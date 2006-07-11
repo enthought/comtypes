@@ -1,3 +1,7 @@
+2006-07-11  Thomas Heller  <theller@python.net>
+
+	* Imported comtypes 0.2.1 into the python.org svn repository.
+
 2006-04-25  Thomas Heller  <theller@python.net>
 
 	* Released version 0.2.1 (svn revision 8).
