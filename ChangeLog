@@ -1,0 +1,59 @@
+2006-04-25  Thomas Heller  <theller@python.net>
+
+	* Released version 0.2.1 (svn revision 8).
+
+2006-03-07  Thomas Heller  <theller@python.net>
+
+	* Imported comtypes from the ctypes CVS repository into the
+	comtypes SVN repository.
+
+2006-03-03  Thomas Heller  <theller@python.net>
+
+	* (Repository): Move the code generator modules into the
+	comtypes.tools package.  Should be refactored later - most
+	important is now that it works again.
+
+2006-02-11  Thomas Heller  <theller@python.net>
+
+	* Merged in lots of changes from the upstream version.  Started
+	localserver support.
+
+2005-10-20  Thomas Heller  <theller@python.net>
+
+	* comtypes\__init__.py: Add logging for easier debugging.  Add
+	COINIT_... flags.  Use the value of sys.coinit_flags (when
+	defined) in the call to CoInitializeEx, this allows to use
+	multithreaded appartments.
+
+	Clean up the lifetime management of implemented COM objects.  Make
+	COM attribute access case insensitive (has a large impact on the
+	performance, unfortunately).
+
+	Move the COMObject definition in a separate module
+	comtypes\_comobject.py.
+
+	* comtypes\tools\codegenerator.py: Don't generate dispid() for
+	non-dispatch based interfaces.
+	
+	* comtypes\client\__init__.py: Add logging for easier debugging.
+
+	* comtypes\persist.py: Remove dispid() from non-dispatch based
+	interfaces. Correct the Read method. Hack around the
+	POINTER(c_wchar) <-> c_wchar_p problem.
+
+2005-10-11  Thomas Heller  <theller@python.net>
+
+	* comtypes\client\__init__.py: Renamed CreateModule() into
+	GetModule().  Removed the 'modulename' parameter from all the
+	function calls - the typelib wrapper alias name is now taken from
+	the typelib library name.  Suggestions from Bruce Dodson.
+
+2005-09-29  Thomas Heller  <theller@python.net>
+
+	* comtypes\GUID.py: Rename the GUID.progid() classmethod into
+	GUID.as_progid().
+
+2005-09-02  Thomas Heller  <theller@python.net>
+
+	* comtypes\client\__init__.py: Can now receive events from custom,
+	non-dispatch interfaces.
