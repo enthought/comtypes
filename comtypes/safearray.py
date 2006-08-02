@@ -1,8 +1,8 @@
 # very thin safearray support
 from ctypes import *
 from comtypes.typeinfo import SAFEARRAYBOUND
-from comtypes.automation import VARIANT, VARTYPE
-from comtypes.automation import VT_VARIANT, VT_R4, VT_R8, VT_I1, VT_I2, VT_I4, VT_INT, VT_UI1, VT_UI2, VT_UI4, VT_UINT
+from comtypes.automation import VARIANT, VARTYPE, BSTR
+from comtypes.automation import VT_VARIANT, VT_R4, VT_R8, VT_I1, VT_I2, VT_I4, VT_INT, VT_UI1, VT_UI2, VT_UI4, VT_UINT, VT_BSTR
 
 class SAFEARRAY(Structure):
     _fields_ = [("cDims", c_ushort),
@@ -117,17 +117,18 @@ def _get_lbound(psa, dim):
     return lb.value
 
 _VT2CTYPE = {
-    VT_R8: c_double,
-    VT_R4: c_float,
+    VT_BSTR: BSTR,
+    VT_I1: c_byte,
+    VT_I2: c_short,
     VT_I4: c_long,
     VT_INT: c_int,
-    VT_I2: c_short,
-    VT_I1: c_byte,
+    VT_R4: c_float,
+    VT_R8: c_double,
+    VT_UI1: c_ubyte,
+    VT_UI2: c_ushort,
     VT_UI4: c_ulong,
     VT_UINT: c_uint,
-    VT_UI2: c_ushort,
-    VT_UI1: c_ubyte,
-    VT_VARIANT: VARIANT
+    VT_VARIANT: VARIANT,
     }
 
 def _get_datatype(psa):
@@ -172,18 +173,18 @@ if __name__ == "__main__":
             rgsa[2].cElements = 4
         else:
             raise ValueError("dim %d not supported" % dim)
-        windll.oleaut32.SafeArrayCreate.restype = POINTER(SAFEARRAY)
-        psa = windll.oleaut32.SafeArrayCreate(VT_I4, len(rgsa), rgsa)
+##        windll.oleaut32.SafeArrayCreate.restype = POINTER(SAFEARRAY)
+        psa = windll.oleaut32.SafeArrayCreate(VT_BSTR, len(rgsa), rgsa)
 
         n = 1
         for b in rgsa:
             n *= b.cElements
         print "%d total elements" % n
 
-        ptr = POINTER(c_int)()
+        ptr = POINTER(BSTR)()
 
         oledll.oleaut32.SafeArrayAccessData(psa, byref(ptr))
-        array = (c_int * n)(*range(n))
+        array = (BSTR * n)(*map(str, range(n)))
         memmove(ptr, array, sizeof(array))
         oledll.oleaut32.SafeArrayUnaccessData(psa)
 
