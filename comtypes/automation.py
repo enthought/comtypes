@@ -10,20 +10,14 @@ try:
 except ImportError:
     decimal = None
     
-from ctypes import _SimpleCData
-class VARIANT_BOOL(_SimpleCData):
-    _type_ = "v"
-    def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.value)
-assert(sizeof(VARIANT_BOOL) == 2)
+from ctypes.wintypes import VARIANT_BOOL
+from ctypes.wintypes import WORD
+from ctypes.wintypes import UINT
+from ctypes.wintypes import DWORD
+from ctypes.wintypes import LONG
 
-# these may be moved elsewhere...
-WORD = c_ushort
-UINT = c_uint
-DWORD = c_ulong
-LONG = c_long
+from ctypes.wintypes import WCHAR
 
-WCHAR = c_wchar
 LCID = DWORD
 DISPID = LONG
 SCODE = LONG
@@ -258,7 +252,7 @@ class tagVARIANT(Structure):
         elif vt == VT_BOOL:
             return self._.VT_BOOL
         elif vt == VT_BSTR:
-            return self._.bstrVal or u''
+            return self._.bstrVal
         elif vt == VT_DATE:
             days = self._.VT_R8
             return datetime.timedelta(days=days) + _com_null_date
