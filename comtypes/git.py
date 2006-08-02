@@ -19,9 +19,9 @@ class IGlobalInterfaceTable(IUnknown):
                   [DWORD, POINTER(GUID), POINTER(POINTER(IUnknown))]),
         ]
 
-    def RegisterInterfaceInGlobal(self, obj):
+    def RegisterInterfaceInGlobal(self, obj, interface=IUnknown):
         cookie = DWORD()
-        self.__com_RegisterInterfaceInGlobal(obj, obj._iid_, cookie)
+        self.__com_RegisterInterfaceInGlobal(obj, interface._iid_, cookie)
         return cookie.value
 
     def GetInterfaceFromGlobal(self, cookie, interface=IUnknown):
