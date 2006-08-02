@@ -69,12 +69,23 @@ def make_interface_pointer(inst, itf,
             else:
                 mth = catch_errors(inst, mth, interface)
             methods.append(proto(mth))
-    class Vtbl(Structure):
-        _fields_ = fields
-    Vtbl.__name__ = "Vtbl_%s" % itf.__name__
+    Vtbl = _create_vtbl_type(tuple(fields), itf)
     vtbl = Vtbl(*methods)
     for iid in iids:
         inst._com_pointers_[iid] = pointer(pointer(vtbl))
+
+def _create_vtbl_type(fields, itf):
+    try:
+        return _vtbl_types[fields]
+    except KeyError:
+        class Vtbl(Structure):
+            _fields_ = fields
+        Vtbl.__name__ = "Vtbl_%s" % itf.__name__
+        _vtbl_types[fields] = Vtbl
+        return Vtbl
+
+# Ugh. Another type cache to avoid leaking types.
+_vtbl_types = {}
 
 ################################################################
 
