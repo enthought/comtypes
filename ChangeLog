@@ -1,3 +1,28 @@
+2006-08-02  Thomas Heller  <theller@python.net>
+
+	* Version number changed to 0.3.0, added 'comtypes.server' package
+	to the setup script.
+
+	* Merged in a LOT of changes from the upstream version.
+	For details see the svn commit messages.
+
+	The most prominent changes are:
+
+	- The strings returned by ITypeInfo::GetDocumentation() do not
+	contain NUL characters any more (some buggy typelibs contain them)
+
+	- comtypes.client.GetEvents returns a 'connection object', which
+	will UnAdvise the connection when deleted.  In other words, you
+	must keep the return value of the GetEvents call as long as you
+	want to reveive events.
+
+	- Pointer to COM interface pointer instances __setitem__ method manages
+	the COM refcount correctly.
+
+	- Changes in the COM shutdown code: maybe the win32com way of
+	never calling CoUninitialize() is the best compromise ;-), but I
+	have not yet given up.
+	
 2006-07-11  Thomas Heller  <theller@python.net>
 
 	* Imported comtypes 0.2.1 into the python.org svn repository.
