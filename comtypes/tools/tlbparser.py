@@ -640,8 +640,10 @@ def _py2exe_hint():
 
 def generate_module(tlib, ofi, make_module, name_module):
     known_symbols = {}
-    for name in ("comtypes.persist", "comtypes.typeinfo",
-                 "comtypes.automation", "comtypes._others", "comtypes", "ctypes"):
+    for name in ("comtypes.persist",
+                 "comtypes.typeinfo", "comtypes.automation",
+                 "comtypes._others", "comtypes",
+                 "ctypes.wintypes", "ctypes"):
         try:
             mod = __import__(name)
         except ImportError:
