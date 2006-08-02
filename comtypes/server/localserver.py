@@ -27,28 +27,34 @@ class ClassFactory(comtypes.COMObject):
     _com_interfaces_ = [IClassFactory]
     _locks = 0
     _queue = None
-    regcls = REGCLS_SINGLEUSE
+    regcls = REGCLS_MULTIPLEUSE
 
-    def __init__(self, cls):
+    def __init__(self, cls, *args, **kw):
         super(ClassFactory, self).__init__()
         cls._factory = self
         self._cls = cls
         self._register_class()
+        self._args = args
+        self._kw = kw
 
     def _register_class(self):
+        regcls = getattr(self._cls, "_regcls_", self.regcls)
         cookie = c_ulong()
         ptr = self._com_pointers_[comtypes.IUnknown._iid_]
         oledll.ole32.CoRegisterClassObject(byref(comtypes.GUID(self._cls._reg_clsid_)),
                                            ptr,
-                                           comtypes.CLSCTX_LOCAL_SERVER,
-                                           self.regcls,
+                                           self._cls._reg_clsctx_,
+                                           regcls,
                                            byref(cookie))
         self.cookie = cookie
+
+    def _revoke_class(self):
+        oledll.ole32.CoRevokeClassObject(self,cookie)
 
     def CreateInstance(self, this, punkOuter, riid, ppv):
         _debug("ClassFactory.CreateInstance(%s)", riid[0])
         self.LockServer(None, True)
-        obj = self._cls()
+        obj = self._cls(*self._args, **self._kw)
         result = obj.IUnknown_QueryInterface(None, riid, ppv)
         _debug("CreateInstance() -> %s", result)
         return result
@@ -94,6 +100,12 @@ def pump_messages():
     from ctypes.wintypes import MSG
     user32 = windll.user32
     msg = MSG()
-    while user32.GetMessageA(byref(msg), 0, 0, 0):
-        user32.TranslateMessage(byref(msg))
-        user32.DispatchMessageA(byref(msg))
+    while 1:
+        res = user32.GetMessageA(byref(msg), 0, 0, 0)
+        if res == -1:
+            raise WinError()
+        if res:
+            user32.TranslateMessage(byref(msg))
+            user32.DispatchMessageA(byref(msg))
+        else:
+            return
