@@ -18,13 +18,11 @@
 # comtypes.client
 
 import sys, os, new, imp
-import weakref
 import ctypes
 
 import comtypes
 from comtypes.hresult import *
 import comtypes.automation
-import comtypes.connectionpoints
 import comtypes.typeinfo
 import comtypes.client.dynamic
 
@@ -32,7 +30,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 __all__ = ["CreateObject", "GetActiveObject", "CoGetObject",
-           "GetEvents", "ReleaseEvents", "GetModule"]
+           "GetEvents", "GetModule"]
 
 __verbose__ = __debug__
 
@@ -135,17 +133,26 @@ def GetModule(tlib):
     """
     if isinstance(tlib, basestring):
         # we accept filenames as well
+        logger.info("GetModule(%s)", tlib)
         tlib = comtypes.typeinfo.LoadTypeLibEx(tlib)
     elif isinstance(tlib, (tuple, list)):
+        logger.info("GetModule(%s)", (tlib,))
         tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(tlib[0]), *tlib[1:])
     elif hasattr(tlib, "_reg_libid_"):
+        logger.info("GetModule(%s)", tlib)
         tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(tlib._reg_libid_),
                                                 *tlib._reg_version_)
+    else:
+        logger.info("GetModule(%s)", tlib.GetLibAttr())
+
     # determine the Python module name
     fullname = _name_module(tlib)
     # create and import the module
     mod = _CreateWrapper(tlib, fullname)
-    modulename = tlib.GetDocumentation(-1)[0]
+    try:
+        modulename = tlib.GetDocumentation(-1)[0]
+    except comtypes.COMError:
+        return mod
     if modulename is None:
         return mod
     modulename = modulename.encode("mbcs")
@@ -177,8 +184,10 @@ def GetModule(tlib):
         ofi.close()
         return _my_import("comtypes.gen." + modulename)
         
-def _CreateWrapper(tlib, fullname):
+def _CreateWrapper(tlib, fullname=None):
     # helper which creates and imports the real typelib wrapper module.
+    if fullname is None:
+        fullname = _name_module(tlib)
     try:
         return _my_import(fullname)
     except Exception:
@@ -267,10 +276,12 @@ def wrap(punk):
             pdisp = comtypes.client.dynamic.Dispatch(pdisp)
             logger.info("IDispatch.GetTypeInfo(0) failed: %s" % pdisp)
             return pdisp
+    typeattr = tinfo.GetTypeAttr()
+    logger.info("Default interface is %s", typeattr.guid)
     try:
-        punk.QueryInterface(comtypes.IUnknown, tinfo.GetTypeAttr().guid)
-    except comtypes.COMError:
-        logger.info("Does not seem to implement default interface from typeinfo, using dynamic")
+        punk.QueryInterface(comtypes.IUnknown, typeattr.guid)
+    except comtypes.COMError, details:
+        logger.info("Does not implement default interface, returning dynamic object")
         return comtypes.client.dynamic.Dispatch(punk)
 
     itf_name = tinfo.GetDocumentation(-1)[0] # interface name
@@ -292,7 +303,7 @@ def wrap(punk):
     # engine.Eval("[1, 2, 3]")
     #
     # Could the above code, as an optimization, check that QI works,
-    # *before* generating the wraper module?
+    # *before* generating the wrapper module?
     result = punk.QueryInterface(interface)
     logger.info("Final result is %s", result)
     return result
@@ -300,195 +311,30 @@ def wrap(punk):
 # Should we do this for POINTER(IUnknown) also?
 ctypes.POINTER(comtypes.automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam
 
-# XXX move into comtypes
-def _getmemid(idlflags):
-    # get the dispid from the idlflags sequence
-    return [memid for memid in idlflags if isinstance(memid, int)][0]
-
-# XXX move into comtypes?
-def _get_dispmap(interface):
-    # return a dictionary mapping dispid numbers to method names
-    assert issubclass(interface, comtypes.automation.IDispatch)
-
-    dispmap = {}
-    if "dual" in interface._idlflags_:
-        # It would be nice if that would work:
-##        for info in interface._methods_:
-##            mth = getattr(interface, info.name)
-##            memid = mth.im_func.memid
-    
-        # See also MSDN docs for the 'defaultvtable' idl flag, or
-        # IMPLTYPEFLAG_DEFAULTVTABLE.  This is not a flag of the
-        # interface, but of the coclass!
-        #
-        # Use the _methods_ list
-        assert not hasattr(interface, "_disp_methods_")
-        for restype, name, argtypes, paramflags, idlflags, helpstring in interface._methods_:
-            memid = _getmemid(idlflags)
-            dispmap[memid] = name
-    else:
-        # Use _disp_methods_
-        # tag, name, idlflags, restype(?), argtypes(?)
-        for tag, name, idlflags, restype, argtypes in interface._disp_methods_:
-            memid = _getmemid(idlflags)
-            dispmap[memid] = name
-    return dispmap
-
-def GetEvents(source, sink, interface=None):
-    """Receive COM events from 'source'.  Events will call methods on
-    the 'sink' object.  'interface' is the source interface to use.
-    """
-    # When called from CreateObject, the sourceinterface has already
-    # been determined by the coclass.  Otherwise, the only thing that
-    # makes sense is to use IProvideClassInfo2 to get the default
-    # source interface.
-
-    if interface is None:
-        # QI for IConnectionPointContainer and thne
-        # EnumConnectionPoints would also work, but doesn't make
-        # sense.  The connection interfaces are enumerated in
-        # arbitrary order, so we cannot decide on out own which one to
-        # use.
-##        cpc = source.QueryInterface(IConnectionPointContainer)
-##        for cp in cpc.EnumConnectionPoints():
-##            print comtypes.com_interface_registry[str(cp.GetConnectionInterface())]
-        try:
-            pci = source.QueryInterface(comtypes.typeinfo.IProvideClassInfo2)
-        except comtypes.COMError:
-            raise TypeError("cannot determine source interface")
-        # another try: block needed?
-        guid = pci.GetGUID(1)
-        interface = comtypes.com_interface_registry[str(guid)]
-        logger.debug("%s using sinkinterface %s", source, interface)
-
-    if issubclass(interface, comtypes.automation.IDispatch):
-        dispmap = _get_dispmap(interface)
-
-        for memid, name in dispmap.iteritems():
-            # find methods to call, if not found ignore event
-            mth = getattr(sink, "%s_%s" % (interface.__name__, name), None)
-            if mth is None:
-                mth = getattr(sink, name, lambda *args: 0)
-            dispmap[memid] = mth
-
-        class DispEventReceiver(comtypes.COMObject):
-            _com_interfaces_ = [interface]
-
-            def IDispatch_Invoke(self, this, memid, riid, lcid, wFlags, pDispParams,
-                                 pVarResult, pExcepInfo, puArgErr):
-                dp = pDispParams[0]
-                # DISPPARAMS contains the arguments in reverse order
-                args = [dp.rgvarg[i].value for i in range(dp.cArgs)]
-                self.dispmap[memid](None, *args[::-1])
-                return 0
-
-            def GetTypeInfoCount(self, this, presult):
-                if not presult:
-                    return E_POINTER
-                presult[0] = 0
-                return S_OK
-
-            def GetTypeInfo(self, this, itinfo, lcid, pptinfo):
-                return E_NOTIMPL
-
-            def GetIDsOfNames(self, this, riid, rgszNames, cNames, lcid, rgDispId):
-                return E_NOTIMPL
-
-        rcv = DispEventReceiver()
-        rcv.dispmap = dispmap
-    else:
-        class EventReceiver(comtypes.COMObject):
-            _com_interfaces_ = [interface]
-
-        for itf in interface.mro()[:-2]: # skip object and IUnknown
-            for info in itf._methods_:
-                restype, name, argtypes, paramflags, idlflags, docstring = info
-
-                mth = getattr(sink, name, lambda self, this, *args: None)
-                setattr(EventReceiver, name, mth)
-        rcv = EventReceiver()
-
-    # XXX All of these (QI, FindConnectionPoint, Advise) can also fail
-    # (for buggy objects?), and we should raise an appropriate error
-    # then.
-
-    try:
-        cpc = source.QueryInterface(comtypes.connectionpoints.IConnectionPointContainer)
-        cp = cpc.FindConnectionPoint(ctypes.byref(interface._iid_))
-        logger.debug("Start advise %s", interface)
-        cookie = cp.Advise(rcv)
-    except:
-        logger.error("Could not connect to object:", exc_info=True)
-        raise
-
-    def release(ref):
-        # XXX Do not reference 'source' here!
-        logger.debug("End advise %s", interface)
-        try:
-            cp.Unadvise(cookie)
-        except (comtypes.COMError, WindowsError):
-            # are we sure we want to ignore errors here?
-            pass
-        del _active_events[(ref, sink, interface)]
-
-    # clean up when the source goes away.
-    guard = weakref.ref(source, release)
-    _active_events[(guard, sink, interface)] = release
-
-_active_events = {}
-
-def ReleaseEvents(source, sink=None, interface=None):
-    """Don't any longer receive events from source.  If 'sink' is
-    specified, only connections to this objects are closed.  If
-    'interface' is specified, only comections from this interface are
-    closed.
-    """
-    count = 0
-    # make a copy since we will delete entries
-    for (ref, s, itf), release in _active_events.copy().iteritems():
-        if ref() == source:
-            if sink is None or s == sink:
-                if interface is None or interface == itf:
-                    release(ref)
-                    count += 1
-    # Should count == 0 be an error?
-    return count
+from comtypes.client._events import GetEvents
 
 ################################################################
 #
 # Object creation
 #
-def GetActiveObject(progid,
-                    interface=None,          # the interface we want
-                    sink=None,               # where to send events
-                    sourceinterface=None):   # the event interface we want
+def GetActiveObject(progid, interface=None):
     clsid = comtypes.GUID.from_progid(progid)
     if interface is None:
         interface = getattr(progid, "_com_interfaces_", [None])[0]
     obj = comtypes.GetActiveObject(clsid, interface=interface)
-    return _manage(obj, clsid,
-                  interface=interface,
-                  sink=sink,
-                  sourceinterface=sourceinterface)
+    return _manage(obj, clsid, interface=interface)
                     
-def _manage(obj, clsid, interface,
-            sink, sourceinterface):
+def _manage(obj, clsid, interface):
+    obj.__dict__['__clsid'] = str(clsid)
     if interface is None:
         obj = wrap(obj)
-    if sink is not None:
-        if sourceinterface is None:
-            # use default outgoing interface for the coclass.
-            sourceinterface = comtypes.com_coclass_registry[str(clsid)]._outgoing_interfaces_[0]
-        GetEvents(obj, sink, sourceinterface)
     return obj
 
 
 def CreateObject(progid,                  # which object to create
                  clsctx=None,             # how to create the object
                  machine=None,            # where to create the object
-                 interface=None,          # the interface we want
-                 sink=None,               # where to send events
-                 sourceinterface=None):   # the event interface we want
+                 interface=None):         # the interface we want
     """Create a COM object from 'progid', and try to QueryInterface()
     it to the most useful interface, generating typelib support on
     demand.  A pointer to this interface is returned.
@@ -498,9 +344,6 @@ def CreateObject(progid,                  # which object to create
        a _clsid_ attribute which should be any of the above.
     'clsctx' specifies how to create the object, use the CLSCTX_... constants.
     'machine' allows to specify a remote machine to create the object on.
-    'sink' specifies an optional object to receive COM events.
-    'sourceinterface' is the interface that sends events.  If not specified,
-        the default source interface is used.
 
     You can also later request to receive events with GetEvents().
     """
@@ -516,15 +359,9 @@ def CreateObject(progid,                  # which object to create
         logger.debug("CoCreateInstanceEx(%s, clsctx=%s, interface=%s, machine=%s)",
                      clsid, clsctx, interface, machine)
         obj = comtypes.CoCreateInstanceEx(clsid, clsctx=clsctx, interface=interface, machine=machine)
-    return _manage(obj, clsid,
-                   interface=interface,
-                   sink=sink,
-                   sourceinterface=sourceinterface)
+    return _manage(obj, clsid, interface=interface)
 
-def CoGetObject(displayname,
-              interface=None,          # the interface we want
-              sink=None,               # where to send events
-              sourceinterface=None):   # the event interface we want
+def CoGetObject(displayname, interface=None):
     """Create an object by calling CoGetObject(displayname).
 
     Additional parameters have the same meaning as in CreateObject().
@@ -532,8 +369,11 @@ def CoGetObject(displayname,
     punk = comtypes.CoGetObject(displayname, interface)
     return _manage(punk,
                    clsid=None,
-                   interface=interface,
-                   sink=sink,
-                   sourceinterface=sourceinterface)
+                   interface=interface)
 
 ################################################################
+
+if __name__ == "__main__":
+    # When started as script, generate typelib wrapper from .tlb file.
+    from comtypes.client import GetModule
+    GetModule(sys.argv[1])
