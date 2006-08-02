@@ -1,6 +1,6 @@
 import unittest as ut
 from ctypes import *
-from comtypes.client import CreateObject, GetEvents, ReleaseEvents
+from comtypes.client import CreateObject, GetEvents
 
 import ctypes.test
 ctypes.test.requires("ui")
@@ -67,9 +67,10 @@ class Test(ut.TestCase):
 
     def test_default_eventinterface(self):
         sink = EventSink()
-        ie = CreateObject("InternetExplorer.Application", sink=sink)
+        ie = CreateObject("InternetExplorer.Application")
+        conn = GetEvents(ie, sink=sink)
         ie.Visible = True
-        ie.Navigate2(URL="http://www.python.org/", Flags=0)
+        ie.Navigate2(URL="http://docs.python.org/", Flags=0)
         import time
         for i in range(50):
             PumpWaitingMessages()
@@ -82,18 +83,16 @@ class Test(ut.TestCase):
                                             'OnVisible'])
 
         del ie
-        
-        import comtypes.client
-        self.failUnlessEqual(comtypes.client._active_events, {})
+        del conn
 
     def test_nondefault_eventinterface(self):
         sink = EventSink()
         ie = CreateObject("InternetExplorer.Application")
         import comtypes.gen.SHDocVw as mod
-        GetEvents(ie, sink, interface=mod.DWebBrowserEvents)
+        conn = GetEvents(ie, sink, interface=mod.DWebBrowserEvents)
 
         ie.Visible = True
-        ie.Navigate2(Flags=0, URL="http://www.python.org/")
+        ie.Navigate2(Flags=0, URL="http://docs.python.org/")
         import time
         for i in range(50):
             PumpWaitingMessages()
@@ -103,9 +102,6 @@ class Test(ut.TestCase):
 
         self.failUnlessEqual(sink._events, ['BeforeNavigate', 'NavigateComplete'])
         del ie
-        
-        import comtypes.client
-        self.failUnlessEqual(comtypes.client._active_events, {})
 
 if __name__ == "__main__":
     ut.main()

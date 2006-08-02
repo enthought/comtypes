@@ -1,4 +1,4 @@
-import unittest as ut
+import unittest
 import time
 import comtypes.client
 
@@ -8,7 +8,7 @@ import ctypes.test
 ctypes.test.requires("ui")
 
 
-class Test(ut.TestCase):
+class Test(unittest.TestCase):
 
     def setUp(self):
         self._events = []
@@ -24,8 +24,8 @@ class Test(ut.TestCase):
         from comtypes.gen import Word
         
         # Get the instance again, and receive events from that
-        w2 = comtypes.client.GetActiveObject("Word.Application",
-                                             sink=self)
+        w2 = comtypes.client.GetActiveObject("Word.Application")
+        conn = comtypes.client.GetEvents(w2, sink=self)
 
         word.Visible = 1
 
