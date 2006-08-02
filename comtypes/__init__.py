@@ -69,53 +69,42 @@ COINIT_SPEED_OVER_MEMORY = 0x8
 def CoInitialize():
     return CoInitializeEx(COINIT_APARTMENTTHREADED)
 
-# Yet another try at COM shutdown.
-
-# XXX Does currently not support multiple appartments,
-# because it relies on global, thread-shared data.
 def CoInitializeEx(flags=None):
-    global __inited
-    if __inited:
-        return
     if flags is None:
         if os.name == "ce":
             flags = getattr(sys, "coinit_flags", COINIT_MULTITHREADED)
         else:
             flags = getattr(sys, "coinit_flags", COINIT_APARTMENTTHREADED)
-    __inited = True
     logger.debug("CoInitializeEx(None, %s)", flags)
-    try:
-        _ole32.CoInitializeEx(None, flags)
-    except WindowsError, details:
-        if details.errno != -2147417850:
-            logger.debug("CoInitializeEx(): WindowsError, %s", details)
-            raise
-        else:
-            logger.debug("CoInitializeEx(): RPC_CHANGED_MODE ignored")
-    else:
+    _ole32.CoInitializeEx(None, flags)
 
-        def shutdown(func=_ole32.CoUninitialize,
-                     _debug=logger.debug):
-            # Make sure no COM pointers stay in exception frames.
-            sys.exc_clear()
-            # Sometimes, CoUnititialize, running at Python shutdown,
-            # raises an exception.  We suppress this when __debug__ is
-            # False.
-            _debug("Calling CoUnititialize()")
-            if __debug__:
-                func()
-            else:
-                try: func()
-                except WindowsError: pass
-            global __inited
-            __inited = False
-            _debug("CoUnititialize() done.")
-
-        import atexit
-        atexit.register(shutdown)
-__inited = False
-
+# COM is initialized automatically for the thread that imports this module
+# for the first time.  sys.coinit_flags is passed as parameter to CoInitializeEx,
+# if defined, otherwise COINIT_APARTMENTTHREADED is used.
+# A shutdown function is registered with atexit, so that CoUninitialize is
+# called when Python is shut down.
 CoInitializeEx()
+
+def shutdown(func=_ole32.CoUninitialize,
+             _debug=logger.debug):
+    # Make sure no COM pointers stay in exception frames.
+    sys.exc_clear()
+    # Sometimes, CoUnititialize, running at Python shutdown,
+    # raises an exception.  We suppress this when __debug__ is
+    # False.
+    _debug("Calling CoUnititialize()")
+    if __debug__:
+        func()
+    else:
+        try: func()
+        except WindowsError: pass
+    global _com_inited
+    _com_inited = False
+    _debug("CoUnititialize() done.")
+
+import atexit
+atexit.register(shutdown)
+del shutdown
 
 ################################################################
 # global registries.
@@ -230,27 +219,25 @@ class _cominterface_meta(type):
         from ctypes import _pointer_type_cache
         _pointer_type_cache[cls] = p
 
-        # XXX These changes break something, unfortunately.
-        # XXX Find out what!
-##        # This looks more and more weird.  We override the
-##        # __setitem__ method of the POINTER(POINTER(interface)) type.
-##        #
-##        # This is so that we can implement COM methods that have to
-##        # return COM pointers more easily and consistent.  Instead of
-##        # using CopyComPointer in the method implementation, we can
-##        # simply do:
-##        #
-##        # def GetTypeInfo(self, this, ..., pptinfo):
-##        #     if not pptinfo: return E_POINTER
-##        #     pptinfo[0] = a_com_interface_pointer
-##        #     return S_OK
-        
-##        from _ctypes import CopyComPointer
-##        def ppi_setitem(self, index, value):
-##            if index != 0:
-##                raise IndexError("Invalid index %s, must be 0" % index)
-##            CopyComPointer(value, self)
-##        POINTER(p).__setitem__ = ppi_setitem
+        def comptr_setitem(self, index, value):
+            # We override the __setitem__ method of the
+            # POINTER(POINTER(interface)) type, so that the COM
+            # reference count is managed correctly.
+            #
+            # This is so that we can implement COM methods that have to
+            # return COM pointers more easily and consistent.  Instead of
+            # using CopyComPointer in the method implementation, we can
+            # simply do:
+            #
+            # def GetTypeInfo(self, this, ..., pptinfo):
+            #     if not pptinfo: return E_POINTER
+            #     pptinfo[0] = a_com_interface_pointer
+            #     return S_OK
+            if index != 0:
+                raise IndexError("Invalid index %s, must be 0" % index)
+            from _ctypes import CopyComPointer
+            CopyComPointer(value, self)
+        POINTER(p).__setitem__ = comptr_setitem
 
         return cls
 
@@ -499,23 +486,42 @@ class _compointer_meta(type(c_void_p), _cominterface_meta):
     "metaclass for COM interface pointer classes"
     # no functionality, but needed to avoid a metaclass conflict
 
+def _is_com_initialized(
+    _init=windll.ole32.CoInitializeEx,
+    _uninit=windll.ole32.CoUninitialize):
+    # Try to determine if COM is still initialized or not.
+    #
+    # This function could even be extended to return the current
+    # threading model.
+    result = _init(None, COINIT_APARTMENTTHREADED)
+    if result == 0:
+        # S_OK means COM was successfully initialized for the current thread.
+        # We uninitialize it again, and return False.
+        _uninit()
+        return False
+    elif result == 1:
+        # S_FALSE means COM is already initialized
+        _uninit()
+        return True
+    elif result == -2147417850:
+        # RPC_E_CHANGED_MODE means a previous call specified a different threading model
+        return True
+    # what about other error codes?
+    return True
+
 class _compointer_base(c_void_p):
     "base class for COM interface pointer classes"
     __metaclass__ = _compointer_meta
     def __del__(self):
         "Release the COM refcount we own."
-        if self:
-            # XXX comtypes now calls CoUnititialize() when the atexit
+        if self and _is_com_initialized and _is_com_initialized():
+            # comtypes now calls CoUnititialize() when the atexit
             # handlers run.  OTOH, the __main__ namespace (and maybe
             # others) may still have instances of com pointers around.
             # CoUnititialize() has finalized them when it returns, so
-            # these com pointers are stale.  Catching the WindowsError
-            # here gets rid of error messages during shutting of Python.
-            try:
-                self.Release()
-            except WindowsError:
-                if __inited:
-                    raise
+            # these com pointers are stale.  In this case, Release()
+            # is no longer called on these stale COM pointers.
+            self.Release()
 
     def __cmp__(self, other):
         # COM identity rule
@@ -558,6 +564,11 @@ class BSTR(_SimpleCData):
         """If we own the memory, call SysFreeString to free it."""
         if not self._b_needsfree_:
             _free(self)
+
+    def __ctypes_from_outparam__(self, _free=windll.oleaut32.SysFreeString):
+        result = self.value
+        _free(self)
+        return result
 
 ################################################################
 # IDL stuff
@@ -703,6 +714,9 @@ class IUnknown(object):
         if iid is None:
             iid = interface._iid_
         self.__com_QueryInterface(byref(iid), byref(p))
+        clsid = self.__dict__.get('__clsid')
+        if clsid is not None:
+            p.__dict__['__clsid'] = clsid
         return p
 
     # these are only so that they get a docstring.
