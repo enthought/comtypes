@@ -42,11 +42,10 @@ class DualDispImplMixin(object):
     def IDispatch_GetTypeInfo(self, this, itinfo, lcid, pptinfo):
         if not pptinfo:
             return E_POINTER
-        # Doesn't work, unless POINTER(POINTER(<interface>)).__setitem__ is overridden correctly.
-##        pptinfo[0] = self.__tinfo
-##        return S_OK
-        from _ctypes import CopyComPointer
-        return CopyComPointer(self.__tinfo, pptinfo)
+        if itinfo != 0:
+            return DISP_E_BADINDEX
+        pptinfo[0] = self.__tinfo
+        return S_OK
 
     def IDispatch_GetIDsOfNames(self, this, riid, rgszNames, cNames, lcid, rgDispId):
         return _oleaut32.DispGetIDsOfNames(self.__tinfo, rgszNames, cNames, rgDispId)
@@ -62,8 +61,8 @@ class DualDispImplMixin(object):
         if not ppTI:
             return E_POINTER
         logger.debug("GetClassInfo called for %s", self._reg_clsid_)
-        from _ctypes import CopyComPointer
-        return CopyComPointer(self.__coclass_tinfo, ppTI)
+        ppTI[0] = self.__coclass_tinfo
+        return S_OK
 
     def IProvideClassInfo2_GetGUID(self, this, dwGuidKind, pGUID):
         if not pGUID:
