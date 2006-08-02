@@ -18,7 +18,7 @@ class dispid(object):
 
 class helpstring(object):
     def __init__(self, text):
-        self.text = text.split("\0")[0]
+        self.text = text
 
     def __repr__(self):
         return "helpstring(%r)" % self.text
@@ -147,8 +147,6 @@ class Generator(codegenerator_base.Generator):
         print >> self.stream, "class %s(CoClass):" % coclass.name
         doc = getattr(coclass, "doc", None)
         if doc:
-            doc = doc.split("\0")[0]
-        if doc:
             print >> self.stream, "    %r" % doc
         print >> self.stream, "    _reg_clsid_ = GUID(%r)" % coclass.clsid
         print >> self.stream, "    _idlflags_ = %s" % coclass.idlflags
@@ -201,8 +199,6 @@ class Generator(codegenerator_base.Generator):
         print >> self.stream, "class %s(%s):" % (head.itf.name, basename)
         print >> self.stream, "    _case_insensitive_ = True"
         doc = getattr(head.itf, "doc", None)
-        if doc:
-            doc = doc.split("\0")[0]
         if doc:
             print >> self.stream, "    %r" % doc
         print >> self.stream, "    _iid_ = GUID(%r)" % head.itf.iid
@@ -278,8 +274,6 @@ class Generator(codegenerator_base.Generator):
         print >> self.stream, "class %s(%s):" % (head.itf.name, basename)
         print >> self.stream, "    _case_insensitive_ = True"
         doc = getattr(head.itf, "doc", None)
-        if doc:
-            doc = doc.split("\0")[0]
         if doc:
             print >> self.stream, "    %r" % doc
         print >> self.stream, "    _iid_ = GUID(%r)" % head.itf.iid
