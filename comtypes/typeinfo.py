@@ -245,6 +245,13 @@ class ITypeLib(IUnknown):
 
 ################
 
+def fix_name(name):
+    # Some typelibs contain BSTR with embedded NUL characters,
+    # probably the len of the BSTR is wrong.
+    if name is None:
+        return name
+    return name.split("\0")[0]
+
 class ITypeInfo(IUnknown):
     _iid_ = GUID("{00020401-0000-0000-C000-000000000046}")
 
@@ -254,6 +261,11 @@ class ITypeInfo(IUnknown):
         
 ##    def GetTypeComp(self):
 ##        "Return ITypeComp pointer for this type"
+
+    def GetDocumentation(self, memid):
+        """Return name, docstring, helpcontext, and helpfile for 'memid'."""
+        name, doc, helpcontext, helpfile = self._GetDocumentation(memid)
+        return fix_name(name), fix_name(doc), helpcontext, fix_name(helpfile)
         
     def GetFuncDesc(self, index):
         "Return FUNCDESC for index"
@@ -656,6 +668,7 @@ N11tagTYPEDESC5DOLLAR_203E._fields_ = [
 ]
 assert sizeof(N11tagTYPEDESC5DOLLAR_203E) == 4, sizeof(N11tagTYPEDESC5DOLLAR_203E)
 assert alignment(N11tagTYPEDESC5DOLLAR_203E) == 4, alignment(N11tagTYPEDESC5DOLLAR_203E)
+tagTYPEDESC._anonymous_ = ('_',)
 tagTYPEDESC._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 582
     # Unnamed field renamed to '_'
