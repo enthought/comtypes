@@ -9,7 +9,7 @@ Limitations:
  - dispinterface support is somewhat weak.
 
 ----------------------------------------------------------------"""
-VERSION = "0.2.1"
+VERSION = "0.3.0"
 
 from distutils.core import setup
 
@@ -40,5 +40,6 @@ setup(name="comtypes",
       version = VERSION,
       packages=["comtypes",
                 "comtypes.client",
+                "comtypes.server",
                 "comtypes.tools",
                 "comtypes.test"])
