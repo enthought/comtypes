@@ -1,0 +1,48 @@
+/*
+b30428b4-cc67-48ba-81db-4c6a6b3db1a3
+*/
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	/*
+	  the oleautomation flag enables universal marshalling on non-dispatch
+	  interfaces. See Don Box, Page 220.
+	*/
+	oleautomation,
+	uuid(58955c76-60a9-4eeb-8b8a-8f92e90d0fe7),
+	helpstring("ITestComServer interface")
+	]
+interface ITestComServer : IDispatch {
+	[propget, id(10), helpstring("returns the id of the server")]
+	HRESULT id([out, retval] UINT *pid);
+
+	[propget, id(11), helpstring("the name of the server")]
+	HRESULT name([out, retval] BSTR *pname);
+
+	[propput, id(11), helpstring("the name of the server")]
+	HRESULT name([in] BSTR name);
+
+	[propget, id(12), helpstring("return complicated stuff")]
+	HRESULT array([out, retval] VARIANT *parray);
+};
+
+[
+	uuid(5a3e1d1d-947a-44ac-9b03-5c37d5f5fffc),
+	version(1.0),
+	helpstring("TestComServer 1.0 Type library")
+	]
+library TestComServerLib
+{
+	importlib("stdole2.tlb");
+
+	[
+		uuid(1fca61d1-a1a6-464c-b3a8-e9508b4ac8f7),
+		helpstring("TestComServer class object")
+		]
+		coclass TestComServer {
+		[default] interface ITestComServer;
+	};
+};
