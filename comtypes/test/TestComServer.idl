@@ -2,6 +2,14 @@
 b30428b4-cc67-48ba-81db-4c6a6b3db1a3
 */
 
+/*
+
+  REMEMBER TO COMPILE A NEW .TLB FILE WHEN THIS CHANGES,
+  AND ALSO TO REMOVE THE comtypes\gen DIRECTORY TO DELETE
+  THE TYPELIB WRAPPERS!
+
+*/
+
 import "oaidl.idl";
 import "ocidl.idl";
 
