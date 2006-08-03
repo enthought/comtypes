@@ -1,3 +1,8 @@
+2006-08-03  Thomas Heller  <theller@python.net>
+
+	* comtypes\server\register.py: For localserver, the wrong script
+	was registered when the class was not in a toplevel module.
+
 2006-08-02  Thomas Heller  <theller@python.net>
 
 	* Version number changed to 0.3.0, added 'comtypes.server' package

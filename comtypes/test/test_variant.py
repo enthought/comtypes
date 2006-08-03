@@ -103,7 +103,7 @@ class VariantTestCase(unittest.TestCase):
 
         # NULL pointer BSTR should be handled as empty string
         v.vt = VT_BSTR
-        self.failUnlessEqual(v.value, "")
+        self.failUnless(v.value in ("", None))
 
 class ArrayTest(unittest.TestCase):
     def test_double(self):
