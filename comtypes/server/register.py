@@ -244,7 +244,7 @@ class Registrar(object):
 
         if clsctx & comtypes.CLSCTX_LOCAL_SERVER and not hasattr(sys, "frozendllhandle"):
             exe = sys.executable
-            script = __import__(cls.__module__).__file__
+            script = sys.modules[cls.__module__].__file__
             if " " in exe:
                 exe = '"%s"' % exe
             if " " in script:
