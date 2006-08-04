@@ -1,3 +1,15 @@
+2006-08-04  Thomas Heller  <theller@python.net>
+
+	* Fixed quite some tests to work or be skipped on Windows CE.
+
+	* comtypes\typesinfo.py: Added ICreateTypeLib2 interface, and
+	changed the CreateTypeLib function to return a pointer to that
+	interface.
+
+	* Added a COM server for testing to the comtypes.test package,
+	plus tests for it.  There are still several memory leaks in
+	comtypes, as the tests show.
+	
 2006-08-03  Thomas Heller  <theller@python.net>
 
 	* comtypes\server\register.py: For localserver, the wrong script
