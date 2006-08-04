@@ -15,8 +15,8 @@ def get_refcnt(comptr):
 class VariantTestCase(unittest.TestCase):
 
     def test_com_refcounts(self):
-        # typelib for Internet Explorer
-        tlb = LoadRegTypeLib(GUID("{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}"), 1, 1, 0)
+        # typelib for oleaut32
+        tlb = LoadRegTypeLib(GUID("{00020430-0000-0000-C000-000000000046}"), 2, 0, 0)
         self.failUnlessEqual(get_refcnt(tlb), 1)
 
         p = tlb.QueryInterface(IUnknown)
@@ -28,7 +28,7 @@ class VariantTestCase(unittest.TestCase):
     def test_com_pointers(self):
         # Storing a COM interface pointer in a VARIANT increments the refcount,
         # changing the variant to contain something else decrements it
-        tlb = LoadRegTypeLib(GUID("{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}"), 1, 1, 0)
+        tlb = LoadRegTypeLib(GUID("{00020430-0000-0000-C000-000000000046}"), 2, 0, 0)
         self.failUnlessEqual(get_refcnt(tlb), 1)
 
         v = VARIANT(tlb)
