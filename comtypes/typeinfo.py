@@ -6,9 +6,11 @@
 import weakref
 
 from ctypes import *
+from ctypes.wintypes import ULONG
 from comtypes import STDMETHOD
 from comtypes import COMMETHOD
 from comtypes import _GUID, GUID
+# XXX should import more stuff from ctypes.wintypes...
 from comtypes.automation import BSTR
 from comtypes.automation import DISPID
 from comtypes.automation import DISPPARAMS
@@ -371,6 +373,9 @@ class ICreateTypeLib(IUnknown):
     _iid_ = GUID("{00020406-0000-0000-C000-000000000046}")
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 2149
 
+class ICreateTypeLib2(ICreateTypeLib):
+    _iid_ = GUID("{0002040F-0000-0000-C000-000000000046}")
+
 class ICreateTypeInfo(IUnknown):
     _iid_ = GUID("{00020405-0000-0000-C000-000000000046}")
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 915
@@ -412,9 +417,9 @@ def RegisterTypeLib(tlib, fullpath, helpdir=None):
     return _oleaut32.RegisterTypeLib(tlib, c_wchar_p(fullpath), c_wchar_p(helpdir))
 
 def CreateTypeLib(filename, syskind=SYS_WIN32):
-    "Return a ICreateTypeLib pointer"
-    ctlib = POINTER(ICreateTypeLib)()
-    _oleaut32.CreateTypeLib(syskind, c_wchar_p(filename), byref(ctlib))
+    "Return a ICreateTypeLib2 pointer"
+    ctlib = POINTER(ICreateTypeLib2)()
+    _oleaut32.CreateTypeLib2(syskind, c_wchar_p(filename), byref(ctlib))
     return ctlib
 
 def QueryPathOfRegTypeLib(libid, wVerMajor, wVerMinor, lcid=0):
@@ -489,6 +494,14 @@ ICreateTypeLib._methods_ = [
     STDMETHOD(HRESULT, 'SetLibFlags', [UINT]),
     STDMETHOD(HRESULT, 'SaveAllChanges', []),
 ]
+
+ICreateTypeLib2._methods_ = [
+# C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 2444
+    STDMETHOD(HRESULT, 'DeleteTypeInfo', [POINTER(ITypeInfo)]),
+    STDMETHOD(HRESULT, 'SetCustData', [POINTER(GUID), POINTER(VARIANT)]),
+    STDMETHOD(HRESULT, 'SetHelpStringContext', [ULONG]),
+    STDMETHOD(HRESULT, 'SetHelpStringDll', [LPOLESTR]),
+    ]
 
 ITypeLib._methods_ = [
 # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 4455
