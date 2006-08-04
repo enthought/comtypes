@@ -21,3 +21,20 @@ url="http://starship.python.net/crew/theller/comtypes/"
 'Operating System :: Microsoft :: Windows CE'
 'Programming Language :: Python'
 'Topic :: Software Development :: Libraries :: Python Modules'
+
+
+Bugs
+====
+
+Windows:
+
+    test_comserver.py, TestLocalServer.test_get_typeinfo() fails with
+    an access violation.  No idea why.
+
+    There are memory leaks, run the tests with -umemleaks to see them.
+
+Windows CE:
+
+    6 tests still fail. One because the CoGetObject function is not
+    found (it seems not to exist), the others because
+    SafeArrayCreateVectorEx does not exist on CE.
