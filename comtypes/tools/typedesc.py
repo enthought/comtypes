@@ -1,8 +1,19 @@
 # More type descriptions from parsed COM typelibaries, extending those
-# in ctypes.wrap.typedesc
+# in typedesc_base
 
 import ctypes
 from comtypes.tools.typedesc_base import *
+
+class TypeLib(object):
+    def __init__(self, name, guid, major, minor, doc=None):
+        self.name = name
+        self.guid = guid
+        self.major = major
+        self.minor = minor
+        self.doc = doc
+
+    def __repr__(self):
+        return "<TypeLib(%s: %s, %s, %s)>" % (self.name, self.guid, self.major, self.minor)
 
 class Constant(object):
     def __init__(self, name, typ, value):

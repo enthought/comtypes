@@ -84,6 +84,25 @@ class Generator(codegenerator_base.Generator):
     ################################################################
     # top-level typedesc generators
     #
+    def TypeLib(self, lib):
+        # lib.name, lib.gui, lib.major, lib.minor, lib.doc
+
+        # Hm, in user code we have to write:
+        # class MyServer(COMObject, ...):
+        #     _com_interfaces_ = [MyTypeLib.IInterface]
+        #     _reg_typelib_ = MyTypeLib.Library._reg_typelib_
+        #                               ^^^^^^^
+        # Should the '_reg_typelib_' attribute be at top-level in the
+        # generated code, instead as being an attribute of the
+        # 'Library' symbol?
+        print >> self.stream, "class Library(object):"
+        if lib.doc:
+            print >> self.stream, "    %r" % lib.doc
+        if lib.name:
+            print >> self.stream, "    name = %r" % lib.name
+        print >> self.stream, "    _reg_typelib_ = (%r, %r, %r)" % (lib.guid, lib.major, lib.minor)
+        print >> self.stream
+
     def External(self, ext):
         # ext.docs - docstring of typelib
         # ext.symbol_name - symbol to generate

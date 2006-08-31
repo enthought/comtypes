@@ -1,74 +1,6 @@
 # Create ctypes wrapper code for abstract type descriptions.
 # Type descriptions are collections of typedesc instances.
 
-# $Log: codegenerator_base.py,v $
-# Revision 1.1.2.1  2006/03/03 16:27:42  theller
-# Move the code generator modules into the comtypes.tools package.
-# Should be refactored later - most important is now that it works again.
-#
-# Revision 1.6.2.6  2006/02/03 02:36:16  perky
-# Fix inconsistent use of tab/spaces (which is refused by compileall.py)
-#
-# Revision 1.6.2.5  2005/10/21 18:18:00  theller
-# The codegenerator now by default assumes 'char *' and 'wchar_t *'
-# types are pointers to zero-terminated strings.  It generates
-#
-#    STRING = c_char_p
-#    WSTRING = c_wchar_p
-#
-# and STRING / WSTRING is used instead of POINTER(c_char) and
-# POINTER(c_wchar).
-#
-# Revision 1.6.2.4  2005/08/24 08:16:35  theller
-# Merged in changes from the CVS HEAD:
-#
-# Sort the generated definitions according to location in the source
-# code in codegenerator.py.
-#
-# Created class Argument and changed the arguments list from a list oy
-# types to transport parameter names if supplied.
-#
-# Revision 1.6.2.3  2005/08/05 17:55:07  theller
-# If guessing the packing of structures in the code generator fails,
-# print a warning and also write it to the output instead of punting
-# completely.  The generated code may or may not work.
-#
-# Revision 1.6.2.2  2005/07/28 08:53:46  theller
-# Use separate streams for imports and code in the generated code. This
-# creates somewhat nicer code since the imports are at the top of the
-# file.
-#
-# Hack around a problem in the EXCEL typelib, where an enumeration value
-# has the same name as the enumeration C type.
-#
-# Revision 1.6.2.1  2005/06/02 12:33:35  theller
-# Fix some pychecker warnings.
-#
-# Revision 1.6  2005/03/16 07:51:19  theller
-# _COMMETHOD_defined was never set to True.
-#
-# Revision 1.5  2005/03/11 15:40:44  theller
-# Detect an 'Enum' com method, and create an __iter__ method in this class.
-#
-# Detect a COM enumerator by checking for the 4 Enum methods, in the
-# correct order, and make this class a Python iterator by generating
-# __iter__() and next() methods.  IMO it's better to do this in the
-# generated code than to mix in another class.
-#
-# Revision 1.4  2005/03/11 10:18:02  theller
-# Various fixes.  And autodetect whether to generate ctypes.com or
-# comtypes wrapper code for com interfaces.
-#
-# Revision 1.3  2005/02/17 19:22:54  theller
-# Refactoring for easier dynamic code generation.
-#
-# Revision 1.2  2005/02/04 18:04:24  theller
-# The code generator now assumes decorators are present in the ctypes module.
-#
-# Revision 1.1  2005/02/04 17:01:24  theller
-# Moved the code generation stuff from the sandbox to it's final location.
-#
-
 import typedesc, sys, types
 
 ASSUME_STRINGS = True
@@ -334,7 +266,7 @@ class Generator(object):
         # we cannot resolve it
         print >> self.stream, "# %s = %s # alias" % (alias.name, alias.alias)
         print "# unresolved alias: %s = %s" % (alias.name, alias.alias)
-
+            
 
     def Macro(self, macro):
         # We don't know if we can generate valid, error free Python
@@ -394,7 +326,7 @@ class Generator(object):
         self.generate(struct.get_body())
 
     Union = Structure
-
+        
     _typedefs = 0
     def Typedef(self, tp):
         self._typedefs += 1
@@ -423,7 +355,7 @@ class Generator(object):
         self._functiontypes += 1
         self.generate(tp.returns)
         self.generate_all(tp.iterArgTypes())
-
+        
     _pointertypes = 0
     def PointerType(self, tp):
         self._pointertypes += 1
@@ -482,6 +414,7 @@ class Generator(object):
             self.generate(item)
         if tp.name:
             print >> self.stream, "%s = c_int # enum" % tp.name
+            self.names.add(tp.name)
 
 
     def StructureBody(self, body):
@@ -734,11 +667,11 @@ class Generator(object):
             self.generate(item)
 
     def cmpitems(a, b):
-        a = getattr(a, "location", None)
-        b = getattr(b, "location", None)
-        if a is None: return -1
-        if b is None: return 1
-        return cmp(a[0],b[0]) or cmp(int(a[1]),int(b[1]))
+	a = getattr(a, "location", None)
+	b = getattr(b, "location", None)
+	if a is None: return -1
+	if b is None: return 1
+	return cmp(a[0],b[0]) or cmp(int(a[1]),int(b[1]))
     cmpitems = staticmethod(cmpitems)
 
     def generate_code(self, items):
@@ -757,6 +690,12 @@ class Generator(object):
         self.output.write("\n\n")
         self.output.write(self.stream.getvalue())
 
+        import textwrap
+        text = "__all__ = [%s]" % ", ".join([repr(str(n)) for n in self.names])
+
+        for line in textwrap.wrap(text,
+                                  subsequent_indent="           "):
+            print >> self.output, line
         return loops
 
     def print_stats(self, stream):
@@ -799,7 +738,7 @@ def generate_code(xmlfile,
 
     if types:
         items = [i for i in items if isinstance(i, types)]
-
+    
     if symbols:
         syms = set(symbols)
         for i in items:
@@ -833,3 +772,4 @@ def generate_code(xmlfile,
     if verbose:
         gen.print_stats(sys.stderr)
         print >> sys.stderr, "needed %d loop(s)" % loops
+

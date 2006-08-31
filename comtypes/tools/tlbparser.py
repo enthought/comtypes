@@ -547,9 +547,19 @@ class Parser(object):
             print "NYI", tkind
 ##            raise "NYI", tkind
 
+    def parse_LibraryDescription(self):
+        la = self.tlib.GetLibAttr()
+        name, doc = self.tlib.GetDocumentation(-1)[:2]
+        desc = typedesc.TypeLib(name,
+                                str(la.guid), la.wMajorVerNum, la.wMinorVerNum,
+                                doc)
+        self._register(None, desc)
+
     ################################################################
 
     def parse(self):
+        self.parse_LibraryDescription()
+
         for i in range(self.tlib.GetTypeInfoCount()):
             tinfo = self.tlib.GetTypeInfo(i)
             self.parse_typeinfo(tinfo)
