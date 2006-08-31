@@ -90,31 +90,25 @@ def SafeArray_FromArray(arr):
 
 def _get_row(ctype, psa, dim, indices, upperbounds):
     # loop over the index of dimension 'dim'
-    # we have to restore the index of the dimension we're looping over
-    restore = indices[dim]
 
+    if dim+1 == len(indices):
+        # The last dimension.
+        length = upperbounds[dim] - indices[dim] + 1
+        ptr = POINTER(ctype)()
+        oledll.oleaut32.SafeArrayAccessData(psa, byref(ptr))
+        result = ptr[:length]
+        oledll.oleaut32.SafeArrayUnaccessData(psa)
+        if ctype == VARIANT:
+            return tuple([v.value for v in result])
+        return tuple(result[:])
+
+    restore = indices[dim]
     result = []
     for i in range(indices[dim], upperbounds[dim]+1):
         indices[dim] = i
-        if dim+1 == len(indices):
-            oledll.oleaut32.SafeArrayGetElement(psa, indices, byref(ctype))
-            result.append(ctype.value)
-        else:
-            result.append(_get_row(ctype, psa, dim+1, indices, upperbounds))
+        result.append(_get_row(ctype, psa, dim+1, indices, upperbounds))
     indices[dim] = restore
     return tuple(result) # for compatibility with pywin32.
-
-def _get_ubound(psa, dim):
-    # Return the upper bound of a dimension in a safearray
-    ubound = c_long()
-    oledll.oleaut32.SafeArrayGetUBound(psa, dim+1, byref(ubound))
-    return ubound.value
-
-def _get_lbound(psa, dim):
-    # Return the lower bound of a dimension in a safearray
-    lb = c_long()
-    oledll.oleaut32.SafeArrayGetLBound(psa, dim+1, byref(lb))
-    return lb.value
 
 _VT2CTYPE = {
     VT_BSTR: BSTR,
@@ -137,13 +131,25 @@ def _get_datatype(psa):
     oledll.oleaut32.SafeArrayGetVartype(psa, byref(vt))
     return _VT2CTYPE[vt.value]
 
+def _get_ubound(psa, dim):
+    # Return the upper bound of a dimension in a safearray
+    ubound = c_long()
+    oledll.oleaut32.SafeArrayGetUBound(psa, dim+1, byref(ubound))
+    return ubound.value
+
+def _get_lbound(psa, dim):
+    # Return the lower bound of a dimension in a safearray
+    lb = c_long()
+    oledll.oleaut32.SafeArrayGetLBound(psa, dim+1, byref(lb))
+    return lb.value
+
 def UnpackSafeArray(psa):
     """Unpack a SAFEARRAY into a Python tuple."""
     dim = oledll.oleaut32.SafeArrayGetDim(psa)
     indexes = [_get_lbound(psa, d) for d in range(dim)]
-    indexes = (c_long * dim)(*indexes)
     upperbounds = [_get_ubound(psa, d) for d in range(dim)]
-    return _get_row(_get_datatype(psa)(), psa, 0, indexes, upperbounds)
+    ctype = _get_datatype(psa)
+    return _get_row(ctype, psa, 0, indexes, upperbounds)
 
 ################################################################
 
