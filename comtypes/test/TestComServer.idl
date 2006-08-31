@@ -7,6 +7,7 @@ b30428b4-cc67-48ba-81db-4c6a6b3db1a3
   REMEMBER TO COMPILE A NEW .TLB FILE WHEN THIS CHANGES,
   AND ALSO TO REMOVE THE comtypes\gen DIRECTORY TO DELETE
   THE TYPELIB WRAPPERS!
+  The TestServer.py should also be registered again.
 
 */
 
@@ -33,8 +34,11 @@ interface ITestComServer : IDispatch {
 	[propput, id(11), helpstring("the name of the server")]
 	HRESULT name([in] BSTR name);
 
-	[propget, id(12), helpstring("return complicated stuff")]
-	HRESULT array([out, retval] VARIANT *parray);
+	[id(12), helpstring("a method that receives an BSTR [in] parameter")]
+	HRESULT SetName([in] BSTR name);
+
+	[id(13), helpstring("evaluate an expression and return the result")]
+	HRESULT eval([in] BSTR what, [out, retval] VARIANT *presult);
 };
 
 [

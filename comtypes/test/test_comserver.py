@@ -75,7 +75,7 @@ class TestInproc(unittest.TestCase):
             mem = wss()
             leaks.append(mem - bytes)
             bytes = mem
-        self.failIf(any(leaks), "Leaks memory: %s" % leaks)
+        self.failIf(any(leaks), "Leaks %d bytes: %s" % (sum(leaks), leaks))
 
     def test_get_id(self):
         obj = self.create_object()
@@ -94,10 +94,17 @@ class TestInproc(unittest.TestCase):
                 obj.name = u"abcde"
             self._find_memleak(func)
 
-    def test_get_variant(self):
+        def test_SetName(self):
+            obj = self.create_object()
+            def func():
+                obj.SetName(u"abcde")
+            self._find_memleak(func)
+
+
+    def test_eval(self):
         obj = self.create_object()
         def func():
-            obj.array
+            obj.eval("(1, 2, 3)")
         self._find_memleak(func)
 
     def test_get_typeinfo(self):

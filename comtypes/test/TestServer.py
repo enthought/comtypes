@@ -76,6 +76,17 @@ class TestComServer(
 ##        parray[0].value = (), ()
 ##        parray[0].value = (), 0
 
+        # leakage
+##        parray[0].value = (((127900.0, None, 2620),
+##                            (127875.0, None, 2335),
+##                            (127675.0, 1071, None)),
+##                           127800.0)
+
+        # reported *no* leakage, but leaks anyway
+##        parray[0].value = ((128000.0, None, 2576),
+##                           (127975.0, None, 1923),
+##                           (127950.0, None, 1734))
+
         # these don't leak
 ##        parray[0].value = (1, 2, 3)
 ##        parray[0].value = (1, 2, None)
@@ -85,8 +96,12 @@ class TestComServer(
 ##        parray[0].value = [1, "2"]
 ##        parray[0].value = (None, None, None)
 
-        parray[0].value = (),
+##        parray[0].value = (),
 
+        return S_OK
+
+    def ITestComServer_eval(self, this, what, presult):
+        presult[0].value = eval(what)
         return S_OK
 
     def ITestComServer__get_id(self, this, pid):
@@ -100,6 +115,10 @@ class TestComServer(
         return S_OK
 
     def ITestComServer__set_name(self, this, name):
+        self._name = name
+        return S_OK
+
+    def ITestComServer_SetName(self, this, name):
         self._name = name
         return S_OK
 
