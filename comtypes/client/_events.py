@@ -107,9 +107,13 @@ class _DispEventReceiver(comtypes.COMObject):
     # as last parameter?
     def IDispatch_Invoke(self, this, memid, riid, lcid, wFlags, pDispParams,
                          pVarResult, pExcepInfo, puArgErr):
+        mth = self.dispmap.get(memid, None)
+        if mth is None:
+            return
         dp = pDispParams[0]
         # DISPPARAMS contains the arguments in reverse order
         args = [dp.rgvarg[i].value for i in range(dp.cArgs)]
+        ##print "Event", self, memid, mth, args
         result = self.dispmap[memid](None, *args[::-1])
         if pVarResult:
             pVarResult[0].value = result
