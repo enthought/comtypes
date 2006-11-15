@@ -69,11 +69,11 @@ def FindOutgoingInterface(source):
     # one connectionpoint, we could use that one.
     try:
         pci = source.QueryInterface(comtypes.typeinfo.IProvideClassInfo2)
+        guid = pci.GetGUID(1)
     except comtypes.COMError:
         pass
     else:
         # another try: block needed?
-        guid = pci.GetGUID(1)
         try:
             interface = comtypes.com_interface_registry[str(guid)]
         except KeyError:

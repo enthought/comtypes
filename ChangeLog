@@ -1,5 +1,9 @@
 2006-11-15  Thomas Heller  <theller@python.net>
 
+	* comtypes.client._events.GetEvents: Catch the exception when
+	IProvideClassInfo::GetGUID fails, and try the next strategy for
+	finding the outgoing interface.
+
 	* comtypes now has a __version__ attribute.  This is set to
 	"0.3.1".  Added test command to the setup script.
 
