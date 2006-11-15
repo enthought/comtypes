@@ -4,6 +4,8 @@ import new, types, sys, os
 from ctypes import *
 from _ctypes import COMError
 
+__version__ = "0.3.1"
+
 import logging
 logger = logging.getLogger(__name__)
 

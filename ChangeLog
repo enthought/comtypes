@@ -1,5 +1,8 @@
 2006-11-15  Thomas Heller  <theller@python.net>
 
+	* comtypes now has a __version__ attribute.  This is set to
+	"0.3.1".  Added test command to the setup script.
+
 	* New function comtypes.client.ShowEvents(source, interface=None).
 	This function is useful for debugging; it connects the source
 	object to a special event receiver that will first print out all
