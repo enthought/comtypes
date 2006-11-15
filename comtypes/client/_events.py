@@ -179,3 +179,22 @@ def GetEvents(source, sink, interface=None):
         rcv = GetCustomEventReceiver(interface, sink)
     return _AdviseConnection(source, interface, rcv)
 
+class EventDumper(object):
+    """Universal sink for COM events."""
+
+    def __getattr__(self, name):
+        "Create event handler methods on demand"
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(name)
+        print "# event found:", name
+        def handler(*args, **kw):
+            print "Event %s(%s)" % (name, ", ".join([repr(a) for a in args]))
+        return handler
+
+def ShowEvents(source, interface=None):
+    """Receive COM events from 'source'.  A special event sink will be
+    used that first prints the names of events that are found in the
+    outgoing interface, and will also print out the events when they
+    are fired.
+    """
+    return comtypes.client.GetEvents(source, sink=EventDumper(), interface=interface)

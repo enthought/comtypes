@@ -30,7 +30,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 __all__ = ["CreateObject", "GetActiveObject", "CoGetObject",
-           "GetEvents", "GetModule"]
+           "GetEvents", "ShowEvents", "GetModule"]
 
 __verbose__ = __debug__
 
@@ -311,7 +311,7 @@ def wrap(punk):
 # Should we do this for POINTER(IUnknown) also?
 ctypes.POINTER(comtypes.automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam
 
-from comtypes.client._events import GetEvents
+from comtypes.client._events import GetEvents, ShowEvents
 
 ################################################################
 #

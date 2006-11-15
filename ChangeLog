@@ -1,3 +1,10 @@
+2006-11-15  Thomas Heller  <theller@python.net>
+
+	* New function comtypes.client.ShowEvents(source, interface=None).
+	This function is useful for debugging; it connects the source
+	object to a special event receiver that will first print out all
+	the event names, and later print out the events as they occur.
+
 2006-08-04  Thomas Heller  <theller@python.net>
 
 	* Fixed quite some tests to work or be skipped on Windows CE.
