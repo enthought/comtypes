@@ -77,15 +77,15 @@ class TestInproc(unittest.TestCase):
             bytes = mem
         self.failIf(any(leaks), "Leaks %d bytes: %s" % (sum(leaks), leaks))
 
-    def test_get_id(self):
-        obj = self.create_object()
-        self._find_memleak(lambda: obj.id)
-
-    def test_get_name(self):
-        obj = self.create_object()
-        self._find_memleak(lambda: obj.name)
-
     if is_resource_enabled("memleaks"):
+        def test_get_id(self):
+            obj = self.create_object()
+            self._find_memleak(lambda: obj.id)
+
+        def test_get_name(self):
+            obj = self.create_object()
+            self._find_memleak(lambda: obj.name)
+
         # This leaks memory, but only with comtypes client code,
         # not win32com client code
         def test_set_name(self):
@@ -101,19 +101,19 @@ class TestInproc(unittest.TestCase):
             self._find_memleak(func)
 
 
-    def test_eval(self):
-        obj = self.create_object()
-        def func():
-            obj.eval("(1, 2, 3)")
-        self._find_memleak(func)
+        def test_eval(self):
+            obj = self.create_object()
+            def func():
+                obj.eval("(1, 2, 3)")
+            self._find_memleak(func)
 
-    def test_get_typeinfo(self):
-        obj = self.create_object()
-        def func():
-            obj.GetTypeInfo(0)
-            obj.GetTypeInfoCount()
-            obj.QueryInterface(comtypes.IUnknown)
-        self._find_memleak(func)
+        def test_get_typeinfo(self):
+            obj = self.create_object()
+            def func():
+                obj.GetTypeInfo(0)
+                obj.GetTypeInfoCount()
+                obj.QueryInterface(comtypes.IUnknown)
+            self._find_memleak(func)
 
 class TestLocalServer(TestInproc):
     def create_object(self):
