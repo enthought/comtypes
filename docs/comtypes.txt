@@ -1,0 +1,104 @@
+comtypes.client
+===============
+
+The ``comtypes.client`` package implements the high-level
+``comtypes`` functionality.  These functions are available:
+
+``CreateObject(progid, clsctx=None, machine=None, interface=None)``
+
+    Create a COM object and return an interface pointer to it.
+    ``progid`` specifies which object to create.  It can be a string
+    like ``"InternetExplorer.Application"``, a ``comtypes.GUID``
+    instance, a GUID string in the form
+    ``"{2F7860A2-1473-4D75-827D-6C4E27600CAC}"``, or any object with a
+    ``_clsid_`` attribute that must be a ``comtypes.GUID`` instance or
+    a GUID string.
+
+    ``clsctx`` specifies how to create the object, any combination of
+    the ``comtypes.CLSCTX_...`` constants can be used.  If nothing is
+    passed, ``comtypes.CLSCTX_SERVER`` is used.
+
+    ``machine`` allows to specify that the object should be created on
+    a different machine, it must be a string specifying the computer
+    name.  DCOM must be enabled for this to work.
+
+    ``interface`` specifies the interface class that should be
+    returned, if not specified ``comtypes`` will try to determine a
+    useful interface itself and return a pointer to that.
+
+``CoGetObject(displayname, interface=None)``
+
+    Return an interface pointer to an named COM object.  For the
+    meaning of ``displayname`` consult the Microsoft documentation
+    about the Windows ``CoGetObject`` function.
+
+    ``interface`` specifies the interface class that should be
+    returned, if not specified ``comtypes`` will try to determine a
+    useful interface itself and return a pointer to that.
+
+``GetActiveObject(progid, interface=None)``
+
+    Returns a pointer to a running object.  ``progid`` specifies the
+    active object from the OLE registration database.
+
+    ``interface`` specifies the interface class that should be used.
+
+All the three functions mentioned above will create the typelib
+wrapper automatically if the object provides type information.  If the
+type library is not exposed by the object itself, the wrapper can be
+created with the ``GetModule`` function.
+
+``GetModule(tlib)``
+
+    This function generates a Python wrapper for a COM typelibrary.
+
+    ``tlib`` can be a ITypeLib COM pointer from a loaded typelibrary,
+    a pathname of an exe or dll containing a type library, a tuple or
+    list containing the GUID of a typelibrary, a major and a minor
+    version number, plus optionally a LCID, or any object that has a
+    _reg_libid_ and _reg_version_ attributes specifying a type
+    library.
+
+    ``GetModule(tlib)`` generates a Python module (if not already
+    present) from the typelibrary, containing interface classes,
+    coclasses, constants, and structures and returns the module object
+    itself.  The modules are generated as parts of the
+    ``comtypes.gen`` package.  The module name is derived from the
+    typelibrary guid, version number and lcid.  The module name is a
+    valid Python module name, so it can be imported with an import
+    statement.  A second wrapper module is also created in the
+    comtypes.gen package with a shorter name that is derived from the
+    type library *name* itself, this does import everything from the
+    real wrapper module but can be imported easier because the module
+    name is easier to type.
+
+``GetEvents(source, sink, interface=None)``
+
+    This functions connects an event sink to the COM object
+    ``source``.
+
+    Events will call methods on the ``sink`` object; the methods must
+    be named ``interfacename_methodname`` or ``methodname``.  The
+    methods will be called with a ``this`` parameter, plus any
+    parameters that the event has.
+
+    ``interface`` is the outgoing interface of the ``source`` object;
+    it must be supplied when ``comtypes`` cannot determine the
+    outgoing interface of ``source``.
+
+    ``GetEvents`` returns the advise connection; you should keep the
+    connection alive as long as you want to receive events.  To break
+    the advise connection simply delete it.
+
+
+``ShowEvents(source, interface=None)``
+
+    This function connects a special event sink to the ``source``
+    object for debugging.  The event sink will first print out all
+    event names that are found in the outgoing interface, and will
+    later print out the events with arguments as they occur.
+
+XXX describe logging, gen_dir, wrap, _manage (?)
+
+XXX describe what com interface pointer is and what you can do with
+it.
