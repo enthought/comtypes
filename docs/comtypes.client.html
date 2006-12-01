@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
+<title>comtypes.client</title>
+<style type="text/css">
+
+/*
+:Author: David Goodger
+:Contact: goodger@users.sourceforge.net
+:Date: $Date$
+:Revision: $Revision$
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin-left: 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left {
+  clear: left }
+
+img.align-right {
+  clear: right }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font-family: serif ;
+  font-size: 100% }
+
+pre.literal-block, pre.doctest-block {
+  margin-left: 2em ;
+  margin-right: 2em ;
+  background-color: #eeeeee }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+tt.docutils {
+  background-color: #eeeeee }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="comtypes-client">
+<h1 class="title">comtypes.client</h1>
+
+<p>The <tt class="docutils literal"><span class="pre">comtypes.client</span></tt> package implements the high-level
+<tt class="docutils literal"><span class="pre">comtypes</span></tt> functionality.  These functions are available:</p>
+<p><tt class="docutils literal"><span class="pre">CreateObject(progid,</span> <span class="pre">clsctx=None,</span> <span class="pre">machine=None,</span> <span class="pre">interface=None)</span></tt></p>
+<blockquote>
+<p>Create a COM object and return an interface pointer to it.
+<tt class="docutils literal"><span class="pre">progid</span></tt> specifies which object to create.  It can be a string
+like <tt class="docutils literal"><span class="pre">&quot;InternetExplorer.Application&quot;</span></tt>, a <tt class="docutils literal"><span class="pre">comtypes.GUID</span></tt>
+instance, a GUID string in the form
+<tt class="docutils literal"><span class="pre">&quot;{2F7860A2-1473-4D75-827D-6C4E27600CAC}&quot;</span></tt>, or any object with a
+<tt class="docutils literal"><span class="pre">_clsid_</span></tt> attribute that must be a <tt class="docutils literal"><span class="pre">comtypes.GUID</span></tt> instance or
+a GUID string.</p>
+<p><tt class="docutils literal"><span class="pre">clsctx</span></tt> specifies how to create the object, any combination of
+the <tt class="docutils literal"><span class="pre">comtypes.CLSCTX_...</span></tt> constants can be used.  If nothing is
+passed, <tt class="docutils literal"><span class="pre">comtypes.CLSCTX_SERVER</span></tt> is used.</p>
+<p><tt class="docutils literal"><span class="pre">machine</span></tt> allows to specify that the object should be created on
+a different machine, it must be a string specifying the computer
+name.  DCOM must be enabled for this to work.</p>
+<p><tt class="docutils literal"><span class="pre">interface</span></tt> specifies the interface class that should be
+returned, if not specified <tt class="docutils literal"><span class="pre">comtypes</span></tt> will try to determine a
+useful interface itself and return a pointer to that.</p>
+</blockquote>
+<p><tt class="docutils literal"><span class="pre">CoGetObject(displayname,</span> <span class="pre">interface=None)</span></tt></p>
+<blockquote>
+<p>Return an interface pointer to an named COM object.  For the
+meaning of <tt class="docutils literal"><span class="pre">displayname</span></tt> consult the Microsoft documentation
+about the Windows <tt class="docutils literal"><span class="pre">CoGetObject</span></tt> function.</p>
+<p><tt class="docutils literal"><span class="pre">interface</span></tt> specifies the interface class that should be
+returned, if not specified <tt class="docutils literal"><span class="pre">comtypes</span></tt> will try to determine a
+useful interface itself and return a pointer to that.</p>
+</blockquote>
+<p><tt class="docutils literal"><span class="pre">GetActiveObject(progid,</span> <span class="pre">interface=None)</span></tt></p>
+<blockquote>
+<p>Returns a pointer to a running object.  <tt class="docutils literal"><span class="pre">progid</span></tt> specifies the
+active object from the OLE registration database.</p>
+<p><tt class="docutils literal"><span class="pre">interface</span></tt> specifies the interface class that should be used.</p>
+</blockquote>
+<p>All the three functions mentioned above will create the typelib
+wrapper automatically if the object provides type information.  If the
+type library is not exposed by the object itself, the wrapper can be
+created with the <tt class="docutils literal"><span class="pre">GetModule</span></tt> function.</p>
+<p><tt class="docutils literal"><span class="pre">GetModule(tlib)</span></tt></p>
+<blockquote>
+<p>This function generates a Python wrapper for a COM typelibrary.</p>
+<p><tt class="docutils literal"><span class="pre">tlib</span></tt> can be a ITypeLib COM pointer from a loaded typelibrary,
+a pathname of an exe or dll containing a type library, a tuple or
+list containing the GUID of a typelibrary, a major and a minor
+version number, plus optionally a LCID, or any object that has a
+_reg_libid_ and _reg_version_ attributes specifying a type
+library.</p>
+<p><tt class="docutils literal"><span class="pre">GetModule(tlib)</span></tt> generates a Python module (if not already
+present) from the typelibrary, containing interface classes,
+coclasses, constants, and structures and returns the module object
+itself.  The modules are generated as parts of the
+<tt class="docutils literal"><span class="pre">comtypes.gen</span></tt> package.  The module name is derived from the
+typelibrary guid, version number and lcid.  The module name is a
+valid Python module name, so it can be imported with an import
+statement.  A second wrapper module is also created in the
+comtypes.gen package with a shorter name that is derived from the
+type library <em>name</em> itself, this does import everything from the
+real wrapper module but can be imported easier because the module
+name is easier to type.</p>
+</blockquote>
+<p><tt class="docutils literal"><span class="pre">GetEvents(source,</span> <span class="pre">sink,</span> <span class="pre">interface=None)</span></tt></p>
+<blockquote>
+<p>This functions connects an event sink to the COM object
+<tt class="docutils literal"><span class="pre">source</span></tt>.</p>
+<p>Events will call methods on the <tt class="docutils literal"><span class="pre">sink</span></tt> object; the methods must
+be named <tt class="docutils literal"><span class="pre">interfacename_methodname</span></tt> or <tt class="docutils literal"><span class="pre">methodname</span></tt>.  The
+methods will be called with a <tt class="docutils literal"><span class="pre">this</span></tt> parameter, plus any
+parameters that the event has.</p>
+<p><tt class="docutils literal"><span class="pre">interface</span></tt> is the outgoing interface of the <tt class="docutils literal"><span class="pre">source</span></tt> object;
+it must be supplied when <tt class="docutils literal"><span class="pre">comtypes</span></tt> cannot determine the
+outgoing interface of <tt class="docutils literal"><span class="pre">source</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">GetEvents</span></tt> returns the advise connection; you should keep the
+connection alive as long as you want to receive events.  To break
+the advise connection simply delete it.</p>
+</blockquote>
+<p><tt class="docutils literal"><span class="pre">ShowEvents(source,</span> <span class="pre">interface=None)</span></tt></p>
+<blockquote>
+This function connects a special event sink to the <tt class="docutils literal"><span class="pre">source</span></tt>
+object for debugging.  The event sink will first print out all
+event names that are found in the outgoing interface, and will
+later print out the events with arguments as they occur.</blockquote>
+<p>XXX describe logging, gen_dir, wrap, _manage (?)</p>
+<p>XXX describe what com interface pointer is and what you can do with
+it.</p>
+</div>
+</body>
+</html>
