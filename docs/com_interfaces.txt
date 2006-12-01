@@ -1,0 +1,193 @@
+=======================
+comtypes COM interfaces
+=======================
+
+.. contents::
+
+To use or implement a COM interface in ``comtypes`` a Python class
+must be created.  Normally is is not needed to write this class
+manually, ``comtypes.client.GetModule`` creates interfaces defined in
+type libraries automatically.  However, an understanding of the
+generated code is certainly useful.
+
+A COM interface in ``comtypes`` is defined by creating a class.  The
+class must derive from ``comtypes.IUnknown`` or a subclass of ``IUnknown``.
+
+COM interfaces in ``comtypes`` are abstract classes, they should never
+be instantiated.
+
+Defining COM interfaces
+-----------------------
+
+A COM interface class must define the following class attributes:
+
+ ``_iid_``
+
+   a ``comtypes.GUID`` instance containing the *interface identifier* of the interface
+
+ ``_idlflags_``
+
+   (optional) a sequence containing IDL flags for the interface
+
+ ``_case_insensitive_``
+
+   (optional) If this is ``True``, this interface supports case
+   insensitive attribute access.
+
+ ``_methods_``
+
+   a sequence describing the methods of this interface.  COM methods
+   of the superclass must not be listed, they are inherited
+   automatically.
+
+The ``_methods_`` list
+......................
+
+Methods are described in a way that somewhat looks like an IDL
+definition of a COM interface.  Methods must be listed in VTable
+order.
+
+There are two functions that create a method definition: ``STDMETHOD``
+is the simple way, and ``COMMETHOD`` allows to specify more
+information.
+
+``comtypes.STDMETHOD(restype, methodname, argtypes=())``
+
+  Calling ``STDMETHOD`` allows to specify the type of the COM method
+  return value.  Usually this is a ``comtypes.HRESULT``, but other
+  return types are also possible.
+
+  ``methodname`` is the name of the COM method.
+
+  ``argtypes`` are the types of arguments that the COM method expects.
+
+
+``comtypes.COMMETHOD(idlflags, restype, methodname, *argspec)``
+
+  ``idlflags`` is a list of IDL flags for the method.  Possible values
+  include ``dispid(aNumber)`` and ``helpstring(HelpText)``, as well as
+  ``"propget"`` for a property getter method, or ``"proput"`` for a
+  property setter method.
+
+  ``restype`` and ``methodname`` are the same as above.
+
+  ``argspec`` is a sequence of tuples, each item describing one
+  argument for the COM method, and must contain several items:
+
+    1. a sequence of IDL flags: ``"in"``, ``"out"``, ``"retval"``, ``"lcid"``.
+
+    2. type of the argument.
+
+    3. argument name.
+
+..    4. XXX Are there more???
+
+Since the ``IUnknown`` metaclass automatically creates Python methods
+and properties that forward the call to the COM methods, there is
+typically no need to write any Python methods for the interface class
+(unless you want to override what the metaclass does).
+
+Sample COM interfaces
+---------------------
+
+These are two simple COM interfaces. ``IProvideClassInfo`` only
+contains one method ``GetClassInfo`` (in addition to the three methods
+inherited from ``IUnknown``).  ``IProvideClassInfo2`` inherits from
+``IProvideClassInfo`` and adds a ``GetGUID`` method.
+
+IDL definition, slightly simplified (from ``OCIDL.IDL``):
+
+::
+
+    [
+        object,
+        uuid(B196B283-BAB4-101A-B69C-00AA00341D07),
+        pointer_default(unique)
+    ]
+    interface IProvideClassInfo : IUnknown
+    {
+        HRESULT GetClassInfo(
+                    [out] ITypeInfo ** ppTI
+                );
+    }
+
+::
+
+    [
+        object,
+        uuid(A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851),
+        pointer_default(unique)
+    ]
+    interface IProvideClassInfo2 : IProvideClassInfo
+    {
+        HRESULT GetGUID(
+                    [in]  DWORD dwGuidKind,
+                    [out] GUID * pGUID
+                );
+    }
+
+``comtypes`` definition:
+
+::
+
+    from ctypes import *
+    from comtypes import IUnknown, GUID, COMMETHOD
+    from comtypes.typeinfo import ITypeInfo
+
+    class IProvideClassInfo(IUnknown):
+        _iid_ = GUID("{B196B283-BAB4-101A-B69C-00AA00341D07}")
+        _methods_ = [
+            # Returns the ITypeInfo interface for the object's coclass type information.
+            COMMETHOD([], HRESULT, "GetClassInfo",
+                      ( ['out'],  POINTER(POINTER(ITypeInfo)), "ppTI" ) )
+            ]
+
+::
+
+    class IProvideClassInfo2(IProvideClassInfo):
+        _iid_ = GUID("{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}")
+        _methods_ = [
+            # Returns the GUID for the object's outgoing IID for its default event set.
+            COMMETHOD([], HRESULT, "GetGUID",
+                      ( ['in'], DWORD, "dwGuidKind" ),
+                      ( ['out', 'retval'], POINTER(GUID), "pGUID" ))
+            ]
+
+using COM interfaces
+--------------------
+
+As said above, comtypes interface classes are never instantiated, also
+they are never used directly.  Instead, one uses instances of
+``POINTER(ISomeInterface)`` to call the methods on a COM object.
+
+The ``IUnknown`` COM interface has ``AddRef()``, ``Release()``, and
+``QueryInterface()`` methods that you can call.  Since the COM internal
+reference count is handled automatically by comtypes, there is no need
+to call the first two methods.
+
+``QueryInterface()``, however, is the call that you need to ask a COM
+object for other COM interfaces.  Since IUnknown is the base class of
+**all** COM interfaces, it is available in every COM interface.
+
+So, assuming you have a ``POINTER(IUnknown)`` instance, you can ask
+for another interface by calling ``QueryInterface`` with the interface
+you want to use.  For example:
+
+   # punk is a pointer to an IUnknown interface
+   pci = punk.QueryInterface(IProvideClassInfo)
+
+This call will either succeed and return a
+``POINTER(IProvideClassInfo)`` instance, or it will raise a
+``comtypes.COMError`` if the interface is not supported.  Assuming the
+call succeeded, you can get the type information of the object by
+calling:
+
+   # pci from above
+   ti = pci.GetClassInfo()
+
+Note that the ``GetClassInfo`` Python method has been created
+automatically by the ``IUnknown`` metaclass.  Unless the call fails,
+it will return a ``POINTER(ITypeInfo)`` instance.
+
+implementing COM interfaces
+---------------------------
