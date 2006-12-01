@@ -43,7 +43,7 @@ A COM interface class must define the following class attributes:
 The ``_methods_`` list
 ......................
 
-Methods are described in a way that somewhat looks like an IDL
+Methods are described in a way that looks somewhat similar to an IDL
 definition of a COM interface.  Methods must be listed in VTable
 order.
 
@@ -55,11 +55,9 @@ information.
 
   Calling ``STDMETHOD`` allows to specify the type of the COM method
   return value.  Usually this is a ``comtypes.HRESULT``, but other
-  return types are also possible.
-
-  ``methodname`` is the name of the COM method.
-
-  ``argtypes`` are the types of arguments that the COM method expects.
+  return types are also possible.  ``methodname`` is the name of the
+  COM method.  ``argtypes`` are the types of arguments that the COM
+  method expects.
 
 
 ``comtypes.COMMETHOD(idlflags, restype, methodname, *argspec)``
@@ -87,15 +85,16 @@ and properties that forward the call to the COM methods, there is
 typically no need to write any Python methods for the interface class
 (unless you want to override what the metaclass does).
 
-Sample COM interfaces
----------------------
+An Example
+----------
 
 These are two simple COM interfaces. ``IProvideClassInfo`` only
 contains one method ``GetClassInfo`` (in addition to the three methods
 inherited from ``IUnknown``).  ``IProvideClassInfo2`` inherits from
 ``IProvideClassInfo`` and adds a ``GetGUID`` method.
 
-IDL definition, slightly simplified (from ``OCIDL.IDL``):
+This is the IDL definition, slightly simplified (from Microsofts
+``OCIDL.IDL``):
 
 ::
 
@@ -111,8 +110,6 @@ IDL definition, slightly simplified (from ``OCIDL.IDL``):
                 );
     }
 
-::
-
     [
         object,
         uuid(A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851),
@@ -126,7 +123,7 @@ IDL definition, slightly simplified (from ``OCIDL.IDL``):
                 );
     }
 
-``comtypes`` definition:
+``comtypes`` interface classes:
 
 ::
 
@@ -137,23 +134,19 @@ IDL definition, slightly simplified (from ``OCIDL.IDL``):
     class IProvideClassInfo(IUnknown):
         _iid_ = GUID("{B196B283-BAB4-101A-B69C-00AA00341D07}")
         _methods_ = [
-            # Returns the ITypeInfo interface for the object's coclass type information.
             COMMETHOD([], HRESULT, "GetClassInfo",
                       ( ['out'],  POINTER(POINTER(ITypeInfo)), "ppTI" ) )
             ]
 
-::
-
     class IProvideClassInfo2(IProvideClassInfo):
         _iid_ = GUID("{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}")
         _methods_ = [
-            # Returns the GUID for the object's outgoing IID for its default event set.
             COMMETHOD([], HRESULT, "GetGUID",
                       ( ['in'], DWORD, "dwGuidKind" ),
                       ( ['out', 'retval'], POINTER(GUID), "pGUID" ))
             ]
 
-using COM interfaces
+Using COM interfaces
 --------------------
 
 As said above, comtypes interface classes are never instantiated, also
@@ -185,9 +178,95 @@ calling:
    # pci from above
    ti = pci.GetClassInfo()
 
-Note that the ``GetClassInfo`` Python method has been created
-automatically by the ``IUnknown`` metaclass.  Unless the call fails,
-it will return a ``POINTER(ITypeInfo)`` instance.
+Unless the call fails, it will return a ``POINTER(ITypeInfo)``
+instance.
 
-implementing COM interfaces
+Implementing COM interfaces
 ---------------------------
+
+While the ``IUnknown`` metaclass creates Python methods that you can
+call in client code directly, you have to write code yourself if you
+want to **implement** a COM interface.  One important thing to keep in
+mind is that each COM method implementation with ``comtypes`` receives
+an additional special parameter per convention named ``this``, just
+after the ``self`` standard parameter.
+
+If you want to implement the ``IProvideClassInfo`` interface described
+above in a Python class you have to write an implementation of the
+``GetClassInfo`` method::
+
+    from comtypes import COMObject
+    from comtypes.persist import IProvideClassInfo
+
+    class MyCOMObject(COMObject):
+        _com_interfaces_ = [
+             ....
+             IProvideClassInfo]
+
+Skipping some very important details that are out of context here, the
+interfaces that your COM object implements must be listed in the
+``_com_interfaces_`` class variable.  Then, of course, you should
+implement the methods of all the interfaces by writing a Python method
+for each of them.
+
+**Note**: The ``COMObject`` metaclass provides a default for methods
+that are **not** implemented in Python.  This default method returns
+the standard COM error code ``E_NOTIMPL`` when it is called.
+
+To implement the COM method named ``MethodName`` for the interface
+``ISomeInterface`` you write a Python method either named ``ISomeInterface_MethodName``
+or simply ``MethodName``.
+
+This method must accept the following arguments:
+
+  1. the standard Python ``self`` parameter.
+
+  2. a special ``this`` parameter, that you can usually ignore.
+
+  3. All the parameters that are listed in the interface description.
+
+The latter parameters will be instances of types specified in the
+``_methods_`` description.
+
+So, to implement the GetClassInfo method of the IProvideClassInfo
+interface, one could write this code::
+
+    from comtypes import COMObject
+    from comtypes.persist import IProvideClassInfo
+
+    class MyCOMObject(COMObject):
+        _com_interfaces_ = [
+             ....
+             IProvideClassInfo]
+
+        def IProvideClassInfo_GetClassInfo(self, this, ppTI):
+	    # this method could also be named 'GetClassInfo'.
+	    .....
+
+The ``ppTI`` parameter in this case is an instance of
+``POINTER(POINTER(ITypeInfo))`` which you have to fill out.  So, to
+write a method that actually returns a useful type info pointer for
+the object, you have to fill the contents of the ``ppTI`` pointer like
+this::
+
+        def IProvideClassInfo_GetClassInfo(self, this, ppTI):
+	    from comtypes.hresult import E_POINTER, S_OK
+	    # First, check for NULL pointer and return error
+	    if not ppTI:
+		return E_POINTER
+	    ti = create_type_info(...) # get the type info somehow
+	    # poke it into the 'out' parameter
+	    ppTI[0] = ti
+	    # and return success
+	    return S_OK
+	    
+``E_POINTER`` ìs an error code that you should return when you
+received an unexpected NULL pointer, ``S_OK`` is the usual success
+code for COM methods returning a ``HRESULT``.  For details about the
+semantics that you have to implement for a COM interface method
+consult the MSDN documentation.
+
+More about the metaclasses
+--------------------------
+
+XXX to be written.
