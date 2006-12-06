@@ -100,8 +100,9 @@ def shutdown(func=_ole32.CoUninitialize,
     else:
         try: func()
         except WindowsError: pass
-    global _com_inited
-    _com_inited = False
+    # Set the flag which means that calling obj.Release() is no longer
+    # needed.
+    _cominterface_meta._com_shutting_down = True
     _debug("CoUnititialize() done.")
 
 import atexit
@@ -124,7 +125,11 @@ class _cominterface_meta(type):
     """Metaclass for COM interfaces.  Automatically creates high level
     methods from COMMETHOD lists.
     """
-    # Metaclass for COM interface classes.
+
+    # This flag is set to True by the atexit handler which calls
+    # CoUnititialize.
+    _com_shutting_down = False
+
     # Creates also a POINTER type for the newly created class.
     def __new__(self, name, bases, namespace):
         methods = namespace.pop("_methods_", None)
@@ -488,42 +493,21 @@ class _compointer_meta(type(c_void_p), _cominterface_meta):
     "metaclass for COM interface pointer classes"
     # no functionality, but needed to avoid a metaclass conflict
 
-def _is_com_initialized(
-    _init=windll.ole32.CoInitializeEx,
-    _uninit=windll.ole32.CoUninitialize):
-    # Try to determine if COM is still initialized or not.
-    #
-    # This function could even be extended to return the current
-    # threading model.
-    result = _init(None, COINIT_APARTMENTTHREADED)
-    if result == 0:
-        # S_OK means COM was successfully initialized for the current thread.
-        # We uninitialize it again, and return False.
-        _uninit()
-        return False
-    elif result == 1:
-        # S_FALSE means COM is already initialized
-        _uninit()
-        return True
-    elif result == -2147417850:
-        # RPC_E_CHANGED_MODE means a previous call specified a different threading model
-        return True
-    # what about other error codes?
-    return True
-
 class _compointer_base(c_void_p):
     "base class for COM interface pointer classes"
     __metaclass__ = _compointer_meta
-    def __del__(self):
+    def __del__(self, _debug=logger.debug):
         "Release the COM refcount we own."
-        if self and _is_com_initialized and _is_com_initialized():
-            # comtypes now calls CoUnititialize() when the atexit
-            # handlers run.  OTOH, the __main__ namespace (and maybe
-            # others) may still have instances of com pointers around.
-            # CoUnititialize() has finalized them when it returns, so
-            # these com pointers are stale.  In this case, Release()
-            # is no longer called on these stale COM pointers.
-            self.Release()
+        if self:
+            # comtypes calls CoUnititialize() when the atexit handlers
+            # runs.  CoUninitialize() cleans up the COM objects that
+            # are still alive. Python COM pointers may still be
+            # present but we can no longer call Release() on them -
+            # this may give a protection fault.  So we need the
+            # _com_shutting_down flag.
+            if not self.__metaclass__._com_shutting_down:
+                _debug("Release %s", self)
+                self.Release()
 
     def __cmp__(self, other):
         # COM identity rule
