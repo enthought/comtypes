@@ -50,3 +50,25 @@ DISP_E_MEMBERNOTFOUND = -2147352573
 DISP_E_UNKNOWNINTERFACE = -2147352575
 
 RPC_E_CHANGED_MODE = -2147417850 # 0x80010106
+
+# 'macros' and constants to create your own HRESULT values:
+
+def MAKE_HRESULT(sev, fac, code):
+    # A hresult is SIGNED in comtypes
+    from ctypes import c_long
+    return c_long((sev << 31 | fac << 16 | code)).value
+
+SEVERITY_ERROR = 1
+SEVERITY_SUCCESS = 0
+
+FACILITY_ITF = 4
+FACILITY_WIN32 = 7
+
+def HRESULT_FROM_WIN32(x):
+    # make signed
+    from ctypes import c_long
+    x = c_long(x).value
+    if x < 0:
+        return x
+    # 0x80000000 | FACILITY_WIN32 << 16 | x & 0xFFFF
+    return c_long(0x80070000 | (x & 0xFFFF)).value
