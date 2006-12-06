@@ -11,8 +11,15 @@ if os.name == "nt":
     class Test(ut.TestCase):
         # No LoadTypeLibEx on windows ce
         def test_LoadTypeLibEx(self):
+            # IE 6 uses shdocvw.dll, IE 7 uses ieframe.dll
+            if os.path.exists(os.path.join(os.environ["SystemRoot"],
+                                           "system32", "ieframe.dll")):
+                dllname = "ieframe.dll"
+            else:
+                dllname = "shdocvw.dll"
+
             self.assertRaises(WindowsError, lambda: LoadTypeLibEx("<xxx.xx>"))
-            tlib = LoadTypeLibEx("shdocvw.dll")
+            tlib = LoadTypeLibEx(dllname)
             self.failUnless(tlib.GetTypeInfoCount())
             tlib.GetDocumentation(-1)
             self.failUnlessEqual(tlib.IsName("iwebbrowser"), "IWebBrowser")
@@ -47,7 +54,7 @@ if os.name == "nt":
 
             path = QueryPathOfRegTypeLib(*info)
             path = path.split("\0")[0]
-            self.failUnless(path.lower().endswith("shdocvw.dll"))
+            self.failUnless(path.lower().endswith(dllname))
 
         def test_TypeInfo(self):
             tlib = LoadTypeLibEx("shdocvw.dll")
