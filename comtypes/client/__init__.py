@@ -227,6 +227,8 @@ def _CreateWrapper(tlib, fullname=None):
 
 def wrap_outparam(punk):
     logger.info("wrap_outparam(%s)", punk)
+    if not punk:
+        return None
     if punk.__com_interface__ == comtypes.automation.IDispatch:
         return wrap(punk)
     return punk
