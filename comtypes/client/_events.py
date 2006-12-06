@@ -134,12 +134,18 @@ class _DispEventReceiver(comtypes.COMObject):
 
 def GetDispEventReceiver(interface, sink):
     methods = {} # maps memid to function
-    for memid, name in _get_dispmap(interface).iteritems():
-        # find methods to call, if not found ignore event
-        mth = getattr(sink, "%s_%s" % (interface.__name__, name), None)
-        if mth is None:
-            mth = getattr(sink, name, lambda *args: 0)
-        methods[memid] = mth
+    interfaces = interface.mro()[:-3] # skip IDispatch, IUnknown, object
+    interface_names = [itf.__name__ for itf in interfaces]
+    for itf in interfaces:
+        for memid, name in _get_dispmap(itf).iteritems():
+            # find methods to call, if not found ignore event
+            for itf_name in interface_names:
+                mth = getattr(sink, "%s_%s" % (itf_name, name), None)
+                if mth is not None:
+                    break
+            else:
+                mth = getattr(sink, name, lambda *args: 0)
+            methods[memid] = mth
 
     # XX Move this stuff into _DispEventReceiver.__init__() ?
     rcv = _DispEventReceiver()
