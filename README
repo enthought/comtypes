@@ -8,7 +8,7 @@ comtypes allows to define, call, and implement custom COM interfaces
 in pure Python.
 
 author="Thomas Heller"
-author_email="theller@python.net"
+author_email="theller@ctypes.org"
 license="MIT License"
 url="http://starship.python.net/crew/theller/comtypes/"
 

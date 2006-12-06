@@ -1,3 +1,17 @@
+2006-12-06  Thomas Heller  <theller@python.net>
+
+	* comtypes.hresult: Add MAKE_HRESULT and HRESULT_FROM_WIN32
+	functions which return HRESULT values.
+
+	* Receive events from the event interface plus all the super
+	interfaces.
+
+	* When a NULL IDispatch pointer is received as an [out] parameter,
+	return None instead of the NULL pointer.
+
+	* Changed the way COM is shut down.  No longer a need to call the
+	possibly expensive (or dangerous?) _is_com_initialized.
+
 2006-11-15  Thomas Heller  <theller@python.net>
 
 	* comtypes.client._events.GetEvents: Catch the exception when
