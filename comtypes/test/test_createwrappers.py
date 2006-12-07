@@ -1,8 +1,11 @@
-import unittest
 import glob
+import os
+import unittest
 import comtypes.typeinfo
 import comtypes.client
 comtypes.client.__verbose__ = False
+
+sysdir = os.path.join(os.environ["SystemRoot"], "system32")
 
 # This test takes quite some time.  It tries to build wrappers for ALL
 # .dll, .tlb, and .ocx files in the system directory which contain typelibs.
@@ -32,13 +35,13 @@ def add_test(fname):
     setattr(Test, "test_%d" % number, test)
     number += 1
 
-for fname in glob.glob(r"c:\windows\system32\*.ocx"):
+for fname in glob.glob(os.path.join(sysdir, "*.ocx")):
     add_test(fname)
 
-for fname in glob.glob(r"c:\windows\system32\*.tlb"):
+for fname in glob.glob(os.path.join(sysdir, "*.tlb")):
     add_test(fname)
 
-for fname in glob.glob(r"c:\windows\system32\*.dll"):
+for fname in glob.glob(os.path.join(sysdir, "*.dll")):
     add_test(fname)
 
 if __name__ == "__main__":
