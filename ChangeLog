@@ -1,3 +1,14 @@
+2006-12-13  Thomas Heller  <theller@python.net>
+
+	* Fix the case insensitivity for COM interfaces (client-side only,
+	so far): If the Python interface class has a "_case_insensitive_"
+	attribute which is True, access of methods and properties is case
+	insensitive.
+
+	By default, this attribute is set to True in interfaces generated
+	from type libraries, because type libraries generally don't
+	preserve the casing of identifiers from IDL interface definitions.
+
 2006-12-06  Thomas Heller  <theller@python.net>
 
 	* Fix comtypes.test.test_typeinfo to work when either IE6 or IE7
