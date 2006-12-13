@@ -135,7 +135,6 @@ class _cominterface_meta(type):
         methods = namespace.pop("_methods_", None)
         dispmethods = namespace.pop("_disp_methods_", None)
         cls = type.__new__(self, name, bases, namespace)
-        cls.__map_case__ = {}
 
         if methods is not None:
             cls._methods_ = methods
@@ -194,14 +193,10 @@ class _cominterface_meta(type):
             else:
                 return getattr(self, name)
 
-        # XXX __setattr__ is pretty heavy-weight, because it is called for
+        # __setattr__ is pretty heavy-weight, because it is called for
         # EVERY attribute assignment.  Settings a non-com attribute
         # through this function takes 8.6 usec, while without this
-        # function it takes 0.7 sec - 12 times slower.  Maybe there should
-        # be a way to enable this method only for code that needs it
-        # (i.e., generated from a typelib)?
-        #
-        # Maybe triggered by a special attribute __case_insensitive__ ?
+        # function it takes 0.7 sec - 12 times slower.
         #
         # How much faster would this be if implemented in C?
         def __setattr__(self, name, value):
@@ -213,9 +208,7 @@ class _cominterface_meta(type):
                      "__com_interface__": cls,
                      "_needs_com_addref_": None}
 
-        CASE_INSENSITIVE = getattr(cls, "_case_insensitive_", False)
-
-        if CASE_INSENSITIVE:
+        if cls._case_insensitive_:
             namespace["__setattr__"] = __setattr__
             namespace["__getattr__"] = __getattr__
 
@@ -255,15 +248,25 @@ class _cominterface_meta(type):
             self._make_dispmethods(value)
         type.__setattr__(self, name, value)
 
+    def _make_case_insensitive(self):
+        # The __map_case__ dictionary maps lower case names to the
+        # names in the original spelling to enable case insensitive
+        # method and attribute access.
+        try:
+            self.__dict__["__map_case__"]
+        except KeyError:
+            d = {}
+            d.update(getattr(self, "__map_case__", {}))
+            self.__map_case__ = d
+
     def _make_dispmethods(self, methods):
+        if self._case_insensitive_:
+            self._make_case_insensitive()
+
         # create dispinterface methods and properties on the interface 'self'
         properties = {}
         for m in methods:
             what, name, idlflags, restype, argspec = m
-
-## XXX Must be tested
-##            # COM is case insensitive
-##            self.__map_case__[name.lower()] = name
 
             # argspec is a sequence of tuples, each tuple is:
             # ([paramflags], type, name)
@@ -343,6 +346,9 @@ class _cominterface_meta(type):
             raise
 
     def _make_methods(self, methods):
+        if self._case_insensitive_:
+            self._make_case_insensitive()
+
         # we insist on an _iid_ in THIS class!
         try:
             iid = self.__dict__["_iid_"]
@@ -428,8 +434,10 @@ class _cominterface_meta(type):
                     setattr(self, "_" + name, mth)
                 else:
                     setattr(self, name, mth)
+
                 # COM is case insensitive
-                self.__map_case__[name.lower()] = name
+                if self._case_insensitive_:
+                    self.__map_case__[name.lower()] = name
 
 
         # create public properties / attribute accessors
@@ -447,8 +455,10 @@ class _cominterface_meta(type):
                 setattr(self, "_" + name, prop)
             else:
                 setattr(self, name, prop)
+
             # COM is case insensitive
-            self.__map_case__[name.lower()] = name
+            if self._case_insensitive_:
+                self.__map_case__[name.lower()] = name
 
 
 ################################################################
@@ -684,6 +694,7 @@ class IUnknown(object):
     The _methods_ list must in VTable order.  Methods are specified
     with STDMETHOD or COMMETHOD calls.
     """
+    _case_insensitive_ = False
     __metaclass__ = _cominterface_meta
     _iid_ = GUID("{00000000-0000-0000-C000-000000000046}")
 
