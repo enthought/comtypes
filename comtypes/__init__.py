@@ -163,6 +163,10 @@ class _cominterface_meta(type):
         # It also allows to pass a CoClass instance to an api
         # expecting a COM interface.
         def from_param(klass, value):
+            """Convert 'value' into a COM pointer to the interface.
+
+            This method accepts a COM pointer, or a CoClass instance
+            which is QueryInterface()d."""
             if value is None:
                 return None
             if isinstance(value, klass):
@@ -186,6 +190,7 @@ class _cominterface_meta(type):
 
         # case insensitive attributes for COM methods and properties
         def __getattr__(self, name):
+            """Implement case insensitive access to methods and properties"""
             try:
                 name = self.__map_case__[name.lower()]
             except KeyError:
@@ -200,6 +205,7 @@ class _cominterface_meta(type):
         #
         # How much faster would this be if implemented in C?
         def __setattr__(self, name, value):
+            """Implement case insensitive access to methods and properties"""
             object.__setattr__(self,
                                self.__map_case__.get(name.lower(), name),
                                value)
@@ -520,6 +526,7 @@ class _compointer_base(c_void_p):
                 self.Release()
 
     def __cmp__(self, other):
+        """Compare pointers to COM interfaces."""
         # COM identity rule
         #
         # XXX To compare COM interface pointers, should we
@@ -532,6 +539,7 @@ class _compointer_base(c_void_p):
         return cmp(super(_compointer_base, self).value, super(_compointer_base, other).value)
 
     def __hash__(self):
+        """Return the hash value of the pointer."""
         # hash the pointer values
         return hash(super(_compointer_base, self).value)
 
@@ -542,7 +550,7 @@ class _compointer_base(c_void_p):
     # XXX check if really needed
     def __get_value(self):
         return self
-    value = property(__get_value)
+    value = property(__get_value, doc="""Return self.""")
 
     def __repr__(self):
         return "<%s object %x>" % (self.__class__.__name__, id(self))
@@ -706,7 +714,7 @@ class IUnknown(object):
     ]
 
     def QueryInterface(self, interface, iid=None):
-        "QueryInterface(klass) -> instance"
+        "QueryInterface(interface) -> instance"
         p = POINTER(interface)()
         if iid is None:
             iid = interface._iid_
@@ -719,17 +727,17 @@ class IUnknown(object):
     # these are only so that they get a docstring.
     # XXX There should be other ways to install a docstring.
     def AddRef(self):
-        "Increase the internal refcount by one"
+        "Increase the internal refcount by one and return it."
         return self.__com_AddRef()
 
     def Release(self):
-        "Decrease the internal refcount by one"
+        "Decrease the internal refcount by one and return it."
         return self.__com_Release()
 
     # should these methods be in a mixin class, which the metaclass
     # adds when it detects the Count, Item, and _NewEnum methods?
     def __len__(self):
-        """Return self.Count, or raises TypeError if this property is not present."""
+        """Return the value of 'self.Count', or raise TypeError if no such property."""
         try:
             return self.Count
         except AttributeError:
@@ -737,6 +745,7 @@ class IUnknown(object):
 
     # calling a COM pointer calls its .Item property, if that is present.
     def __call__(self, *args, **kw):
+        """Return the value of 'self.Item(*args, **kw)', or raise TypeError if no such method."""
         try:
             mth = self.Item
         except AttributeError:
@@ -746,7 +755,7 @@ class IUnknown(object):
     # does this make sense? It seems that all standard typelibs I've
     # seen so far that support .Item also support ._NewEnum
     def __getitem__(self, index):
-        """Forwards to self.Item(index), raises TypeError if no Item method."""
+        """Return the result of 'self.Item(index)', or raise TypeError if no such method."""
         # Should we insist that the Item method has a dispid of DISPID_VALUE ( 0 )?
         try:
             mth = self.Item
@@ -785,7 +794,7 @@ class IUnknown(object):
     # python iterator when called.  Thanks to Bengt Richter for the
     # idea.
     def __iter__(self):
-        """Forwards to self._NewEnum, or raises AttributeError."""
+        """Return to self._NewEnum, or raise AttributeError if no such property."""
         try:
             enum = self._NewEnum
         except AttributeError:
