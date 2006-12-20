@@ -39,10 +39,35 @@ def catch_errors(obj, mth, interface):
     return func
 
 def _do_implement(interface_name, method_name):
-    def mth(*args):
+    def _not_implemented(*args):
+        """Return E_NOTIMPL because the method is not implemented."""
         _debug("unimplemented method %s_%s called", interface_name, method_name)
         return E_NOTIMPL
-    return mth
+    return _not_implemented
+
+class _MethodFinder(object):
+    def __init__(self, inst):
+        self.inst = inst
+        # map lower case names to names with correct spelling.
+        self.names = dict([(n.lower(), n) for n in dir(inst)])
+
+    def get_impl(self, interface, mthname):
+        fq_name = "%s_%s" % (interface.__name__, mthname)
+        if interface._case_insensitive_:
+            mthname = self.names.get(mthname.lower(), mthname)
+            fq_name = self.names.get(fq_name.lower(), fq_name)
+        try:
+            # try the simple name, like 'QueryInterface'
+            return getattr(self.inst, mthname)
+        except AttributeError:
+            pass
+        try:
+            # qualified name, like 'IUnknown_QueryInterface'
+            return getattr(self.inst, fq_name)
+        except AttributeError:
+            # use method that returns E_NOTIMPL when called.
+            _debug("%r: %s.%s not implemented", self.inst, interface.__name__, mthname)
+            return _do_implement(interface.__name__, mthname)
 
 def make_interface_pointer(inst, itf,
                            _debug=_debug):
@@ -51,23 +76,14 @@ def make_interface_pointer(inst, itf,
     iids = [] # interface identifiers.
     # iterate over interface inheritance in reverse order to build the
     # virtual function table, and leave out the 'object' base class.
+    finder = _MethodFinder(inst)
     for interface in itf.__mro__[-2::-1]:
         iids.append(interface._iid_)
         for m in interface._methods_:
             restype, mthname, argtypes, paramflags, idlflags, helptext = m
             proto = WINFUNCTYPE(restype, c_void_p, *argtypes)
             fields.append((mthname, proto))
-            # try the simple name, like 'QueryInterface'
-            mth = getattr(inst, mthname, None)
-            if mth is None:
-                # qualified name, like 'IUnknown_QueryInterface'
-                mth = getattr(inst, "%s_%s" % (interface.__name__, mthname), None)
-            if mth is None:
-                mth = _do_implement(interface.__name__, mthname)
-                # XXX Should we try harder for case-insensitive lookup of methods?
-                _debug("%r: %s.%s not implemented", inst, interface.__name__, mthname)
-            else:
-                mth = catch_errors(inst, mth, interface)
+            mth = finder.get_impl(interface, mthname)
             methods.append(proto(mth))
     Vtbl = _create_vtbl_type(tuple(fields), itf)
     vtbl = Vtbl(*methods)

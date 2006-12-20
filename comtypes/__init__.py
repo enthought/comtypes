@@ -4,8 +4,6 @@ import new, types, sys, os
 from ctypes import *
 from _ctypes import COMError
 
-__version__ = "0.3.1"
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -441,10 +439,12 @@ class _cominterface_meta(type):
                 else:
                     setattr(self, name, mth)
 
-                # COM is case insensitive
-                if self._case_insensitive_:
-                    self.__map_case__[name.lower()] = name
-
+            # COM is case insensitive.
+            #
+            # For a method, this is the real name.  For a property,
+            # this is the name WITHOUT the _set_ or _get_ prefix.
+            if self._case_insensitive_:
+                self.__map_case__[name.lower()] = name
 
         # create public properties / attribute accessors
         for (name, doc, nargs), methods in properties.items():
@@ -564,15 +564,26 @@ class BSTR(_SimpleCData):
     _type_ = "X"
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.value)
-    def __del__(self, _free=windll.oleaut32.SysFreeString):
-        """If we own the memory, call SysFreeString to free it."""
-        if not self._b_needsfree_:
-            _free(self)
 
     def __ctypes_from_outparam__(self, _free=windll.oleaut32.SysFreeString):
         result = self.value
         _free(self)
         return result
+
+    def __del__(self, _free=windll.oleaut32.SysFreeString):
+        """If we own the memory, call SysFreeString to free it."""
+        if not self._b_base_:
+            _free(self)
+
+    def from_param(cls, value):
+        """Convert into a foreign function call parameter."""
+        if isinstance(value, cls):
+            return value
+        # Although the builtin SimpleCData.from_param call does the
+        # right thing, it doesn't ensure that SysFreeString is called
+        # on destruction.
+        return cls(value)
+    from_param = classmethod(from_param)
 
 ################################################################
 # IDL stuff
