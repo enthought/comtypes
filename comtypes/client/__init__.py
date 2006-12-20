@@ -17,7 +17,7 @@
 
 # comtypes.client
 
-import sys, os, new, imp
+import sys, os, new
 import ctypes
 
 import comtypes
@@ -26,13 +26,14 @@ import comtypes.automation
 import comtypes.typeinfo
 import comtypes.client.dynamic
 
+from comtypes.client._events import GetEvents, ShowEvents
+from comtypes.client._generate import GetModule
+
 import logging
 logger = logging.getLogger(__name__)
 
 __all__ = ["CreateObject", "GetActiveObject", "CoGetObject",
            "GetEvents", "ShowEvents", "GetModule"]
-
-__verbose__ = __debug__
 
 ################################################################
 # Determine the directory where generated modules live.
@@ -64,166 +65,6 @@ import comtypes.gen
 ##gen_dir = None
     
 ################################################################
-
-def _my_import(fullname):
-    # helper function to import dotted modules
-    return __import__(fullname, globals(), locals(), ['DUMMY'])
-
-def _my_findmodule(fullname):
-    # Use imp.find_module to find out whether a module exists or not.
-    # Raise ImportError if it doesn't exist.
-    #
-    # Hm, couldn'w we directly look for the .py or .pyc/.pyo files?
-    name, rest = fullname.split(".", 1)
-    file_, pathname, desc = imp.find_module(name)
-    if file_:
-        file_.close()
-    for name in rest.split("."):
-        file_, pathname, desc = imp.find_module(name, [pathname])
-        if file_:
-            file_.close()
-
-def _name_module(tlib):
-    # Determine the name of a typelib wrapper module.
-    libattr = tlib.GetLibAttr()
-    modname = "_%s_%s_%s_%s" % \
-              (str(libattr.guid)[1:-1].replace("-", "_"),
-               libattr.lcid,
-               libattr.wMajorVerNum,
-               libattr.wMinorVerNum)
-    return "comtypes.gen." + modname
-
-def GetModule(tlib):
-    """Create a module wrapping a COM typelibrary on demand.
-
-    'tlib' must be an ITypeLib COM pointer instance, the pathname of a
-    type library, or a tuple/list specifying the arguments to a
-    comtypes.typeinfo.LoadRegTypeLib call:
-
-      (libid, wMajorVerNum, wMinorVerNum, lcid=0)
-
-    Or it can be an object with _reg_libid_ and _reg_version_
-    attributes.
-    
-    This function determines the module name from the typelib
-    attributes, then tries to import it.  If that fails because the
-    module doesn't exist, the module is generated in the comtypes.gen
-    package.
-
-    It is possible to delete the whole comtypes\gen directory to
-    remove all generated modules, the directory and the __init__.py
-    file in it will be recreated when needed.
-
-    If comtypes.gen __path__ is not a directory (in a frozen
-    executable it lives in a zip archive), generated modules are only
-    created in memory without writing them to the file system.
-
-    Example:
-
-        GetModule("shdocvw.dll")
-
-    would create modules named
-    
-       comtypes.gen._EAB22AC0_30C1_11CF_A7EB_0000C05BAE0B_0_1_1
-       comtypes.gen.SHDocVw
-
-    containing the Python wrapper code for the type library used by
-    Internet Explorer.  The former module contains all the code, the
-    latter is a short stub loading the former.
-    """
-    if isinstance(tlib, basestring):
-        # we accept filenames as well
-        logger.info("GetModule(%s)", tlib)
-        tlib = comtypes.typeinfo.LoadTypeLibEx(tlib)
-    elif isinstance(tlib, (tuple, list)):
-        logger.info("GetModule(%s)", (tlib,))
-        tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(tlib[0]), *tlib[1:])
-    elif hasattr(tlib, "_reg_libid_"):
-        logger.info("GetModule(%s)", tlib)
-        tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(tlib._reg_libid_),
-                                                *tlib._reg_version_)
-    else:
-        logger.info("GetModule(%s)", tlib.GetLibAttr())
-
-    # determine the Python module name
-    fullname = _name_module(tlib)
-    # create and import the module
-    mod = _CreateWrapper(tlib, fullname)
-    try:
-        modulename = tlib.GetDocumentation(-1)[0]
-    except comtypes.COMError:
-        return mod
-    if modulename is None:
-        return mod
-    modulename = modulename.encode("mbcs")
-
-    # create and import the friendly-named module
-    try:
-        return _my_import("comtypes.gen." + modulename)
-    except:
-        # this way, the module is always regenerated if importing it
-        # fails.  It would probably be better to check for the
-        # existance of the module first with imp.find_module (but
-        # beware of dotted names), and only regenerate if if not
-        # found.  Other errors while importing should probably make
-        # this function fail.
-        if __verbose__:
-            print "# Generating comtypes.gen.%s" % modulename
-        modname = fullname.split(".")[-1]
-        code = "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
-        code += "__name__ = 'comtypes.gen.%s'" % modulename
-        if gen_dir is None:
-            mod = new.module("comtypes.gen." + modulename)
-            exec code in mod.__dict__
-            sys.modules["comtypes.gen." + modulename] = mod
-            setattr(comtypes.gen, modulename, mod)
-            return mod
-        # create in file system, and import it
-        ofi = open(os.path.join(gen_dir, modulename + ".py"), "w")
-        ofi.write(code)
-        ofi.close()
-        return _my_import("comtypes.gen." + modulename)
-        
-def _CreateWrapper(tlib, fullname=None):
-    # helper which creates and imports the real typelib wrapper module.
-    if fullname is None:
-        fullname = _name_module(tlib)
-    try:
-        return _my_import(fullname)
-    except Exception:
-        # we could not import the module.  What was the reason?
-        try:
-            _my_findmodule(fullname)
-        except ImportError:
-            # module does not exist, generate it
-            pass
-        else:
-            # any other error: fail
-            raise
-        # We generate the module since it doesn't exist
-        from comtypes.tools.tlbparser import generate_module
-        modname = fullname.split(".")[-1]
-        if gen_dir is None:
-            import cStringIO
-            ofi = cStringIO.StringIO()
-        else:
-            ofi = open(os.path.join(gen_dir, modname + ".py"), "w")
-        # use warnings.warn, maybe?
-        if __verbose__:
-            print "# Generating comtypes.gen.%s" % modname
-        generate_module(tlib, ofi, GetModule, _name_module)
-
-        if gen_dir is None:
-            code = ofi.getvalue()
-            mod = new.module(fullname)
-            exec code in mod.__dict__
-            sys.modules[fullname] = mod
-            setattr(comtypes.gen, modname, mod)
-        else:
-            ofi.close()
-            mod = _my_import(fullname)
-            reload(mod)
-        return mod
 
 def wrap_outparam(punk):
     logger.info("wrap_outparam(%s)", punk)
@@ -313,8 +154,6 @@ def wrap(punk):
 # Should we do this for POINTER(IUnknown) also?
 ctypes.POINTER(comtypes.automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam
 
-from comtypes.client._events import GetEvents, ShowEvents
-
 ################################################################
 #
 # Object creation
@@ -373,9 +212,3 @@ def CoGetObject(displayname, interface=None):
                    clsid=None,
                    interface=interface)
 
-################################################################
-
-if __name__ == "__main__":
-    # When started as script, generate typelib wrapper from .tlb file.
-    from comtypes.client import GetModule
-    GetModule(sys.argv[1])

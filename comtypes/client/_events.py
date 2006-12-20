@@ -79,8 +79,8 @@ def FindOutgoingInterface(source):
         except KeyError:
             tinfo = pci.GetClassInfo()
             tlib, index = tinfo.GetContainingTypeLib()
-            from comtypes.client import _CreateWrapper
-            _CreateWrapper(tlib)
+            from comtypes.client import GetModule
+            GetModule(tlib)
             interface = comtypes.com_interface_registry[str(guid)]
         logger.debug("%s using sinkinterface %s", source, interface)
         return interface
