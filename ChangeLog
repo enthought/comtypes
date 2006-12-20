@@ -1,3 +1,14 @@
+2006-12-20  Thomas Heller  <theller@python.net>
+
+	* comtypes.client.GetModule now recreates the Python module
+	automatically if the type library file timestamp is newer than the
+	module.  The actual code for GetModule now lives in a separate
+	module comtypes.client._generate, but the GetModule symbol is
+	still exposed from comtypes.client.
+
+	* COM method implementations are now found doing case insensitive
+	lookup if the interfaces "_case_insensitivity_" attribute is True.
+
 2006-12-13  Thomas Heller  <theller@python.net>
 
 	* Fix the case insensitivity for COM interfaces (client-side only,
