@@ -1,5 +1,5 @@
 # -*- coding: latin-1 -*-
-import unittest as ut
+import unittest
 
 import ctypes.test
 ctypes.test.requires("ui")
@@ -8,7 +8,7 @@ import datetime
 
 from comtypes.client import CreateObject
 
-class Test(ut.TestCase):
+class Test(unittest.TestCase):
     def setUp(self):
         self.xl = CreateObject("Excel.Application")
 
