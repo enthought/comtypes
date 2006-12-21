@@ -109,7 +109,7 @@ class _DispEventReceiver(comtypes.COMObject):
                          pVarResult, pExcepInfo, puArgErr):
         mth = self.dispmap.get(memid, None)
         if mth is None:
-            return
+            return S_OK
         dp = pDispParams[0]
         # DISPPARAMS contains the arguments in reverse order
         args = [dp.rgvarg[i].value for i in range(dp.cArgs)]
