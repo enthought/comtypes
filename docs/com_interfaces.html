@@ -60,29 +60,43 @@ tt.docutils {
 <div class="contents topic">
 <p class="topic-title first"><a id="contents" name="contents">Contents</a></p>
 <ul class="simple">
-<li><a class="reference" href="#defining-com-interfaces" id="id1" name="id1">Defining COM interfaces</a><ul>
-<li><a class="reference" href="#the-methods-list" id="id2" name="id2">The <tt class="docutils literal"><span class="pre">_methods_</span></tt> list</a></li>
+<li><a class="reference" href="#overview" id="id1" name="id1">Overview</a></li>
+<li><a class="reference" href="#defining-com-interfaces" id="id2" name="id2">Defining COM interfaces</a><ul>
+<li><a class="reference" href="#the-methods-list" id="id3" name="id3">The <tt class="docutils literal"><span class="pre">_methods_</span></tt> list</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#an-example" id="id3" name="id3">An Example</a></li>
-<li><a class="reference" href="#using-com-interfaces" id="id4" name="id4">Using COM interfaces</a></li>
-<li><a class="reference" href="#implementing-com-interfaces" id="id5" name="id5">Implementing COM interfaces</a></li>
-<li><a class="reference" href="#case-sensitivity" id="id6" name="id6">Case sensitivity</a></li>
-<li><a class="reference" href="#more-about-the-metaclasses" id="id7" name="id7">More about the metaclasses</a></li>
+<li><a class="reference" href="#an-example" id="id4" name="id4">An Example</a></li>
+<li><a class="reference" href="#using-com-interfaces" id="id5" name="id5">Using COM interfaces</a></li>
+<li><a class="reference" href="#implementing-com-interfaces" id="id6" name="id6">Implementing COM interfaces</a></li>
+<li><a class="reference" href="#case-sensitivity" id="id7" name="id7">Case sensitivity</a></li>
+<li><a class="reference" href="#more-about-the-metaclass" id="id8" name="id8">More about the metaclass</a></li>
 </ul>
 </div>
+<div class="section">
+<h2><a class="toc-backref" href="#id1" id="overview" name="overview">Overview</a></h2>
 <p>To use or implement a COM interface in <tt class="docutils literal"><span class="pre">comtypes</span></tt> a Python class
 must be created.  Normally is is not needed to write this class
-manually, <tt class="docutils literal"><span class="pre">comtypes.client.GetModule</span></tt> creates interfaces defined in
-type libraries automatically.  However, an understanding of the
-generated code is certainly useful.</p>
-<p>A COM interface in <tt class="docutils literal"><span class="pre">comtypes</span></tt> is defined by creating a class.  The
-class must derive from <tt class="docutils literal"><span class="pre">comtypes.IUnknown</span></tt> or a subclass of <tt class="docutils literal"><span class="pre">IUnknown</span></tt>.</p>
-<p>COM interfaces in <tt class="docutils literal"><span class="pre">comtypes</span></tt> are abstract classes, they should never
-be instantiated.</p>
+manually, <tt class="docutils literal"><span class="pre">comtypes.client.GetModule</span></tt> creates interfaces from type
+libraries automatically.  However, an understanding of the generated
+code is certainly useful.</p>
+<p>If no type library but only an IDL file is available it is often the
+fastest way to make the interfaces available to Python by compiling
+the IDL file into a temporary type library, and generate a Python
+module for it; the type library can be deleted after that because it
+is not needed any more.</p>
+<p>It is possible to take the generated module, move it as a template
+into another location and customize the classes with hand written
+methods (this is how much of the interfaces in the comtypes package
+have been created).</p>
+<p>The COM interfaces in <tt class="docutils literal"><span class="pre">comtypes</span></tt> are abstract classes, they should
+never be instantiated.</p>
+</div>
 <div class="section">
-<h2><a class="toc-backref" href="#id1" id="defining-com-interfaces" name="defining-com-interfaces">Defining COM interfaces</a></h2>
-<p>A COM interface class must define the following class attributes:</p>
+<h2><a class="toc-backref" href="#id2" id="defining-com-interfaces" name="defining-com-interfaces">Defining COM interfaces</a></h2>
+<p>A COM interface in <tt class="docutils literal"><span class="pre">comtypes</span></tt> is defined by creating a class.  The
+class must derive from <tt class="docutils literal"><span class="pre">comtypes.IUnknown</span></tt> or a subclass of
+<tt class="docutils literal"><span class="pre">IUnknown</span></tt>.  The interface class must define the following class
+attributes:</p>
 <blockquote>
 <p><tt class="docutils literal"><span class="pre">_iid_</span></tt></p>
 <blockquote>
@@ -96,12 +110,23 @@ a <tt class="docutils literal"><span class="pre">comtypes.GUID</span></tt> insta
 insensitive attribute access.</blockquote>
 <p><tt class="docutils literal"><span class="pre">_methods_</span></tt></p>
 <blockquote>
-a sequence describing the methods of this interface.  COM methods
+<p>a sequence describing the methods of this interface.  COM methods
 of the superclass must not be listed, they are inherited
-automatically.</blockquote>
+automatically.</p>
+<p>If one or more of the COM methods reference the interface class
+itself, it is possible to assign the <tt class="docutils literal"><span class="pre">_methods_</span></tt> attribute
+<em>after</em> the class statement like this:</p>
+<pre class="literal-block">
+class ISomeInterface(IUnknown):
+    _iid_ = GUID(...)
+ISomeInterface._methods_ = [.., POINTER(ISomeInterface), .]
+</pre>
 </blockquote>
+</blockquote>
+<p><strong>Note:</strong> All the other attributes <tt class="docutils literal"><span class="pre">_iid_</span></tt>, <tt class="docutils literal"><span class="pre">_idlflags_</span></tt>,
+<tt class="docutils literal"><span class="pre">_case_insensitive_</span></tt> must be defined when <tt class="docutils literal"><span class="pre">_methods_</span></tt> is set.</p>
 <div class="section">
-<h3><a class="toc-backref" href="#id2" id="the-methods-list" name="the-methods-list">The <tt class="docutils literal"><span class="pre">_methods_</span></tt> list</a></h3>
+<h3><a class="toc-backref" href="#id3" id="the-methods-list" name="the-methods-list">The <tt class="docutils literal"><span class="pre">_methods_</span></tt> list</a></h3>
 <p>Methods are described in a way that looks somewhat similar to an IDL
 definition of a COM interface.  Methods must be listed in VTable
 order.</p>
@@ -140,7 +165,7 @@ typically no need to write any Python methods for the interface class
 </div>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id3" id="an-example" name="an-example">An Example</a></h2>
+<h2><a class="toc-backref" href="#id4" id="an-example" name="an-example">An Example</a></h2>
 <p>These are two simple COM interfaces. <tt class="docutils literal"><span class="pre">IProvideClassInfo</span></tt> only
 contains one method <tt class="docutils literal"><span class="pre">GetClassInfo</span></tt> (in addition to the three methods
 inherited from <tt class="docutils literal"><span class="pre">IUnknown</span></tt>).  <tt class="docutils literal"><span class="pre">IProvideClassInfo2</span></tt> inherits from
@@ -196,7 +221,7 @@ class IProvideClassInfo2(IProvideClassInfo):
 </pre>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id4" id="using-com-interfaces" name="using-com-interfaces">Using COM interfaces</a></h2>
+<h2><a class="toc-backref" href="#id5" id="using-com-interfaces" name="using-com-interfaces">Using COM interfaces</a></h2>
 <p>As said above, comtypes interface classes are never instantiated, also
 they are never used directly.  Instead, one uses instances of
 <tt class="docutils literal"><span class="pre">POINTER(ISomeInterface)</span></tt> to call the methods on a COM object.</p>
@@ -226,7 +251,7 @@ ti = pci.GetClassInfo()
 instance.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id5" id="implementing-com-interfaces" name="implementing-com-interfaces">Implementing COM interfaces</a></h2>
+<h2><a class="toc-backref" href="#id6" id="implementing-com-interfaces" name="implementing-com-interfaces">Implementing COM interfaces</a></h2>
 <p>While the <tt class="docutils literal"><span class="pre">IUnknown</span></tt> metaclass creates Python methods that you can
 call in client code directly, you have to write code yourself if you
 want to <strong>implement</strong> a COM interface.  One important thing to keep in
@@ -305,7 +330,7 @@ semantics that you have to implement for a COM interface method
 consult the MSDN documentation.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id6" id="case-sensitivity" name="case-sensitivity">Case sensitivity</a></h2>
+<h2><a class="toc-backref" href="#id7" id="case-sensitivity" name="case-sensitivity">Case sensitivity</a></h2>
 <p>In principle, COM is a case insensitive technology (probably because
 of Visual Basic).  Type libraries generated from IDL files, however,
 do <em>not</em> always even preserve the case of identifiers; see for example
@@ -317,25 +342,87 @@ also case sensitive.  This means that you have to call
 <p>To work around the problems that you get when the case of identifiers
 in the type library (and in the generated Python module for this
 library) is not the same as in the IDL file, <tt class="docutils literal"><span class="pre">comtypes</span></tt> allows to
-have case insensitive attribute access for methods and attributes of
+have case insensitive attribute access for methods and properties of
 COM interfaces.  This behaviour is enabled by setting the
 <tt class="docutils literal"><span class="pre">_case_insensitive_</span></tt> attribute of a Python COM interface to
 <tt class="docutils literal"><span class="pre">True</span></tt>.  In case of derived COM interfaces, case sensitivity is
-enabled ot disabled separately for each interface.</p>
+enabled or disabled separately for each interface.</p>
 <p>The code generated by the <tt class="docutils literal"><span class="pre">GetModule</span></tt> function sets this attribute
 to <tt class="docutils literal"><span class="pre">True</span></tt>.  Case insensitive access has a small performance penalty,
 if you want to avoid this, you should edit the generated code and set
 <tt class="docutils literal"><span class="pre">_case_insensitive_</span></tt> to False.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id7" id="more-about-the-metaclasses" name="more-about-the-metaclasses">More about the metaclasses</a></h2>
-<p>XXX to be written.</p>
+<h2><a class="toc-backref" href="#id8" id="more-about-the-metaclass" name="more-about-the-metaclass">More about the metaclass</a></h2>
+<p>The Python class <tt class="docutils literal"><span class="pre">IUnknown</span></tt>, which is the base interface of <em>all</em>
+COM interfaces, uses a metaclass that automatically creates Python
+methods and properties for the COM methods described in the
+<tt class="docutils literal"><span class="pre">_methods_</span></tt> list.</p>
+<p>For a COM method described by a <tt class="docutils literal"><span class="pre">STDMETHOD</span></tt> only the types of the
+arguments and the return type of the method is known.  In this case
+only trivial code is generated that checks the type of the arguments
+and returns whatever the COM method returns.</p>
+<p>For a COM method described by <tt class="docutils literal"><span class="pre">COMMETHOD</span></tt>, much more information is
+available: the argument names, the direction of data transfer for each
+argument [&quot;in&quot;], [&quot;out&quot;], or [&quot;in&quot;, &quot;out&quot;], and whether this method is
+a getter or setter of a property.  In this case, code is generated
+that instantiates containers for &quot;out&quot; parameters inside the method
+call, passes and &quot;in&quot; and &quot;out&quot; parameters to the actual COM method of
+the object, retrives &quot;out&quot; parameters from their container(s) and
+returns them as the result.  If the method has exactly one &quot;out&quot;
+parameter, this is returned. If the method has two or more &quot;out&quot;
+parameters, a tuple of their values is returned.  <strong>Note</strong>: the native
+return value of the method, usually a <tt class="docutils literal"><span class="pre">HRESULT</span></tt>, is <em>not</em> returned
+in the presence of &quot;out&quot; parameters.</p>
+<p>For the <tt class="docutils literal"><span class="pre">IProvideClassInfo</span></tt> and <tt class="docutils literal"><span class="pre">IProvideClassInfo</span></tt> COM interfaces
+mentioned above, the metaclass creates methods with these signatures
+automatically (<tt class="docutils literal"><span class="pre">__call_com_method()</span></tt> is the <tt class="docutils literal"><span class="pre">ctypes</span></tt> code that
+calls the actual method slot of the COM object):</p>
+<pre class="literal-block">
+class IProvideClassInfo(IUnknown): ...
+
+    # code for this method generated by the IUnknown metaclass at
+    # runtime
+    #def GetClassInfo(self):
+    #    param = POINTER(ITypeInfo)()
+    #    __call_com_method(byref(param))
+    #    return param[0]
+
+class IProvideClassInfo2(IProvideClassInfo):
+    ...
+
+    # code for this method generated by the IUnknown metaclass at
+    # runtime
+    #def GetGUID(self, dwGuidKind):
+    #    param = GUID()
+    #    __call_com_method(dwGuidKind, byref(param))
+    #    return param
+</pre>
+<p>According to MSDN, the <tt class="docutils literal"><span class="pre">IProvideClassInfo2::GetGUID</span></tt> method
+<em>&quot;returns a GUID corresponding to the specified dwGuidKind&quot;</em>.
+However, currently only a single valid value for <em>dwGuidKind</em> is
+defined: <tt class="docutils literal"><span class="pre">GUIDKIND_DEFAULT_SOURCE_DISP_IID</span> <span class="pre">==</span> <span class="pre">1</span></tt> which specifies the guid
+for the default outgoing interface.</p>
+<p>So, it would probably make sense to implement the GetGUID method with
+a default value of 1 for the <em>dwGuidKind</em> parameter.  This can be done
+by manually implementing a <tt class="docutils literal"><span class="pre">GetGUID</span></tt> method for the
+<tt class="docutils literal"><span class="pre">IProvideClassInfo2</span></tt> interface class:</p>
+<pre class="literal-block">
+class IProvideClassInfo2(IProvideClassInfo):
+    ...
+    def GetGUID(self, dwGuidKind=1):
+        return self._GetGUID(dwGuidKind)
+</pre>
+<p>When the metaclass finds that the <tt class="docutils literal"><span class="pre">GetGUID</span></tt> method <strong>already has</strong>
+an implementation, it will not overwrite it.  Instead, it creates an
+interface method with the name <tt class="docutils literal"><span class="pre">_GetGUID</span></tt> that you can use to get
+the raw functionality.</p>
 </div>
 </div>
 <div class="footer">
 <hr class="footer" />
 <a class="reference" href="com_interfaces.txt">View document source</a>.
-Generated on: 2006-12-20 19:31 UTC.
+Generated on: 2006-12-21 20:04 UTC.
 
 </div>
 </body>
