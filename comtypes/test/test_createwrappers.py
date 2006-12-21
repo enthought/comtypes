@@ -3,7 +3,9 @@ import os
 import unittest
 import comtypes.typeinfo
 import comtypes.client
-comtypes.client.__verbose__ = False
+import comtypes.client._generate
+# don't print messages when typelib wrappers are generated
+comtypes.client._generate.__verbose__ = False
 
 sysdir = os.path.join(os.environ["SystemRoot"], "system32")
 
