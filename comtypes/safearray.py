@@ -88,25 +88,21 @@ def SafeArray_FromArray(arr):
 
 ################################################################
 
-def _get_row(ctype, psa, dim, indices, upperbounds):
+def _get_row(ctype, psa, dim, indices, lowerbounds, upperbounds):
     # loop over the index of dimension 'dim'
-
-    if dim+1 == len(indices):
-        # The last dimension.
-        length = upperbounds[dim] - indices[dim] + 1
-        ptr = POINTER(ctype)()
-        oledll.oleaut32.SafeArrayAccessData(psa, byref(ptr))
-        result = ptr[:length]
-        oledll.oleaut32.SafeArrayUnaccessData(psa)
-        if ctype == VARIANT:
-            return tuple([v.value for v in result])
-        return tuple(result[:])
-
+    # we have to restore the index of the dimension we're looping over
     restore = indices[dim]
+
     result = []
-    for i in range(indices[dim], upperbounds[dim]+1):
-        indices[dim] = i
-        result.append(_get_row(ctype, psa, dim+1, indices, upperbounds))
+    if dim+1 == len(indices):
+        for i in range(indices[dim], upperbounds[dim]+1):
+            indices[dim] = i
+            oledll.oleaut32.SafeArrayGetElement(psa, indices, byref(ctype))
+            result.append(ctype.value)
+    else:
+        for i in range(indices[dim], upperbounds[dim]+1):
+            indices[dim] = i
+            result.append(_get_row(ctype, psa, dim+1, indices, lowerbounds, upperbounds))
     indices[dim] = restore
     return tuple(result) # for compatibility with pywin32.
 
@@ -146,10 +142,10 @@ def _get_lbound(psa, dim):
 def UnpackSafeArray(psa):
     """Unpack a SAFEARRAY into a Python tuple."""
     dim = oledll.oleaut32.SafeArrayGetDim(psa)
-    indexes = [_get_lbound(psa, d) for d in range(dim)]
+    lowerbounds = [_get_lbound(psa, d) for d in range(dim)]
+    indexes = (c_long * dim)(*lowerbounds)
     upperbounds = [_get_ubound(psa, d) for d in range(dim)]
-    ctype = _get_datatype(psa)
-    return _get_row(ctype, psa, 0, indexes, upperbounds)
+    return _get_row(_get_datatype(psa)(), psa, 0, indexes, lowerbounds, upperbounds)
 
 ################################################################
 
