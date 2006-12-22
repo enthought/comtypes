@@ -621,13 +621,34 @@ class TypeLibParser(Parser):
 
 ##    path = r"c:\vc98\include\activscp.tlb"
 
+def get_tlib_filename(tlib):
+    # seems if the typelib is not registered, there's no way to
+    # determine the filename.
+    from ctypes import windll, byref
+    from comtypes import BSTR
+    la = tlib.GetLibAttr()
+    name = BSTR()
+    try:
+        windll.oleaut32.QueryPathOfRegTypeLib
+    except AttributeError:
+        # Windows CE doesn't have this function
+        return None
+    if 0 == windll.oleaut32.QueryPathOfRegTypeLib(byref(la.guid),
+                                                  la.wMajorVerNum,
+                                                  la.wMinorVerNum,
+                                                  0, # lcid
+                                                  byref(name)
+                                                  ):
+        return name.value.split("\0")[0]
+    return None
+
 def _py2exe_hint():
     # If the tlbparser is frozen, we need to include these
     import comtypes.persist
     import comtypes.typeinfo
     import comtypes.automation
 
-def generate_module(tlib, ofi, make_module, name_module, filename):
+def generate_module(tlib, ofi, make_module, name_module):
     known_symbols = {}
     for name in ("comtypes.persist",
                  "comtypes.typeinfo", "comtypes.automation",
@@ -644,6 +665,7 @@ def generate_module(tlib, ofi, make_module, name_module, filename):
         for name in mod.__dict__:
             known_symbols[name] = mod.__name__
     p = TypeLibParser(tlib)
+    filename = get_tlib_filename(tlib)
     items = p.parse()
 
     from codegenerator import Generator

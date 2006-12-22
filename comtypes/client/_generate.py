@@ -125,6 +125,14 @@ def _module_is_current(tlib, tlib_path, module_path):
     # If the timestamp of the typelibrary file is later the the
     # timestamp of the Python module the module is out of date and
     # needs to be regenerated.
+    if tlib_path is None:
+        # try to find pathname of type library
+        from comtypes.typeinfo import QueryPathOfRegTypeLib
+        libattr = tlib.GetLibAttr()
+        try:
+            tlib_path = QueryPathOfRegTypeLib(libattr.guid, libattr.wMajorVerNum, libattr.wMinorVerNum)
+        except WindowsError:
+            return True
 
     # Search for the actual typelib file (it seems Windows searches
     # along $PATH, although that is not documented)
@@ -149,16 +157,6 @@ def _CreateWrapper(tlib, pathname=None):
     except KeyError:
         pass
 
-    if pathname is None:
-        # try to find pathname of type library
-        from comtypes.typeinfo import QueryPathOfRegTypeLib
-        libattr = tlib.GetLibAttr()
-        try:
-            pathname = QueryPathOfRegTypeLib(libattr.guid,
-                                             libattr.wMajorVerNum,
-                                             libattr.wMinorVerNum)
-        except WindowsError:
-            pass
     modname = fullname.split(".")[-1]
     is_current = True
     try:
@@ -186,7 +184,7 @@ def _CreateWrapper(tlib, pathname=None):
     # use warnings.warn, maybe?
     if __verbose__:
         print "# Generating comtypes.gen.%s" % modname
-    generate_module(tlib, ofi, GetModule, _name_module, pathname)
+    generate_module(tlib, ofi, GetModule, _name_module)
 
     if comtypes.client.gen_dir is None:
         code = ofi.getvalue()
