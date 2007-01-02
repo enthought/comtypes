@@ -111,6 +111,8 @@ def GetModule(tlib):
     code += "__name__ = 'comtypes.gen.%s'" % modulename
     if comtypes.client.gen_dir is None:
         mod = new.module("comtypes.gen." + modulename)
+        mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
+                                    "<memory>")
         exec code in mod.__dict__
         sys.modules["comtypes.gen." + modulename] = mod
         setattr(comtypes.gen, modulename, mod)
@@ -189,6 +191,8 @@ def _CreateWrapper(tlib, pathname=None):
     if comtypes.client.gen_dir is None:
         code = ofi.getvalue()
         mod = new.module(fullname)
+        mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
+                                    "<memory>")
         exec code in mod.__dict__
         sys.modules[fullname] = mod
         setattr(comtypes.gen, modname, mod)
