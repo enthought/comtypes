@@ -1,8 +1,8 @@
-2006-12-21  Thomas Heller  <theller@python.net>
+2007-01-02  Thomas Heller  <theller@python.net>
 
-	* comtypes.safearray.UnpackSafeArray did not work correctly for
-	multidimensional arrays.  Restored the old slow version since this
-	works better.  More tests are needed.
+	* comtypes\client\_generate.py: Make sure that generated modules
+	have a __file__ attribute, even if gen_dir is None.  The filename
+	part of the __file__ attribute is '<memory>' in this case.
 
 2006-12-20  Thomas Heller  <theller@python.net>
 
