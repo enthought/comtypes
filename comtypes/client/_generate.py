@@ -186,7 +186,7 @@ def _CreateWrapper(tlib, pathname=None):
     # use warnings.warn, maybe?
     if __verbose__:
         print "# Generating comtypes.gen.%s" % modname
-    generate_module(tlib, ofi, GetModule, _name_module)
+    generate_module(tlib, ofi, pathname)
 
     if comtypes.client.gen_dir is None:
         code = ofi.getvalue()

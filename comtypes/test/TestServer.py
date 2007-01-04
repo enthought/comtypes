@@ -17,14 +17,12 @@ import comtypes.typeinfo
 
 ################################################################
 
-# pathname of the type library file
-
-tlbfile = os.path.join(os.path.dirname(__file__), "TestComServer.tlb")
-
 # Create the wrapper in the comtypes.gen package, it will be named
 # TestComServerLib; the name is derived from the 'library ' statement
 # in the IDL file
 if not hasattr(sys, "frozen"):
+    # pathname of the type library file
+    tlbfile = os.path.join(os.path.dirname(__file__), "TestComServer.tlb")
     # if running as frozen app (dll or exe), the wrapper should be in
     # the library archive, so we don't need to generate it.
     comtypes.client.GetModule(tlbfile)
@@ -58,9 +56,6 @@ class TestComServer(
     _reg_novers_progid_ = "TestComServerLib.TestComServer"
     _reg_desc_ = "comtypes COM server sample for testing"
     _reg_clsctx_ = comtypes.CLSCTX_INPROC_SERVER | comtypes.CLSCTX_LOCAL_SERVER
-
-    # needed for DualDispImplMixin:
-    _typelib_path_ = tlbfile
 
     ################################
     # ITestComServer methods
@@ -113,14 +108,20 @@ class TestComServer(
     _name = u"spam, spam, spam"
 
     def ITestComServer__get_name(self, this, pname):
-        pname[0] = u"spam, spam, spam"
+        pname[0] = self._name
         return S_OK
 
     def ITestComServer__set_name(self, this, name):
         self._name = name
         return S_OK
 
-    def ITestComServer_SetName(self, this, name):
+##    def ITestComServer_SetName(self, this, name):
+##        self._name = name
+##        return S_OK
+
+    def ITestComServer_sEtNaMe(self, this, name):
+        # the method is spelled in a funny way to check case
+        # insensitivity when implementing COM methods.
         self._name = name
         return S_OK
 
