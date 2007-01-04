@@ -47,6 +47,12 @@ from ctypes import windll, c_ulong, c_wchar_p, WinError, sizeof, create_string_b
 
 _debug = logging.getLogger(__name__).debug
 
+def get_winerror(exception):
+    try:
+        return exception.winerror
+    except AttributeError:
+        return exception.errno
+
 # a SHDeleteKey function, will remove a registry key with all subkeys.
 def _non_zero(retval, func, args):
     if retval:
@@ -69,7 +75,14 @@ def _explain(hkey):
     return _KEYS.get(hkey, hkey)
 
 class Registrar(object):
+    """COM class registration.
 
+    The COM class can override what this does by implementing
+    _register and/or _unregister class methods.  These methods will be
+    called with the calling instance of Registrar, and so can call the
+    Registrars _register and _unregister methods which do the actual
+    work.
+    """
     def nodebug(self, cls):
         """Delete logging entries from the registry."""
         clsid = cls._reg_clsid_
@@ -79,7 +92,7 @@ class Registrar(object):
             hkey = _winreg.OpenKey(_winreg.HKEY_CLASSES_ROOT, r"CLSID\%s" % clsid)
             _winreg.DeleteKey(hkey, "Logging")
         except WindowsError, detail:
-            if detail.errno != 2:
+            if get_winerror(detail) != 2:
                 raise
 
     def debug(self, cls, levels, format):
@@ -104,7 +117,7 @@ class Registrar(object):
             try:
                 _winreg.DeleteValue(hkey, "format")
             except WindowsError, detail:
-                if detail.errno != 2:
+                if get_winerror(detail) != 2:
                     raise
 
     def register(self, cls):
@@ -113,7 +126,14 @@ class Registrar(object):
         # of all registry entries, even if we would not write them.
         # Second, we create new entries.
         # It seems ATL does the same.
-        self.unregister(cls, force=True)
+        mth = getattr(cls, "_register", None)
+        if mth is not None:
+            mth(self)
+        else:
+            self._unregister(cls, force=True)
+            self._register(cls)
+
+    def _register(self, cls):
         table = self._registry_entries(cls)
         table.sort()
         _debug("Registering %s", cls)
@@ -130,13 +150,23 @@ class Registrar(object):
                 _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", dll)
                 LoadTypeLibEx(dll, REGKIND_REGISTER)
             else:
-                path = cls._typelib_path_
+                if hasattr(sys, "frozen"):
+                    path = sys.executable
+                else:
+                    path = cls._typelib_path_
                 _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", path)
                 LoadTypeLibEx(path, REGKIND_REGISTER)
         _debug("Done")
 
     def unregister(self, cls, force=False):
         """Unregister the COM server class."""
+        mth = getattr(cls, "_unregister", None)
+        if mth is not None:
+            mth(self)
+        else:
+            self._unregister(cls, force=force)
+
+    def _unregister(self, cls, force=False):
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
         table = [t[:2] for t in self._registry_entries(cls)]
@@ -154,7 +184,7 @@ class Registrar(object):
                     _debug("DeleteKey %s\\%s", _explain(hkey), subkey)
                     _winreg.DeleteKey(hkey, subkey)
             except WindowsError, detail:
-                if detail.errno != 2:
+                if get_winerror(detail) != 2:
                     raise
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
@@ -162,7 +192,7 @@ class Registrar(object):
                 _debug("UnRegisterTypeLib(%s, %s, %s)", *tlib)
                 UnRegisterTypeLib(*tlib)
             except WindowsError, detail:
-                if not detail.errno in (TYPE_E_REGISTRYACCESS, TYPE_E_CANTLOADLIBRARY):
+                if not get_winerror(detail) in (TYPE_E_REGISTRYACCESS, TYPE_E_CANTLOADLIBRARY):
                     raise
         _debug("Done")
 
@@ -233,7 +263,7 @@ class Registrar(object):
 
             reg_novers_progid = getattr(cls, "_reg_novers_progid_", None)
             if reg_novers_progid:
-                append(HKCR, "CLSID\\%s\\VersionIndependendProgID" % reg_clsid, # 1a
+                append(HKCR, "CLSID\\%s\\VersionIndependentProgID" % reg_clsid, # 1a
                        "", reg_novers_progid)
                 if reg_desc:
                     append(HKCR, reg_novers_progid, "", reg_desc) # 2a
@@ -242,23 +272,26 @@ class Registrar(object):
 
         clsctx = getattr(cls, "_reg_clsctx_", 0)
 
-        if clsctx & comtypes.CLSCTX_LOCAL_SERVER and not hasattr(sys, "frozendllhandle"):
+        if clsctx & comtypes.CLSCTX_LOCAL_SERVER \
+               and not hasattr(sys, "frozendllhandle"):
             exe = sys.executable
-            script = sys.modules[cls.__module__].__file__
             if " " in exe:
                 exe = '"%s"' % exe
-            if " " in script:
-                script = '"%s"' % script
-            append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", "%s %s" % (exe, script))
+            if not hasattr(sys, "frozen"):
+                script = os.path.abspath(sys.modules[cls.__module__].__file__)
+                if " " in script:
+                    script = '"%s"' % script
+                append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", "%s %s" % (exe, script))
+            else:
+                append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", "%s" % exe)
 
         if clsctx & comtypes.CLSCTX_INPROC_SERVER:
             append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
                    "", self._get_serverdll())
-            # only for inproc servers
-            append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
-                   "PythonClass", self._get_full_classname(cls))
             # only for non-frozen inproc servers the PythonPath is needed.
             if not hasattr(sys, "frozendllhandle"):
+                append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
+                       "PythonClass", self._get_full_classname(cls))
                 append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
                        "PythonPath", self._get_pythonpath(cls))
 
