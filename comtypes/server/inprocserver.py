@@ -35,7 +35,13 @@ class ClassFactory(COMObject):
             g_cLocks -= 1
         return S_OK
 
+# will be set by py2exe boot script 'from outside'
+_clsid_to_class = {}
+
 def inproc_find_class(clsid):
+    if _clsid_to_class:
+        return _clsid_to_class[clsid]
+
     key = _winreg.OpenKey(_winreg.HKEY_CLASSES_ROOT, "CLSID\\%s\\InprocServer32" % clsid)
     try:
         pathdir = _winreg.QueryValueEx(key, "PythonPath")[0]
