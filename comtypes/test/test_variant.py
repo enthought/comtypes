@@ -17,30 +17,30 @@ class VariantTestCase(unittest.TestCase):
     def test_com_refcounts(self):
         # typelib for oleaut32
         tlb = LoadRegTypeLib(GUID("{00020430-0000-0000-C000-000000000046}"), 2, 0, 0)
-        self.failUnlessEqual(get_refcnt(tlb), 1)
+        rc = get_refcnt(tlb)
 
         p = tlb.QueryInterface(IUnknown)
-        self.failUnlessEqual(get_refcnt(tlb), 2)
+        self.failUnlessEqual(get_refcnt(tlb), rc+1)
 
         del p
-        self.failUnlessEqual(get_refcnt(tlb), 1)
+        self.failUnlessEqual(get_refcnt(tlb), rc)
 
     def test_com_pointers(self):
         # Storing a COM interface pointer in a VARIANT increments the refcount,
         # changing the variant to contain something else decrements it
         tlb = LoadRegTypeLib(GUID("{00020430-0000-0000-C000-000000000046}"), 2, 0, 0)
-        self.failUnlessEqual(get_refcnt(tlb), 1)
+        rc = get_refcnt(tlb)
 
         v = VARIANT(tlb)
-        self.failUnlessEqual(get_refcnt(tlb), 2)
+        self.failUnlessEqual(get_refcnt(tlb), rc+1)
 
         p = v.value
-        self.failUnlessEqual(get_refcnt(tlb), 3)
+        self.failUnlessEqual(get_refcnt(tlb), rc+2)
         del p
-        self.failUnlessEqual(get_refcnt(tlb), 2)
+        self.failUnlessEqual(get_refcnt(tlb), rc+1)
 
         v.value = None
-        self.failUnlessEqual(get_refcnt(tlb), 1)
+        self.failUnlessEqual(get_refcnt(tlb), rc)
 
     def test_null_com_pointers(self):
         p = POINTER(IUnknown)()
