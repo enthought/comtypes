@@ -1,3 +1,18 @@
+2007-01-10  Thomas Heller  <theller@python.net>
+
+	* (Re-)Added comtypes.__version__ again, and set it to "0.3.2".
+
+	* Removed assert statements about sizeof() and alingment() of
+	generated Structure subclasses for portability to 64-bit Windows.
+
+	* Iterating over COM collections retrived the _NewEnum property
+	twice.
+	
+	* Cleaned up the codegeneration.  Generated modules now have a
+	'typelib_path' variable that points to the type library used to
+	generate them, 'CoClass' subclasses have '_typelib_path_' which is
+	used for registration.
+
 2007-01-02  Thomas Heller  <theller@python.net>
 
 	* comtypes\client\_generate.py: Make sure that generated modules
