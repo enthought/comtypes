@@ -426,7 +426,7 @@ def QueryPathOfRegTypeLib(libid, wVerMajor, wVerMinor, lcid=0):
     "Return the path of a registered type library"
     pathname = BSTR()
     _oleaut32.QueryPathOfRegTypeLib(byref(GUID(libid)), wVerMajor, wVerMinor, lcid, byref(pathname))
-    return pathname.value
+    return pathname.value.split("\0")[0]
 
 ################################################################
 # Structures
