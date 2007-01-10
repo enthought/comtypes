@@ -88,6 +88,4 @@ class GUID(Structure):
         return guid
     create_new = classmethod(create_new)
 
-assert(sizeof(GUID) == 16), sizeof(GUID)
-
 __all__ = ["GUID"]

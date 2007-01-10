@@ -86,8 +86,6 @@ class tagPROPBAG2(Structure):
         ('pstrName', WSTRING),
         ('clsid', GUID),
         ]
-assert sizeof(tagPROPBAG2) == 36, sizeof(tagPROPBAG2)
-assert alignment(tagPROPBAG2) == 4, alignment(tagPROPBAG2)
 
 class IPropertyBag2(IUnknown):
     _iid_ = GUID('{22F55882-280B-11D0-A8A9-00A0C90C2004}')

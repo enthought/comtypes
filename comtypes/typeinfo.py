@@ -668,8 +668,6 @@ tagTLIBATTR._fields_ = [
     ('wMinorVerNum', WORD),
     ('wLibFlags', WORD),
 ]
-assert sizeof(tagTLIBATTR) == 32, sizeof(tagTLIBATTR)
-assert alignment(tagTLIBATTR) == 4, alignment(tagTLIBATTR)
 class N11tagTYPEDESC5DOLLAR_203E(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 584
     pass
@@ -679,8 +677,6 @@ N11tagTYPEDESC5DOLLAR_203E._fields_ = [
     ('lpadesc', POINTER(tagARRAYDESC)),
     ('hreftype', HREFTYPE),
 ]
-assert sizeof(N11tagTYPEDESC5DOLLAR_203E) == 4, sizeof(N11tagTYPEDESC5DOLLAR_203E)
-assert alignment(N11tagTYPEDESC5DOLLAR_203E) == 4, alignment(N11tagTYPEDESC5DOLLAR_203E)
 tagTYPEDESC._anonymous_ = ('_',)
 tagTYPEDESC._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 582
@@ -688,15 +684,11 @@ tagTYPEDESC._fields_ = [
     ('_', N11tagTYPEDESC5DOLLAR_203E),
     ('vt', VARTYPE),
 ]
-assert sizeof(tagTYPEDESC) == 8, sizeof(tagTYPEDESC)
-assert alignment(tagTYPEDESC) == 4, alignment(tagTYPEDESC)
 tagIDLDESC._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 633
     ('dwReserved', ULONG_PTR),
     ('wIDLFlags', USHORT),
 ]
-assert sizeof(tagIDLDESC) == 8, sizeof(tagIDLDESC)
-assert alignment(tagIDLDESC) == 4, alignment(tagIDLDESC)
 tagTYPEATTR._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 672
     ('guid', GUID),
@@ -718,8 +710,6 @@ tagTYPEATTR._fields_ = [
     ('tdescAlias', TYPEDESC),
     ('idldescType', IDLDESC),
 ]
-assert sizeof(tagTYPEATTR) == 76, sizeof(tagTYPEATTR)
-assert alignment(tagTYPEATTR) == 4, alignment(tagTYPEATTR)
 class N10tagVARDESC5DOLLAR_205E(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 807
     pass
@@ -728,8 +718,6 @@ N10tagVARDESC5DOLLAR_205E._fields_ = [
     ('oInst', DWORD),
     ('lpvarValue', POINTER(VARIANT)),
 ]
-assert sizeof(N10tagVARDESC5DOLLAR_205E) == 4, sizeof(N10tagVARDESC5DOLLAR_205E)
-assert alignment(N10tagVARDESC5DOLLAR_205E) == 4, alignment(N10tagVARDESC5DOLLAR_205E)
 class tagELEMDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 661
     pass
@@ -751,8 +739,6 @@ tagPARAMDESC._fields_ = [
     ('pparamdescex', LPPARAMDESCEX),
     ('wParamFlags', USHORT),
 ]
-assert sizeof(tagPARAMDESC) == 8, sizeof(tagPARAMDESC)
-assert alignment(tagPARAMDESC) == 4, alignment(tagPARAMDESC)
 PARAMDESC = tagPARAMDESC
 
 N11tagELEMDESC5DOLLAR_204E._fields_ = [
@@ -760,16 +746,12 @@ N11tagELEMDESC5DOLLAR_204E._fields_ = [
     ('idldesc', IDLDESC),
     ('paramdesc', PARAMDESC),
 ]
-assert sizeof(N11tagELEMDESC5DOLLAR_204E) == 8, sizeof(N11tagELEMDESC5DOLLAR_204E)
-assert alignment(N11tagELEMDESC5DOLLAR_204E) == 4, alignment(N11tagELEMDESC5DOLLAR_204E)
 tagELEMDESC._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 661
     ('tdesc', TYPEDESC),
     # Unnamed field renamed to '_'
     ('_', N11tagELEMDESC5DOLLAR_204E),
 ]
-assert sizeof(tagELEMDESC) == 16, sizeof(tagELEMDESC)
-assert alignment(tagELEMDESC) == 4, alignment(tagELEMDESC)
 ELEMDESC = tagELEMDESC
 
 tagVARDESC._fields_ = [
@@ -782,16 +764,12 @@ tagVARDESC._fields_ = [
     ('wVarFlags', WORD),
     ('varkind', VARKIND),
 ]
-assert sizeof(tagVARDESC) == 36, sizeof(tagVARDESC)
-assert alignment(tagVARDESC) == 4, alignment(tagVARDESC)
 tagBINDPTR._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 3075
     ('lpfuncdesc', POINTER(FUNCDESC)),
     ('lpvardesc', POINTER(VARDESC)),
     ('lptcomp', POINTER(ITypeComp)),
 ]
-assert sizeof(tagBINDPTR) == 4, sizeof(tagBINDPTR)
-assert alignment(tagBINDPTR) == 4, alignment(tagBINDPTR)
 
 tagFUNCDESC._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 769
@@ -808,16 +786,12 @@ tagFUNCDESC._fields_ = [
     ('elemdescFunc', ELEMDESC),
     ('wFuncFlags', WORD),
 ]
-assert sizeof(tagFUNCDESC) == 52, sizeof(tagFUNCDESC)
-assert alignment(tagFUNCDESC) == 4, alignment(tagFUNCDESC)
 
 tagPARAMDESCEX._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 601
     ('cBytes', DWORD),
     ('varDefaultValue', VARIANTARG),
 ]
-assert sizeof(tagPARAMDESCEX) == 24, sizeof(tagPARAMDESCEX)
-assert alignment(tagPARAMDESCEX) == 8, alignment(tagPARAMDESCEX)
 
 class tagSAFEARRAYBOUND(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 226
@@ -825,8 +799,6 @@ class tagSAFEARRAYBOUND(Structure):
         ('cElements', DWORD),
         ('lLbound', LONG),
     ]
-assert sizeof(tagSAFEARRAYBOUND) == 8, sizeof(tagSAFEARRAYBOUND)
-assert alignment(tagSAFEARRAYBOUND) == 4, alignment(tagSAFEARRAYBOUND)
 SAFEARRAYBOUND = tagSAFEARRAYBOUND
 
 tagARRAYDESC._fields_ = [
@@ -835,6 +807,4 @@ tagARRAYDESC._fields_ = [
     ('cDims', USHORT),
     ('rgbounds', SAFEARRAYBOUND * 1),
 ]
-assert sizeof(tagARRAYDESC) == 20, sizeof(tagARRAYDESC)
-assert alignment(tagARRAYDESC) == 4, alignment(tagARRAYDESC)
 

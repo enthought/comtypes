@@ -438,8 +438,6 @@ tagEXCEPINFO._fields_ = [
     ('pfnDeferredFillIn', c_void_p),
     ('scode', SCODE),
 ]
-assert sizeof(tagEXCEPINFO) == 32, sizeof(tagEXCEPINFO)
-assert alignment(tagEXCEPINFO) == 4, alignment(tagEXCEPINFO)
 EXCEPINFO = tagEXCEPINFO
 
 class tagDISPPARAMS(Structure):
@@ -454,8 +452,6 @@ class tagDISPPARAMS(Structure):
         if self._b_needsfree_:
             for i in range(self.cArgs):
                 self.rgvarg[i].value = None
-assert sizeof(tagDISPPARAMS) == 16, sizeof(tagDISPPARAMS)
-assert alignment(tagDISPPARAMS) == 4, alignment(tagDISPPARAMS)
 DISPPARAMS = tagDISPPARAMS
 
 DISPID_VALUE = 0
