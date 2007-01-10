@@ -1,9 +1,17 @@
 import glob
 import os
 import unittest
+import warnings
 import comtypes.typeinfo
 import comtypes.client
 import comtypes.client._generate
+
+# filter warnings about interfaces without a base interface; they will
+# be skipped in the code generation.
+warnings.filterwarnings("ignore",
+                        "Ignoring interface .* which has no base interface",
+                        UserWarning)
+
 # don't print messages when typelib wrappers are generated
 comtypes.client._generate.__verbose__ = False
 
@@ -11,9 +19,6 @@ sysdir = os.path.join(os.environ["SystemRoot"], "system32")
 
 # This test takes quite some time.  It tries to build wrappers for ALL
 # .dll, .tlb, and .ocx files in the system directory which contain typelibs.
-import ctypes.test
-ctypes.test.requires("typelibs")
-
 
 class Test(unittest.TestCase):
     def setUp(self):
@@ -46,8 +51,7 @@ for fname in glob.glob(os.path.join(sysdir, "*.tlb")):
 for fname in glob.glob(os.path.join(sysdir, "*.dll")):
     # these typelibs give errors:
     if os.path.basename(fname).lower() in (
-        "vbar332.dll", # has a COM interface with no base interface
-        "syncom.dll", # has a COM interface with no base interface
+        "syncom.dll", # assertionerror
         "msvidctl.dll", # assignment to None
         "scardssp.dll", # assertionerror
         "sccsccp.dll"): # assertionerror
