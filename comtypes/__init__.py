@@ -17,12 +17,9 @@ DWORD = c_ulong
 
 wireHWND = c_ulong
 
-from comtypes.hresult import E_NOINTERFACE
-
 ################################################################
-# Readings:
+# About COM apartments:
 # http://blogs.msdn.com/larryosterman/archive/2004/04/28/122240.aspx
-# http://www.microsoft.com/ntserver/techresources/appserv/COM/DCOM/5_ConcurrencyMgmt.asp
 ################################################################
 
 ################################################################
@@ -782,8 +779,17 @@ class IUnknown(object):
         # Hm, should we call __ctypes_from_outparam__ on the result?
         return result
 
-    def __make_iter(self):
-        enum = self._NewEnum
+    # Some magic to implement an __iter__ method.  Raises
+    # AttributeError if no _NewEnum attribute is found in the class.
+    # If _NewEnum is present, returns a callable that will return a
+    # python iterator when called.  Thanks to Bengt Richter for the
+    # idea.
+    def __iter__(self):
+        """Return self._NewEnum, or raise AttributeError if no such property."""
+        try:
+            enum = self._NewEnum
+        except AttributeError:
+            raise AttributeError("__iter__")
         if isinstance(enum, types.MethodType):
             # _NewEnum should be a propget property, with dispid -4.  See:
             # http://msdn.microsoft.com/library/en-us/automat/htm/chap2_2ws9.asp
@@ -797,20 +803,7 @@ class IUnknown(object):
         result = enum.QueryInterface(IEnumVARIANT)
         # Hm, is there a comtypes problem? Or are we using com incorrectly?
         result.__parent = self
-        return result
-
-    # Some magic to implement an __iter__ method.  Raises
-    # attributeerror if no _NewEnum attribute is found in the class.
-    # If _NewEnum is present, returns a callable that will return a
-    # python iterator when called.  Thanks to Bengt Richter for the
-    # idea.
-    def __iter__(self):
-        """Return to self._NewEnum, or raise AttributeError if no such property."""
-        try:
-            enum = self._NewEnum
-        except AttributeError:
-            raise AttributeError, "__iter__"
-        return self.__make_iter
+        return lambda: result
     __iter__ = property(__iter__)
 
 ################################################################
