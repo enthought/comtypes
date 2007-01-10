@@ -43,6 +43,7 @@ import comtypes
 from comtypes.typeinfo import LoadTypeLibEx, UnRegisterTypeLib, REGKIND_REGISTER
 from comtypes.hresult import *
 from comtypes.server import w_getopt
+import comtypes.server.inprocserver
 from ctypes import windll, c_ulong, c_wchar_p, WinError, sizeof, create_string_buffer
 
 _debug = logging.getLogger(__name__).debug
@@ -288,8 +289,9 @@ class Registrar(object):
         if clsctx & comtypes.CLSCTX_INPROC_SERVER:
             append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
                    "", self._get_serverdll())
-            # only for non-frozen inproc servers the PythonPath is needed.
-            if not hasattr(sys, "frozendllhandle"):
+            # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
+            if not hasattr(sys, "frozendllhandle") \
+                   or not comtypes.server.inprocserver._clsid_to_class:
                 append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
                        "PythonClass", self._get_full_classname(cls))
                 append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
