@@ -188,22 +188,47 @@ class Generator(object):
 	return cmp(a[0],b[0]) or cmp(int(a[1]),int(b[1]))
     cmpitems = staticmethod(cmpitems)
 
+    def _make_relative_path(self, path1, path2):
+        """path1 and path2 are pathnames.
+        Return path1 as a relative path to path2, if possible.
+        """
+        path1 = os.path.abspath(path1)
+        path2 = os.path.abspath(path2)
+        common = os.path.commonprefix([os.path.normcase(path1),
+                                       os.path.normcase(path2)])
+        if not os.path.isdir(common):
+            return path1
+        if not common.endswith("\\"):
+            return path1
+        if not os.path.isdir(path2):
+            path2 = os.path.dirname(path2)
+        # strip the common prefix
+        path1 = path1[len(common):]
+        path2 = path2[len(common):]
+
+        parts2 = path2.split("\\")
+        return "..\\" * len(parts2) + path1
+
     def generate_code(self, items, filename=None):
         self.filename = filename
         if filename is not None:
             if os.path.isabs(filename):
                 # absolute path
                 print >> self.output, "typelib_path = %r" % filename
-            elif not os.path.dirname(filename):
-                # no directory
+            elif not os.path.dirname(filename) and not os.path.isfile(filename):
+                # no directory given, and not in current directory.
                 print >> self.output, "typelib_path = %r" % filename
             else:
                 # relative path; make relative to comtypes.gen.
-                path = os.path.normpath(os.path.join(r"..\..", filename))
+                path = self._make_relative_path(filename, comtypes.gen.__path__[0])
                 print >> self.output, "import os"
                 print >> self.output, "typelib_path = os.path.normpath("
                 print >> self.output, "    os.path.abspath(os.path.join(os.path.dirname(__file__),"
                 print >> self.output, "                                 %r)))" % path
+
+                p = os.path.normpath(os.path.abspath(os.path.join(comtypes.gen.__path__[0],
+                                                                  path)))
+                assert os.path.isfile(p)
         print >> self.imports, "_lcid = 0 # change this if required"
         print >> self.imports, "from ctypes import *"
         items = set(items)
