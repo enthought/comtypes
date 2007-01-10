@@ -1,5 +1,6 @@
-# requires ctypes 0.9.8 or later
 import new, types, sys, os
+
+__version__ = "0.3.2"
 
 from ctypes import *
 from _ctypes import COMError
