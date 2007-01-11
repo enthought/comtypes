@@ -132,6 +132,13 @@ class tagVARIANT(Structure):
             ("c_void_p", c_void_p),
 
             ("bstrVal", BSTR),
+            # placeholder only, for the correct size:
+            #struct  __tagBRECORD
+            #    {
+            #        PVOID pvRecord;
+            #        IRecordInfo __RPC_FAR *pRecInfo;
+            #    }__VARIANT_NAME_4;
+            ("__tagBRECORD", c_void_p * 2),
             ]
     _fields_ = [("vt", VARTYPE),
                 ("wReserved1", c_ushort),
