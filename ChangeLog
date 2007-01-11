@@ -1,10 +1,11 @@
 2007-01-11  Thomas Heller  <theller@python.net>
 
-	* comtypes.automation: Fix size of VARIANT definition for 64-bit
+	* comtypes codegenerator: Do not hardcode pointer and VARIANT size
+	and alignment.  This fixes code generation issues on 64-bit
 	Windows.
 
-	* comtypes codegenerator: Do not hardcode pointer size.  Fixes
-	some code generation issues on 64-bit Windows.
+	* comtypes.automation: Fix size of VARIANT definition for 64-bit
+	Windows.
 
 2007-01-10  Thomas Heller  <theller@python.net>
 
