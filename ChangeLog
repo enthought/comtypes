@@ -1,4 +1,7 @@
-2007-01-11    <theller@python.net>
+2007-01-11  Thomas Heller  <theller@python.net>
+
+	* comtypes.automation: Fix size of VARIANT definition for 64-bit
+	Windows.
 
 	* comtypes codegenerator: Do not hardcode pointer size.  Fixes
 	some code generation issues on 64-bit Windows.
