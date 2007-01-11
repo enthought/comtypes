@@ -51,10 +51,33 @@ for fname in glob.glob(os.path.join(sysdir, "*.tlb")):
 for fname in glob.glob(os.path.join(sysdir, "*.dll")):
     # these typelibs give errors:
     if os.path.basename(fname).lower() in (
-        "syncom.dll", # assertionerror
+        "syncom.dll", # interfaces without base interface
         "msvidctl.dll", # assignment to None
-        "scardssp.dll", # assertionerror
-        "sccsccp.dll"): # assertionerror
+        "scardssp.dll", # assertionerror sizeof()
+        "sccsccp.dll", # assertionerror sizeof()
+
+        # Typeinfo in comsvcs.dll in XP 64-bit SP 1 is broken.
+        # Oleview decompiles this code snippet (^ marks are m):
+        #[
+        #  odl,
+        #  uuid(C7B67079-8255-42C6-9EC0-6994A3548780)
+        #]
+        #interface IAppDomainHelper : IDispatch {
+        #    HRESULT _stdcall pfnShutdownCB(void* pv);
+        #    HRESULT _stdcall Initialize(
+        #                    [in] IUnknown* pUnkAD, 
+        #                    [in] IAppDomainHelper __MIDL_0028, 
+        #                         ^^^^^^^^^^^^^^^^
+        #                    [in] void* pPool);
+        #    HRESULT _stdcall pfnCallbackCB(void* pv);
+        #    HRESULT _stdcall DoCallback(
+        #                    [in] IUnknown* pUnkAD, 
+        #                    [in] IAppDomainHelper __MIDL_0029, 
+        #                         ^^^^^^^^^^^^^^^^
+        #                    [in] void* pPool);
+        #};
+        "comsvcs.dll", 
+        ):
         continue
     add_test(fname)
 
