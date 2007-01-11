@@ -1,14 +1,15 @@
 from comtypes import automation, typeinfo, COMError
 from comtypes.tools import typedesc
+from ctypes import c_void_p, sizeof, alignment
 
 ################################
 
 def PTR(typ):
-    import struct
-    _ptr_size = struct.calcsize("P") * 8
-    return typedesc.PointerType(typ, _ptr_size, _ptr_size)
+    return typedesc.PointerType(typ,
+                                sizeof(c_void_p)*8,
+                                alignment(c_void_p)*8)
 
-# basic C data types, with size and alingment in bits
+# basic C data types, with size and alignment in bits
 char_type = typedesc.FundamentalType("char", 8, 8)
 uchar_type = typedesc.FundamentalType("unsigned char", 8, 8)
 wchar_t_type = typedesc.FundamentalType("wchar_t", 16, 16)
@@ -29,7 +30,10 @@ SCODE_type = typedesc.Typedef("SCODE", int_type)
 VARIANT_BOOL_type = typedesc.Typedef("VARIANT_BOOL", short_type)
 HRESULT_type = typedesc.Typedef("HRESULT", ulong_type)
 
-VARIANT_type = typedesc.Structure("VARIANT", align=64, members=[], bases=[], size=128)
+VARIANT_type = typedesc.Structure("VARIANT",
+                                  align=alignment(automation.VARIANT)*8,
+                                  members=[], bases=[],
+                                  size=sizeof(automation.VARIANT)*8)
 IDISPATCH_type = typedesc.Typedef("IDispatch", None)
 IUNKNOWN_type = typedesc.Typedef("IUnknown", None)
 
