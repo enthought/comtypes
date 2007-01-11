@@ -2,8 +2,11 @@ from comtypes import automation, typeinfo, COMError
 from comtypes.tools import typedesc
 
 ################################
+
 def PTR(typ):
-    return typedesc.PointerType(typ, 32, 32)
+    import struct
+    _ptr_size = struct.calcsize("P") * 8
+    return typedesc.PointerType(typ, _ptr_size, _ptr_size)
 
 # basic C data types, with size and alingment in bits
 char_type = typedesc.FundamentalType("char", 8, 8)
@@ -97,7 +100,7 @@ class Parser(object):
 
         elif tdesc.vt == automation.VT_PTR:
             typ = self.make_type(tdesc._.lptdesc[0], tinfo)
-            return typedesc.PointerType(typ, 32, 32)
+            return PTR(typ)
 
         elif tdesc.vt == automation.VT_USERDEFINED:
             ti = tinfo.GetRefTypeInfo(tdesc._.hreftype)
