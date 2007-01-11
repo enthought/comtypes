@@ -1,3 +1,8 @@
+2007-01-11    <theller@python.net>
+
+	* comtypes codegenerator: Do not hardcode pointer size.  Fixes
+	some code generation issues on 64-bit Windows.
+
 2007-01-10  Thomas Heller  <theller@python.net>
 
 	* (Re-)Added comtypes.__version__ again, and set it to "0.3.2".
