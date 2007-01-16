@@ -233,10 +233,12 @@ class Parser(object):
 
         assert ta.cVars == 0, "vars on an Interface?"
 
+        members = []
         for i in range(ta.cFuncs):
             fd = tinfo.GetFuncDesc(i)
 ##            func_name = tinfo.GetDocumentation(fd.memid)[0]
             func_name, func_doc = tinfo.GetDocumentation(fd.memid)[:2]
+            assert fd.funckind == typeinfo.FUNC_PUREVIRTUAL
             returns = self.make_type(fd.elemdescFunc.tdesc, tinfo)
             names = tinfo.GetNames(fd.memid, fd.cParams+1)
             names.append("rhs")
@@ -245,6 +247,7 @@ class Parser(object):
             flags = self.func_flags(fd.wFuncFlags)
             flags += self.inv_kind(fd.invkind)
             mth = typedesc.ComMethod(fd.invkind, fd.memid, func_name, returns, flags, func_doc)
+            mth.oVft = fd.oVft
             for p in range(fd.cParams):
                 typ = self.make_type(fd.lprgelemdescParam[p].tdesc, tinfo)
                 name = names[p+1]
@@ -256,7 +259,11 @@ class Parser(object):
                 else:
                     default = None
                 mth.add_argument(typ, name, self.param_flags(flags), default)
-            itf.members.append(mth)
+            members.append((fd.oVft, mth))
+        # Sort the methods by oVft (VTable offset): Some typeinfo
+        # don't list methods in VTable order.
+        members.sort()
+        itf.members.extend([m[1] for m in members])
 
         return itf
 
@@ -303,6 +310,7 @@ class Parser(object):
         for i in range(basemethods, ta.cFuncs):
             fd = tinfo.GetFuncDesc(i)
             func_name, func_doc = tinfo.GetDocumentation(fd.memid)[:2]
+            assert fd.funckind == typeinfo.FUNC_DISPATCH
 
             assert func_name not in ("QueryInterface", "AddRef", "Release")
 
