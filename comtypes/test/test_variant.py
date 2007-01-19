@@ -3,7 +3,7 @@ from ctypes import *
 from comtypes import IUnknown, GUID
 from comtypes.automation import VARIANT, DISPPARAMS
 from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib
-from ctypes.test import is_resource_enabled
+from comtypes.test import is_resource_enabled
 
 def get_refcnt(comptr):
     # return the COM reference count of a COM interface pointer

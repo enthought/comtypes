@@ -6,8 +6,8 @@ from ctypes import POINTER
 comtypes.client.GetModule("msscript.ocx")
 from comtypes.gen import MSScriptControl
 
-import ctypes.test
-ctypes.test.requires("ui")
+import comtypes.test
+comtypes.test.requires("ui")
 
 class Test(ut.TestCase):
     def test_progid(self):

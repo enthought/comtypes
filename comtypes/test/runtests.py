@@ -1,6 +1,5 @@
 import sys
-import ctypes.test
 import comtypes.test
 
 if __name__ == "__main__":
-    sys.exit(ctypes.test.main(comtypes.test))
+    sys.exit(comtypes.test.run(sys.argv[1:]))

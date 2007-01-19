@@ -1,8 +1,8 @@
 # -*- coding: latin-1 -*-
 import unittest
 
-import ctypes.test
-ctypes.test.requires("ui")
+import comtypes.test
+comtypes.test.requires("ui")
 
 import datetime
 

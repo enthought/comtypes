@@ -1,8 +1,8 @@
 from ctypes import *
 import unittest as ut
 
-import ctypes.test
-ctypes.test.requires("devel")
+import comtypes.test
+comtypes.test.requires("devel")
 
 from comtypes import BSTR, IUnknown, GUID, COMMETHOD, HRESULT
 class IMalloc(IUnknown):

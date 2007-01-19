@@ -4,8 +4,8 @@ import comtypes.client
 
 # XXX leaks references.
 
-import ctypes.test
-ctypes.test.requires("ui")
+import comtypes.test
+comtypes.test.requires("ui")
 
 
 class Test(unittest.TestCase):

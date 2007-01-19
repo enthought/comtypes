@@ -1,10 +1,10 @@
 import unittest as ut
 
-import ctypes.test
-ctypes.test.requires("ui")
-
 import comtypes
 import comtypes.client
+
+import comtypes.test
+comtypes.test.requires("ui")
 
 class Test(ut.TestCase):
     def tearDown(self):

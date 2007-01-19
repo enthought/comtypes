@@ -2,8 +2,8 @@ import unittest as ut
 from ctypes import *
 from comtypes.client import CreateObject, GetEvents
 
-import ctypes.test
-ctypes.test.requires("ui")
+import comtypes.test
+comtypes.test.requires("ui")
 
 class EventSink:
     def __init__(self):
