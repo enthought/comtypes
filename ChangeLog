@@ -1,3 +1,8 @@
+2007-01-16  Thomas Heller  <theller@python.net>
+
+	* comtypes.tools.tlbparser: Sort interface methods by VTable order
+	(there are typeinfos that list the methods in a different order).
+
 2007-01-11  Thomas Heller  <theller@python.net>
 
 	* comtypes codegenerator: Do not hardcode pointer and VARIANT size
