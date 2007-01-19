@@ -1,9 +1,9 @@
 import unittest, gc
 from ctypes import *
 from ctypes.wintypes import *
-from ctypes.test import is_resource_enabled
 from comtypes.client import CreateObject
 from comtypes.server.register import register, unregister
+from comtypes.test import is_resource_enabled
 
 ################################################################
 
@@ -41,6 +41,29 @@ except NameError:
                 return True
         return False
 
+def find_memleak(func):
+    # call 'func' several times, so that memory consumption
+    # stabilizes:
+    for j in xrange(LOOPS[0]):
+        for k in xrange(LOOPS[1]):
+            func()
+    gc.collect(); gc.collect(); gc.collect()
+##    leaks = [0] * LOOPS[0]
+    bytes = wss()
+    # call 'func' several times, recording the difference in
+    # memory consumption before and after the call.  Repeat this a
+    # few times, and return a list containing the memory
+    # consumption differences.
+    for j in xrange(LOOPS[0]):
+        for k in xrange(LOOPS[1]):
+            func()
+        gc.collect(); gc.collect(); gc.collect()
+##        mem = wss()
+##        leaks.append(mem - bytes)
+##        bytes = mem
+##    return leaks
+    return [wss() - bytes]
+
 ################################################################
 import comtypes.test.TestServer
 
@@ -56,25 +79,7 @@ class TestInproc(unittest.TestCase):
         return CreateObject("TestComServerLib.TestComServer")
 
     def _find_memleak(self, func):
-        # call 'func' several times, so that memory consumption
-        # stabilizes:
-        for i in range(LOOPS[0]):
-            for j in range(LOOPS[1]):
-                func()
-        gc.collect(); gc.collect(); gc.collect()
-        leaks = []
-        bytes = wss()
-        # call 'func' several times, recording the difference in
-        # memory consumption before and after the call.  Repeat this a
-        # few times, and return a list containing the memory
-        # consumption differences.
-        for i in range(LOOPS[0]):
-            for j in range(LOOPS[1]):
-                func()
-            gc.collect(); gc.collect(); gc.collect()
-            mem = wss()
-            leaks.append(mem - bytes)
-            bytes = mem
+        leaks = find_memleak(func)
         self.failIf(any(leaks), "Leaks %d bytes: %s" % (sum(leaks), leaks))
 
     if is_resource_enabled("memleaks"):
