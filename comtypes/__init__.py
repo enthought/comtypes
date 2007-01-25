@@ -568,21 +568,6 @@ class BSTR(_SimpleCData):
         _free(self)
         return result
 
-    def __del__(self, _free=windll.oleaut32.SysFreeString):
-        """If we own the memory, call SysFreeString to free it."""
-        if not self._b_base_:
-            _free(self)
-
-    def from_param(cls, value):
-        """Convert into a foreign function call parameter."""
-        if isinstance(value, cls):
-            return value
-        # Although the builtin SimpleCData.from_param call does the
-        # right thing, it doesn't ensure that SysFreeString is called
-        # on destruction.
-        return cls(value)
-    from_param = classmethod(from_param)
-
 ################################################################
 # IDL stuff
 
