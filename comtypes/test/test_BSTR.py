@@ -11,9 +11,9 @@ dll = CDLL(_ctypes_test.__file__)
 try:
     any
 except NameError:
-    from comtypes.test.test_comserver import any
+    from comtypes.test.find_memleak import any
 
-from comtypes.test.test_comserver import find_memleak
+from comtypes.test.find_memleak import find_memleak
 
 class Test(unittest.TestCase):
     def check_leaks(self, func):
