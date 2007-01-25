@@ -22,7 +22,7 @@ class SAFEARRAY(Structure):
     def __getitem__(self, index):
         ix = c_int(index)
         data = c_double()
-        res = windll.oleaut32.SafeArrayGetElement(byref(self), byref(ix), byref(data))
+        res = SafeArrayGetElement(byref(self), byref(ix), byref(data))
         if res:
             raise WinError(res)
         return data.value
@@ -30,7 +30,7 @@ class SAFEARRAY(Structure):
     def __iter__(self):
         ix = c_int()
         data = c_double()
-        get = windll.oleaut32.SafeArrayGetElement
+        get = SafeArrayGetElement
         while 1:
             if get(byref(self), byref(ix), byref(data)):
                 raise StopIteration
@@ -52,20 +52,46 @@ class SAFEARRAY(Structure):
 # SafeArrayCreateEx DOES work, as it seems.
 # BTW: A C program has the same behaviour.
 
-windll.oleaut32.SafeArrayCreateVectorEx.restype = POINTER(SAFEARRAY)
-oledll.oleaut32.SafeArrayGetVartype.argtypes = (c_void_p, POINTER(VARTYPE))
-oledll.oleaut32.SafeArrayGetElement.argtypes = (c_void_p, POINTER(c_long), c_void_p)
+SafeArrayCreateVectorEx = windll.oleaut32.SafeArrayCreateVectorEx
+SafeArrayCreateVectorEx.restype = POINTER(SAFEARRAY)
 
-windll.oleaut32.SafeArrayCreate.argtypes = (VARTYPE, c_uint, POINTER(SAFEARRAYBOUND))
-windll.oleaut32.SafeArrayCreate.restype = POINTER(SAFEARRAY)
+SafeArrayPutElement = oledll.oleaut32.SafeArrayPutElement
+SafeArrayPutElement.argtypes = (c_void_p, POINTER(c_long), c_void_p)
+
+SafeArrayGetElement = oledll.oleaut32.SafeArrayGetElement
+SafeArrayGetElement.argtypes = (c_void_p, POINTER(c_long), c_void_p)
+
+SafeArrayAccessData = oledll.oleaut32.SafeArrayAccessData
+SafeArrayAccessData.argtypes = (c_void_p, POINTER(c_void_p))
+
+SafeArrayUnaccessData = oledll.oleaut32.SafeArrayUnaccessData
+SafeArrayUnaccessData.argtypes = (c_void_p,)
+
+SafeArrayGetVartype = oledll.oleaut32.SafeArrayGetVartype
+SafeArrayGetVartype.argtypes = (c_void_p, POINTER(VARTYPE))
+
+SafeArrayCreate = windll.oleaut32.SafeArrayCreate
+SafeArrayCreate.argtypes = (VARTYPE, c_uint, POINTER(SAFEARRAYBOUND))
+SafeArrayCreate.restype = POINTER(SAFEARRAY)
+
+SafeArrayGetUBound = oledll.oleaut32.SafeArrayGetUBound
+SafeArrayGetUBound.argtypes = (c_void_p, c_uint, POINTER(c_long))
+
+SafeArrayGetLBound = oledll.oleaut32.SafeArrayGetLBound
+SafeArrayGetLBound.argtypes = (c_void_p, c_uint, POINTER(c_long))
+
+SafeArrayGetDim = oledll.oleaut32.SafeArrayGetDim
+SafeArrayGetDim.restype = c_uint
+
+################################################################
 
 def SafeArray_FromSequence(seq):
     """Create a one dimensional safearray of type VT_VARIANT from a
     sequence of Python objects
     """
-    psa = windll.oleaut32.SafeArrayCreateVectorEx(VT_VARIANT, 0, len(seq), None)
+    psa = SafeArrayCreateVectorEx(VT_VARIANT, 0, len(seq), None)
     for index, elem in enumerate(seq):
-        oledll.oleaut32.SafeArrayPutElement(psa, byref(c_long(index)), byref(VARIANT(elem)))
+        SafeArrayPutElement(psa, byref(c_long(index)), byref(VARIANT(elem)))
     return psa
 
 def SafeArray_FromArray(arr):
@@ -84,11 +110,11 @@ def SafeArray_FromArray(arr):
         "B": VT_UI1,
         }
     vt = TYPECODE[arr.typecode]
-    psa = windll.oleaut32.SafeArrayCreateVectorEx(vt, 0, len(arr), None)
+    psa = SafeArrayCreateVectorEx(vt, 0, len(arr), None)
     ptr = c_void_p()
-    oledll.oleaut32.SafeArrayAccessData(psa, byref(ptr))
+    SafeArrayAccessData(psa, byref(ptr))
     memmove(ptr, arr.buffer_info()[0], len(arr) * arr.itemsize)
-    oledll.oleaut32.SafeArrayUnaccessData(psa)
+    SafeArrayUnaccessData(psa)
     return vt, psa
 
 ################################################################
@@ -102,7 +128,7 @@ def _get_row(ctype, psa, dim, indices, lowerbounds, upperbounds):
     if dim+1 == len(indices):
         for i in range(indices[dim], upperbounds[dim]+1):
             indices[dim] = i
-            oledll.oleaut32.SafeArrayGetElement(psa, indices, byref(ctype))
+            SafeArrayGetElement(psa, indices, byref(ctype))
             result.append(ctype.value)
     else:
         for i in range(indices[dim], upperbounds[dim]+1):
@@ -129,24 +155,24 @@ _VT2CTYPE = {
 def _get_datatype(psa):
     # Return the ctypes data type corresponding to the SAFEARRAY's typecode.
     vt = VARTYPE()
-    oledll.oleaut32.SafeArrayGetVartype(psa, byref(vt))
+    SafeArrayGetVartype(psa, byref(vt))
     return _VT2CTYPE[vt.value]
 
 def _get_ubound(psa, dim):
     # Return the upper bound of a dimension in a safearray
     ubound = c_long()
-    oledll.oleaut32.SafeArrayGetUBound(psa, dim+1, byref(ubound))
+    SafeArrayGetUBound(psa, dim+1, byref(ubound))
     return ubound.value
 
 def _get_lbound(psa, dim):
     # Return the lower bound of a dimension in a safearray
     lb = c_long()
-    oledll.oleaut32.SafeArrayGetLBound(psa, dim+1, byref(lb))
+    SafeArrayGetLBound(psa, dim+1, byref(lb))
     return lb.value
 
 def UnpackSafeArray(psa):
     """Unpack a SAFEARRAY into a Python tuple."""
-    dim = oledll.oleaut32.SafeArrayGetDim(psa)
+    dim = SafeArrayGetDim(psa)
     lowerbounds = [_get_lbound(psa, d) for d in range(dim)]
     indexes = (c_long * dim)(*lowerbounds)
     upperbounds = [_get_ubound(psa, d) for d in range(dim)]
@@ -180,22 +206,22 @@ if __name__ == "__main__":
             rgsa[2].cElements = 4
         else:
             raise ValueError("dim %d not supported" % dim)
-        psa = windll.oleaut32.SafeArrayCreate(VT_BSTR, len(rgsa), rgsa)
+        psa = SafeArrayCreate(VT_BSTR, len(rgsa), rgsa)
 
         n = 1
         for b in rgsa:
             n *= b.cElements
         print "%d total elements" % n
 
-        ptr = POINTER(BSTR)()
+##        ptr = POINTER(BSTR)()
 
-        oledll.oleaut32.SafeArrayAccessData(psa, byref(ptr))
-        array = (BSTR * n)(*map(str, range(n)))
-        memmove(ptr, array, sizeof(array))
-        oledll.oleaut32.SafeArrayUnaccessData(psa)
+##        SafeArrayAccessData(psa, byref(ptr))
+##        array = (BSTR * n)(*map(str, range(n)))
+##        memmove(ptr, array, sizeof(array))
+##        SafeArrayUnaccessData(psa)
 
-        import pprint
-        pprint.pprint(UnpackSafeArray(psa))
+##        import pprint
+##        pprint.pprint(UnpackSafeArray(psa))
 
 ##    v = VARIANT()
 ##    v.value = [("1",), (2, 3, None)]
