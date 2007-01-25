@@ -53,6 +53,11 @@ class SAFEARRAY(Structure):
 # BTW: A C program has the same behaviour.
 
 windll.oleaut32.SafeArrayCreateVectorEx.restype = POINTER(SAFEARRAY)
+oledll.oleaut32.SafeArrayGetVartype.argtypes = (c_void_p, POINTER(VARTYPE))
+oledll.oleaut32.SafeArrayGetElement.argtypes = (c_void_p, POINTER(c_long), c_void_p)
+
+windll.oleaut32.SafeArrayCreate.argtypes = (VARTYPE, c_uint, POINTER(SAFEARRAYBOUND))
+windll.oleaut32.SafeArrayCreate.restype = POINTER(SAFEARRAY)
 
 def SafeArray_FromSequence(seq):
     """Create a one dimensional safearray of type VT_VARIANT from a
@@ -175,7 +180,6 @@ if __name__ == "__main__":
             rgsa[2].cElements = 4
         else:
             raise ValueError("dim %d not supported" % dim)
-##        windll.oleaut32.SafeArrayCreate.restype = POINTER(SAFEARRAY)
         psa = windll.oleaut32.SafeArrayCreate(VT_BSTR, len(rgsa), rgsa)
 
         n = 1
