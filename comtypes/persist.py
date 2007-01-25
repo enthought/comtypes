@@ -11,6 +11,7 @@ The 'DictPropertyBag' class is a class implementing the IPropertyBag
 interface, useful in client code.
 """
 from ctypes import *
+from ctypes.wintypes import WORD
 from comtypes import GUID, IUnknown, COMMETHOD, HRESULT, dispid
 from comtypes.automation import VARIANT, tagEXCEPINFO
 
@@ -67,7 +68,7 @@ class IPersistPropertyBag(IPersist):
         ]
 
 
-CLIPFORMAT = c_ulong # Hm, is that correct?
+CLIPFORMAT = WORD
 
 PROPBAG2_TYPE_UNDEFINED = 0
 PROPBAG2_TYPE_DATA = 1
