@@ -22,6 +22,8 @@ class PROCESS_MEMORY_COUNTERS(Structure):
         for n, _ in self._fields_[2:]:
             print n, getattr(self, n)/1e6
 
+windll.psapi.GetProcessMemoryInfo.argtypes = (HANDLE, POINTER(PROCESS_MEMORY_COUNTERS), DWORD)
+
 def wss():
     # Return the working set size (memory used by process)
     pmi = PROCESS_MEMORY_COUNTERS()
