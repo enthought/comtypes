@@ -109,8 +109,24 @@ if os.name == "ce":
     _InterlockedIncrement = windll.coredll.InterlockedIncrement
     _InterlockedDecrement = windll.coredll.InterlockedDecrement
 else:
-    _InterlockedIncrement = windll.kernel32.InterlockedIncrement
-    _InterlockedDecrement = windll.kernel32.InterlockedDecrement
+    try:
+        _InterlockedIncrement = windll.kernel32.InterlockedIncrement
+        _InterlockedDecrement = windll.kernel32.InterlockedDecrement
+    except AttributeError:
+        import thread
+        _lock = thread.allocate_lock()
+
+        def _InterlockedIncrement(obj):
+            _lock.acquire()
+            result = obj._obj.value = obj._obj.value + 1
+            _lock.release()
+            return result
+
+        def _InterlockedDecrement(obj):
+            _lock.acquire()
+            result = obj._obj.value = obj._obj.value - 1
+            _lock.release()
+            return result
 
 class COMObject(object):
     _instances_ = {}
