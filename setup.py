@@ -7,7 +7,7 @@ in pure Python.
 import comtypes
 
 import sys, os
-from distutils.core import setup, Command
+from distutils.core import setup, Command, DistutilsOptionError
 
 class test(Command):
     # Original version of this class posted
@@ -44,16 +44,16 @@ class test(Command):
     def run(self):
         self.run_command('build')
 
-        import ctypes.test
-        ctypes.test.use_resources.extend(self.use_resources)
+        import comtypes.test
+        comtypes.test.use_resources.extend(self.use_resources)
 
         for name in self.tests:
             package = __import__(name, globals(), locals(), ['*'])
             print "Testing package", name, (sys.version, sys.platform, os.name)
-            ctypes.test.run_tests(package,
-                                  "test_*.py",
-                                  self.verbose,
-                                  self.refcounts)
+            comtypes.test.run_tests(package,
+                                    "test_*.py",
+                                    self.verbose,
+                                    self.refcounts)
 
     # run()
 
