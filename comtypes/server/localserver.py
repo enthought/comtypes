@@ -101,7 +101,7 @@ def pump_messages():
     user32 = windll.user32
     msg = MSG()
     while 1:
-        res = user32.GetMessageA(byref(msg), 0, 0, 0)
+        res = user32.GetMessageA(byref(msg), None, 0, 0)
         if res == -1:
             raise WinError()
         if res:
