@@ -396,11 +396,18 @@ def LoadRegTypeLib(guid, wMajorVerNum, wMinorVerNum, lcid=0):
     _oleaut32.LoadRegTypeLib(byref(GUID(guid)), wMajorVerNum, wMinorVerNum, lcid, byref(tlib))
     return tlib
 
-def LoadTypeLibEx(szFile, regkind=REGKIND_NONE):
-    "Load, and optionally register a type library file"
-    ptl = POINTER(ITypeLib)()
-    _oleaut32.LoadTypeLibEx(c_wchar_p(szFile), regkind, byref(ptl))
-    return ptl
+if hasattr(_oleaut32, "LoadTypeLibEx"):
+    def LoadTypeLibEx(szFile, regkind=REGKIND_NONE):
+        "Load, and optionally register a type library file"
+        ptl = POINTER(ITypeLib)()
+        _oleaut32.LoadTypeLibEx(c_wchar_p(szFile), regkind, byref(ptl))
+        return ptl
+else:
+    def LoadTypeLibEx(szFile, regkind=REGKIND_NONE):
+        "Load, and optionally register a type library file"
+        ptl = POINTER(ITypeLib)()
+        _oleaut32.LoadTypeLib(c_wchar_p(szFile), byref(ptl))
+        return ptl
 
 def LoadTypeLib(szFile):
     "Load and register a type library file"
