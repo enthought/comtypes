@@ -1,3 +1,9 @@
+2007-01-25  Thomas Heller  <theller@python.net>
+
+	* Removed unneeded methods from comtypes.BSTR.  The resource
+	management is handled by ctypes; this requires ctypes version
+	1.0.2 to correctly release BSTR resources.
+
 2007-01-19  Thomas Heller  <theller@python.net>
 
 	* The comtypes.test package is now self contained, it does no
