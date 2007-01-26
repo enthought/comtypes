@@ -195,7 +195,7 @@ def run(args = []):
         elif flag == "-u":
             use_resources.extend(value.split(","))
 
-    mask = "test_*.py?"
+    mask = "test_*.py*"
     if args:
         mask = args[0]
 
