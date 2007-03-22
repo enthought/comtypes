@@ -12,14 +12,14 @@ except NameError:
     from comtypes.test.find_memleak import any
 
 ################################################################
-import comtypes.test.TestServer
+import comtypes.test.TestComServer
 
 LOOPS = 10, 1000
 
 class TestInproc(unittest.TestCase):
 
     def __init__(self, *args, **kw):
-        register(comtypes.test.TestServer.TestComServer)
+        register(comtypes.test.TestComServer.TestComServer)
         super(TestInproc, self).__init__(*args, **kw)
 
     def create_object(self):
