@@ -34,11 +34,14 @@ def GetModule(tlib):
 
     Or it can be an object with _reg_libid_ and _reg_version_
     attributes.
-    
+
+    A relative pathname is interpreted as relative to the callers
+    __file__, if this exists.
+
     This function determines the module name from the typelib
     attributes, then tries to import it.  If that fails because the
-    module doesn't exist, the module is generated in the comtypes.gen
-    package.
+    module doesn't exist, the module is generated into the
+    comtypes.gen package.
 
     It is possible to delete the whole comtypes\gen directory to
     remove all generated modules, the directory and the __init__.py
@@ -64,8 +67,21 @@ def GetModule(tlib):
     pathname = None
     if isinstance(tlib, basestring):
         # pathname of type library
-        pathname = tlib
+        if not os.path.isabs(tlib):
+            # If a relative pathname is used, we try to interpret
+            # this pathname as relative to the callers __file__.
+            frame = sys._getframe(1)
+            _file_ = frame.f_globals.get("__file__", None)
+            if _file_ is not None:
+                directory = os.path.dirname(os.path.abspath(_file_))
+                abspath = os.path.normpath(os.path.join(directory, tlib))
+                # If the file does exist, we use it.  Otherwise it may
+                # still be that the file is on Windows search path for
+                # typelibs, and we leave the pathname alone.
+                if os.path.isfile(abspath):
+                    tlib = abspath
         logger.info("GetModule(%s)", tlib)
+        pathname = tlib
         tlib = comtypes.typeinfo.LoadTypeLibEx(tlib)
     elif isinstance(tlib, (tuple, list)):
         # sequence containing libid and version numbers
@@ -144,10 +160,11 @@ def _module_is_current(tlib, tlib_path, module_path):
             if os.path.isfile(what):
                 tlib_path = what
                 break
-        else:
-            # Cannot find the file, so cannot check timestamps.
-            # Assume the module is current.
-            return True
+
+    if not os.path.isfile(tlib_path):
+        # Cannot find the file, so cannot check timestamps.
+        # Assume the module is current.
+        return True
 
     return os.stat(module_path).st_mtime > os.stat(tlib_path).st_mtime
 
