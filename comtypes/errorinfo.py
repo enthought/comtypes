@@ -88,7 +88,8 @@ def ReportException(hresult, iid, clsid=None, helpfile=None, helpcontext=None):
     """Report a COM exception.  Returns the passed in hresult value."""
     text = "%s: %s" % sys.exc_info()[:2]
     return ReportError(text, iid,
-                       clsid=clsid, helpfile=helpfile, helpcontext=helpcontext)
+                       clsid=clsid, helpfile=helpfile, helpcontext=helpcontext,
+                       hresult=hresult)
 
 __all__ = ["ICreateErrorInfo", "IErrorInfo", "ISupportErrorInfo",
            "ReportError", "ReportException",
