@@ -5,9 +5,6 @@ from comtypes.test import requires
 
 ##requires("memleaks")
 
-import _ctypes_test
-dll = CDLL(_ctypes_test.__file__)
-
 try:
     any
 except NameError:
@@ -23,6 +20,7 @@ class Test(unittest.TestCase):
     def test_creation(self):
         def doit():
             BSTR(u"abcdef" * 100)
+        doit()
         self.check_leaks(doit)
 
     def test_from_param(self):
@@ -30,29 +28,15 @@ class Test(unittest.TestCase):
             BSTR.from_param(u"abcdef")
         self.check_leaks(doit)
 
-    def test_call_1(self):
-        func = dll._testfunc_p_p
-        func.restype = c_void_p
-        func.argtypes = (BSTR, )
-        def doit():
-            func(u"abcdef")
-        self.check_leaks(doit)
-
-    def test_call_2(self):
-        func = dll._testfunc_p_p
-        func.restype = c_void_p
-        func.argtypes = (BSTR, )
-        def doit():
-            func(BSTR(u"abcdef"))
-        self.check_leaks(doit)
-
     def test_paramflags(self):
-        prototype = CFUNCTYPE(c_void_p, BSTR)
-        func = prototype(("_testfunc_p_p", dll))
+        prototype = WINFUNCTYPE(c_void_p, BSTR)
+        func = prototype(("SysStringLen", oledll.oleaut32))
         func.restype = c_void_p
         func.argtypes = (BSTR, )
         def doit():
             func(u"abcdef")
+            func(u"abc xyz")
+            func(BSTR(u"abc def"))
         self.check_leaks(doit)
 
     def test_inargs(self):
@@ -63,6 +47,8 @@ class Test(unittest.TestCase):
         self.failUnlessEqual(SysStringLen("abc xyz"), 7)
         def doit():
             SysStringLen("abc xyz")
+            SysStringLen(u"abc xyz")
+            SysStringLen(BSTR(u"abc def"))
         self.check_leaks(doit)
 
 if __name__ == "__main__":

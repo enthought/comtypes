@@ -568,6 +568,21 @@ class BSTR(_SimpleCData):
         _free(self)
         return result
 
+    def __del__(self, _free=windll.oleaut32.SysFreeString):
+        """If we own the memory, call SysFreeString to free it."""
+        if not self._b_base_:
+            _free(self)
+
+    def from_param(cls, value):
+        """Convert into a foreign function call parameter."""
+        if isinstance(value, cls):
+            return value
+        # Although the builtin SimpleCData.from_param call does the
+        # right thing, it doesn't ensure that SysFreeString is called
+        # on destruction.
+        return cls(value)
+    from_param = classmethod(from_param)
+
 ################################################################
 # IDL stuff
 
@@ -757,8 +772,11 @@ class IUnknown(object):
             raise TypeError, "unsubscriptable object"
         try:
             result = mth(index)
-        except COMError:
-            raise IndexError, "invalid index"
+        except COMError, details:
+            if details.hresult == -2147352565: # DISP_E_BADINDEX
+                raise IndexError, "invalid index"
+            else:
+                raise
         # Hm, this doesn't look correct...
         if not result: # we got a NULL com pointer
             raise IndexError, "invalid index"
@@ -783,6 +801,9 @@ class IUnknown(object):
             #
             # Sometimes, however, it is a method.
             enum = enum()
+        if hasattr(enum, "Next"):
+            enum.__parent = self
+            return lambda: enum
         # _NewEnum returns an IUnknown pointer, QueryInterface() it to
         # IEnumVARIANT
         from comtypes.automation import IEnumVARIANT

@@ -2,7 +2,7 @@ import unittest
 from ctypes import *
 from ctypes.wintypes import *
 from comtypes.client import CreateObject
-from comtypes.server.register import register, unregister
+from comtypes.server.register import register#, unregister
 from comtypes.test import is_resource_enabled
 from comtypes.test.find_memleak import find_memleak
 
@@ -13,8 +13,6 @@ except NameError:
 
 ################################################################
 import comtypes.test.TestComServer
-
-LOOPS = 10, 1000
 
 class TestInproc(unittest.TestCase):
 
@@ -28,6 +26,29 @@ class TestInproc(unittest.TestCase):
     def _find_memleak(self, func):
         leaks = find_memleak(func)
         self.failIf(any(leaks), "Leaks %d bytes: %s" % (sum(leaks), leaks))
+
+    def test_getname(self):
+        from ctypes import byref, pointer
+        from comtypes import BSTR
+
+        # This tests a tricky bug, introduced with this patch:
+        # http://www.python.org/sf/1643874
+        #
+        # Returning a BSTR as an [out] parameter from a server
+        # implementation must transfer the ownership to the caller.
+        # When this is not done, the BSTR instance is SysFreeString'd
+        # too early, and the memory is reused.
+        obj = self.create_object()
+        pb = pointer(BSTR())
+        # Get the BSTR from the server:
+        obj._ITestComServer__com__get_name(pb)
+        # Retrieve the value, but keep the pointer to the BSTR alive:
+        name = pb[0]
+        # Create sme BSTR's to reuse the memory in case it has been freed:
+        for i in range(10):
+            BSTR("f" * len(name))
+        # Make sure the pointer is still valid:
+        self.failUnlessEqual(pb[0], name)
 
     if is_resource_enabled("memleaks"):
         def test_get_id(self):
