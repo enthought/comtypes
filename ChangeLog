@@ -1,5 +1,25 @@
+2007-03-22  Thomas Heller  <theller@python.net>
+
+	* In comtypes.hresult, add the hex HRESULT values in comments for
+	reference.
+
+	* In comtypes.errorinfo.ReportError, use the supplied hresult
+	value.
+
+	* Improved _NewEnum client-side handling.
+
+	* When a relative pathname to a type library is passed to
+	comtypes.client.GetModule(), the pathname is now interpreted
+	relative to the __file__ of the caller if this pathname actually
+	exists in the filesystem.
+
+	* Fixed several memory leaks and other problems in the BSTR
+	implementation.  The previous change that requires ctypes version
+	1.0.2 was backed out again because it was the wrong approach.
+	
 2007-01-25  Thomas Heller  <theller@python.net>
 
+	NOTE: This comment is no longer true, see above.
 	* Removed unneeded methods from comtypes.BSTR.  The resource
 	management is handled by ctypes; this requires ctypes version
 	1.0.2 to correctly release BSTR resources.
