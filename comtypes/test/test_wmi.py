@@ -1,6 +1,9 @@
 import unittest as ut
 from ctypes import POINTER
 from comtypes.client import CoGetObject
+from comtypes.test import requires
+
+requires("time")
 
 # WMI has dual interfaces.
 # Some methods/properties have "[out] POINTER(VARIANT)" parameters.

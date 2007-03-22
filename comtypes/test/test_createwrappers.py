@@ -5,6 +5,9 @@ import warnings
 import comtypes.typeinfo
 import comtypes.client
 import comtypes.client._generate
+from comtypes.test import requires
+
+requires("typelibs")
 
 # filter warnings about interfaces without a base interface; they will
 # be skipped in the code generation.
