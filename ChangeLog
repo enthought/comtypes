@@ -1,3 +1,12 @@
+2007-03-23  Thomas Heller  <theller@python.net>
+
+	* Fixed: TextWrap did destroy the generated code when very long
+	symbol names used were in the type library.
+
+	* The IEnumVARIANT.Next(celt) method can now be called with
+	celt != 1.  It will return a list of items then; this allows to get
+	more objects at a time.
+
 2007-03-22  Thomas Heller  <theller@python.net>
 
 	* In comtypes.hresult, add the hex HRESULT values in comments for
