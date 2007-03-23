@@ -361,6 +361,7 @@ import comtypes
 comtypes._VARIANT_type_hack = VARIANT
 
 _carg_obj = type(byref(c_int()))
+from _ctypes import Array as _CArrayType
 
 # Override the default .from_param classmethod of POINTER(VARIANT).
 # This allows to pass values which can be stored in VARIANTs as
@@ -377,11 +378,19 @@ def _from_param(self, arg):
     # accept VARIANT instance
     if isinstance(arg, VARIANT):
         return byref(arg)
+    if isinstance(arg, _CArrayType) and arg._type_ is VARIANT:
+        # accept array of VARIANTs
+        return arg
     # anything else which can be converted to a VARIANT.
     return byref(VARIANT(arg))
 
 POINTER(VARIANT).from_param = classmethod(_from_param)
 del _from_param
+
+def setitem(self, index, value):
+    self[index].value = value
+
+POINTER(VARIANT).__setitem__ = setitem
 
 ################################################################
 
@@ -394,21 +403,28 @@ class IEnumVARIANT(IUnknown):
     def next(self):
         item, fetched = self.Next(1)
         if fetched:
-            # XXX This should read 'return item[0]', since Next()
-            # always returns a pointer to an array.
-            # Oder wie oder was...
             return item
         raise StopIteration
 
     def __getitem__(self, index):
-        # XXX Simplify me!!!
-        var = VARIANT()
         self.Reset()
+        # Does not yet work.
+##        if isinstance(index, slice):
+##            self.Skip(index.start or 0)
+##            return self.Next(index.stop or sys.maxint)
         self.Skip(index)
-        fetched = self.Next(1, byref(var))
+        item, fetched = self.Next(1)
         if fetched:
-            return var.value
-        raise IndexError, index
+            return item
+        raise IndexError
+
+    def Next(self, celt):
+        if celt == 1:
+            return self._Next(1)
+        fetched = c_ulong()
+        array = (VARIANT * celt)()
+        self.__com_Next(celt, array, fetched)
+        return [v.value for v in array[:fetched.value]]
 
 IEnumVARIANT._methods_ = [
     COMMETHOD([], HRESULT, 'Next',
