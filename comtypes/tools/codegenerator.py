@@ -246,10 +246,11 @@ class Generator(object):
         self.output.write(self.stream.getvalue())
 
         import textwrap
+        wrapper = textwrap.TextWrapper(subsequent_indent="           ",
+                                       break_long_words=False)
         text = "__all__ = [%s]" % ", ".join([repr(str(n)) for n in self.names])
 
-        for line in textwrap.wrap(text,
-                                  subsequent_indent="           "):
+        for line in wrapper.wrap(text):
             print >> self.output, line
         return loops
 
