@@ -102,15 +102,16 @@ else:
         def create_object(self):
             return Dispatch("TestComServerLib.TestComServer")
 
+        # These tests make no sense with win32com, override to disable them:
         def test_get_typeinfo(self):
             pass
 
-    class TestLocalServer_win32com(TestInproc):
+        def test_getname(self):
+            pass
+
+    class TestLocalServer_win32com(TestInproc_win32com):
         def create_object(self):
             return Dispatch("TestComServerLib.TestComServer", clsctx = comtypes.CLSCTX_LOCAL_SERVER)
-
-        def test_get_typeinfo(self):
-            pass
 
 if __name__ == "__main__":
     unittest.main()
