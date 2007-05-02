@@ -21,7 +21,8 @@ class TestInproc(unittest.TestCase):
         super(TestInproc, self).__init__(*args, **kw)
 
     def create_object(self):
-        return CreateObject("TestComServerLib.TestComServer")
+        return CreateObject("TestComServerLib.TestComServer",
+                            clsctx = comtypes.CLSCTX_INPROC_SERVER)
 
     def _find_memleak(self, func):
         leaks = find_memleak(func)
