@@ -133,7 +133,7 @@ class COMObject(object):
     _factory = None
 
     def __new__(cls, *args, **kw):
-        self = super(COMObject, cls).__new__(cls, *args, **kw)
+        self = super(COMObject, cls).__new__(cls)
         if isinstance(self, c_void_p):
             # We build the VTables only for direct instances of
             # CoClass, not for POINTERs to CoClass.
