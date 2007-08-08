@@ -1,3 +1,8 @@
+2007-08-08  Thomas Heller  <theller@python.net>
+
+	* Add better support for dynamic dispatch, comtypes.CoUninitialize
+	function.  Patch from Belyaev Dmitry.
+
 2007-03-23  Thomas Heller  <theller@python.net>
 
 	* Fixed: TextWrap did destroy the generated code when very long

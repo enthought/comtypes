@@ -83,6 +83,13 @@ def CoInitializeEx(flags=None):
 # called when Python is shut down.
 CoInitializeEx()
 
+# We need to have CoUninitialize for multithreaded model where we have
+# to initialize and uninitialize COM for every new thread (except main)
+# in which we are using COM
+def CoUninitialize():
+    logger.debug("CoUninitialize()")
+    _ole32.CoUninitialize()
+
 def shutdown(func=_ole32.CoUninitialize,
              _debug=logger.debug):
     # Make sure no COM pointers stay in exception frames.
