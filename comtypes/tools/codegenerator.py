@@ -410,11 +410,16 @@ class Generator(object):
                 # Hm. We cannot generate code for IUnknown...
                 print >> self.stream, "assert 0, 'cannot generate code for IUnknown'"
                 print >> self.stream, "class %s(_com_interface):" % head.struct.name
+                print >> self.stream, "    pass"
             elif type(head.struct) == typedesc.Structure:
                 print >> self.stream, "class %s(Structure):" % head.struct.name
+                if hasattr(head.struct, "_recordinfo_"):
+                    print >> self.stream, "    _recordinfo_ = %r" % (head.struct._recordinfo_,)
+                else:
+                    print >> self.stream, "    pass"
             elif type(head.struct) == typedesc.Union:
                 print >> self.stream, "class %s(Union):" % head.struct.name
-            print >> self.stream, "    pass"
+                print >> self.stream, "    pass"
         self.names.add(head.struct.name)
 
     _structures = 0

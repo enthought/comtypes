@@ -148,6 +148,14 @@ class Parser(object):
                                     size=ta.cbSizeInstance*8)
         self._register(struct_name, struct)
 
+        if ta.guid:
+            tlib, _ = tinfo.GetContainingTypeLib()
+            tlib_ta = tlib.GetLibAttr()
+            struct._recordinfo_ = (str(tlib_ta.guid),
+                                   tlib_ta.wMajorVerNum, tlib_ta.wMinorVerNum,
+                                   tlib_ta.lcid,
+                                   str(ta.guid))
+
         for i in range(ta.cVars):
             vd = tinfo.GetVarDesc(i)
             name = tinfo.GetDocumentation(vd.memid)[0]
