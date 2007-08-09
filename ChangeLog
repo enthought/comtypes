@@ -1,6 +1,13 @@
 2007-08-09  Thomas Heller  <theller@python.net>
 
-	* Release comtypes-0.3.2
+	* Added the IRecordInfo interface to comtypes.typeinfo.
+
+	* If UDTs (structures or unions) in a typelib have a GUID defined,
+	add a _recordinfo_ attribute to the generated code.  This allows
+	to call GetRecordInfoFromGuids(*_recordinfo_) to get an
+	IRecordInfo pointer.
+
+	* Released comtypes-0.3.2
 
 2007-08-08  Thomas Heller  <theller@python.net>
 
