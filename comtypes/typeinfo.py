@@ -386,9 +386,85 @@ class ICreateTypeInfo(IUnknown):
             rgszNames[i] = n
         return self._SetFuncAndParamNames(index, rgszNames, len(names))
 
+class IRecordInfo(IUnknown):
+    # C:/vc98/include/OAIDL.H 5974
+    _iid_ = GUID("{0000002F-0000-0000-C000-000000000046}")
+
+    def GetFieldNames(self, *args):
+        count = c_ulong()
+        self.__com_GetFieldNames(count, None)
+        array = (BSTR * count.value)()
+        self.__com_GetFieldNames(count, array)
+        result = array[:]
+        # XXX Should SysFreeString the array contents. How to?
+        return result
+
+IRecordInfo. _methods_ = [
+        COMMETHOD([], HRESULT, 'RecordInit',
+                  (['in'], c_void_p, 'pvNew')),
+        COMMETHOD([], HRESULT, 'RecordClear',
+                  (['in'], c_void_p, 'pvExisting')),
+        COMMETHOD([], HRESULT, 'RecordCopy',
+                  (['in'], c_void_p, 'pvExisting'),
+                  (['in'], c_void_p, 'pvNew')),
+        COMMETHOD([], HRESULT, 'GetGuid',
+                  (['out'], POINTER(GUID), 'pguid')),
+        COMMETHOD([], HRESULT, 'GetName',
+                  (['out'], POINTER(BSTR), 'pbstrName')),
+        COMMETHOD([], HRESULT, 'GetSize',
+                  (['out'], POINTER(c_ulong), 'pcbSize')),
+        COMMETHOD([], HRESULT, 'GetTypeInfo',
+                  (['out'], POINTER(POINTER(ITypeInfo)), 'ppTypeInfo')),
+        COMMETHOD([], HRESULT, 'GetField',
+                  (['in'], c_void_p, 'pvData'),
+                  (['in'], c_wchar_p, 'szFieldName'),
+                  (['out'], POINTER(VARIANT), 'pvarField')),
+        COMMETHOD([], HRESULT, 'GetFieldNoCopy',
+                  (['in'], c_void_p, 'pvData'),
+                  (['in'], c_wchar_p, 'szFieldName'),
+                  (['out'], POINTER(VARIANT), 'pvarField'),
+                  (['out'], POINTER(c_void_p), 'ppvDataCArray')),
+        COMMETHOD([], HRESULT, 'PutField',
+                  (['in'], c_ulong, 'wFlags'),
+                  (['in'], c_void_p, 'pvData'),
+                  (['in'], c_wchar_p, 'szFieldName'),
+                  (['in'], POINTER(VARIANT), 'pvarField')),
+        COMMETHOD([], HRESULT, 'PutFieldNoCopy',
+                  (['in'], c_ulong, 'wFlags'),
+                  (['in'], c_void_p, 'pvData'),
+                  (['in'], c_wchar_p, 'szFieldName'),
+                  (['in'], POINTER(VARIANT), 'pvarField')),
+        COMMETHOD([], HRESULT, 'GetFieldNames',
+                  (['in', 'out'], POINTER(c_ulong), 'pcNames'),
+                  (['in'], POINTER(BSTR), 'rgBstrNames')),
+        COMMETHOD([], BOOL, 'IsMatchingType',
+                  (['in'], POINTER(IRecordInfo))),
+        COMMETHOD([], HRESULT, 'RecordCreate'),
+        COMMETHOD([], HRESULT, 'RecordCreateCopy',
+                  (['in'], c_void_p, 'pvSource'),
+                  (['out'], POINTER(c_void_p), 'ppvDest')),
+        COMMETHOD([], HRESULT, 'RecordDestroy',
+                  (['in'], c_void_p, 'pvRecord'))]
+
+                  
+
 ################################################################
 # functions
 _oleaut32 = oledll.oleaut32
+
+def GetRecordInfoFromTypeInfo(tinfo):
+    "Return an IRecordInfo pointer to the UDT described in tinfo"
+    ri = POINTER(IRecordInfo)()
+    _oleaut32.GetRecordInfoFromTypeInfo(tinfo, byref(ri))
+    return ri
+
+def GetRecordInfoFromGuids(rGuidTypeLib, verMajor, verMinor, lcid, rGuidTypeInfo):
+    ri = POINTER(IRecordInfo)()
+    _oleaut32.GetRecordInfoFromGuids(byref(GUID(rGuidTypeLib)),
+                                     verMajor, verMinor, lcid,
+                                     byref(GUID(rGuidTypeInfo)),
+                                     byref(ri))
+    return ri
 
 def LoadRegTypeLib(guid, wMajorVerNum, wMinorVerNum, lcid=0):
     "Load a registered type library"
