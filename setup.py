@@ -1,7 +1,9 @@
-r"""comtypes - Python COM package, based on the ctypes FFI library.
+r"""comtypes - pure Python COM package, based on the ctypes FFI library.
 
 comtypes allows to define, call, and implement custom COM interfaces
 in pure Python.
+
+http://svn.python.org/projects/ctypes/trunk/comtypes/#egg=comtypes-dev
 
 ----------------------------------------------------------------"""
 import comtypes
@@ -76,9 +78,10 @@ setup(name="comtypes",
       long_description = __doc__,
       author="Thomas Heller",
       author_email="theller@python.net",
-      license="MIT License",
-      url="http://starship.python.net/crew/theller/comtypes/",
+      url="http://starship.python.net/crew/wiki/the_comtypes_package",
+      download_url = "http://sourceforge.net/project/showfiles.php?group_id=115265",
 
+      license="MIT License",
       package_data = {"comtypes.test": ["TestComServer.idl",
                                         "TestComServer.tlb"]},
 
