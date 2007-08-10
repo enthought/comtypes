@@ -50,6 +50,16 @@ library TestComServerLib
 {
 	importlib("stdole2.tlb");
 
+	typedef
+		[
+			uuid(086b7f11-aed0-4de0-b77a-f1998371da83)
+			]
+		struct MYCOLOR {
+			double red;
+			double green;
+			double blue;
+		} MYCOLOR;
+
 	[
 		uuid(1fca61d1-a1a6-464c-b3a8-e9508b4ac8f7),
 		helpstring("TestComServer class object")
