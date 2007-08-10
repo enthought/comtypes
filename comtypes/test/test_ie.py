@@ -1,7 +1,6 @@
 import unittest as ut
 from ctypes import *
-from comtypes.client import CreateObject, GetEvents
-from comtypes import PumpWaitingMessages
+from comtypes.client import CreateObject, GetEvents, PumpWaitingMessages
 
 import comtypes.test
 comtypes.test.requires("ui")

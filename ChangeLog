@@ -1,7 +1,7 @@
 2007-08-10  Thomas Heller  <theller@python.net>
 
-	* Add comtypes.PumpWaitingMessages() helper funtion.  May be used
-	to dispatch COM events in single threaded appartments.
+	* Add comtypes.client.PumpWaitingMessages() helper funtion.  May
+	be used to dispatch COM events in single threaded appartments.
 
 2007-08-09  Thomas Heller  <theller@python.net>
 
