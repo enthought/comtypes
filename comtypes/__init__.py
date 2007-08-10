@@ -113,6 +113,20 @@ atexit.register(shutdown)
 del shutdown
 
 ################################################################
+# Helper function: in single threaded appartments, a message loop must
+# be running to dispatch COM events.
+
+def PumpWaitingMessages():
+    user32 = windll.user32
+    from ctypes.wintypes import MSG
+    msg = MSG()
+    PM_REMOVE = 0x0001
+    while user32.PeekMessageA(byref(msg), None, 0, 0, PM_REMOVE):
+        user32.TranslateMessage(byref(msg))
+        user32.DispatchMessageA(byref(msg))
+
+
+################################################################
 # global registries.
 
 # allows to find interface classes by guid strings (iid)

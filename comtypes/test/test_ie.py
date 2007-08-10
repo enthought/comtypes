@@ -1,6 +1,7 @@
 import unittest as ut
 from ctypes import *
 from comtypes.client import CreateObject, GetEvents
+from comtypes import PumpWaitingMessages
 
 import comtypes.test
 comtypes.test.requires("ui")
@@ -47,15 +48,6 @@ class MSG(Structure):
                 ("lParam", c_ulong),
                 ("time", c_ulong),
                 ("pt", POINT)]
-
-def PumpWaitingMessages():
-    from ctypes import windll, byref
-    user32 = windll.user32
-    msg = MSG()
-    PM_REMOVE = 0x0001
-    while user32.PeekMessageA(byref(msg), 0, 0, 0, PM_REMOVE):
-        user32.TranslateMessage(byref(msg))
-        user32.DispatchMessageA(byref(msg))
 
 class Test(ut.TestCase):
 
