@@ -1,3 +1,8 @@
+2007-08-14  Thomas Heller  <theller@python.net>
+
+	* comtypes\tools\codegenerator.py: Generate the needed imports
+	when COM defaultvalues are used in parameter lists.
+
 2007-08-10  Thomas Heller  <theller@python.net>
 
 	* Add comtypes.client.PumpWaitingMessages() helper funtion.  May
