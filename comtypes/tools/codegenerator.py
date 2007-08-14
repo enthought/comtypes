@@ -305,6 +305,13 @@ class Generator(object):
             return "c_int" # enums are integers
         return t.name
 
+    def need_VARIANT_imports(self, value):
+        text = repr(value)
+        if "Decimal(" in text:
+            print >> self.imports, "from decimal import Decimal"
+        if "datetime.datetime(" in text:
+            print >> self.imports, "import datetime"
+
     _STRING_defined = False
     def need_STRING(self):
         if self._STRING_defined:
@@ -822,6 +829,7 @@ class Generator(object):
                 if 'lcid' in idlflags:# and 'in' in idlflags:
                     default = lcid
                 if default is not None:
+                    self.need_VARIANT_imports(default)
                     arglist.append("( %r, %s, '%s', %r )" % (
                         idlflags,
                         self.type_name(typ),
@@ -852,6 +860,7 @@ class Generator(object):
             self.stream.write("               ")
             arglist = []
             for typ, name, idlflags, default in m.arguments:
+                self.need_VARIANT_imports(default)
                 if default is not None:
                     arglist.append("( %r, %s, '%s', %r )" % (
                         idlflags,

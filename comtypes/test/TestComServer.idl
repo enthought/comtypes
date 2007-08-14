@@ -39,6 +39,13 @@ interface ITestComServer : IDispatch {
 
 	[id(13), helpstring("evaluate an expression and return the result")]
 	HRESULT eval([in] BSTR what, [out, retval] VARIANT *presult);
+
+	/* Some methods that use defaultvalues */
+	[id(14)]
+	HRESULT do_cy([in, defaultvalue(32.78)] CURRENCY *value);
+
+	[id(15)]
+	HRESULT do_date([in, defaultvalue(32)] DATE *value);
 };
 
 [
