@@ -223,12 +223,12 @@ def PumpWaitingMessages():
     periodically if no other message loop is running (in a console
     application, for example).
     """
-    user32 = windll.user32
+    user32 = ctypes.windll.user32
     from ctypes.wintypes import MSG
     msg = MSG()
     PM_REMOVE = 0x0001
-    while user32.PeekMessageA(byref(msg), None, 0, 0, PM_REMOVE):
-        user32.TranslateMessage(byref(msg))
-        user32.DispatchMessageA(byref(msg))
+    while user32.PeekMessageA(ctypes.byref(msg), None, 0, 0, PM_REMOVE):
+        user32.TranslateMessage(ctypes.byref(msg))
+        user32.DispatchMessageA(ctypes.byref(msg))
 
 
