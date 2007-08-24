@@ -72,7 +72,7 @@ class DualDispImplMixin(object):
             return E_INVALIDARG
         # XXX MSDN: The outgoing interface in question must be derived from IDispatch. 
         iid = self._outgoing_interfaces_[0]._iid_
-        memmove(pGUID, iid, sizeof(iid))
+        memmove(pGUID, byref(iid), sizeof(iid))
         logger.debug("IProvideClassInfo2::GetGUID -> %s", iid)
         return S_OK
 
