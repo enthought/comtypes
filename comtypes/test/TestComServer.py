@@ -13,6 +13,7 @@ import comtypes.client
 import comtypes.errorinfo
 import comtypes.server
 import comtypes.server.automation
+import comtypes.server.connectionpoints
 import comtypes.typeinfo
 
 ################################################################
@@ -40,6 +41,7 @@ from comtypes.gen import TestComServerLib
 class TestComServer(
     TestComServerLib.TestComServer, # the coclass from the typelib wrapper
     comtypes.server.automation.DualDispImplMixin, # other mixins
+    comtypes.server.connectionpoints.ConnectableObjectMixin,
     ):
 
     # The default interface from the typelib MUST be the first
@@ -48,6 +50,7 @@ class TestComServer(
     _com_interfaces_ = TestComServerLib.TestComServer._com_interfaces_ + \
                        [comtypes.typeinfo.IProvideClassInfo2,
                         comtypes.errorinfo.ISupportErrorInfo,
+                        comtypes.connectionpoints.IConnectionPointContainer,
                         ]
 
     # registry entries
@@ -98,7 +101,9 @@ class TestComServer(
         return S_OK
 
     def ITestComServer_eval(self, this, what, presult):
+        self.Fire_Event(0, "EvalStarted", what)
         presult[0].value = eval(what)
+        self.Fire_Event(0, "EvalCompleted", what, presult[0].value)
         return S_OK
 
     def ITestComServer__get_id(self, this, pid):
