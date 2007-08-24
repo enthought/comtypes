@@ -161,7 +161,7 @@ def GetCustomEventReceiver(interface, sink):
         for info in itf._methods_:
             restype, name, argtypes, paramflags, idlflags, docstring = info
 
-            mth = getattr(sink, name, lambda self, this, *args: None)
+            mth = getattr(sink, name, lambda self, this, *args: 0)
             setattr(EventReceiver, name, mth)
     rcv = EventReceiver()
     return rcv
@@ -195,6 +195,7 @@ class EventDumper(object):
         print "# event found:", name
         def handler(*args, **kw):
             print "Event %s(%s)" % (name, ", ".join([repr(a) for a in args]))
+            return 0
         return handler
 
 def ShowEvents(source, interface=None):
