@@ -16,6 +16,20 @@ import "ocidl.idl";
 
 [
 	object,
+	oleautomation,
+	uuid(f0a241e2-25d1-4f6d-9461-c67bf262779f),
+	helpstring("A custom event interface")
+	]
+interface ITestComServerEvents : IUnknown {
+	[id(10)]
+	HRESULT EvalStarted([in] BSTR what);
+
+	[id(11)]
+	HRESULT EvalCompleted([in] BSTR what, [in] VARIANT result);
+};
+
+[
+	object,
 	/*
 	  the oleautomation flag enables universal marshalling on non-dispatch
 	  interfaces. See Don Box, Page 220.
@@ -73,5 +87,6 @@ library TestComServerLib
 		]
 		coclass TestComServer {
 		[default] interface ITestComServer;
+		[default, source] interface ITestComServerEvents;
 	};
 };
