@@ -7,7 +7,8 @@
 	implementation.
 
 	* comtypes.client: Fix ShowEvents(): COM methods must return a
-	HRESULT value, not None.
+	HRESULT value, not None.  Fix several NameErrors in the
+	PumpWaitingMessages function.
 	
 2007-08-14  Thomas Heller  <theller@python.net>
 
