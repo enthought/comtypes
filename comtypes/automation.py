@@ -3,6 +3,8 @@ from ctypes import *
 from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
+from comtypes.partial import partial
+
 import datetime # for VT_DATE, standard in Python 2.3 and up
 import array
 try:
@@ -363,34 +365,31 @@ comtypes._VARIANT_type_hack = VARIANT
 _carg_obj = type(byref(c_int()))
 from _ctypes import Array as _CArrayType
 
-# Override the default .from_param classmethod of POINTER(VARIANT).
-# This allows to pass values which can be stored in VARIANTs as
-# function parameters declared as POINTER(VARIANT).  See
-# InternetExplorer's Navigate2() method, or Word's Close() method, for
-# examples.
-def _from_param(self, arg):
-    # accept POINTER(VARIANT) instance
-    if isinstance(arg, POINTER(VARIANT)):
-        return arg
-    # accept byref(VARIANT) instance
-    if isinstance(arg, _carg_obj) and isinstance(arg._obj, VARIANT):
-        return arg
-    # accept VARIANT instance
-    if isinstance(arg, VARIANT):
-        return byref(arg)
-    if isinstance(arg, _CArrayType) and arg._type_ is VARIANT:
-        # accept array of VARIANTs
-        return arg
-    # anything else which can be converted to a VARIANT.
-    return byref(VARIANT(arg))
+class _(partial, POINTER(VARIANT)):
+    # Override the default .from_param classmethod of POINTER(VARIANT).
+    # This allows to pass values which can be stored in VARIANTs as
+    # function parameters declared as POINTER(VARIANT).  See
+    # InternetExplorer's Navigate2() method, or Word's Close() method, for
+    # examples.
+    def from_param(self, arg):
+        # accept POINTER(VARIANT) instance
+        if isinstance(arg, POINTER(VARIANT)):
+            return arg
+        # accept byref(VARIANT) instance
+        if isinstance(arg, _carg_obj) and isinstance(arg._obj, VARIANT):
+            return arg
+        # accept VARIANT instance
+        if isinstance(arg, VARIANT):
+            return byref(arg)
+        if isinstance(arg, _CArrayType) and arg._type_ is VARIANT:
+            # accept array of VARIANTs
+            return arg
+        # anything else which can be converted to a VARIANT.
+        return byref(VARIANT(arg))
+    from_param = classmethod(from_param)
 
-POINTER(VARIANT).from_param = classmethod(_from_param)
-del _from_param
-
-def setitem(self, index, value):
-    self[index].value = value
-
-POINTER(VARIANT).__setitem__ = setitem
+    def __setitem__(self, index, value):
+        self[index].value = value
 
 ################################################################
 
