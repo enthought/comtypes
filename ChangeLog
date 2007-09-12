@@ -1,3 +1,12 @@
+2007-09-03  Thomas Heller  <theller@python.net>
+
+	* Add the partial module, which allows the usual class statement
+	syntax to attach methods to already existing classes.
+
+	* Use partial in comtypes.automation to attach methods to
+	POINTER(VARIANT).
+
+
 2007-08-24  Thomas Heller  <theller@python.net>
 
 	* Added a custom outgoing interface to TestComServer.idl.
