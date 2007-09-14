@@ -20,11 +20,14 @@ comtypes.client._generate.__verbose__ = False
 
 sysdir = os.path.join(os.environ["SystemRoot"], "system32")
 
+progdir = os.environ["ProgramFiles"]
+
 # This test takes quite some time.  It tries to build wrappers for ALL
 # .dll, .tlb, and .ocx files in the system directory which contain typelibs.
 
 class Test(unittest.TestCase):
     def setUp(self):
+        "Do not write the generated files into the comtypes.gen directory"
         comtypes.client.gen_dir = None
 
     def tearDown(self):
@@ -49,6 +52,12 @@ for fname in glob.glob(os.path.join(sysdir, "*.ocx")):
     add_test(fname)
 
 for fname in glob.glob(os.path.join(sysdir, "*.tlb")):
+    add_test(fname)
+
+for fname in glob.glob(os.path.join(progdir, r"Microsoft Office\Office*\*.tlb")):
+    add_test(fname)
+
+for fname in glob.glob(os.path.join(progdir, r"Microsoft Office\Office*\*.olb")):
     add_test(fname)
 
 for fname in glob.glob(os.path.join(sysdir, "*.dll")):
