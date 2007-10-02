@@ -1,8 +1,9 @@
 # very thin safearray support
 from ctypes import *
-from comtypes.typeinfo import SAFEARRAYBOUND
-from comtypes.automation import VARIANT, VARTYPE, BSTR
+from comtypes.typeinfo import SAFEARRAYBOUND, IRecordInfo
+from comtypes.automation import VARIANT, VARTYPE, BSTR, VT_RECORD
 from comtypes.automation import VT_VARIANT, VT_R4, VT_R8, VT_I1, VT_I2, VT_I4, VT_INT, VT_UI1, VT_UI2, VT_UI4, VT_UINT, VT_BSTR
+from comtypes.client import GetModule
 
 class SAFEARRAY(Structure):
     _fields_ = [("cDims", c_ushort),
@@ -70,6 +71,9 @@ SafeArrayUnaccessData.argtypes = (c_void_p,)
 SafeArrayGetVartype = oledll.oleaut32.SafeArrayGetVartype
 SafeArrayGetVartype.argtypes = (c_void_p, POINTER(VARTYPE))
 
+SafeArrayGetRecordInfo = oledll.oleaut32.SafeArrayGetRecordInfo
+SafeArrayGetRecordInfo.argtypes = (c_void_p, POINTER(POINTER(IRecordInfo)))
+
 SafeArrayCreate = windll.oleaut32.SafeArrayCreate
 SafeArrayCreate.argtypes = (VARTYPE, c_uint, POINTER(SAFEARRAYBOUND))
 SafeArrayCreate.restype = POINTER(SAFEARRAY)
@@ -119,7 +123,7 @@ def SafeArray_FromArray(arr):
 
 ################################################################
 
-def _get_row(ctype, psa, dim, indices, lowerbounds, upperbounds):
+def _get_row(ctype, isrec, psa, dim, indices, lowerbounds, upperbounds):
     # loop over the index of dimension 'dim'
     # we have to restore the index of the dimension we're looping over
     restore = indices[dim]
@@ -127,13 +131,14 @@ def _get_row(ctype, psa, dim, indices, lowerbounds, upperbounds):
     result = []
     if dim+1 == len(indices):
         for i in range(indices[dim], upperbounds[dim]+1):
-            indices[dim] = i
-            SafeArrayGetElement(psa, indices, byref(ctype))
-            result.append(ctype.value)
+            indices[dim] = i; cval=ctype()
+            SafeArrayGetElement(psa, indices, byref(cval))
+            if isrec: result.append(cval)
+            else: result.append(cval.value)
     else:
         for i in range(indices[dim], upperbounds[dim]+1):
             indices[dim] = i
-            result.append(_get_row(ctype, psa, dim+1, indices, lowerbounds, upperbounds))
+            result.append(_get_row(ctype, isrec, psa, dim+1, indices, lowerbounds, upperbounds))
     indices[dim] = restore
     return tuple(result) # for compatibility with pywin32.
 
@@ -156,7 +161,16 @@ def _get_datatype(psa):
     # Return the ctypes data type corresponding to the SAFEARRAY's typecode.
     vt = VARTYPE()
     SafeArrayGetVartype(psa, byref(vt))
-    return _VT2CTYPE[vt.value]
+    try: return False, _VT2CTYPE[vt.value]
+    except KeyError:
+      if vt.value == VT_RECORD:
+          ri=POINTER(IRecordInfo)()
+          SafeArrayGetRecordInfo(psa, byref(ri))
+          tlib, _ = ri.value.GetTypeInfo().GetContainingTypeLib()
+          mod = GetModule(tlib)
+          return True, getattr(mod, ri.value.GetName())
+      else:
+          raise
 
 def _get_ubound(psa, dim):
     # Return the upper bound of a dimension in a safearray
@@ -176,7 +190,8 @@ def UnpackSafeArray(psa):
     lowerbounds = [_get_lbound(psa, d) for d in range(dim)]
     indexes = (c_long * dim)(*lowerbounds)
     upperbounds = [_get_ubound(psa, d) for d in range(dim)]
-    return _get_row(_get_datatype(psa)(), psa, 0, indexes, lowerbounds, upperbounds)
+    isrec, ctype = _get_datatype(psa)
+    return _get_row(ctype, isrec, psa, 0, indexes, lowerbounds, upperbounds)
 
 ################################################################
 
