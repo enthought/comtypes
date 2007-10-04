@@ -85,6 +85,9 @@ def FindOutgoingInterface(source):
         logger.debug("%s using sinkinterface %s", source, interface)
         return interface
 
+    # If we can find the CLSID of the COM object, we can look for a
+    # registered outgoing interface (__clsid has been set by
+    # comtypes.client):
     clsid = source.__dict__.get('__clsid')
     try:
         interface = comtypes.com_coclass_registry[clsid]._outgoing_interfaces_[0]
@@ -144,7 +147,7 @@ def GetDispEventReceiver(interface, sink):
                 if mth is not None:
                     break
             else:
-                mth = getattr(sink, name, lambda *args: 0)
+                mth = getattr(sink, name, lambda *args: S_OK)
             methods[memid] = mth
 
     # XX Move this stuff into _DispEventReceiver.__init__() ?
@@ -161,7 +164,7 @@ def GetCustomEventReceiver(interface, sink):
         for info in itf._methods_:
             restype, name, argtypes, paramflags, idlflags, docstring = info
 
-            mth = getattr(sink, name, lambda self, this, *args: 0)
+            mth = getattr(sink, name, lambda self, this, *args: S_OK)
             setattr(EventReceiver, name, mth)
     rcv = EventReceiver()
     return rcv
@@ -175,7 +178,6 @@ def GetEvents(source, sink, interface=None):
     # been determined by the coclass.  Otherwise, the only thing that
     # makes sense is to use IProvideClassInfo2 to get the default
     # source interface.
-
     if interface is None:
         interface = FindOutgoingInterface(source)
 
@@ -195,7 +197,7 @@ class EventDumper(object):
         print "# event found:", name
         def handler(*args, **kw):
             print "Event %s(%s)" % (name, ", ".join([repr(a) for a in args]))
-            return 0
+            return S_OK
         return handler
 
 def ShowEvents(source, interface=None):
