@@ -1,3 +1,12 @@
+2007-10-04  Thomas Heller  <theller@python.net>
+
+	* Several refactorings and a small bugfix from the upstream
+	repository.
+
+	* In the comtypes\gen\... type library wrappers, the code
+	generator now creates a commented out template that shows an
+	implementation for each interface it wraps.
+
 2007-10-02  Thomas Heller  <theller@python.net>
 
 	* comtypes.safearray.UnpackSafeArray can now unpack SAFEARRAYs
