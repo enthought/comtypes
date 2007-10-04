@@ -213,9 +213,41 @@ class _cominterface_meta(type):
     def __setattr__(self, name, value):
         if name == "_methods_":
             self._make_methods(value)
+            self._make_specials()
         elif name == "_disp_methods_":
             self._make_dispmethods(value)
+            self._make_specials()
         type.__setattr__(self, name, value)
+
+    def _make_specials(self):
+        # This call installs methods that forward the Python protocols
+        # to COM protocols.
+
+        class _(partial.partial, self):
+
+            if hasattr(self, "Count"):
+                def __len__(self):
+                    return self.Count
+
+            if hasattr(self, "Item"):
+                def __call__(self, *args, **kw):
+                    return self.Item(*args, **kw)
+
+                # does this make sense? It seems that all standard typelibs I've
+                # seen so far that support .Item also support ._NewEnum
+                def __getitem__(self, index):
+                    try:
+                        result = self.Item(index)
+                    except COMError, details:
+                        if details.hresult == -2147352565: # DISP_E_BADINDEX
+                            raise IndexError, "invalid index"
+                        else:
+                            raise
+                    # Hm, this doesn't look correct...
+                    if not result: # we got a NULL com pointer
+                        raise IndexError, "invalid index"
+                    # Hm, should we call __ctypes_from_outparam__ on the result?
+                    return result
 
     def _make_case_insensitive(self):
         # The __map_case__ dictionary maps lower case names to the
@@ -742,46 +774,6 @@ class IUnknown(object):
     def Release(self):
         "Decrease the internal refcount by one and return it."
         return self.__com_Release()
-
-    # should these methods be in a mixin class, which the metaclass
-    # adds when it detects the Count, Item, and _NewEnum methods?
-    def __len__(self):
-        """Return the value of 'self.Count', or raise TypeError if no such property."""
-        try:
-            return self.Count
-        except AttributeError:
-            raise TypeError, "len() of unsized object"
-
-    # calling a COM pointer calls its .Item property, if that is present.
-    def __call__(self, *args, **kw):
-        """Return the value of 'self.Item(*args, **kw)', or raise TypeError if no such method."""
-        try:
-            mth = self.Item
-        except AttributeError:
-            raise TypeError, "object is not callable"
-        return mth(*args, **kw)
-
-    # does this make sense? It seems that all standard typelibs I've
-    # seen so far that support .Item also support ._NewEnum
-    def __getitem__(self, index):
-        """Return the result of 'self.Item(index)', or raise TypeError if no such method."""
-        # Should we insist that the Item method has a dispid of DISPID_VALUE ( 0 )?
-        try:
-            mth = self.Item
-        except AttributeError:
-            raise TypeError, "unsubscriptable object"
-        try:
-            result = mth(index)
-        except COMError, details:
-            if details.hresult == -2147352565: # DISP_E_BADINDEX
-                raise IndexError, "invalid index"
-            else:
-                raise
-        # Hm, this doesn't look correct...
-        if not result: # we got a NULL com pointer
-            raise IndexError, "invalid index"
-        # Hm, should we call __ctypes_from_outparam__ on the result?
-        return result
 
     # Some magic to implement an __iter__ method.  Raises
     # AttributeError if no _NewEnum attribute is found in the class.
