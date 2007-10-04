@@ -59,14 +59,8 @@ class _AdviseConnection(object):
 
 def FindOutgoingInterface(source):
     """XXX Describe the strategy that is used..."""
-    # QI for IConnectionPointContainer and then
-    # EnumConnectionPoints would also work, but doesn't make
-    # sense.  The connection interfaces are enumerated in
-    # arbitrary order, so we cannot decide on out own which one to
-    # use.
-    #
-    # Hm, if IConnectionPointContainer::EnumConnectionPoints only has
-    # one connectionpoint, we could use that one.
+    # If the COM object implements IProvideClassInfo2, it is easy to
+    # find the default autgoing interface.
     try:
         pci = source.QueryInterface(comtypes.typeinfo.IProvideClassInfo2)
         guid = pci.GetGUID(1)
@@ -97,7 +91,33 @@ def FindOutgoingInterface(source):
         logger.debug("%s using sinkinterface from clsid %s", source, interface)
         return interface
 
+##    interface = find_single_connection_interface(source)
+##    if interface:
+##        return interface
+
     raise TypeError("cannot determine source interface")
+
+def find_single_connection_interface(source):
+    # Enumerate the connection interfaces.  If we find a single one,
+    # return it, if there are more, we give up since we cannot
+    # determine which one to use.
+    cpc = source.QueryInterface(comtypes.connectionpoints.IConnectionPointContainer)
+    enum = cpc.EnumConnectionPoints()
+    iid = enum.next().GetConnectionInterface()
+    try:
+        enum.next()
+    except StopIteration:
+        try:
+            interface = comtypes.com_interface_registry[str(iid)]
+        except KeyError:
+            return None
+        else:
+            logger.debug("%s using sinkinterface from iid %s", source, interface)
+            return interface
+    else:
+        logger.debug("%s has nore than one connection point", source)
+
+    return None
 
 class _DispEventReceiver(comtypes.COMObject):
     _com_interfaces_ = [comtypes.automation.IDispatch]
