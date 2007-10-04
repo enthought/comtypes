@@ -757,8 +757,54 @@ class Generator(object):
                 self.make_ComMethod(m, "dual" in body.itf.idlflags)
             else:
                 raise TypeError, "what's this?"
-        print >> self.stream, "]"
 
+        print >> self.stream, "]"
+        print >> self.stream, "################################################################"
+        print >> self.stream, "## code template for %s implementation" % body.itf.name
+        print >> self.stream, "##class %s_Impl(object):" % body.itf.name
+
+        methods = {}
+        for m in body.itf.members:
+            if isinstance(m, typedesc.ComMethod):
+                # m.arguments is a sequence of tuples:
+                # (argtype, argname, idlflags, docstring)
+                inargs = [a[1] for a in m.arguments
+                        if not 'out' in a[2]]
+                outargs = [a[1] for a in m.arguments
+                        if 'out' in a[2]]
+                if 'propget' in m.idlflags:
+                    methods.setdefault(m.name, [0, inargs, outargs, m.doc])[0] |= 1
+                elif 'propput' in m.idlflags:
+                    methods.setdefault(m.name, [0, inargs[:-1], inargs[-1:], m.doc])[0] |= 2
+                else:
+                    methods[m.name] = (0, inargs, outargs, m.doc)
+
+        for name, (typ, inargs, outargs, doc) in methods.iteritems():
+            if typ == 0: # method
+                print >> self.stream, "##    def %s(%s):" % (name, ", ".join(["self"] + inargs))
+                print >> self.stream, "##        %r" % (doc or "-no docstring-")
+                print >> self.stream, "##        #return %s" % (", ".join(outargs))
+            elif typ == 1: # propget
+                print >> self.stream, "##    @property"
+                print >> self.stream, "##    def %s(%s):" % (name, ", ".join(["self"] + inargs))
+                print >> self.stream, "##        %r" % (doc or "-no docstring-")
+                print >> self.stream, "##        #return %s" % (", ".join(outargs))
+            elif typ == 2: # propput
+                print >> self.stream, "##    def _set(%s):" % ", ".join(["self"] + inargs + outargs)
+                print >> self.stream, "##        %r" % (doc or "-no docstring-")
+                print >> self.stream, "##    %s = property(fset = _set, doc = _set.__doc__)" % name
+            elif typ == 3: # propget + propput
+                print >> self.stream, "##    def _get(%s):" % ", ".join(["self"] + inargs)
+                print >> self.stream, "##        %r" % (doc or "-no docstring-")
+                print >> self.stream, "##        #return %s" % (", ".join(outargs))
+                print >> self.stream, "##    def _set(%s):" % ", ".join(["self"] + inargs + outargs)
+                print >> self.stream, "##        %r" % (doc or "-no docstring-")
+                print >> self.stream, "##    %s = property(_get, _set, doc = _set.__doc__)" % name
+            else:
+                raise RuntimeError("BUG")
+            print >> self.stream, "##"
+        print >> self.stream
+                    
     def DispInterface(self, itf):
         self.generate(itf.get_head())
         self.generate(itf.get_body())
