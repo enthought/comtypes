@@ -804,6 +804,16 @@ class IUnknown(object):
         "Decrease the internal refcount by one and return it."
         return self.__com_Release()
 
+# IPersist is a trivial interface, which allows to ask an object about
+# its clsid.
+class IPersist(IUnknown):
+    _iid_ = GUID('{0000010C-0000-0000-C000-000000000046}')
+    _idlflags_ = []
+    _methods_ = [
+        COMMETHOD([], HRESULT, 'GetClassID',
+                  ( ['out'], POINTER(GUID), 'pClassID' )),
+        ]
+
 ################################################################
 def CoGetObject(displayname, interface):
     """Convert a displayname to a moniker, then bind and return the object

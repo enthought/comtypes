@@ -1,7 +1,6 @@
 """This module defines the following interfaces:
 
   IErrorLog
-  IPersist
   IPropertyBag
   IPersistPropertyBag
   IPropertyBag2
@@ -13,6 +12,7 @@ interface, useful in client code.
 from ctypes import *
 from ctypes.wintypes import WORD
 from comtypes import GUID, IUnknown, COMMETHOD, HRESULT, dispid
+from comtypes import IPersist
 from comtypes.automation import VARIANT, tagEXCEPINFO
 
 # XXX Replace by canonical solution!!!
@@ -25,14 +25,6 @@ class IErrorLog(IUnknown):
         COMMETHOD([], HRESULT, 'AddError',
                   ( ['in'], WSTRING, 'pszPropName' ),
                   ( ['in'], POINTER(tagEXCEPINFO), 'pExcepInfo' )),
-        ]
-
-class IPersist(IUnknown):
-    _iid_ = GUID('{0000010C-0000-0000-C000-000000000046}')
-    _idlflags_ = []
-    _methods_ = [
-        COMMETHOD([], HRESULT, 'GetClassID',
-                  ( ['out'], POINTER(GUID), 'pClassID' )),
         ]
 
 class IPropertyBag(IUnknown):
