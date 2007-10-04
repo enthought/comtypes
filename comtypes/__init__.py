@@ -4,6 +4,7 @@ __version__ = "0.3.3"
 
 from ctypes import *
 from _ctypes import COMError
+from comtypes import partial
 
 import logging
 logger = logging.getLogger(__name__)
@@ -154,61 +155,58 @@ class _cominterface_meta(type):
         else:
             _ptr_bases = (cls, POINTER(bases[0]))
 
-        # case insensitive attributes for COM methods and properties
-        def __getattr__(self, name):
-            """Implement case insensitive access to methods and properties"""
-            try:
-                name = self.__map_case__[name.lower()]
-            except KeyError:
-                raise AttributeError(name)
-            else:
-                return getattr(self, name)
-
-        # __setattr__ is pretty heavy-weight, because it is called for
-        # EVERY attribute assignment.  Settings a non-com attribute
-        # through this function takes 8.6 usec, while without this
-        # function it takes 0.7 sec - 12 times slower.
-        #
-        # How much faster would this be if implemented in C?
-        def __setattr__(self, name, value):
-            """Implement case insensitive access to methods and properties"""
-            object.__setattr__(self,
-                               self.__map_case__.get(name.lower(), name),
-                               value)
-            
-        namespace = {"__com_interface__": cls,
-                     "_needs_com_addref_": None}
-
-        if cls._case_insensitive_:
-            namespace["__setattr__"] = __setattr__
-            namespace["__getattr__"] = __getattr__
-
         # The interface 'cls' is used as a mixin.
         p = type(_compointer_base)("POINTER(%s)" % cls.__name__,
                                    _ptr_bases,
-                                   namespace)
+                                   {"__com_interface__": cls,
+                                    "_needs_com_addref_": None})
+
         from ctypes import _pointer_type_cache
         _pointer_type_cache[cls] = p
 
-        def comptr_setitem(self, index, value):
-            # We override the __setitem__ method of the
-            # POINTER(POINTER(interface)) type, so that the COM
-            # reference count is managed correctly.
-            #
-            # This is so that we can implement COM methods that have to
-            # return COM pointers more easily and consistent.  Instead of
-            # using CopyComPointer in the method implementation, we can
-            # simply do:
-            #
-            # def GetTypeInfo(self, this, ..., pptinfo):
-            #     if not pptinfo: return E_POINTER
-            #     pptinfo[0] = a_com_interface_pointer
-            #     return S_OK
-            if index != 0:
-                raise IndexError("Invalid index %s, must be 0" % index)
-            from _ctypes import CopyComPointer
-            CopyComPointer(value, self)
-        POINTER(p).__setitem__ = comptr_setitem
+        if cls._case_insensitive_:
+            class p(partial.partial, p):
+                # case insensitive attributes for COM methods and properties
+                def __getattr__(self, name):
+                    """Implement case insensitive access to methods and properties"""
+                    try:
+                        name = self.__map_case__[name.lower()]
+                    except KeyError:
+                        raise AttributeError(name)
+                    else:
+                        return getattr(self, name)
+
+                # __setattr__ is pretty heavy-weight, because it is called for
+                # EVERY attribute assignment.  Settings a non-com attribute
+                # through this function takes 8.6 usec, while without this
+                # function it takes 0.7 sec - 12 times slower.
+                #
+                # How much faster would this be if implemented in C?
+                def __setattr__(self, name, value):
+                    """Implement case insensitive access to methods and properties"""
+                    object.__setattr__(self,
+                                       self.__map_case__.get(name.lower(), name),
+                                       value)
+
+        class _(partial.partial, POINTER(p)):
+            def __setitem__(self, index, value):
+                # We override the __setitem__ method of the
+                # POINTER(POINTER(interface)) type, so that the COM
+                # reference count is managed correctly.
+                #
+                # This is so that we can implement COM methods that have to
+                # return COM pointers more easily and consistent.  Instead of
+                # using CopyComPointer in the method implementation, we can
+                # simply do:
+                #
+                # def GetTypeInfo(self, this, ..., pptinfo):
+                #     if not pptinfo: return E_POINTER
+                #     pptinfo[0] = a_com_interface_pointer
+                #     return S_OK
+                if index != 0:
+                    raise IndexError("Invalid index %s, must be 0" % index)
+                from _ctypes import CopyComPointer
+                CopyComPointer(value, self)
 
         return cls
 
