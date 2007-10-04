@@ -250,6 +250,13 @@ class Registrar(object):
         # basic entry - names the comobject
         reg_clsid = str(cls._reg_clsid_) # that's the only required attribute for registration
         reg_desc = getattr(cls, "_reg_desc_", "")
+        if not reg_desc:
+            # Simple minded algorithm to construct a description from
+            # the progid:
+            reg_desc = getattr(cls, "_reg_novers_progid_", "") or \
+                       getattr(cls, "_reg_progid_", "")
+            if reg_desc:
+                reg_desc = reg_desc.replace(".", " ")
         append(HKCR, "CLSID\\%s" % reg_clsid, "", reg_desc)
 
         reg_progid = getattr(cls, "_reg_progid_", None)
