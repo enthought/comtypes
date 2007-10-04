@@ -223,13 +223,18 @@ class _cominterface_meta(type):
         # This call installs methods that forward the Python protocols
         # to COM protocols.
 
+        def has_name(name):
+            if self._case_insensitive_:
+                return name.lower() in self.__map_case__
+            return hasattr(self, name)
+
         class _(partial.partial, self):
 
-            if hasattr(self, "Count"):
+            if has_name("Count"):
                 def __len__(self):
                     return self.Count
 
-            if hasattr(self, "Item"):
+            if has_name("Item"):
                 def __call__(self, *args, **kw):
                     return self.Item(*args, **kw)
 
@@ -248,6 +253,30 @@ class _cominterface_meta(type):
                         raise IndexError, "invalid index"
                     # Hm, should we call __ctypes_from_outparam__ on the result?
                     return result
+
+            if has_name("_NewEnum"):
+                def __iter__(self):
+                    # This method returns a pointer to _some_ _NewEnum interface.
+                    # It relies on the fact that the code generator creates next()
+                    # methods for them automatically.
+                    #
+                    # Better would maybe to return an object that
+                    # implements the Python iterator protocol, and
+                    # forwards the calls to the COM interface.
+                    enum = self._NewEnum
+                    if isinstance(enum, types.MethodType):
+                        # _NewEnum should be a propget property, with dispid -4.  See:
+                        # http://msdn.microsoft.com/library/en-us/automat/htm/chap2_2ws9.asp
+                        # http://msdn.microsoft.com/library/en-us/automat/htm/chap4_64j7.asp
+                        #
+                        # Sometimes, however, it is a method.
+                        enum = enum()
+                    if hasattr(enum, "Next"):
+                        return enum
+                    # _NewEnum returns an IUnknown pointer, QueryInterface() it to
+                    # IEnumVARIANT
+                    from comtypes.automation import IEnumVARIANT
+                    return enum.QueryInterface(IEnumVARIANT)
 
     def _make_case_insensitive(self):
         # The __map_case__ dictionary maps lower case names to the
@@ -774,36 +803,6 @@ class IUnknown(object):
     def Release(self):
         "Decrease the internal refcount by one and return it."
         return self.__com_Release()
-
-    # Some magic to implement an __iter__ method.  Raises
-    # AttributeError if no _NewEnum attribute is found in the class.
-    # If _NewEnum is present, returns a callable that will return a
-    # python iterator when called.  Thanks to Bengt Richter for the
-    # idea.
-    def __iter__(self):
-        """Return self._NewEnum, or raise AttributeError if no such property."""
-        try:
-            enum = self._NewEnum
-        except AttributeError:
-            raise AttributeError("__iter__")
-        if isinstance(enum, types.MethodType):
-            # _NewEnum should be a propget property, with dispid -4.  See:
-            # http://msdn.microsoft.com/library/en-us/automat/htm/chap2_2ws9.asp
-            # http://msdn.microsoft.com/library/en-us/automat/htm/chap4_64j7.asp
-            #
-            # Sometimes, however, it is a method.
-            enum = enum()
-        if hasattr(enum, "Next"):
-            enum.__parent = self
-            return lambda: enum
-        # _NewEnum returns an IUnknown pointer, QueryInterface() it to
-        # IEnumVARIANT
-        from comtypes.automation import IEnumVARIANT
-        result = enum.QueryInterface(IEnumVARIANT)
-        # Hm, is there a comtypes problem? Or are we using com incorrectly?
-        result.__parent = self
-        return lambda: result
-    __iter__ = property(__iter__)
 
 ################################################################
 def CoGetObject(displayname, interface):
