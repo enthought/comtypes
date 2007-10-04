@@ -24,9 +24,6 @@ wireHWND = c_ulong
 ################################################################
 
 ################################################################
-# Where should the __ctypes_from_param__ story go?
-# And what would be the 'correct' name for that method?
-################################################################
 # constants for object creation
 CLSCTX_INPROC_SERVER = 1
 CLSCTX_INPROC_HANDLER = 2
@@ -157,40 +154,6 @@ class _cominterface_meta(type):
         else:
             _ptr_bases = (cls, POINTER(bases[0]))
 
-        # The following function will be used as POINTER(<cominterface>).from_param.
-        #
-        # It fixes the problem when there are multiple python interface types
-        # wrapping the same COM interface.  This could happen because some interfaces
-        # are contained in multiple typelibs.
-        #
-        # It also allows to pass a CoClass instance to an api
-        # expecting a COM interface.
-        def from_param(klass, value):
-            """Convert 'value' into a COM pointer to the interface.
-
-            This method accepts a COM pointer, or a CoClass instance
-            which is QueryInterface()d."""
-            if value is None:
-                return None
-            if isinstance(value, klass):
-                return value
-            # multiple python interface types for the same COM interface.
-            # Do we need more checks here?
-            if klass._iid_ == getattr(value, "_iid_", None):
-                return value
-            # Accept an CoClass instance which exposes the interface required.
-            try:
-                table = value._com_pointers_
-            except AttributeError:
-                pass
-            else:
-                try:
-                    # a kind of QueryInterface
-                    return table[klass._iid_]
-                except KeyError:
-                    raise TypeError("Interface %s not supported" % klass._iid_)
-            return value.QueryInterface(cls)
-
         # case insensitive attributes for COM methods and properties
         def __getattr__(self, name):
             """Implement case insensitive access to methods and properties"""
@@ -213,8 +176,7 @@ class _cominterface_meta(type):
                                self.__map_case__.get(name.lower(), name),
                                value)
             
-        namespace = {"from_param": classmethod(from_param),
-                     "__com_interface__": cls,
+        namespace = {"__com_interface__": cls,
                      "_needs_com_addref_": None}
 
         if cls._case_insensitive_:
@@ -559,6 +521,39 @@ class _compointer_base(c_void_p):
 
     def __repr__(self):
         return "<%s object %x>" % (self.__class__.__name__, id(self))
+
+    # This fixes the problem when there are multiple python interface types
+    # wrapping the same COM interface.  This could happen because some interfaces
+    # are contained in multiple typelibs.
+    #
+    # It also allows to pass a CoClass instance to an api
+    # expecting a COM interface.
+    def from_param(klass, value):
+        """Convert 'value' into a COM pointer to the interface.
+
+        This method accepts a COM pointer, or a CoClass instance
+        which is QueryInterface()d."""
+        if value is None:
+            return None
+        if isinstance(value, klass):
+            return value
+        # multiple python interface types for the same COM interface.
+        # Do we need more checks here?
+        if klass._iid_ == getattr(value, "_iid_", None):
+            return value
+        # Accept an CoClass instance which exposes the interface required.
+        try:
+            table = value._com_pointers_
+        except AttributeError:
+            pass
+        else:
+            try:
+                # a kind of QueryInterface
+                return table[klass._iid_]
+            except KeyError:
+                raise TypeError("Interface %s not supported" % klass._iid_)
+        return value.QueryInterface(klass.__com_interface__)
+    from_param = classmethod(from_param)
 
 ################################################################
 
