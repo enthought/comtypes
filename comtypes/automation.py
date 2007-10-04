@@ -371,7 +371,7 @@ class _(partial, POINTER(VARIANT)):
     # function parameters declared as POINTER(VARIANT).  See
     # InternetExplorer's Navigate2() method, or Word's Close() method, for
     # examples.
-    def from_param(self, arg):
+    def from_param(cls, arg):
         # accept POINTER(VARIANT) instance
         if isinstance(arg, POINTER(VARIANT)):
             return arg
@@ -423,7 +423,7 @@ class IEnumVARIANT(IUnknown):
         fetched = c_ulong()
         array = (VARIANT * celt)()
         self.__com_Next(celt, array, fetched)
-        return [v.value for v in array[:fetched.value]]
+        return [v.__ctypes_from_outparam__() for v in array[:fetched.value]]
 
 IEnumVARIANT._methods_ = [
     COMMETHOD([], HRESULT, 'Next',
