@@ -1,19 +1,16 @@
 import unittest
 from ctypes import *
 from ctypes.wintypes import *
-from comtypes.client import CreateObject
+from comtypes.client import CreateObject, GetEvents, ShowEvents
 from comtypes.server.register import register#, unregister
 from comtypes.test import is_resource_enabled
 from comtypes.test.find_memleak import find_memleak
 
 ################################################################
 import comtypes.test.TestComServer
+register(comtypes.test.TestComServer.TestComServer)
 
 class TestInproc(unittest.TestCase):
-
-    def __init__(self, *args, **kw):
-        register(comtypes.test.TestComServer.TestComServer)
-        super(TestInproc, self).__init__(*args, **kw)
 
     def create_object(self):
         return CreateObject("TestComServerLib.TestComServer",
@@ -84,10 +81,11 @@ class TestInproc(unittest.TestCase):
                 obj.QueryInterface(comtypes.IUnknown)
             self._find_memleak(func)
 
-class TestLocalServer(TestInproc):
-    def create_object(self):
-        return CreateObject("TestComServerLib.TestComServer",
-                            clsctx = comtypes.CLSCTX_LOCAL_SERVER)
+if is_resource_enabled("ui"):
+    class TestLocalServer(TestInproc):
+        def create_object(self):
+            return CreateObject("TestComServerLib.TestComServer",
+                                clsctx = comtypes.CLSCTX_LOCAL_SERVER)
 
 try:
     from win32com.client import Dispatch
@@ -105,9 +103,61 @@ else:
         def test_getname(self):
             pass
 
-    class TestLocalServer_win32com(TestInproc_win32com):
-        def create_object(self):
-            return Dispatch("TestComServerLib.TestComServer", clsctx = comtypes.CLSCTX_LOCAL_SERVER)
+    if is_resource_enabled("ui"):
+        class TestLocalServer_win32com(TestInproc_win32com):
+            def create_object(self):
+                return Dispatch("TestComServerLib.TestComServer", clsctx = comtypes.CLSCTX_LOCAL_SERVER)
+
+import doctest
+import comtypes.test.test_comserver
+
+
+class TestCase(unittest.TestCase):
+    def test(self):
+        doctest.testmod(comtypes.test.test_comserver, optionflags=doctest.ELLIPSIS)
+
+    # The following functions are never called, they only contain doctests:
+
+    def ShowEvents(self):
+        '''
+        >>> from comtypes.client import CreateObject, ShowEvents
+        >>>
+        >>> o = CreateObject("TestComServerLib.TestComServer")
+        >>> con = ShowEvents(o)
+        # event found: EvalStarted
+        # event found: EvalCompleted
+        >>> result = o.eval("10 / 4")
+        Event EvalStarted(<comtypes.client._events.EventReceiver object at ..., u'10 / 4')
+        Event EvalCompleted(<comtypes.client._events.EventReceiver object at ..., u'10 / 4', VARIANT(2))
+        >>> result
+        2
+        >>>
+        '''
+
+    def GetEvents():
+        """
+        >>> from comtypes.client import CreateObject, GetEvents
+        >>>
+        >>> o =  CreateObject("TestComServerLib.TestComServer")
+        >>> class EventHandler(object):
+        ...     def EvalStarted(self, this, what):
+        ...         print "EvalStarted:", what
+        ...         return 0
+        ...     def EvalCompleted(self, this, what, result):
+        ...         print "EvalCompleted:", what, "=", result.value
+        ...         return 0
+        ...
+        >>>
+        >>> con = GetEvents(o, EventHandler())
+        >>> o.eval("2 + 3")
+        EvalStarted: 2 + 3
+        EvalCompleted: 2 + 3 = 5
+        5
+        >>> del con
+        >>> o.eval("3 + 2")
+        5
+        >>>
+        """
 
 if __name__ == "__main__":
     unittest.main()
