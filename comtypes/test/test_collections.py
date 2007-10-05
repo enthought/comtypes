@@ -1,6 +1,5 @@
 import unittest
 from comtypes.client import CreateObject, GetModule #, Constants
-from find_memleak import find_memleak
 from ctypes import ArgumentError
 
 class Test(unittest.TestCase):
