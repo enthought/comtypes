@@ -35,13 +35,16 @@ class Test(unittest.TestCase):
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
 
+        # With pywin32, one could write xl.Cells(a, b)
+        # With comtypes, one must write xl.Cells.Item(1, b)
+
         for i in xrange(20):
-            xl.Cells(i+1,i+1).Value = "Hi %d" % i
+            xl.Cells.Item(i+1,i+1).Value = "Hi %d" % i
 
         # test dates out with Excel
         xl.Range("A5").Value = "Excel time"
         xl.Range("B5").Formula = "=Now()"
-        self.failUnlessEqual(xl.Cells(5,2).Formula, "=NOW()")
+        self.failUnlessEqual(xl.Cells.Item(5,2).Formula, "=NOW()")
 
         xl.Range("A6").Calculate()
         excel_time = xl.Range("B5").Value
@@ -51,19 +54,13 @@ class Test(unittest.TestCase):
         self.failUnless(python_time >= excel_time)
         self.failUnless(python_time - excel_time < datetime.timedelta(seconds=1))
 
-        # How does "xl.Cells.Item(1, 2)" work?
-        # xl.Cells is a POINTER(Range) instance.
-        # Callign this is the same as calling it's .Item value:
-        self.failUnlessEqual(xl.Cells.Item(1, 2).Value,
-                             xl.Cells(1, 2).Value)
-
         # some random code, grabbed from c.l.p
         sh = wb.Worksheets(1)
 
-        sh.Cells(1,1).Value = "Hello World!"
-        sh.Cells(3,3).Value = "Hello World!"
-        sh.Range(sh.Cells(1,1),sh.Cells(3,3)).Copy(sh.Cells(4,1))
-        sh.Range(sh.Cells(4,1),sh.Cells(6,3)).Select()
+        sh.Cells.Item(1,1).Value = "Hello World!"
+        sh.Cells.Item(3,3).Value = "Hello World!"
+        sh.Range(sh.Cells.Item(1,1),sh.Cells.Item(3,3)).Copy(sh.Cells.Item(4,1))
+        sh.Range(sh.Cells.Item(4,1),sh.Cells.Item(6,3)).Select()
 
         import time
         time.sleep(2)
