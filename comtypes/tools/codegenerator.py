@@ -777,7 +777,7 @@ class Generator(object):
                 elif 'propput' in m.idlflags:
                     methods.setdefault(m.name, [0, inargs[:-1], inargs[-1:], m.doc])[0] |= 2
                 else:
-                    methods[m.name] = (0, inargs, outargs, m.doc)
+                    methods[m.name] = [0, inargs, outargs, m.doc]
 
         for name, (typ, inargs, outargs, doc) in methods.iteritems():
             if typ == 0: # method
