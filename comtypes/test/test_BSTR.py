@@ -5,17 +5,12 @@ from comtypes.test import requires
 
 ##requires("memleaks")
 
-try:
-    any
-except NameError:
-    from comtypes.test.find_memleak import any
-
 from comtypes.test.find_memleak import find_memleak
 
 class Test(unittest.TestCase):
     def check_leaks(self, func):
-        leaks = find_memleak(func)
-        self.failIf(any(leaks), "Leaks %d bytes: %s" % (sum(leaks), leaks))
+        bytes = find_memleak(func)
+        self.failIf(bytes, "Leaks %d bytes" % bytes)
 
     def test_creation(self):
         def doit():

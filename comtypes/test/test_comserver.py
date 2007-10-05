@@ -6,11 +6,6 @@ from comtypes.server.register import register#, unregister
 from comtypes.test import is_resource_enabled
 from comtypes.test.find_memleak import find_memleak
 
-try:
-    any
-except NameError:
-    from comtypes.test.find_memleak import any
-
 ################################################################
 import comtypes.test.TestComServer
 
@@ -25,8 +20,8 @@ class TestInproc(unittest.TestCase):
                             clsctx = comtypes.CLSCTX_INPROC_SERVER)
 
     def _find_memleak(self, func):
-        leaks = find_memleak(func)
-        self.failIf(any(leaks), "Leaks %d bytes: %s" % (sum(leaks), leaks))
+        bytes = find_memleak(func)
+        self.failIf(bytes, "Leaks %d bytes" % bytes)
 
     def test_getname(self):
         from ctypes import byref, pointer

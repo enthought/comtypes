@@ -31,37 +31,24 @@ def wss():
         raise WinError()
     return pmi.WorkingSetSize
 
-try:
-    any
-except NameError:
-    def any(iterable):
-        for element in iterable:
-            if element:
-                return True
-        return False
-
 LOOPS = 10, 1000
 
-def find_memleak(func):
+def find_memleak(func, loops=LOOPS):
     # call 'func' several times, so that memory consumption
     # stabilizes:
-    for j in xrange(LOOPS[0]):
-        for k in xrange(LOOPS[1]):
+    for j in xrange(loops[0]):
+        for k in xrange(loops[1]):
             func()
     gc.collect(); gc.collect(); gc.collect()
-##    leaks = [0] * LOOPS[0]
     bytes = wss()
     # call 'func' several times, recording the difference in
     # memory consumption before and after the call.  Repeat this a
     # few times, and return a list containing the memory
     # consumption differences.
-    for j in xrange(LOOPS[0]):
-        for k in xrange(LOOPS[1]):
+    for j in xrange(loops[0]):
+        for k in xrange(loops[1]):
             func()
-        gc.collect(); gc.collect(); gc.collect()
-##        mem = wss()
-##        leaks.append(mem - bytes)
-##        bytes = mem
-##    return leaks
-    return [wss() - bytes]
+    gc.collect(); gc.collect(); gc.collect()
+    # return the increased in process size
+    return wss() - bytes
 
