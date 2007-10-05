@@ -768,10 +768,11 @@ class Generator(object):
             if isinstance(m, typedesc.ComMethod):
                 # m.arguments is a sequence of tuples:
                 # (argtype, argname, idlflags, docstring)
-                inargs = [a[1] for a in m.arguments
+                # Some typelibs have unnamed method parameters!
+                inargs = [a[1] or '<unnamed>' for a in m.arguments
                         if not 'out' in a[2]]
-                outargs = [a[1] for a in m.arguments
-                        if 'out' in a[2]]
+                outargs = [a[1] or '<unnamed>' for a in m.arguments
+                           if 'out' in a[2]]
                 if 'propget' in m.idlflags:
                     methods.setdefault(m.name, [0, inargs, outargs, m.doc])[0] |= 1
                 elif 'propput' in m.idlflags:

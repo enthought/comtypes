@@ -55,9 +55,21 @@ for fname in glob.glob(os.path.join(sysdir, "*.tlb")):
     add_test(fname)
 
 for fname in glob.glob(os.path.join(progdir, r"Microsoft Office\Office*\*.tlb")):
+    if os.path.basename(fname).lower() in (
+        "grde50.olb", # UnicodeEncodeError
+        "xl5de32.olb", # UnicodeEncodeError
+        "grde50.olb", # UnicodeEncodeError
+        ):
+        continue
     add_test(fname)
 
 for fname in glob.glob(os.path.join(progdir, r"Microsoft Office\Office*\*.olb")):
+    if os.path.basename(fname).lower() in (
+        "grde50.olb", # UnicodeEncodeError
+        "xl5de32.olb", # UnicodeEncodeError
+        "grde50.olb", # UnicodeEncodeError
+        ):
+        continue
     add_test(fname)
 
 for fname in glob.glob(os.path.join(sysdir, "*.dll")):
@@ -88,7 +100,7 @@ for fname in glob.glob(os.path.join(sysdir, "*.dll")):
         #                         ^^^^^^^^^^^^^^^^
         #                    [in] void* pPool);
         #};
-        "comsvcs.dll", 
+        "comsvcs.dll",
         ):
         continue
     add_test(fname)
