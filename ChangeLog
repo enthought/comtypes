@@ -1,3 +1,22 @@
+2007-10-16  Thomas Heller  <theller@python.net>
+
+	* Changed version number to 0.3.4.
+	
+	* Mega-patch: Completely rewritten safearray support.  SAFERARRAYs
+	are now automatically converted to Python tuples when they are
+	received as [out] parameters in COM methods, and sequences are
+	accepted as SAFEARRAY [in] parameters.  Multidimensional safearray
+	support still has to be added.
+
+	* VARIANTs can now also contain SAFEARRAYs.  VARIANTs containing
+	SAFEARRAYs with a typecode other than VT_VARIANT, Python
+	array.array instances can be used.
+
+	* Added a comtypes.messageloop module that contains a simple
+	messageloop which allows to add and remove custom filter functions.
+
+	* Removed the comtypes.client.PumpWaitingMessages function.
+
 2007-10-04  Thomas Heller  <theller@python.net>
 
 	* Several refactorings and a small bugfix from the upstream
