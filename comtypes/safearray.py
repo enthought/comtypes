@@ -7,6 +7,11 @@ _safearray_type_cache = {}
 ################################################################
 # This is THE PUBLIC function: the gateway to the SAFEARRAY functionality.
 def _midlSAFEARRAY(itemtype):
+    """This function mimics the 'SAFEARRAY(aType)' IDL idiom.  It
+    returns a subtype of SAFEARRAY, instances will be built with a
+    typecode VT_...  corresponding to the aType, which must be one of
+    the supported ctypes.
+    """
     try:
         return POINTER(_safearray_type_cache[itemtype])
     except KeyError:
