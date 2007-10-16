@@ -102,7 +102,7 @@ def _make_safearray_type(itemtype):
 
             dim = _safearray.SafeArrayGetDim(self)
             if dim != 1:
-                return unpack_multidim(self, dim)
+                return self.unpack_multidim(dim)
 
             from comtypes.automation import VARIANT
             lower = _safearray.SafeArrayGetLBound(self, 1)
@@ -125,6 +125,36 @@ def _make_safearray_type(itemtype):
                 _safearray.SafeArrayUnaccessData(self)
             return tuple(result)
 
+        def _get_row(self, dim, indices, lowerbounds, upperbounds):
+            # loop over the index of dimension 'dim'
+            # we have to restore the index of the dimension we're looping over
+            restore = indices[dim]
+
+            result = []
+            obj = self._itemtype_()
+            pobj = byref(obj)
+            if dim+1 == len(indices):
+                # It should be faster to lock the array and get a whole row at once?
+                # How to calculate the pointer offset?
+                for i in range(indices[dim], upperbounds[dim]+1):
+                    indices[dim] = i
+                    _safearray.SafeArrayGetElement(self, indices, pobj)
+                    result.append(obj.value)
+            else:
+                for i in range(indices[dim], upperbounds[dim]+1):
+                    indices[dim] = i
+                    result.append(self._get_row(dim+1, indices, lowerbounds, upperbounds))
+            indices[dim] = restore
+            return tuple(result) # for compatibility with pywin32.
+
+        def unpack_multidim(self, dim):
+            """Unpack a multidimensional SAFEARRAY into a Python tuple."""
+            lowerbounds = [_safearray.SafeArrayGetLBound(self, d) for d in range(1, dim+1)]
+            indexes = (c_long * dim)(*lowerbounds)
+            upperbounds = [_safearray.SafeArrayGetUBound(self, d) for d in range(1, dim+1)]
+            return self._get_row(0, indexes, lowerbounds, upperbounds)
+
+
     class _(partial, POINTER(POINTER(sa_type))):
 
         @classmethod
@@ -141,34 +171,3 @@ def _make_safearray_type(itemtype):
             super(POINTER(POINTER(sa_type)), self).__setitem__(index, pa)
 
     return sa_type
-
-
-def _get_row(pa, dim, indices, lowerbounds, upperbounds):
-    # loop over the index of dimension 'dim'
-    # we have to restore the index of the dimension we're looping over
-    restore = indices[dim]
-
-    result = []
-    obj = pa._itemtype_()
-    pobj = byref(obj)
-    if dim+1 == len(indices):
-        # It should be faster to lock the array and get a whole row at once?
-        # How to calculate the pointer offset?
-        for i in range(indices[dim], upperbounds[dim]+1):
-            indices[dim] = i
-            _safearray.SafeArrayGetElement(pa, indices, pobj)
-            result.append(obj.value)
-    else:
-        for i in range(indices[dim], upperbounds[dim]+1):
-            indices[dim] = i
-            result.append(_get_row(pa, dim+1, indices, lowerbounds, upperbounds))
-    indices[dim] = restore
-    return tuple(result) # for compatibility with pywin32.
-
-def unpack_multidim(pa, dim):
-    """Unpack a multidimensional SAFEARRAY into a Python tuple."""
-    lowerbounds = [_safearray.SafeArrayGetLBound(pa, d) for d in range(1, dim+1)]
-    indexes = (c_long * dim)(*lowerbounds)
-    upperbounds = [_safearray.SafeArrayGetUBound(pa, d) for d in range(1, dim+1)]
-    return _get_row(pa, 0, indexes, lowerbounds, upperbounds)
-
