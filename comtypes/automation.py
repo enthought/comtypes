@@ -222,13 +222,13 @@ class tagVARIANT(Structure):
             CopyComPointer(value, byref(self._))
             self.vt = VT_UNKNOWN
         elif isinstance(value, (list, tuple)):
-            obj = safearray.create(_midlSAFEARRAY(VARIANT), value)
+            obj = _midlSAFEARRAY(VARIANT).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, array.array):
             vartype = _arraycode_to_vartype[value.typecode]
             typ = _vartype_to_ctype[vartype]
-            obj = safearray.create(_midlSAFEARRAY(typ), value)
+            obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, Structure):

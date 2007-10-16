@@ -46,8 +46,37 @@ def _make_safearray_type(itemtype):
         _needsfree = False
 
         @classmethod
+        def create(cls, value, extra=None):
+            """Create a POINTER(SAFEARRAY_...) instance of the correct type;
+            value is a sequence containing the items to store."""
+
+            # XXX XXX
+            #
+            # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
+            # the GUID of the interface.
+            #
+            # For VT_RECORD, extra must be a pointer to an IRecordInfo
+            # describing the record.
+            pa = _safearray.SafeArrayCreateVectorEx(cls._vartype_,
+                                                    0,
+                                                    len(value),
+                                                    extra)
+            # We now have a POINTER(tagSAFEARRAY) instance which we must cast
+            # to the correct type:
+            pa = cast(pa, cls)
+            # Now, fill the data in:
+            ptr = POINTER(cls._itemtype_)() # container for the values
+            _safearray.SafeArrayAccessData(pa, byref(ptr))
+            try:
+                for index, item in enumerate(value):
+                    ptr[index] = item
+            finally:
+                _safearray.SafeArrayUnaccessData(pa)
+            return pa
+
+        @classmethod
         def from_param(cls, value):
-            result = create(cls, value, extra)
+            result = cls.create(value, extra)
             result._needsfree = True
             return result
 
@@ -74,45 +103,17 @@ def _make_safearray_type(itemtype):
         def from_param(cls, value):
             if isinstance(value, cls._type_):
                 return byref(value)
-            return byref(create(cls._type_, value))
+            return byref(cls._type_.create(value))
 
         def __setitem__(self, index, value):
             # create an LP_SAFEARRAY_... instance
-            pa = create(self._type_, value)
+            pa = self._type_.create(value)
             # XXX Must we destroy the currently contained data? 
             # fill it into self
             super(POINTER(POINTER(sa_type)), self).__setitem__(index, pa)
 
     return sa_type
 
-
-def create(cls, value, extra=None):
-    """Create a POINTER(SAFEARRAY_...) instance of the correct type;
-    value is a sequence containing the items to store."""
-    
-    # XXX XXX
-    #
-    # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
-    # the GUID of the interface.
-    #
-    # For VT_RECORD, extra must be a pointer to an IRecordInfo
-    # describing the record.
-    pa = _safearray.SafeArrayCreateVectorEx(cls._vartype_,
-                                            0,
-                                            len(value),
-                                            extra)
-    # We now have a POINTER(tagSAFEARRAY) instance which we must cast
-    # to the correct type:
-    pa = cast(pa, cls)
-    # Now, fill the data in:
-    ptr = POINTER(cls._itemtype_)() # container for the values
-    _safearray.SafeArrayAccessData(pa, byref(ptr))
-    try:
-        for index, item in enumerate(value):
-            ptr[index] = item
-    finally:
-        _safearray.SafeArrayUnaccessData(pa)
-    return pa
 
 def _get_row(pa, dim, indices, lowerbounds, upperbounds):
     # loop over the index of dimension 'dim'
