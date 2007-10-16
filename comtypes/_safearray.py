@@ -98,3 +98,12 @@ def SafeArrayGetUBound(pa, dim):
     return result.value
 
 
+SafeArrayLock = _oleaut32.SafeArrayLock
+SafeArrayLock.restype = HRESULT
+SafeArrayLock.argtypes = [POINTER(SAFEARRAY)]
+SafeArrayPtrOfIndex = _oleaut32.SafeArrayPtrOfIndex
+SafeArrayPtrOfIndex.restype = HRESULT
+SafeArrayPtrOfIndex.argtypes = [POINTER(SAFEARRAY), POINTER(LONG), c_void_p]
+SafeArrayUnlock = _oleaut32.SafeArrayUnlock
+SafeArrayUnlock.restype = HRESULT
+SafeArrayUnlock.argtypes = [POINTER(SAFEARRAY)]
