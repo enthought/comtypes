@@ -4,7 +4,7 @@ from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
 from comtypes.partial import partial
-from comtypes import _safearray, safearray
+from comtypes import _safearray
 
 import datetime # for VT_DATE, standard in Python 2.3 and up
 import array
@@ -335,7 +335,7 @@ class tagVARIANT(Structure):
             return v.value
         elif self.vt & VT_ARRAY:
             typ = _vartype_to_ctype[self.vt & ~VT_ARRAY]
-            return safearray.unpack(cast(self._.pparray, _midlSAFEARRAY(typ)))
+            return cast(self._.pparray, _midlSAFEARRAY(typ)).unpack()
         else:
             raise NotImplementedError("typecode %d = 0x%x)" % (vt, vt))
 

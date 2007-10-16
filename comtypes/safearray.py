@@ -84,7 +84,7 @@ def _make_safearray_type(itemtype):
             # pparray[0] returns the whole array contents.
             if index != 0:
                 raise IndexError("Only index 0 allowed")
-            return unpack(self)
+            return self.unpack()
 
         def __setitem__(self, index, value):
             raise TypeError("Setting items not allowed")
@@ -96,6 +96,34 @@ def _make_safearray_type(itemtype):
         def __del__(self):
             if self._needsfree:
                 _safearray.SafeArrayDestroy(self)
+
+        def unpack(self):
+            """Unpack a multidimensional POINTER(SAFEARRAY_...) into a Python tuple."""
+
+            dim = _safearray.SafeArrayGetDim(self)
+            if dim != 1:
+                return unpack_multidim(self, dim)
+
+            from comtypes.automation import VARIANT
+            lower = _safearray.SafeArrayGetLBound(self, 1)
+            upper = _safearray.SafeArrayGetUBound(self, 1)
+            ptr = POINTER(self._itemtype_)() # container for the values
+
+            # XXX XXX
+            # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
+            # interface iid by SafeArrayGetIID().
+            #
+            # For VT_RECORD we should call SafeArrayGetRecordInfo().
+
+            _safearray.SafeArrayAccessData(self, byref(ptr))
+            try:
+                if self._itemtype_ == VARIANT:
+                    result = [ptr[i].value for i in xrange(lower, upper+1)]
+                else:
+                    result = [ptr[i] for i in xrange(lower, upper+1)]
+            finally:
+                _safearray.SafeArrayUnaccessData(self)
+            return tuple(result)
 
     class _(partial, POINTER(POINTER(sa_type))):
 
@@ -143,32 +171,4 @@ def unpack_multidim(pa, dim):
     indexes = (c_long * dim)(*lowerbounds)
     upperbounds = [_safearray.SafeArrayGetUBound(pa, d) for d in range(1, dim+1)]
     return _get_row(pa, 0, indexes, lowerbounds, upperbounds)
-
-def unpack(pa):
-    """Unpack a multidimensional POINTER(SAFEARRAY_...) into a Python tuple."""
-
-    dim = _safearray.SafeArrayGetDim(pa)
-    if dim != 1:
-        return unpack_multidim(pa, dim)
-
-    from comtypes.automation import VARIANT
-    lower = _safearray.SafeArrayGetLBound(pa, 1)
-    upper = _safearray.SafeArrayGetUBound(pa, 1)
-    ptr = POINTER(pa._itemtype_)() # container for the values
-
-    # XXX XXX
-    # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
-    # interface iid by SafeArrayGetIID().
-    #
-    # For VT_RECORD we should call SafeArrayGetRecordInfo().
-
-    _safearray.SafeArrayAccessData(pa, byref(ptr))
-    try:
-        if pa._itemtype_ == VARIANT:
-            result = [ptr[i].value for i in xrange(lower, upper+1)]
-        else:
-            result = [ptr[i] for i in xrange(lower, upper+1)]
-    finally:
-        _safearray.SafeArrayUnaccessData(pa)
-    return tuple(result)
 
