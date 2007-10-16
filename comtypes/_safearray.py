@@ -103,6 +103,7 @@ SafeArrayLock.restype = HRESULT
 SafeArrayLock.argtypes = [POINTER(SAFEARRAY)]
 SafeArrayPtrOfIndex = _oleaut32.SafeArrayPtrOfIndex
 SafeArrayPtrOfIndex.restype = HRESULT
+# Last parameter manually changed from POINTER(c_void_p) to c_void_p:
 SafeArrayPtrOfIndex.argtypes = [POINTER(SAFEARRAY), POINTER(LONG), c_void_p]
 SafeArrayUnlock = _oleaut32.SafeArrayUnlock
 SafeArrayUnlock.restype = HRESULT
