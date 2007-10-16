@@ -34,7 +34,7 @@ class EventsTest(unittest.TestCase):
         # Running a message loop with a timeout should work for all
         # possible COM apartment types; however it is *required* for
         # single threaded appartments.
-        from comtypes.server.localserver import pump_messages
+        from comtypes import messageloop
         def post_quit_message(hwnd, msg, idEvent, dwTime):
             ctypes.windll.user32.PostQuitMessage(0)
             ctypes.windll.user32.KillTimer(hwnd, idEvent)
@@ -47,7 +47,7 @@ class EventsTest(unittest.TestCase):
                                                   ctypes.c_uint, TIMERPROC)
         ctypes.windll.user32.SetTimer(0, 42, timeout,
                                       TIMERPROC(post_quit_message))
-        pump_messages()
+        messageloop.run()
 
     def test(self):
         # Start IE, call .Quit(), and check if the

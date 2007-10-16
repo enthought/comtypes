@@ -471,6 +471,8 @@ class _cominterface_meta(type):
             # this is the name WITHOUT the _set_ or _get_ prefix.
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
+                if is_prop:
+                    self.__map_case__[name[5:].lower()] = name[5:]
 
         # create public properties / attribute accessors
         for (name, doc, nargs), methods in properties.items():
@@ -506,11 +508,14 @@ class bound_named_property(object):
     def __getitem__(self, index):
         if self.getter is None:
             raise TypeError("unsubscriptable object")
-        return self.getter(self.im_inst, index)
+        if isinstance(index, tuple):
+            return self.getter(self.im_inst, *index)
+        else:
+            return self.getter(self.im_inst, index)
 
     def __call__(self, *args):
         if self.getter is None:
-            raise TypeError("object is nor callable")
+            raise TypeError("object is not callable")
         return self.getter(self.im_inst, *args)
 
     def __setitem__(self, index, value):
@@ -707,15 +712,6 @@ _NOTHING = object()
 def _unpack_argspec(idl, typ, name=None, defval=_NOTHING):
     return idl, typ, name, defval
 
-# will be overwritten with the real VARIANT type when
-# comtypes.automation is imported.
-
-# XXX We don't want to make this module import
-# comtypes.automation but we need VARIANT.  So
-# comtypes.automation sets it from the outside into
-# this module, when it is imported. Hack, hack.
-_VARIANT_type_hack = None
-
 def COMMETHOD(idlflags, restype, methodname, *argspec):
     """Specifies a COM method slot with idlflags.
 
@@ -730,16 +726,16 @@ def COMMETHOD(idlflags, restype, methodname, *argspec):
     # join them together(does this make sense?) and replace by None if empty.
     helptext = "".join(helptext) or None
 
-    VARIANT = _VARIANT_type_hack # more pretty local name for our hack
+    from comtypes.automation import VARIANT
 
     for item in argspec:
         idl, typ, argname, defval = _unpack_argspec(*item)
         pflags = _encode_idl(idl)
         if "optional" in idl:
             if defval is _NOTHING:
-                if VARIANT and typ is VARIANT:
+                if typ is VARIANT:
                     defval = VARIANT.missing
-                elif VARIANT and typ is POINTER(VARIANT):
+                elif typ is POINTER(VARIANT):
                     defval = pointer(VARIANT.missing)
                 else:
 ##                    msg = "'optional' only allowed for VARIANT and VARIANT*, not for %s" \

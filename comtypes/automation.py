@@ -4,6 +4,7 @@ from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
 from comtypes.partial import partial
+from comtypes import _safearray, safearray
 
 import datetime # for VT_DATE, standard in Python 2.3 and up
 import array
@@ -117,6 +118,9 @@ class tagVARIANT(Structure):
     # The C Header file defn of VARIANT is much more complicated, but
     # this is the ctypes version - functional as well.
     class U_VARIANT(Union):
+        class _tagBRECORD(Structure):
+            _fields_ = [("pvRecord", c_void_p),
+                        ("pRecInfo", POINTER(IUnknown))]
         _fields_ = [
             ("VT_BOOL", VARIANT_BOOL),
             ("VT_I1", c_byte),
@@ -132,16 +136,12 @@ class tagVARIANT(Structure):
             ("VT_CY", c_longlong),
             ("c_wchar_p", c_wchar_p),
             ("c_void_p", c_void_p),
+            ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
 
             ("bstrVal", BSTR),
-            # placeholder only, for the correct size:
-            #struct  __tagBRECORD
-            #    {
-            #        PVOID pvRecord;
-            #        IRecordInfo __RPC_FAR *pRecInfo;
-            #    }__VARIANT_NAME_4;
-            ("__tagBRECORD", c_void_p * 2),
+            ("_tagBRECORD", _tagBRECORD),
             ]
+        _anonymous_ = ["_tagBRECORD"]
     _fields_ = [("vt", VARTYPE),
                 ("wReserved1", c_ushort),
                 ("wReserved2", c_ushort),
@@ -214,6 +214,7 @@ class tagVARIANT(Structure):
             self._.VT_R8 = com_days
         elif decimal is not None and isinstance(value, decimal.Decimal):
             self._.VT_CY = int(round(value * 10000))
+            self.vt = VT_CY
         elif isinstance(value, POINTER(IDispatch)):
             CopyComPointer(value, byref(self._))
             self.vt = VT_DISPATCH
@@ -221,16 +222,27 @@ class tagVARIANT(Structure):
             CopyComPointer(value, byref(self._))
             self.vt = VT_UNKNOWN
         elif isinstance(value, (list, tuple)):
-            from comtypes.safearray import SafeArray_FromSequence
-            self._.c_void_p = cast(SafeArray_FromSequence(value), c_void_p)
-            self.vt = VT_ARRAY | VT_VARIANT
+            obj = safearray.create(_midlSAFEARRAY(VARIANT), value)
+            memmove(byref(self._), byref(obj), sizeof(obj))
+            self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, array.array):
-            from comtypes.safearray import SafeArray_FromArray
-            typecode, psa = SafeArray_FromArray(value)
-            self._.c_void_p = cast(psa, c_void_p)
-            self.vt = VT_ARRAY | typecode
+            vartype = _arraycode_to_vartype[value.typecode]
+            typ = _vartype_to_ctype[vartype]
+            obj = safearray.create(_midlSAFEARRAY(typ), value)
+            memmove(byref(self._), byref(obj), sizeof(obj))
+            self.vt = VT_ARRAY | obj._vartype_
+        elif isinstance(value, Structure):
+            guids = value._recordinfo_
+            from comtypes.typeinfo import GetRecordInfoFromGuids
+            ri = GetRecordInfoFromGuids(*guids)
+            self.vt = VT_RECORD
+            # Assigning a COM pointer to a structure field does NOT
+            # call AddRef(), have to call it manually:
+            ri.AddRef()
+            self._.pRecInfo = ri
+            self._.pvRecord = ri.RecordCreateCopy(byref(value))
         else:
-            raise "VARIANT _set_value, NYI", value
+            raise TypeError("Cannot put %r in VARIANT" % value)
         # buffer ->  SAFEARRAY of VT_UI1 ?
 
     # c:/sf/pywin32/com/win32com/src/oleargs.cpp 197
@@ -296,13 +308,34 @@ class tagVARIANT(Structure):
             # VT_BREF|VT_VARIANT, so do it manually.
             v = cast(self._.c_void_p, POINTER(VARIANT))[0]
             return v.value
+        elif vt == VT_RECORD:
+            from comtypes.client import GetModule
+            from comtypes.typeinfo import IRecordInfo
+
+            # Retrieving a COM pointer from a structure field does NOT
+            # call AddRef(), have to call it manually:
+            punk = self._.pRecInfo
+            punk.AddRef()
+            ri = punk.QueryInterface(IRecordInfo)
+
+            # find typelib
+            tlib = ri.GetTypeInfo().GetContainingTypeLib()[0]
+
+            # load typelib wrapper module
+            mod = GetModule(tlib)
+            # retrive the type and create an instance
+            value = getattr(mod, ri.GetName())()
+            # copy data into the instance
+            ri.RecordCopy(self._.pvRecord, byref(value))
+
+            return value
         elif self.vt & VT_BYREF:
             v = VARIANT()
             _VariantCopyInd(byref(v), byref(self))
             return v.value
         elif self.vt & VT_ARRAY:
-            from comtypes.safearray import UnpackSafeArray
-            return UnpackSafeArray(self._.c_void_p)
+            typ = _vartype_to_ctype[self.vt & ~VT_ARRAY]
+            return safearray.unpack(cast(self._.pparray, _midlSAFEARRAY(typ)))
         else:
             raise NotImplementedError("typecode %d = 0x%x)" % (vt, vt))
 
@@ -356,12 +389,6 @@ v.vt = VT_ERROR
 v._.VT_I4 = 0x80020004L
 del v
 
-# Hack alert.  Make the VARIANT type available in the comtypes module,
-# once comtypes.automation has been imported.  See comment in
-# comtypes\__init__.py.
-import comtypes
-comtypes._VARIANT_type_hack = VARIANT
-
 _carg_obj = type(byref(c_int()))
 from _ctypes import Array as _CArrayType
 
@@ -392,7 +419,7 @@ class _(partial, POINTER(VARIANT)):
         self[index].value = value
 
 ################################################################
-
+# interfaces, structures, ...
 class IEnumVARIANT(IUnknown):
     _iid_ = GUID('{00020404-0000-0000-C000-000000000046}')
     _idlflags_ = ['hidden']
@@ -587,21 +614,52 @@ class IDispatch(IUnknown):
 
     # XXX Would separate methods for _METHOD, _PROPERTYGET and _PROPERTYPUT be better?
 
+################################################################
+# safearrays
+# XXX Only one-dimensional arrays are currently implemented
 
-VT2CTYPE = {
-    VT_R4: c_float,
-    VT_R8: c_double,
-    VT_I4: c_long,
-    VT_INT: c_int,
-    VT_UI4: c_ulong,
-    VT_VOID: None,
-    VT_BSTR: BSTR,
-    VT_DISPATCH: POINTER(IDispatch),
-    VT_HRESULT: HRESULT,
-    VT_VARIANT: VARIANT,
-    VT_BOOL: VARIANT_BOOL,
+# map ctypes types to VARTYPE values
+
+_arraycode_to_vartype = {
+    "d": VT_R8,
+    "f": VT_R4,
+    "l": VT_I4,
+    "i": VT_INT,
+    "h": VT_I2,
+    "b": VT_I1,
+    "I": VT_UINT,
+    "L": VT_UI4,
+    "H": VT_UI2,
+    "B": VT_UI1,
     }
 
-def _midlSAFEARRAY(aType):
-    from comtypes.safearray import SAFEARRAY
-    return POINTER(SAFEARRAY)
+_ctype_to_vartype = {
+    c_byte: VT_I1,
+    c_ubyte: VT_UI1,
+
+    c_short: VT_I2,
+    c_ushort: VT_UI2,
+
+    c_long: VT_I4,
+    c_ulong: VT_UI4,
+
+    c_float: VT_R4,
+    c_double: VT_R8,
+
+    VARIANT_BOOL: VT_BOOL,
+
+    BSTR: VT_BSTR,
+    VARIANT: VT_VARIANT,
+
+    POINTER(IUnknown): VT_UNKNOWN,
+    POINTER(IDispatch): VT_DISPATCH,
+    }
+
+_vartype_to_ctype = {}
+for c, v in _ctype_to_vartype.iteritems():
+    _vartype_to_ctype[v] = c
+_vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
+_vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
+
+
+from comtypes.safearray import _midlSAFEARRAY

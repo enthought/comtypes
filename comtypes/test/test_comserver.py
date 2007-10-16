@@ -52,8 +52,6 @@ class TestInproc(unittest.TestCase):
             obj = self.create_object()
             self._find_memleak(lambda: obj.name)
 
-        # This leaks memory, but only with comtypes client code,
-        # not win32com client code
         def test_set_name(self):
             obj = self.create_object()
             def func():
@@ -70,7 +68,8 @@ class TestInproc(unittest.TestCase):
         def test_eval(self):
             obj = self.create_object()
             def func():
-                obj.eval("(1, 2, 3)")
+                return obj.eval("(1, 2, 3)")
+            self.failUnlessEqual(func(), (1, 2, 3))
             self._find_memleak(func)
 
         def test_get_typeinfo(self):

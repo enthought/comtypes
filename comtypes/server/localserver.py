@@ -89,23 +89,10 @@ class ClassFactory(comtypes.COMObject):
 
     def run_sta(self):
         "Can be overridden in subclasses, to install a custom message pump."
-        pump_messages()
+        from comtypes import messageloop
+        messageloop.run()
 
     def run_mta(self):
         "Can be overridden in subclasses."
         self._queue = Queue.Queue()
         self._queue.get()
-
-def pump_messages():
-    from ctypes.wintypes import MSG
-    user32 = windll.user32
-    msg = MSG()
-    while 1:
-        res = user32.GetMessageA(byref(msg), None, 0, 0)
-        if res == -1:
-            raise WinError()
-        if res:
-            user32.TranslateMessage(byref(msg))
-            user32.DispatchMessageA(byref(msg))
-        else:
-            return

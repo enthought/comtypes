@@ -1,243 +1,168 @@
-# very thin safearray support
 from ctypes import *
-from comtypes.typeinfo import SAFEARRAYBOUND, IRecordInfo
-from comtypes.automation import VARIANT, VARTYPE, BSTR, VT_RECORD
-from comtypes.automation import VT_VARIANT, VT_R4, VT_R8, VT_I1, VT_I2, VT_I4, VT_INT, VT_UI1, VT_UI2, VT_UI4, VT_UINT, VT_BSTR
-from comtypes.client import GetModule
+from comtypes import _safearray
+from comtypes.partial import partial
 
-class SAFEARRAY(Structure):
-    _fields_ = [("cDims", c_ushort),
-                ("fFeatures", c_ushort),
-                ("cbElements", c_ulong),
-                ("cLocks", c_ulong),
-                ("pvData", c_void_p),
-                ("rgsabound", SAFEARRAYBOUND * 1)]
-
-    def dump(self):
-        print "cDims", self.cDims
-        print "fFeatures 0x%x" % self.fFeatures
-        print "cLocks", self.cLocks
-        print "cbElements", self.cbElements
-
-
-    def __getitem__(self, index):
-        ix = c_int(index)
-        data = c_double()
-        res = SafeArrayGetElement(byref(self), byref(ix), byref(data))
-        if res:
-            raise WinError(res)
-        return data.value
-
-    def __iter__(self):
-        ix = c_int()
-        data = c_double()
-        get = SafeArrayGetElement
-        while 1:
-            if get(byref(self), byref(ix), byref(data)):
-                raise StopIteration
-            yield data.value
-            ix.value += 1
-
-# XXX
-# Seems to work, but not tested enough.
-##@ classmethod
-##def from_param(cls, arg):
-##    if not isinstance(arg, cls._type_):
-##        arg = SafeArray_FromSequence(arg)
-##    return byref(arg)
-##POINTER(POINTER(SAFEARRAY)).from_param = from_param
-
-# XXX For whatever reason, oleaut32.SafeArrayCreateVector does not seem to work correctly
-# on the Win2k system I have.  The result cannot be passed successfully to SafeArrayGetVartype,
-# the call fails with E_INVALIDARG because FADF_HAVEVARTYPE is not set.
-# SafeArrayCreateEx DOES work, as it seems.
-# BTW: A C program has the same behaviour.
-
-SafeArrayCreateVectorEx = windll.oleaut32.SafeArrayCreateVectorEx
-SafeArrayCreateVectorEx.restype = POINTER(SAFEARRAY)
-
-SafeArrayPutElement = oledll.oleaut32.SafeArrayPutElement
-SafeArrayPutElement.argtypes = (c_void_p, POINTER(c_long), c_void_p)
-
-SafeArrayGetElement = oledll.oleaut32.SafeArrayGetElement
-SafeArrayGetElement.argtypes = (c_void_p, POINTER(c_long), c_void_p)
-
-SafeArrayAccessData = oledll.oleaut32.SafeArrayAccessData
-SafeArrayAccessData.argtypes = (c_void_p, POINTER(c_void_p))
-
-SafeArrayUnaccessData = oledll.oleaut32.SafeArrayUnaccessData
-SafeArrayUnaccessData.argtypes = (c_void_p,)
-
-SafeArrayGetVartype = oledll.oleaut32.SafeArrayGetVartype
-SafeArrayGetVartype.argtypes = (c_void_p, POINTER(VARTYPE))
-
-SafeArrayGetRecordInfo = oledll.oleaut32.SafeArrayGetRecordInfo
-SafeArrayGetRecordInfo.argtypes = (c_void_p, POINTER(POINTER(IRecordInfo)))
-
-SafeArrayCreate = windll.oleaut32.SafeArrayCreate
-SafeArrayCreate.argtypes = (VARTYPE, c_uint, POINTER(SAFEARRAYBOUND))
-SafeArrayCreate.restype = POINTER(SAFEARRAY)
-
-SafeArrayGetUBound = oledll.oleaut32.SafeArrayGetUBound
-SafeArrayGetUBound.argtypes = (c_void_p, c_uint, POINTER(c_long))
-
-SafeArrayGetLBound = oledll.oleaut32.SafeArrayGetLBound
-SafeArrayGetLBound.argtypes = (c_void_p, c_uint, POINTER(c_long))
-
-SafeArrayGetDim = oledll.oleaut32.SafeArrayGetDim
-SafeArrayGetDim.restype = c_uint
+_safearray_type_cache = {}
 
 ################################################################
+# This is THE PUBLIC function: the gateway to the SAFEARRAY functionality.
+def _midlSAFEARRAY(itemtype):
+    try:
+        return POINTER(_safearray_type_cache[itemtype])
+    except KeyError:
+        sa_type = _make_safearray_type(itemtype)
+        _safearray_type_cache[itemtype] = sa_type
+        return POINTER(sa_type)
 
-def SafeArray_FromSequence(seq):
-    """Create a one dimensional safearray of type VT_VARIANT from a
-    sequence of Python objects
-    """
-    psa = SafeArrayCreateVectorEx(VT_VARIANT, 0, len(seq), None)
-    for index, elem in enumerate(seq):
-        SafeArrayPutElement(psa, byref(c_long(index)), byref(VARIANT(elem)))
-    return psa
+def _make_safearray_type(itemtype):
+    # Create and return a subclass of tagSAFEARRAY
+    from comtypes.automation import _ctype_to_vartype, VT_RECORD
 
-def SafeArray_FromArray(arr):
-    """Create a one dimensional safearray of a numeric type from an
-    array instance"""
-    TYPECODE = {
-        "d": VT_R8,
-        "f": VT_R4,
-        "l": VT_I4,
-        "i": VT_INT,
-        "h": VT_I2,
-        "b": VT_I1,
-        "I": VT_UINT,
-        "L": VT_UI4,
-        "H": VT_UI2,
-        "B": VT_UI1,
-        }
-    vt = TYPECODE[arr.typecode]
-    psa = SafeArrayCreateVectorEx(vt, 0, len(arr), None)
-    ptr = c_void_p()
-    SafeArrayAccessData(psa, byref(ptr))
-    memmove(ptr, arr.buffer_info()[0], len(arr) * arr.itemsize)
-    SafeArrayUnaccessData(psa)
-    return vt, psa
+    meta = type(_safearray.tagSAFEARRAY)
+    sa_type = meta.__new__(meta,
+                           "SAFEARRAY_%s" % itemtype.__name__,
+                           (_safearray.tagSAFEARRAY,), {})
 
-################################################################
+    try:
+        vartype = _ctype_to_vartype[itemtype]
+        extra = None
+    except KeyError:
+        if issubclass(itemtype, Structure):
+            from comtypes.typeinfo import GetRecordInfoFromGuids
+            extra = GetRecordInfoFromGuids(*itemtype._recordinfo_)
+            vartype = VT_RECORD
+        else:
+            raise TypeError(itemtype)
 
-def _get_row(ctype, isrec, psa, dim, indices, lowerbounds, upperbounds):
+    class _(partial, POINTER(sa_type)):
+        # Should explain the ideas how SAFEARRAY is used in comtypes
+        _itemtype_ = itemtype # a ctypes type
+        _vartype_ = vartype # a VARTYPE value: VT_...
+        _needsfree = False
+
+        @classmethod
+        def from_param(cls, value):
+            result = create(cls, value, extra)
+            result._needsfree = True
+            return result
+
+        def __getitem__(self, index):
+            # pparray[0] returns the whole array contents.
+            if index != 0:
+                raise IndexError("Only index 0 allowed")
+            return unpack(self)
+
+        def __setitem__(self, index, value):
+            raise TypeError("Setting items not allowed")
+
+        def __ctypes_from_outparam__(self):
+            self._needsfree = True
+            return self[0]
+            
+        def __del__(self):
+            if self._needsfree:
+                _safearray.SafeArrayDestroy(self)
+
+    class _(partial, POINTER(POINTER(sa_type))):
+
+        @classmethod
+        def from_param(cls, value):
+            if isinstance(value, cls._type_):
+                return byref(value)
+            return byref(create(cls._type_, value))
+
+        def __setitem__(self, index, value):
+            # create an LP_SAFEARRAY_... instance
+            pa = create(self._type_, value)
+            # XXX Must we destroy the currently contained data? 
+            # fill it into self
+            super(POINTER(POINTER(sa_type)), self).__setitem__(index, pa)
+
+    return sa_type
+
+
+def create(cls, value, extra=None):
+    """Create a POINTER(SAFEARRAY_...) instance of the correct type;
+    value is a sequence containing the items to store."""
+    
+    # XXX XXX
+    #
+    # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
+    # the GUID of the interface.
+    #
+    # For VT_RECORD, extra must be a pointer to an IRecordInfo
+    # describing the record.
+    pa = _safearray.SafeArrayCreateVectorEx(cls._vartype_,
+                                            0,
+                                            len(value),
+                                            extra)
+    # We now have a POINTER(tagSAFEARRAY) instance which we must cast
+    # to the correct type:
+    pa = cast(pa, cls)
+    # Now, fill the data in:
+    ptr = POINTER(cls._itemtype_)() # container for the values
+    _safearray.SafeArrayAccessData(pa, byref(ptr))
+    try:
+        for index, item in enumerate(value):
+            ptr[index] = item
+    finally:
+        _safearray.SafeArrayUnaccessData(pa)
+    return pa
+
+def _get_row(pa, dim, indices, lowerbounds, upperbounds):
     # loop over the index of dimension 'dim'
     # we have to restore the index of the dimension we're looping over
     restore = indices[dim]
 
     result = []
+    obj = pa._itemtype_()
+    pobj = byref(obj)
     if dim+1 == len(indices):
+        # It should be faster to lock the array and get a whole row at once?
+        # How to calculate the pointer offset?
         for i in range(indices[dim], upperbounds[dim]+1):
-            indices[dim] = i; cval=ctype()
-            SafeArrayGetElement(psa, indices, byref(cval))
-            if isrec: result.append(cval)
-            else: result.append(cval.value)
+            indices[dim] = i
+            _safearray.SafeArrayGetElement(pa, indices, pobj)
+            result.append(obj.value)
     else:
         for i in range(indices[dim], upperbounds[dim]+1):
             indices[dim] = i
-            result.append(_get_row(ctype, isrec, psa, dim+1, indices, lowerbounds, upperbounds))
+            result.append(_get_row(pa, dim+1, indices, lowerbounds, upperbounds))
     indices[dim] = restore
     return tuple(result) # for compatibility with pywin32.
 
-_VT2CTYPE = {
-    VT_BSTR: BSTR,
-    VT_I1: c_byte,
-    VT_I2: c_short,
-    VT_I4: c_long,
-    VT_INT: c_int,
-    VT_R4: c_float,
-    VT_R8: c_double,
-    VT_UI1: c_ubyte,
-    VT_UI2: c_ushort,
-    VT_UI4: c_ulong,
-    VT_UINT: c_uint,
-    VT_VARIANT: VARIANT,
-    }
-
-def _get_datatype(psa):
-    # Return the ctypes data type corresponding to the SAFEARRAY's typecode.
-    vt = VARTYPE()
-    SafeArrayGetVartype(psa, byref(vt))
-    try: return False, _VT2CTYPE[vt.value]
-    except KeyError:
-      if vt.value == VT_RECORD:
-          ri=POINTER(IRecordInfo)()
-          SafeArrayGetRecordInfo(psa, byref(ri))
-          tlib, _ = ri.value.GetTypeInfo().GetContainingTypeLib()
-          mod = GetModule(tlib)
-          return True, getattr(mod, ri.value.GetName())
-      else:
-          raise
-
-def _get_ubound(psa, dim):
-    # Return the upper bound of a dimension in a safearray
-    ubound = c_long()
-    SafeArrayGetUBound(psa, dim+1, byref(ubound))
-    return ubound.value
-
-def _get_lbound(psa, dim):
-    # Return the lower bound of a dimension in a safearray
-    lb = c_long()
-    SafeArrayGetLBound(psa, dim+1, byref(lb))
-    return lb.value
-
-def UnpackSafeArray(psa):
-    """Unpack a SAFEARRAY into a Python tuple."""
-    dim = SafeArrayGetDim(psa)
-    lowerbounds = [_get_lbound(psa, d) for d in range(dim)]
+def unpack_multidim(pa, dim):
+    """Unpack a multidimensional SAFEARRAY into a Python tuple."""
+    lowerbounds = [_safearray.SafeArrayGetLBound(pa, d) for d in range(1, dim+1)]
     indexes = (c_long * dim)(*lowerbounds)
-    upperbounds = [_get_ubound(psa, d) for d in range(dim)]
-    isrec, ctype = _get_datatype(psa)
-    return _get_row(ctype, isrec, psa, 0, indexes, lowerbounds, upperbounds)
+    upperbounds = [_safearray.SafeArrayGetUBound(pa, d) for d in range(1, dim+1)]
+    return _get_row(pa, 0, indexes, lowerbounds, upperbounds)
 
-################################################################
+def unpack(pa):
+    """Unpack a multidimensional POINTER(SAFEARRAY_...) into a Python tuple."""
 
-if __name__ == "__main__":
-    for dim in range(1, 4):
+    dim = _safearray.SafeArrayGetDim(pa)
+    if dim != 1:
+        return unpack_multidim(pa, dim)
 
-        if dim == 2:
-            rgsa = (SAFEARRAYBOUND * 2)()
-            rgsa[0].lLbound = 3
-            rgsa[0].cElements = 9
-            rgsa[1].lLbound = 7
-            rgsa[1].cElements = 6
+    from comtypes.automation import VARIANT
+    lower = _safearray.SafeArrayGetLBound(pa, 1)
+    upper = _safearray.SafeArrayGetUBound(pa, 1)
+    ptr = POINTER(pa._itemtype_)() # container for the values
 
-        elif dim == 1:
-            rgsa = (SAFEARRAYBOUND * 1)()
-            rgsa[0].lLbound = 3
-            rgsa[0].cElements = 9
+    # XXX XXX
+    # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
+    # interface iid by SafeArrayGetIID().
+    #
+    # For VT_RECORD we should call SafeArrayGetRecordInfo().
 
-        elif dim == 3:
-
-            rgsa = (SAFEARRAYBOUND * 3)()
-            rgsa[0].lLbound = 1
-            rgsa[0].cElements = 6
-            rgsa[1].lLbound = 2
-            rgsa[1].cElements = 5
-            rgsa[2].lLbound = 3
-            rgsa[2].cElements = 4
+    _safearray.SafeArrayAccessData(pa, byref(ptr))
+    try:
+        if pa._itemtype_ == VARIANT:
+            result = [ptr[i].value for i in xrange(lower, upper+1)]
         else:
-            raise ValueError("dim %d not supported" % dim)
-        psa = SafeArrayCreate(VT_BSTR, len(rgsa), rgsa)
+            result = [ptr[i] for i in xrange(lower, upper+1)]
+    finally:
+        _safearray.SafeArrayUnaccessData(pa)
+    return tuple(result)
 
-        n = 1
-        for b in rgsa:
-            n *= b.cElements
-        print "%d total elements" % n
-
-##        ptr = POINTER(BSTR)()
-
-##        SafeArrayAccessData(psa, byref(ptr))
-##        array = (BSTR * n)(*map(str, range(n)))
-##        memmove(ptr, array, sizeof(array))
-##        SafeArrayUnaccessData(psa)
-
-##        import pprint
-##        pprint.pprint(UnpackSafeArray(psa))
-
-##    v = VARIANT()
-##    v.value = [("1",), (2, 3, None)]
-##    print v.value

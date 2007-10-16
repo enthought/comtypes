@@ -212,23 +212,3 @@ def CoGetObject(displayname, interface=None):
                    clsid=None,
                    interface=interface)
 
-
-################################################################
-# Helper function: in single threaded appartments, a message loop must
-# be running to dispatch COM events.
-
-def PumpWaitingMessages():
-    """Single threaded COM apartments need to run a messageloop to
-    dispatch events correctly.  This function should be called
-    periodically if no other message loop is running (in a console
-    application, for example).
-    """
-    user32 = ctypes.windll.user32
-    from ctypes.wintypes import MSG
-    msg = MSG()
-    PM_REMOVE = 0x0001
-    while user32.PeekMessageA(ctypes.byref(msg), None, 0, 0, PM_REMOVE):
-        user32.TranslateMessage(ctypes.byref(msg))
-        user32.DispatchMessageA(ctypes.byref(msg))
-
-
