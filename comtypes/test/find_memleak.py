@@ -50,5 +50,8 @@ def find_memleak(func, loops=LOOPS):
             func()
     gc.collect(); gc.collect(); gc.collect()
     # return the increased in process size
-    return wss() - bytes
+    result = wss() - bytes
+    # Sometimes the process size did decrease, we do not report leaks
+    # in this case:
+    return max(result, 0)
 
