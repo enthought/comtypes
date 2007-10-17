@@ -160,7 +160,7 @@ class tagVARIANT(Structure):
             _VariantClear(byref(self))
 
     def __repr__(self):
-        return "VARIANT(%r)" % (self.value,)
+        return "VARIANT(typecode 0x%x, %r)" % (self.vt, self.value)
 
     def from_param(cls, value):
         if isinstance(value, cls):
