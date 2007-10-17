@@ -57,6 +57,9 @@ def _make_safearray_type(itemtype):
             #
             # For VT_RECORD, extra must be a pointer to an IRecordInfo
             # describing the record.
+
+            # XXX How to specify the lbound (3. parameter to CreateVectorEx)?
+            # XXX How to test lbound != 0?
             pa = _safearray.SafeArrayCreateVectorEx(cls._vartype_,
                                                     0,
                                                     len(value),
@@ -105,8 +108,7 @@ def _make_safearray_type(itemtype):
                 return self.unpack_multidim(dim)
 
             from comtypes.automation import VARIANT
-            lower = _safearray.SafeArrayGetLBound(self, 1)
-            upper = _safearray.SafeArrayGetUBound(self, 1)
+            num_elements = _safearray.SafeArrayGetUBound(self, 1)+1 - _safearray.SafeArrayGetLBound(self, 1)
             ptr = POINTER(self._itemtype_)() # container for the values
 
             # XXX XXX
@@ -118,9 +120,9 @@ def _make_safearray_type(itemtype):
             _safearray.SafeArrayAccessData(self, byref(ptr))
             try:
                 if self._itemtype_ == VARIANT:
-                    result = [ptr[i].value for i in xrange(lower, upper+1)]
+                    result = [i.value for i in ptr[:num_elements]]
                 else:
-                    result = [ptr[i] for i in xrange(lower, upper+1)]
+                    result = ptr[:num_elements]
             finally:
                 _safearray.SafeArrayUnaccessData(self)
             return tuple(result)
