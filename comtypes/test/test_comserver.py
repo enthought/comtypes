@@ -127,7 +127,7 @@ class TestCase(unittest.TestCase):
         # event found: EvalCompleted
         >>> result = o.eval("10 / 4")
         Event EvalStarted(<comtypes.client._events.EventReceiver object at ..., u'10 / 4')
-        Event EvalCompleted(<comtypes.client._events.EventReceiver object at ..., u'10 / 4', VARIANT(2))
+        Event EvalCompleted(<comtypes.client._events.EventReceiver object at ..., u'10 / 4', VARIANT(typecode 0x3, 2))
         >>> result
         2
         >>>
