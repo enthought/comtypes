@@ -651,8 +651,9 @@ _ctype_to_vartype = {
     BSTR: VT_BSTR,
     VARIANT: VT_VARIANT,
 
-    POINTER(IUnknown): VT_UNKNOWN,
-    POINTER(IDispatch): VT_DISPATCH,
+    # These are not yet implemented:
+##    POINTER(IUnknown): VT_UNKNOWN,
+##    POINTER(IDispatch): VT_DISPATCH,
     }
 
 _vartype_to_ctype = {}
