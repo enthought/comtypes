@@ -2,7 +2,7 @@
 
 from ctypes import *
 from ctypes.wintypes import *
-from comtypes import HRESULT
+from comtypes import HRESULT, GUID
 
 ################################################################
 ##if __debug__:
@@ -108,3 +108,9 @@ SafeArrayPtrOfIndex.argtypes = [POINTER(SAFEARRAY), POINTER(LONG), c_void_p]
 SafeArrayUnlock = _oleaut32.SafeArrayUnlock
 SafeArrayUnlock.restype = HRESULT
 SafeArrayUnlock.argtypes = [POINTER(SAFEARRAY)]
+SafeArrayGetIID = _oleaut32.SafeArrayGetIID
+SafeArrayGetIID.restype = HRESULT
+SafeArrayGetIID.argtypes = [POINTER(SAFEARRAY), POINTER(GUID)]
+SafeArrayDestroyDescriptor = _oleaut32.SafeArrayDestroyDescriptor
+SafeArrayDestroyDescriptor.restype = HRESULT
+SafeArrayDestroyDescriptor.argtypes = [POINTER(SAFEARRAY)]
