@@ -50,13 +50,12 @@ class VariantTestCase(unittest.TestCase):
         self.failUnlessEqual(v.vt, VT_ARRAY | VT_R4)
         self.failUnlessEqual(tuple(a.tolist()), v.value)
 
-##    def test_2dim_array(self):
-##        data = ((1, 2, 3, 4),
-##                (5, 6, 7, 8),
-##                (9, 10, 11, 12))
-##        from comtypes.safearray import SafeArray_FromSequence, UnpackSafeArray
-##        a = SafeArray_FromSequence(data)
-##        self.failUnlessEqual(UnpackSafeArray(a), data)
+    def test_2dim_array(self):
+        data = ((1, 2, 3, 4),
+                (5, 6, 7, 8),
+                (9, 10, 11, 12))
+        v = VARIANT(data)
+        self.failUnlessEqual(v.value, data)
 
     def test_datetime(self):
         now = datetime.datetime.now()
@@ -157,6 +156,21 @@ class SafeArrayTestCase(unittest.TestCase):
 
         sa = t.from_param([True, False, True, False])
         self.failUnlessEqual(sa[0], (True, False, True, False))
+
+    # not yet implemented 
+##    def test_VT_UNKNOWN(self):
+##        a = _midlSAFEARRAY(POINTER(IUnknown))
+##        t = _midlSAFEARRAY(POINTER(IUnknown))
+##        self.failUnless(a is t)
+
+##        from comtypes.typeinfo import CreateTypeLib
+##        punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
+##        refcnt_before = punk.AddRef(), punk.Release()
+##        t.from_param([punk, punk, punk])
+##        import gc; gc.collect(); gc.collect()
+##        refcnt_after = punk.AddRef(), punk.Release()
+##        # This test leaks COM refcounts of the punk object.  Don't know why.
+##        ##self.failUnlessEqual(refcnt_before, refcnt_after)
 
     def test_UDT(self):
         from comtypes.gen.TestComServerLib import MYCOLOR
