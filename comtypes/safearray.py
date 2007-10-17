@@ -100,32 +100,46 @@ def _make_safearray_type(itemtype):
             if self._needsfree:
                 _safearray.SafeArrayDestroy(self)
 
-        def unpack(self):
-            """Unpack a multidimensional POINTER(SAFEARRAY_...) into a Python tuple."""
+        def _get_size(self, dim):
+            "Return the number of elements for dimension 'dim'"
+            return _safearray.SafeArrayGetUBound(self, dim)+1 - _safearray.SafeArrayGetLBound(self, dim)
 
+        def unpack(self):
+            """Unpack a POINTER(SAFEARRAY_...) into a Python tuple."""
             dim = _safearray.SafeArrayGetDim(self)
-            if dim != 1:
+
+            if dim == 1:
+                num_elements = self._get_size(1)
+                return tuple(self._get_elements_raw(num_elements))
+            elif dim == 2:
+                # get the number of elements in each dimension
+                rows, cols = self._get_size(1), self._get_size(2)
+                # get all elements
+                result = self._get_elements_raw(rows * cols)
+                # transpose the result, because it is in VB order
+                result = [tuple(result[r::rows]) for r in range(rows)]
+                return tuple(result)
+            else:
                 return self.unpack_multidim(dim)
 
+        def _get_elements_raw(self, num_elements):
+            """Returns a flat list containing ALL elements in the safearray."""
             from comtypes.automation import VARIANT
-            num_elements = _safearray.SafeArrayGetUBound(self, 1)+1 - _safearray.SafeArrayGetLBound(self, 1)
-            ptr = POINTER(self._itemtype_)() # container for the values
-
-            # XXX XXX
+            # XXX Not sure this is true:
             # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
             # interface iid by SafeArrayGetIID().
-            #
-            # For VT_RECORD we should call SafeArrayGetRecordInfo().
-
+##            from comtypes.automation import VT_UNKNOWN, VT_DISPATCH
+##            if self._vartype_ in (VT_UNKNOWN, VT_DISPATCH):
+##                raise "HALT"
+            ptr = POINTER(self._itemtype_)() # container for the values
             _safearray.SafeArrayAccessData(self, byref(ptr))
             try:
                 if self._itemtype_ == VARIANT:
-                    result = [i.value for i in ptr[:num_elements]]
+                    return [i.value for i in ptr[:num_elements]]
                 else:
-                    result = ptr[:num_elements]
+                    return ptr[:num_elements]
             finally:
                 _safearray.SafeArrayUnaccessData(self)
-            return tuple(result)
 
         def _get_row(self, dim, indices, lowerbounds, upperbounds):
             # loop over the index of dimension 'dim'
