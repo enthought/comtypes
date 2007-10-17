@@ -120,7 +120,10 @@ def _make_safearray_type(itemtype):
                 result = [tuple(result[r::rows]) for r in range(rows)]
                 return tuple(result)
             else:
-                return self.unpack_multidim(dim)
+                lowerbounds = [_safearray.SafeArrayGetLBound(self, d) for d in range(1, dim+1)]
+                indexes = (c_long * dim)(*lowerbounds)
+                upperbounds = [_safearray.SafeArrayGetUBound(self, d) for d in range(1, dim+1)]
+                return self._get_row(0, indexes, lowerbounds, upperbounds)
 
         def _get_elements_raw(self, num_elements):
             """Returns a flat list containing ALL elements in the safearray."""
@@ -162,14 +165,6 @@ def _make_safearray_type(itemtype):
                     result.append(self._get_row(dim+1, indices, lowerbounds, upperbounds))
             indices[dim] = restore
             return tuple(result) # for compatibility with pywin32.
-
-        def unpack_multidim(self, dim):
-            """Unpack a multidimensional SAFEARRAY into a Python tuple."""
-            lowerbounds = [_safearray.SafeArrayGetLBound(self, d) for d in range(1, dim+1)]
-            indexes = (c_long * dim)(*lowerbounds)
-            upperbounds = [_safearray.SafeArrayGetUBound(self, d) for d in range(1, dim+1)]
-            return self._get_row(0, indexes, lowerbounds, upperbounds)
-
 
     class _(partial, POINTER(POINTER(sa_type))):
 
