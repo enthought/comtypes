@@ -1,5 +1,5 @@
 from ctypes import *
-from comtypes import _safearray
+from comtypes import _safearray, GUID, IUnknown
 from comtypes.partial import partial
 
 _safearray_type_cache = {}
@@ -21,7 +21,8 @@ def _midlSAFEARRAY(itemtype):
 
 def _make_safearray_type(itemtype):
     # Create and return a subclass of tagSAFEARRAY
-    from comtypes.automation import _ctype_to_vartype, VT_RECORD
+    from comtypes.automation import _ctype_to_vartype, VT_RECORD, \
+         VT_UNKNOWN, IDispatch, VT_DISPATCH
 
     meta = type(_safearray.tagSAFEARRAY)
     sa_type = meta.__new__(meta,
@@ -47,8 +48,9 @@ def _make_safearray_type(itemtype):
 
         @classmethod
         def create(cls, value, extra=None):
-            """Create a POINTER(SAFEARRAY_...) instance of the correct type;
-            value is a sequence containing the items to store."""
+            """Create a one-dimensional POINTER(SAFEARRAY_...)
+            instance of the correct type; value is a sequence
+            containing the items to store."""
 
             # XXX XXX
             #
@@ -59,11 +61,13 @@ def _make_safearray_type(itemtype):
             # describing the record.
 
             # XXX How to specify the lbound (3. parameter to CreateVectorEx)?
-            # XXX How to test lbound != 0?
+            # XXX How to write tests for lbound != 0?
             pa = _safearray.SafeArrayCreateVectorEx(cls._vartype_,
                                                     0,
                                                     len(value),
                                                     extra)
+            if not pa:
+                raise MemoryError() 
             # We now have a POINTER(tagSAFEARRAY) instance which we must cast
             # to the correct type:
             pa = cast(pa, cls)
