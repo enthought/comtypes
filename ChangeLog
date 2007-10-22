@@ -1,3 +1,8 @@
+2007-10-22  Thomas Heller  <theller@python.net>
+
+	* The repr of a COM pointer instance now includes the pointer
+	value for easier debugging.
+
 2007-10-17  Thomas Heller  <theller@python.net>
 
 	* Disable the VT_UNKNOWN and VT_DISPATCH safearray codes, they do

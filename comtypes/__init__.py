@@ -584,7 +584,8 @@ class _compointer_base(c_void_p):
     value = property(__get_value, doc="""Return self.""")
 
     def __repr__(self):
-        return "<%s object %x>" % (self.__class__.__name__, id(self))
+        ptr = super(_compointer_base, self).value
+        return "<%s, ptr=0x%x, at %x>" % (self.__class__.__name__, ptr or 0, id(self))
 
     # This fixes the problem when there are multiple python interface types
     # wrapping the same COM interface.  This could happen because some interfaces
