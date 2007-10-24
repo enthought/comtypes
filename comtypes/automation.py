@@ -241,6 +241,9 @@ class tagVARIANT(Structure):
             ri.AddRef()
             self._.pRecInfo = ri
             self._.pvRecord = ri.RecordCreateCopy(byref(value))
+        elif isinstance(getattr(value, "_comobj", None), POINTER(IDispatch)):
+            CopyComPointer(value._comobj, byref(self._))
+            self.vt = VT_DISPATCH
         else:
             raise TypeError("Cannot put %r in VARIANT" % value)
         # buffer ->  SAFEARRAY of VT_UI1 ?
@@ -566,7 +569,7 @@ class IDispatch(IUnknown):
         excepinfo = EXCEPINFO()
         argerr = c_uint()
 
-        if _invkind == DISPATCH_PROPERTYPUT: # propput
+        if _invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF): # propput
             assert len(args) == 1
             dp = DISPPARAMS()
             dp.cArgs = 1
