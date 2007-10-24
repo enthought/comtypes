@@ -224,9 +224,16 @@ class _cominterface_meta(type):
         # to COM protocols.
 
         def has_name(name):
+            # Determine whether a property or method named 'name'
+            # exists
             if self._case_insensitive_:
                 return name.lower() in self.__map_case__
             return hasattr(self, name)
+
+        def is_enum_interface():
+            # Is this an IEnum... interface?
+            return has_name("Next") and has_name("Skip") \
+                   and has_name("Reset") and has_name("Clone")
 
         class _(partial.partial, self):
 
@@ -235,24 +242,28 @@ class _cominterface_meta(type):
                     return self.Count
 
             if has_name("Item"):
+                # 'Item' is the 'default' value.  Make it available by
+                # calling the instance (Not sure this makes sense, but
+                # win32com does this also).
                 def __call__(self, *args, **kw):
                     return self.Item(*args, **kw)
 
-                # does this make sense? It seems that all standard typelibs I've
-                # seen so far that support .Item also support ._NewEnum
-                def __getitem__(self, index):
-                    try:
-                        result = self.Item(index)
-                    except COMError, details:
-                        if details.hresult == -2147352565: # DISP_E_BADINDEX
+                # Forward indexing to 'Item(...)' on
+                # non-IEnum... interfaces:
+                if not is_enum_interface():
+                    def __getitem__(self, index):
+                        try:
+                            result = self.Item(index)
+                        except COMError, details:
+                            if details.hresult == -2147352565: # DISP_E_BADINDEX
+                                raise IndexError, "invalid index"
+                            else:
+                                raise
+                        # Hm, this doesn't look correct...
+                        if not result: # we got a NULL com pointer
                             raise IndexError, "invalid index"
-                        else:
-                            raise
-                    # Hm, this doesn't look correct...
-                    if not result: # we got a NULL com pointer
-                        raise IndexError, "invalid index"
-                    # Hm, should we call __ctypes_from_outparam__ on the result?
-                    return result
+                        # Hm, should we call __ctypes_from_outparam__ on the result?
+                        return result
 
             if has_name("_NewEnum"):
                 def __iter__(self):
@@ -265,9 +276,7 @@ class _cominterface_meta(type):
                     # forwards the calls to the COM interface.
                     enum = self._NewEnum
                     if isinstance(enum, types.MethodType):
-                        # _NewEnum should be a propget property, with dispid -4.  See:
-                        # http://msdn.microsoft.com/library/en-us/automat/htm/chap2_2ws9.asp
-                        # http://msdn.microsoft.com/library/en-us/automat/htm/chap4_64j7.asp
+                        # _NewEnum should be a propget property, with dispid -4.
                         #
                         # Sometimes, however, it is a method.
                         enum = enum()
