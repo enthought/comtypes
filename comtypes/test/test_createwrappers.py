@@ -21,6 +21,7 @@ comtypes.client._generate.__verbose__ = False
 sysdir = os.path.join(os.environ["SystemRoot"], "system32")
 
 progdir = os.environ["ProgramFiles"]
+common_progdir = os.environ["CommonProgramFiles"]
 
 # This test takes quite some time.  It tries to build wrappers for ALL
 # .dll, .tlb, and .ocx files in the system directory which contain typelibs.
@@ -71,6 +72,10 @@ for fname in glob.glob(os.path.join(progdir, r"Microsoft Office\Office*\*.olb"))
         ):
         continue
     add_test(fname)
+
+for fname in glob.glob(os.path.join(common_progdir, r"Microsoft Shared\Speech\*.dll")):
+    add_test(fname)
+
 
 for fname in glob.glob(os.path.join(sysdir, "*.dll")):
     # these typelibs give errors:
