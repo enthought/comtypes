@@ -78,9 +78,8 @@ class Test(ut.TestCase):
         ie.Visible = False
         ie.Quit()
 
-        self.failUnlessEqual(sink._events, ['OnVisible', 'BeforeNavigate2',
-                                            'NavigateComplete2', 'DocumentComplete',
-                                            'OnVisible'])
+        self.failUnlessEqual(sink._events[:2], ['OnVisible', 'BeforeNavigate2'])
+        self.failUnlessEqual(sink._events[-1], 'OnVisible')
 
         del ie
         del conn
