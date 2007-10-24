@@ -34,8 +34,11 @@ class _MetaPartial(type):
             if k == '__module__':
                 # Ignore implicit attribute
                 continue
-            if k in base.__dict__ and not hasattr(v, '__replace'):
-                raise TypeError, "%s already has %s" % (repr(base), k)
+            if k in base.__dict__:
+                if hasattr(v, '__noreplace'):
+                    continue
+                if not hasattr(v, '__replace'):
+                    raise TypeError, "%s already has %s" % (repr(base), k)
             setattr(base, k, v)
         # Return the original class
         return base
@@ -50,3 +53,8 @@ def replace(f):
     f.__replace = True
     return f
 
+def noreplace(f):
+    """Method decorator to indicate that a method definition shall
+    silently be ignored if it already exists in the full class."""
+    f.__noreplace = True
+    return f
