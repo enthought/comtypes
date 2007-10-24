@@ -170,11 +170,12 @@ class _cominterface_meta(type):
                 def __getattr__(self, name):
                     """Implement case insensitive access to methods and properties"""
                     try:
-                        name = self.__map_case__[name.lower()]
+                        fixed_name = self.__map_case__[name.lower()]
                     except KeyError:
                         raise AttributeError(name)
-                    else:
-                        return getattr(self, name)
+                    if fixed_name != name: # prevent unbounded recursion
+                        return getattr(self, fixed_name)
+                    raise AttributeError(name)
 
                 # __setattr__ is pretty heavy-weight, because it is called for
                 # EVERY attribute assignment.  Settings a non-com attribute
