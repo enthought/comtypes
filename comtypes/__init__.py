@@ -320,13 +320,26 @@ class _cominterface_meta(type):
 ## not in 2.3                method.__name__ = name
                 if 'propget' in idlflags:
                     nargs = len(argspec)
-                    properties.setdefault((name, nargs), [None, None])[0] = method
+                    properties.setdefault((name, nargs), [None, None, None])[0] = method
                 elif 'propput' in idlflags:
                     nargs = len(argspec)-1
-                    properties.setdefault((name, nargs), [None, None])[1] = method
+                    properties.setdefault((name, nargs), [None, None, None])[1] = method
+                elif 'propputref' in idlflags:
+                    nargs = len(argspec)-1
+                    properties.setdefault((name, nargs), [None, None, None])[2] = method
                 else:
                     setattr(self, name, method)
         for (name, nargs), methods in properties.items():
+            # methods contains [propget or None, propput or None, propputref or None]
+            if methods[1] and methods[2]:
+                # both propput and propputref.  Cannot handle these yet...
+                raise TypeError("propput AND propputref not supported in %s.%s" % (self.__name__, name))
+            if methods[2]:
+                # use propputref
+                del methods[1]
+            else:
+                # use propput (if any)
+                del methods[2]
             if nargs:
                 setattr(self, name, named_property(*methods))
             else:
@@ -346,6 +359,10 @@ class _cominterface_meta(type):
         elif 'propput' in idlflags:
             def putfunc(obj, *args, **kw):
                 return self.Invoke(obj, memid, _invkind=4, *args, **kw) # DISPATCH_PROPERTYPUT
+            return putfunc
+        elif 'propputref' in idlflags:
+            def putfunc(obj, *args, **kw):
+                return self.Invoke(obj, memid, _invkind=8, *args, **kw) # DISPATCH_PROPERTYPUTREF
             return putfunc
         # a first attempt to make use of the restype.  Still, support
         # for named arguments and default argument values should be
@@ -451,14 +468,21 @@ class _cominterface_meta(type):
                 # nargs = len([flags for flags in paramflags
                 #             if (flags[0] & 1) or (flags[0] == 0)])
                 propname = name[len("_get_"):]
-                properties.setdefault((propname, doc, nargs), [None, None])[0] = func
+                properties.setdefault((propname, doc, nargs), [None, None, None])[0] = func
                 is_prop = True
             elif "propput" in idlflags:
                 assert name.startswith("_set_")
                 nargs = len([flags for flags in paramflags
                               if flags[0] & 7 in (0, 1)]) - 1
                 propname = name[len("_set_"):]
-                properties.setdefault((propname, doc, nargs), [None, None])[1] = func
+                properties.setdefault((propname, doc, nargs), [None, None, None])[1] = func
+                is_prop = True
+            elif "propputref" in idlflags:
+                assert name.startswith("_setref_")
+                nargs = len([flags for flags in paramflags
+                              if flags[0] & 7 in (0, 1)]) - 1
+                propname = name[len("_setref_"):]
+                properties.setdefault((propname, doc, nargs), [None, None, None])[2] = func
                 is_prop = True
 
             # We install the method in the class, except when it's a
@@ -481,6 +505,16 @@ class _cominterface_meta(type):
 
         # create public properties / attribute accessors
         for (name, doc, nargs), methods in properties.items():
+            # methods contains [propget or None, propput or None, propputref or None]
+            if methods[1] and methods[2]:
+                # both propput and propputref.  Cannot handle these yet...
+                raise TypeError("propput AND propputref not supported in %s.%s" % (self.__name__, name))
+            elif methods[2]:
+                # use propputref
+                del methods[1]
+            else:
+                # use propput (if any)
+                del methods[2]
             if nargs == 0:
                 prop = property(*methods + [None, doc])
             else:
@@ -757,6 +791,8 @@ def COMMETHOD(idlflags, restype, methodname, *argspec):
         methodname = "_get_%s" % methodname
     elif "propput" in idlflags:
         methodname = "_set_%s" % methodname
+    elif "propputref" in idlflags:
+        methodname = "_setref_%s" % methodname
     return restype, methodname, tuple(argtypes), tuple(paramflags), tuple(idlflags), helptext
 
 ################################################################
