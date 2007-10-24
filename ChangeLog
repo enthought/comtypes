@@ -1,3 +1,22 @@
+2007-10-24  Thomas Heller  <theller@python.net>
+
+	* When a COM property has a 'propputref' but no 'propput' accessor
+	method, use the former in the same way as a 'propput' would work.
+	When both 'propputref' and 'propput' are present, raise a
+	TypeError because we cannot handle this case for now.
+
+	* Fixed infinit recursion error in __getattr__ implementation.
+	
+	* comtypes.dynamic._Dispatch now implements a __setattr__ methods
+	that will call to Invoke() with DISPATCH_PROPERTYPUT or
+	DISPATCH_PROPERTYPUTREF.
+	
+	* Handle DISPATCH_PROPERTYPUTREF in IDispatch.Invoke
+	implementation.
+
+	* comtypes.dynamic._Dispatch objects can now be used as VARIANT
+	value.
+
 2007-10-22  Thomas Heller  <theller@python.net>
 
 	* The repr of a COM pointer instance now includes the pointer
