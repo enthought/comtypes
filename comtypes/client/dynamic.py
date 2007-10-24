@@ -39,8 +39,8 @@ class MethodCaller:
 class _Dispatch(object):
     # Expose methods and properties via fully dynamic dispatch
     def __init__(self, comobj):
-        self._comobj = comobj
-        self._ids = {} # Tiny optimization: trying not to use GetIDsOfNames more than once
+        self.__dict__["_comobj"] = comobj
+        self.__dict__["_ids"] = {} # Tiny optimization: trying not to use GetIDsOfNames more than once
 
     def __enum(self):
         e = self._comobj.Invoke(-4) # DISPID_NEWENUM
@@ -74,11 +74,27 @@ class _Dispatch(object):
         except COMError, (hresult, text, details):
             if hresult in ERRORS_BAD_CONTEXT:
                 result = MethodCaller(dispid, self)
-                setattr(self, name, result)
+                self.__dict__[name] = result
             else: raise
         except: raise
         
         return result
+
+    def __setattr__(self, name, value):
+        dispid = self._ids.get(name)
+        if not dispid:
+            dispid = self._comobj.GetIDsOfNames(name)[0]
+            self._ids[name] = dispid
+        # First try propertyput, if that fails with
+        # DISP_E_MEMBERNOTFOUND then try propertyputref
+        flags = comtypes.automation.DISPATCH_PROPERTYPUT
+        try:
+            return self._comobj.Invoke(dispid, value, _invkind=flags)
+        except COMError, (hresult, text, details):
+            if hresult == hres.DISP_E_MEMBERNOTFOUND: pass
+            else: raise
+        flags = comtypes.automation.DISPATCH_PROPERTYPUTREF
+        return self._comobj.Invoke(dispid, value, _invkind=flags)
 
     def __iter__(self):
         return _Collection(self.__enum())
