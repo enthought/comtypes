@@ -1,5 +1,13 @@
 2007-10-26  Thomas Heller  <theller@python.net>
 
+	* When a COM property has both propput and propputref accessor
+	methods, the Python property fset methods determines the type of
+	the argument.
+
+	If the argument is a COM interface pointer, or a VARIANT
+	containing one, then propputref is called, otherwise proput is
+	called to set the property.
+
 	* Allow the creation of SAFEARRAY(UDT) types even if the UDT has
 	no _recordinfo_.  Creating instances of these types will fail
 	however since no IRecordInfo pointer can be created.  This change

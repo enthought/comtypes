@@ -332,9 +332,27 @@ class _cominterface_meta(type):
         for (name, nargs), methods in properties.items():
             # methods contains [propget or None, propput or None, propputref or None]
             if methods[1] and methods[2]:
-                # both propput and propputref.  Cannot handle these yet...
-                raise TypeError("propput AND propputref not supported in %s.%s" % (self.__name__, name))
-            if methods[2]:
+                # both propput and propputref.
+                #
+                # Create a setter method that examines the argument type
+                # and calls 'propputref' if it is an Object (in the VB
+                # sense), or call 'propput' otherwise.
+                propput = methods[1]
+                propputref = methods[2]
+                from comtypes.automation import VARIANT
+                def put_or_putref(self, *args):
+                    obj = args[-1]
+                    # A COM pointer is an 'Object'
+                    if isinstance(obj, POINTER(IUnknown)):
+                        return propputref(self, *args)
+                    # A COM pointer in a VARIANT is an 'Object', too
+                    elif isinstance(obj, VARIANT) and isinstance(obj.value, POINTER(IUnknown)):
+                        return propputref(self, *args)
+                    else:
+                        return propput(self, *args)
+                methods[1] = put_or_putref
+                del methods[2]
+            elif methods[2]:
                 # use propputref
                 del methods[1]
             else:
@@ -507,8 +525,26 @@ class _cominterface_meta(type):
         for (name, doc, nargs), methods in properties.items():
             # methods contains [propget or None, propput or None, propputref or None]
             if methods[1] and methods[2]:
-                # both propput and propputref.  Cannot handle these yet...
-                raise TypeError("propput AND propputref not supported in %s.%s" % (self.__name__, name))
+                # both propput and propputref.
+                #
+                # Create a setter method that examines the argument type
+                # and calls 'propputref' if it is an Object (in the VB
+                # sense), or call 'propput' otherwise.
+                propput = methods[1]
+                propputref = methods[2]
+                from comtypes.automation import VARIANT
+                def put_or_putref(self, *args):
+                    obj = args[-1]
+                    # A COM pointer is an 'Object'
+                    if isinstance(obj, POINTER(IUnknown)):
+                        return propputref(self, *args)
+                    # A COM pointer in a VARIANT is an 'Object', too
+                    elif isinstance(obj, VARIANT) and isinstance(obj.value, POINTER(IUnknown)):
+                        return propputref(self, *args)
+                    else:
+                        return propput(self, *args)
+                methods[1] = put_or_putref
+                del methods[2]
             elif methods[2]:
                 # use propputref
                 del methods[1]
@@ -563,9 +599,9 @@ class bound_named_property(object):
         self.setter(self.im_inst, index, value)
 
 class named_property(object):
-    def __init__(self, getter, setter, doc=None):
-        self.getter = getter
-        self.setter = setter
+    def __init__(self, fget=None, fset=None, doc=None):
+        self.getter = fget
+        self.setter = fset
         self.doc = doc
 
     def __get__(self, im_inst, im_class=None):
@@ -613,18 +649,14 @@ class _compointer_base(c_void_p):
         # hash the pointer values
         return hash(super(_compointer_base, self).value)
 
-    # override the .value property of c_void_p
-    #
-    # for symmetry with other ctypes types
-    # XXX explain
-    # XXX check if really needed
+    # redefine the .value property; return the object itself.
     def __get_value(self):
         return self
     value = property(__get_value, doc="""Return self.""")
 
     def __repr__(self):
         ptr = super(_compointer_base, self).value
-        return "<%s, ptr=0x%x, at %x>" % (self.__class__.__name__, ptr or 0, id(self))
+        return "<%s ptr=0x%x at %x>" % (self.__class__.__name__, ptr or 0, id(self))
 
     # This fixes the problem when there are multiple python interface types
     # wrapping the same COM interface.  This could happen because some interfaces
