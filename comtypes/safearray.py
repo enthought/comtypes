@@ -34,8 +34,13 @@ def _make_safearray_type(itemtype):
         extra = None
     except KeyError:
         if issubclass(itemtype, Structure):
-            from comtypes.typeinfo import GetRecordInfoFromGuids
-            extra = GetRecordInfoFromGuids(*itemtype._recordinfo_)
+            try:
+                guids = itemtype._recordinfo_
+            except AttributeError:
+                extra = None
+            else:
+                from comtypes.typeinfo import GetRecordInfoFromGuids
+                extra = GetRecordInfoFromGuids(*guids)
             vartype = VT_RECORD
         else:
             raise TypeError(itemtype)
@@ -52,8 +57,6 @@ def _make_safearray_type(itemtype):
             instance of the correct type; value is a sequence
             containing the items to store."""
 
-            # XXX XXX
-            #
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
             # the GUID of the interface.
             #
@@ -67,6 +70,9 @@ def _make_safearray_type(itemtype):
                                                     len(value),
                                                     extra)
             if not pa:
+                if cls._vartype_ == VT_RECORD and extra is None:
+                    raise TypeError("Cannot create SAFEARRAY type VT_RECORD without IRecordInfo.")
+                # Hm, there may be other reasons why the creation fails...
                 raise MemoryError() 
             # We now have a POINTER(tagSAFEARRAY) instance which we must cast
             # to the correct type:
