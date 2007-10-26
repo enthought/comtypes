@@ -119,6 +119,25 @@ com_interface_registry = {}
 # allows to find coclasses by guid strings (clsid)
 com_coclass_registry = {}
 
+def _is_object(obj):
+    """This function determines if the argument is a COM object.  It
+    is used in several places to determine whether propputref or
+    propput setters have to be used."""
+    from comtypes.automation import VARIANT
+    # A COM pointer is an 'Object'
+    if isinstance(obj, POINTER(IUnknown)):
+        return True
+    # A COM pointer in a VARIANT is an 'Object', too
+    elif isinstance(obj, VARIANT) and isinstance(obj.value, POINTER(IUnknown)):
+        return True
+    try:
+        # a comtypes.client.dynamic.Dispatch object
+        _comobj = obj._comobj
+    except AttributeError:
+        return False
+    return True
+
+
 ################################################################
 # The metaclasses...
 
@@ -339,14 +358,8 @@ class _cominterface_meta(type):
                 # sense), or call 'propput' otherwise.
                 propput = methods[1]
                 propputref = methods[2]
-                from comtypes.automation import VARIANT
                 def put_or_putref(self, *args):
-                    obj = args[-1]
-                    # A COM pointer is an 'Object'
-                    if isinstance(obj, POINTER(IUnknown)):
-                        return propputref(self, *args)
-                    # A COM pointer in a VARIANT is an 'Object', too
-                    elif isinstance(obj, VARIANT) and isinstance(obj.value, POINTER(IUnknown)):
+                    if _is_object(args[-1]):
                         return propputref(self, *args)
                     else:
                         return propput(self, *args)
@@ -532,14 +545,8 @@ class _cominterface_meta(type):
                 # sense), or call 'propput' otherwise.
                 propput = methods[1]
                 propputref = methods[2]
-                from comtypes.automation import VARIANT
                 def put_or_putref(self, *args):
-                    obj = args[-1]
-                    # A COM pointer is an 'Object'
-                    if isinstance(obj, POINTER(IUnknown)):
-                        return propputref(self, *args)
-                    # A COM pointer in a VARIANT is an 'Object', too
-                    elif isinstance(obj, VARIANT) and isinstance(obj.value, POINTER(IUnknown)):
+                    if _is_object(args[-1]):
                         return propputref(self, *args)
                     else:
                         return propput(self, *args)
