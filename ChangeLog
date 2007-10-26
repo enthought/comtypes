@@ -1,3 +1,10 @@
+2007-10-26  Thomas Heller  <theller@python.net>
+
+	* Allow the creation of SAFEARRAY(UDT) types even if the UDT has
+	no _recordinfo_.  Creating instances of these types will fail
+	however since no IRecordInfo pointer can be created.  This change
+	allows to import typelib wrappers that have UDTs without guids.
+
 2007-10-24  Thomas Heller  <theller@python.net>
 
 	* When a COM property has a 'propputref' but no 'propput' accessor
