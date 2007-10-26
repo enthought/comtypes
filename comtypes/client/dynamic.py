@@ -3,7 +3,7 @@ import comtypes.automation
 import comtypes.typeinfo
 import comtypes.client
 
-from comtypes import COMError
+from comtypes import COMError, IUnknown, _is_object
 import comtypes.hresult as hres
 
 # These errors generally mean the property or method exists,
@@ -27,14 +27,26 @@ def Dispatch(obj):
     return obj
 
 class MethodCaller:
-    kw = dict(_invkind=comtypes.automation.DISPATCH_METHOD)
-    
+    # Wrong name: does not only call methods but also handle
+    # property accesses.
     def __init__(self, _id, _obj):
         self._id = _id
         self._obj = _obj
         
     def __call__(self, *args):
-        return self._obj._comobj.Invoke(self._id, *args, **self.kw)
+        return self._obj._comobj.Invoke(self._id, *args)
+
+    def __getitem__(self, *args):
+        return self._obj._comobj.Invoke(self._id, *args,
+                                        **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYGET))
+
+    def __setitem__(self, *args):
+        if _is_object(args[-1]):
+            self._obj._comobj.Invoke(self._id, *args,
+                                        **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYPUTREF))
+        else:
+            self._obj._comobj.Invoke(self._id, *args,
+                                        **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYPUT))
 
 class _Dispatch(object):
     # Expose methods and properties via fully dynamic dispatch
