@@ -1,5 +1,8 @@
 2007-10-26  Thomas Heller  <theller@python.net>
 
+	* Implemented property get, put, and putref with arguments
+	in comtypes.client.dynamic.
+
 	* When a COM property has both propput and propputref accessor
 	methods, the Python property fset methods determines the type of
 	the argument.
