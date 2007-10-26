@@ -231,7 +231,7 @@ class tagVARIANT(Structure):
             obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
-        elif isinstance(value, Structure):
+        elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
             guids = value._recordinfo_
             from comtypes.typeinfo import GetRecordInfoFromGuids
             ri = GetRecordInfoFromGuids(*guids)
@@ -570,11 +570,15 @@ class IDispatch(IUnknown):
         argerr = c_uint()
 
         if _invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF): # propput
-            assert len(args) == 1
+            array = (VARIANT * len(args))()
+
+            for i, a in enumerate(args[::-1]):
+                array[i].value = a
+
             dp = DISPPARAMS()
-            dp.cArgs = 1
+            dp.cArgs = len(args)
             dp.cNamedArgs = 1
-            dp.rgvarg = pointer(VARIANT(args[0]))
+            dp.rgvarg = array
             dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
         else:
             array = (VARIANT * len(args))()
