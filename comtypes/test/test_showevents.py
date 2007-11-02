@@ -16,10 +16,11 @@ class EventsTest(unittest.TestCase):
         # The following code waits for 'timeout' milliseconds in the
         # way required for COM, internally doing the correct things
         # depending on the COM appartment of the current thread.
-        timeout = 1000
-        # We have to supply at least one NULL handle, otherwise
+        #
+        # We have to supply at least one event handle, otherwise
         # CoWaitForMultipleHandles complains.
-        handles = (ctypes.c_void_p * 1)()
+        hevt = ctypes.windll.kernel32.CreateEventA(None, True, False, None)
+        handles = (ctypes.c_void_p * 1)(hevt)
         RPC_S_CALLPENDING = -2147417835
         try:
             ctypes.oledll.ole32.CoWaitForMultipleHandles(0,
@@ -29,25 +30,8 @@ class EventsTest(unittest.TestCase):
         except WindowsError, details:
             if details[0] != RPC_S_CALLPENDING: # timeout expired
                 raise
-
-    def pump_messages_with_timeout(self, timeout):
-        # Running a message loop with a timeout should work for all
-        # possible COM apartment types; however it is *required* for
-        # single threaded appartments.
-        from comtypes import messageloop
-        def post_quit_message(hwnd, msg, idEvent, dwTime):
-            ctypes.windll.user32.PostQuitMessage(0)
-            ctypes.windll.user32.KillTimer(hwnd, idEvent)
-            return 0
-        TIMERPROC = ctypes.WINFUNCTYPE(None,
-                                       ctypes.c_void_p, ctypes.c_uint,
-                                       ctypes.c_uint, ctypes.c_ulong)
-        proc = TIMERPROC(post_quit_message)
-        ctypes.windll.user32.SetTimer.argtypes = (ctypes.c_void_p, ctypes.c_uint,
-                                                  ctypes.c_uint, TIMERPROC)
-        ctypes.windll.user32.SetTimer(0, 42, timeout,
-                                      TIMERPROC(post_quit_message))
-        messageloop.run()
+        finally:
+            ctypes.windll.kernel32.CloseHandle(hevt)
 
     def test(self):
         # Start IE, call .Quit(), and check if the
