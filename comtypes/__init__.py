@@ -269,8 +269,8 @@ class _cominterface_meta(type):
                 def __getitem__(self, index):
                     try:
                         result = self.Item(index)
-                    except COMError, details:
-                        if details.hresult == -2147352565: # DISP_E_BADINDEX
+                    except COMError, (hresult, text, details):
+                        if hresult == -2147352565: # DISP_E_BADINDEX
                             raise IndexError, "invalid index"
                         else:
                             raise
