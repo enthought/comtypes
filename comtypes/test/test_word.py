@@ -50,5 +50,18 @@ class Test(unittest.TestCase):
 
 ##        self.failUnlessEqual(self._events, ["DocumentChange", "DocumentChange"])
 
+    def test_commandbar(self):
+        word = comtypes.client.CreateObject("Word.Application")
+        word.Visible = 1
+        tb = word.CommandBars("Standard")
+        btn = tb.Controls[1]
+
+        evt = word.VBE.Events.CommandBarEvents(btn)
+        from comtypes.gen import Word, VBIDE
+        comtypes.client.ShowEvents(evt, interface=VBIDE._dispCommandBarControlEvents)
+        comtypes.client.ShowEvents(evt)
+
+        word.Quit()
+
 if __name__ == "__main__":
     unittest.main()
