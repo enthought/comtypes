@@ -10,7 +10,9 @@ def _wrap_coclass(self):
     # but we really want this interface:
     itf = self._com_interfaces_[0]
     punk = cast(self, POINTER(itf))
-    return punk.QueryInterface(itf)
+    result = punk.QueryInterface(itf)
+    result.__dict__["__clsid"] = str(self._reg_clsid_)
+    return result
 
 #
 # The mro() of a POINTER(App) type, where class App is a subclass of CoClass:
