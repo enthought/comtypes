@@ -1,5 +1,8 @@
 2007-11-02  Thomas Heller  <theller@python.net>
 
+	* Bump version number to 0.4.0.
+	Released version 0.4.0.
+
 	* In _wrap_coclass, attach a __clsid attribute to the returned
 	object. This allows, for example, to find outgoing interfaces when
 	a CoClass is returned from a COM method call.

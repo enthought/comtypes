@@ -1,6 +1,6 @@
 import new, types, sys, os
 
-__version__ = "0.3.4"
+__version__ = "0.4.0"
 
 from ctypes import *
 from _ctypes import COMError

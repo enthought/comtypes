@@ -68,7 +68,7 @@ classifiers = [
     'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
     'Operating System :: Microsoft :: Windows',
-    'Operating System :: Microsoft :: Windows CE',
+##    'Operating System :: Microsoft :: Windows CE',
     'Programming Language :: Python',
     'Topic :: Software Development :: Libraries :: Python Modules',
     ]
