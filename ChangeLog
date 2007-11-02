@@ -1,3 +1,9 @@
+2007-11-02  Thomas Heller  <theller@python.net>
+
+	* In _wrap_coclass, attach a __clsid attribute to the returned
+	object. This allows, for example, to find outgoing interfaces when
+	a CoClass is returned from a COM method call.
+
 2007-10-26  Thomas Heller  <theller@python.net>
 
 	* Implemented property get, put, and putref with arguments
