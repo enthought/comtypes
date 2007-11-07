@@ -1,5 +1,7 @@
 2007-11-07  Thomas Heller  <theller@python.net>
 
+	* Changed version number to 0.4.1.
+
 	* Add an post-install script that will (after confirmation) remove
 	the comtypes\gen directory containing the generated modules.
 
