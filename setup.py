@@ -84,8 +84,10 @@ setup(name="comtypes",
       license="MIT License",
       package_data = {"comtypes.test": ["TestComServer.idl",
                                         "TestComServer.tlb"]},
-
       classifiers=classifiers,
+
+      scripts=["clear_comtypes_cache.py"],
+      options={"bdist_wininst": {"install_script": "clear_comtypes_cache.py"}},
 
       cmdclass = {'test': test},
       
