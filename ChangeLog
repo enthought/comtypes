@@ -1,3 +1,11 @@
+2007-11-15  Thomas Heller  <theller@python.net>
+
+	* comtypes\__init__.py:  Restructure the code that extend the COM
+	interface subclasses with __len__, __call__, __getitem__, and
+	__iter__ methods.  This is done with the comtypes.partial module,
+	and apparently had strange behaviour when the code is run under a
+	debugger.
+
 2007-11-07  Thomas Heller  <theller@python.net>
 
 	* Changed version number to 0.4.1.
