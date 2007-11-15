@@ -8,6 +8,10 @@ import datetime
 
 from comtypes.client import CreateObject
 
+xlRangeValueDefault = 10
+xlRangeValueXMLSpreadsheet = 11
+xlRangeValueMSPersistXML = 12
+
 class Test(unittest.TestCase):
     def setUp(self):
         self.xl = CreateObject("Excel.Application")
@@ -21,16 +25,20 @@ class Test(unittest.TestCase):
 
         wb = xl.Workbooks.Add()
 
-        xl.Range["A1", "C1"].Value = (10,"20",31.4)
-        xl.Range["A2:C2"].Value = ('x','y','z')
-        xl.Range["A3:C3"].Value = ('3','2','1')
+        xl.Range["A1", "C1"].Value[()] = (10,"20",31.4)
+        xl.Range["A2:C2"].Value[()] = ('x','y','z')
+        xl.Range["A3:C3"].Value[()] = ('3','2','1')
 
-        self.failUnlessEqual(xl.Range["A1:C3"].Value,
+        self.failUnlessEqual(xl.Range["A1:C3"].Value[()],
+                             ((10.0, 20.0, 31.4),
+                              ("x", "y", "z"),
+                              (3.0, 2.0, 1.0)))
+        self.failUnlessEqual(xl.Range["A1:C3"].Value[xlRangeValueDefault],
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
 
-        self.failUnlessEqual(xl.Range["A1", "C3"].Value,
+        self.failUnlessEqual(xl.Range["A1", "C3"].Value[()],
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
@@ -39,15 +47,15 @@ class Test(unittest.TestCase):
         # With comtypes, one must write xl.Cells.Item(1, b)
 
         for i in xrange(20):
-            xl.Cells.Item[i+1,i+1].Value = "Hi %d" % i
+            xl.Cells.Item[i+1,i+1].Value[()] = "Hi %d" % i
 
         # test dates out with Excel
-        xl.Range["A5"].Value = "Excel time"
+        xl.Range["A5"].Value[()] = "Excel time"
         xl.Range["B5"].Formula = "=Now()"
         self.failUnlessEqual(xl.Cells.Item[5,2].Formula, "=NOW()")
 
         xl.Range["A6"].Calculate()
-        excel_time = xl.Range["B5"].Value
+        excel_time = xl.Range["B5"].Value[()]
         self.failUnlessEqual(type(excel_time), datetime.datetime)
         python_time = datetime.datetime.now()
 
@@ -57,8 +65,8 @@ class Test(unittest.TestCase):
         # some random code, grabbed from c.l.p
         sh = wb.Worksheets[1]
 
-        sh.Cells.Item[1,1].Value = "Hello World!"
-        sh.Cells.Item[3,3].Value = "Hello World!"
+        sh.Cells.Item[1,1].Value[()] = "Hello World!"
+        sh.Cells.Item[3,3].Value[()] = "Hello World!"
         sh.Range[sh.Cells.Item[1,1],sh.Cells.Item[3,3]].Copy(sh.Cells.Item[4,1])
         sh.Range[sh.Cells.Item[4,1],sh.Cells.Item[6,3]].Select()
 
