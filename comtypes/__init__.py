@@ -605,7 +605,10 @@ class bound_named_property(object):
     def __setitem__(self, index, value):
         if self.setter is None:
             raise TypeError("object does not support item assignment")
-        self.setter(self.im_inst, index, value)
+        if isinstance(index, tuple):
+            self.setter(self.im_inst, *(index + (value,)))
+        else:
+            self.setter(self.im_inst, index, value)
 
 class named_property(object):
     def __init__(self, fget=None, fset=None, doc=None):
