@@ -1,3 +1,9 @@
+2007-11-21  Thomas Heller  <theller@python.net>
+
+	* comtypes\__init__.py: Add docstrings to special methods.  Make
+	named_property a data descriptor by providing a __set__ method
+	(which will raise AttributeError when called).
+
 2007-11-15  Thomas Heller  <theller@python.net>
 
 	* comtypes\__init__.py: Fix bound_named_property.__setitem__ so

@@ -254,6 +254,7 @@ class _cominterface_meta(type):
         if has_name("Count"):
             class _(partial.partial, self):
                 def __len__(self):
+                    "Return the the 'self.Count' property."
                     return self.Count
 
         if has_name("Item"):
@@ -262,12 +263,14 @@ class _cominterface_meta(type):
                 # calling the instance (Not sure this makes sense, but
                 # win32com does this also).
                 def __call__(self, *args, **kw):
+                    "Return 'self.Item(*args, **kw)'"
                     return self.Item(*args, **kw)
 
                 @partial.noreplace
                 # does this make sense? It seems that all standard typelibs I've
                 # seen so far that support .Item also support ._NewEnum
                 def __getitem__(self, index):
+                    "Return 'self.Item(index)'"
                     try:
                         result = self.Item(index)
                     except COMError, (hresult, text, details):
@@ -284,6 +287,7 @@ class _cominterface_meta(type):
         if has_name("_NewEnum"):
             class _(partial.partial, self):
                 def __iter__(self):
+                    "Return an iterator over the _NewEnum collection."
                     # This method returns a pointer to _some_ _NewEnum interface.
                     # It relies on the fact that the code generator creates next()
                     # methods for them automatically.
@@ -614,12 +618,16 @@ class named_property(object):
     def __init__(self, fget=None, fset=None, doc=None):
         self.getter = fget
         self.setter = fset
-        self.doc = doc
+        self.__doc__ = doc
 
     def __get__(self, im_inst, im_class=None):
         if im_inst is None:
             return self
         return bound_named_property(self.getter, self.setter, im_inst)
+
+    # Make this a data descriptor
+    def __set__(self, obj):
+        raise AttributeError("Unsettable attribute")
 
 ################################################################
 
