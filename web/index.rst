@@ -13,11 +13,15 @@ for *dispatch based* COM interfaces, it is not possible to access
 The |comtypes| package makes it easy to access and implement both
 custom and dispatch based COM interfaces.
 
+This document describes |comtypes| version 0.4.1.
+
 .. contents::
+
+The comtypes.client package
+***************************
 
 The **comtypes.client** package implements the high-level |comtypes|
 functionality.
-
 
 Creating and accessing COM objects
 ++++++++++++++++++++++++++++++++++
@@ -94,9 +98,8 @@ exposes methods and properties of the interface.
 Calling methods
 ---------------
 
-Calling COM methods is straightforward just as in Python.
-
-Methods can be called with positional and named arguments.
+Calling COM methods is straightforward just like with other Python
+objects.  They can be called with positional and named arguments.
 
 Arguments marked ``[out]`` or ``[out, retval]`` in the IDL are
 returned from a sucessful method call, in a tuple if there is more
@@ -105,7 +108,7 @@ the ``HRESULT`` returned by the method call is returned.  When
 ``[out]`` or ``[out, retval]`` arguments are returned from a sucessful
 call, the ``HRESULT`` value is lost.
 
-If the COM method call fails, a ``COMError`` exception is raised,
+If the COM method call fails, a ``COMError`` exception is raised.
 containing the HRESULT value.
 
 
@@ -229,6 +232,12 @@ based on so-called *connection points*.
     ``source`` object for debugging.  The event sink will first print
     out all event names that are found in the outgoing interface, and
     will later print out the events with their arguments as they occur.
+    ``ShowEvents`` returns a connection object which must be kept
+    alive as long as you want to receive events.  When the object is
+    deleted the connection to the source object is closed.
+
+    To actually receive events you may have to call the ``PumpEvents``
+    function so that COM works correctly.
 
 ``PumpEvents(timeout)``
     This functions runs for a certain time in a way that is required
@@ -240,6 +249,7 @@ based on so-called *connection points*.
     Pressing Control-C raises a KeyboardError exception and terminates
     the function.
 
+
 Examples
 --------
 
@@ -248,6 +258,10 @@ XXX Add examples
 
 Threading
 +++++++++
+
+XXX mention single threaded apartments, multi threaded apartments.
+``sys.coinit_flags``, ``CoInitialize``, ``CoUninitialize`` and so on.
+All this is pretty advanced stuff.
 
 XXX mention threading issues, message loops
 
@@ -385,6 +399,12 @@ Other stuff
 
 XXX describe logging, gen_dir, wrap, _manage (?)
 
+Downloads
+*********
+
+Releases can be downloaded in the sourceforge files_ section.
+
+The |comtypes| project is hosted on sourceforge_.
 
 .. include:: footer.rst
 
@@ -393,3 +413,7 @@ XXX describe logging, gen_dir, wrap, _manage (?)
 .. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
 
 .. _ctypes: http://starship.python.net/crew/theller/ctypes
+
+.. _sourceforge: http://sourceforge.net/projects/comtypes
+
+.. _files: http://sourceforge.net/project/showfiles.php?group_id=115265
