@@ -28,7 +28,15 @@ class Test(unittest.TestCase):
         xl.Range["A1", "C1"].Value[()] = (10,"20",31.4)
         xl.Range["A2:C2"].Value[()] = ('x','y','z')
         xl.Range["A3:C3"].Value[()] = ('3','2','1')
+## not (yet?) implemented:
+##        xl.Range["A4:C4"].Value = ('3','2','1')
 
+        # call property to retrieve value
+        self.failUnlessEqual(xl.Range["A1:C3"].Value(),
+                             ((10.0, 20.0, 31.4),
+                              ("x", "y", "z"),
+                              (3.0, 2.0, 1.0)))
+        # index with empty tuple
         self.failUnlessEqual(xl.Range["A1:C3"].Value[()],
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
