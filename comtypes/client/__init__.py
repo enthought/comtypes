@@ -26,14 +26,14 @@ import comtypes.automation
 import comtypes.typeinfo
 import comtypes.client.dynamic
 
-from comtypes.client._events import GetEvents, ShowEvents
+from comtypes.client._events import GetEvents, ShowEvents, PumpEvents
 from comtypes.client._generate import GetModule
 
 import logging
 logger = logging.getLogger(__name__)
 
 __all__ = ["CreateObject", "GetActiveObject", "CoGetObject",
-           "GetEvents", "ShowEvents", "GetModule"]
+           "GetEvents", "ShowEvents", "PumpEvents", "GetModule"]
 
 ################################################################
 # Determine the directory where generated modules live.

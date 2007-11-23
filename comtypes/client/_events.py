@@ -227,3 +227,41 @@ def ShowEvents(source, interface=None):
     are fired.
     """
     return comtypes.client.GetEvents(source, sink=EventDumper(), interface=interface)
+
+def PumpEvents(timeout):
+    """This following code waits for 'timeout' seconds in the way
+    required for COM, internally doing the correct things depending
+    on the COM appartment of the current thread.  It is possible to
+    terminate the message loop by pressing CTRL+C, which will raise
+    a KeyboardInterrupt.
+    """
+    # XXX Should there be a way to pass additional event handles which
+    # can terminate this function?
+    hevt = ctypes.windll.kernel32.CreateEventA(None, True, False, None)
+    handles = (ctypes.c_void_p * 1)(hevt)
+    RPC_S_CALLPENDING = -2147417835
+
+    @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)
+    def HandlerRoutine(dwCtrlType):
+        if dwCtrlType == 0: # CTRL+C
+            ctypes.windll.kernel32.SetEvent(hevt)
+            return 1
+        return 0
+
+    ctypes.windll.kernel32.SetConsoleCtrlHandler(HandlerRoutine, 1)
+
+    try:
+        try:
+            res = ctypes.oledll.ole32.CoWaitForMultipleHandles(0,
+                                                               int(timeout * 1000),
+                                                               len(handles), handles,
+                                                               ctypes.byref(ctypes.c_ulong()))
+        except WindowsError, details:
+            if details[0] != RPC_S_CALLPENDING: # timeout expired
+                raise
+        else:
+            raise KeyboardInterrupt
+    finally:
+        ctypes.windll.kernel32.CloseHandle(hevt)
+        ctypes.windll.kernel32.SetConsoleCtrlHandler(HandlerRoutine, 0)
+
