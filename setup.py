@@ -3,7 +3,12 @@ r"""comtypes - pure Python COM package, based on the ctypes FFI library.
 comtypes allows to define, call, and implement custom COM interfaces
 in pure Python.
 
+SVN repository:
 http://svn.python.org/projects/ctypes/trunk/comtypes/#egg=comtypes-dev
+
+mailing list: http://gmane.org/info.php?group=gmane.comp.python.comtypes.user
+
+https://lists.sourceforge.net/lists/listinfo/comtypes-users
 
 ----------------------------------------------------------------"""
 import comtypes
@@ -78,7 +83,7 @@ setup(name="comtypes",
       long_description = __doc__,
       author="Thomas Heller",
       author_email="theller@python.net",
-      url="http://starship.python.net/crew/wiki/the_comtypes_package",
+      url="http://starship.python.net/crew/theller/wiki/the_comtypes_package",
       download_url = "http://sourceforge.net/project/showfiles.php?group_id=115265",
 
       license="MIT License",
