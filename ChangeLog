@@ -1,5 +1,7 @@
 2007-11-23  Thomas Heller  <theller@python.net>
 
+	* Released version comtypes 0.4.1.
+
 	* Add a PumpEvents(timeout) function to comtypes.client.  This
 	function calls the win32 CoWaitForMultipleHandles() function which
 	will wait in a way compatible with all types of apartments;
