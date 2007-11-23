@@ -1,0 +1,395 @@
+####################
+The comtypes package
+####################
+
+|comtypes| is a *pure Python* COM package based on the ctypes_ ffi
+foreign function library.  **ctypes** is included in Python 2.5 and
+later, it is also available for Python 2.4 as separate download.
+
+While the **pywin32** package contains superior client side support
+for *dispatch based* COM interfaces, it is not possible to access
+*custom* COM interfaces unless they are wrapped in C++-code.
+
+The |comtypes| package makes it easy to access and implement both
+custom and dispatch based COM interfaces.
+
+.. contents::
+
+The **comtypes.client** package implements the high-level |comtypes|
+functionality.
+
+
+Creating and accessing COM objects
+++++++++++++++++++++++++++++++++++
+
+**comtypes.client** exposes three functions that allow to create or
+access COM objects.
+
+``CreateObject(progid, clsctx=None, machine=None, interface=None)``
+    Create a COM object and return an interface pointer to it.
+
+    ``progid`` specifies which object to create.  It can be a string
+    like ``"InternetExplorer.Application"`` or
+    ``"{2F7860A2-1473-4D75-827D-6C4E27600CAC}"``, a ``comtypes.GUID``
+    instance, or any object with a ``_clsid_`` attribute that must be
+    a ``comtypes.GUID`` instance or a GUID string.
+
+    ``clsctx`` specifies how to create the object, any combination of
+    the ``comtypes.CLSCTX_...`` constants can be used.  If nothing is
+    passed, ``comtypes.CLSCTX_SERVER`` is used.
+
+    ``machine`` allows to specify that the object should be created on
+    a different machine, it must be a string specifying the computer
+    name or IP address.  DCOM must be enabled for this to work.
+
+    ``interface`` specifies the interface class that should be
+    returned, if not specified |comtypes| will determine a useful
+    interface itself and return a pointer to that.
+
+``CoGetObject(displayname, interface=None)``
+    Create a named COM object and returns an interface pointer to it.
+    For the interpretation of ``displayname`` consult the Microsoft
+    documentation for the Windows ``CoGetObject`` function.
+    ``"winmgmts:"``, for example, is the displayname for `WMI
+    monikers`_::
+
+        wmi = CoGetObject("winmgmts:")
+
+    ``interface`` has the same meaning as in the ``CreateObject``
+    function.
+
+``GetActiveObject(progid, interface=None)``
+    Returns a pointer to an already running object.  ``progid``
+    specifies the active object from the OLE registration database.
+
+    The ``GetActiveObject`` function succeeds when the COM object is
+    already running, and has registered itself in the COM running
+    object table.  Not all COM objects do this.
+
+All the three functions mentioned above will create the typelib
+wrapper automatically if the object provides type information.  If the
+type library is not exposed by the object itself, the wrapper can be
+created by calling the ``GetModule`` function.
+
+
+Using COM objects
++++++++++++++++++
+
+The COM interface pointer that is returned by one of the creation
+functions (``CreateObject``, ``CoGetObject``, or ``GetActiveObject``)
+exposes methods and properties of the interface.
+
+
+..
+  XXX Move this elsewhere (or display the help() output in a separate page?
+
+  The builtin Python ``help()`` function shows a lot of information
+  about the interface pointer; probably more than you want to know.
+  Here is an excerpt showing an interface for Internet Explorer:
+
+  .. include:: scripting.help
+     :literal:
+
+
+Calling methods
+---------------
+
+Calling COM methods is straightforward just as in Python.
+
+Methods can be called with positional and named arguments.
+
+Arguments marked ``[out]`` or ``[out, retval]`` in the IDL are
+returned from a sucessful method call, in a tuple if there is more
+than one.  If no ``[out]`` or ``[out, retval]`` arguments are present,
+the ``HRESULT`` returned by the method call is returned.  When
+``[out]`` or ``[out, retval]`` arguments are returned from a sucessful
+call, the ``HRESULT`` value is lost.
+
+If the COM method call fails, a ``COMError`` exception is raised,
+containing the HRESULT value.
+
+
+Accessing properties
+--------------------
+
+COM properties present some challenges.  Properties can be read-write,
+read-only, or write-only.  They may have zero, one, or more arguments;
+arguments may even be optional.
+
+Properties without arguments can be accessed in the usual way.  This
+example demonstrates the ``Visible`` property of Internet Explorer::
+
+    >>> ie = CreateObject("InternetExplorer.Application")
+    >>> print ie.Visible
+    False
+    >>> ie.Visible = True
+    >>>
+
+
+Properties with arguments (named properties)
+............................................
+
+Properties with arguments can be accessed using index notation.
+The following example starts Excel, creates a new workbook, and
+accesses the contents of some cells in the ``xlRangeValueDefault``
+format (this code has been tested with Office 2003)::
+
+    >>> xl = CreateObject("Excel.Application")
+    >>> xl.Workbooks.Add()
+    >>> from comtypes.gen.Excel import xlRangeValueDefault
+    >>> xl.Range["A1", "C1"].Value[xlRangeValueDefault] = (10,"20",31.4)
+    >>> print xl.Range["A1", "C1"].Value[xlRangeValueDefault]
+    (10, "20", 31.4)
+    >>>
+
+
+Properties with optional arguments
+..................................
+
+If you look into the Excel type library (or the generated
+*comtypes.gen* wrapper module) you will find that the parameter for
+the ``.Value`` property is optional, so it would be possible to get or
+set this property without the need to pass (or even know) the
+``xlRangeValueDefault`` argument.
+
+Unfortunately, Python does not allow indexing without arguments::
+
+    >>> xl.Range["A1", "C1"].Value[] = (10,"20",31.4)
+      File "<stdin>", line 1
+        xl.Range["A1", "C1"].Value[] = (10,"20",31.4)
+                                   ^
+    SyntaxError: invalid syntax
+    >>> print xl.Range["A1", "C1"].Value[]
+      File "<stdin>", line 1
+    print xl.Range["A1", "C1"].Value[]
+                                     ^
+    SyntaxError: invalid syntax
+    >>>
+
+So, |comtypes| must provide some ways to access these properties.  To
+*get* a named property without passing any argument, you can *call*
+the property::
+
+    >>> print xl.Range["A1", "C1"].Value()
+    (10, "20", 31.4)
+    >>>
+
+It is also possible to index with an empty tuple::
+
+    >>> print xl.Range["A1", "C1"].Value[()]
+    (10, "20", 31.4)
+    >>>
+
+To *set* a named property without passing any argument, you can
+also use the empty tuple index trick:
+
+    >>> xl.Range["A1", "C1"].Value[()] = (1, 2, 3)
+    >>>
+
+.. This is not (yet?) implemented.  Would is be useful?
+   Another way is to assing to the tuple in the normal way::
+
+      >>> xl.Range["A1", "C1"].Value = (1, 2, 3)
+      >>>
+
+The lcid parameter
+------------------
+
+Some COM methods or properties have an optional ``lcid`` parameter.
+This parameter is used to specify a langauge identifier.  The
+generated modules always pass 0 (zero) for this parameter.  If this is
+not what you want you have to edit the generated code.
+
+COM events
+++++++++++
+
+Some COM objects support events, which allows them to notify the user
+of the object when something happens.  The standard COM mechanism is
+based on so-called *connection points*.
+
+``GetEvents(source, sink, interface=None)``
+    This functions connects an event sink to the COM object
+    ``source``.
+
+    Events will call methods on the ``sink`` object; the methods must
+    be named ``interfacename_methodname`` or ``methodname``.  The
+    methods will be called with a ``this`` parameter, plus any
+    parameters that the event has.
+
+    ``interface`` is the outgoing interface of the ``source`` object;
+    it must be supplied when |comtypes| cannot determine the
+    outgoing interface of ``source``.
+
+    ``GetEvents`` returns the advise connection; you should keep the
+    connection alive as long as you want to receive events.  To break
+    the advise connection simply delete it.
+
+``ShowEvents(source, interface=None)``
+    This function contructs an event sink and connects it to the
+    ``source`` object for debugging.  The event sink will first print
+    out all event names that are found in the outgoing interface, and
+    will later print out the events with their arguments as they occur.
+
+``PumpEvents(timeout)``
+    This functions runs for a certain time in a way that is required
+    for COM to work correctly.  In a single-theaded apartment it runs
+    a windows message loop, in a multithreaded apparment it simply
+    waits.  The ``timeout`` argument may be a floating point number to
+    indicate a time of less than a second.
+
+    Pressing Control-C raises a KeyboardError exception and terminates
+    the function.
+
+Examples
+--------
+
+XXX Add examples
+
+
+Threading
++++++++++
+
+XXX mention threading issues, message loops
+
+Typelibraries
++++++++++++++
+
+Accessing type libraries
+------------------------
+
+|comtypes| uses early binding even to custom COM interfaces.  A Python
+class, derived from the ''comtypes.IUnknown`` class must be written.
+This class describes the interface methods and properties in a way
+that is somewhat similar to IDL notation.
+
+It should be possible to write the interface classes manually,
+fortunately |comtypes| includes a code generator that does create
+modules containing the Python interface class (and more) automatically
+from COM typelibraries.
+
+``GetModule(tlib)``
+
+    This function generates a Python wrapper for a COM typelibrary.
+    When a COM object exposes its own typeinfo, this function is
+    called automatically when the object is created.
+
+    ``tlib`` can be an **ITypeLib** COM pointer from a loaded
+    typelibrary, the pathname of a file containing a type library
+    (.tlb, .exe or .dll), a tuple or list containing the GUID of a
+    typelibrary, a major and a minor version number, plus optionally a
+    LCID, or any object that has a _reg_libid_ and _reg_version_
+    attributes specifying a type library.
+
+    ``GetModule(tlib)`` generates a Python module (if not already
+    present) from the typelibrary, containing interface classes,
+    coclasses, constants, and structures and returns the module object
+    itself.  The modules are generated inside the ``comtypes.gen``
+    package.  The module name is derived from the typelibrary guid,
+    version number and lcid.  The module name is a valid Python module
+    name, so it can be imported with an import statement.  A second
+    wrapper module is also created in the comtypes.gen package with a
+    shorter name that is derived from the type library *name* itself,
+    this does import everything from the real wrapper module but can
+    be imported easier because the module name is easier to type.
+
+    For example, the typelibrary for Internet Explorer has the name
+    ``SHDocVw`` (this is the name specified in the type library IDL
+    file, it is not the filename), the guid is
+    ``{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}``, and the version number
+    ``1.1``.  The name of the real typelib wrapper module is
+    ``comtypes.gen._EAB22AC0_30C1_11CF_A7EB_0000C05BAE0B_0_1_1`` and
+    the name of the second wrapper is ``comtypes.gen.SHDocVw``.
+
+    When you want to freeze your script with py2exe you can ensure
+    that py2exe includes these typelib wrappers by writing::
+
+        import comtypes.gen.SHDocVw
+
+    somewhere.
+
+``gen_dir``
+
+    This variable determines the directory where the typelib wrappers
+    are written to.  If it is ``None``, modules are only generated in
+    memory.
+
+    ``comtypes.client.gen_dir`` is calculated when the
+    **comtypes.client** module is first imported.  It is set to the
+    directory of the **comtypes.gen** package when this is a valid
+    file system path; otherwise it is set to ``None``.
+
+    In a script frozen with py2exe the directory of **comtypes.gen**
+    is somewhere in a zip-archive, ``gen_dir`` is ``None``, and even
+    if tyelib wrappers are created at runtime no attempt is made to
+    write them to the file system.  Instead, the modules are generated
+    only in memory.
+
+    ``comtypes.client.gen_dir`` can also be set to ``None`` to prevent
+    writing typelib wrappers to the file system.  The downside is that
+    for large type libraries the code generation can take some time.
+
+Examples
+--------
+
+Here   are several ways   to generate the  typelib  wrapper module for
+Internet Explorer with the ``GetModule`` function::
+
+   >>> from comtypes.client import GetModule
+   >>> GetModule("shdocvw.dll")
+   >>> GetModule(["{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}", 1, 1)
+   >>>
+
+This code snippet could be used to generate the typelib wrapper module
+for Internet Explorer automatically when your script is run, and would
+include the module into the exe-file when the script is frozen by
+py2exe::
+
+    >>> import sys
+    >>> if not hasattr(sys, "frozen"):
+    >>>     from comtypes.client import GetModule
+    >>>     GetModule("shdocvw.dll")
+    >>> import comtypes.gen.ShDocVw
+    >>>
+
+
+Case sensitivity
+----------------
+
+In principle, COM is a case insensitive technology (probably because
+of Visual Basic).  Type libraries generated from IDL files, however,
+do *not* always even preserve the case of identifiers; see for example
+http://support.microsoft.com/kb/220137.
+
+Python (and C/C++) are case sensitive languages, so |comtypes| is also
+case sensitive.  This means that you have to call
+``obj.QueryInterface(...)``, it will not work to write
+``obj.queryinterface(...)``.
+
+To work around the problems that you get when the case of identifiers
+in the type library (and in the generated Python module for this
+library) is not the same as in the IDL file, |comtypes| allows to have
+case insensitive attribute access for methods and properties in COM
+interfaces.  This behaviour is enabled by setting the
+``_case_insensitive_`` attribute of a Python COM interface to
+``True``.  In case of derived COM interfaces, case sensitivity is
+enabled or disabled separately for each interface.
+
+The code generated by the ``GetModule`` function sets this attribute
+to ``True``.  Case insensitive access has a small performance penalty,
+if you want to avoid this, you should edit the generated code and set
+the ``_case_insensitive_`` attribute to ``False``.
+
+
+Other stuff
++++++++++++
+
+XXX describe logging, gen_dir, wrap, _manage (?)
+
+
+.. include:: footer.rst
+
+.. |comtypes| replace:: **comtypes**
+
+.. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
+
+.. _ctypes: http://starship.python.net/crew/theller/ctypes
