@@ -1,3 +1,10 @@
+2007-11-23  Thomas Heller  <theller@python.net>
+
+	* Add a PumpEvents(timeout) function to comtypes.client.  This
+	function calls the win32 CoWaitForMultipleHandles() function which
+	will wait in a way compatible with all types of apartments;
+	additionally this function can be interrupted with Control+C.
+
 2007-11-21  Thomas Heller  <theller@python.net>
 
 	* comtypes\__init__.py: Add docstrings to special methods.  Make
