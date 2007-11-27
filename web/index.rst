@@ -83,16 +83,23 @@ The COM interface pointer that is returned by one of the creation
 functions (``CreateObject``, ``CoGetObject``, or ``GetActiveObject``)
 exposes methods and properties of the interface.
 
+Since ``comtypes`` uses early binding to COM interfaces (when type
+information is exposed by the COM object), the interface methods and
+properties are available for introspection.  The Python builtin
+``help`` function can be used to get an overview of them.
 
-..
-  XXX Move this elsewhere (or display the help() output in a separate page?
+``MSScriptControl.ScriptControl`` is the progid of the MS scripting
+engine; this is an interesting COM object that allows to execute
+JScript or VBScript programs.  Here_ is the complete output of these
+commands::
 
-  The builtin Python ``help()`` function shows a lot of information
-  about the interface pointer; probably more than you want to know.
-  Here is an excerpt showing an interface for Internet Explorer:
+    >>> from comtypes.client import CreateObject
+    >>> engine = CreateObject("MSScriptControl.ScriptControl")
+    >>> help(engine)
+    .....
+    >>>
 
-  .. include:: scripting.help
-     :literal:
+.. _Here: scriptcontrol.html
 
 
 Calling methods
