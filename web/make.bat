@@ -1,5 +1,6 @@
 @echo off
 rem Build the comtypes web pages
+set PYTHONPATH=
 
 c:\python25\python -c "from comtypes.client import CreateObject; help(CreateObject('Scripting.Dictionary'))" > scripting.help
 
