@@ -1,6 +1,6 @@
 @echo off
 rem Build the comtypes web pages
-set PYTHONPATH=
+set PYTHONPATH=..
 
 c:\python25\python -c "from comtypes.client import CreateObject; help(CreateObject('MSScriptControl.ScriptControl'))" > scriptcontrol.txt
 
