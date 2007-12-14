@@ -115,7 +115,7 @@ the ``HRESULT`` returned by the method call is returned.  When
 ``[out]`` or ``[out, retval]`` arguments are returned from a sucessful
 call, the ``HRESULT`` value is lost.
 
-If the COM method call fails, a ``COMError`` exception is raised.
+If the COM method call fails, a ``COMError`` exception is raised,
 containing the HRESULT value.
 
 
