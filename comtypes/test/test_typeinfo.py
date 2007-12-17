@@ -1,5 +1,5 @@
 import os
-import unittest as ut
+import unittest
 from ctypes import POINTER, byref
 from comtypes import GUID, COMError
 from comtypes.automation import DISPATCH_METHOD
@@ -8,7 +8,7 @@ from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib, \
 
 # We should add other test cases for Windows CE.
 if os.name == "nt":
-    class Test(ut.TestCase):
+    class Test(unittest.TestCase):
         # No LoadTypeLibEx on windows ce
         def test_LoadTypeLibEx(self):
             # IE 6 uses shdocvw.dll, IE 7 uses ieframe.dll
