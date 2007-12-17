@@ -1,4 +1,4 @@
-import unittest as ut
+import unittest
 
 import comtypes
 import comtypes.client
@@ -6,7 +6,7 @@ import comtypes.client
 import comtypes.test
 comtypes.test.requires("ui")
 
-class Test(ut.TestCase):
+class Test(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, "w1"):
             self.w1.Quit()
