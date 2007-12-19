@@ -51,6 +51,15 @@ class Test(unittest.TestCase):
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
 
+        r = xl.Range["A1:C3"]
+        i = iter(r)
+
+        # Test for iteration support in 'Range' interface
+        self.failUnlessEqual([c.Value() for c in xl.Range["A1:C3"]],
+                             [10.0, 20.0, 31.4,
+                              "x", "y", "z",
+                              3.0, 2.0, 1.0])
+
         # With pywin32, one could write xl.Cells(a, b)
         # With comtypes, one must write xl.Cells.Item(1, b)
 
