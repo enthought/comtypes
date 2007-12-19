@@ -1,3 +1,11 @@
+2007-12-19  Thomas Heller  <theller@python.net>
+
+	* Bump version number to 0.4.2.
+
+	* Special methods (__iter__ and so on) did not work on
+	dispinterfaces, because the __map_case__ dictionary was not
+	populated.
+
 2007-11-23  Thomas Heller  <theller@python.net>
 
 	* Released version comtypes 0.4.1.
