@@ -6,6 +6,25 @@ from ctypes import *
 from _ctypes import COMError
 from comtypes import partial
 
+try:
+    COMError()
+    # Python 2.5 and 2.5.1 have a bug in the COMError implementation:
+    # The type has no __init__ method, and no hresult, text, and
+    # details instance vars.  Work around this bug by monkeypatching
+    # COMError.
+except TypeError:
+    def monkeypatch_COMError():
+        def __init__(self, hresult, text, details):
+            self.hresult = hresult
+            self.text = text
+            self.details = details
+        COMError.__init__ = __init__
+        def __repr__(self):
+            return "%s(%r, %r, %r)" % (self.__class__.__name__, self.hresult, self.text, self.details)
+        COMError.__repr__ = __repr__
+    monkeypatch_COMError()
+    del monkeypatch_COMError
+
 import logging
 logger = logging.getLogger(__name__)
 

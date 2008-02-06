@@ -1,3 +1,8 @@
+2008-02-06  Thomas Heller  <theller@python.net>
+
+	* Added a workaround for the buggy _ctypes.COMError in Python 2.5
+	and 2.51.
+
 2007-12-19  Thomas Heller  <theller@python.net>
 
 	* Bump version number to 0.4.2.
