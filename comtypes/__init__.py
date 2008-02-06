@@ -8,16 +8,19 @@ from comtypes import partial
 
 try:
     COMError()
+except TypeError:
+    pass
+else:
     # Python 2.5 and 2.5.1 have a bug in the COMError implementation:
     # The type has no __init__ method, and no hresult, text, and
     # details instance vars.  Work around this bug by monkeypatching
     # COMError.
-except TypeError:
     def monkeypatch_COMError():
         def __init__(self, hresult, text, details):
             self.hresult = hresult
             self.text = text
             self.details = details
+            super(COMError, self).__init__(hresult, text, details)
         COMError.__init__ = __init__
         def __repr__(self):
             return "%s(%r, %r, %r)" % (self.__class__.__name__, self.hresult, self.text, self.details)

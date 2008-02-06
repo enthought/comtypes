@@ -37,7 +37,13 @@ class Test(unittest.TestCase):
         import time
         time.sleep(1)
         
-        self.assertRaises(comtypes.COMError, lambda: w2.Visible)
+        try:
+            w2.Visible
+        except comtypes.COMError, err:
+            variables = err.hresult, err.text, err.details
+            self.failUnlessEqual(variables, err[:])
+        else:
+            raise AssertionError("COMError not raised")
 
         self.assertRaises(WindowsError, comtypes.client.GetActiveObject, "Word.Application")
             
