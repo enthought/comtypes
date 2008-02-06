@@ -1,5 +1,9 @@
 2008-02-06  Thomas Heller  <theller@python.net>
 
+	* Replaced the comtypes.messageloop.add_filter(filter) function
+	with comtypes-messageloop.insert_filter(index, filter).  This
+	allows to specify the order in which the filters are applied.
+
 	* Added a workaround for the buggy _ctypes.COMError in Python 2.5
 	and 2.51.
 

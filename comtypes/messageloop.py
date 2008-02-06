@@ -10,10 +10,10 @@ DispatchMessage = _user32.DispatchMessageA
 class _MessageLoop(object):
 
     def __init__(self):
-        self._filters = set()
+        self._filters = []
 
-    def add_filter(self, obj):
-        self._filters.add(obj)
+    def insert_filter(self, obj, index=-1):
+        self._filters.insert(index, obj)
 
     def remove_filter(self, obj):
         self._filters.remove(obj)
@@ -40,7 +40,7 @@ class _MessageLoop(object):
 _messageloop = _MessageLoop()
 
 run = _messageloop.run
-add_filter = _messageloop.add_filter
+insert_filter = _messageloop.insert_filter
 remove_filter = _messageloop.remove_filter
 
-__all__ = ["run", "add_filter", "remove_filter"]
+__all__ = ["run", "insert_filter", "remove_filter"]
