@@ -5,8 +5,6 @@
 #
 # TODO: 
 #
-# - rename wrap
-#
 # - beautify the code generator output (import statements at the top)
 #
 # - add a GetTypelibWrapper(obj) function?
@@ -71,11 +69,10 @@ def wrap_outparam(punk):
     if not punk:
         return None
     if punk.__com_interface__ == comtypes.automation.IDispatch:
-        return wrap(punk)
+        return GetBestInterface(punk)
     return punk
 
-# XXX rename this!
-def wrap(punk):
+def GetBestInterface(punk):
     """Try to QueryInterface a COM pointer to the 'most useful'
     interface.
     
@@ -87,7 +84,7 @@ def wrap(punk):
     if not punk: # NULL COM pointer
         return punk # or should we return None?
     # find the typelib and the interface name
-    logger.info("wrap(%s)", punk)
+    logger.info("GetBestInterface(%s)", punk)
     try:
         pci = punk.QueryInterface(comtypes.typeinfo.IProvideClassInfo)
         logger.info("Does implement IProvideClassInfo")
@@ -150,6 +147,8 @@ def wrap(punk):
     result = punk.QueryInterface(interface)
     logger.info("Final result is %s", result)
     return result
+# backwards compatibility:
+wrap = GetBestInterface
 
 # Should we do this for POINTER(IUnknown) also?
 ctypes.POINTER(comtypes.automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam
@@ -168,7 +167,7 @@ def GetActiveObject(progid, interface=None):
 def _manage(obj, clsid, interface):
     obj.__dict__['__clsid'] = str(clsid)
     if interface is None:
-        obj = wrap(obj)
+        obj = GetBestInterface(obj)
     return obj
 
 
