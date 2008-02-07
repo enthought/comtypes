@@ -120,7 +120,7 @@ the ``HRESULT`` returned by the method call is returned.  When
 call, the ``HRESULT`` value is lost.
 
 If the COM method call fails, a ``COMError`` exception is raised,
-containing the HRESULT value.
+containing the ``HRESULT`` value.
 
 
 Accessing properties
@@ -279,15 +279,6 @@ Examples
 XXX Add examples
 
 
-Threading
-+++++++++
-
-XXX mention single threaded apartments, multi threaded apartments.
-``sys.coinit_flags``, ``CoInitialize``, ``CoUninitialize`` and so on.
-All this is pretty advanced stuff.
-
-XXX mention threading issues, message loops
-
 Typelibraries
 +++++++++++++
 
@@ -295,7 +286,7 @@ Accessing type libraries
 ------------------------
 
 |comtypes| uses early binding even to custom COM interfaces.  A Python
-class, derived from the ''comtypes.IUnknown`` class must be written.
+class, derived from the ``comtypes.IUnknown`` class must be written.
 This class describes the interface methods and properties in a way
 that is somewhat similar to IDL notation.
 
@@ -422,6 +413,15 @@ to ``True``.  Case insensitive access has a small performance penalty,
 if you want to avoid this, you should edit the generated code and set
 the ``_case_insensitive_`` attribute to ``False``.
 
+
+Threading
++++++++++
+
+XXX mention single threaded apartments, multi threaded apartments.
+``sys.coinit_flags``, ``CoInitialize``, ``CoUninitialize`` and so on.
+All this is pretty advanced stuff.
+
+XXX mention threading issues, message loops
 
 Other stuff
 +++++++++++
