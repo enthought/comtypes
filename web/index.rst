@@ -55,7 +55,9 @@ access COM objects.
     For the interpretation of ``displayname`` consult the Microsoft
     documentation for the Windows ``CoGetObject`` function.
     ``"winmgmts:"``, for example, is the displayname for `WMI
-    monikers`_::
+    monikers`_:
+
+    .. sourcecode:: python
 
         wmi = CoGetObject("winmgmts:")
 
@@ -91,7 +93,9 @@ properties are available for introspection.  The Python builtin
 ``MSScriptControl.ScriptControl`` is the progid of the MS scripting
 engine; this is an interesting COM object that allows to execute
 JScript or VBScript programs.  Here_ is the complete output of these
-commands::
+commands:
+
+.. sourcecode:: pycon
 
     >>> from comtypes.client import CreateObject
     >>> engine = CreateObject("MSScriptControl.ScriptControl")
@@ -127,7 +131,9 @@ read-only, or write-only.  They may have zero, one, or more arguments;
 arguments may even be optional.
 
 Properties without arguments can be accessed in the usual way.  This
-example demonstrates the ``Visible`` property of Internet Explorer::
+example demonstrates the ``Visible`` property of Internet Explorer:
+
+.. sourcecode:: pycon
 
     >>> ie = CreateObject("InternetExplorer.Application")
     >>> print ie.Visible
@@ -142,7 +148,9 @@ Properties with arguments (named properties)
 Properties with arguments can be accessed using index notation.
 The following example starts Excel, creates a new workbook, and
 accesses the contents of some cells in the ``xlRangeValueDefault``
-format (this code has been tested with Office 2003)::
+format (this code has been tested with Office 2003):
+
+.. sourcecode:: pycon
 
     >>> xl = CreateObject("Excel.Application")
     >>> xl.Workbooks.Add()
@@ -162,7 +170,9 @@ the ``.Value`` property is optional, so it would be possible to get or
 set this property without the need to pass (or even know) the
 ``xlRangeValueDefault`` argument.
 
-Unfortunately, Python does not allow indexing without arguments::
+Unfortunately, Python does not allow indexing without arguments:
+
+.. sourcecode:: pycon
 
     >>> xl.Range["A1", "C1"].Value[] = (10,"20",31.4)
       File "<stdin>", line 1
@@ -171,20 +181,24 @@ Unfortunately, Python does not allow indexing without arguments::
     SyntaxError: invalid syntax
     >>> print xl.Range["A1", "C1"].Value[]
       File "<stdin>", line 1
-    print xl.Range["A1", "C1"].Value[]
-                                     ^
+        print xl.Range["A1", "C1"].Value[]
+                                         ^
     SyntaxError: invalid syntax
     >>>
 
 So, |comtypes| must provide some ways to access these properties.  To
 *get* a named property without passing any argument, you can *call*
-the property::
+the property:
+
+.. sourcecode:: pycon
 
     >>> print xl.Range["A1", "C1"].Value()
     (10, "20", 31.4)
     >>>
 
-It is also possible to index with an empty tuple::
+It is also possible to index with an empty tuple:
+
+.. sourcecode:: pycon
 
     >>> print xl.Range["A1", "C1"].Value[()]
     (10, "20", 31.4)
@@ -193,11 +207,13 @@ It is also possible to index with an empty tuple::
 To *set* a named property without passing any argument, you can
 also use the empty tuple index trick:
 
+.. sourcecode:: pycon
+
     >>> xl.Range["A1", "C1"].Value[()] = (1, 2, 3)
     >>>
 
 .. This is not (yet?) implemented.  Would is be useful?
-   Another way is to assing to the tuple in the normal way::
+   Another way is to assing to the tuple in the normal way:
 
       >>> xl.Range["A1", "C1"].Value = (1, 2, 3)
       >>>
@@ -322,7 +338,9 @@ from COM typelibraries.
     the name of the second wrapper is ``comtypes.gen.SHDocVw``.
 
     When you want to freeze your script with py2exe you can ensure
-    that py2exe includes these typelib wrappers by writing::
+    that py2exe includes these typelib wrappers by writing:
+
+    .. sourcecode:: python
 
         import comtypes.gen.SHDocVw
 
@@ -353,7 +371,9 @@ Examples
 --------
 
 Here   are several ways   to generate the  typelib  wrapper module for
-Internet Explorer with the ``GetModule`` function::
+Internet Explorer with the ``GetModule`` function:
+
+.. sourcecode:: pycon
 
    >>> from comtypes.client import GetModule
    >>> GetModule("shdocvw.dll")
@@ -363,7 +383,9 @@ Internet Explorer with the ``GetModule`` function::
 This code snippet could be used to generate the typelib wrapper module
 for Internet Explorer automatically when your script is run, and would
 include the module into the exe-file when the script is frozen by
-py2exe::
+py2exe:
+
+.. sourcecode:: pycon
 
     >>> import sys
     >>> if not hasattr(sys, "frozen"):

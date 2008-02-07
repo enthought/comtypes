@@ -219,7 +219,7 @@ pre.address {
   font-family: serif ;
   font-size: 100% }
 
-pre.literal-block, pre.doctest-block {
+pre.literal-block, pre.doctest-block, div.highlight {
   margin-left: 2em ;
   margin-right: 2em ;
   background-color: #eeeeee }
