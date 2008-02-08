@@ -1,3 +1,10 @@
+2008-02-08  Thomas Heller  <theller@python.net>
+
+	* Hacked support for 'open array' [out] parameters in COM methods.
+	These are arrays that have both size_is() and length_is() in IDL.
+	See the comments in comtypes\tools\codegenerator.py, search for
+	'OPENARRAY'.
+
 2008-02-06  Thomas Heller  <theller@python.net>
 
 	* The badly named comtypes.client.wrap function was renamed into

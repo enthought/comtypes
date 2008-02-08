@@ -326,6 +326,13 @@ class Generator(object):
         print >> self.imports, "WSTRING = c_wchar_p"
         self._WSTRING_defined = True
 
+    _OPENARRAYS_defined = False
+    def need_OPENARRAYS(self):
+        if self._OPENARRAYS_defined:
+            return
+        print >> self.imports, "OPENARRAY = POINTER(c_ubyte) # hack, see comtypes/tools/codegenerator.py"
+        self._OPENARRAYS_defined = True
+
     _arraytypes = 0
     def ArrayType(self, tp):
         self._arraytypes += 1
@@ -873,19 +880,65 @@ class Generator(object):
             self.stream.write("              ")
             arglist = []
             for typ, name, idlflags, default in m.arguments:
+                type_name = self.type_name(typ)
+                ###########################################################
+                # IDL files that contain 'open arrays' or 'conformant
+                # varying arrays' method parameters are strange.
+                # These arrays have both a 'size_is()' and
+                # 'length_is()' attribute, like this example from
+                # dia2.idl (in the DIA SDK):
+                #
+                # interface IDiaSymbol: IUnknown {
+                # ...
+                #     HRESULT get_dataBytes(
+                #         [in] DWORD cbData,
+                #         [out] DWORD *pcbData,
+                #         [out, size_is(cbData),
+                #          length_is(*pcbData)] BYTE data[]
+                #     );
+                #
+                # The really strange thing is that the decompiled type
+                # library then contains this declaration, which declares
+                # the interface itself as [out] method parameter:
+                #
+                # interface IDiaSymbol: IUnknown {
+                # ...
+                #     HRESULT _stdcall get_dataBytes(
+                #         [in] unsigned long cbData, 
+                #         [out] unsigned long* pcbData, 
+                #         [out] IDiaSymbol data);
+                #
+                # Of course, comtypes does not accept a COM interface
+                # as method parameter; so replace the parameter type
+                # with the comtypes spelling of 'unsigned char *', and
+                # mark the parameter as [in, out], so the IDL
+                # equivalent would be like this:
+                #
+                # interface IDiaSymbol: IUnknown {
+                # ...
+                #     HRESULT _stdcall get_dataBytes(
+                #         [in] unsigned long cbData, 
+                #         [out] unsigned long* pcbData, 
+                #         [in, out] BYTE data[]);
+                ###########################################################
+                if isinstance(typ, typedesc.ComInterface):
+                    self.need_OPENARRAYS()
+                    type_name = "OPENARRAY"
+                    if 'in' not in idlflags:
+                        idlflags.append('in')
                 if 'lcid' in idlflags:# and 'in' in idlflags:
                     default = lcid
                 if default is not None:
                     self.need_VARIANT_imports(default)
                     arglist.append("( %r, %s, '%s', %r )" % (
                         idlflags,
-                        self.type_name(typ),
+                        type_name,
                         name,
                         default))
                 else:
                     arglist.append("( %r, %s, '%s' )" % (
                         idlflags,
-                        self.type_name(typ),
+                        type_name,
                         name))
             self.stream.write(",\n              ".join(arglist))
             print >> self.stream, "),"
