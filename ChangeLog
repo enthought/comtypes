@@ -1,3 +1,8 @@
+2008-03-04  Thomas Heller  <theller@python.net>
+
+	* Add comtypes.client.gen_dir to comtypes.gen.__path__ so that the
+	codegenerator can import its generated module(s).
+
 2008-02-08  Thomas Heller  <theller@python.net>
 
 	* Hacked support for 'open array' [out] parameters in COM methods.

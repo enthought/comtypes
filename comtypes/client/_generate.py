@@ -11,6 +11,10 @@ __verbose__ = __debug__
 
 def _my_import(fullname):
     # helper function to import dotted modules
+    import comtypes.gen
+    if comtypes.client.gen_dir \
+           and comtypes.client.gen_dir not in comtypes.gen.__path__:
+        comtypes.gen.__path__.append(comtypes.client.gen_dir)
     return __import__(fullname, globals(), locals(), ['DUMMY'])
 
 def _name_module(tlib):
