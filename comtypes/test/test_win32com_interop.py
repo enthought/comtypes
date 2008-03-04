@@ -6,7 +6,9 @@ from ctypes.wintypes import BOOL
 from comtypes import IUnknown
 from comtypes.client import CreateObject
 from comtypes.automation import IDispatch
+from comtypes.test import requires
 
+requires("pythoncom")
 import pythoncom
 import win32com.client
 
