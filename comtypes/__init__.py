@@ -246,7 +246,13 @@ class _cominterface_meta(type):
                 #     pptinfo[0] = a_com_interface_pointer
                 #     return S_OK
                 if index != 0:
-                    raise IndexError("Invalid index %s, must be 0" % index)
+                    # CopyComPointer, which is in _ctypes, does only
+                    # handle an index of 0.  This code does what
+                    # CopyComPointer should do if index != 0.
+                    if bool(value):
+                        value.AddRef()
+                    super(_, self).__setitem__(index, value)
+                    return
                 from _ctypes import CopyComPointer
                 CopyComPointer(value, self)
 

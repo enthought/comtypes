@@ -187,6 +187,60 @@ class SafeArrayTestCase(unittest.TestCase):
         del sa
         self.failUnlessEqual(initial, com_refcnt(punk))
 
+        sa = t.from_param([None])
+        self.failUnlessEqual((POINTER(IUnknown)(),), sa[0])
+        
+
+    def test_VT_UNKNOWN_multi(self):
+        a = _midlSAFEARRAY(POINTER(IUnknown))
+        t = _midlSAFEARRAY(POINTER(IUnknown))
+        self.failUnless(a is t)
+
+        def com_refcnt(o):
+            "Return the COM refcount of an interface pointer"
+            import gc; gc.collect(); gc.collect()
+            o.AddRef()
+            return o.Release()
+
+        from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
+        punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
+
+        # initial refcount
+        initial = com_refcnt(punk)
+
+        # This should increase the refcount by 4
+        sa = t.from_param((punk,) * 4)
+        self.failUnlessEqual(initial + 4, com_refcnt(punk))
+
+        # Unpacking the array must not change the refcount, and must
+        # return an equal object.
+        self.failUnlessEqual((punk,)*4, sa[0])
+        self.failUnlessEqual(initial + 4, com_refcnt(punk))
+
+        del sa
+        self.failUnlessEqual(initial, com_refcnt(punk))
+
+        # This should increase the refcount by 2
+        sa = t.from_param((punk, None, punk, None))
+        self.failUnlessEqual(initial + 2, com_refcnt(punk))
+
+        null = POINTER(IUnknown)()
+        self.failUnlessEqual((punk, null, punk, null), sa[0])
+
+        del sa
+        self.failUnlessEqual(initial, com_refcnt(punk))
+
+        # repeat same test, with 2 different com pointers
+
+        plib = CreateTypeLib("foo")
+        a, b = com_refcnt(plib), com_refcnt(punk)
+        sa = t.from_param([plib, punk, plib])
+
+####        self.failUnlessEqual((plib, punk, plib), sa[0])
+        self.failUnlessEqual((a+2, b+1), (com_refcnt(plib), com_refcnt(punk)))
+
+        del sa
+        self.failUnlessEqual((a, b), (com_refcnt(plib), com_refcnt(punk)))
 
     def test_UDT(self):
         from comtypes.gen.TestComServerLib import MYCOLOR
