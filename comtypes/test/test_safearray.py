@@ -158,20 +158,35 @@ class SafeArrayTestCase(unittest.TestCase):
         sa = t.from_param([True, False, True, False])
         self.failUnlessEqual(sa[0], (True, False, True, False))
 
-    # not yet implemented 
-##    def test_VT_UNKNOWN(self):
-##        a = _midlSAFEARRAY(POINTER(IUnknown))
-##        t = _midlSAFEARRAY(POINTER(IUnknown))
-##        self.failUnless(a is t)
+    def test_VT_UNKNOWN_1(self):
+        a = _midlSAFEARRAY(POINTER(IUnknown))
+        t = _midlSAFEARRAY(POINTER(IUnknown))
+        self.failUnless(a is t)
 
-##        from comtypes.typeinfo import CreateTypeLib
-##        punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
-##        refcnt_before = punk.AddRef(), punk.Release()
-##        t.from_param([punk, punk, punk])
-##        import gc; gc.collect(); gc.collect()
-##        refcnt_after = punk.AddRef(), punk.Release()
-##        # This test leaks COM refcounts of the punk object.  Don't know why.
-##        ##self.failUnlessEqual(refcnt_before, refcnt_after)
+        def com_refcnt(o):
+            "Return the COM refcount of an interface pointer"
+            import gc; gc.collect(); gc.collect()
+            o.AddRef()
+            return o.Release()
+
+        from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
+        punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
+
+        # initial refcount
+        initial = com_refcnt(punk)
+
+        # This should increase the refcount by 1
+        sa = t.from_param([punk])
+        self.failUnlessEqual(initial + 1, com_refcnt(punk))
+
+        # Unpacking the array must not change the refcount, and must
+        # return an equal object.
+        self.failUnlessEqual((punk,), sa[0])
+        self.failUnlessEqual(initial + 1, com_refcnt(punk))
+
+        del sa
+        self.failUnlessEqual(initial, com_refcnt(punk))
+
 
     def test_UDT(self):
         from comtypes.gen.TestComServerLib import MYCOLOR

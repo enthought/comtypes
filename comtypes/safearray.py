@@ -1,5 +1,5 @@
 from ctypes import *
-from comtypes import _safearray, GUID, IUnknown
+from comtypes import _safearray, GUID, IUnknown, com_interface_registry
 from comtypes.partial import partial
 
 _safearray_type_cache = {}
@@ -42,6 +42,12 @@ def _make_safearray_type(itemtype):
                 from comtypes.typeinfo import GetRecordInfoFromGuids
                 extra = GetRecordInfoFromGuids(*guids)
             vartype = VT_RECORD
+        elif issubclass(itemtype, POINTER(IDispatch)):
+            vartype = VT_DISPATCH
+            extra = pointer(itemtype._iid_)
+        elif issubclass(itemtype, POINTER(IUnknown)):
+            vartype = VT_UNKNOWN
+            extra = pointer(itemtype._iid_)
         else:
             raise TypeError(itemtype)
 
@@ -141,14 +147,20 @@ def _make_safearray_type(itemtype):
             # XXX Not sure this is true:
             # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
             # interface iid by SafeArrayGetIID().
-##            from comtypes.automation import VT_UNKNOWN, VT_DISPATCH
-##            if self._vartype_ in (VT_UNKNOWN, VT_DISPATCH):
-##                raise "HALT"
             ptr = POINTER(self._itemtype_)() # container for the values
             _safearray.SafeArrayAccessData(self, byref(ptr))
             try:
                 if self._itemtype_ == VARIANT:
                     return [i.value for i in ptr[:num_elements]]
+                elif issubclass(self._itemtype_, POINTER(IUnknown)):
+                    iid = _safearray.SafeArrayGetIID(self)
+                    itf = com_interface_registry[str(iid)]
+                    # COM interface pointers retrieved from array
+                    # must be AddRef()'d.
+                    result = ptr[:num_elements]
+                    [p.AddRef() for p in result
+                     if bool(p)]
+                    return [p.QueryInterface(itf) for p in result]
                 else:
                     return ptr[:num_elements]
             finally:

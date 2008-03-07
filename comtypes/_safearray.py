@@ -108,9 +108,13 @@ SafeArrayPtrOfIndex.argtypes = [POINTER(SAFEARRAY), POINTER(LONG), c_void_p]
 SafeArrayUnlock = _oleaut32.SafeArrayUnlock
 SafeArrayUnlock.restype = HRESULT
 SafeArrayUnlock.argtypes = [POINTER(SAFEARRAY)]
-SafeArrayGetIID = _oleaut32.SafeArrayGetIID
-SafeArrayGetIID.restype = HRESULT
-SafeArrayGetIID.argtypes = [POINTER(SAFEARRAY), POINTER(GUID)]
+_SafeArrayGetIID = _oleaut32.SafeArrayGetIID
+_SafeArrayGetIID.restype = HRESULT
+_SafeArrayGetIID.argtypes = [POINTER(SAFEARRAY), POINTER(GUID)]
+def SafeArrayGetIID(pa):
+    result = GUID()
+    _SafeArrayGetIID(pa, result)
+    return result
 SafeArrayDestroyDescriptor = _oleaut32.SafeArrayDestroyDescriptor
 SafeArrayDestroyDescriptor.restype = HRESULT
 SafeArrayDestroyDescriptor.argtypes = [POINTER(SAFEARRAY)]
