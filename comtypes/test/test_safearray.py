@@ -236,7 +236,7 @@ class SafeArrayTestCase(unittest.TestCase):
         a, b = com_refcnt(plib), com_refcnt(punk)
         sa = t.from_param([plib, punk, plib])
 
-####        self.failUnlessEqual((plib, punk, plib), sa[0])
+        self.failUnlessEqual((plib, punk, plib), sa[0])
         self.failUnlessEqual((a+2, b+1), (com_refcnt(plib), com_refcnt(punk)))
 
         del sa
