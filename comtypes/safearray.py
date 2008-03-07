@@ -156,11 +156,17 @@ def _make_safearray_type(itemtype):
                     iid = _safearray.SafeArrayGetIID(self)
                     itf = com_interface_registry[str(iid)]
                     # COM interface pointers retrieved from array
-                    # must be AddRef()'d.
-                    result = ptr[:num_elements]
-                    [p.AddRef() for p in result
-                     if bool(p)]
-                    return [p.QueryInterface(itf) for p in result]
+                    # must be AddRef()'d if non-NULL.
+                    elems = ptr[:num_elements]
+                    result = []
+                    for p in elems:
+                        if bool(p):
+                            p.AddRef()
+                            result.append(p.QueryInterface(itf))
+                        else:
+                            # return a NULL-interface pointer.
+                            result.append(POINTER(itf)())
+                    return result
                 else:
                     return ptr[:num_elements]
             finally:
