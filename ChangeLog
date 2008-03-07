@@ -1,3 +1,8 @@
+2008-03-07  Thomas Heller  <theller@python.net>
+
+	* Implemented support for SAFEARRAYs containing com interface
+	pointers.
+
 2008-03-04  Thomas Heller  <theller@python.net>
 
 	* Add comtypes.client.gen_dir to comtypes.gen.__path__ so that the
