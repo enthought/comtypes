@@ -706,26 +706,20 @@ class _compointer_base(c_void_p):
 
     def __cmp__(self, other):
         """Compare pointers to COM interfaces."""
+        # COM identity rule
+        #
+        # XXX To compare COM interface pointers, should we
+        # automatically QueryInterface for IUnknown on both items, and
+        # compare the pointer values?
         if not isinstance(other, _compointer_base):
             return 1
 
-        # COM identity rule
-        #
-        # To compare COM interface pointers, we must QueryInterface
-        # for IUnknown on both items, and compare the pointer values
-        if self:
-            self = self.QueryInterface(IUnknown)
-        if other:
-            other = other.QueryInterface(IUnknown)
         # get the value property of the c_void_p baseclass, this is the pointer value
-        return cmp(super(_compointer_base, self).value,
-                   super(_compointer_base, other).value)
+        return cmp(super(_compointer_base, self).value, super(_compointer_base, other).value)
 
     def __hash__(self):
         """Return the hash value of the pointer."""
         # hash the pointer values
-        if self:
-            self = self.QueryInterface(IUnknown)
         return hash(super(_compointer_base, self).value)
 
     # redefine the .value property; return the object itself.

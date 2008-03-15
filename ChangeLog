@@ -1,14 +1,5 @@
 2008-03-07  Thomas Heller  <theller@python.net>
 
-	* IMPORTANT CHANGE: COM interfaces pointers are now hashed and
-	compared by QueryInterfacing to IUnknown first, and then hashing
-	and comparing the pointer value.
-
-	This has the effect that COM interface pointers are considered
-	equal if they belong to the same COM object, even if the
-	interfaces are different (see the COM identity rule:
-	http://msdn2.microsoft.com/en-us/library/ms810016.aspx).
-
 	* Implemented support for SAFEARRAYs containing com interface
 	pointers.
 

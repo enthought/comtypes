@@ -2,7 +2,6 @@
 import unittest as ut
 from ctypes import windll, POINTER, byref, HRESULT
 from comtypes import IUnknown, STDMETHOD, GUID
-from comtypes.typeinfo import CreateTypeLib
 
 # XXX leaks references!
 
@@ -106,6 +105,8 @@ class BasicTest(ut.TestCase):
         self.failUnlessEqual(a, b)
         self.failUnlessEqual(hash(a), hash(b))
 
+        from comtypes.typeinfo import CreateTypeLib
+
         # we do not save the lib, so no file will be created.
         # these should NOT be identical
         a = CreateTypeLib(u"blahblah")
@@ -125,14 +126,6 @@ class BasicTest(ut.TestCase):
         self.failUnlessEqual(a, c)
         self.failUnlessEqual(hash(a), hash(c))
 
-    def test_identity_objects(self):
-        from comtypes.typeinfo import ITypeLib
-        a = CreateTypeLib("foo")
-        b = a.QueryInterface(ITypeLib)
-
-        self.failUnlessEqual(a, b)
-
-        self.failUnlessEqual(hash(a), hash(b))
 
 def main():
     ut.main()
