@@ -1,3 +1,9 @@
+2008-04-07  Thomas Heller  <theller@python.net>
+
+	* Fix the codegenerator to handle all kinds of IEnumXXX::Next
+	method signatures; the second and third parameters may be [out] or
+	[in, out].
+
 2008-03-07  Thomas Heller  <theller@python.net>
 
 	* Implemented support for SAFEARRAYs containing com interface

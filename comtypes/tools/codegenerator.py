@@ -716,18 +716,23 @@ class Generator(object):
 
             # Well, not sure if they are really broken, but sometimes
             # the last parameter to Next is marked [in, out],
-            # sometimes it is only [out].
+            # most of the time it is only [out].
             NextIsBroken = False
             for mth in head.itf.members:
                 if mth.name == "Next":
-                    NextIsBroken = 'in' in mth.arguments[-1][2]
+                    # The second and third arguments of the 'Next' method
+                    # are sometimes [in, out], sometimes only [out].
+                    # For the former case we have to provide values in the call.
+                    next_method = "item, fetched = self.Next(1"
+                    if 'in' in mth.arguments[1][2]:
+                        next_method += ", %s()" % self.type_name(mth.arguments[1][0].typ)
+                    if 'in' in mth.arguments[2][2]:
+                        next_method += ", c_ulong()"
+                    next_method += ")"
                     break
 
             print >> self.stream, "    def next(self):"
-            if NextIsBroken:
-                print >> self.stream, "        item, fetched = self.Next(1, 0)"
-            else:
-                print >> self.stream, "        item, fetched = self.Next(1)"
+            print >> self.stream, "        %s" % next_method
             print >> self.stream, "        if fetched:"
             print >> self.stream, "            return item"
             print >> self.stream, "        raise StopIteration"
@@ -736,10 +741,7 @@ class Generator(object):
             print >> self.stream, "    def __getitem__(self, index):"
             print >> self.stream, "        self.Reset()"
             print >> self.stream, "        self.Skip(index)"
-            if NextIsBroken:
-                print >> self.stream, "        item, fetched = self.Next(1, 0)"
-            else:
-                print >> self.stream, "        item, fetched = self.Next(1)"
+            print >> self.stream, "        %s" % next_method
             print >> self.stream, "        if fetched:"
             print >> self.stream, "            return item"
             print >> self.stream, "        raise IndexError, index"
