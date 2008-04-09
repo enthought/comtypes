@@ -1,3 +1,8 @@
+2008-04-09  Thomas Heller  <theller@python.net>
+
+	* comtypes.util: New module, containing the byref_at() and
+	cast_field() helper functions.
+
 2008-04-07  Thomas Heller  <theller@python.net>
 
 	* Fix the codegenerator to handle all kinds of IEnumXXX::Next
