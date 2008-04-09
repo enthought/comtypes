@@ -1,5 +1,7 @@
 2008-04-09  Thomas Heller  <theller@python.net>
 
+	* Bump version number to 0.4.3a
+
 	* Released version comtypes 0.4.2.
 
 	* comtypes.util: New module, containing the byref_at() and
