@@ -93,4 +93,4 @@ def cast_field(struct, fieldname, fieldtype, offset=0,
     return cast(_byref_at(struct, fieldoffset),
                 _POINTER(fieldtype))[0]
 
-__all__ = ["byref_at"]
+__all__ = ["byref_at", "cast_field"]
