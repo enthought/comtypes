@@ -541,6 +541,15 @@ Other stuff
 
 XXX describe logging, gen_dir, wrap, _manage (?)
 
+Links
++++++
+
+Yaroslav Kourovtsev has written an article_ titled "Working with custom
+COM interfaces from Python" that describes how to use |comtypes| to
+access a custom COM object.
+
+.. _article:  http://www.codeproject.com/KB/COM/python-comtypes-interop.aspx
+
 Downloads
 *********
 
