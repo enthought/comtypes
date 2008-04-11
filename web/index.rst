@@ -270,13 +270,126 @@ based on so-called *connection points*.
     indicate a time of less than a second.
 
     Pressing Control-C raises a KeyboardError exception and terminates
-    the function.
+    the function immediately.
 
 
 Examples
 --------
 
-XXX Add examples
+Here is an example which demonstrates how to find and receive events
+from Excel:
+
+.. sourcecode:: pycon
+
+    >>> from comtypes.client import CreateObject
+    >>> xl = CreateObject("Excel.Application")
+    >>> xl.Visible = True
+    >>> print xl
+    <POINTER(_Application) ptr=0x29073c at c156c0>
+    >>> 
+
+The ``ShowEvents`` function is a useful helper to get started with the
+events of an object in the interactive Python interpreter.
+
+We call ``ShowEvents`` to connect to the events that Excel fires.
+``ShowEvents`` first lists the events that are present on the
+``_Application`` object:
+
+.. sourcecode:: pycon
+
+   >>> from comtypes.client import ShowEvents
+   >>> connection = ShowEvents(xl)
+   # event found: AppEvents_WorkbookSync
+   # event found: AppEvents_WindowResize
+   # event found: AppEvents_WindowActivate
+   # event found: AppEvents_WindowDeactivate
+   # event found: AppEvents_SheetSelectionChange
+   # event found: AppEvents_SheetBeforeDoubleClick
+   # event found: AppEvents_SheetBeforeRightClick
+   # event found: AppEvents_SheetActivate
+   # event found: AppEvents_SheetDeactivate
+   # event found: AppEvents_SheetCalculate
+   # event found: AppEvents_SheetChange
+   # event found: AppEvents_NewWorkbook
+   # event found: AppEvents_WorkbookOpen
+   # event found: AppEvents_WorkbookActivate
+   # event found: AppEvents_WorkbookDeactivate
+   # event found: AppEvents_WorkbookBeforeClose
+   # event found: AppEvents_WorkbookBeforeSave
+   # event found: AppEvents_WorkbookBeforePrint
+   # event found: AppEvents_WorkbookNewSheet
+   # event found: AppEvents_WorkbookAddinInstall
+   # event found: AppEvents_WorkbookAddinUninstall
+   # event found: AppEvents_SheetFollowHyperlink
+   # event found: AppEvents_SheetPivotTableUpdate
+   # event found: AppEvents_WorkbookPivotTableCloseConnection
+   # event found: AppEvents_WorkbookPivotTableOpenConnection
+   # event found: AppEvents_WorkbookBeforeXmlImport
+   # event found: AppEvents_WorkbookAfterXmlImport
+   # event found: AppEvents_WorkbookBeforeXmlExport
+   # event found: AppEvents_WorkbookAfterXmlExport
+   >>> print connection
+   <comtypes.client._events._AdviseConnection object at 0x00C16AD0>
+   >>>
+
+We have assigned the return value of the ``ShowEvents`` call to the
+variable ``connection``, this variable keeps the connection to Excel
+alive and it will print events as they actually occur.
+
+To receive COM events correctly, it is important to run a message
+loop; the ``PumpEvents()`` function will do that for a certain time.
+Here is what happens when we call this function and in the meantime
+interactively open an Excel worksheet.  ``comtypes`` prints the events
+as they are fired with their parameters:
+
+.. sourcecode:: pycon
+
+   >>> from comtypes.client import PumpEvents
+   >>> PumpEvents(30)
+   Event AppEvents_WorkbookOpen(None, <POINTER(_Workbook) ptr=...>)
+   Event AppEvents_WorkbookActivate(None, <POINTER(_Workbook) ptr=...>)
+   Event AppEvents_WindowActivate(None, <POINTER(Window) ptr=...>, <POINTER(_Workbook) ptr=...>)
+   >>>
+
+The first parameter is always the ``this`` pointer passed as ``None``
+for comtypes-internal reasons, other parameters depend on the event.
+To terminate the connection we simply delete the ``connection``
+variable; it may be required to call the Python garbage collector to
+terminate the connection immediately, and we will not receive any
+events from Excel anymore:
+
+.. sourcecode:: pycon
+
+   >>> del connection
+   >>> import gc; gc.collect()
+   123
+   >>>
+
+If we want to process the events in our own code, we use the
+``GetEvents()`` function in a very similar way.  This function must be
+called with the COM object as the first argument, the second parameter
+is a Python object, the event sink, that will process the events.  The
+event sink should have methods named like the events we want to
+process.  It is only required to implement methods for those events
+that we want to process, other events are ignored.
+
+The following code defines a class that processes the
+``AppEvents_WorkbookOpen`` event, creates an instance of this class
+and passes it as second parameter to the ``GetEvents()`` function:
+
+.. sourcecode:: pycon
+
+   >>> from comtypes.client import GetEvents
+   >>> class EventSink(object):
+   ...     def AppEvents_WorkbookOpen(self, this, workbook):
+   ...         print "WorkbookOpened", workbook
+   ...         # add your code here
+   ...
+   >>> sink = EventSink()
+   >>> connection = GetEvents(xl, sink)
+   >>> PumpEvents(30)
+   WorkbookOpened <POINTER(_Workbook) ptr=0x291944 at 1853120>
+   >>>
 
 
 Typelibraries
