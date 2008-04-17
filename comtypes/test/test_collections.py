@@ -2,6 +2,8 @@ import unittest
 from comtypes.client import CreateObject, GetModule #, Constants
 from ctypes import ArgumentError
 
+from comtypes.test.find_memleak import find_memleak
+
 class Test(unittest.TestCase):
 
     def test_IEnumVARIANT(self):
@@ -58,6 +60,23 @@ class Test(unittest.TestCase):
         # slicing is not (yet?) supported
         cv.Reset()
         self.failUnlessRaises(ArgumentError, lambda: cv[:])
+
+    def test_leaks(self):
+        # The XP firewall manager.
+        fwmgr = CreateObject('HNetCfg.FwMgr')
+        # apps has a _NewEnum property that implements IEnumVARIANT
+        apps = fwmgr.LocalPolicy.CurrentProfile.AuthorizedApplications
+
+        def doit():
+            for item in iter(apps):
+                item.ProcessImageFileName
+        bytes = find_memleak(doit, (2, 20))
+        self.failIf(bytes, "Leaks %d bytes" % bytes)
+
+        def doit():
+            iter(apps).Next(99)
+        bytes = find_memleak(doit, (2, 20))
+        self.failIf(bytes, "Leaks %d bytes" % bytes)
 
 if __name__ == "__main__":
     unittest.main()

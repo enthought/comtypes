@@ -12,7 +12,6 @@ from comtypes.hresult import *
 import comtypes.client
 import comtypes.errorinfo
 import comtypes.server
-import comtypes.server.automation
 import comtypes.server.connectionpoints
 import comtypes.typeinfo
 
@@ -40,7 +39,6 @@ from comtypes.gen import TestComServerLib
 # class.
 class TestComServer(
     TestComServerLib.TestComServer, # the coclass from the typelib wrapper
-    comtypes.server.automation.DualDispImplMixin, # other mixins
     comtypes.server.connectionpoints.ConnectableObjectMixin,
     ):
 

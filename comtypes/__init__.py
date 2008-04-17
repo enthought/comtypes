@@ -28,6 +28,13 @@ else:
     monkeypatch_COMError()
     del monkeypatch_COMError
 
+class ReturnHRESULT(Exception):
+    """ReturnHRESULT(hresult, text)
+
+    Return a hresult code from a COM method implementation
+    without logging an error.
+    """
+
 import logging
 logger = logging.getLogger(__name__)
 

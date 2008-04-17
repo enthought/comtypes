@@ -50,9 +50,18 @@ class _AdviseConnection(object):
         self.cookie = self.cp.Advise(receiver)
         self.receiver = receiver
 
+    def disconnect(self):
+        if self.cookie:
+            self.cp.Unadvise(self.cookie)
+            logger.debug("Unadvised %s", self.cp)
+            self.cp = None
+            self.cookie = None
+            del self.receiver
+
     def __del__(self):
         try:
-            self.cp.Unadvise(self.cookie)
+            if self.cookie is not None:
+                self.cp.Unadvise(self.cookie)
         except (comtypes.COMError, WindowsError):
             # Are we sure we want to ignore errors here?
             pass

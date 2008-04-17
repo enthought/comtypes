@@ -78,6 +78,8 @@ if os.path.isfile(path):
     print "ADD", path
     add_test(path)
 
+for fname in glob.glob(os.path.join(common_progdir, r"Microsoft Shared\Speech\*.dll")):
+    add_test(fname)
 
 for fname in glob.glob(os.path.join(sysdir, "*.dll")):
     # these typelibs give errors:

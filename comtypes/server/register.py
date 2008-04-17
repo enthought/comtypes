@@ -286,6 +286,8 @@ class Registrar(object):
             if " " in exe:
                 exe = '"%s"' % exe
             if not hasattr(sys, "frozen"):
+                if not __debug__:
+                    exe = "%s -O" % exe
                 script = os.path.abspath(sys.modules[cls.__module__].__file__)
                 if " " in script:
                     script = '"%s"' % script
@@ -328,7 +330,7 @@ def UseCommandLine(*classes):
     opts, args = w_getopt.w_getopt(sys.argv[1:],
                                    "regserver unregserver embedding l: f: nodebug")
     if not opts:
-        sys.stderr.write(usage)
+        sys.stderr.write(usage + "\n")
         return 0 # nothing for us to do
 
     levels = []

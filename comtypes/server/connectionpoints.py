@@ -58,10 +58,20 @@ class ConnectionPointImpl(COMObject):
             # for better performance, we could cache the dispids.
             dispid = self._typeinfo.GetIDsOfNames(name)[0]
             for p in self._connections.values():
-                p.Invoke(dispid, *args, **kw)
+                try:
+                    p.Invoke(dispid, *args, **kw)
+                except COMError, details:
+                    # XXX for certain errors (server missing) we should unadvise the connection
+                    logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
+                                   exc_info=True)
         else:
             for p in self._connections.values():
-                getattr(p, name)(*args, **kw)
+                try:
+                    getattr(p, name)(*args, **kw)
+                except COMError, details:
+                    # XXX for certain errors (server missing) we should unadvise the connection
+                    logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
+                                   exc_info=True)
 
 class ConnectableObjectMixin(object):
     """Mixin which implements IConnectionPointContainer.

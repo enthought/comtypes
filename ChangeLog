@@ -1,3 +1,9 @@
+2008-04-17  Thomas Heller  <theller@python.net>
+
+	* Merge in a lot of changes from the private upstream repository
+	26394; mainly much better support for implementing comtypes
+	servers.
+
 2008-04-09  Thomas Heller  <theller@python.net>
 
 	* Bump version number to 0.4.3a
