@@ -31,8 +31,6 @@ Windows:
     test_comserver.py, TestLocalServer.test_get_typeinfo() fails with
     an access violation.  No idea why.
 
-    There are memory leaks, run the tests with -umemleaks to see them.
-
 Windows CE:
 
     6 tests still fail. One because the CoGetObject function is not
