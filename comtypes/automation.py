@@ -168,6 +168,14 @@ class tagVARIANT(Structure):
         return cls(value)
     from_param = classmethod(from_param)
 
+    def _set_byref(self, value):
+        # This method allows to change the value of a
+        # (VT_BYREF|VT_xxx) variant in place.
+        if not self.vt & VT_BYREF:
+            raise TypeError("set_byref requires a VT_BYREF VARIANT instance")
+        typ = _vartype_to_ctype[self.vt & ~VT_BYREF]
+        cast(self._.c_void_p, POINTER(typ))[0] = value
+
     # see also c:/sf/pywin32/com/win32com/src/oleargs.cpp 54
     def _set_value(self, value):
         _VariantClear(byref(self))

@@ -18,6 +18,12 @@ from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 from comtypes import IPersist
 
+# so we don't have to import comtypes.automation
+DISPATCH_METHOD = 1
+DISPATCH_PROPERTYGET = 2
+DISPATCH_PROPERTYPUT = 4
+DISPATCH_PROPERTYPUTREF = 8
+
 class E_NotImplemented(Exception):
     """COM method is not implemented"""
 
@@ -77,10 +83,10 @@ def hack(inst, mth, paramflags, interface, mthname):
     if code.co_varnames[1:2] == ("this",):
         return catch_errors(inst, mth, interface, mthname)
     dirflags = [f[0] for f in paramflags]
-    # An argument is [IN] if it is not [OUT] !
-    # This handles the case where no direction is defined in the IDL file.
-    # number of input arguments:
-    args_in = len([f for f in dirflags if (f & 2) == 0])
+    # An argument is an input arg either if flags are NOT set in the
+    # idl file, or if the flags contain 'in'. In other words, the
+    # direction flag is either exactly '0' or has the '1' bit set:
+    args_in = len([f for f in dirflags if (f == 0) or (f & 1)])
     # number of output arguments:
     args_out = len([f for f in dirflags if f & 2])
     if args_in != code.co_argcount - 1:
@@ -92,9 +98,12 @@ def hack(inst, mth, paramflags, interface, mthname):
     clsid = getattr(inst, "_reg_clsid_", None)
     def wrapper(this, *args):
         outargs = args[len(args)-args_out:]
-        for a in outargs:
-            if not a:
-                return E_POINTER
+        # Method implementations could check for and return E_POINTER
+        # themselves.  Or an error will be raised when
+        # 'outargs[i][0] = value' is executed.
+##        for a in outargs:
+##            if not a:
+##                return E_POINTER
         try:
             result = mth(*args[:args_in])
             if args_out == 1:
@@ -136,7 +145,7 @@ class _MethodFinder(object):
         # map lower case names to names with correct spelling.
         self.names = dict([(n.lower(), n) for n in dir(inst)])
 
-    def get_impl(self, instance, interface, mthname, paramflags, idlflags):
+    def get_impl(self, interface, mthname, paramflags, idlflags):
         mth = self.find_impl(interface, mthname, paramflags, idlflags)
         if mth is None:
             return _do_implement(interface.__name__, mthname)
@@ -226,6 +235,7 @@ class COMObject(object):
             return self
         if hasattr(self, "_com_interfaces_"):
             self.__prepare_comobject()
+        self._dispimpl_ = {}
         return self
 
     def __prepare_comobject(self):
@@ -278,7 +288,7 @@ class COMObject(object):
                 restype, mthname, argtypes, paramflags, idlflags, helptext = m
                 proto = WINFUNCTYPE(restype, c_void_p, *argtypes)
                 fields.append((mthname, proto))
-                mth = finder.get_impl(self, interface, mthname, paramflags, idlflags)
+                mth = finder.get_impl(interface, mthname, paramflags, idlflags)
                 methods.append(proto(mth))
         Vtbl = _create_vtbl_type(tuple(fields), itf)
         vtbl = Vtbl(*methods)
@@ -391,44 +401,112 @@ class COMObject(object):
         else:
             return 1
 
-    def IDispatch_GetTypeInfo(self, itinfo, lcid):
+    def IDispatch_GetTypeInfo(self, this, itinfo, lcid, ptinfo):
         if itinfo != 0:
-            raise WindowsError(DISP_E_BADINDEX)
+            return DISP_E_BADINDEX
         try:
-            self.__typelib
-        except AttributeError:
-            raise WindowsError(E_NOTIMPL)
-        else:
-            return self.__typeinfo
-
-    def IDispatch_GetIDsOfNames(self, this, riid, rgszNames, cNames, lcid, rgDispId):
-        # Use windll to let DispGetIDsOfNames return a HRESULT instead
-        # of raising an error:
-        try:
-            self.__typeinfo
+            ptinfo[0] = self.__typeinfo
+            return S_OK
         except AttributeError:
             return E_NOTIMPL
-        return windll.oleaut32.DispGetIDsOfNames(self.__typeinfo,
+
+    def IDispatch_GetIDsOfNames(self, this, riid, rgszNames, cNames, lcid, rgDispId):
+        # This call uses windll instead of oledll so that a failed
+        # call to DispGetIDsOfNames will return a HRESULT instead of
+        # raising an error.
+        try:
+            tinfo = self.__typeinfo
+        except AttributeError:
+            return E_NOTIMPL
+        return windll.oleaut32.DispGetIDsOfNames(tinfo,
                                                  rgszNames, cNames, rgDispId)
 
     def IDispatch_Invoke(self, this, dispIdMember, riid, lcid, wFlags,
                          pDispParams, pVarResult, pExcepInfo, puArgErr):
+        interface = self._com_interfaces_[0]
         try:
-            self.__typeinfo
+            # We cannot use DispInvoke on pure dispinterfaces; it
+            # would return DISP_E_MEMBERNOTFOUND.
+            #
+            # XXX Could we check for !TYPEFLAG_DUAL and TYPEFLAG_FDISPATCHABLE instead?
+            methods = interface._disp_methods_
         except AttributeError:
-            # Hm, we pretend to implement IDispatch, but have no
-            # typeinfo, and so cannot fulfill the contract.  Should we
-            # better return E_NOTIMPL or DISP_E_MEMBERNOTFOUND?  Some
-            # clients call IDispatch_Invoke with 'known' DISPID_...'
-            # values, without going through GetIDsOfNames first.
+            try:
+                tinfo = self.__typeinfo
+            except AttributeError:
+                # Hm, we pretend to implement IDispatch, but have no
+                # typeinfo, and so cannot fulfill the contract.  Should we
+                # better return E_NOTIMPL or DISP_E_MEMBERNOTFOUND?  Some
+                # clients call IDispatch_Invoke with 'known' DISPID_...'
+                # values, without going through GetIDsOfNames first.
+                return DISP_E_MEMBERNOTFOUND
+            # This call uses windll instead of oledll so that a failed
+            # call to DispInvoke will return a HRESULT instead of raising
+            # an error.
+            ptr = self._com_pointers_[interface._iid_]
+            return windll.oleaut32.DispInvoke(ptr,
+                                              tinfo,
+                                              dispIdMember, wFlags, pDispParams,
+                                              pVarResult, pExcepInfo, puArgErr)
+
+        impl = self._find_impl(dispIdMember, wFlags, bool(pVarResult))
+        if isinstance(impl, int):
+            return impl
+
+        params = pDispParams[0]
+        args = [params.rgvarg[i].value for i in range(params.cArgs)[::-1]]
+
+        if pVarResult:
+            args += [pVarResult]
+
+        return impl(this, *args)
+
+    def _find_impl(self, dispid, wFlags, expects_result,
+                   finder=None):
+        try:
+            return self._dispimpl_[(dispid, wFlags)]
+        except KeyError:
+            pass
+
+        interface = self._com_interfaces_[0]
+
+        methods = interface._disp_methods_
+        # XXX This uses a linear search
+        descr = [m for m in methods
+                 if m[2][0] == dispid]
+        if not descr:
             return DISP_E_MEMBERNOTFOUND
-        impl = self._com_pointers_[self._com_interfaces_[0]._iid_]
-        # Use windll to let DispInvoke return a HRESULT instead
-        # of raising an error:
-        return windll.oleaut32.DispInvoke(impl,
-                                          self.__typeinfo,
-                                          dispIdMember, wFlags, pDispParams,
-                                          pVarResult, pExcepInfo, puArgErr)
+        disptype, name, idlflags, restype, argspec = descr[0]
+
+        if disptype == "DISPMETHOD":
+            if (wFlags & DISPATCH_METHOD) == 0:
+                return DISP_E_MEMBERNOTFOUND
+
+        elif disptype == "DISPPROPERTY":
+
+            if wFlags & DISPATCH_PROPERTYGET:
+                name = "_get_" + name
+            elif wFlags & DISPATCH_PROPERTYPUT:
+                name = "_set_" + name
+            elif wFlags & DISPATCH_PROPERTYPUTREF:
+                name = "_setref_" + name
+            else:
+                return DISP_E_MEMBERNOTFOUND
+
+        else:
+            # this should not happen at all: it is a bug in comtypes
+            return E_FAIL
+
+        from comtypes import _encode_idl
+        paramflags = [(_encode_idl(m[0]),) + m[1:] for m in argspec]
+        if expects_result:
+            paramflags += [[2]]
+            
+        if finder is None:
+            finder = _MethodFinder(self)
+        impl = finder.get_impl(interface, name, paramflags, [])
+        self._dispimpl_[(dispid, wFlags)] = impl
+        return impl
 
     ################################################################
     # IPersist interface

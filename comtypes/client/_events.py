@@ -185,10 +185,27 @@ def GetDispEventReceiver(interface, sink):
     rcv._com_pointers_[interface._iid_] = rcv._com_pointers_[comtypes.automation.IDispatch._iid_]
     return rcv
 
+# New implementation of GetDispEventReceiver; not yet enabled.
+#
+# The 'this'-calling convention seems to work, the 'this-less'
+# convention not yet (severe changes to VARIANT are required).
+def X_GetDispEventReceiver(interface, sink):
+
+    class Sink(comtypes.COMObject):
+        _com_interfaces_ = [interface]
+
+        def _find_impl(self, dispid, wFlags, expects_result):
+            from comtypes._comobject import _MethodFinder
+            return super(Sink, self)._find_impl(dispid, wFlags, expects_result,
+                                                finder=_MethodFinder(sink))
+
+    return Sink()
+
 def GetCustomEventReceiver(interface, sink):
     class EventReceiver(comtypes.COMObject):
         _com_interfaces_ = [interface]
 
+    # XXX should use a mechanism similar to _find_impl() above.
     for itf in interface.mro()[:-2]: # skip object and IUnknown
         for info in itf._methods_:
             restype, name, argtypes, paramflags, idlflags, docstring = info
