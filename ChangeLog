@@ -1,5 +1,8 @@
 2008-04-17  Thomas Heller  <theller@python.net>
 
+	* More changes merged from upstream svn 26400, add support for
+	implementing (non-dual) dispinterfaces (work in progress).
+
 	* Merge in a lot of changes from the private upstream repository
 	26394; mainly much better support for implementing comtypes
 	servers.
