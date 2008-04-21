@@ -449,20 +449,26 @@ class COMObject(object):
                                               dispIdMember, wFlags, pDispParams,
                                               pVarResult, pExcepInfo, puArgErr)
 
+        # No typeinfo, or a non-dual dispinterface.  We have to
+        # implement Invoke completely ourself.
         impl = self._find_impl(dispIdMember, wFlags, bool(pVarResult))
-        if isinstance(impl, int):
+        # _find_impl could return an integer error code which we return. 
+        if isinstance(impl, (int, long)):
             return impl
 
+        # _find_impl returned a callable; prepare the arguments and
+        # call it.
         params = pDispParams[0]
         args = [params.rgvarg[i].value for i in range(params.cArgs)[::-1]]
-
         if pVarResult:
             args += [pVarResult]
-
         return impl(this, *args)
 
     def _find_impl(self, dispid, wFlags, expects_result,
                    finder=None):
+        # This method tries to find an implementation for dispid and
+        # wFlags.  If not found, an integer HRESULT error code is
+        # returned; otherwise a function/method that Invoke must call.
         try:
             return self._dispimpl_[(dispid, wFlags)]
         except KeyError:
@@ -475,11 +481,13 @@ class COMObject(object):
         descr = [m for m in methods
                  if m[2][0] == dispid]
         if not descr:
+            self._dispimpl_[(dispid, wFlags)] = DISP_E_MEMBERNOTFOUND
             return DISP_E_MEMBERNOTFOUND
         disptype, name, idlflags, restype, argspec = descr[0]
 
         if disptype == "DISPMETHOD":
             if (wFlags & DISPATCH_METHOD) == 0:
+                self._dispimpl_[(dispid, wFlags)] = DISP_E_MEMBERNOTFOUND
                 return DISP_E_MEMBERNOTFOUND
 
         elif disptype == "DISPPROPERTY":
@@ -491,6 +499,7 @@ class COMObject(object):
             elif wFlags & DISPATCH_PROPERTYPUTREF:
                 name = "_setref_" + name
             else:
+                self._dispimpl_[(dispid, wFlags)] = DISP_E_MEMBERNOTFOUND
                 return DISP_E_MEMBERNOTFOUND
 
         else:
