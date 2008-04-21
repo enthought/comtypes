@@ -56,10 +56,11 @@ class Test(unittest.TestCase):
         tb = word.CommandBars("Standard")
         btn = tb.Controls[1]
 
-        evt = word.VBE.Events.CommandBarEvents(btn)
-        from comtypes.gen import Word, VBIDE
-        comtypes.client.ShowEvents(evt, interface=VBIDE._dispCommandBarControlEvents)
-        comtypes.client.ShowEvents(evt)
+        if 0: # word does not allow programmatic access, so this does fail
+            evt = word.VBE.Events.CommandBarEvents(btn)
+            from comtypes.gen import Word, VBIDE
+            comtypes.client.ShowEvents(evt, interface=VBIDE._dispCommandBarControlEvents)
+            comtypes.client.ShowEvents(evt)
 
         word.Quit()
 
