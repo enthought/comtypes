@@ -1,3 +1,15 @@
+2008-04-25  Thomas Heller  <theller@python.net>
+
+	* The __repr__ of VARIANT changed again to make it a little bit shorter.
+
+	VARIANT instances of VT_BREF are NOT unpacked when the .value
+	attribute as accessed. The value instead can be got or set by
+	indexing, so the api is the same as for pointer instances:
+
+	  print byref_var[0]
+	  byref_var[0] = value
+
+
 2008-04-17  Thomas Heller  <theller@python.net>
 
 	* More changes merged from upstream svn 26400, add support for

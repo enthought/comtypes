@@ -160,7 +160,9 @@ class tagVARIANT(Structure):
             _VariantClear(byref(self))
 
     def __repr__(self):
-        return "VARIANT(typecode 0x%x, %r)" % (self.vt, self.value)
+        if self.vt & VT_BYREF:
+            return "VARIANT(vt=0x%x, byref(%r))" % (self.vt, self[0])
+        return "VARIANT(vt=0x%x, %r)" % (self.vt, self.value)
 
     def from_param(cls, value):
         if isinstance(value, cls):
@@ -168,9 +170,11 @@ class tagVARIANT(Structure):
         return cls(value)
     from_param = classmethod(from_param)
 
-    def _set_byref(self, value):
+    def __setitem__(self, index, value):
         # This method allows to change the value of a
         # (VT_BYREF|VT_xxx) variant in place.
+        if index != 0:
+            raise IndexError(index)
         if not self.vt & VT_BYREF:
             raise TypeError("set_byref requires a VT_BYREF VARIANT instance")
         typ = _vartype_to_ctype[self.vt & ~VT_BYREF]
@@ -314,11 +318,8 @@ class tagVARIANT(Structure):
             ptr.AddRef()
             return ptr.__ctypes_from_outparam__()
         # see also c:/sf/pywin32/com/win32com/src/oleargs.cpp
-        elif vt == VT_BYREF|VT_VARIANT:
-            # apparently VariantCopyInd doesn't work with
-            # VT_BREF|VT_VARIANT, so do it manually.
-            v = cast(self._.c_void_p, POINTER(VARIANT))[0]
-            return v.value
+        elif self.vt & VT_BYREF:
+            return self
         elif vt == VT_RECORD:
             from comtypes.client import GetModule
             from comtypes.typeinfo import IRecordInfo
@@ -340,15 +341,26 @@ class tagVARIANT(Structure):
             ri.RecordCopy(self._.pvRecord, byref(value))
 
             return value
-        elif self.vt & VT_BYREF:
-            v = VARIANT()
-            _VariantCopyInd(byref(v), byref(self))
-            return v.value
         elif self.vt & VT_ARRAY:
             typ = _vartype_to_ctype[self.vt & ~VT_ARRAY]
             return cast(self._.pparray, _midlSAFEARRAY(typ)).unpack()
         else:
             raise NotImplementedError("typecode %d = 0x%x)" % (vt, vt))
+
+    def __getitem__(self, index):
+        if index != 0:
+            raise IndexError(index)
+        if self.vt == VT_BYREF|VT_VARIANT:
+            v = VARIANT()
+            # apparently VariantCopyInd doesn't work always with
+            # VT_BREF|VT_VARIANT, so do it manually.
+            v = cast(self._.c_void_p, POINTER(VARIANT))[0]
+            return v.value
+        else:
+            v = VARIANT()
+            _VariantCopyInd(byref(v), byref(self))
+            return v.value
+
 
 # these are missing:
 ##    getter[VT_ERROR]
