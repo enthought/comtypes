@@ -84,21 +84,21 @@ def GetModule(tlib):
                 # typelibs, and we leave the pathname alone.
                 if os.path.isfile(abspath):
                     tlib = abspath
-        logger.info("GetModule(%s)", tlib)
+        logger.debug("GetModule(%s)", tlib)
         pathname = tlib
         tlib = comtypes.typeinfo.LoadTypeLibEx(tlib)
     elif isinstance(tlib, (tuple, list)):
         # sequence containing libid and version numbers
-        logger.info("GetModule(%s)", (tlib,))
+        logger.debug("GetModule(%s)", (tlib,))
         tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(tlib[0]), *tlib[1:])
     elif hasattr(tlib, "_reg_libid_"):
         # a COMObject implementation
-        logger.info("GetModule(%s)", tlib)
+        logger.debug("GetModule(%s)", tlib)
         tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(tlib._reg_libid_),
                                                 *tlib._reg_version_)
     else:
         # an ITypeLib pointer
-        logger.info("GetModule(%s)", tlib.GetLibAttr())
+        logger.debug("GetModule(%s)", tlib.GetLibAttr())
 
     # create and import the module
     is_current, mod = _CreateWrapper(tlib, pathname)

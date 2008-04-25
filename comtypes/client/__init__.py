@@ -65,7 +65,7 @@ import comtypes.gen
 ################################################################
 
 def wrap_outparam(punk):
-    logger.info("wrap_outparam(%s)", punk)
+    logger.debug("wrap_outparam(%s)", punk)
     if not punk:
         return None
     if punk.__com_interface__ == comtypes.automation.IDispatch:
@@ -84,10 +84,10 @@ def GetBestInterface(punk):
     if not punk: # NULL COM pointer
         return punk # or should we return None?
     # find the typelib and the interface name
-    logger.info("GetBestInterface(%s)", punk)
+    logger.debug("GetBestInterface(%s)", punk)
     try:
         pci = punk.QueryInterface(comtypes.typeinfo.IProvideClassInfo)
-        logger.info("Does implement IProvideClassInfo")
+        logger.debug("Does implement IProvideClassInfo")
         tinfo = pci.GetClassInfo() # TypeInfo for the CoClass
         # find the interface marked as default
         ta = tinfo.GetTypeAttr()
@@ -104,24 +104,24 @@ def GetBestInterface(punk):
         href = tinfo.GetRefTypeOfImplType(index)
         tinfo = tinfo.GetRefTypeInfo(href)
     except comtypes.COMError:
-        logger.info("Does NOT implement IProvideClassInfo")
+        logger.debug("Does NOT implement IProvideClassInfo")
         try:
             pdisp = punk.QueryInterface(comtypes.automation.IDispatch)
         except comtypes.COMError:
-            logger.info("No Dispatch interface: %s", punk)
+            logger.debug("No Dispatch interface: %s", punk)
             return punk
         try:
             tinfo = pdisp.GetTypeInfo(0)
         except comtypes.COMError:
             pdisp = comtypes.client.dynamic.Dispatch(pdisp)
-            logger.info("IDispatch.GetTypeInfo(0) failed: %s" % pdisp)
+            logger.debug("IDispatch.GetTypeInfo(0) failed: %s" % pdisp)
             return pdisp
     typeattr = tinfo.GetTypeAttr()
-    logger.info("Default interface is %s", typeattr.guid)
+    logger.debug("Default interface is %s", typeattr.guid)
     try:
         punk.QueryInterface(comtypes.IUnknown, typeattr.guid)
     except comtypes.COMError, details:
-        logger.info("Does not implement default interface, returning dynamic object")
+        logger.debug("Does not implement default interface, returning dynamic object")
         return comtypes.client.dynamic.Dispatch(punk)
 
     itf_name = tinfo.GetDocumentation(-1)[0] # interface name
@@ -131,7 +131,7 @@ def GetBestInterface(punk):
     mod = GetModule(tlib)
     # Python interface class
     interface = getattr(mod, itf_name)
-    logger.info("Implements default interface from typeinfo %s", interface)
+    logger.debug("Implements default interface from typeinfo %s", interface)
     # QI for this interface
     # XXX
     # What to do if this fails?
@@ -145,7 +145,7 @@ def GetBestInterface(punk):
     # Could the above code, as an optimization, check that QI works,
     # *before* generating the wrapper module?
     result = punk.QueryInterface(interface)
-    logger.info("Final result is %s", result)
+    logger.debug("Final result is %s", result)
     return result
 # backwards compatibility:
 wrap = GetBestInterface

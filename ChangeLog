@@ -1,6 +1,13 @@
 2008-04-25  Thomas Heller  <theller@python.net>
 
-	* The __repr__ of VARIANT changed again to make it a little bit shorter.
+	* Replace logger.info() calls with logger.debug() since it is more
+	appropriate.
+
+	In comtypes.server.connectionpoints, when a event notification
+	fails with an error indicating that the event sink is no longer
+	present, close the connection and log a warning.
+
+	The __repr__ of VARIANT changed again to make it a little bit shorter.
 
 	VARIANT instances of VT_BREF are NOT unpacked when the .value
 	attribute as accessed. The value instead can be got or set by

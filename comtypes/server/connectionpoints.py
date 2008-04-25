@@ -27,7 +27,7 @@ class ConnectionPointImpl(COMObject):
     def IConnectionPoint_Advise(self, this, pUnk, pdwCookie):
         if not pUnk or not pdwCookie:
             return E_POINTER
-        logger.info("Advise")
+        logger.debug("Advise")
         try:
             ptr = pUnk.QueryInterface(self._sink_interface)
         except COMError:
@@ -37,7 +37,7 @@ class ConnectionPointImpl(COMObject):
         return S_OK
 
     def IConnectionPoint_Unadvise(self, this, dwCookie):
-        logger.info("Unadvise %s", dwCookie)
+        logger.debug("Unadvise %s", dwCookie)
         try:
             del self._connections[dwCookie]
         except KeyError:
@@ -51,27 +51,37 @@ class ConnectionPointImpl(COMObject):
         return E_NOTIMPL
 
     def _call_sinks(self, name, *args, **kw):
-        logger.info("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw)
+        logger.debug("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw)
         # Is it an IDispatch derived interface?  Then, events have to be delivered
         # via Invoke calls (even if it is a dual interface).
         if hasattr(self._sink_interface, "Invoke"):
             # for better performance, we could cache the dispids.
             dispid = self._typeinfo.GetIDsOfNames(name)[0]
-            for p in self._connections.values():
+            for key, p in self._connections.items():
                 try:
                     p.Invoke(dispid, *args, **kw)
                 except COMError, details:
-                    # XXX for certain errors (server missing) we should unadvise the connection
-                    logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
-                                   exc_info=True)
+                    if details.hresult == -2147023174:
+                        logger.warning("_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
+                                       self, name, args, kw,
+                                       exc_info=True)
+                        del self._connections[key]
+                    else:
+                        logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
+                                       exc_info=True)
         else:
             for p in self._connections.values():
                 try:
                     getattr(p, name)(*args, **kw)
                 except COMError, details:
-                    # XXX for certain errors (server missing) we should unadvise the connection
-                    logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
-                                   exc_info=True)
+                    if details.hresult == -2147023174:
+                        logger.warning("_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
+                                       self, name, args, kw,
+                                       exc_info=True)
+                        del self._connections[key]
+                    else:
+                        logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
+                                       exc_info=True)
 
 class ConnectableObjectMixin(object):
     """Mixin which implements IConnectionPointContainer.
@@ -97,7 +107,7 @@ class ConnectableObjectMixin(object):
 
     def IConnectionPointContainer_FindConnectionPoint(self, this, refiid, ppcp):
         iid = refiid[0]
-        logger.info("FindConnectionPoint %s", iid)
+        logger.debug("FindConnectionPoint %s", iid)
         if not ppcp:
             return E_POINTER
         for itf in self._outgoing_interfaces_:
@@ -108,15 +118,15 @@ class ConnectableObjectMixin(object):
                 # from byref() to pointer().
                 conn = self.__connections[itf]
                 result = conn.IUnknown_QueryInterface(None, pointer(IConnectionPoint._iid_), ppcp)
-                logger.info("connectionpoint found, QI() -> %s", result)
+                logger.debug("connectionpoint found, QI() -> %s", result)
                 return result
-        logger.info("No connectionpoint found")
+        logger.debug("No connectionpoint found")
         return CONNECT_E_NOCONNECTION
 
     def Fire_Event(self, itf, name, *args, **kw):
         # Fire event 'name' with arguments *args and **kw.
         # Accepts either an interface index or an interface as first argument.
-        logger.info("Fire_Event(%s, %s, *%s, **%s)", itf, name, args, kw)
+        logger.debug("Fire_Event(%s, %s, *%s, **%s)", itf, name, args, kw)
         if isinstance(itf, int):
             itf = self._outgoing_interfaces_[itf]
         self.__connections[itf]._call_sinks(name, *args, **kw)
