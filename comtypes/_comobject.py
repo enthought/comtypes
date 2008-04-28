@@ -151,23 +151,29 @@ class _MethodFinder(object):
             return _do_implement(interface.__name__, mthname)
         return hack(self.inst, mth, paramflags, interface, mthname)
 
-    def find_impl(self, interface, mthname, paramflags, idlflags):
-        fq_name = "%s_%s" % (interface.__name__, mthname)
-        if interface._case_insensitive_:
-            mthname = self.names.get(mthname.lower(), mthname)
-            fq_name = self.names.get(fq_name.lower(), fq_name)
-
+    def find_method(self, fq_name, mthname):
+        # Try to find a method, first with the fully qualified name
+        # ('IUnknown_QueryInterface'), if that fails try the simple
+        # name ('QueryInterface')
         try:
-            # qualified name, like 'IUnknown_QueryInterface'
             return getattr(self.inst, fq_name)
         except AttributeError:
             pass
-        try:
+        return getattr(self.inst, mthname)
+
+    def find_impl(self, interface, mthname, paramflags, idlflags):
+        fq_name = "%s_%s" % (interface.__name__, mthname)
+        if interface._case_insensitive_:
             # simple name, like 'QueryInterface'
-            return getattr(self.inst, mthname)
+            mthname = self.names.get(mthname.lower(), mthname)
+            # qualified name, like 'IUnknown_QueryInterface'
+            fq_name = self.names.get(fq_name.lower(), fq_name)
+
+        try:
+            return self.find_method(fq_name, mthname)
         except AttributeError:
             pass
-        propname = mthname[5:]
+        propname = mthname[5:] # strip the '_get_' or '_set' prefix
         if interface._case_insensitive_:
             propname = self.names.get(propname.lower(), propname)
         # propput and propget is done with 'normal' attribute access,
