@@ -106,6 +106,8 @@ def _make_safearray_type(itemtype):
             return self.unpack()
 
         def __setitem__(self, index, value):
+            # XXX Need this to implement [in, out] safearrays in COM servers!
+##            print "__setitem__", index, value
             raise TypeError("Setting items not allowed")
 
         def __ctypes_from_outparam__(self):
