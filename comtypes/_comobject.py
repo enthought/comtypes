@@ -279,16 +279,15 @@ class COMObject(object):
                 if IPersist not in interfaces:
                     interfaces += (IPersist,)
         for itf in interfaces[::-1]:
-            self._make_interface_pointer_(itf)
+            self.__make_interface_pointer(itf)
 
-    def _make_interface_pointer_(self, itf, finder=None):
+    def __make_interface_pointer(self, itf):
         methods = [] # method implementations
         fields = [] # (name, prototype) for virtual function table
         iids = [] # interface identifiers.
         # iterate over interface inheritance in reverse order to build the
         # virtual function table, and leave out the 'object' base class.
-        if finder is None:
-            finder = _MethodFinder(self)
+        finder = self._get_method_finder_(itf)
         for interface in itf.__mro__[-2::-1]:
             iids.append(interface._iid_)
             for m in interface._methods_:
@@ -301,6 +300,11 @@ class COMObject(object):
         vtbl = Vtbl(*methods)
         for iid in iids:
             self._com_pointers_[iid] = pointer(pointer(vtbl))
+
+    def _get_method_finder_(self, itf):
+        # This method can be overridden to customize how methods are
+        # found.
+        return _MethodFinder(self)
 
     #########################################################
     # IUnknown methods implementations

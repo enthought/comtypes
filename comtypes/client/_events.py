@@ -185,6 +185,19 @@ def GetDispEventReceiver(interface, sink):
     rcv._com_pointers_[interface._iid_] = rcv._com_pointers_[comtypes.automation.IDispatch._iid_]
     return rcv
 
+from comtypes._comobject import _MethodFinder
+class _SinkMethodFinder(_MethodFinder):
+    def __init__(self, inst, sink):
+        super(_SinkMethodFinder, self).__init__(inst)
+        self.sink = sink
+
+    def find_method(self, fq_name, mthname):
+        try:
+            return super(_SinkMethodFinder, self).find_method(fq_name, mthname)
+        except AttributeError:
+            return getattr(self.sink, mthname,
+                           lambda this, *args: S_OK)
+
 # New implementation of GetDispEventReceiver; not yet enabled.
 #
 # The 'this'-calling convention seems to work, the 'this-less'
@@ -205,15 +218,12 @@ def GetCustomEventReceiver(interface, sink):
     class EventReceiver(comtypes.COMObject):
         _com_interfaces_ = [interface]
 
-    # XXX should use a mechanism similar to _find_impl() above.
-    for itf in interface.mro()[:-2]: # skip object and IUnknown
-        for info in itf._methods_:
-            restype, name, argtypes, paramflags, idlflags, docstring = info
-
-            mth = getattr(sink, name, lambda self, this, *args: S_OK)
-            setattr(EventReceiver, name, mth)
-    rcv = EventReceiver()
-    return rcv
+        def _get_method_finder_(self, itf):
+            # Use a special MethodFinder that will first try 'self',
+            # then the sink.
+            return _SinkMethodFinder(self, sink)
+        
+    return EventReceiver()
 
 
 def GetEvents(source, sink, interface=None):
