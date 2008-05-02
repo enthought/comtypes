@@ -300,6 +300,54 @@ class COMObject(object):
         vtbl = Vtbl(*methods)
         for iid in iids:
             self._com_pointers_[iid] = pointer(pointer(vtbl))
+        for m in getattr(itf, "_disp_methods_", ()):
+            what, mthname, idlflags, restype, argspec = m
+            #################
+            # What we have:
+            #
+            # restypes is a ctypes type or None
+            # argspec is seq. of (['in'], paramtype, paramname) tuples (or lists?)
+            #################
+            # What we need:
+            #
+            # idlflags must contain 'propget', 'propset' and so on:
+            # Must be constructed by converting disptype
+            #
+            # paramflags must be a sequence
+            # of (F_IN|F_OUT|F_RETVAL, paramname[, default-value]) tuples
+            # comtypes has this function which may help:
+            #    def _encode_idl(names):
+            #        # sum up "in", "out", ... values found in _PARAMFLAGS, ignoring all others.
+            #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
+            #################
+            dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator...
+            if what == "DISPMETHOD":
+                if 'propget' in idlflags:
+                    invkind = 2 # DISPATCH_PROPERTYGET
+                elif 'propput' in idlflags:
+                    invkind = 4 # DISPATCH_PROPERTYPUT
+                elif 'propputref' in idlflags:
+                    invkind = 8 # DISPATCH_PROPERTYPUTREF
+                else:
+                    invkind = 1 # DISPATCH_METHOD
+            if what == "DISPPROPERTY":
+                # has get and (set, if not "readonly" in idlflags)
+                pass
+
+            from comtypes import _encode_idl
+            paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec]
+
+##            import sys
+##            print >> sys.stderr, "GET_IMPL", interface.__name__, mthname
+##            print >> sys.stderr, "\tparamflags:", paramflags
+##            print >> sys.stderr, "\tidlflags:", idlflags
+##            print >> sys.stderr, finder.get_impl(interface, mthname, paramflags, idlflags)
+##            print >> sys.stderr
+##            print >> sys.stderr, "%s_%s" % (interface.__name__, mthname)
+            # We should build a _dispmap_ (or whatever) now, that maps
+            # invkind and dispid to implementations that the finder finds;
+            # and eventually calls them in IDispatch_Invoke.
+            finder.get_impl(interface, mthname, paramflags, idlflags)
 
     def _get_method_finder_(self, itf):
         # This method can be overridden to customize how methods are

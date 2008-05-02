@@ -123,11 +123,11 @@ class TestCase(unittest.TestCase):
         >>>
         >>> o = CreateObject("TestComServerLib.TestComServer")
         >>> con = ShowEvents(o)
-        # event found: EvalStarted
-        # event found: EvalCompleted
+        # event found: ITestComServerEvents_EvalStarted
+        # event found: ITestComServerEvents_EvalCompleted
         >>> result = o.eval("10 / 4")
-        Event EvalStarted(..., u'10 / 4')
-        Event EvalCompleted(..., u'10 / 4', VARIANT(vt=0x3, 2))
+        Event ITestComServerEvents_EvalStarted(..., u'10 / 4')
+        Event ITestComServerEvents_EvalCompleted(..., u'10 / 4', VARIANT(vt=0x3, 2))
         >>> result
         2
         >>>

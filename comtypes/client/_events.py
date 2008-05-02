@@ -7,41 +7,6 @@ import comtypes.connectionpoints
 import logging
 logger = logging.getLogger(__name__)
 
-
-# XXX move into comtypes
-def _getmemid(idlflags):
-    # get the dispid from the idlflags sequence
-    return [memid for memid in idlflags if isinstance(memid, int)][0]
-
-# XXX move into comtypes?
-def _get_dispmap(interface):
-    # return a dictionary mapping dispid numbers to method names
-    assert issubclass(interface, comtypes.automation.IDispatch)
-
-    dispmap = {}
-    if "dual" in interface._idlflags_:
-        # It would be nice if that would work:
-##        for info in interface._methods_:
-##            mth = getattr(interface, info.name)
-##            memid = mth.im_func.memid
-    
-        # See also MSDN docs for the 'defaultvtable' idl flag, or
-        # IMPLTYPEFLAG_DEFAULTVTABLE.  This is not a flag of the
-        # interface, but of the coclass!
-        #
-        # Use the _methods_ list
-        assert not hasattr(interface, "_disp_methods_")
-        for restype, name, argtypes, paramflags, idlflags, helpstring in interface._methods_:
-            memid = _getmemid(idlflags)
-            dispmap[memid] = name
-    else:
-        # Use _disp_methods_
-        # tag, name, idlflags, restype(?), argtypes(?)
-        for tag, name, idlflags, restype, argtypes in interface._disp_methods_:
-            memid = _getmemid(idlflags)
-            dispmap[memid] = name
-    return dispmap
-
 class _AdviseConnection(object):
     def __init__(self, source, interface, receiver):
         cpc = source.QueryInterface(comtypes.connectionpoints.IConnectionPointContainer)
@@ -128,63 +93,6 @@ def find_single_connection_interface(source):
 
     return None
 
-class _DispEventReceiver(comtypes.COMObject):
-    _com_interfaces_ = [comtypes.automation.IDispatch]
-    # Hrm.  If the receiving interface is implemented as a dual interface,
-    # the methods implementations expect 'out, retval' parameters in their
-    # argument list.
-    #
-    # What would happen if we call ITypeInfo::Invoke() ?
-    # If we call the methods directly, shouldn't we pass pVarResult
-    # as last parameter?
-    def IDispatch_Invoke(self, this, memid, riid, lcid, wFlags, pDispParams,
-                         pVarResult, pExcepInfo, puArgErr):
-        mth = self.dispmap.get(memid, None)
-        if mth is None:
-            return S_OK
-        dp = pDispParams[0]
-        # DISPPARAMS contains the arguments in reverse order
-        args = [dp.rgvarg[i].value for i in range(dp.cArgs)]
-        ##print "Event", self, memid, mth, args
-        result = self.dispmap[memid](None, *args[::-1])
-        if pVarResult:
-            pVarResult[0].value = result
-        return S_OK
-
-    def GetTypeInfoCount(self, this, presult):
-        if not presult:
-            return E_POINTER
-        presult[0] = 0
-        return S_OK
-
-    def GetTypeInfo(self, this, itinfo, lcid, pptinfo):
-        return E_NOTIMPL
-
-    def GetIDsOfNames(self, this, riid, rgszNames, cNames, lcid, rgDispId):
-        return E_NOTIMPL
-
-
-def GetDispEventReceiver(interface, sink):
-    methods = {} # maps memid to function
-    interfaces = interface.mro()[:-3] # skip IDispatch, IUnknown, object
-    interface_names = [itf.__name__ for itf in interfaces]
-    for itf in interfaces:
-        for memid, name in _get_dispmap(itf).iteritems():
-            # find methods to call, if not found ignore event
-            for itf_name in interface_names:
-                mth = getattr(sink, "%s_%s" % (itf_name, name), None)
-                if mth is not None:
-                    break
-            else:
-                mth = getattr(sink, name, lambda *args: S_OK)
-            methods[memid] = mth
-
-    # XX Move this stuff into _DispEventReceiver.__init__() ?
-    rcv = _DispEventReceiver()
-    rcv.dispmap = methods
-    rcv._com_pointers_[interface._iid_] = rcv._com_pointers_[comtypes.automation.IDispatch._iid_]
-    return rcv
-
 from comtypes._comobject import _MethodFinder
 class _SinkMethodFinder(_MethodFinder):
     def __init__(self, inst, sink):
@@ -195,36 +103,23 @@ class _SinkMethodFinder(_MethodFinder):
         try:
             return super(_SinkMethodFinder, self).find_method(fq_name, mthname)
         except AttributeError:
-            return getattr(self.sink, mthname,
-                           lambda this, *args: S_OK)
+            try:
+                return getattr(self.sink, fq_name)
+            except AttributeError:
+                return getattr(self.sink, mthname,
+                               lambda this, *args: S_OK)
 
-# New implementation of GetDispEventReceiver; not yet enabled.
-#
-# The 'this'-calling convention seems to work, the 'this-less'
-# convention not yet (severe changes to VARIANT are required).
-def X_GetDispEventReceiver(interface, sink):
+def CreateEventReceiver(interface, sink):
 
     class Sink(comtypes.COMObject):
-        _com_interfaces_ = [interface]
-
-        def _find_impl(self, dispid, wFlags, expects_result):
-            from comtypes._comobject import _MethodFinder
-            return super(Sink, self)._find_impl(dispid, wFlags, expects_result,
-                                                finder=_MethodFinder(sink))
-
-    return Sink()
-
-def GetCustomEventReceiver(interface, sink):
-    class EventReceiver(comtypes.COMObject):
         _com_interfaces_ = [interface]
 
         def _get_method_finder_(self, itf):
             # Use a special MethodFinder that will first try 'self',
             # then the sink.
             return _SinkMethodFinder(self, sink)
-        
-    return EventReceiver()
 
+    return Sink()
 
 def GetEvents(source, sink, interface=None):
     """Receive COM events from 'source'.  Events will call methods on
@@ -237,10 +132,7 @@ def GetEvents(source, sink, interface=None):
     if interface is None:
         interface = FindOutgoingInterface(source)
 
-    if issubclass(interface, comtypes.automation.IDispatch):
-        rcv = GetDispEventReceiver(interface, sink)
-    else:
-        rcv = GetCustomEventReceiver(interface, sink)
+    rcv = CreateEventReceiver(interface, sink)
     return _AdviseConnection(source, interface, rcv)
 
 class EventDumper(object):
