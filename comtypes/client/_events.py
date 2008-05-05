@@ -106,8 +106,7 @@ class _SinkMethodFinder(_MethodFinder):
             try:
                 return getattr(self.sink, fq_name)
             except AttributeError:
-                return getattr(self.sink, mthname,
-                               lambda this, *args: S_OK)
+                return getattr(self.sink, mthname)
 
 def CreateEventReceiver(interface, sink):
 
@@ -143,10 +142,13 @@ class EventDumper(object):
         if name.startswith("__") and name.endswith("__"):
             raise AttributeError(name)
         print "# event found:", name
-        def handler(*args, **kw):
+        def handler(self, this, *args, **kw):
+            # XXX handler is called with 'this'.  Should we really print "None" instead?
+            args = (None,) + args
             print "Event %s(%s)" % (name, ", ".join([repr(a) for a in args]))
             return S_OK
-        return handler
+        import new
+        return new.instancemethod(handler, EventDumper, self)
 
 def ShowEvents(source, interface=None):
     """Receive COM events from 'source'.  A special event sink will be

@@ -48,11 +48,9 @@ class EventsTest(unittest.TestCase):
         # event found: DWebBrowserEvents2_UpdatePageStatus
         # event found: DWebBrowserEvents2_PrivacyImpactedStateChange
         # event found: DWebBrowserEvents2_NewWindow3
-        # event found: DWebBrowserEvents2_SetPhishingFilterStatus
-        # event found: DWebBrowserEvents2_WindowStateChanged
         >>> res = o.Navigate2("http://www.python.org")
         Event DWebBrowserEvents2_PropertyChange(None, u'{265b75c1-4158-11d0-90f6-00c04fd497ea}')
-        Event DWebBrowserEvents2_BeforeNavigate2(None, <POINTER(IWebBrowser2) ptr=... at ...>, u'http://www.python.org/', 0, None, None, None, False)
+        Event DWebBrowserEvents2_BeforeNavigate2(None, <POINTER(IWebBrowser2) ptr=...>, VARIANT(vt=0x400c, byref(u'http://www.python.org/')), VARIANT(vt=0x400c, byref(0)), VARIANT(vt=0x400c, byref(None)), VARIANT(vt=0x400c, byref(VARIANT(vt=0x400c, byref(None)))), VARIANT(vt=0x400c, byref(None)), VARIANT(vt=0x400b, byref(False)))
         Event DWebBrowserEvents2_DownloadBegin(None)
         Event DWebBrowserEvents2_PropertyChange(None, u'{D0FCA420-D3F5-11CF-B211-00AA004AE837}')
         >>> res = PumpEvents(0.01)
