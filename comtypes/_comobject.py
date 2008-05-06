@@ -302,50 +302,59 @@ class COMObject(object):
             self._com_pointers_[iid] = pointer(pointer(vtbl))
         if hasattr(itf, "_disp_methods_"):
             self._dispimpl_ = {}
-        for m in getattr(itf, "_disp_methods_", ()):
-            what, mthname, idlflags, restype, argspec = m
-            #################
-            # What we have:
-            #
-            # restypes is a ctypes type or None
-            # argspec is seq. of (['in'], paramtype, paramname) tuples (or lists?)
-            #################
-            # What we need:
-            #
-            # idlflags must contain 'propget', 'propset' and so on:
-            # Must be constructed by converting disptype
-            #
-            # paramflags must be a sequence
-            # of (F_IN|F_OUT|F_RETVAL, paramname[, default-value]) tuples
-            # comtypes has this function which may help:
-            #    def _encode_idl(names):
-            #        # sum up "in", "out", ... values found in _PARAMFLAGS, ignoring all others.
-            #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
-            #################
+            for m in itf._disp_methods_:
+                what, mthname, idlflags, restype, argspec = m
+                #################
+                # What we have:
+                #
+                # restypes is a ctypes type or None
+                # argspec is seq. of (['in'], paramtype, paramname) tuples (or lists?)
+                #################
+                # What we need:
+                #
+                # idlflags must contain 'propget', 'propset' and so on:
+                # Must be constructed by converting disptype
+                #
+                # paramflags must be a sequence
+                # of (F_IN|F_OUT|F_RETVAL, paramname[, default-value]) tuples
+                #
+                # comtypes has this function which helps:
+                #    def _encode_idl(names):
+                #        # convert to F_xxx and sum up "in", "out",
+                #        # "retval" values found in _PARAMFLAGS, ignoring
+                #        # other stuff.
+                #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
+                #################
 
-            if what == "DISPMETHOD":
-                if 'propget' in idlflags:
-                    invkind = 2 # DISPATCH_PROPERTYGET
-                    mthname = "_get_" + mthname
-                elif 'propput' in idlflags:
-                    invkind = 4 # DISPATCH_PROPERTYPUT
-                    mthname = "_set_" + mthname
-                elif 'propputref' in idlflags:
-                    invkind = 8 # DISPATCH_PROPERTYPUTREF
-                    mthname = "_setref_" + mthname
-                else:
-                    invkind = 1 # DISPATCH_METHOD
-                    if restype:
-                        argspec = argspec + ((['out'], restype, ""),)
-            elif what == "DISPPROPERTY":
-                import sys
-                # has get and (set, if not "readonly" in idlflags)
-                print >> sys.stderr, "Not yet Implemented", mthname
-##                import pdb; pdb.set_trace()
-                continue
+                if what == "DISPMETHOD":
+                    if 'propget' in idlflags:
+                        invkind = 2 # DISPATCH_PROPERTYGET
+                        mthname = "_get_" + mthname
+                    elif 'propput' in idlflags:
+                        invkind = 4 # DISPATCH_PROPERTYPUT
+                        mthname = "_set_" + mthname
+                    elif 'propputref' in idlflags:
+                        invkind = 8 # DISPATCH_PROPERTYPUTREF
+                        mthname = "_setref_" + mthname
+                    else:
+                        invkind = 1 # DISPATCH_METHOD
+                        if restype:
+                            argspec = argspec + ((['out'], restype, ""),)
+                        self.__make_dispentry(finder, interface, mthname,
+                                              idlflags, argspec, invkind)
+                elif what == "DISPPROPERTY":
+                    self.__make_dispentry(finder, interface,
+                                          "_get_" + mthname,
+                                          idlflags, argspec,
+                                          2 # DISPATCH_PROPERTYGET
+                                          )
+                    if not 'readonly' in idlflags:
+                        self.__make_dispentry(finder, interface,
+                                              "_put_" + mthname,
+                                              idlflags, argspec,
+                                              4) # DISPATCH_PROPERTYPUT
+                        # Add DISPATCH_PROPERTYPUTREF also?
 
-            self.__make_dispentry(finder, interface, mthname,
-                                  idlflags, argspec, invkind)
 
     def __make_dispentry(self,
                          finder, interface, mthname,
