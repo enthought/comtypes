@@ -322,7 +322,7 @@ class COMObject(object):
             #        # sum up "in", "out", ... values found in _PARAMFLAGS, ignoring all others.
             #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
             #################
-            dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator...
+            dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator.
             if what == "DISPMETHOD":
                 if 'propget' in idlflags:
                     invkind = 2 # DISPATCH_PROPERTYGET
@@ -335,6 +335,8 @@ class COMObject(object):
                     mthname = "_setref_" + mthname
                 else:
                     invkind = 1 # DISPATCH_METHOD
+                    if restype:
+                        argspec = argspec + ((['out'], restype, ""),)
             elif what == "DISPPROPERTY":
                 import sys
                 # has get and (set, if not "readonly" in idlflags)
