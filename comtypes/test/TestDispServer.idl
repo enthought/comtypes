@@ -28,7 +28,7 @@ dispinterface DTestDispServerEvents {
 	]
 dispinterface DTestDispServer {
   properties:
-	[propget, id(10), helpstring("the id of the server")]
+	[readonly, id(10), helpstring("the id of the server")]
 		UINT id;
 
 	[id(11), helpstring("the name of the server")]
