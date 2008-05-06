@@ -439,6 +439,8 @@ class _(partial, POINTER(VARIANT)):
     from_param = classmethod(from_param)
 
     def __setitem__(self, index, value):
+        # This is to support the same sematics as a pointer instance:
+        # variant[0] = value
         self[index].value = value
 
 ################################################################
