@@ -83,7 +83,7 @@ class TestDispServer(
 
     # Implementation of the DTestDispServer::Name propget
     def DTestDispServer__get_name(self, this, pname):
-        pname[0].value = self._name
+        pname[0] = self._name
         return S_OK
 
     # Implementation of the DTestDispServer::Name propput

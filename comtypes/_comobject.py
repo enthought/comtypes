@@ -350,7 +350,7 @@ class COMObject(object):
                                           )
                     if not 'readonly' in idlflags:
                         self.__make_dispentry(finder, interface,
-                                              "_put_" + mthname,
+                                              "_set_" + mthname,
                                               idlflags, argspec,
                                               4) # DISPATCH_PROPERTYPUT
                         # Add DISPATCH_PROPERTYPUTREF also?
@@ -368,6 +368,11 @@ class COMObject(object):
         dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator.
         impl = finder.get_impl(interface, mthname, paramflags, idlflags)
         self._dispimpl_[(dispid, invkind)] = impl
+        # invkind is really a set of flags; we allow both
+        # DISPATCH_METHOD and DISPATCH_PROPERTYGET (win32com uses
+        # this, maybe other languages too?)
+        if invkind in (1, 2):
+            self._dispimpl_[(dispid, 3)] = impl
 
     def _get_method_finder_(self, itf):
         # This method can be overridden to customize how methods are
@@ -532,77 +537,11 @@ class COMObject(object):
 
         params = pDispParams[0]
         args = [params.rgvarg[i].value for i in range(params.cArgs)[::-1]]
-        if pVarResult:
+        # MSDN: pVarResult is ignored if DISPATCH_PROPERTYPUT or
+        # DISPATCH_PROPERTYPUTREF is specified.
+        if pVarResult and (0 == (wFlags & (4 | 8))):
             args += [pVarResult]
         return mth(this, *args)
-
-##        # No typeinfo, or a non-dual dispinterface.  We have to
-##        # implement Invoke completely ourself.
-##        impl = self._find_impl(dispIdMember, wFlags, bool(pVarResult))
-##        # _find_impl could return an integer error code which we return. 
-##        if isinstance(impl, (int, long)):
-##            return impl
-
-##        # _find_impl returned a callable; prepare the arguments and
-##        # call it.
-##        params = pDispParams[0]
-##        args = [params.rgvarg[i].value for i in range(params.cArgs)[::-1]]
-##        if pVarResult:
-##            args += [pVarResult]
-##        return impl(this, *args)
-
-##    def _find_impl(self, dispid, wFlags, expects_result,
-##                   finder=None):
-##        # This method tries to find an implementation for dispid and
-##        # wFlags.  If not found, an integer HRESULT error code is
-##        # returned; otherwise a function/method that Invoke must call.
-##        try:
-##            return self._dispimpl_[(dispid, wFlags)]
-##        except KeyError:
-##            pass
-
-##        interface = self._com_interfaces_[0]
-
-##        methods = interface._disp_methods_
-##        # XXX This uses a linear search
-##        descr = [m for m in methods
-##                 if m[2][0] == dispid]
-##        if not descr:
-##            self._dispimpl_[(dispid, wFlags)] = DISP_E_MEMBERNOTFOUND
-##            return DISP_E_MEMBERNOTFOUND
-##        disptype, name, idlflags, restype, argspec = descr[0]
-
-##        if disptype == "DISPMETHOD":
-##            if (wFlags & DISPATCH_METHOD) == 0:
-##                self._dispimpl_[(dispid, wFlags)] = DISP_E_MEMBERNOTFOUND
-##                return DISP_E_MEMBERNOTFOUND
-
-##        elif disptype == "DISPPROPERTY":
-
-##            if wFlags & DISPATCH_PROPERTYGET:
-##                name = "_get_" + name
-##            elif wFlags & DISPATCH_PROPERTYPUT:
-##                name = "_set_" + name
-##            elif wFlags & DISPATCH_PROPERTYPUTREF:
-##                name = "_setref_" + name
-##            else:
-##                self._dispimpl_[(dispid, wFlags)] = DISP_E_MEMBERNOTFOUND
-##                return DISP_E_MEMBERNOTFOUND
-
-##        else:
-##            # this should not happen at all: it is a bug in comtypes
-##            return E_FAIL
-
-##        from comtypes import _encode_idl
-##        paramflags = [(_encode_idl(m[0]),) + m[1:] for m in argspec]
-##        if expects_result:
-##            paramflags += [[2]]
-            
-##        if finder is None:
-##            finder = _MethodFinder(self)
-##        impl = finder.get_impl(interface, name, paramflags, [])
-##        self._dispimpl_[(dispid, wFlags)] = impl
-##        return impl
 
     ################################################################
     # IPersist interface
