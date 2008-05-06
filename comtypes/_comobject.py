@@ -322,7 +322,7 @@ class COMObject(object):
             #        # sum up "in", "out", ... values found in _PARAMFLAGS, ignoring all others.
             #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
             #################
-            dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator.
+
             if what == "DISPMETHOD":
                 if 'propget' in idlflags:
                     invkind = 2 # DISPATCH_PROPERTYGET
@@ -342,24 +342,23 @@ class COMObject(object):
                 # has get and (set, if not "readonly" in idlflags)
                 print >> sys.stderr, "Not yet Implemented", mthname
 ##                import pdb; pdb.set_trace()
-                invkind = 0
-                pass
+                continue
 
-            from comtypes import _encode_idl
-            paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec]
+            self.__make_dispentry(finder, interface, mthname,
+                                  idlflags, argspec, invkind)
 
-##            import sys
-##            print >> sys.stderr, "GET_IMPL", interface.__name__, mthname
-##            print >> sys.stderr, "\tparamflags:", paramflags
-##            print >> sys.stderr, "\tidlflags:", idlflags
-##            print >> sys.stderr, finder.get_impl(interface, mthname, paramflags, idlflags)
-##            print >> sys.stderr
-##            print >> sys.stderr, "%s_%s" % (interface.__name__, mthname)
-            # We should build a _dispmap_ (or whatever) now, that maps
-            # invkind and dispid to implementations that the finder finds;
-            # and eventually calls them in IDispatch_Invoke.
-            impl = finder.get_impl(interface, mthname, paramflags, idlflags)
-            self._dispimpl_[(dispid, invkind)] = impl
+    def __make_dispentry(self,
+                         finder, interface, mthname,
+                         idlflags, argspec, invkind):
+        # We build a _dispmap_ entry now that maps invkind and
+        # dispid to implementations that the finder finds;
+        # IDispatch_Invoke will later call it.
+        from comtypes import _encode_idl
+        paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec]
+
+        dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator.
+        impl = finder.get_impl(interface, mthname, paramflags, idlflags)
+        self._dispimpl_[(dispid, invkind)] = impl
 
     def _get_method_finder_(self, itf):
         # This method can be overridden to customize how methods are
