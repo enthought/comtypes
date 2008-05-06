@@ -63,7 +63,9 @@ class TestDispServer(
 
     def DTestDispServer_eval(self, this, expr, presult):
         self.Fire_Event(0, "EvalStarted", expr)
-        presult[0].value = eval(expr)
+        # The following two are equivalent, but the former is more generic:
+        presult[0] = eval(expr)
+        ##presult[0].value = eval(expr)
         self.Fire_Event(0, "EvalCompleted", expr, presult[0].value)
         return S_OK
 
