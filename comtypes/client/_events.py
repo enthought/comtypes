@@ -146,7 +146,6 @@ class EventDumper(object):
             # XXX handler is called with 'this'.  Should we really print "None" instead?
             args = (None,) + args
             print "Event %s(%s)" % (name, ", ".join([repr(a) for a in args]))
-            return S_OK
         import new
         return new.instancemethod(handler, EventDumper, self)
 

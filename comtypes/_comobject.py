@@ -60,7 +60,7 @@ def catch_errors(obj, mth, interface, mthname):
     clsid = getattr(obj, "_reg_clsid_", None)
     def func(*args, **kw):
         try:
-            return mth(*args, **kw)
+            result = mth(*args, **kw)
         except ReturnHRESULT, (hresult, text):
             return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)
         except (COMError, WindowsError), details:
@@ -72,6 +72,9 @@ def catch_errors(obj, mth, interface, mthname):
         except:
             _error("Exception in %s.%s implementation:", interface.__name__, mthname, exc_info=True)
             return ReportException(E_FAIL, interface._iid_, clsid=clsid)
+        if result is None:
+            return S_OK
+        return result
     return func
 
 ################################################################
