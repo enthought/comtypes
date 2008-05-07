@@ -45,6 +45,12 @@ dispinterface DTestDispServer {
 	[id(14), helpstring("evaluate an expression and return the result")]
 		VARIANT eval2([in] BSTR what);
 
+	[id(16), helpstring("execute a statement")]
+		void Exec([in] BSTR what);
+
+	[id(17), helpstring("execute a statement")]
+		void Exec2([in] BSTR what);
+
 	/* Some methods that use defaultvalues */
 	[id(100)]
 		void do_cy([in, defaultvalue(32.78)] CURRENCY *value);

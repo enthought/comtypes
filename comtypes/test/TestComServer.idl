@@ -60,6 +60,13 @@ interface ITestComServer : IDispatch {
 
 	[id(15)]
 	HRESULT do_date([in, defaultvalue(32)] DATE *value);
+
+	[id(16), helpstring("execute a statement")]
+	HRESULT Exec([in] BSTR what);
+
+	[id(17), helpstring("execute a statement")]
+	HRESULT Exec2([in] BSTR what);
+
 };
 
 [

@@ -4,16 +4,12 @@ logging.basicConfig()
 ##logging.basicConfig(level=logging.DEBUG)
 ##logger = logging.getLogger(__name__)
 
+# Add comtypes to sys.path (if this is run from a SVN checkout)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), r"..\..")))
 
-import ctypes
 import comtypes
-from comtypes.hresult import *
-import comtypes.client
-import comtypes.errorinfo
-import comtypes.server
+from comtypes.hresult import S_OK
 import comtypes.server.connectionpoints
-import comtypes.typeinfo
 
 ################################################################
 
@@ -21,6 +17,7 @@ import comtypes.typeinfo
 # TestComServerLib; the name is derived from the 'library ' statement
 # in the IDL file
 if not hasattr(sys, "frozen"):
+    import comtypes.client
     # pathname of the type library file
     tlbfile = os.path.join(os.path.dirname(__file__), "TestDispServer.tlb")
     # if running as frozen app (dll or exe), the wrapper should be in
@@ -32,11 +29,13 @@ from comtypes.gen import TestDispServerLib
 
 ################################################################
 
-# Implement the CoClass.  Use the coclass from the wrapper as base
-# class, and use DualDispMixin as base class which provides default
-# implementations of IDispatch, IProvideClassInfo, IProvideClassInfo2
-# interfaces.  ISupportErrorInfo is implemented by the COMObject base
-# class.
+# Implement the CoClass by defining a subclass of the
+# TestDispServerLib.TestDispServer class in the wrapper file.  The
+# COMObject base class provides default implementations of the
+# IUnknown, IDispatch, IPersist, IProvideClassInfo,
+# IProvideClassInfo2, and ISupportErrorInfo interfaces.
+#
+# The ConnectableObjectMixin class provides connectionpoints (events).
 class TestDispServer(
     TestDispServerLib.TestDispServer, # the coclass from the typelib wrapper
     comtypes.server.connectionpoints.ConnectableObjectMixin,
@@ -46,10 +45,7 @@ class TestDispServer(
     # interface, other interfaces can follow
 
     _com_interfaces_ = TestDispServerLib.TestDispServer._com_interfaces_ + \
-                       [comtypes.typeinfo.IProvideClassInfo2,
-                        comtypes.errorinfo.ISupportErrorInfo,
-                        comtypes.connectionpoints.IConnectionPointContainer,
-                        ]
+                       [comtypes.connectionpoints.IConnectionPointContainer]
 
     # registry entries
     _reg_threading_ = "Both"
@@ -78,6 +74,13 @@ class TestDispServer(
     def DTestDispServer__get_id(self, this, pid):
         pid[0] = id(self)
         return S_OK
+
+    def DTestDispServer_Exec(self, this, what):
+        exec(what)
+        return S_OK
+
+    def DTestDispServer_Exec2(self, what):
+        exec(what)
 
     _name = u"spam, spam, spam"
 

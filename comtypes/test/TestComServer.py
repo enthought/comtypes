@@ -108,6 +108,13 @@ class TestComServer(
         pid[0] = id(self)
         return S_OK
 
+    def ITestComServer_Exec(self, this, what):
+        exec(what)
+        return S_OK
+
+    def ITestComServer_Exec2(self, what):
+        exec(what)
+
     _name = u"spam, spam, spam"
 
     def ITestComServer__get_name(self, this, pname):
