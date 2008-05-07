@@ -58,7 +58,7 @@ def _do_implement(interface_name, method_name):
 
 def catch_errors(obj, mth, interface, mthname):
     clsid = getattr(obj, "_reg_clsid_", None)
-    def func(*args, **kw):
+    def call_with_this(*args, **kw):
         try:
             result = mth(*args, **kw)
         except ReturnHRESULT, (hresult, text):
@@ -75,7 +75,7 @@ def catch_errors(obj, mth, interface, mthname):
         if result is None:
             return S_OK
         return result
-    return func
+    return call_with_this
 
 ################################################################
 
@@ -100,7 +100,7 @@ def hack(inst, mth, paramflags, interface, mthname):
     # is always correct.
 
     clsid = getattr(inst, "_reg_clsid_", None)
-    def wrapper(this, *args):
+    def call_without_this(this, *args):
         outargs = args[len(args)-args_out:]
         # Method implementations could check for and return E_POINTER
         # themselves.  Or an error will be raised when
@@ -141,7 +141,7 @@ def hack(inst, mth, paramflags, interface, mthname):
             return ReportException(E_FAIL, interface._iid_, clsid=clsid)
         return S_OK
 
-    return wrapper
+    return call_without_this
 
 class _MethodFinder(object):
     def __init__(self, inst):
