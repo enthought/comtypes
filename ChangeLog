@@ -1,3 +1,9 @@
+2008-05-07  Thomas Heller  <theller@python.net>
+
+	* Fixed the definition of VARIANT.empty and VARIANT.null; the
+	values were swapped.
+	https://sourceforge.net/tracker/?func=detail&atid=692940&aid=1959722&group_id=115265
+
 2008-04-25  Thomas Heller  <theller@python.net>
 
 	* Replace logger.info() calls with logger.debug() since it is more
