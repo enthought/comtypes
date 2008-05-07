@@ -2,6 +2,7 @@ import unittest, os
 from ctypes import *
 from comtypes import IUnknown, GUID
 from comtypes.automation import VARIANT, DISPPARAMS
+from comtypes.automation import VT_NULL, VT_EMPTY, VT_ERROR
 from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib
 from comtypes.test import is_resource_enabled
 
@@ -13,6 +14,19 @@ def get_refcnt(comptr):
     return comptr.Release()
 
 class VariantTestCase(unittest.TestCase):
+
+    def test_constants(self):
+        empty = VARIANT.empty
+        self.failUnlessEqual(empty.vt, VT_EMPTY)
+        self.failUnless(empty.value is None)
+
+        null = VARIANT.null
+        self.failUnlessEqual(null.vt, VT_NULL)
+        self.failUnless(null.value is None)
+
+        missing = VARIANT.missing
+        self.failUnlessEqual(missing.vt, VT_ERROR)
+        self.assertRaises(NotImplementedError, lambda: missing.value)
 
     def test_com_refcounts(self):
         # typelib for oleaut32

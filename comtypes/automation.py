@@ -405,8 +405,8 @@ VARIANT = tagVARIANT
 VARIANTARG = VARIANT
 
 # some commonly used VARIANT instances
-VARIANT.empty = VARIANT(None)
-VARIANT.null = VARIANT()
+VARIANT.null = VARIANT(None)
+VARIANT.empty = VARIANT()
 VARIANT.missing = v = VARIANT()
 v.vt = VT_ERROR
 v._.VT_I4 = 0x80020004L
