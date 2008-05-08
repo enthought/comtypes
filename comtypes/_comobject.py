@@ -343,8 +343,8 @@ class COMObject(object):
                         invkind = 1 # DISPATCH_METHOD
                         if restype:
                             argspec = argspec + ((['out'], restype, ""),)
-                        self.__make_dispentry(finder, interface, mthname,
-                                              idlflags, argspec, invkind)
+                    self.__make_dispentry(finder, interface, mthname,
+                                          idlflags, argspec, invkind)
                 elif what == "DISPPROPERTY":
                     self.__make_dispentry(finder, interface,
                                           "_get_" + mthname,
