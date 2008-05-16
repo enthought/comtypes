@@ -494,6 +494,23 @@ class _cominterface_meta(type):
                 raise TypeError, "baseinterface '%s' has no _methods_" % itf.__name__
             raise
 
+    def _fix_inout_args(self, func, argtypes, dirflags):
+        # This function provides a workaround for a bug in ctypes.
+        # [in, out] parameters must be converted with the argtype's
+        # .from_param() method BEFORE they are passed to the _ctypes
+        # build_callargs() function in Modules/_ctypes/_ctypes.c
+        #
+        # TODO: The workaround should be disabled when a ctypes
+        # version is used where the bug is fixed.
+        def call_with_inout(self_, *args):
+            converted_args = []
+            for t, d, v in zip(argtypes, dirflags, args):
+                if d == 3:
+                    v = t._type_.from_param(v)
+                converted_args.append(v)
+            return func(self_, *converted_args)
+        return call_with_inout
+        
     def _make_methods(self, methods):
         if self._case_insensitive_:
             self._make_case_insensitive()
@@ -542,6 +559,13 @@ class _cominterface_meta(type):
             setattr(self,
                     "_%s__com_%s" % (self.__name__, name),
                     new.instancemethod(raw_func, None, self))
+
+            if paramflags:
+                # see comment in the _fix_inout_args method
+                dirflags = [(p[0]&3) for p in paramflags]
+                if 3 in dirflags:
+                    func = self._fix_inout_args(func, argtypes, dirflags)
+
             # 'func' is a high level function calling the COM method
             func.__doc__ = doc
             func.__name__ = name # for pyhelp

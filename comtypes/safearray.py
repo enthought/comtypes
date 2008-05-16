@@ -95,9 +95,10 @@ def _make_safearray_type(itemtype):
 
         @classmethod
         def from_param(cls, value):
-            result = cls.create(value, extra)
-            result._needsfree = True
-            return result
+            if not isinstance(value, cls):
+                value = cls.create(value, extra)
+                value._needsfree = True
+            return value
 
         def __getitem__(self, index):
             # pparray[0] returns the whole array contents.

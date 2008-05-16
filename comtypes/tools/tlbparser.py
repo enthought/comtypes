@@ -107,7 +107,19 @@ class Parser(object):
             return PTR(typ)
 
         elif tdesc.vt == automation.VT_USERDEFINED:
-            ti = tinfo.GetRefTypeInfo(tdesc._.hreftype)
+            try:
+                ti = tinfo.GetRefTypeInfo(tdesc._.hreftype)
+            except COMError, details:
+                type_name = "__error_hreftype_%d__" % tdesc._.hreftype
+                message = "\n\tGetRefTypeInfo failed: %s\n\tgenerating type '%s' instead" % \
+                          (details, type_name)
+                import warnings
+                warnings.warn(message, UserWarning);
+                result = typedesc.Structure(type_name,
+                                            align=8,
+                                            members=[], bases=[],
+                                            size=0)
+                return result
             result = self.parse_typeinfo(ti)
             assert result is not None, ti.GetDocumentation(-1)[0]
             return result

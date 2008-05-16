@@ -1,3 +1,12 @@
+2008-05-16  Thomas Heller  <theller@python.net>
+
+	* Provide a workaround for a bug in ctypes. This allows methods
+	using [in, out] parameters to correctly convert native Python
+	values.
+
+	* comtypes/tools/tlbparser.py: When GetRefTypeInfo(hreftype)
+	fails, emit a warning and generate a fake type instead.
+
 2008-05-07  Thomas Heller  <theller@python.net>
 
 	* Fixed the definition of VARIANT.empty and VARIANT.null; the
