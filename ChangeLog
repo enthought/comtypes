@@ -1,3 +1,9 @@
+2008-05-29  Thomas Heller  <theller@python.net>
+
+	* Improved the [in, out] parameter workaround.  These parameters
+	are now optional.  Removed the special codegeneration for [in,
+	out] parameters in IEnumXXX.Next methods.  Added test.
+
 2008-05-16  Thomas Heller  <theller@python.net>
 
 	* Provide a workaround for a bug in ctypes. This allows methods

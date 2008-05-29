@@ -494,21 +494,70 @@ class _cominterface_meta(type):
                 raise TypeError, "baseinterface '%s' has no _methods_" % itf.__name__
             raise
 
-    def _fix_inout_args(self, func, argtypes, dirflags):
+    def _fix_inout_args(self, func, argtypes, paramflags):
         # This function provides a workaround for a bug in ctypes.
         # [in, out] parameters must be converted with the argtype's
         # .from_param() method BEFORE they are passed to the _ctypes
-        # build_callargs() function in Modules/_ctypes/_ctypes.c
+        # build_callargs() function in Modules/_ctypes/_ctypes.c.
+        #
+        # For details see below.
         #
         # TODO: The workaround should be disabled when a ctypes
         # version is used where the bug is fixed.
-        def call_with_inout(self_, *args):
-            converted_args = []
-            for t, d, v in zip(argtypes, dirflags, args):
-                if d == 3:
-                    v = t._type_.from_param(v)
-                converted_args.append(v)
-            return func(self_, *converted_args)
+        SIMPLETYPE = type(c_int)
+        BYREFTYPE = type(byref(c_int()))
+        def call_with_inout(self_, *args, **kw):
+            args = list(args)
+            outargs = []
+            for i, info in enumerate(paramflags):
+                direction = info[0]
+                if direction & 3 == 3:
+                    # This is an [in, out] parameter.
+                    #
+                    # Determine name and required type of the parameter.
+                    name = info[1]
+                    # [in, out] parameters are passed as pointers,
+                    # this is the pointed-to type:
+                    atyp = argtypes[i]._type_
+
+                    # Get the actual parameter, either as positional or
+                    # keyword arg.
+                    try:
+                        try:
+                            v = args[i]
+                        except IndexError:
+                            v = kw[name]
+                    except KeyError:
+                        # no parameter was passed, make an empty one
+                        # of the required type
+                        v = atyp()
+                    else:
+                        # parameter was passed, call .from_param() to
+                        # convert it to a ctypes type.
+                        if type(atyp) is SIMPLETYPE:
+                            # The from_param method of simple types
+                            # (c_int, c_double, ...) returns a byref()
+                            # object which we cannot use since later
+                            # it will be wrapped in a pointer.  Simply
+                            # call the constructor with the argument
+                            # in that case.
+                            v = atyp(v)
+                        else:
+                            v = atyp.from_param(v)
+                            assert not isinstance(v, BYREFTYPE)
+                    outargs.append(v)
+                    if len(args) > i:
+                        args[i] = v
+                    else:
+                        kw[name] = v
+        
+            rescode = func(self_, *args, **kw)
+            result = [o.__ctypes_from_outparam__() for o in outargs]
+            if len(result) > 1:
+                return tuple(result)
+            elif len(result) == 1:
+                return result[0]
+            return rescode
         return call_with_inout
         
     def _make_methods(self, methods):
@@ -564,8 +613,10 @@ class _cominterface_meta(type):
                 # see comment in the _fix_inout_args method
                 dirflags = [(p[0]&3) for p in paramflags]
                 if 3 in dirflags:
-                    func = self._fix_inout_args(func, argtypes, dirflags)
-
+##                    fullname = "%s::%s" % (self.__name__, name)
+##                    print "FIX %s" % fullname
+                    func = self._fix_inout_args(func, argtypes, paramflags)
+                    
             # 'func' is a high level function calling the COM method
             func.__doc__ = doc
             func.__name__ = name # for pyhelp
