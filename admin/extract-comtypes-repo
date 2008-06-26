@@ -1,0 +1,50 @@
+#!/bin/sh
+
+# This script extracts the comtypes repository from the svn.python.org repository.
+
+if test ! -d mirror
+then {
+	svnadmin create mirror
+	cat <<'EOF' > mirror/hooks/pre-revprop-change
+#!/bin/sh
+USER="$3"
+
+if [ "$USER" = "svnsync" ]; then exit 0; fi
+
+echo "Only the svnsync user can change revprops" >&2
+exit 1
+EOF
+
+	chmod +x mirror/hooks/pre-revprop-change
+	svnsync init --username svnsync file://`pwd`/mirror http://svn.python.org/projects/
+}
+fi
+
+svnsync sync file://`pwd`/mirror
+
+if test ! -f svn.python.org-dumpfile
+then {
+    echo "Dumping svn.python.org SVN repository mirror, this may take an hour or so."
+    date
+    svnadmin dump ./mirror -r 40000:HEAD > svn.python.org-dumpfile
+    date
+} fi
+
+if test ! -f comtypes-dumpfile
+then {
+    echo "Filtering comtypes out of the svn.python.org SVN repository dumpfile, this may take some minutes."
+    date
+    cat svn.python.org-dumpfile | ./svndumpfilter2 --drop-empty-revs ./mirror ctypes/trunk/comtypes ctypes/branches/comtypes* ctypes/tags/comtypes* >comtypes-dumpfile
+    date
+    rm -fr comtypes-repo
+} fi
+
+if test ! -d comtypes-repo
+then {
+    svnadmin create comtypes-repo
+    svn mkdir file://`pwd`/comtypes-repo/ctypes -m "Create initial structure"
+    svn mkdir file://`pwd`/comtypes-repo/ctypes/trunk -m "Create initial structure"
+    svn mkdir file://`pwd`/comtypes-repo/ctypes/branches -m "Create initial structure"
+    svn mkdir file://`pwd`/comtypes-repo/ctypes/tags -m "Create initial structure"
+    svnadmin load comtypes-repo < comtypes-dumpfile
+} fi
