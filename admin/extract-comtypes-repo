@@ -25,18 +25,18 @@ svnsync sync file://`pwd`/mirror
 if test ! -f svn.python.org-dumpfile
 then {
     echo "Dumping svn.python.org SVN repository mirror, this may take an hour or so."
-    date
     svnadmin dump ./mirror -r 40000:HEAD > svn.python.org-dumpfile
-    date
 } fi
 
 if test ! -f comtypes-dumpfile
 then {
-    echo "Filtering comtypes out of the svn.python.org SVN repository dumpfile, this may take some minutes."
-    date
-    cat svn.python.org-dumpfile | ./svndumpfilter2 --drop-empty-revs ./mirror ctypes/trunk/comtypes ctypes/branches/comtypes* ctypes/tags/comtypes* >comtypes-dumpfile
-    date
     rm -fr comtypes-repo
+    echo "Filtering ctypes out of the svn.python.org SVN repository dumpfile, this may take some minutes."
+    # It is important that we use svndumpfilter first to create a smaller dumpfile (5 GB reduced to 120 MB),
+    # otherwise svndumpfilter2 below will run out of memory.
+    cat svn.python.org-dumpfile | svndumpfilter include ctypes >ctypes-dumpfile
+    echo "Filtering comtypes out of the ctypes dumpfile, this may take some minutes."
+    cat ctypes-dumpfile | ./svndumpfilter2 --drop-empty-revs --renumber-revs ./mirror ctypes/trunk/comtypes ctypes/branches/comtypes* ctypes/tags/comtypes* >comtypes-dumpfile
 } fi
 
 if test ! -d comtypes-repo
