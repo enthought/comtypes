@@ -36,15 +36,14 @@ then {
     # otherwise svndumpfilter2 below will run out of memory.
     cat svn.python.org-dumpfile | svndumpfilter include ctypes >ctypes-dumpfile
     echo "Filtering comtypes out of the ctypes dumpfile, this may take some minutes."
-    cat ctypes-dumpfile | ./svndumpfilter2 --drop-empty-revs --renumber-revs ./mirror ctypes/trunk/comtypes ctypes/branches/comtypes* ctypes/tags/comtypes* >comtypes-dumpfile
+    cat ctypes-dumpfile | ./svndumpfilter2 --drop-empty-revs --renumber-revs ./mirror ctypes/trunk/comtypes ctypes/branches/comtypes* ctypes/tags/comtypes* | sed "s/-path: ctypes\//-path: /g" >comtypes-dumpfile
 } fi
 
 if test ! -d comtypes-repo
 then {
     svnadmin create comtypes-repo
-    svn mkdir file://`pwd`/comtypes-repo/ctypes -m "Create initial structure"
-    svn mkdir file://`pwd`/comtypes-repo/ctypes/trunk -m "Create initial structure"
-    svn mkdir file://`pwd`/comtypes-repo/ctypes/branches -m "Create initial structure"
-    svn mkdir file://`pwd`/comtypes-repo/ctypes/tags -m "Create initial structure"
+    svn mkdir file://`pwd`/comtypes-repo/trunk -m "Create initial structure"
+    svn mkdir file://`pwd`/comtypes-repo/branches -m "Create initial structure"
+    svn mkdir file://`pwd`/comtypes-repo/tags -m "Create initial structure"
     svnadmin load comtypes-repo < comtypes-dumpfile
 } fi
