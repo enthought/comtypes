@@ -28,22 +28,34 @@ then {
     svnadmin dump ./mirror -r 40000:HEAD > svn.python.org-dumpfile
 } fi
 
-if test ! -f comtypes-dumpfile
+if test ! -f ctypes-dumpfile
 then {
-    rm -fr comtypes-repo
+    rm -fr comtypes-dumpfile
     echo "Filtering ctypes out of the svn.python.org SVN repository dumpfile, this may take some minutes."
     # It is important that we use svndumpfilter first to create a smaller dumpfile (5 GB reduced to 120 MB),
     # otherwise svndumpfilter2 below will run out of memory.
     cat svn.python.org-dumpfile | svndumpfilter include ctypes >ctypes-dumpfile
+} fi
+
+if test ! -f comtypes-dumpfile
+then {
+    rm -fr comtypes-repo
     echo "Filtering comtypes out of the ctypes dumpfile, this may take some minutes."
-    cat ctypes-dumpfile | ./svndumpfilter2 --drop-empty-revs --renumber-revs ./mirror ctypes/trunk/comtypes ctypes/branches/comtypes* ctypes/tags/comtypes* | sed "s/-path: ctypes\//-path: /g" >comtypes-dumpfile
+    # We include ctypes/trunk/comtypes, ctypes/branches/comtypes*, ctypes/tags/comtypes*
+    # Then we strip off the ctypes/ prefix, and rewrite 'trunk/comtypes' into 'trunk'
+    cat ctypes-dumpfile | ./svndumpfilter2 --drop-empty-revs --renumber-revs ./mirror ctypes/trunk/comtypes ctypes/branches/comtypes* ctypes/tags/comtypes* | sed "s/-path: ctypes\//-path: /g" | sed "s/-path: trunk\/comtypes/-path: trunk/g" >comtypes-dumpfile
 } fi
 
 if test ! -d comtypes-repo
 then {
     svnadmin create comtypes-repo
-    svn mkdir file://`pwd`/comtypes-repo/trunk -m "Create initial structure"
     svn mkdir file://`pwd`/comtypes-repo/branches -m "Create initial structure"
     svn mkdir file://`pwd`/comtypes-repo/tags -m "Create initial structure"
     svnadmin load comtypes-repo < comtypes-dumpfile
 } fi
+
+# Create the dumpfile
+svnadmin dump ./comtypes-repo | bzip2 > sfimportcomtypes.bz2
+# and test it.
+svnadmin create ./new-comtypes-repo
+bzcat sfimportcomtypes.bz2 | svnadmin load ./new-comtypes-repo
