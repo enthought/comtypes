@@ -1,4 +1,4 @@
-REM @echo off
+@echo off
 rem Build the comtypes web pages
 set PYTHONPATH=..
 
