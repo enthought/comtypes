@@ -9,6 +9,14 @@ logger = logging.getLogger(__name__)
 
 __verbose__ = __debug__
 
+if os.name == "ce":
+    # Windows CE has a hard coded PATH
+    # XXX Additionally there's an OEM path, plus registry settings.
+    # We don't currently use the latter.
+    PATH = ["\\Windows", "\\"]
+else:
+    PATH = os.environ["PATH"]
+
 def _my_import(fullname):
     # helper function to import dotted modules
     import comtypes.gen
@@ -159,7 +167,7 @@ def _module_is_current(tlib, tlib_path, module_path):
     # Search for the actual typelib file (it seems Windows searches
     # along $PATH, although that is not documented)
     if not os.path.isfile(tlib_path) and not os.path.isabs(tlib_path):
-        for directory in os.environ["PATH"].split(";"):
+        for directory in PATH:
             what = os.path.join(directory, tlib_path)
             if os.path.isfile(what):
                 tlib_path = what

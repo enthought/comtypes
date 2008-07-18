@@ -1,5 +1,14 @@
 2008-07-18  Thomas Heller  <theller@python.net>
 
+	* comtypes\test\find_memleak.py: Windows CE does not have
+	GetProcessMemoryInfo; disable the find_memleak function because it
+	cannot work.
+
+	* comtypes\client\_generate.py, comtypes\typeinfo.py: Windows CE
+	doesn't have QueryPathOfRegTypeLib - try to emulate it.  Also it
+	doesn't use tha PATH environment variable; use a hardcoded search
+	path for type libraries.
+
 	* comtypes\test\runtests.py: Define a main() function.
 
 2008-05-29  Thomas Heller  <theller@python.net>
