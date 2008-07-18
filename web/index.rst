@@ -226,6 +226,52 @@ This parameter is used to specify a langauge identifier.  The
 generated modules always pass 0 (zero) for this parameter.  If this is
 not what you want you have to edit the generated code.
 
+Converting data types
+---------------------
+
+|comtypes| usually converts arguments and results between COM and
+Python in just the way one would expect.
+
+``VARIANT`` parameters sometimes requires special care.  A ``VARIANT``
+can hold a lot of different types - simple ones like integers, floats,
+or strings, also more complicated ones like single dimensional or even
+multidimensional arrays.  The value a ``VARIANT`` contains is
+specified by a *typecode* that comtypes automatically assigns.
+
+When you pass simple sequences (lists or tuples) as VARIANT
+parameters, the COM server will receive a VARIANT containing a
+SAFEARRAY of VARIANTs with the typecode ``VT_ARRAY | VT_VARIANT``.
+
+Some COM server methods, however, do not accept such arrays, they
+require for example an array of shorT integers with the typecode
+``VT_ARRAY | VT_I2``, an array of integers with typecode ``VT_ARRAY |
+VT_INT``, or an array a strings with typecode ``VT_ARRAY | VT_BSTR``.
+
+To create these variants you must pass an instance of the Python
+``array.array`` with the correct Python typecode to the COM method.
+The mapping of the ``array.array`` typecode to the ``VARIANT``
+typecode is defined in the comtypes.automation module by a
+dictionary:
+
+.. sourcecode:: python
+
+    _arraycode_to_vartype = {
+        "b": VT_I1,
+        "h": VT_I2,
+        "i": VT_INT,
+        "l": VT_I4,
+
+        "B": VT_UI1,
+        "H": VT_UI2,
+        "I": VT_UINT,
+        "L": VT_UI4,
+
+        "f": VT_R4,
+        "d": VT_R8,
+    }
+
+XXX Add some simple examples
+
 COM events
 ++++++++++
 
