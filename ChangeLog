@@ -1,3 +1,7 @@
+2008-07-18  Thomas Heller  <theller@python.net>
+
+	* comtypes\test\runtests.py: Define a main() function.
+
 2008-05-29  Thomas Heller  <theller@python.net>
 
 	* Improved the [in, out] parameter workaround.  These parameters
