@@ -270,7 +270,51 @@ dictionary:
         "d": VT_R8,
     }
 
-XXX Add some simple examples
+AutoCAD, for example, is one of the COM servers that requires VARIANTs
+with the typecodes ``VT_ARRAY | VT_I2`` or ``VT_ARRAY | VT_R8`` for
+parameters.  This code snippet was contributed by a user:
+
+.. sourcecode:: python
+
+    """Sample to demonstrate how to use comtypes to automate AutoCAD:
+    adding a point and a line to the drawing; and attaching xdata of
+    different types to them. The objective is to actually show how to
+    create variants of different types using comtypes.  Such variants are
+    required by many methods in AutoCAD COM API. AutoCAD needs to be
+    running to test the following code."""
+    
+    import array
+    import comtypes.client
+    
+    #Get running instance of the AutoCAD application
+    app = comtypes.client.GetActiveObject("AutoCAD.Application")
+    
+    #Get the ModelSpace object
+    ms = app.ActiveDocument.ModelSpace
+    
+    #Add a POINT in ModelSpace
+    pt = array.array('d', [0,0,0])
+    point = ms.AddPoint(pt)
+    
+    #Add a LINE in ModelSpace
+    pt1 = array.array('d', [1.0,1.0,0])
+    pt2 = array.array('d', [2.0,2.0,0])
+    line = ms.AddLine(pt1, pt2)
+    
+    #Add an integer type xdata to the point.
+    point.SetXData(array.array("h", [1001, 1070]), ['Test_Application1', 600])
+    
+    #Add a double type xdata to the line.
+    line.SetXData(array.array("h", [1001, 1040]), ['Test_Application2', 132.65])
+    
+    #Add a string type xdata to the line.
+    line.SetXData(array.array("h", [1001, 1000]), ['Test_Application3', 'TestData'])
+    
+    #Add a list type (a point coordinate in this case) xdata to the line.
+    line.SetXData(array.array("h", [1001, 1010]),
+	          ['Test_Application4', array.array('d', [2.0,0,0])])
+    
+    print "Done."
 
 COM events
 ++++++++++
