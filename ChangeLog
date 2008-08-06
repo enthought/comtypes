@@ -1,3 +1,14 @@
+2008-08-06  Thomas Heller  <theller@python.net>
+
+	* The repository was moved from python.org to sourceforge.net.
+	The svn trunk URL is now:
+	https://comtypes.svn.sourceforge.net/svnroot/comtypes/trunk
+
+	The script that extracted the repository is in
+	admin/extract_comtypes_repo. The repository structure and the
+	revision numbers have changed; the last revision on python.org is
+	rev 65336, this was imported as revision rev 354.
+
 2008-07-18  Thomas Heller  <theller@python.net>
 
 	* comtypes\test\find_memleak.py: Windows CE does not have
