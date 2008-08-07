@@ -125,13 +125,33 @@ class TestCase(unittest.TestCase):
         >>> con = ShowEvents(o)
         # event found: ITestComServerEvents_EvalStarted
         # event found: ITestComServerEvents_EvalCompleted
-        >>> result = o.eval("10 / 4")
-        Event ITestComServerEvents_EvalStarted(..., u'10 / 4')
-        Event ITestComServerEvents_EvalCompleted(..., u'10 / 4', VARIANT(vt=0x3, 2))
+        >>> result = o.eval("10. / 4")
+        Event ITestComServerEvents_EvalStarted(None, u'10. / 4')
+        Event ITestComServerEvents_EvalCompleted(None, u'10. / 4', VARIANT(vt=0x5, 2.5))
         >>> result
-        2
+        2.5
         >>>
         '''
+
+        # The following test, if enabled, works but the testsuit
+        # crashes elsewhere.  Is there s problem with SAFEARRAYs?
+
+    if is_resource_enabled("CRASHES"):
+        def Fails(self):
+            '''
+            >>> from comtypes.client import CreateObject, ShowEvents
+            >>>
+            >>> o = CreateObject("TestComServerLib.TestComServer")
+            >>> con = ShowEvents(o)
+            # event found: ITestComServerEvents_EvalStarted
+            # event found: ITestComServerEvents_EvalCompleted
+            >>> result = o.eval("['32'] * 2")
+            Event ITestComServerEvents_EvalStarted(None, u"['32'] * 2")
+            Event ITestComServerEvents_EvalCompleted(None, u"['32'] * 2", VARIANT(vt=0x200c, (u'32', u'32')))
+            >>> result
+            (u'32', u'32')
+            >>>
+            '''
 
     def GetEvents():
         """

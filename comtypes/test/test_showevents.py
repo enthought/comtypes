@@ -6,10 +6,10 @@ import doctest
 class EventsTest(unittest.TestCase):
 
     def test(self):
-        doctest.testmod(comtypes.test.test_showevents, optionflags=doctest.ELLIPSIS)
+        doctest.testmod(optionflags=doctest.ELLIPSIS)
 
-    # ShowEvents and GetEvents are never called, they only contain doctests:
-    def ShowEvents(self):
+    # These methods are never called, they only contain doctests.
+    def IE_ShowEvents(self):
         '''
         >>> from comtypes.client import CreateObject, ShowEvents, PumpEvents
         >>>
@@ -50,7 +50,7 @@ class EventsTest(unittest.TestCase):
         # event found: DWebBrowserEvents2_NewWindow3
         >>> res = o.Navigate2("http://www.python.org")
         Event DWebBrowserEvents2_PropertyChange(None, u'{265b75c1-4158-11d0-90f6-00c04fd497ea}')
-        Event DWebBrowserEvents2_BeforeNavigate2(None, <POINTER(IWebBrowser2) ptr=...>, VARIANT(vt=0x400c, byref(u'http://www.python.org/')), VARIANT(vt=0x400c, byref(0)), VARIANT(vt=0x400c, byref(None)), VARIANT(vt=0x400c, byref(VARIANT(vt=0x400c, byref(None)))), VARIANT(vt=0x400c, byref(None)), VARIANT(vt=0x400b, byref(False)))
+        Event DWebBrowserEvents2_BeforeNavigate2(None, <POINTER(IWebBrowser2) ...>, VARIANT(vt=0x400c, byref(u'http://www.python.org/')), VARIANT(vt=0x400c, byref(0)), VARIANT(vt=0x400c, byref(None)), VARIANT(vt=0x400c, byref(VARIANT(vt=0x400c, byref(None)))), VARIANT(vt=0x400c, byref(None)), VARIANT(vt=0x400b, byref(False)))
         Event DWebBrowserEvents2_DownloadBegin(None)
         Event DWebBrowserEvents2_PropertyChange(None, u'{D0FCA420-D3F5-11CF-B211-00AA004AE837}')
         >>> res = PumpEvents(0.01)
@@ -62,7 +62,7 @@ class EventsTest(unittest.TestCase):
         >>>
         '''
 
-    def GetEvents():
+    def IE_GetEvents():
         """
         >>> from comtypes.client import CreateObject, GetEvents, PumpEvents
         >>>
@@ -81,6 +81,103 @@ class EventsTest(unittest.TestCase):
         >>> res = PumpEvents(0.01)
         >>>
         """
+
+    # XXX XXX XXX XXX XXX XXX XXX XXX
+    # Arguments delivered in wrong order!
+    def Excel_Events(self):
+        '''
+        >>> from comtypes.client import CreateObject, ShowEvents, PumpEvents
+        >>>
+        >>> o = CreateObject("Excel.Application")
+        >>> con = ShowEvents(o)
+        # event found: AppEvents_NewWorkbook
+        # event found: AppEvents_SheetSelectionChange
+        # event found: AppEvents_SheetBeforeDoubleClick
+        # event found: AppEvents_SheetBeforeRightClick
+        # event found: AppEvents_SheetActivate
+        # event found: AppEvents_SheetDeactivate
+        # event found: AppEvents_SheetCalculate
+        # event found: AppEvents_SheetChange
+        # event found: AppEvents_WorkbookOpen
+        # event found: AppEvents_WorkbookActivate
+        # event found: AppEvents_WorkbookDeactivate
+        # event found: AppEvents_WorkbookBeforeClose
+        # event found: AppEvents_WorkbookBeforeSave
+        # event found: AppEvents_WorkbookBeforePrint
+        # event found: AppEvents_WorkbookNewSheet
+        # event found: AppEvents_WorkbookAddinInstall
+        # event found: AppEvents_WorkbookAddinUninstall
+        # event found: AppEvents_WindowResize
+        # event found: AppEvents_WindowActivate
+        # event found: AppEvents_WindowDeactivate
+        # event found: AppEvents_SheetFollowHyperlink
+        # event found: AppEvents_SheetPivotTableUpdate
+        # event found: AppEvents_WorkbookPivotTableCloseConnection
+        # event found: AppEvents_WorkbookPivotTableOpenConnection
+        # event found: AppEvents_WorkbookSync
+        # event found: AppEvents_WorkbookBeforeXmlImport
+        # event found: AppEvents_WorkbookAfterXmlImport
+        # event found: AppEvents_WorkbookBeforeXmlExport
+        # event found: AppEvents_WorkbookAfterXmlExport
+        >>> wb = o.Workbooks.Add()
+        Event AppEvents_NewWorkbook(None, <POINTER(_Workbook) ...>)
+        Event AppEvents_WorkbookActivate(None, <POINTER(_Workbook) ...>)
+        Event AppEvents_WindowActivate(None, <POINTER(Window) ...>, <POINTER(_Workbook) ...>)
+        >>> PumpEvents(0.1)
+        >>> res = o.Quit(); PumpEvents(0.1)
+        Event AppEvents_WorkbookBeforeClose(None, VARIANT(vt=0x400b, byref(False)), <POINTER(_Workbook) ...>)
+        Event AppEvents_WindowDeactivate(None, <POINTER(Window) ...>, <POINTER(_Workbook) ...>)
+        Event AppEvents_WorkbookDeactivate(None, <POINTER(_Workbook) ...>)
+        >>>
+        '''
+
+    # XXX XXX XXX XXX XXX XXX XXX XXX
+    # Arguments delivered in wrong order!
+    def Word_Events(self):
+        '''
+        >>> from comtypes.client import CreateObject, ShowEvents, PumpEvents
+        >>>
+        >>> o = CreateObject("Word.Application")
+        >>> con = ShowEvents(o)
+        # event found: ApplicationEvents4_Startup
+        # event found: ApplicationEvents4_Quit
+        # event found: ApplicationEvents4_DocumentChange
+        # event found: ApplicationEvents4_DocumentOpen
+        # event found: ApplicationEvents4_DocumentBeforeClose
+        # event found: ApplicationEvents4_DocumentBeforePrint
+        # event found: ApplicationEvents4_DocumentBeforeSave
+        # event found: ApplicationEvents4_NewDocument
+        # event found: ApplicationEvents4_WindowActivate
+        # event found: ApplicationEvents4_WindowDeactivate
+        # event found: ApplicationEvents4_WindowSelectionChange
+        # event found: ApplicationEvents4_WindowBeforeRightClick
+        # event found: ApplicationEvents4_WindowBeforeDoubleClick
+        # event found: ApplicationEvents4_EPostagePropertyDialog
+        # event found: ApplicationEvents4_EPostageInsert
+        # event found: ApplicationEvents4_MailMergeAfterMerge
+        # event found: ApplicationEvents4_MailMergeAfterRecordMerge
+        # event found: ApplicationEvents4_MailMergeBeforeMerge
+        # event found: ApplicationEvents4_MailMergeBeforeRecordMerge
+        # event found: ApplicationEvents4_MailMergeDataSourceLoad
+        # event found: ApplicationEvents4_MailMergeDataSourceValidate
+        # event found: ApplicationEvents4_MailMergeWizardSendToCustom
+        # event found: ApplicationEvents4_MailMergeWizardStateChange
+        # event found: ApplicationEvents4_WindowSize
+        # event found: ApplicationEvents4_XMLSelectionChange
+        # event found: ApplicationEvents4_XMLValidationError
+        # event found: ApplicationEvents4_DocumentSync
+        # event found: ApplicationEvents4_EPostageInsertEx
+        >>> PumpEvents(0.1)
+        >>> doc = o.Documents.Add()
+        Event ApplicationEvents4_NewDocument(None, <POINTER(_Document) ...>)
+        Event ApplicationEvents4_DocumentChange(None)
+        >>> res = o.Quit(); PumpEvents(0.1)
+        Event ApplicationEvents4_DocumentBeforeClose(None, VARIANT(vt=0x400b, byref(False)), <POINTER(_Document) ...>)
+        Event ApplicationEvents4_WindowDeactivate(None, <POINTER(Window) ...>, <POINTER(_Document) ...>)
+        Event ApplicationEvents4_DocumentChange(None)
+        Event ApplicationEvents4_Quit(None)
+        >>>
+        '''
 
 if __name__ == "__main__":
     unittest.main()
