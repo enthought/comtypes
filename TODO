@@ -20,3 +20,4 @@ Improve dynamic dispatch support, based on patches provided by Michael
 Curran.  See
 http://article.gmane.org/gmane.comp.python.comtypes.user/199
 
+Provide a .cab file for easy installation on Windows CE.
