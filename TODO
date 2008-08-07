@@ -1,0 +1,12 @@
+comtypes TODO-list
+==================
+
+Events handlers for office applications (Word, Excel) are called with
+the arguments in reverse order.
+
+The comtypes\gen directory may be unwritable for the current user. See
+http://sourceforge.net/tracker/index.php?func=detail&aid=2014775&group_id=115265&atid=692942
+
+Improve dynamic dispatch support, based on patches provided by Michael
+Curran.  See
+http://article.gmane.org/gmane.comp.python.comtypes.user/199
