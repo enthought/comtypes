@@ -663,10 +663,21 @@ class Generator(object):
 
         for itf, idlflags in coclass.interfaces:
             self.generate(itf.get_head())
-        implemented = [i[0].name for i in coclass.interfaces
-                       if i[1] & 2 == 0]
-        sources = [i[0].name for i in coclass.interfaces
-                       if i[1] & 2 == 2]
+        implemented = []
+        sources = []
+        for item in coclass.interfaces:
+            # item is (interface class, impltypeflags)
+            if item[1] & 2: # IMPLTYPEFLAG_FSOURCE
+                # source interface
+                where = sources
+            else:
+                # sink interface
+                where = implemented
+            if item[1] & 1: # IMPLTYPEFLAG_FDEAULT
+                # The default interface should be the first item on the list
+                where.insert(0, item[0].name)
+            else:
+                where.append(item[0].name)
         if implemented:
             print >> self.stream, "%s._com_interfaces_ = [%s]" % (coclass.name, ", ".join(implemented))
         if sources:
