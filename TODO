@@ -10,6 +10,21 @@ the arguments in reverse order.
 In test_comserver.py, TestLocalServer.test_get_typeinfo() fails with
 an access violation.  No idea why.
 
+With Python 2.6, there are two failures in the test suite.  The same errors
+occur with Python2.5 and Python 2.4 if ctypes-1.1 is used, so it seems to be
+a ctypes bug:
+  Traceback (most recent call last):
+    File "c:\sf\comtypes\comtypes\test\test_sapi.py", line 21, in test
+      engine.AudioOutputStream = stream
+  AttributeError: can't set attribute
+
+  Traceback (most recent call last):
+    File "c:\sf\comtypes\comtypes\test\test_propputref.py", line 13, in test
+      d.Item["object"] = s
+    File "c:\sf\comtypes\comtypes\__init__.py", line 750, in __setitem__
+      self.setter(self.im_inst, index, value)
+  COMError: (-2147352573, 'Mitglied nicht gefunden.', (None, None, None, 0, None))
+
 Features planned
 ----------------
 
