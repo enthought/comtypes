@@ -1,11 +1,11 @@
 
-To be written.
-==============
+comtypes
+========
 
-comtypes - Python COM package, based on the ctypes FFI library.
+comtypes - Pure Python COM package, based on the ctypes FFI library.
 
 comtypes allows to define, call, and implement custom COM interfaces
-in pure Python.
+in pure Python.  It works on Windows, 64-bit Windows, and Windows CE.
 
 author="Thomas Heller"
 author_email="theller@ctypes.org"
@@ -23,16 +23,3 @@ url="http://starship.python.net/crew/theller/comtypes/"
 'Topic :: Software Development :: Libraries :: Python Modules'
 
 
-Bugs
-====
-
-Windows:
-
-    test_comserver.py, TestLocalServer.test_get_typeinfo() fails with
-    an access violation.  No idea why.
-
-Windows CE:
-
-    6 tests still fail. One because the CoGetObject function is not
-    found (it seems not to exist), the others because
-    SafeArrayCreateVectorEx does not exist on CE.
