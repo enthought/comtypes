@@ -4,10 +4,10 @@ comtypes allows to define, call, and implement custom COM interfaces
 in pure Python.
 
 SVN repository:
-http://svn.python.org/projects/ctypes/trunk/comtypes/#egg=comtypes-dev
+https://comtypes.svn.sourceforge.net/comtypes/#egg=comtypes-dev
 
-mailing list: http://gmane.org/info.php?group=gmane.comp.python.comtypes.user
-
+Mailing list:
+http://gmane.org/info.php?group=gmane.comp.python.comtypes.user
 https://lists.sourceforge.net/lists/listinfo/comtypes-users
 
 ----------------------------------------------------------------"""
