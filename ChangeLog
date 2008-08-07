@@ -1,5 +1,7 @@
 2008-08-07  Thomas Heller  <theller@python.net>
 
+	* Bump version number to 0.5.1
+
 	* comtypes\tools\codegenerator.py: Change the order of the
 	interfaces in the _com_interfaces_ and _outgoing_interfaces_ list
 	so that the default interface is the first one.  This fixes the
