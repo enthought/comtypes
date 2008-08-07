@@ -7,7 +7,7 @@
 	The script that extracted the repository is in
 	admin/extract_comtypes_repo. The repository structure and the
 	revision numbers have changed; the last revision on python.org is
-	rev 65336, this was imported as revision rev 354.
+	rev 65336, this was imported as revision rev 355.
 
 2008-07-18  Thomas Heller  <theller@python.net>
 
