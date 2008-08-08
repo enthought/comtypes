@@ -3,8 +3,8 @@ r"""
 comtypes
 --------
 
-A pure Python COM package, based on the ctypes FFI
-library, in under 10000 lines of code (not counting the unittests).
+**comtypes** is a lightweight Python COM package, based on the ctypes
+FFI library, in under 10000 lines of code (not counting the tests).
 
 **comtypes** allows to define, call, and implement custom and
 dispatch-based COM interfaces in pure Python.  It works on Windows,
@@ -12,7 +12,7 @@ dispatch-based COM interfaces in pure Python.  It works on Windows,
 
 Documentation:
 
-    http://starship.python.net/crew/theller/comtypes
+    http://starship.python.net/crew/theller/comtypes/
 
 SVN repository:
 
@@ -22,7 +22,7 @@ Mailing list:
 
     http://gmane.org/info.php?group=gmane.comp.python.comtypes.user
 
-    https://lists.sourceforge.net/lists/listinfo/comtypes-users
+    https://lists.sourceforge.net/lists/listinfo/comtypes-users/
 
 Releases can be downloaded in the sourceforge files_ section.
 
@@ -98,7 +98,7 @@ classifiers = [
     ]
 
 setup(name="comtypes",
-      description="Pure Python COM package, based on the ctypes package",
+      description="Pure Python COM package",
       long_description = __doc__,
       author="Thomas Heller",
       author_email="theller@python.net",
