@@ -226,12 +226,36 @@ _vtbl_types = {}
 
 ################################################################
 
-if os.name == "ce":
-    _InterlockedIncrement = windll.coredll.InterlockedIncrement
-    _InterlockedDecrement = windll.coredll.InterlockedDecrement
+try:
+    if os.name == "ce":
+        _InterlockedIncrement = windll.coredll.InterlockedIncrement
+        _InterlockedDecrement = windll.coredll.InterlockedDecrement
+    else:
+        _InterlockedIncrement = windll.kernel32.InterlockedIncrement
+        _InterlockedDecrement = windll.kernel32.InterlockedDecrement
+except AttributeError:
+    import threading
+    _lock = threading.Lock()
+    _acquire = _lock.acquire
+    _release = _lock.release
+    # win 64 doesn't have these functions
+    def _InterlockedIncrement(ob):
+        _acquire()
+        refcnt = ob.value + 1
+        ob.value = refcnt
+        _release()
+        return refcnt
+    def _InterlockedDecrement(ob):
+        _acquire()
+        refcnt = ob.value - 1
+        ob.value = refcnt
+        _release()
+        return refcnt
 else:
-    _InterlockedIncrement = windll.kernel32.InterlockedIncrement
-    _InterlockedDecrement = windll.kernel32.InterlockedDecrement
+    _InterlockedIncrement.argtypes = [POINTER(c_long)]
+    _InterlockedDecrement.argtypes = [POINTER(c_long)]
+    _InterlockedIncrement.restype = c_long
+    _InterlockedDecrement.restype = c_long
 
 class COMObject(object):
     _instances_ = {}
@@ -387,7 +411,7 @@ class COMObject(object):
     def IUnknown_AddRef(self, this,
                         __InterlockedIncrement=_InterlockedIncrement,
                         _debug=_debug):
-        result = __InterlockedIncrement(byref(self._refcnt))
+        result = __InterlockedIncrement(self._refcnt)
         if result == 1:
             # keep reference to the object in a class variable.
             COMObject._instances_[self] = None
@@ -397,13 +421,12 @@ class COMObject(object):
 
     def IUnknown_Release(self, this,
                          __InterlockedDecrement=_InterlockedDecrement,
-                         _byref=byref,
                         _debug=_debug):
-        # If this is called at COM shutdown, byref() and
-        # _InterlockedDecrement() must still be available, although
-        # module level variables may have been deleted already - so we
-        # supply them as default arguments.
-        result = __InterlockedDecrement(_byref(self._refcnt))
+        # If this is called at COM shutdown, _InterlockedDecrement()
+        # must still be available, although module level variables may
+        # have been deleted already - so we supply it as default
+        # argument.
+        result = __InterlockedDecrement(self._refcnt)
         _debug("%r.Release() -> %s", self, result)
         if result == 0:
             # For whatever reasons, at cleanup it may be that
