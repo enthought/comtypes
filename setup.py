@@ -28,7 +28,7 @@ Releases can be downloaded in the sourceforge files_ section.
 
 .. _files: http://sourceforge.net/project/showfiles.php?group_id=115265
 
-.. _`https://comtypes.svn.sourceforge.net/comtypes/`: https://comtypes.svn.sourceforge.net/comtypes/#egg=comtypes-dev
+.. _`https://comtypes.svn.sourceforge.net/comtypes/`: https://comtypes.svn.sourceforge.net/svnroot/comtypes/#egg=comtypes-dev
 """
 import comtypes
 
