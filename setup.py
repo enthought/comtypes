@@ -1,16 +1,35 @@
-r"""comtypes - pure Python COM package, based on the ctypes FFI library.
+r"""
 
-comtypes allows to define, call, and implement custom COM interfaces
-in pure Python.
+comtypes
+--------
+
+A pure Python COM package, based on the ctypes FFI
+library, in under 10000 lines of code (not counting the unittests).
+
+**comtypes** allows to define, call, and implement custom and
+dispatch-based COM interfaces in pure Python.  It works on Windows,
+64-bit Windows, and Windows CE.
+
+Documentation:
+
+    http://starship.python.net/crew/theller/comtypes
 
 SVN repository:
-https://comtypes.svn.sourceforge.net/comtypes/#egg=comtypes-dev
+
+    `https://comtypes.svn.sourceforge.net/comtypes/`_
 
 Mailing list:
-http://gmane.org/info.php?group=gmane.comp.python.comtypes.user
-https://lists.sourceforge.net/lists/listinfo/comtypes-users
 
-----------------------------------------------------------------"""
+    http://gmane.org/info.php?group=gmane.comp.python.comtypes.user
+
+    https://lists.sourceforge.net/lists/listinfo/comtypes-users
+
+Releases can be downloaded in the sourceforge files_ section.
+
+.. _files: http://sourceforge.net/project/showfiles.php?group_id=115265
+
+.. _`https://comtypes.svn.sourceforge.net/comtypes/`: https://comtypes.svn.sourceforge.net/comtypes/#egg=comtypes-dev
+"""
 import comtypes
 
 import sys, os
@@ -83,7 +102,7 @@ setup(name="comtypes",
       long_description = __doc__,
       author="Thomas Heller",
       author_email="theller@python.net",
-      url="http://starship.python.net/crew/theller/wiki/the_comtypes_package",
+      url="http://starship.python.net/crew/theller/comtypes",
       download_url = "http://sourceforge.net/project/showfiles.php?group_id=115265",
 
       license="MIT License",
