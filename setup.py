@@ -3,8 +3,9 @@ r"""
 comtypes
 --------
 
-**comtypes** is a lightweight Python COM package, based on the ctypes
-FFI library, in under 10000 lines of code (not counting the tests).
+**comtypes** is a lightweight Python COM package, based on the ctypes_
+FFI library, in less than 10000 lines of code (not counting the
+tests).
 
 **comtypes** allows to define, call, and implement custom and
 dispatch-based COM interfaces in pure Python.  It works on Windows,
@@ -31,6 +32,8 @@ Releases can be downloaded in the sourceforge files_ section.
 .. _files: http://sourceforge.net/project/showfiles.php?group_id=115265
 
 .. _`https://comtypes.svn.sourceforge.net/svnroot/comtypes/`: https://comtypes.svn.sourceforge.net/svnroot/comtypes/#egg=comtypes-dev
+
+.. _ctypes: http://docs.python.org/lib/module-ctypes.html
 """
 import comtypes
 
