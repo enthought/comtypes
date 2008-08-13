@@ -4,7 +4,11 @@ from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
 from comtypes.partial import partial
-from comtypes import _safearray
+try:
+    from comtypes import _safearray
+except (ImportError, AttributeError):
+    class _safearray(object):
+        tagSAFEARRAY = None
 
 import datetime # for VT_DATE, standard in Python 2.3 and up
 import array
@@ -692,4 +696,7 @@ _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
 
 
-from comtypes.safearray import _midlSAFEARRAY
+try:
+    from comtypes.safearray import _midlSAFEARRAY
+except (ImportError, AttributeError):
+    pass

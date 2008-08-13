@@ -1,3 +1,9 @@
+2008-08-13  Thomas Heller  <theller@python.net>
+
+	* comtypes\automation.py: Allow this module to be imported on
+	Windows CE.  Using safearrays on Windows CE will not work. I'm not
+	sure if they are used much.
+
 2008-08-08  Thomas Heller  <theller@python.net>
 
 	* Implement InterlockedIncrement and InterlockedDecrement for
