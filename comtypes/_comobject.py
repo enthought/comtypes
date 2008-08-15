@@ -303,8 +303,8 @@ class COMObject(object):
                    IProvideClassInfo2 not in interfaces:
                     interfaces += (IProvideClassInfo2,)
         if hasattr(self, "_reg_clsid_"):
-                if IPersist not in interfaces:
-                    interfaces += (IPersist,)
+            if IPersist not in interfaces:
+                interfaces += (IPersist,)
         for itf in interfaces[::-1]:
             self.__make_interface_pointer(itf)
 
