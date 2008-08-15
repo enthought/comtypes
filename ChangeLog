@@ -1,3 +1,28 @@
+2008-08-15  Thomas Heller  <theller@python.net>
+
+	* comtypes.client._find_gen_dir() improved (based on a patch and
+	helpful thoughts of Stefan Schukat): If comtypes.gen is not a
+	directory in the filesystem, or not writeable by users, a new
+	directory is created which will cache generated code.  This could
+	be the case if comtypes is installed in a directory that has no
+	write permissions by the urrent user, if the comtypes package
+	resides in a zip-archive or a zipped egg, or if comtypes is used
+	in a py2exe'd script.
+
+	'%APPDATA%\<username>\Python\Python<XY>\comtypes_cache'
+
+	is used for a normal Python script, for a py2exe frozen executables
+	the directory will be
+
+	'%TEMP%\comtypes_cache\<imagebasename>-<XY>'
+
+	where <imagebasename> is the basename without extension of the
+	frozen executable image, and <XY> is the major and minor Python
+	version number, '25' for example.
+
+	This makes sure that generated modules will *always* cached in the
+	file system.
+	
 2008-08-13  Thomas Heller  <theller@python.net>
 
 	* comtypes\automation.py: Allow this module to be imported on

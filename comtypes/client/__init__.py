@@ -1,21 +1,15 @@
-'''High level client level COM support module.
+'''comtypes.client - High level client level COM support package.
 '''
 
 ################################################################
 #
-# TODO: 
+# TODO:
 #
-# - beautify the code generator output (import statements at the top)
-#
-# - add a GetTypelibWrapper(obj) function?
-#
-# - refactor this code into several modules now that this is a package
+# - refactor some code into modules
 #
 ################################################################
 
-# comtypes.client
-
-import sys, os, new
+import sys, os
 import ctypes
 
 import comtypes
@@ -33,36 +27,13 @@ logger = logging.getLogger(__name__)
 __all__ = ["CreateObject", "GetActiveObject", "CoGetObject",
            "GetEvents", "ShowEvents", "PumpEvents", "GetModule"]
 
-################################################################
-# Determine the directory where generated modules live.
-# Creates the directory if it doesn't exist - if possible.
-def _find_gen_dir():
-    if not os.path.isfile(comtypes.__file__):
-        try:
-            from comtypes import gen
-        except ImportError:
-            module = sys.modules["comtypes.gen"] = new.module("comtypes.gen")
-            comtypes.gen = module
-        return None
-    # determine the place where generated modules live
-    comtypes_path = os.path.join(comtypes.__path__[0], "gen")
-    if not os.path.exists(comtypes_path):
-        os.mkdir(comtypes_path)
-    comtypes_init = os.path.join(comtypes_path, "__init__.py")
-    if not os.path.exists(comtypes_init):
-        ofi = open(comtypes_init, "w")
-        ofi.write("# comtypes.gen package, directory for generated files.\n")
-        ofi.close()
-    from comtypes import gen
-    return gen.__path__[0]
+from comtypes.client._code_cache import _find_gen_dir
 
 gen_dir = _find_gen_dir()
 import comtypes.gen
 
 ### for testing
 ##gen_dir = None
-    
-################################################################
 
 def wrap_outparam(punk):
     logger.debug("wrap_outparam(%s)", punk)
@@ -75,7 +46,7 @@ def wrap_outparam(punk):
 def GetBestInterface(punk):
     """Try to QueryInterface a COM pointer to the 'most useful'
     interface.
-    
+
     Get type information for the provided object, either via
     IDispatch.GetTypeInfo(), or via IProvideClassInfo.GetClassInfo().
     Generate a wrapper module for the typelib, and QI for the
@@ -163,7 +134,7 @@ def GetActiveObject(progid, interface=None):
         interface = getattr(progid, "_com_interfaces_", [None])[0]
     obj = comtypes.GetActiveObject(clsid, interface=interface)
     return _manage(obj, clsid, interface=interface)
-                    
+
 def _manage(obj, clsid, interface):
     obj.__dict__['__clsid'] = str(clsid)
     if interface is None:
@@ -210,4 +181,3 @@ def CoGetObject(displayname, interface=None):
     return _manage(punk,
                    clsid=None,
                    interface=interface)
-
