@@ -16,7 +16,7 @@ try:
     import decimal # standard in Python 2.4 and up
 except ImportError:
     decimal = None
-    
+
 from ctypes.wintypes import VARIANT_BOOL
 from ctypes.wintypes import WORD
 from ctypes.wintypes import UINT
@@ -587,7 +587,7 @@ class IDispatch(IUnknown):
         #
         # For comtypes this is handled in DISPPARAMS.__del__ and VARIANT.__del__.
         _invkind = kw.pop("_invkind", 1) # DISPATCH_METHOD
-        _lcid = kw.pop("_lcid", 0) 
+        _lcid = kw.pop("_lcid", 0)
         if kw:
             raise ValueError, "named parameters not yet implemented"
 

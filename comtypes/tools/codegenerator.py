@@ -14,7 +14,7 @@ class lcid(object):
     def __repr__(self):
         return "_lcid"
 lcid = lcid()
-        
+
 class dispid(object):
     def __init__(self, memid):
         self.memid = memid
@@ -181,11 +181,11 @@ class Generator(object):
             self.generate(item)
 
     def cmpitems(a, b):
-	a = getattr(a, "location", None)
-	b = getattr(b, "location", None)
-	if a is None: return -1
-	if b is None: return 1
-	return cmp(a[0],b[0]) or cmp(int(a[1]),int(b[1]))
+        a = getattr(a, "location", None)
+        b = getattr(b, "location", None)
+        if a is None: return -1
+        if b is None: return 1
+        return cmp(a[0],b[0]) or cmp(int(a[1]),int(b[1]))
     cmpitems = staticmethod(cmpitems)
 
     def _make_relative_path(self, path1, path2):
@@ -443,7 +443,7 @@ class Generator(object):
         self.generate(struct.get_body())
 
     Union = Structure
-        
+
     def StructureBody(self, body):
         fields = []
         methods = []
@@ -808,7 +808,7 @@ class Generator(object):
                 raise RuntimeError("BUG")
             print >> self.stream, "##"
         print >> self.stream
-                    
+
     def DispInterface(self, itf):
         self.generate(itf.get_head())
         self.generate(itf.get_body())
@@ -900,8 +900,8 @@ class Generator(object):
                 # interface IDiaSymbol: IUnknown {
                 # ...
                 #     HRESULT _stdcall get_dataBytes(
-                #         [in] unsigned long cbData, 
-                #         [out] unsigned long* pcbData, 
+                #         [in] unsigned long cbData,
+                #         [out] unsigned long* pcbData,
                 #         [out] IDiaSymbol data);
                 #
                 # Of course, comtypes does not accept a COM interface
@@ -913,8 +913,8 @@ class Generator(object):
                 # interface IDiaSymbol: IUnknown {
                 # ...
                 #     HRESULT _stdcall get_dataBytes(
-                #         [in] unsigned long cbData, 
-                #         [out] unsigned long* pcbData, 
+                #         [in] unsigned long cbData,
+                #         [out] unsigned long* pcbData,
                 #         [in, out] BYTE data[]);
                 ###########################################################
                 if isinstance(typ, typedesc.ComInterface):

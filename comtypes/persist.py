@@ -138,7 +138,7 @@ class DictPropertyBag(COMObject):
     def __init__(self, **kw):
         super(DictPropertyBag, self).__init__()
         self.values = kw
-            
+
     def Read(self, this, name, pVar, errorlog):
         try:
             val = self.values[name]
@@ -157,4 +157,3 @@ class DictPropertyBag(COMObject):
         val = var[0].value
         self.values[name] = val
         return S_OK
-

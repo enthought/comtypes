@@ -20,7 +20,7 @@ class ConnectionPointImpl(COMObject):
         self._cookie = 0
         self._sink_interface = sink_interface
         self._typeinfo = sink_typeinfo
-        
+
     # per MSDN, all interface methods *must* be implemented, E_NOTIMPL
     # is no allowed return value
 
@@ -130,4 +130,3 @@ class ConnectableObjectMixin(object):
         if isinstance(itf, int):
             itf = self._outgoing_interfaces_[itf]
         self.__connections[itf]._call_sinks(name, *args, **kw)
-

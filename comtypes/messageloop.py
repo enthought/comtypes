@@ -17,7 +17,7 @@ class _MessageLoop(object):
 
     def remove_filter(self, obj):
         self._filters.remove(obj)
-        
+
     def run(self):
         msg = MSG()
         lpmsg = byref(msg)
@@ -30,7 +30,7 @@ class _MessageLoop(object):
             if not self.filter_message(lpmsg):
                 TranslateMessage(lpmsg)
                 DispatchMessage(lpmsg)
-                    
+
     def filter_message(self, lpmsg):
         for filter in self._filters:
             if filter(lpmsg):

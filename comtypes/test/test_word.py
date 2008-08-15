@@ -22,7 +22,7 @@ class Test(unittest.TestCase):
         # create a word instance
         word = comtypes.client.CreateObject("Word.Application")
         from comtypes.gen import Word
-        
+
         # Get the instance again, and receive events from that
         w2 = comtypes.client.GetActiveObject("Word.Application")
         conn = comtypes.client.GetEvents(w2, sink=self)

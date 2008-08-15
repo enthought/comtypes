@@ -31,7 +31,7 @@ def comtypes2pywin(ptr, interface=None):
     'interface' specifies the interface we want; it must be a comtypes
     interface class.  The interface must be implemented by the object;
     and the interface must be known to pythoncom.
-    
+
     If 'interface' is specified, comtypes.IUnknown is used.
     """
     if interface is None:

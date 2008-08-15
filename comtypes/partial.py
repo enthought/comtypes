@@ -15,7 +15,7 @@ After this class definition is executed, original_method.FullClass
 will have all the additional properties defined in ExtendedClass;
 the name ExtendedClass is of no importance (and becomes an alias
 for FullClass).
-It is an error if the original class already contains the 
+It is an error if the original class already contains the
 definitions being added, unless they are methods declared
 with @replace.
 """
@@ -48,7 +48,7 @@ class partial:
     __metaclass__ = _MetaPartial
 
 def replace(f):
-    """Method decorator to indicate that a method shall replace 
+    """Method decorator to indicate that a method shall replace
     the method in the full class."""
     f.__replace = True
     return f

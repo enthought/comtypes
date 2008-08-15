@@ -198,13 +198,13 @@ class ITypeLib(IUnknown):
 
 ##    def GetTypeInfoCount(self):
 ##        "Return the number of type informations"
-    
+
 ##    def GetTypeInfo(self, index):
 ##        "Load type info by index"
-    
+
 ##    def GetTypeInfoType(self, index):
 ##        "Return the TYPEKIND of type information"
-    
+
 ##    def GetTypeInfoOfGuid(self, guid):
 ##        "Return type information for a guid"
 
@@ -217,7 +217,7 @@ class ITypeLib(IUnknown):
 
 ##    def GetDocumentation(self, index):
 ##        "Return documentation for a type description."
-        
+
     def IsName(self, name, lHashVal=0):
         """Check if there is type information for this name.
 
@@ -261,7 +261,7 @@ class ITypeInfo(IUnknown):
     def GetTypeAttr(self):
         "Return the TYPEATTR for this type"
         return _deref_with_release(self._GetTypeAttr(), self.ReleaseTypeAttr)
-        
+
 ##    def GetTypeComp(self):
 ##        "Return ITypeComp pointer for this type"
 
@@ -269,11 +269,11 @@ class ITypeInfo(IUnknown):
         """Return name, docstring, helpcontext, and helpfile for 'memid'."""
         name, doc, helpcontext, helpfile = self._GetDocumentation(memid)
         return fix_name(name), fix_name(doc), helpcontext, fix_name(helpfile)
-        
+
     def GetFuncDesc(self, index):
         "Return FUNCDESC for index"
         return _deref_with_release(self._GetFuncDesc(index), self.ReleaseFuncDesc)
-    
+
     def GetVarDesc(self, index):
         "Return VARDESC for index"
         return _deref_with_release(self._GetVarDesc(index), self.ReleaseVarDesc)
@@ -328,7 +328,7 @@ class ITypeInfo(IUnknown):
 ##        "Return index into and the containing type lib itself"
 
 ##    def ReleaseTypeAttr(self, pta):
-        
+
 ##    def ReleaseFuncDesc(self, pfd):
 
 ##    def ReleaseVarDesc(self, pvd):
@@ -359,14 +359,14 @@ class ITypeComp(IUnknown):
             raise NotImplementedError
         elif kind == DESCKIND_NONE:
             raise NameError, "Name %s not found" % name
-        
+
     def BindType(self, name, lHashVal=0):
         "Bind a type, and return both the typeinfo and typecomp for it."
         ti = POINTER(ITypeInfo)()
         tc = POINTER(ITypeComp)()
         self.__com_BindType(name, lHashVal, byref(ti), byref(tc))
         return ti, tc
-        
+
 
 ################
 
@@ -447,7 +447,7 @@ IRecordInfo. _methods_ = [
         COMMETHOD([], HRESULT, 'RecordDestroy',
                   (['in'], c_void_p, 'pvRecord'))]
 
-                  
+
 
 ################################################################
 # functions
@@ -906,4 +906,3 @@ tagARRAYDESC._fields_ = [
     ('cDims', USHORT),
     ('rgbounds', SAFEARRAYBOUND * 1),
 ]
-

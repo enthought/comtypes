@@ -92,5 +92,3 @@ IEnumConnectionPoints._methods_ = [
     COMMETHOD([], HRESULT, 'Clone',
               ( ['out'], POINTER(POINTER(IEnumConnectionPoints)), 'ppEnum' )),
 ]
-
-

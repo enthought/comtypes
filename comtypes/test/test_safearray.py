@@ -189,7 +189,7 @@ class SafeArrayTestCase(unittest.TestCase):
 
         sa = t.from_param([None])
         self.failUnlessEqual((POINTER(IUnknown)(),), sa[0])
-        
+
 
     def test_VT_UNKNOWN_multi(self):
         a = _midlSAFEARRAY(POINTER(IUnknown))

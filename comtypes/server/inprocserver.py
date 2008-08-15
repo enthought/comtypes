@@ -22,7 +22,7 @@ class ClassFactory(COMObject):
 
     def IClassFactory_CreateInstance(self, this, punkOuter, riid, ppv):
         _debug("ClassFactory.CreateInstance(%s)", riid[0])
-        
+
         result = self._cls().IUnknown_QueryInterface(None, riid, ppv)
         _debug("CreateInstance() -> %s", result)
         return result

@@ -7,7 +7,7 @@ class TestCase(unittest.TestCase):
     def test(self):
         from comtypes.client import GetModule
         iem = GetModule("shdocvw.dll")
-        
+
         # IDispatch(IUnknown)
         # IWebBrowser(IDispatch)
         # IWebBrowserApp(IWebBrowser)
@@ -30,7 +30,7 @@ class TestCase(unittest.TestCase):
         for name in iem.IWebBrowser.__map_case__:
             self.failUnless(name in iem.IWebBrowserApp.__map_case__, "%s missing" % name)
             self.failUnless(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
-        
+
         for name in iem.IWebBrowserApp.__map_case__:
             self.failUnless(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
 

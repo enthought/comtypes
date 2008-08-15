@@ -119,7 +119,7 @@ setup(name="comtypes",
       options={"bdist_wininst": {"install_script": "clear_comtypes_cache.py"}},
 
       cmdclass = {'test': test},
-      
+
       version=comtypes.__version__,
       packages=["comtypes",
                 "comtypes.client",

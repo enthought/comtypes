@@ -42,7 +42,7 @@ class BasicTest(ut.TestCase):
 
         self.failUnlessEqual(other.AddRef(), 2)
         self.failUnlessEqual(other.Release(), 1)
-        
+
     def test_derived(self):
         # XXX leaks 50 refs
         self.failUnlessEqual(method_count(IUnknown), 3)

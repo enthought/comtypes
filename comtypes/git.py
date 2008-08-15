@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     tlib = CreateTypeLib("foo.bar") # we don not save it later
     assert (tlib.AddRef(), tlib.Release()) == (2, 1)
-    
+
     cookie = RegisterInterfaceInGlobal(tlib)
     assert (tlib.AddRef(), tlib.Release()) == (3, 2)
 

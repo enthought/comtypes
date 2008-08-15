@@ -20,7 +20,7 @@ class ICreateErrorInfo(IUnknown):
         COMMETHOD([], HRESULT, 'SetHelpContext',
                   (['in'], DWORD, "dwHelpContext"))
         ]
-        
+
 class IErrorInfo(IUnknown):
     _iid_ = GUID("{1CF2B120-547D-101B-8E65-08002B2BD119}")
     _methods_ = [

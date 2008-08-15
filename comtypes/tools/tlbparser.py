@@ -180,7 +180,7 @@ class Parser(object):
                                    offset)
             members.append(field)
         return struct
-        
+
     # TKIND_MODULE = 2
     def ParseModule(self, tinfo, ta):
         assert 0 == ta.cImplTypes
@@ -379,7 +379,7 @@ class Parser(object):
                  # typeinfo.FUNCFLAG_FREPLACEABLE: "???",
                  typeinfo.FUNCFLAG_FIMMEDIATEBIND: "immediatebind"}
         return [NAMES[bit] for bit in NAMES if bit & flags]
-                 
+
     def param_flags(self, flags):
         # map PARAMFLAGS values to idl attributes
         NAMES = {typeinfo.PARAMFLAG_FIN: "in",
@@ -413,7 +413,7 @@ class Parser(object):
         NEGATIVE_NAMES = {typeinfo.TYPEFLAG_FCANCREATE: "noncreatable"}
         return [NAMES[bit] for bit in NAMES if bit & flags] + \
                [NEGATIVE_NAMES[bit] for bit in NEGATIVE_NAMES if not (bit & flags)]
-    
+
     def interface_type_flags(self, flags):
         # map TYPEFLAGS values to idl attributes
         NAMES = {typeinfo.TYPEFLAG_FAPPOBJECT: "appobject",
@@ -435,7 +435,7 @@ class Parser(object):
         NEGATIVE_NAMES = {}
         return [NAMES[bit] for bit in NAMES if bit & flags] + \
                [NEGATIVE_NAMES[bit] for bit in NEGATIVE_NAMES if not (bit & flags)]
-    
+
     def var_flags(self, flags):
         NAMES = {typeinfo.VARFLAG_FREADONLY: "readonly",
                  typeinfo.VARFLAG_FSOURCE: "source",
@@ -452,7 +452,7 @@ class Parser(object):
                  typeinfo.VARFLAG_FIMMEDIATEBIND: "immediatebind"
                  }
         return [NAMES[bit] for bit in NAMES if bit & flags]
-    
+
 
     # TKIND_COCLASS = 5
     def ParseCoClass(self, tinfo, ta):
@@ -483,7 +483,7 @@ class Parser(object):
         alias = typedesc.Typedef(name, typ)
         self._register(name, alias)
         return alias
-    
+
     # TKIND_UNION = 7
     def ParseUnion(self, tinfo, ta):
         union_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
@@ -507,7 +507,7 @@ class Parser(object):
                                    offset)
             members.append(field)
         return union
-        
+
     ################################################################
 
     def _typelib_module(self, tlib=None):
@@ -545,7 +545,7 @@ class Parser(object):
                                     name,
                                     size,
                                     align,
-                                    tlib.GetDocumentation(-1)[:2])                                    
+                                    tlib.GetDocumentation(-1)[:2])
             self._register(name, typ, tlib)
             return typ
 
@@ -645,7 +645,7 @@ class TypeLibParser(Parser):
 ##    path = r"stdole32.tlb"
 
 ##    path = r"shdocvw.dll"
-    
+
 ##    path = r"c:\Programme\Microsoft Office\Office\MSO97.DLL"
 ##    path = r"PICCLP32.OCX" # DispProperty
 ##    path = r"MSHFLXGD.OCX" # DispProperty, propputref

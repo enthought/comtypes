@@ -84,4 +84,3 @@ class COMCollection(COMObject):
         return enum.IUnknown_QueryInterface(None,
                                             pointer(IUnknown._iid_),
                                             penum)
-

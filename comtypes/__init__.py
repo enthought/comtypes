@@ -553,7 +553,7 @@ class _cominterface_meta(type):
                         args[i] = v
                     else:
                         kw[name] = v
-        
+
             rescode = func(self_, *args, **kw)
             result = [o.__ctypes_from_outparam__() for o in outargs]
             if len(result) > 1:
@@ -562,7 +562,7 @@ class _cominterface_meta(type):
                 return result[0]
             return rescode
         return call_with_inout
-        
+
     def _make_methods(self, methods):
         if self._case_insensitive_:
             self._make_case_insensitive()
@@ -619,7 +619,7 @@ class _cominterface_meta(type):
 ##                    fullname = "%s::%s" % (self.__name__, name)
 ##                    print "FIX %s" % fullname
                     func = self._fix_inout_args(func, argtypes, paramflags)
-                    
+
             # 'func' is a high level function calling the COM method
             func.__doc__ = doc
             func.__name__ = name # for pyhelp

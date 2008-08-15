@@ -89,7 +89,7 @@ class Test(unittest.TestCase):
 
         import time
         time.sleep(2)
-    
+
     def tearDown(self):
         # Close all open workbooks without saving, then quit excel.
         for wb in self.xl.Workbooks:

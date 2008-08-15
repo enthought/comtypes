@@ -79,7 +79,7 @@ def _make_safearray_type(itemtype):
                 if cls._vartype_ == VT_RECORD and extra is None:
                     raise TypeError("Cannot create SAFEARRAY type VT_RECORD without IRecordInfo.")
                 # Hm, there may be other reasons why the creation fails...
-                raise MemoryError() 
+                raise MemoryError()
             # We now have a POINTER(tagSAFEARRAY) instance which we must cast
             # to the correct type:
             pa = cast(pa, cls)
@@ -114,7 +114,7 @@ def _make_safearray_type(itemtype):
         def __ctypes_from_outparam__(self):
             self._needsfree = True
             return self[0]
-            
+
         def __del__(self):
             if self._needsfree:
                 _safearray.SafeArrayDestroy(self)
@@ -208,7 +208,7 @@ def _make_safearray_type(itemtype):
         def __setitem__(self, index, value):
             # create an LP_SAFEARRAY_... instance
             pa = self._type_.create(value)
-            # XXX Must we destroy the currently contained data? 
+            # XXX Must we destroy the currently contained data?
             # fill it into self
             super(POINTER(POINTER(sa_type)), self).__setitem__(index, pa)
 

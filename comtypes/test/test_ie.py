@@ -34,7 +34,7 @@ class EventSink:
     def DocumentComplete(self, this, *args):
 ##        print "DocumentComplete", args
         self._events.append("DocumentComplete")
-    
+
 
 class POINT(Structure):
     _fields_ = [("x", c_long),

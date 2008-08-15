@@ -33,7 +33,7 @@ class Test(unittest.TestCase):
 
     def tearDown(self):
         comtypes.client.gen_dir = comtypes.client._find_gen_dir()
-    
+
 number = 0
 
 def add_test(fname):
@@ -98,14 +98,14 @@ for fname in glob.glob(os.path.join(sysdir, "*.dll")):
         #interface IAppDomainHelper : IDispatch {
         #    HRESULT _stdcall pfnShutdownCB(void* pv);
         #    HRESULT _stdcall Initialize(
-        #                    [in] IUnknown* pUnkAD, 
-        #                    [in] IAppDomainHelper __MIDL_0028, 
+        #                    [in] IUnknown* pUnkAD,
+        #                    [in] IAppDomainHelper __MIDL_0028,
         #                         ^^^^^^^^^^^^^^^^
         #                    [in] void* pPool);
         #    HRESULT _stdcall pfnCallbackCB(void* pv);
         #    HRESULT _stdcall DoCallback(
-        #                    [in] IUnknown* pUnkAD, 
-        #                    [in] IAppDomainHelper __MIDL_0029, 
+        #                    [in] IUnknown* pUnkAD,
+        #                    [in] IAppDomainHelper __MIDL_0029,
         #                         ^^^^^^^^^^^^^^^^
         #                    [in] void* pPool);
         #};

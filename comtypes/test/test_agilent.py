@@ -13,7 +13,7 @@ try:
 except WindowsError:
     pass
 else:
-    
+
     class Test(unittest.TestCase):
         def test(self):
             # The point of this test is the ReadWaveform method below,
@@ -75,7 +75,7 @@ else:
             self.failIf([x for x in array if not isinstance(x, float)])
             self.failUnlessEqual(initial_x, 0.0)
             self.failUnlessEqual(x_increment, 0.0)
-            
+
 
 
 ##if __name__ == "__main__":

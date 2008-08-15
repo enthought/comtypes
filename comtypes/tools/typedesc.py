@@ -95,7 +95,7 @@ class DispInterface(object):
         self.idlflags = idlflags
         self.itf_head = DispInterfaceHead(self)
         self.itf_body = DispInterfaceBody(self)
-        
+
     def get_body(self):
         return self.itf_body
 
@@ -119,7 +119,7 @@ class ComInterface(object):
         self.idlflags = idlflags
         self.itf_head = ComInterfaceHead(self)
         self.itf_body = ComInterfaceBody(self)
-        
+
     def get_body(self):
         return self.itf_body
 

@@ -32,7 +32,7 @@ class MethodCaller:
     def __init__(self, _id, _obj):
         self._id = _id
         self._obj = _obj
-        
+
     def __call__(self, *args):
         return self._obj._comobj.Invoke(self._id, *args)
 
@@ -79,7 +79,7 @@ class _Dispatch(object):
         if not dispid:
             dispid = self._comobj.GetIDsOfNames(name)[0]
             self._ids[name] = dispid
-        
+
         flags = comtypes.automation.DISPATCH_PROPERTYGET
         try:
             result = self._comobj.Invoke(dispid, _invkind=flags)
@@ -89,7 +89,7 @@ class _Dispatch(object):
                 self.__dict__[name] = result
             else: raise
         except: raise
-        
+
         return result
 
     def __setattr__(self, name, value):

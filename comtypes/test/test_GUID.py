@@ -30,7 +30,7 @@ class Test(unittest.TestCase):
                                  GUID("{f414c260-6ac0-11cf-b6d1-00aa00bbbb58}"))
             self.failUnlessEqual(GUID("{f414c260-6ac0-11cf-b6d1-00aa00bbbb58}").as_progid(),
                                  u'JScript')
-            
+
 
         self.failIfEqual(GUID.create_new(), GUID.create_new())
 

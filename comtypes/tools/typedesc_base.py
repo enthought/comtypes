@@ -98,7 +98,7 @@ class FundamentalType(object):
         if name != "void":
             self.size = int(size)
             self.align = int(align)
-        
+
 class PointerType(object):
     location = None
     def __init__(self, typ, size, align):

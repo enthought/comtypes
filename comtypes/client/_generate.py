@@ -68,7 +68,7 @@ def GetModule(tlib):
         GetModule("shdocvw.dll")
 
     would create modules named
-    
+
        comtypes.gen._EAB22AC0_30C1_11CF_A7EB_0000C05BAE0B_0_1_1
        comtypes.gen.SHDocVw
 
@@ -119,7 +119,7 @@ def GetModule(tlib):
     modulename = modulename.encode("mbcs")
 
     # create and import the friendly-named module
-    if is_current: 
+    if is_current:
         try:
             return _my_import("comtypes.gen." + modulename)
         except:

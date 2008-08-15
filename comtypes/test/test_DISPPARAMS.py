@@ -20,7 +20,7 @@ class TestCase(ut.TestCase):
         # these fail:
 ##        self.failUnlessEqual(dp.rgvarg[1].value, "spam")
 ##        self.failUnlessEqual(dp.rgvarg[2].value, "foo")
-            
+
     def X_test_2(self):
         # basically the same test as above
         from comtypes.automation import DISPPARAMS, VARIANT
@@ -32,7 +32,7 @@ class TestCase(ut.TestCase):
 
         import gc
         gc.collect()
-        
+
         self.failUnlessEqual(dp.rgvarg[0].value, 42)
         self.failUnlessEqual(dp.rgvarg[1].value, "spam")
         self.failUnlessEqual(dp.rgvarg[2].value, "foo")

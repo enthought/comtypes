@@ -14,7 +14,7 @@ logging.NTDebugHandler = NTDebugHandler
 
 def setup_logging(*pathnames):
     import ConfigParser
-    
+
     parser = ConfigParser.ConfigParser()
     parser.optionxform = str # use case sensitive option names!
 
@@ -49,4 +49,3 @@ def setup_logging(*pathnames):
             logging.getLogger(name).setLevel(value)
     except ConfigParser.NoSectionError:
         pass
-

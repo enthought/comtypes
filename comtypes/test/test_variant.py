@@ -62,7 +62,7 @@ class VariantTestCase(unittest.TestCase):
 
         v = VARIANT(p)
         self.failUnlessEqual(get_refcnt(p), 0)
-        
+
     def test_dispparams(self):
         # DISPPARAMS is a complex structure, well worth testing.
         d = DISPPARAMS()

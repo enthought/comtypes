@@ -46,10 +46,9 @@ class _coclass_meta(type):
                                   {"__ctypes_from_outparam__": _wrap_coclass})
         from ctypes import _pointer_type_cache
         _pointer_type_cache[klass] = PTR
-        
+
         return klass
 
 # will not work if we change the order of the two base classes!
 class _coclass_pointer_meta(type(c_void_p), _coclass_meta):
     pass
-

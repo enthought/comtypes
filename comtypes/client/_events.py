@@ -193,4 +193,3 @@ def PumpEvents(timeout):
     finally:
         ctypes.windll.kernel32.CloseHandle(hevt)
         ctypes.windll.kernel32.SetConsoleCtrlHandler(HandlerRoutine, 0)
-
