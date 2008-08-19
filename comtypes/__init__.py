@@ -415,7 +415,7 @@ class _cominterface_meta(type):
 
         for (name, nargs), methods in properties.items():
             # methods contains [propget or None, propput or None, propputref or None]
-            if methods[1] and methods[2]:
+            if methods[1] is not None and methods[2] is not None:
                 # both propput and propputref.
                 #
                 # Create a setter method that examines the argument type
@@ -430,7 +430,7 @@ class _cominterface_meta(type):
                         return propput(self, *args)
                 methods[1] = put_or_putref
                 del methods[2]
-            elif methods[2]:
+            elif methods[2] is not None:
                 # use propputref
                 del methods[1]
             else:
@@ -681,7 +681,7 @@ class _cominterface_meta(type):
         # create public properties / attribute accessors
         for (name, doc, nargs), methods in properties.items():
             # methods contains [propget or None, propput or None, propputref or None]
-            if methods[1] and methods[2]:
+            if methods[1] is not None and methods[2] is not None:
                 # both propput and propputref.
                 #
                 # Create a setter method that examines the argument type
@@ -696,7 +696,7 @@ class _cominterface_meta(type):
                         return propput(self, *args)
                 methods[1] = put_or_putref
                 del methods[2]
-            elif methods[2]:
+            elif methods[2] is not None:
                 # use propputref
                 del methods[1]
             else:
