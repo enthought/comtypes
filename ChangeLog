@@ -1,3 +1,10 @@
+2008-08-20  Thomas Heller  <theller@python.net>
+
+	* comtypes.server.register: Add an optional 'executable' parameter
+	to Registrar.register(cls), can be used to override the executable
+	image name that comtypes detects itself.  Patch by Michael
+	Robellard.
+
 2008-08-15  Thomas Heller  <theller@python.net>
 
 	* comtypes.client._find_gen_dir() improved (based on a patch and

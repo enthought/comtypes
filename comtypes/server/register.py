@@ -121,7 +121,7 @@ class Registrar(object):
                 if get_winerror(detail) != 2:
                     raise
 
-    def register(self, cls):
+    def register(self, cls, executable=None):
         """Register the COM server class."""
         # First, we unregister the object with force=True, to force removal
         # of all registry entries, even if we would not write them.
@@ -132,9 +132,9 @@ class Registrar(object):
             mth(self)
         else:
             self._unregister(cls, force=True)
-            self._register(cls)
+            self._register(cls, executable)
 
-    def _register(self, cls):
+    def _register(self, cls, executable=None):
         table = self._registry_entries(cls)
         table.sort()
         _debug("Registering %s", cls)
@@ -151,7 +151,9 @@ class Registrar(object):
                 _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", dll)
                 LoadTypeLibEx(dll, REGKIND_REGISTER)
             else:
-                if hasattr(sys, "frozen"):
+                if executable:
+                    path = executable
+                elif hasattr(sys, "frozen"):
                     path = sys.executable
                 else:
                     path = cls._typelib_path_
