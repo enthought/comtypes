@@ -41,7 +41,7 @@ def midlSAFEARRAY(typ):
     return typedesc.SAFEARRAYType(typ)
 
 # faked COM data types
-CURRENCY_type = float_type # wrong
+CURRENCY_type = longlong_type # slightly wrong; should be scaled by 10000 - use subclass of longlong?
 DATE_type = double_type # not *that* wrong...
 DECIMAL_type = double_type # wrong - it's a 12 byte structure (or was it 16 bytes?)
 

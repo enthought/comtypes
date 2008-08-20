@@ -1,5 +1,10 @@
 2008-08-20  Thomas Heller  <theller@python.net>
 
+	* Changed the codegenerator to generate 'c_longlong' instead of
+	'c_float' for CURRENCY. This is not really correct since the
+	CURRENCY value is a fixed point integer scaled by a factor of
+	10000, but at least the code will not crash.  Need a test case.
+
 	* comtypes.server.register: Add an optional 'executable' parameter
 	to Registrar.register(cls), can be used to override the executable
 	image name that comtypes detects itself.  Patch by Michael
