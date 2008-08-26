@@ -1,0 +1,46 @@
+// COMtypesTestServer.idl : IDL source for COMtypesTestServer
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (COMtypesTestServer.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(466F83EA-A98E-4B26-8601-2721231A146A),
+	dual,
+	nonextensible,
+	helpstring("ITestComServer Interface"),
+	pointer_default(unique)
+]
+interface ITestComServer : IDispatch{
+};
+[
+	uuid(6BDC9B16-0A3C-4903-9EF6-376B52F8DEDE),
+	version(1.0),
+	helpstring("COMtypesTestServer 1.0 Type Library")
+]
+library COMtypesTestServerLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(B08C8CA5-22E4-46A8-B114-B34F0B4CF63C),
+		helpstring("_ITestComServerEvents Interface")
+	]
+	dispinterface _ITestComServerEvents
+	{
+		properties:
+		methods:
+	};
+	[
+		uuid(3FAA4F11-7846-4945-BDDF-8E413D939346),
+		helpstring("TestComServer Class")
+	]
+	coclass TestComServer
+	{
+		[default] interface ITestComServer;
+		[default, source] dispinterface _ITestComServerEvents;
+	};
+};
