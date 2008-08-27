@@ -12,13 +12,26 @@ try:
     GUID.from_progid("Agilent546XX.Agilent546XX")
 except WindowsError:
     pass
-else:
 
+else:
     class Test(unittest.TestCase):
         def test(self):
             # The point of this test is the ReadWaveform method below,
             # which takes several [in, out] arguments.
             agDrvr = CreateObject("Agilent546XX.Agilent546XX")
+
+            # XXX XXX XXX The following call crashes hard with an accessviolation when
+            # the OANOCACHE environ variable is set.
+            import os
+            if "OANOCACHE" in os.environ:
+                print "Cannot test. buggy COM object?"
+                return
+
+            # Initialize the driver in simulation mode.  Resource descriptor is ignored.
+            agDrvr.Initialize("", False, False, "Simulate=true")
+            # Initialize driver.  Edit resource descriptor for your system.
+            # agDrvr.Initialize("GPIB0::7::INSTR", False, False, "QueryInstrStatus=true")
+
             from comtypes.gen import IviScopeLib
             iviDrvr = agDrvr.QueryInterface(IviScopeLib.IIviScope)
 
@@ -26,11 +39,6 @@ else:
 ##            print "Identifier:", iviDrvr.Identity.Identifier
 ##            print "   Revision:",  agDrvr.Identity.Revision
 ##            print "Description:", agDrvr.Identity.Description
-
-            # Initialize the driver in simulation mode.  Resource descriptor is ignored.
-            agDrvr.Initialize("", False, False, "Simulate=true")
-            # Initialize driver.  Edit resource descriptor for your system.
-            # agDrvr.Initialize("GPIB0::7::INSTR", False, False, "QueryInstrStatus=true")
 
             # Get instrument Identity properties.
 ##            print "InstrumentModel: ", agDrvr.Identity.InstrumentModel
@@ -78,5 +86,5 @@ else:
 
 
 
-##if __name__ == "__main__":
-##    main()
+if __name__ == "__main__":
+    unittest.main()
