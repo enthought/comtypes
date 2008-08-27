@@ -1,5 +1,7 @@
 2008-08-27  Thomas Heller  <theller@python.net>
 
+	* Avoid double-free of BSTR strings under certain conditions.
+
 	* A NULL handler is now added to the comtypes logger; this
 	prevents messages like 'No handlers could be found for logger
 	"comtypes"' when an error message is logged and the logging module

@@ -872,7 +872,9 @@ class BSTR(_SimpleCData):
 
     def __ctypes_from_outparam__(self, _free=windll.oleaut32.SysFreeString):
         result = self.value
-        _free(self)
+        if self._b_base_:
+            # otherwise __del__ will free the memory
+            _free(self)
         return result
 
     def __del__(self, _free=windll.oleaut32.SysFreeString):
