@@ -1,9 +1,23 @@
 import new, types, sys, os
 
-# version numbers follow the setuptools convention:
+# comtypes version numbers follow the setuptools convention:
 # http://peak.telecommunity.com/DevCenter/setuptools#specifying-your-project-s-version
 # 0.6.0dev < 0.6.0a < 0.6.0.b < 0.6.0c < 0.6.0
 __version__ = "0.5.2dev"
+
+import logging
+class NullHandler(logging.Handler):
+    """A Handler that does nothing."""
+    def emit(self, record):
+        pass
+
+logger = logging.getLogger(__name__)
+
+# Add a NULL handler to the comtypes logger.  This prevents getting a
+# message like this:
+#    No handlers could be found for logger "comtypes"
+# when logging is not configured and logger.error() is called.
+logger.addHandler(NullHandler())
 
 from ctypes import *
 from _ctypes import COMError
@@ -37,9 +51,6 @@ class ReturnHRESULT(Exception):
     Return a hresult code from a COM method implementation
     without logging an error.
     """
-
-import logging
-logger = logging.getLogger(__name__)
 
 ##class IDLWarning(UserWarning):
 ##    "Warn about questionable type information"
