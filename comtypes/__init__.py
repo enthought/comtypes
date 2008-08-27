@@ -867,19 +867,19 @@ from ctypes import _SimpleCData
 class BSTR(_SimpleCData):
     "The windows BSTR data type"
     _type_ = "X"
+    _needsfree = False
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.value)
 
-    def __ctypes_from_outparam__(self, _free=windll.oleaut32.SysFreeString):
-        result = self.value
-        if self._b_base_:
-            # otherwise __del__ will free the memory
-            _free(self)
-        return result
+    def __ctypes_from_outparam__(self):
+        self._needsfree = True
+        return self.value
 
     def __del__(self, _free=windll.oleaut32.SysFreeString):
-        """If we own the memory, call SysFreeString to free it."""
-        if not self._b_base_:
+        # Free the string if self owns the memory
+        # or if instructed by __ctypes_from_outparam__.
+        if self._b_base_ is None \
+               or self._needsfree:
             _free(self)
 
     def from_param(cls, value):
