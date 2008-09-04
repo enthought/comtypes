@@ -5,7 +5,7 @@ from comtypes.tools import typedesc
 import comtypes.client
 import comtypes.client._generate
 
-version = "$Rev$"
+version = "$Rev$"[6:-2]
 
 try:
     import cStringIO as StringIO
@@ -212,6 +212,11 @@ class Generator(object):
         return "..\\" * len(parts2) + path1
 
     def generate_code(self, items, filename=None):
+        print >> self.output, "__codegen_version__ = %r" % version
+        print >> self.output, "import comtypes.tools.codegenerator"
+        print >> self.output, "if comtypes.tools.codegenerator.version != __codegen_version__:"
+        print >> self.output, "    raise ImportError('wrapper code out of date')"
+        
         self.filename = filename
         if filename is not None:
             if os.path.isabs(filename):

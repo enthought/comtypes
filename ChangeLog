@@ -1,3 +1,17 @@
+2008-09-04  Thomas Heller  <theller@python.net>
+
+	* Removed the code that compared the timestamps of Python wrapper
+	modules and type library files - this approach was totally broken.
+
+	Generated modules are out of date if they were created by the code
+	generator module with a different version number; the version
+	number is now checked when a module is imported.
+
+	The current mechanism also works correctly for generated modules
+	in frozen scripts.
+
+	Thanks to Anthony Tuininga.
+
 2008-08-27  Thomas Heller  <theller@python.net>
 
 	* Avoid double-free of BSTR strings under certain conditions.

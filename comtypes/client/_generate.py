@@ -1,8 +1,8 @@
-import imp
 import new
 import os
 import sys
 import comtypes.client
+import comtypes.tools.codegenerator
 
 import logging
 logger = logging.getLogger(__name__)
@@ -109,7 +109,7 @@ def GetModule(tlib):
         logger.debug("GetModule(%s)", tlib.GetLibAttr())
 
     # create and import the module
-    is_current, mod = _CreateWrapper(tlib, pathname)
+    mod = _CreateWrapper(tlib, pathname)
     try:
         modulename = tlib.GetDocumentation(-1)[0]
     except comtypes.COMError:
@@ -119,23 +119,25 @@ def GetModule(tlib):
     modulename = modulename.encode("mbcs")
 
     # create and import the friendly-named module
-    if is_current:
-        try:
-            return _my_import("comtypes.gen." + modulename)
-        except:
-            pass
-        # this way, the module is always regenerated if importing it
-        # fails.  It would probably be better to check for the
-        # existance of the module first with imp.find_module (but
-        # beware of dotted names), and only regenerate if if not
-        # found.  Other errors while importing should probably make
-        # this function fail.
+    try:
+        mod = _my_import("comtypes.gen." + modulename)
+        if getattr(mod, "__codegen_version__", None) != comtypes.tools.codegenerator.version:
+            raise ImportError("version mismatch")
+    except Exception, details:
+        logger.info("Could not import comtypes.gen.%s: %s", modulename, details)
+    else:
+        return mod
+    # the module is always regenerated if the import fails
     if __verbose__:
         print "# Generating comtypes.gen.%s" % modulename
     # determine the Python module name
     fullname = _name_module(tlib)
     modname = fullname.split(".")[-1]
-    code = "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
+    code = "__codegen_version__ = %r\n" % comtypes.tools.codegenerator.version
+    code += "import comtypes.tools.codegenerator\n"
+    code += "if comtypes.tools.codegenerator.version != __codegen_version__:\n"
+    code += "    raise ImportError('wrapper code out of date')\n"
+    code += "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
     code += "__name__ = 'comtypes.gen.%s'" % modulename
     if comtypes.client.gen_dir is None:
         mod = new.module("comtypes.gen." + modulename)
@@ -151,59 +153,20 @@ def GetModule(tlib):
     ofi.close()
     return _my_import("comtypes.gen." + modulename)
 
-def _module_is_current(tlib, tlib_path, module_path):
-    # If the timestamp of the typelibrary file is later the the
-    # timestamp of the Python module the module is out of date and
-    # needs to be regenerated.
-    if tlib_path is None:
-        # try to find pathname of type library
-        from comtypes.typeinfo import QueryPathOfRegTypeLib
-        libattr = tlib.GetLibAttr()
-        try:
-            tlib_path = QueryPathOfRegTypeLib(libattr.guid, libattr.wMajorVerNum, libattr.wMinorVerNum)
-        except WindowsError:
-            return True
-
-    # Search for the actual typelib file (it seems Windows searches
-    # along $PATH, although that is not documented)
-    if not os.path.isfile(tlib_path) and not os.path.isabs(tlib_path):
-        for directory in PATH:
-            what = os.path.join(directory, tlib_path)
-            if os.path.isfile(what):
-                tlib_path = what
-                break
-
-    if not os.path.isfile(tlib_path):
-        # Cannot find the file, so cannot check timestamps.
-        # Assume the module is current.
-        return True
-
-    return os.stat(module_path).st_mtime > os.stat(tlib_path).st_mtime
-
 def _CreateWrapper(tlib, pathname=None):
     # helper which creates and imports the real typelib wrapper module.
     fullname = _name_module(tlib)
     try:
-        return True, sys.modules[fullname]
+        return sys.modules[fullname]
     except KeyError:
         pass
 
     modname = fullname.split(".")[-1]
-    is_current = True
+
     try:
-        file_, module_path, desc = imp.find_module(modname, comtypes.gen.__path__)
-    except ImportError:
-        pass
-    else:
-        is_current = _module_is_current(tlib, pathname, module_path)
-        if not is_current:
-            print "# comtypes.gen.%s must be regenerated" % modname
-        else:
-            try:
-                return True, imp.load_module(modname, file_, module_path, desc)
-            finally:
-                if file_:
-                    file_.close()
+        return _my_import(fullname)
+    except Exception, details:
+        logger.info("Could not import %s: %s", fullname, details)
 
     # generate the module since it doesn't exist or is out of date
     from comtypes.tools.tlbparser import generate_module
@@ -212,7 +175,7 @@ def _CreateWrapper(tlib, pathname=None):
         ofi = cStringIO.StringIO()
     else:
         ofi = open(os.path.join(comtypes.client.gen_dir, modname + ".py"), "w")
-    # use warnings.warn, maybe?
+    # XXX use logging!
     if __verbose__:
         print "# Generating comtypes.gen.%s" % modname
     generate_module(tlib, ofi, pathname)
@@ -228,9 +191,7 @@ def _CreateWrapper(tlib, pathname=None):
     else:
         ofi.close()
         mod = _my_import(fullname)
-        # why the reload here?
-        reload(mod)
-    return is_current, mod
+    return mod
 
 ################################################################
 
