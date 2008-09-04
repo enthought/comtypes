@@ -15,7 +15,7 @@ if os.name == "ce":
     # We don't currently use the latter.
     PATH = ["\\Windows", "\\"]
 else:
-    PATH = os.environ["PATH"]
+    PATH = os.environ["PATH"].split(os.pathsep)
 
 def _my_import(fullname):
     # helper function to import dotted modules
