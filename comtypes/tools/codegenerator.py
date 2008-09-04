@@ -5,6 +5,8 @@ from comtypes.tools import typedesc
 import comtypes.client
 import comtypes.client._generate
 
+version = "$Rev$"
+
 try:
     import cStringIO as StringIO
 except ImportError:
