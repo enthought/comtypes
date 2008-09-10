@@ -4,9 +4,6 @@ comtypes TODO-list
 Bugs
 ----
 
-Events handlers for office applications (Word, Excel) are called with
-the arguments in reverse order.
-
 In test_comserver.py, TestLocalServer.test_get_typeinfo() fails with
 an access violation.  No idea why.
 

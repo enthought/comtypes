@@ -561,13 +561,45 @@ class COMObject(object):
         except KeyError:
             return DISP_E_MEMBERNOTFOUND
 
+        # Unpack the parameters: It would be great if we could use the
+        # DispGetParam function - but we cannot since it requires that
+        # we pass a VARTYPE for each argument and we do not know that.
+        #
+        # Seems that n arguments have dispids (0, 1, ..., n-1).
+        # Unnamed arguments are packed into the DISPPARAMS array in
+        # reverse order (starting with the highest dispid), named
+        # arguments are packed in the order specified by the
+        # rgdispidNamedArgs array.
+        #
         params = pDispParams[0]
-        args = [params.rgvarg[i].value for i in range(params.cArgs)[::-1]]
-        # MSDN: pVarResult is ignored if DISPATCH_PROPERTYPUT or
-        # DISPATCH_PROPERTYPUTREF is specified.
-        if pVarResult and (0 == (wFlags & (4 | 8))):
-            args += [pVarResult]
-        return mth(this, *args)
+
+        if wFlags & (4 | 8):
+            # DISPATCH_PROPERTYPUT
+            # DISPATCH_PROPERTYPUTREF
+            #
+            # How are the parameters unpacked for propertyput
+            # operations with additional parameters?  Can propput
+            # have additional args?
+            args = [params.rgvarg[i].value for i in range(params.cNamedArgs)[::-1]]
+            # MSDN: pVarResult is ignored if DISPATCH_PROPERTYPUT or
+            # DISPATCH_PROPERTYPUTREF is specified.
+            return mth(this, *args)
+
+        else:
+            # DISPATCH_METHOD
+            # DISPATCH_PROPERTYGET
+            # the positions of named arguments
+            named_indexes = [params.rgdispidNamedArgs[i] for i in range(params.cNamedArgs)]
+            # the positions of unnamed arguments
+            unnamed_indexes = range(params.cArgs - params.cNamedArgs)[::-1]
+            # It seems that this code calculates the indexes of the
+            # parameters in the params.rgvarg array correctly.
+            indexes = named_indexes + unnamed_indexes
+            args = [params.rgvarg[i].value for i in named_indexes + unnamed_indexes]
+
+            if pVarResult:
+                args.append(pVarResult)
+            return mth(this, *args)
 
     ################################################################
     # IPersist interface

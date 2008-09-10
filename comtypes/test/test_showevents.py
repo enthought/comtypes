@@ -1,12 +1,12 @@
 import sys
 import unittest
-import comtypes.test.test_showevents
 import doctest
 
 class EventsTest(unittest.TestCase):
 
     def test(self):
-        doctest.testmod(optionflags=doctest.ELLIPSIS)
+        import comtypes.test.test_showevents
+        doctest.testmod(comtypes.test.test_showevents, optionflags=doctest.ELLIPSIS)
 
     # These methods are never called, they only contain doctests.
     def IE_ShowEvents(self):
@@ -82,8 +82,6 @@ class EventsTest(unittest.TestCase):
         >>>
         """
 
-    # XXX XXX XXX XXX XXX XXX XXX XXX
-    # Arguments delivered in wrong order!
     def Excel_Events(self):
         '''
         >>> from comtypes.client import CreateObject, ShowEvents, PumpEvents
@@ -122,17 +120,42 @@ class EventsTest(unittest.TestCase):
         >>> wb = o.Workbooks.Add()
         Event AppEvents_NewWorkbook(None, <POINTER(_Workbook) ...>)
         Event AppEvents_WorkbookActivate(None, <POINTER(_Workbook) ...>)
-        Event AppEvents_WindowActivate(None, <POINTER(Window) ...>, <POINTER(_Workbook) ...>)
+        Event AppEvents_WindowActivate(None, <POINTER(_Workbook) ...>, <POINTER(Window) ...>)
         >>> PumpEvents(0.1)
         >>> res = o.Quit(); PumpEvents(0.1)
-        Event AppEvents_WorkbookBeforeClose(None, VARIANT(vt=0x400b, byref(False)), <POINTER(_Workbook) ...>)
-        Event AppEvents_WindowDeactivate(None, <POINTER(Window) ...>, <POINTER(_Workbook) ...>)
+        Event AppEvents_WorkbookBeforeClose(None, <POINTER(_Workbook) ...>, VARIANT(vt=0x400b, byref(False)))
+        Event AppEvents_WindowDeactivate(None, <POINTER(_Workbook) ...>, <POINTER(Window) ...>)
         Event AppEvents_WorkbookDeactivate(None, <POINTER(_Workbook) ...>)
         >>>
         '''
 
-    # XXX XXX XXX XXX XXX XXX XXX XXX
-    # Arguments delivered in wrong order!
+    def Excel_Events_2(self):
+        '''
+        >>> from comtypes.client import CreateObject, GetEvents, PumpEvents
+        >>>
+        >>> o = CreateObject("Excel.Application")
+        >>> class Sink(object):
+        ...    def AppEvents_NewWorkbook(self, this, workbook):
+        ...        print "AppEvents_NewWorkbook", workbook
+        ...
+        >>>
+        >>> con = GetEvents(o, Sink())
+        >>> wb = o.Workbooks.Add()
+        AppEvents_NewWorkbook <POINTER(_Workbook) ...>
+        >>>
+        >>> class Sink(object):
+        ...    def AppEvents_NewWorkbook(self, workbook):
+        ...        print "AppEvents_NewWorkbook(no this)", workbook
+        ...
+        >>>
+        >>> con = GetEvents(o, Sink())
+        >>> wb = o.Workbooks.Add()
+        AppEvents_NewWorkbook(no this) <POINTER(_Workbook) ...>
+        >>>
+        >>> res = o.Quit()
+        >>>
+        '''
+
     def Word_Events(self):
         '''
         >>> from comtypes.client import CreateObject, ShowEvents, PumpEvents
@@ -172,8 +195,8 @@ class EventsTest(unittest.TestCase):
         Event ApplicationEvents4_NewDocument(None, <POINTER(_Document) ...>)
         Event ApplicationEvents4_DocumentChange(None)
         >>> res = o.Quit(); PumpEvents(0.1)
-        Event ApplicationEvents4_DocumentBeforeClose(None, VARIANT(vt=0x400b, byref(False)), <POINTER(_Document) ...>)
-        Event ApplicationEvents4_WindowDeactivate(None, <POINTER(Window) ...>, <POINTER(_Document) ...>)
+        Event ApplicationEvents4_DocumentBeforeClose(None, <POINTER(_Document) ...>, VARIANT(vt=0x400b, byref(False)))
+        Event ApplicationEvents4_WindowDeactivate(None, <POINTER(_Document) ...>, <POINTER(Window) ...>)
         Event ApplicationEvents4_DocumentChange(None)
         Event ApplicationEvents4_Quit(None)
         >>>
