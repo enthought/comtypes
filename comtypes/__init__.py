@@ -133,11 +133,13 @@ def CoInitializeEx(flags=None):
     logger.debug("CoInitializeEx(None, %s)", flags)
     _ole32.CoInitializeEx(None, flags)
 
-# COM is initialized automatically for the thread that imports this module
-# for the first time.  sys.coinit_flags is passed as parameter to CoInitializeEx,
-# if defined, otherwise COINIT_APARTMENTTHREADED is used.
-# A shutdown function is registered with atexit, so that CoUninitialize is
-# called when Python is shut down.
+# COM is initialized automatically for the thread that imports this
+# module for the first time.  sys.coinit_flags is passed as parameter
+# to CoInitializeEx, if defined, otherwise COINIT_APARTMENTTHREADED
+# (COINIT_MULTITHREADED on Windows CE) is used.
+#
+# A shutdown function is registered with atexit, so that
+# CoUninitialize is called when Python is shut down.
 CoInitializeEx()
 
 # We need to have CoUninitialize for multithreaded model where we have
@@ -148,9 +150,10 @@ def CoUninitialize():
     _ole32.CoUninitialize()
 
 def shutdown(func=_ole32.CoUninitialize,
-             _debug=logger.debug):
+             _debug=logger.debug,
+             _exc_clear=sys.exc_clear):
     # Make sure no COM pointers stay in exception frames.
-    sys.exc_clear()
+    _exc_clear()
     # Sometimes, CoUnititialize, running at Python shutdown,
     # raises an exception.  We suppress this when __debug__ is
     # False.
@@ -162,7 +165,8 @@ def shutdown(func=_ole32.CoUninitialize,
         except WindowsError: pass
     # Set the flag which means that calling obj.Release() is no longer
     # needed.
-    _cominterface_meta._com_shutting_down = True
+    if _cominterface_meta is not None:
+        _cominterface_meta._com_shutting_down = True
     _debug("CoUnititialize() done.")
 
 import atexit
