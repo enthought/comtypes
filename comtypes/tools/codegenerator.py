@@ -212,11 +212,6 @@ class Generator(object):
         return "..\\" * len(parts2) + path1
 
     def generate_code(self, items, filename=None):
-        print >> self.output, "__codegen_version__ = %r" % version
-        print >> self.output, "import comtypes.tools.codegenerator"
-        print >> self.output, "if comtypes.tools.codegenerator.version != __codegen_version__:"
-        print >> self.output, "    raise ImportError('wrapper code out of date')"
-        
         self.filename = filename
         if filename is not None:
             if os.path.isabs(filename):
@@ -259,6 +254,7 @@ class Generator(object):
 
         for line in wrapper.wrap(text):
             print >> self.output, line
+        print >> self.output, "from comtypes import _check_version; _check_version(%r)" % version
         return loops
 
     def type_name(self, t, generate=True):

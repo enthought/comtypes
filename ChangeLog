@@ -1,3 +1,10 @@
+2008-09-18  Thomas Heller  <theller@python.net>
+
+	* Changed the version-checking code that the code generator
+	creates.  Reintroduced (sorry, Anthony!) the comparison of
+	timestamps, if both the typelib and the generated module are
+	files.
+
 2008-09-10  Thomas Heller  <theller@python.net>
 
 	* In comtypes\_comobject.py, Invoke: Named arguments passed to

@@ -23,6 +23,22 @@ from ctypes import *
 from _ctypes import COMError
 from comtypes import partial
 
+def _check_version(actual):
+    from comtypes.tools.codegenerator import version as required
+    if actual != required:
+        raise ImportError("Wrong version")
+    if not hasattr(sys, "frozen"):
+        g = sys._getframe(1).f_globals
+        mod_path = g.get("__file__")
+        tlb_path = g.get("typelib_path")
+        try:
+            mod_mtime = os.stat(mod_path).st_mtime
+            tlib_mtime = os.stat(tlb_path).st_mtime
+        except (WindowsError, TypeError):
+            return
+        if mod_mtime < tlib_mtime:
+            raise ImportError("Typelib newer than module")
+
 try:
     COMError()
 except TypeError:

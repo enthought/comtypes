@@ -121,8 +121,6 @@ def GetModule(tlib):
     # create and import the friendly-named module
     try:
         mod = _my_import("comtypes.gen." + modulename)
-        if getattr(mod, "__codegen_version__", None) != comtypes.tools.codegenerator.version:
-            raise ImportError("version mismatch")
     except Exception, details:
         logger.info("Could not import comtypes.gen.%s: %s", modulename, details)
     else:
@@ -133,11 +131,7 @@ def GetModule(tlib):
     # determine the Python module name
     fullname = _name_module(tlib)
     modname = fullname.split(".")[-1]
-    code = "__codegen_version__ = %r\n" % comtypes.tools.codegenerator.version
-    code += "import comtypes.tools.codegenerator\n"
-    code += "if comtypes.tools.codegenerator.version != __codegen_version__:\n"
-    code += "    raise ImportError('wrapper code out of date')\n"
-    code += "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
+    code = "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
     code += "__name__ = 'comtypes.gen.%s'" % modulename
     if comtypes.client.gen_dir is None:
         mod = new.module("comtypes.gen." + modulename)
