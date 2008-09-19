@@ -1,5 +1,7 @@
 2008-09-19  Thomas Heller  <theller@python.net>
 
+	* Bump version number to 0.5.3dev.
+
 	* Bump version number to 0.5.2.
 	Released comtypes-0.5.2.
 
