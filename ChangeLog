@@ -1,5 +1,8 @@
 2008-09-19  Thomas Heller  <theller@python.net>
 
+	* Bump version number to 0.5.2.
+	Released comtypes-0.5.2.
+
 	* COMError nows prints the contained hresult in hex.
 
 2008-09-18  Thomas Heller  <theller@python.net>
