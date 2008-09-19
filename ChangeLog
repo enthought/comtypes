@@ -1,3 +1,7 @@
+2008-09-19  Thomas Heller  <theller@python.net>
+
+	* COMError nows prints the contained hresult in hex.
+
 2008-09-18  Thomas Heller  <theller@python.net>
 
 	* Changed the version-checking code that the code generator

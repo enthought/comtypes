@@ -55,11 +55,16 @@ else:
             self.details = details
             super(COMError, self).__init__(hresult, text, details)
         COMError.__init__ = __init__
-        def __repr__(self):
-            return "%s(%r, %r, %r)" % (self.__class__.__name__, self.hresult, self.text, self.details)
-        COMError.__repr__ = __repr__
     monkeypatch_COMError()
     del monkeypatch_COMError
+
+class COMError(partial.partial, COMError):
+    @partial.replace
+    def __str__(self):
+        return "%s(0x%X, %r, %r)" % (self.__class__.__name__,
+                                     self.hresult & 0xFFFFFFFF,
+                                     self.text,
+                                     self.details)
 
 class ReturnHRESULT(Exception):
     """ReturnHRESULT(hresult, text)
