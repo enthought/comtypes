@@ -34,7 +34,7 @@ def _check_version(actual):
         try:
             mod_mtime = os.stat(mod_path).st_mtime
             tlib_mtime = os.stat(tlb_path).st_mtime
-        except (WindowsError, TypeError):
+        except (OSError, TypeError):
             return
         if mod_mtime < tlib_mtime:
             raise ImportError("Typelib newer than module")
