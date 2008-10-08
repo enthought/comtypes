@@ -358,7 +358,7 @@ class ITypeComp(IUnknown):
         elif kind == DESCKIND_IMPLICITAPPOBJ:
             raise NotImplementedError
         elif kind == DESCKIND_NONE:
-            raise NameError, "Name %s not found" % name
+            raise NameError("Name %s not found" % name)
 
     def BindType(self, name, lHashVal=0):
         "Bind a type, and return both the typeinfo and typecomp for it."

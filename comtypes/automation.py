@@ -589,7 +589,7 @@ class IDispatch(IUnknown):
         _invkind = kw.pop("_invkind", 1) # DISPATCH_METHOD
         _lcid = kw.pop("_lcid", 0)
         if kw:
-            raise ValueError, "named parameters not yet implemented"
+            raise ValueError("named parameters not yet implemented")
 
         result = VARIANT()
         excepinfo = EXCEPINFO()

@@ -200,7 +200,7 @@ class Parser(object):
             elif fd.callconv == typeinfo.CC_STDCALL:
                 attributes = "__stdcall__"
             else:
-                raise ValueError, "calling convention %d" % fd.callconv
+                raise ValueError("calling convention %d" % fd.callconv)
 
             func = typedesc.Function(func_name, returns, attributes, extern=1)
             if func_doc is not None:
@@ -525,7 +525,7 @@ class Parser(object):
             if isinstance(value, typedesc.External):
                 return
             # BUG: We try to register an item that's already registered.
-            raise ValueError, "Bug: Multiple registered name '%s': %r" % (name, value)
+            raise ValueError("Bug: Multiple registered name '%s': %r" % (name, value))
         self.items[fullname] = value
 
     def parse_typeinfo(self, tinfo):

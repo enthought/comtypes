@@ -68,7 +68,7 @@ def GetBestInterface(punk):
         else:
             if ta.cImplTypes != 1:
                 # Hm, should we use dynamic now?
-                raise TypeError, "No default interface found"
+                raise TypeError("No default interface found")
             # Only one interface implemented, use that (even if
             # not marked as default).
             index = 0

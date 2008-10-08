@@ -28,12 +28,12 @@ def w_getopt(args, options):
                 try:
                     opts.append((arg, args[1]))
                 except IndexError:
-                    raise GetoptError, "option '%s' requires an argument" % args[0]
+                    raise GetoptError("option '%s' requires an argument" % args[0])
                 args = args[1:]
             elif arg in options:
                 opts.append((arg, ''))
             else:
-                raise GetoptError, "invalid option '%s'" % args[0]
+                raise GetoptError("invalid option '%s'" % args[0])
             args = args[1:]
         else:
             arguments.append(args[0])

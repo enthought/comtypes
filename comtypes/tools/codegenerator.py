@@ -93,20 +93,20 @@ def _calc_packing(struct, fields, pack, isStruct):
             size += a - size % a
         if isStruct:
             if size != f.offset:
-                raise PackingError, "field %s offset (%s/%s)" % (f.name, size, f.offset)
+                raise PackingError("field %s offset (%s/%s)" % (f.name, size, f.offset))
             size += s
         else:
             size = max(size, s)
         total_align = max(total_align, a)
     if total_align != struct.align:
-        raise PackingError, "total alignment (%s/%s)" % (total_align, struct.align)
+        raise PackingError("total alignment (%s/%s)" % (total_align, struct.align))
     a = total_align
     if pack is not None:
         a = min(pack, a)
     if size % a:
         size += a - size % a
     if size != struct.size:
-        raise PackingError, "total size (%s/%s)" % (size, struct.size)
+        raise PackingError("total size (%s/%s)" % (size, struct.size))
 
 def calc_packing(struct, fields):
     # try several packings, starting with unspecified packing
@@ -120,7 +120,7 @@ def calc_packing(struct, fields):
             if pack is None:
                 return None
             return pack/8
-    raise PackingError, "PACKING FAILED: %s" % details
+    raise PackingError("PACKING FAILED: %s" % details)
 
 class PackingError(Exception):
     pass
@@ -762,7 +762,7 @@ class Generator(object):
             if isinstance(m, typedesc.ComMethod):
                 self.make_ComMethod(m, "dual" in body.itf.idlflags)
             else:
-                raise TypeError, "what's this?"
+                raise TypeError("what's this?")
 
         print >> self.stream, "]"
         print >> self.stream, "################################################################"
@@ -841,7 +841,7 @@ class Generator(object):
             elif isinstance(m, typedesc.DispProperty):
                 self.generate(m.typ)
             else:
-                raise TypeError, m
+                raise TypeError(m)
 
         self.need_dispid()
         self.need_DISPMETHOD()
@@ -852,7 +852,7 @@ class Generator(object):
             elif isinstance(m, typedesc.DispProperty):
                 self.make_DispProperty(m)
             else:
-                raise TypeError, m
+                raise TypeError(m)
         print >> self.stream, "]"
 
     ################################################################

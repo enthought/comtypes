@@ -62,10 +62,10 @@ class _Dispatch(object):
         enum = self.__enum()
         if index > 0:
             if 0 != enum.Skip(index):
-                raise IndexError, "index out of range"
+                raise IndexError("index out of range")
         item, fetched = enum.Next(1)
         if not fetched:
-            raise IndexError, "index out of range"
+            raise IndexError("index out of range")
         return item
 
     def QueryInterface(self, *args):

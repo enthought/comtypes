@@ -354,12 +354,12 @@ class _cominterface_meta(type):
                         result = self.Item(index)
                     except COMError, (hresult, text, details):
                         if hresult == -2147352565: # DISP_E_BADINDEX
-                            raise IndexError, "invalid index"
+                            raise IndexError("invalid index")
                         else:
                             raise
                     # Hm, this doesn't look correct...
                     if not result: # we got a NULL com pointer
-                        raise IndexError, "invalid index"
+                        raise IndexError("invalid index")
                     # Hm, should we call __ctypes_from_outparam__ on the result?
                     return result
 
@@ -415,7 +415,7 @@ class _cominterface_meta(type):
             try:
                 memid = [x for x in idlflags if isinstance(x, int)][0]
             except IndexError:
-                raise TypeError, "no dispid found in idlflags"
+                raise TypeError("no dispid found in idlflags")
             if what == "DISPPROPERTY": # DISPPROPERTY
                 assert not argspec # XXX does not yet work for properties with parameters
                 accessor = self._disp_property(memid, idlflags)
@@ -530,7 +530,7 @@ class _cominterface_meta(type):
                         for itf in self.mro()[1:-1]])
         except KeyError, (name,):
             if name == "_methods_":
-                raise TypeError, "baseinterface '%s' has no _methods_" % itf.__name__
+                raise TypeError("baseinterface '%s' has no _methods_" % itf.__name__)
             raise
 
     def _fix_inout_args(self, func, argtypes, paramflags):
@@ -607,7 +607,7 @@ class _cominterface_meta(type):
         try:
             iid = self.__dict__["_iid_"]
         except KeyError:
-            raise AttributeError, "this class must define an _iid_"
+            raise AttributeError("this class must define an _iid_")
         else:
             iid = str(iid)
 ##            if iid in com_interface_registry:
