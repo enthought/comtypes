@@ -2,7 +2,7 @@ from ctypes import *
 from comtypes.hresult import *
 
 import os
-import new
+import types
 import logging
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -200,7 +200,7 @@ class _MethodFinder(object):
                 setattr(self, propname, value)
             except AttributeError:
                 raise E_NotImplemented()
-        return new.instancemethod(set, self.inst, type(self.inst))
+        return types.MethodType(set, self.inst, type(self.inst))
 
     def getter(self, propname):
         #
@@ -209,7 +209,7 @@ class _MethodFinder(object):
                 return getattr(self, propname)
             except AttributeError:
                 raise E_NotImplemented()
-        return new.instancemethod(get, self.inst, type(self.inst))
+        return types.MethodType(get, self.inst, type(self.inst))
 
 def _create_vtbl_type(fields, itf):
     try:

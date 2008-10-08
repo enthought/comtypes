@@ -1,4 +1,4 @@
-import new, types, sys, os
+import types, sys, os
 
 # comtypes version numbers follow the setuptools convention:
 # http://peak.telecommunity.com/DevCenter/setuptools#specifying-your-project-s-version
@@ -646,7 +646,7 @@ class _cominterface_meta(type):
                 func = prototype(i + vtbl_offset, name, paramflags, None)
             setattr(self,
                     "_%s__com_%s" % (self.__name__, name),
-                    new.instancemethod(raw_func, None, self))
+                    types.MethodType(raw_func, None, self))
 
             if paramflags:
                 # see comment in the _fix_inout_args method
@@ -660,7 +660,7 @@ class _cominterface_meta(type):
             func.__doc__ = doc
             func.__name__ = name # for pyhelp
             # make it an unbound method.  Remember, 'self' is a type here.
-            mth = new.instancemethod(func, None, self)
+            mth = types.MethodType(func, None, self)
 
             # is it a property set or property get?
             is_prop = False

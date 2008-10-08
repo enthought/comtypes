@@ -4,7 +4,7 @@ The main function is _find_gen_dir(), which on-demand creates the
 comtypes.gen package and returns a directory where generated code can
 be written to.
 """
-import ctypes, logging, new, os, sys, tempfile
+import ctypes, logging, os, sys, tempfile
 logger = logging.getLogger(__name__)
 
 def _find_gen_dir():
@@ -96,7 +96,7 @@ def _create_comtypes_gen_package():
                 ofi.close()
         except (OSError, IOError), details:
             logger.info("Creating comtypes.gen package failed: %s", details)
-            module = sys.modules["comtypes.gen"] = new.module("comtypes.gen")
+            module = sys.modules["comtypes.gen"] = types.ModuleType("comtypes.gen")
             comtypes.gen = module
             comtypes.gen.__path__ = []
             logger.info("Created a memory-only package.")

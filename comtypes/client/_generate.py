@@ -1,4 +1,4 @@
-import new
+import types
 import os
 import sys
 import comtypes.client
@@ -134,7 +134,7 @@ def GetModule(tlib):
     code = "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
     code += "__name__ = 'comtypes.gen.%s'" % modulename
     if comtypes.client.gen_dir is None:
-        mod = new.module("comtypes.gen." + modulename)
+        mod = types.ModuleType("comtypes.gen." + modulename)
         mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
                                     "<memory>")
         exec code in mod.__dict__
@@ -176,7 +176,7 @@ def _CreateWrapper(tlib, pathname=None):
 
     if comtypes.client.gen_dir is None:
         code = ofi.getvalue()
-        mod = new.module(fullname)
+        mod = types.ModuleType(fullname)
         mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
                                     "<memory>")
         exec code in mod.__dict__
