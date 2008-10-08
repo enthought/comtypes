@@ -1,4 +1,4 @@
-import new, os, unittest, sys, tempfile
+import types, os, unittest, sys, tempfile
 
 import comtypes
 import comtypes.client
@@ -16,7 +16,7 @@ class Test(unittest.TestCase):
         self.orig_comtypesgen = sys.modules["comtypes.gen"]
         del sys.modules["comtypes.gen"]
         del comtypes.gen
-        mod = sys.modules["comtypes.gen"] = new.module("comtypes.gen")
+        mod = sys.modules["comtypes.gen"] = types.ModuleType("comtypes.gen")
         mod.__path__ = []
         comtypes.gen = mod
 
