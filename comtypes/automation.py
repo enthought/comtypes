@@ -620,7 +620,8 @@ class IDispatch(IUnknown):
         try:
             self.__com_Invoke(dispid, riid_null, _lcid, _invkind, byref(dp),
                               byref(result), byref(excepinfo), byref(argerr))
-        except COMError, (hresult, text, details):
+        except COMError, err:
+            (hresult, text, details) = err.args
             if hresult == DISP_E_EXCEPTION:
                 details = (excepinfo.bstrDescription, excepinfo.bstrSource,
                            excepinfo.bstrHelpFile, excepinfo.dwHelpContext,

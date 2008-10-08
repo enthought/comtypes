@@ -102,7 +102,8 @@ class _Dispatch(object):
         flags = comtypes.automation.DISPATCH_PROPERTYPUT
         try:
             return self._comobj.Invoke(dispid, value, _invkind=flags)
-        except COMError, (hresult, text, details):
+        except COMError, err:
+            (hresult, text, details) = err.args
             if hresult == hres.DISP_E_MEMBERNOTFOUND: pass
             else: raise
         flags = comtypes.automation.DISPATCH_PROPERTYPUTREF

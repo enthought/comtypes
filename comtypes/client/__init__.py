@@ -91,7 +91,7 @@ def GetBestInterface(punk):
     logger.debug("Default interface is %s", typeattr.guid)
     try:
         punk.QueryInterface(comtypes.IUnknown, typeattr.guid)
-    except comtypes.COMError, details:
+    except comtypes.COMError:
         logger.debug("Does not implement default interface, returning dynamic object")
         return comtypes.client.dynamic.Dispatch(punk)
 

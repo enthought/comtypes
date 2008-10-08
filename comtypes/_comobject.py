@@ -61,7 +61,8 @@ def catch_errors(obj, mth, interface, mthname):
     def call_with_this(*args, **kw):
         try:
             result = mth(*args, **kw)
-        except ReturnHRESULT, (hresult, text):
+        except ReturnHRESULT, err:
+            (hresult, text) = err.args
             return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)
         except (COMError, WindowsError), details:
             _error("Exception in %s.%s implementation:", interface.__name__, mthname, exc_info=True)
@@ -117,9 +118,11 @@ def hack(inst, mth, paramflags, interface, mthname):
                     raise ValueError("Method should have returned a %s-tuple" % args_out)
                 for i, value in enumerate(result):
                     outargs[i][0] = value
-        except ReturnHRESULT, (hresult, text):
+        except ReturnHRESULT, err:
+            (hresult, text) = err.args
             return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)
-        except COMError, (hr, text, details):
+        except COMError, err:
+            (hr, text, details) = err.args
             _error("Exception in %s.%s implementation:", interface.__name__, mthname, exc_info=True)
             try:
                 descr, source, helpfile, helpcontext, progid = details

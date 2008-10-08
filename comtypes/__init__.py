@@ -198,13 +198,8 @@ def _is_object(obj):
     # A COM pointer in a VARIANT is an 'Object', too
     elif isinstance(obj, VARIANT) and isinstance(obj.value, POINTER(IUnknown)):
         return True
-    try:
-        # a comtypes.client.dynamic.Dispatch object
-        _comobj = obj._comobj
-    except AttributeError:
-        return False
-    return True
-
+    # It may be a dynamic dispatch object.
+    return hasattr(obj, "_comobj")
 
 ################################################################
 # The metaclasses...
@@ -352,7 +347,8 @@ class _cominterface_meta(type):
                     "Return 'self.Item(index)'"
                     try:
                         result = self.Item(index)
-                    except COMError, (hresult, text, details):
+                    except COMError, err:
+                        (hresult, text, details) = err.args
                         if hresult == -2147352565: # DISP_E_BADINDEX
                             raise IndexError("invalid index")
                         else:
@@ -528,7 +524,8 @@ class _cominterface_meta(type):
         try:
             return sum([len(itf.__dict__["_methods_"])
                         for itf in self.mro()[1:-1]])
-        except KeyError, (name,):
+        except KeyError, err:
+            (name,) = err.args
             if name == "_methods_":
                 raise TypeError("baseinterface '%s' has no _methods_" % itf.__name__)
             raise
