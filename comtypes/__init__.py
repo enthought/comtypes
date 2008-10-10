@@ -818,7 +818,8 @@ class _compointer_base(c_void_p):
             # present but we can no longer call Release() on them -
             # this may give a protection fault.  So we need the
             # _com_shutting_down flag.
-            if not self.__metaclass__._com_shutting_down:
+            #
+            if not type(self)._com_shutting_down:
                 _debug("Release %s", self)
                 self.Release()
 
