@@ -1,5 +1,8 @@
 2008-10-10  Thomas Heller  <theller@python.net>
 
+	* Import cStringIO, which should always be available on Windows,
+	instead of first trying cStringIO and then StringIO.
+
 	* Python 2.6 compatibility: use 'types.MethodType' instead of
 	'new.instancemethod' to fix a -3 warning.
 

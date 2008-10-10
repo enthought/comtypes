@@ -1,16 +1,13 @@
 # Code generator to generate code for everything contained in COM type
 # libraries.
 import os
+import cStringIO
 from comtypes.tools import typedesc
 import comtypes.client
 import comtypes.client._generate
 
 version = "$Rev$"[6:-2]
 
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
 
 class lcid(object):
     def __repr__(self):
@@ -149,8 +146,8 @@ class Generator(object):
     def __init__(self, ofi, known_symbols=None):
         self._externals = {}
         self.output = ofi
-        self.stream = StringIO.StringIO()
-        self.imports = StringIO.StringIO()
+        self.stream = cStringIO.StringIO()
+        self.imports = cStringIO.StringIO()
 ##        self.stream = self.imports = self.output
         self.known_symbols = known_symbols or {}
 
