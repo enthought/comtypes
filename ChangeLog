@@ -1,3 +1,20 @@
+2008-10-10  Thomas Heller  <theller@python.net>
+
+	* Python 2.6 compatibility: use 'types.MethodType' instead of
+	'new.instancemethod' to fix a -3 warning.
+
+	Use 'raise Exception(details)' instead of
+	'raise Exception, details'.
+
+	Don't use tuple unpacking in exception handlers:
+	  'except COMError, err:
+	      (hresult, text, details) = err'
+	instead of
+	  'except COMError, (hresult, text, details)'
+
+	* Python 2.4 compatibility: os.stat() raises OSError instead of
+	WindowsError when a file is not found.
+
 2008-09-19  Thomas Heller  <theller@python.net>
 
 	* Bump version number to 0.5.3dev.
