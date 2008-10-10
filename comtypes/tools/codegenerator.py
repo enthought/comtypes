@@ -182,14 +182,6 @@ class Generator(object):
         for item in items:
             self.generate(item)
 
-    def cmpitems(a, b):
-        a = getattr(a, "location", None)
-        b = getattr(b, "location", None)
-        if a is None: return -1
-        if b is None: return 1
-        return cmp(a[0],b[0]) or cmp(int(a[1]),int(b[1]))
-    cmpitems = staticmethod(cmpitems)
-
     def _make_relative_path(self, path1, path2):
         """path1 and path2 are pathnames.
         Return path1 as a relative path to path2, if possible.
@@ -238,7 +230,7 @@ class Generator(object):
         while items:
             loops += 1
             self.more = set()
-            self.generate_all(sorted(items, self.cmpitems))
+            self.generate_all(items)
 
             items |= self.more
             items -= self.done
