@@ -1,3 +1,8 @@
+2008-10-29  Thomas Heller  <theller@python.net>
+
+	* The Fire_Event() method in comtypes.server.connectionpoints now
+	returns a list of results.
+
 2008-10-10  Thomas Heller  <theller@python.net>
 
 	* Import cStringIO, which should always be available on Windows,

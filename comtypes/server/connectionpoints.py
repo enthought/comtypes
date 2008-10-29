@@ -51,6 +51,7 @@ class ConnectionPointImpl(COMObject):
         return E_NOTIMPL
 
     def _call_sinks(self, name, *args, **kw):
+        results = []
         logger.debug("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw)
         # Is it an IDispatch derived interface?  Then, events have to be delivered
         # via Invoke calls (even if it is a dual interface).
@@ -59,20 +60,25 @@ class ConnectionPointImpl(COMObject):
             dispid = self._typeinfo.GetIDsOfNames(name)[0]
             for key, p in self._connections.items():
                 try:
-                    p.Invoke(dispid, *args, **kw)
+                    result = p.Invoke(dispid, *args, **kw)
                 except COMError, details:
                     if details.hresult == -2147023174:
                         logger.warning("_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
                                        self, name, args, kw,
                                        exc_info=True)
-                        del self._connections[key]
+                        try:
+                            del self._connections[key]
+                        except KeyError:
+                            pass # connection already gone
                     else:
                         logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
                                        exc_info=True)
+                else:
+                    results.append(result)
         else:
             for p in self._connections.values():
                 try:
-                    getattr(p, name)(*args, **kw)
+                    result = getattr(p, name)(*args, **kw)
                 except COMError, details:
                     if details.hresult == -2147023174:
                         logger.warning("_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
@@ -82,6 +88,9 @@ class ConnectionPointImpl(COMObject):
                     else:
                         logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
                                        exc_info=True)
+                else:
+                    results.append(result)
+        return results
 
 class ConnectableObjectMixin(object):
     """Mixin which implements IConnectionPointContainer.
@@ -126,7 +135,9 @@ class ConnectableObjectMixin(object):
     def Fire_Event(self, itf, name, *args, **kw):
         # Fire event 'name' with arguments *args and **kw.
         # Accepts either an interface index or an interface as first argument.
+        # Returns a list of results.
         logger.debug("Fire_Event(%s, %s, *%s, **%s)", itf, name, args, kw)
         if isinstance(itf, int):
             itf = self._outgoing_interfaces_[itf]
-        self.__connections[itf]._call_sinks(name, *args, **kw)
+        return self.__connections[itf]._call_sinks(name, *args, **kw)
+
