@@ -1,5 +1,9 @@
 2008-10-29  Thomas Heller  <theller@python.net>
 
+	* Handle coclass pointers as arguments in com interface methods
+	correctly.  Method calls will now accept pointers to the default
+	interface of this coclass.
+
 	* The Fire_Event() method in comtypes.server.connectionpoints now
 	returns a list of results.
 
