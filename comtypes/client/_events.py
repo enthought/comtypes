@@ -166,6 +166,24 @@ def PumpEvents(timeout):
     """
     # XXX Should there be a way to pass additional event handles which
     # can terminate this function?
+
+    # XXX XXX XXX
+    #
+    # It may be that I misunderstood the CoWaitForMultipleHandles
+    # function.  Is a message loop required in a STA?  Seems so...
+    #
+    # MSDN says:
+    #
+    # If the caller resides in a single-thread apartment,
+    # CoWaitForMultipleHandles enters the COM modal loop, and the
+    # thread's message loop will continue to dispatch messages using
+    # the thread's message filter. If no message filter is registered
+    # for the thread, the default COM message processing is used.
+    #
+    # If the calling thread resides in a multithread apartment (MTA),
+    # CoWaitForMultipleHandles calls the Win32 function
+    # MsgWaitForMultipleObjects.
+    
     hevt = ctypes.windll.kernel32.CreateEventA(None, True, False, None)
     handles = (ctypes.c_void_p * 1)(hevt)
     RPC_S_CALLPENDING = -2147417835
