@@ -1,3 +1,9 @@
+2008-11-05  Thomas Heller  <theller@python.net>
+
+	* Add the IPersistFile interface to the comtypes.persist module.
+	Add comtypes.shelllink module which contains IShellLinkA and
+	IShellLinkW interfaces, plus the ShellLink coclass.
+
 2008-10-29  Thomas Heller  <theller@python.net>
 
 	* Handle coclass pointers as arguments in com interface methods
