@@ -563,7 +563,6 @@ class IDispatch(IUnknown):
     def GetTypeInfo(self, index, lcid=0):
         """Return type information.  Index 0 specifies typeinfo for IDispatch"""
         import comtypes.typeinfo
-        # we could also use cast instead of QueryInterface.  Does it matter?
         result = self._GetTypeInfo(index, lcid)
         return result.QueryInterface(comtypes.typeinfo.ITypeInfo)
 
@@ -574,7 +573,7 @@ class IDispatch(IUnknown):
         arr = (c_wchar_p * len(names))(*names)
         ids = (DISPID * len(names))()
         self.__com_GetIDsOfNames(riid_null, arr, len(names), lcid, ids)
-        return [i for i in ids]
+        return ids[:]
 
     def Invoke(self, dispid, *args, **kw):
         """Invoke a method or property."""
