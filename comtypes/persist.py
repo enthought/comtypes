@@ -10,7 +10,7 @@ The 'DictPropertyBag' class is a class implementing the IPropertyBag
 interface, useful in client code.
 """
 from ctypes import *
-from ctypes.wintypes import WORD
+from ctypes.wintypes import WORD, DWORD, BOOL
 from comtypes import GUID, IUnknown, COMMETHOD, HRESULT, dispid
 from comtypes import IPersist
 from comtypes.automation import VARIANT, tagEXCEPINFO
@@ -121,6 +121,59 @@ class IPersistPropertyBag2(IPersist):
                   ( ['in'], c_int, 'fClearDirty' ),
                   ( ['in'], c_int, 'fSaveAllProperties' )),
         COMMETHOD([], HRESULT, 'IsDirty'),
+        ]
+
+
+# STGM constants
+# Access
+STGM_READ = 0x00000000
+STGM_WRITE = 0x00000001
+STGM_READWRITE = 0x00000002
+
+# Sharing
+STGM_SHARE_EXCLUSIVE = 0x00000010
+STGM_SHARE_DENY_WRITE = 0x00000020
+STGM_SHARE_DENY_READ = 0x00000030
+STGM_SHARE_DENY_NONE = 0x00000040
+STGM_PRIORITY = 0x00040000
+
+# Creation
+STGM_FAILIFTHERE = 0x00000000
+STGM_CREATE = 0x00001000
+STGM_CONVERT = 0x00020000
+
+# Transactioning
+STGM_DIRECT = 0x00000000
+STGM_TRANSACTED = 0x00010000
+
+# Transactioning Performance
+STGM_NOSCRATCH = 0x00100000
+STGM_NOSNAPSHOT = 0x00200000
+
+# Direct SWMR and Simple
+STGM_SIMPLE = 0x08000000
+STGM_DIRECT_SWMR = 0x00400000
+
+# Delete on release
+STGM_DELETEONRELEASE = 0x04000000
+
+LPOLESTR = LPCOLESTR = c_wchar_p
+
+class IPersistFile(IPersist):
+    _iid_ = GUID('{0000010B-0000-0000-C000-000000000046}')
+    _idlflags_ = []
+    _methods_ = [
+        COMMETHOD([], HRESULT, 'IsDirty'),
+        COMMETHOD([], HRESULT, 'Load',
+                  ( ['in'], LPCOLESTR, 'pszFileName' ),
+                  ( ['in'], DWORD, 'dwMode' )),
+        COMMETHOD([], HRESULT, 'Save',
+                  ( ['in'], LPCOLESTR, 'pszFileName' ),
+                  ( ['in'], BOOL, 'fRemember' )),
+        COMMETHOD([], HRESULT, 'SaveCompleted',
+                  ( ['in'], LPCOLESTR, 'pszFileName' )),
+        COMMETHOD([], HRESULT, 'GetCurFile',
+                  ( ['out'], POINTER(LPOLESTR), 'ppszFileName' ))
         ]
 
 
