@@ -15,6 +15,7 @@ REM set CMD=c:\python24\python -u c:/python24/scripts/rst2html.py %OPTIONS% %CSS
 set CMD=c:\python25\python -u rst2html.py %OPTIONS% %CSS%
 
 %CMD% index.rst index.html
+%CMD% server.rst server.html
 %CMD% scriptcontrol.rst scriptcontrol.html
 
 if not "%1" == "" start %1.html

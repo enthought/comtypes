@@ -1,0 +1,24 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+        uuid(11C65963-BD45-4B56-A06E-1610532B8613),
+        dual,
+        oleautomation
+]
+interface IMyInterface : IDispatch {
+        HRESULT MyMethod([in] INT a, [in] INT b, [out, retval] INT *presult);
+}
+
+[
+	uuid(F0D8338A-BDC1-45D7-A14F-27D64E7BCA18)
+]
+library MyTypeLib
+{
+        importlib("stdole2.tlb");
+	
+        [uuid(FBA0A6D0-B775-40D7-924A-B593B6EFA091)]
+		coclass MyObject {
+		[default] interface IMyInterface;
+        };
+};

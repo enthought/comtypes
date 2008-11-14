@@ -15,6 +15,9 @@ custom and dispatch based COM interfaces.
 
 This document describes |comtypes| version 0.4.1.
 
+NEW: The beginning of the documentation for implementing COM servers in
+comtypes is here: comtypes_server_
+
 .. contents::
 
 The comtypes.client package
@@ -323,6 +326,10 @@ Some COM objects support events, which allows them to notify the user
 of the object when something happens.  The standard COM mechanism is
 based on so-called *connection points*.
 
+Note: For the rules that you should observe when implementing event
+handlers you should read the implementing_COM_methods_ section in the
+comtypes server document.
+
 ``GetEvents(source, sink, interface=None)``
     This functions connects an event sink to the COM object
     ``source``.
@@ -481,6 +488,9 @@ and passes it as second parameter to the ``GetEvents()`` function:
    WorkbookOpened <POINTER(_Workbook) ptr=0x291944 at 1853120>
    >>>
 
+Note that event handler methods support the same calling convention as
+COM method implementations in comtypes.  So the remarks about
+implementing_COM_methods_ should be observed.
 
 Typelibraries
 +++++++++++++
@@ -658,3 +668,7 @@ The |comtypes| project is hosted on sourceforge_.
 .. _sourceforge: http://sourceforge.net/projects/comtypes
 
 .. _files: http://sourceforge.net/project/showfiles.php?group_id=115265
+
+.. _comtypes_server: server.html
+
+.. _implementing_COM_methods: server.html#implementing-com-methods
