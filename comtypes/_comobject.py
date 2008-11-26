@@ -90,34 +90,43 @@ def hack(inst, mth, paramflags, interface, mthname):
     # An argument is an input arg either if flags are NOT set in the
     # idl file, or if the flags contain 'in'. In other words, the
     # direction flag is either exactly '0' or has the '1' bit set:
-    args_in = len([f for f in dirflags if (f == 0) or (f & 1)])
-    # number of output arguments:
-    args_out = len([f for f in dirflags if f & 2])
+    # Output arguments have flag '2'
+
+    args_out_idx=[]
+    args_in_idx=[]
+    for i,a in enumerate(dirflags):
+        if a&2:
+            args_out_idx.append(i)
+        if a&1 or a==0:
+            args_in_idx.append(i)
+    args_out = len(args_out_idx)
+
     ## XXX Remove this:
 ##    if args_in != code.co_argcount - 1:
 ##        return catch_errors(inst, mth, interface, mthname)
-    # This code assumes that input args are always first, and output
-    # args are always last.  Have to check with the IDL docs if this
-    # is always correct.
 
     clsid = getattr(inst, "_reg_clsid_", None)
     def call_without_this(this, *args):
-        outargs = args[len(args)-args_out:]
         # Method implementations could check for and return E_POINTER
         # themselves.  Or an error will be raised when
         # 'outargs[i][0] = value' is executed.
 ##        for a in outargs:
 ##            if not a:
 ##                return E_POINTER
+
+        #make argument list for handler by index array built above
+        inargs=[]
+        for a in args_in_idx:
+            inargs.append(args[a])
         try:
-            result = mth(*args[:args_in])
+            result = mth(*inargs)
             if args_out == 1:
-                outargs[0][0] = result
+                args[args_out_idx[0]][0] = result
             elif args_out != 0:
                 if len(result) != args_out:
                     raise ValueError("Method should have returned a %s-tuple" % args_out)
                 for i, value in enumerate(result):
-                    outargs[i][0] = value
+                    args[args_out_idx[i]][0] = value
         except ReturnHRESULT, err:
             (hresult, text) = err.args
             return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)

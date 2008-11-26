@@ -67,6 +67,8 @@ interface ITestComServer : IDispatch {
 	[id(17), helpstring("execute a statement")]
 	HRESULT Exec2([in] BSTR what);
 
+	[id(18), helpstring("a method with [in] and [out] args in mixed order")]
+	HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);
 };
 
 [

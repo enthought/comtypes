@@ -1,3 +1,9 @@
+2008-11-26  Thomas Heller  <theller@python.net>
+
+	* Applied a patch from Torbjørn Tyridal.  This allows to
+	high-level implement methods in COM servers, and event handler
+	methods that have [in] and [out] arguments in mixed order.
+
 2008-11-05  Thomas Heller  <theller@python.net>
 
 	* Add the IPersistFile interface to the comtypes.persist module.

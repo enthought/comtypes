@@ -135,6 +135,11 @@ class TestComServer(
         self._name = name
         return S_OK
 
+##    [id(18), helpstring("a method with [in] and [out] args in mixed order")]
+##    HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);
+    def MixedInOut(self, a, c):
+        return a+1, c+1
+    
 if __name__ == "__main__":
     try:
         from comtypes.server.register import UseCommandLine

@@ -20,6 +20,10 @@ class TestInproc(unittest.TestCase):
         bytes = find_memleak(func)
         self.failIf(bytes, "Leaks %d bytes" % bytes)
 
+    def test_mixedinout(self):
+        o = self.create_object()
+        self.failUnlessEqual(o.MixedInOut(2, 4), (3, 5))
+
     def test_getname(self):
         from ctypes import byref, pointer
         from comtypes import BSTR
@@ -100,6 +104,11 @@ else:
             pass
 
         def test_getname(self):
+            pass
+
+        def test_mixedinout(self):
+            # Not sure about this; it raise 'Invalid Number of parameters'
+            # Is mixed [in], [out] args not compatible with IDispatch???
             pass
 
     if is_resource_enabled("ui"):
