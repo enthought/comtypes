@@ -6,6 +6,8 @@ import comtypes.gen
 
 from comtypes.client._code_cache import _get_appdata_dir
 
+imgbase = os.path.splitext(os.path.basename(sys.executable))[0]
+
 class Test(unittest.TestCase):
     """Test the comtypes.client._find_gen_dir() function in several
     simulated environments.
@@ -51,7 +53,7 @@ class Test(unittest.TestCase):
         # %TEMP%\comtypes_cache\<imagebasename>-25
         # the image is python25.dll
         path = os.path.join(tempfile.gettempdir(),
-                            r"comtypes_cache\python%d%d-%d%d" % (ma, mi, ma, mi))
+                            r"comtypes_cache\%s%d%d-%d%d" % (imgbase, ma, mi, ma, mi))
         gen_dir = comtypes.client._find_gen_dir()
         self.failUnlessEqual(path, gen_dir)
 
@@ -59,7 +61,8 @@ class Test(unittest.TestCase):
         sys.frozen = "console_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
         path = os.path.join(tempfile.gettempdir(),
-                            r"comtypes_cache\python-%d%d" % sys.version_info[:2])
+                            r"comtypes_cache\%s-%d%d" % (
+            imgbase, sys.version_info[0], sys.version_info[1]))
         gen_dir = comtypes.client._find_gen_dir()
         self.failUnlessEqual(path, gen_dir)
 
@@ -67,7 +70,8 @@ class Test(unittest.TestCase):
         sys.frozen = "windows_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
         path = os.path.join(tempfile.gettempdir(),
-                            r"comtypes_cache\python-%d%d" % sys.version_info[:2])
+                            r"comtypes_cache\%s-%d%d" % (
+            imgbase, sys.version_info[0], sys.version_info[1]))
         gen_dir = comtypes.client._find_gen_dir()
         self.failUnlessEqual(path, gen_dir)
 
