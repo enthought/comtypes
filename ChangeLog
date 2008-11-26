@@ -1,5 +1,8 @@
 2008-11-26  Thomas Heller  <theller@python.net>
 
+	* Added untested code to comtypes.server: RegisterActiveObject()
+	and RevokeActiveObject(), plus some flags.
+
 	* Applied a patch from Torbjørn Tyridal.  This allows to
 	high-level implement methods in COM servers, and event handler
 	methods that have [in] and [out] arguments in mixed order.

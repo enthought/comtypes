@@ -15,3 +15,27 @@ class IClassFactory(comtypes.IUnknown):
 ##    _methods_ = [
 ##        STDMETHOD(HRESULT, "AddConnection", [c_ulong, c_ulong]),
 ##        STDMETHOD(HRESULT, "ReleaseConnection", [c_ulong, c_ulong, c_ulong])]
+
+# The following code is untested:
+
+ACTIVEOBJECT_STRONG = 0x0
+ACTIVEOBJECT_WEAK   = 0x1
+
+oleaut32 = ctypes.oledll.oleaut32
+
+def RegisterActiveObject(comobj, weak=True):
+    punk = comobj._com_pointers_[comtypes.IUnknown._iid_]
+    clsid = comobj._reg_clsid_
+    if weak:
+        flags = ACTIVEOBJECT_WEAK
+    else:
+        flags = ACTIVEOBJECT_STRONG
+    handle = ctypes.c_ulong()
+    oleaut32.RegisterActiveObject(punk,
+                                  ctypes.byref(clsid),
+                                  flags,
+                                  ctypes.byref(handle))
+    return handle.value
+
+def RevokeActiveObject(handle):
+    oleaut32.RevokeActiveObject(handle, None)
