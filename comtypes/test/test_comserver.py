@@ -1,4 +1,4 @@
-import unittest
+import unittest, sys
 from ctypes import *
 from ctypes.wintypes import *
 from comtypes.client import CreateObject, GetEvents, ShowEvents
@@ -126,21 +126,38 @@ class TestCase(unittest.TestCase):
 
     # The following functions are never called, they only contain doctests:
 
-    def ShowEvents(self):
-        '''
-        >>> from comtypes.client import CreateObject, ShowEvents
-        >>>
-        >>> o = CreateObject("TestComServerLib.TestComServer")
-        >>> con = ShowEvents(o)
-        # event found: ITestComServerEvents_EvalStarted
-        # event found: ITestComServerEvents_EvalCompleted
-        >>> result = o.eval("10. / 4")
-        Event ITestComServerEvents_EvalStarted(None, u'10. / 4')
-        Event ITestComServerEvents_EvalCompleted(None, u'10. / 4', VARIANT(vt=0x5, 2.5))
-        >>> result
-        2.5
-        >>>
-        '''
+    if sys.version_info >= (3, 0):
+        def ShowEvents(self):
+            '''
+            >>> from comtypes.client import CreateObject, ShowEvents
+            >>>
+            >>> o = CreateObject("TestComServerLib.TestComServer")
+            >>> con = ShowEvents(o)
+            # event found: ITestComServerEvents_EvalStarted
+            # event found: ITestComServerEvents_EvalCompleted
+            >>> result = o.eval("10. / 4")
+            Event ITestComServerEvents_EvalStarted(None, '10. / 4')
+            Event ITestComServerEvents_EvalCompleted(None, '10. / 4', VARIANT(vt=0x5, 2.5))
+            >>> result
+            2.5
+            >>>
+            '''
+    else:
+        def ShowEvents(self):
+            '''
+            >>> from comtypes.client import CreateObject, ShowEvents
+            >>>
+            >>> o = CreateObject("TestComServerLib.TestComServer")
+            >>> con = ShowEvents(o)
+            # event found: ITestComServerEvents_EvalStarted
+            # event found: ITestComServerEvents_EvalCompleted
+            >>> result = o.eval("10. / 4")
+            Event ITestComServerEvents_EvalStarted(None, u'10. / 4')
+            Event ITestComServerEvents_EvalCompleted(None, u'10. / 4', VARIANT(vt=0x5, 2.5))
+            >>> result
+            2.5
+            >>>
+            '''
 
         # The following test, if enabled, works but the testsuit
         # crashes elsewhere.  Is there s problem with SAFEARRAYs?
@@ -169,10 +186,10 @@ class TestCase(unittest.TestCase):
         >>> o =  CreateObject("TestComServerLib.TestComServer")
         >>> class EventHandler(object):
         ...     def EvalStarted(self, this, what):
-        ...         print "EvalStarted:", what
+        ...         print("EvalStarted: %s" % what)
         ...         return 0
         ...     def EvalCompleted(self, this, what, result):
-        ...         print "EvalCompleted:", what, "=", result.value
+        ...         print("EvalCompleted: %s = %s" % (what, result.value))
         ...         return 0
         ...
         >>>

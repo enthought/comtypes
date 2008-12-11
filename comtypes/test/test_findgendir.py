@@ -1,5 +1,8 @@
 import types, os, unittest, sys, tempfile
 
+if sys.version_info >= (3, 0):
+    from imp import reload
+
 import comtypes
 import comtypes.client
 import comtypes.gen

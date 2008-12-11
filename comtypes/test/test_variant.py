@@ -83,13 +83,15 @@ class VariantTestCase(unittest.TestCase):
         import sys
         v = VARIANT()
 
-        v.value = sys.maxint
-        self.failUnlessEqual(v.value, sys.maxint)
-        self.failUnlessEqual(type(v.value), int)
+        if (hasattr(sys, "maxint")):
+            # this test doesn't work in Python 3000
+            v.value = sys.maxint
+            self.failUnlessEqual(v.value, sys.maxint)
+            self.failUnlessEqual(type(v.value), int)
 
-        v.value += 1
-        self.failUnlessEqual(v.value, sys.maxint+1)
-        self.failUnlessEqual(type(v.value), long)
+            v.value += 1
+            self.failUnlessEqual(v.value, sys.maxint+1)
+            self.failUnlessEqual(type(v.value), long)
 
         v.value = 1L
         self.failUnlessEqual(v.value, 1)

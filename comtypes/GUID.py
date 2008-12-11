@@ -1,4 +1,12 @@
 from ctypes import *
+import sys
+
+if sys.version_info > (3,):
+    def binary(obj):
+        return bytes(obj)
+else:
+    def binary(obj):
+        return buffer(obj)
 
 BYTE = c_byte
 WORD = c_ushort
@@ -39,19 +47,19 @@ class GUID(Structure):
 
     def __cmp__(self, other):
         if isinstance(other, GUID):
-            return cmp(buffer(self), buffer(other))
+            return cmp(binary(self), binary(other))
         return -1
 
     def __nonzero__(self):
-        return str(buffer(self)) != "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+        return self != GUID_null
 
     def __eq__(self, other):
         return isinstance(other, GUID) and \
-               buffer(self) == buffer(other)
+               binary(self) == binary(other)
 
     def __hash__(self):
         # We make GUID instances hashable, although they are mutable.
-        return hash(buffer(self))
+        return hash(binary(self))
 
     def copy(self):
         return GUID(unicode(self))
@@ -87,5 +95,7 @@ class GUID(Structure):
         _CoCreateGuid(byref(guid))
         return guid
     create_new = classmethod(create_new)
+
+GUID_null = GUID()
 
 __all__ = ["GUID"]

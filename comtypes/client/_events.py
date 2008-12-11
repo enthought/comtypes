@@ -6,7 +6,6 @@ import comtypes.typeinfo
 import comtypes.connectionpoints
 import logging
 logger = logging.getLogger(__name__)
-import types
 
 class _AdviseConnection(object):
     def __init__(self, source, interface, receiver):
@@ -147,7 +146,7 @@ class EventDumper(object):
             # XXX handler is called with 'this'.  Should we really print "None" instead?
             args = (None,) + args
             print "Event %s(%s)" % (name, ", ".join([repr(a) for a in args]))
-        return types.MethodType(handler, EventDumper, self)
+        return comtypes.instancemethod(handler, EventDumper, self)
 
 def ShowEvents(source, interface=None):
     """Receive COM events from 'source'.  A special event sink will be
@@ -204,7 +203,7 @@ def PumpEvents(timeout):
                                                                len(handles), handles,
                                                                ctypes.byref(ctypes.c_ulong()))
         except WindowsError, details:
-            if details[0] != RPC_S_CALLPENDING: # timeout expired
+            if details.args[0] != RPC_S_CALLPENDING: # timeout expired
                 raise
         else:
             raise KeyboardInterrupt

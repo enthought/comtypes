@@ -35,10 +35,13 @@ Releases can be downloaded in the sourceforge files_ section.
 
 .. _ctypes: http://docs.python.org/lib/module-ctypes.html
 """
-import comtypes
-
 import sys, os
 from distutils.core import setup, Command, DistutilsOptionError
+
+try:
+    from distutils.command.build_py import build_py_2to3 as build_py
+except ImportError:
+    from distutils.command.build_py import build_py
 
 class test(Command):
     # Original version of this class posted
@@ -57,7 +60,6 @@ class test(Command):
     boolean_options = ["refcounts"]
 
     def initialize_options(self):
-        self.build_base = 'build'
         self.use_resources = ""
         self.refcounts = False
         self.tests = "comtypes.test"
@@ -73,14 +75,18 @@ class test(Command):
     # finalize_options()
 
     def run(self):
-        self.run_command('build')
+        build = self.reinitialize_command('build')
+        build.run()
+        if build.build_lib is not None:
+            sys.path.insert(0, build.build_lib)
 
         import comtypes.test
         comtypes.test.use_resources.extend(self.use_resources)
 
         for name in self.tests:
             package = __import__(name, globals(), locals(), ['*'])
-            print "Testing package", name, (sys.version, sys.platform, os.name)
+            sys.stdout.write("Testing package %s %s\n"
+                             % (name, (sys.version, sys.platform, os.name)))
             comtypes.test.run_tests(package,
                                     "test_*.py",
                                     self.verbose,
@@ -102,6 +108,17 @@ classifiers = [
     'Topic :: Software Development :: Libraries :: Python Modules',
     ]
 
+def read_version():
+    # Determine the version number by reading it from the file
+    # 'comtypes\__init__.py'.  We cannot import this file (with py3,
+    # at least) because it is in py2.x syntax.
+    ns = {}
+    for line in open("comtypes\__init__.py"):
+        if line.startswith("__version__ = "):
+            exec(line, ns)
+            break
+    return ns["__version__"]
+
 setup(name="comtypes",
       description="Pure Python COM package",
       long_description = __doc__,
@@ -118,9 +135,10 @@ setup(name="comtypes",
       scripts=["clear_comtypes_cache.py"],
       options={"bdist_wininst": {"install_script": "clear_comtypes_cache.py"}},
 
-      cmdclass = {'test': test},
+      cmdclass = {'test': test,
+                  'build_py': build_py},
 
-      version=comtypes.__version__,
+      version=read_version(),
       packages=["comtypes",
                 "comtypes.client",
                 "comtypes.server",

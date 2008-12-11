@@ -58,13 +58,19 @@ else:
     monkeypatch_COMError()
     del monkeypatch_COMError
 
-class COMError(partial.partial, COMError):
-    @partial.replace
-    def __str__(self):
-        return "%s(0x%X, %r, %r)" % (self.__class__.__name__,
-                                     self.hresult & 0xFFFFFFFF,
-                                     self.text,
-                                     self.details)
+if sys.version_info >= (3, 0):
+    pythonapi.PyInstanceMethod_New.argtypes = [py_object]
+    pythonapi.PyInstanceMethod_New.restype = py_object
+    PyInstanceMethod_Type = type(pythonapi.PyInstanceMethod_New(id))
+
+    def instancemethod(func, inst, cls):
+        mth = PyInstanceMethod_Type(func)
+        if inst is None:
+            return mth
+        return mth.__get__(inst)
+else:
+    def instancemethod(func, inst, cls):
+        return types.MethodType(func, inst, cls)
 
 class ReturnHRESULT(Exception):
     """ReturnHRESULT(hresult, text)
@@ -156,7 +162,7 @@ def CoUninitialize():
 
 def shutdown(func=_ole32.CoUninitialize,
              _debug=logger.debug,
-             _exc_clear=sys.exc_clear):
+             _exc_clear=getattr(sys, "exc_clear", lambda: None)):
     # Make sure no COM pointers stay in exception frames.
     _exc_clear()
     # Sometimes, CoUnititialize, running at Python shutdown,
@@ -522,8 +528,10 @@ class _cominterface_meta(type):
     def __get_baseinterface_methodcount(self):
         "Return the number of com methods in the base interfaces"
         try:
-            return sum([len(itf.__dict__["_methods_"])
-                        for itf in self.mro()[1:-1]])
+            result = 0
+            for itf in self.mro()[1:-1]:
+                result += len(itf.__dict__["_methods_"])
+            return result
         except KeyError, err:
             (name,) = err.args
             if name == "_methods_":
@@ -643,7 +651,7 @@ class _cominterface_meta(type):
                 func = prototype(i + vtbl_offset, name, paramflags, None)
             setattr(self,
                     "_%s__com_%s" % (self.__name__, name),
-                    types.MethodType(raw_func, None, self))
+                    instancemethod(raw_func, None, self))
 
             if paramflags:
                 # see comment in the _fix_inout_args method
@@ -657,7 +665,7 @@ class _cominterface_meta(type):
             func.__doc__ = doc
             func.__name__ = name # for pyhelp
             # make it an unbound method.  Remember, 'self' is a type here.
-            mth = types.MethodType(func, None, self)
+            mth = instancemethod(func, None, self)
 
             # is it a property set or property get?
             is_prop = False
@@ -835,6 +843,12 @@ class _compointer_base(c_void_p):
 
         # get the value property of the c_void_p baseclass, this is the pointer value
         return cmp(super(_compointer_base, self).value, super(_compointer_base, other).value)
+
+    def __eq__(self, other):
+        if not isinstance(other, _compointer_base):
+            return False
+        # get the value property of the c_void_p baseclass, this is the pointer value
+        return super(_compointer_base, self).value == super(_compointer_base, other).value
 
     def __hash__(self):
         """Return the hash value of the pointer."""
@@ -1207,7 +1221,9 @@ from comtypes._comobject import COMObject
 # What's a coclass?
 # a POINTER to a coclass is allowed as parameter in a function declaration:
 # http://msdn.microsoft.com/library/en-us/midl/midl/oleautomation.asp
-class CoClass(COMObject):
-    from comtypes._meta import _coclass_meta as __metaclass__
 
+from comtypes._meta import _coclass_meta
+
+class CoClass(COMObject):
+    __metaclass__ = _coclass_meta
 ################################################################

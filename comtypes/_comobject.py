@@ -2,7 +2,6 @@ from ctypes import *
 from comtypes.hresult import *
 
 import os
-import types
 import logging
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -13,7 +12,7 @@ _error = logger.error
 # COM object implementation
 from _ctypes import CopyComPointer
 
-from comtypes import COMError, ReturnHRESULT
+from comtypes import COMError, ReturnHRESULT, instancemethod
 from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 from comtypes import IPersist
@@ -212,7 +211,7 @@ class _MethodFinder(object):
                 setattr(self, propname, value)
             except AttributeError:
                 raise E_NotImplemented()
-        return types.MethodType(set, self.inst, type(self.inst))
+        return instancemethod(set, self.inst, type(self.inst))
 
     def getter(self, propname):
         #
@@ -221,7 +220,7 @@ class _MethodFinder(object):
                 return getattr(self, propname)
             except AttributeError:
                 raise E_NotImplemented()
-        return types.MethodType(get, self.inst, type(self.inst))
+        return instancemethod(get, self.inst, type(self.inst))
 
 def _create_vtbl_type(fields, itf):
     try:
@@ -592,7 +591,11 @@ class COMObject(object):
             # How are the parameters unpacked for propertyput
             # operations with additional parameters?  Can propput
             # have additional args?
-            args = [params.rgvarg[i].value for i in range(params.cNamedArgs)[::-1]]
+            #
+            # 2to3 has problems to translate 'range(...)[::-1]'
+            # correctly, so use 'list(range)[::-1]' instead (will be
+            # fixed in Python 3.1, probably):
+            args = [params.rgvarg[i].value for i in list(range(params.cNamedArgs))[::-1]]
             # MSDN: pVarResult is ignored if DISPATCH_PROPERTYPUT or
             # DISPATCH_PROPERTYPUTREF is specified.
             return mth(this, *args)
@@ -601,9 +604,13 @@ class COMObject(object):
             # DISPATCH_METHOD
             # DISPATCH_PROPERTYGET
             # the positions of named arguments
+            #
+            # 2to3 has problems to translate 'range(...)[::-1]'
+            # correctly, so use 'list(range)[::-1]' instead (will be
+            # fixed in Python 3.1, probably):
             named_indexes = [params.rgdispidNamedArgs[i] for i in range(params.cNamedArgs)]
             # the positions of unnamed arguments
-            unnamed_indexes = range(params.cArgs - params.cNamedArgs)[::-1]
+            unnamed_indexes = list(range(params.cArgs - params.cNamedArgs))[::-1]
             # It seems that this code calculates the indexes of the
             # parameters in the params.rgvarg array correctly.
             indexes = named_indexes + unnamed_indexes

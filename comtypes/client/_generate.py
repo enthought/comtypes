@@ -116,7 +116,8 @@ def GetModule(tlib):
         return mod
     if modulename is None:
         return mod
-    modulename = modulename.encode("mbcs")
+    if sys.version_info < (3, 0):
+        modulename = modulename.encode("mbcs")
 
     # create and import the friendly-named module
     try:

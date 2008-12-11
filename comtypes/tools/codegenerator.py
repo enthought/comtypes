@@ -203,6 +203,8 @@ class Generator(object):
     def generate_code(self, items, filename=None):
         self.filename = filename
         if filename is not None:
+            # Hm, what is the CORRECT encoding?
+            print >> self.output, "# -*- coding: mbcs -*-"
             if os.path.isabs(filename):
                 # absolute path
                 print >> self.output, "typelib_path = %r" % filename
@@ -730,7 +732,7 @@ class Generator(object):
             print >> self.stream, "        item, fetched = self.Next(1)"
             print >> self.stream, "        if fetched:"
             print >> self.stream, "            return item"
-            print >> self.stream, "        raise IndexError, index"
+            print >> self.stream, "        raise IndexError(index)"
             print >> self.stream
 
     def ComInterfaceBody(self, body):

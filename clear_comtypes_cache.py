@@ -42,6 +42,6 @@ if directory:
             fullpath = os.path.join(directory, f)
             os.remove(fullpath)
         os.rmdir(directory)
-        print "Removed directory %s" % directory
+        print("Removed directory %s" % directory)
     else:
-        print "Directory %s NOT removed" % directory
+        print("Directory %s NOT removed" % directory)

@@ -1,3 +1,12 @@
+2008-12-11  Thomas Heller  <theller@python.net>
+
+	* Merged changes from the py3-branch:
+
+	Various changes for py3 compatibility.  The setup script now uses
+	distutils.command.build_py.build_py_2to3 when run with Python 3.x,
+	and converts the sources into py3 syntax on the fly (in the build
+	directory).
+
 2008-11-26  Thomas Heller  <theller@python.net>
 
 	* Added untested code to comtypes.server: RegisterActiveObject()

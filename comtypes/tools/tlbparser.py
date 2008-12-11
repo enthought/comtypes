@@ -129,7 +129,7 @@ class Parser(object):
             itemtype = self.make_type(tdesc._.lptdesc[0], tinfo)
             return midlSAFEARRAY(itemtype)
 
-        raise "NYI", tdesc.vt
+        raise NotImplementedError(tdesc.vt)
 
     ################################################################
 

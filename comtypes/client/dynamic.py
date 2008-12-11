@@ -83,12 +83,17 @@ class _Dispatch(object):
         flags = comtypes.automation.DISPATCH_PROPERTYGET
         try:
             result = self._comobj.Invoke(dispid, _invkind=flags)
-        except COMError, (hresult, text, details):
+        except COMError, err:
+            (hresult, text, details) = err.args
             if hresult in ERRORS_BAD_CONTEXT:
                 result = MethodCaller(dispid, self)
                 self.__dict__[name] = result
-            else: raise
-        except: raise
+            else:
+                # The line break is important for 2to3 to work correctly
+                raise
+        except:
+            # The line break is important for 2to3 to work correctly
+            raise
 
         return result
 
