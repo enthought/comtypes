@@ -1,6 +1,9 @@
 2008-12-11  Thomas Heller  <theller@python.net>
 
-	* Merged changes from the py3-branch:
+	* Workaround for Python bug: Python 3 cannot handle a distutils
+	installscript in the setup script
+
+	* Merged the py3-branch:
 
 	Various changes for py3 compatibility.  The setup script now uses
 	distutils.command.build_py.build_py_2to3 when run with Python 3.x,
