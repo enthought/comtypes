@@ -121,10 +121,11 @@ def read_version():
 
 if sys.version_info >= (3, 0):
     # install_script does not work in Python 3 (python bug)
-    # Another python bug(?): it doesn't accept an empty options dict ???
+    # Another distutils bug: it doesn't accept an empty options dict
     options = {"foo": {}}
+##    options = {}
 else:
-    options={"bdist_wininst": {"install_script": "clear_comtypes_cache.py"}},
+    options={"bdist_wininst": {"install_script": "clear_comtypes_cache.py"}}
 
 setup(name="comtypes",
       description="Pure Python COM package",
