@@ -1,7 +1,6 @@
 2008-12-12  Thomas Heller  <theller@python.net>
 
-	* Bumped version number to 0.6.0.
-	Released comtypes-0.6.0.
+	* Bumped version number to 0.5.3.
 
 	* Added VARIANT support for VT_I8 and VT_UI8 typecodes.
 
