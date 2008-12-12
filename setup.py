@@ -103,8 +103,14 @@ classifiers = [
     'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
     'Operating System :: Microsoft :: Windows',
-##    'Operating System :: Microsoft :: Windows CE', # pypi doesn't have this classifier
+    'Operating System :: Microsoft :: Windows :: Windows CE',
     'Programming Language :: Python',
+    'Programming Language :: Python :: 2'
+    'Programming Language :: Python :: 2.4'
+    'Programming Language :: Python :: 2.5'
+    'Programming Language :: Python :: 2.6'
+    'Programming Language :: Python :: 3'
+    'Programming Language :: Python :: 3.0'
     'Topic :: Software Development :: Libraries :: Python Modules',
     ]
 
