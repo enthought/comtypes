@@ -6,9 +6,9 @@ import os, unittest, tempfile
 from comtypes.client import CreateObject
 
 class Test(unittest.TestCase):
-    def test(self):
-        engine = CreateObject("SAPI.SpVoice")
-        stream = CreateObject("SAPI.SpFileStream")
+    def test(self, dynamic=False):
+        engine = CreateObject("SAPI.SpVoice", dynamic=dynamic)
+        stream = CreateObject("SAPI.SpFileStream", dynamic=dynamic)
         from comtypes.gen import SpeechLib
 
         fd, fname = tempfile.mkstemp(suffix=".wav")
@@ -26,25 +26,7 @@ class Test(unittest.TestCase):
         os.unlink(fname)
 
     def test_dyndisp(self):
-        from comtypes.client.dynamic import _Dispatch
-        engine = _Dispatch(CreateObject("SAPI.SpVoice"))
-        stream = _Dispatch(CreateObject("SAPI.SpFileStream"))
-
-        from comtypes.gen import SpeechLib
-
-        fd, fname = tempfile.mkstemp(suffix=".wav")
-        os.close(fd)
-
-        stream.Open(fname, SpeechLib.SSFMCreateForWrite)
-
-        # engine.AudioStream is a propputref property
-        engine.AudioOutputStream = stream
-        self.failUnlessEqual(engine.AudioOutputStream, stream._comobj)
-        engine.speak("Hello, World", 0)
-        stream.Close()
-        filesize = os.stat(fname).st_size
-        self.failUnless(filesize > 100, "filesize only %d bytes" % filesize)
-        os.unlink(fname)
+        return self.test(dynamic=True)
 
 if __name__ == "__main__":
     unittest.main()

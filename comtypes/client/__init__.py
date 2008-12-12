@@ -126,6 +126,30 @@ ctypes.POINTER(comtypes.automation.IDispatch).__ctypes_from_outparam__ = wrap_ou
 
 ################################################################
 #
+# Typelib constants
+#
+class Constants(object):
+    """This class loads the type library from the supplied object,
+    then exposes constants in the type library as attributes."""
+    def __init__(self, obj):
+        obj = obj.QueryInterface(comtypes.automation.IDispatch)
+        tlib, index = obj.GetTypeInfo(0).GetContainingTypeLib()
+        self.tcomp = tlib.GetTypeComp()
+
+    def __getattr__(self, name):
+        try:
+            kind, desc = self.tcomp.Bind(name)
+        except (WindowsError, comtypes.COMError):
+            raise AttributeError(name)
+        if kind != "variable":
+            raise AttributeError(name)
+        return desc._.lpvarValue[0].value
+
+    def _bind_type(self, name):
+        return self.tcomp.BindType(name)
+
+################################################################
+#
 # Object creation
 #
 def GetActiveObject(progid, interface=None):
@@ -145,7 +169,8 @@ def _manage(obj, clsid, interface):
 def CreateObject(progid,                  # which object to create
                  clsctx=None,             # how to create the object
                  machine=None,            # where to create the object
-                 interface=None):         # the interface we want
+                 interface=None,          # the interface we want
+                 dynamic=False):          # use dynamic dispatch
     """Create a COM object from 'progid', and try to QueryInterface()
     it to the most useful interface, generating typelib support on
     demand.  A pointer to this interface is returned.
@@ -160,7 +185,11 @@ def CreateObject(progid,                  # which object to create
     """
     clsid = comtypes.GUID.from_progid(progid)
     logger.debug("%s -> %s", progid, clsid)
-    if interface is None:
+    if dynamic:
+        if interface:
+            raise ValueError("interface and dynamic are mutually exclusive")
+        interface = comtypes.automation.IDispatch
+    elif interface is None:
         interface = getattr(progid, "_com_interfaces_", [None])[0]
     if machine is None:
         logger.debug("CoCreateInstance(%s, clsctx=%s, interface=%s)",
@@ -170,6 +199,8 @@ def CreateObject(progid,                  # which object to create
         logger.debug("CoCreateInstanceEx(%s, clsctx=%s, interface=%s, machine=%s)",
                      clsid, clsctx, interface, machine)
         obj = comtypes.CoCreateInstanceEx(clsid, clsctx=clsctx, interface=interface, machine=machine)
+    if dynamic:
+        return comtypes.client.dynamic.Dispatch(obj)
     return _manage(obj, clsid, interface=interface)
 
 def CoGetObject(displayname, interface=None):

@@ -276,12 +276,14 @@ class tagVARIANT(Structure):
         elif isinstance(getattr(value, "_comobj", None), POINTER(IDispatch)):
             CopyComPointer(value._comobj, byref(self._))
             self.vt = VT_DISPATCH
+        elif isinstance(value, VARIANT):
+            windll.oleaut32.VariantCopy(byref(self), byref(value))
         else:
             raise TypeError("Cannot put %r in VARIANT" % value)
         # buffer ->  SAFEARRAY of VT_UI1 ?
 
     # c:/sf/pywin32/com/win32com/src/oleargs.cpp 197
-    def _get_value(self):
+    def _get_value(self, dynamic=False):
         vt = self.vt
         if vt in (VT_EMPTY, VT_NULL):
             return None
@@ -340,7 +342,11 @@ class tagVARIANT(Structure):
             ptr = cast(val, POINTER(IDispatch))
             # cast doesn't call AddRef (it should, imo!)
             ptr.AddRef()
-            return ptr.__ctypes_from_outparam__()
+            if not dynamic:
+                return ptr.__ctypes_from_outparam__()
+            else:
+                from comtypes.client.dynamic import Dispatch
+                return Dispatch(ptr)
         # see also c:/sf/pywin32/com/win32com/src/oleargs.cpp
         elif self.vt & VT_BYREF:
             return self
@@ -472,6 +478,7 @@ class _(partial, POINTER(VARIANT)):
 class IEnumVARIANT(IUnknown):
     _iid_ = GUID('{00020404-0000-0000-C000-000000000046}')
     _idlflags_ = ['hidden']
+    _dynamic = False
     def __iter__(self):
         return self
 
@@ -494,12 +501,14 @@ class IEnumVARIANT(IUnknown):
         raise IndexError
 
     def Next(self, celt):
-        if celt == 1:
-            return self._Next(1)
         fetched = c_ulong()
+        if celt == 1:
+            v = VARIANT()
+            self.__com_Next(celt, v, fetched)
+            return v._get_value(dynamic=self._dynamic), fetched.value
         array = (VARIANT * celt)()
         self.__com_Next(celt, array, fetched)
-        return [v.__ctypes_from_outparam__() for v in array[:fetched.value]]
+        return [v._get_value(dynamic=self._dynamic) for v in array[:fetched.value]]
 
 IEnumVARIANT._methods_ = [
     COMMETHOD([], HRESULT, 'Next',
@@ -595,6 +604,27 @@ class IDispatch(IUnknown):
         self.__com_GetIDsOfNames(riid_null, arr, len(names), lcid, ids)
         return ids[:]
 
+    def _invoke(self, memid, invkind, lcid, *args):
+        var = VARIANT()
+        argerr = c_uint()
+        dp = DISPPARAMS()
+
+        if args:
+            array = (VARIANT * len(args))()
+
+            for i, a in enumerate(args[::-1]):
+                array[i].value = a
+
+            dp.cArgs = len(args)
+            if invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):
+                dp.cNamedArgs = 1
+                dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
+            dp.rgvarg = array
+
+        self.__com_Invoke(memid, riid_null, lcid, invkind,
+                          dp, var, None, argerr)
+        return var._get_value(dynamic=True)
+
     def Invoke(self, dispid, *args, **kw):
         """Invoke a method or property."""
 
@@ -663,7 +693,7 @@ class IDispatch(IUnknown):
                                ("TypeError: Parameter %s" % (argerr.value + 1),
                                 args))
             raise
-        return result.value
+        return result._get_value(dynamic=True)
 
     # XXX Would separate methods for _METHOD, _PROPERTYGET and _PROPERTYPUT be better?
 

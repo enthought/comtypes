@@ -13,10 +13,16 @@ xlRangeValueXMLSpreadsheet = 11
 xlRangeValueMSPersistXML = 12
 
 class Test(unittest.TestCase):
-    def setUp(self):
-        self.xl = CreateObject("Excel.Application")
 
-    def test_excel(self):
+    def test_earlybound(self):
+        self._doit(False)
+
+    def test_latebound(self):
+        self._doit(True)
+
+    def _doit(self, dynamic):
+        self.xl = CreateObject("Excel.Application", dynamic=dynamic)
+        
         xl = self.xl
         xl.Visible = 0
         self.failUnlessEqual(xl.Visible, False)
@@ -65,6 +71,11 @@ class Test(unittest.TestCase):
 
         for i in xrange(20):
             xl.Cells.Item[i+1,i+1].Value[()] = "Hi %d" % i
+            print xl.Cells.Item[i+1, i+1].Value[()]
+
+        for i in xrange(20):
+            xl.Cells(i+1,i+1).Value[()] = "Hi %d" % i
+            print xl.Cells(i+1, i+1).Value[()]
 
         # test dates out with Excel
         xl.Range["A5"].Value[()] = "Excel time"
@@ -86,9 +97,6 @@ class Test(unittest.TestCase):
         sh.Cells.Item[3,3].Value[()] = "Hello World!"
         sh.Range[sh.Cells.Item[1,1],sh.Cells.Item[3,3]].Copy(sh.Cells.Item[4,1])
         sh.Range[sh.Cells.Item[4,1],sh.Cells.Item[6,3]].Select()
-
-        import time
-        time.sleep(2)
 
     def tearDown(self):
         # Close all open workbooks without saving, then quit excel.

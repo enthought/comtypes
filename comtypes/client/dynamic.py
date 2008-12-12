@@ -2,6 +2,7 @@ import ctypes
 import comtypes.automation
 import comtypes.typeinfo
 import comtypes.client
+import comtypes.client.lazybind
 
 from comtypes import COMError, IUnknown, _is_object
 import comtypes.hresult as hres
@@ -23,7 +24,11 @@ def Dispatch(obj):
     if isinstance(obj, _Dispatch):
         return obj
     if isinstance(obj, ctypes.POINTER(comtypes.automation.IDispatch)):
-        return _Dispatch(obj)
+        try:
+            tinfo = obj.GetTypeInfo(0)
+        except (comtypes.COMError, WindowsError):
+            return _Dispatch(obj)
+        return comtypes.client.lazybind.Dispatch(obj, tinfo)
     return obj
 
 class MethodCaller:
@@ -57,6 +62,11 @@ class _Dispatch(object):
     def __enum(self):
         e = self._comobj.Invoke(-4) # DISPID_NEWENUM
         return e.QueryInterface(comtypes.automation.IEnumVARIANT)
+
+    def __cmp__(self, other): 	 
+        if not isinstance(other, _Dispatch): 	 
+            return 1 	 
+        return cmp(self._comobj, other._comobj)
 
     def __getitem__(self, index):
         enum = self.__enum()

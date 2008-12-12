@@ -1,5 +1,50 @@
 2008-12-12  Thomas Heller  <theller@python.net>
+	
+	* Merged changes from the dyndispatch branch:
 
+	    * Add a comtypes.client.Constants class that provides a way to
+	    access constants in the type library for an object, even when
+	    no wrapper has been created for the type library.  The
+	    contants can be accessed as attributes like this, assuming
+	    'obj' is a COM object that exposes type information at runtime
+	    via the dispatch interface:
+		Constants(obj).MyConstant
+
+	    * New comtypes.client.lazybind module.
+
+	    * Implement NamedProperty.__call__().  Extend
+	    NamedProperty.__getitem__() and NamedProperty.__setitem__() so
+	    that they accept a tuple, which make lazy bound objects more
+	    compatible with early bound objects.
+
+	    * Finished (for now) the comtypes.client.lazybind module.
+	    IEnumVARIANT instances get a _dynamic attribute which defaults
+	    to False.  The values returned from next() calls are retrived
+	    by calling ._set_value(self._dynamic) on the VARIANT result.
+
+	    * comtypes.client.dynamic:
+
+	    * Started changes based on ideas from Michael Curran: better
+	    dynamic dispatch support, and a way to disable the
+	    time-consuming wrapper code generation on demand.
+	
+	    * comtypes\client: Add a new 'dynamic=False' parameter to the
+	    CreateObject function.  This parameter allows to create a
+	    dynamic dispatch object, bypassing the code generation.
+
+	    * comtypes\automation.py: Add a new parameter to the
+	    VARIANT._get_value(dynamic=False) method.  This allows to
+	    retrieve the current value as a _Dispatch() instance if the
+	    typecode is VT_DISPATCH, bypassing the code generation on the
+	    result.  The IDispatch.Invoke implementation now uses this to
+	    ensure that dynamic objects are returned when possible.
+
+	    * comtypes\client\dynamic.py: Implement _Dispatch.__eq__ so
+	    that we can compare instances for equality.
+
+
+2008-12-12  Thomas Heller  <theller@python.net>
+	
 	* Bumped version number to 0.5.3.
 
 	* Added VARIANT support for VT_I8 and VT_UI8 typecodes.
