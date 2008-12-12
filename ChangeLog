@@ -1,3 +1,7 @@
+2008-12-12  Thomas Heller  <theller@python.net>
+
+	* Added VARIANT support for VT_I8 and VT_UI8 typecodes.
+
 2008-12-11  Thomas Heller  <theller@python.net>
 
 	* Workaround for Python bug: Python 3 cannot handle a distutils

@@ -130,10 +130,12 @@ class tagVARIANT(Structure):
             ("VT_I1", c_byte),
             ("VT_I2", c_short),
             ("VT_I4", c_long),
+            ("VT_I8", c_longlong),
             ("VT_INT", c_int),
             ("VT_UI1", c_ubyte),
             ("VT_UI2", c_ushort),
             ("VT_UI4", c_ulong),
+            ("VT_UI8", c_ulonglong),
             ("VT_UINT", c_uint),
             ("VT_R4", c_float),
             ("VT_R8", c_double),
@@ -212,6 +214,20 @@ class tagVARIANT(Structure):
                     # did work.
                     self.vt = VT_UI4
                     return
+            # try VT_I8 next.
+            if value >= 0:
+                u.VT_I8 = value
+                if u.VT_I8 == value:
+                    # did work.
+                    self.vt = VT_I8
+                    return
+            # try VT_UI8 next.
+            if value >= 0:
+                u.VT_UI8 = value
+                if u.VT_UI8 == value:
+                    # did work.
+                    self.vt = VT_UI8
+                    return
             # VT_R8 is last resort.
             self.vt = VT_R8
             u.VT_R8 = float(value)
@@ -275,6 +291,10 @@ class tagVARIANT(Structure):
             return self._.VT_I2
         elif vt == VT_I4:
             return self._.VT_I4
+        elif vt == VT_I8:
+            return self._.VT_I8
+        elif vt == VT_UI8:
+            return self._.VT_UI8
         elif vt == VT_INT:
             return self._.VT_INT
         elif vt == VT_UI1:
