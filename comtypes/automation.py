@@ -508,7 +508,10 @@ class IEnumVARIANT(IUnknown):
             return v._get_value(dynamic=self._dynamic), fetched.value
         array = (VARIANT * celt)()
         self.__com_Next(celt, array, fetched)
-        return [v._get_value(dynamic=self._dynamic) for v in array[:fetched.value]]
+        result = [v._get_value(dynamic=self._dynamic) for v in array[:fetched.value]]
+        for v in array:
+            v.value = None
+        return result
 
 IEnumVARIANT._methods_ = [
     COMMETHOD([], HRESULT, 'Next',

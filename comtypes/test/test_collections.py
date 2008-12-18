@@ -61,7 +61,7 @@ class Test(unittest.TestCase):
         cv.Reset()
         self.failUnlessRaises(ArgumentError, lambda: cv[:])
 
-    def test_leaks(self):
+    def test_leaks_1(self):
         # The XP firewall manager.
         fwmgr = CreateObject('HNetCfg.FwMgr')
         # apps has a _NewEnum property that implements IEnumVARIANT
@@ -73,8 +73,27 @@ class Test(unittest.TestCase):
         bytes = find_memleak(doit, (2, 20))
         self.failIf(bytes, "Leaks %d bytes" % bytes)
 
+    def test_leaks_2(self):
+        # The XP firewall manager.
+        fwmgr = CreateObject('HNetCfg.FwMgr')
+        # apps has a _NewEnum property that implements IEnumVARIANT
+        apps = fwmgr.LocalPolicy.CurrentProfile.AuthorizedApplications
+
         def doit():
             iter(apps).Next(99)
+        bytes = find_memleak(doit, (2, 20))
+        self.failIf(bytes, "Leaks %d bytes" % bytes)
+
+    def test_leaks_3(self):
+        # The XP firewall manager.
+        fwmgr = CreateObject('HNetCfg.FwMgr')
+        # apps has a _NewEnum property that implements IEnumVARIANT
+        apps = fwmgr.LocalPolicy.CurrentProfile.AuthorizedApplications
+
+        def doit():
+            for i in range(2):
+                for what in iter(apps):
+                    pass
         bytes = find_memleak(doit, (2, 20))
         self.failIf(bytes, "Leaks %d bytes" % bytes)
 

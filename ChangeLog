@@ -1,3 +1,7 @@
+2008-12-18  Thomas Heller  <theller@python.net>
+
+	* Fix memoryleak in IEnumVARIANT.
+
 2008-12-12  Thomas Heller  <theller@python.net>
 	
 	* Merged changes from the dyndispatch branch:
