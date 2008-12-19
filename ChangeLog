@@ -1,5 +1,8 @@
 2008-12-19  Thomas Heller  <theller@python.net>
 
+	* Fix a problem with SAFEARRAYs where the contained data was
+	released too early.
+
 	* Fix property get handling for FUNC_PUREVIRTUAL functions in
 	lazybind.py
 

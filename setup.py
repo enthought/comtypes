@@ -36,6 +36,7 @@ Releases can be downloaded in the sourceforge files_ section.
 .. _ctypes: http://docs.python.org/lib/module-ctypes.html
 """
 import sys, os
+import ctypes
 from distutils.core import setup, Command, DistutilsOptionError
 
 try:
@@ -79,6 +80,10 @@ class test(Command):
         build.run()
         if build.build_lib is not None:
             sys.path.insert(0, build.build_lib)
+
+        # Register our ATL COM tester dll
+        dll = ctypes.OleDLL(r"source\debug\AvmcIfc.dll")
+        dll.DllRegisterServer()
 
         import comtypes.test
         comtypes.test.use_resources.extend(self.use_resources)

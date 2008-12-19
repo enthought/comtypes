@@ -171,7 +171,15 @@ def _make_safearray_type(itemtype):
                             result.append(POINTER(itf)())
                     return result
                 else:
-                    return ptr[:num_elements]
+                    # If the safearray element are NOT native python
+                    # objects, the containing safearray must be kept
+                    # alive until all the elements are destroyed.
+                    if not issubclass(self._itemtype_, Structure):
+                        return ptr[:num_elements]
+                    def keep_safearray(v):
+                        v.__keepref = self
+                        return v
+                    return [keep_safearray(x) for x in ptr[:num_elements]]
             finally:
                 _safearray.SafeArrayUnaccessData(self)
 
