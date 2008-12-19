@@ -1,0 +1,61 @@
+// AvmcIfc.idl : IDL source for AvmcIfc.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (AvmcIfc.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+// 1129c4e1-f46a-4b61-a464-406d7df3e516
+	
+    [
+        uuid(6C7A25CB-7938-4BE0-A285-12C616717FDD),
+        version(1.0),
+        helpstring("FTDI Device info node")
+    ]
+    typedef struct DeviceInfo {
+        [helpstring("Special case variant")]    VARIANT  Special;
+        [helpstring("Name of the variable")]    BSTR     Name;
+        [helpstring("Value of the variable")]   long     Value;
+		[helpstring("Flags")]					long Flags; //ULONG
+		[helpstring("Device Type")]				long Type; //ULONG
+		[helpstring("Device Id")]			    long ID;  //ULONG
+		[helpstring("Local Id")]			    long LocId; //DWORD
+		[helpstring("Device's Serial Number")]  BSTR SerialNumber;
+		[helpstring("Device's Description")]    BSTR Description;
+		[helpstring("Device current handle")]   long ftHandle; //ULONG
+    } DeviceInfo;
+
+	[
+		object,
+		uuid(6C7A25CC-7938-4BE0-A285-12C616717FDD),
+		dual,
+		helpstring("IAvmc Interface"),
+		pointer_default(unique)
+	]
+	interface IAvmc : IDispatch
+	{
+		[id(1), helpstring("method FindAllAvmc")] HRESULT FindAllAvmc([out] SAFEARRAY(DeviceInfo) *avmcList);
+	};
+
+[
+	uuid(70577167-ED71-4977-B719-2C40C6DD8E1D),
+	version(1.0),
+	helpstring("AvmcIfc 1.0 Type Library")
+]
+library AVMCIFCLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	
+	[
+		uuid(41BDBDFC-A848-4523-A149-ADD3AE1E6D84),
+		helpstring("Avmc Class")
+	]
+	coclass Avmc
+	{
+		[default] interface IAvmc;
+	};
+};

@@ -1,0 +1,33 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AvmcIfc", "AvmcIfc.vcproj", "{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release MinDependency = Release MinDependency
+		Release MinSize = Release MinSize
+		Unicode Debug = Unicode Debug
+		Unicode Release MinDependency = Unicode Release MinDependency
+		Unicode Release MinSize = Unicode Release MinSize
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Debug.ActiveCfg = Debug|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Debug.Build.0 = Debug|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Release MinDependency.ActiveCfg = Release MinDependency|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Release MinDependency.Build.0 = Release MinDependency|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Release MinSize.ActiveCfg = Release MinSize|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Release MinSize.Build.0 = Release MinSize|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Unicode Debug.ActiveCfg = Unicode Debug|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Unicode Debug.Build.0 = Unicode Debug|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Unicode Release MinDependency.ActiveCfg = Unicode Release MinDependency|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Unicode Release MinDependency.Build.0 = Unicode Release MinDependency|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Unicode Release MinSize.ActiveCfg = Unicode Release MinSize|Win32
+		{B5A3DC99-A047-4696-86AC-10E96CDB2EBC}.Unicode Release MinSize.Build.0 = Unicode Release MinSize|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,23 @@
+HKCR
+{
+	AvmcIfc.Avmc.1 = s 'Avmc Class'
+	{
+		CLSID = s '{41BDBDFC-A848-4523-A149-ADD3AE1E6D84}'
+	}
+	AvmcIfc.Avmc = s 'Avmc Class'
+	{
+		CLSID = s '{41BDBDFC-A848-4523-A149-ADD3AE1E6D84}'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {41BDBDFC-A848-4523-A149-ADD3AE1E6D84} = s 'Avmc Class'
+		{
+			ProgID = s 'AvmcIfc.Avmc.1'
+			VersionIndependentProgID = s 'AvmcIfc.Avmc'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'both'
+			}
+		}
+	}
+}

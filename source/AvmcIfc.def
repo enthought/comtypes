@@ -1,0 +1,9 @@
+; AvmcIfc.def : Declares the module parameters.
+
+LIBRARY      "AvmcIfc.DLL"
+
+EXPORTS
+	DllCanUnloadNow     PRIVATE
+	DllGetClassObject   PRIVATE
+	DllRegisterServer   PRIVATE
+	DllUnregisterServer	PRIVATE
