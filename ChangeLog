@@ -1,5 +1,7 @@
 2008-12-19  Thomas Heller  <theller@python.net>
 
+	* Bumped version number to 0.6.0.
+
 	* comtypes.client.lazybind.Dipatch:
 	If __getitem__ fails the get the indexed default value, try
 	NewENUM.  Implement __eq__ for Python 3 compatibility.
