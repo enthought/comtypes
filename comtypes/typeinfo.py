@@ -547,8 +547,8 @@ TYPEATTR = tagTYPEATTR
 class tagFUNCDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 769
     def __repr__(self):
-        return "FUNCDESC(memid=%s, cParams=%s, cParamsOpt=%s, callconv=%s, invkind=%s)" % \
-               (self.memid, self.cParams, self.cParamsOpt, self.callconv, self.invkind)
+        return "FUNCDESC(memid=%s, cParams=%s, cParamsOpt=%s, callconv=%s, invkind=%s, funckind=%s)" % \
+               (self.memid, self.cParams, self.cParamsOpt, self.callconv, self.invkind, self.funckind)
 
 
 FUNCDESC = tagFUNCDESC

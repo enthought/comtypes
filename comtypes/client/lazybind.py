@@ -14,6 +14,8 @@ from comtypes.automation import DISPID_PROPERTYPUT
 from comtypes.automation import DISPID_VALUE
 from comtypes.automation import DISPID_NEWENUM
 
+from comtypes.typeinfo import FUNC_PUREVIRTUAL, FUNC_DISPATCH
+
 class FuncDesc(object):
     """Stores important FUNCDESC properties by copying them from a
     real FUNCDESC instance.
@@ -109,7 +111,10 @@ class Dispatch(object):
                 # Using a separate instance to store interesting
                 # attributes of descr avoids that the typecomp instance is
                 # kept alive...
-                info = FuncDesc(memid=descr.memid, invkind=descr.invkind, cParams=descr.cParams)
+                info = FuncDesc(memid=descr.memid,
+                                invkind=descr.invkind,
+                                cParams=descr.cParams,
+                                funckind=descr.funckind)
             self._tdesc[(name, invkind)] = info
             return info
 
@@ -132,8 +137,16 @@ class Dispatch(object):
             raise AttributeError(name)
         if descr.invkind == DISPATCH_PROPERTYGET:
             # DISPATCH_PROPERTYGET
-            if descr.cParams == 0:
-                return self._comobj._invoke(descr.memid, descr.invkind, 0)
+            if descr.funckind == FUNC_DISPATCH:
+                if descr.cParams == 0:
+                    return self._comobj._invoke(descr.memid, descr.invkind, 0)
+            elif descr.funckind == FUNC_PUREVIRTUAL:
+                # FUNC_PUREVIRTUAL descriptions contain the property
+                # itself as a parameter.
+                if descr.cParams == 1:
+                    return self._comobj._invoke(descr.memid, descr.invkind, 0)
+            else:
+                raise RuntimeError("funckind %d not yet implemented" % descr.funckind)
             put = self.__bind(name, DISPATCH_PROPERTYPUT)
             putref = self.__bind(name, DISPATCH_PROPERTYPUTREF)
             return NamedProperty(self, descr, put, putref)
