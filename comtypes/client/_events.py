@@ -187,12 +187,13 @@ def PumpEvents(timeout):
     handles = (ctypes.c_void_p * 1)(hevt)
     RPC_S_CALLPENDING = -2147417835
 
-    @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)
+##    @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)
     def HandlerRoutine(dwCtrlType):
         if dwCtrlType == 0: # CTRL+C
             ctypes.windll.kernel32.SetEvent(hevt)
             return 1
         return 0
+    HandlerRoutine = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)(HandlerRoutine)
 
     ctypes.windll.kernel32.SetConsoleCtrlHandler(HandlerRoutine, 1)
 

@@ -507,12 +507,13 @@ class COMObject(object):
 
     ################################################################
     # IDispatch methods
-    @property
+##    @property
     def __typeinfo(self):
         # XXX Looks like this better be a static property, set by the
         # code that sets __typelib also...
         iid = self._com_interfaces_[0]._iid_
         return self.__typelib.GetTypeInfoOfGuid(iid)
+    __typeinfo = property(__typeinfo)
 
     def IDispatch_GetTypeInfoCount(self):
         try:

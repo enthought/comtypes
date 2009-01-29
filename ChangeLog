@@ -1,5 +1,7 @@
 2009-01-29  Thomas Heller  <theller@python.net>
 
+	* Restore compatibility with Python 2.3.
+	
 	* comtypes\client\_code_cache.py: Add missing 'import types' in
 	comtypes\client\_code_cache.py.
 

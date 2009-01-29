@@ -346,7 +346,7 @@ class _cominterface_meta(type):
                     "Return 'self.Item(*args, **kw)'"
                     return self.Item(*args, **kw)
 
-                @partial.noreplace
+##                @partial.noreplace
                 # does this make sense? It seems that all standard typelibs I've
                 # seen so far that support .Item also support ._NewEnum
                 def __getitem__(self, index):
@@ -364,6 +364,7 @@ class _cominterface_meta(type):
                         raise IndexError("invalid index")
                     # Hm, should we call __ctypes_from_outparam__ on the result?
                     return result
+                __getitem__ = partial.noreplace(__getitem__)
 
         if has_name("_NewEnum"):
             class _(partial.partial, self):
@@ -663,7 +664,11 @@ class _cominterface_meta(type):
 
             # 'func' is a high level function calling the COM method
             func.__doc__ = doc
-            func.__name__ = name # for pyhelp
+            try:
+                func.__name__ = name # for pyhelp
+            except TypeError:
+                # In Python 2.3, __name__ is a readonly attribute
+                pass
             # make it an unbound method.  Remember, 'self' is a type here.
             mth = instancemethod(func, None, self)
 

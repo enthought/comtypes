@@ -122,6 +122,12 @@ def calc_packing(struct, fields):
 class PackingError(Exception):
     pass
 
+try:
+    set
+except NameError:
+    # Python 2.3
+    from sets import Set as set
+
 # XXX These should be filtered out in gccxmlparser.
 dont_assert_size = set(
     [

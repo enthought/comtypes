@@ -57,7 +57,7 @@ def _make_safearray_type(itemtype):
         _vartype_ = vartype # a VARTYPE value: VT_...
         _needsfree = False
 
-        @classmethod
+##        @classmethod
         def create(cls, value, extra=None):
             """Create a one-dimensional POINTER(SAFEARRAY_...)
             instance of the correct type; value is a sequence
@@ -92,13 +92,15 @@ def _make_safearray_type(itemtype):
             finally:
                 _safearray.SafeArrayUnaccessData(pa)
             return pa
+        create = classmethod(create)
 
-        @classmethod
+##        @classmethod
         def from_param(cls, value):
             if not isinstance(value, cls):
                 value = cls.create(value, extra)
                 value._needsfree = True
             return value
+        from_param = classmethod(from_param)
 
         def __getitem__(self, index):
             # pparray[0] returns the whole array contents.
@@ -207,11 +209,12 @@ def _make_safearray_type(itemtype):
 
     class _(partial, POINTER(POINTER(sa_type))):
 
-        @classmethod
+##        @classmethod
         def from_param(cls, value):
             if isinstance(value, cls._type_):
                 return byref(value)
             return byref(cls._type_.create(value))
+        from_param = classmethod(from_param)
 
         def __setitem__(self, index, value):
             # create an LP_SAFEARRAY_... instance
