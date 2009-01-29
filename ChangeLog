@@ -1,3 +1,8 @@
+2009-01-29  Thomas Heller  <theller@python.net>
+
+	* comtypes\client\_code_cache.py: Add missing 'import types' in
+	comtypes\client\_code_cache.py.
+
 2008-12-19  Thomas Heller  <theller@python.net>
 
 	* Bumped version number to 0.6.0.
