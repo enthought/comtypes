@@ -1,3 +1,9 @@
+2009-03-17  Thomas Heller  <theller@python.net>
+
+	* Fixed the return type of ITypeLib::ReleaseTLibAttr, which is
+	documented wrongly in MSDN.  The return type is void, not HRESULT.
+	Reported to cause crashes on Windows 7.
+
 2009-01-29  Thomas Heller  <theller@python.net>
 
 	* Restore compatibility with Python 2.3.
