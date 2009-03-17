@@ -636,7 +636,7 @@ ITypeLib._methods_ = [
               (['out'], POINTER(BOOL))),
     STDMETHOD(HRESULT, 'FindName', [LPOLESTR, DWORD, POINTER(POINTER(ITypeInfo)),
                                     POINTER(MEMBERID), POINTER(USHORT)]),
-    COMMETHOD([], HRESULT, 'ReleaseTLibAttr',
+    COMMETHOD([], None, 'ReleaseTLibAttr',
               (['in'], POINTER(TLIBATTR)))
 ]
 
