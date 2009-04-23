@@ -1,6 +1,7 @@
 from ctypes import *
 from comtypes import _safearray, GUID, IUnknown, com_interface_registry
 from comtypes.partial import partial
+import array
 
 _safearray_type_cache = {}
 
@@ -87,8 +88,20 @@ def _make_safearray_type(itemtype):
             ptr = POINTER(cls._itemtype_)() # container for the values
             _safearray.SafeArrayAccessData(pa, byref(ptr))
             try:
-                for index, item in enumerate(value):
-                    ptr[index] = item
+                if isinstance(value, array.array):
+                    addr, n = value.buffer_info()
+                    nbytes = len(value) * sizeof(cls._itemtype_)
+                    memmove(ptr, addr, nbytes)
+                # test for a numpy array without importing numpy
+                elif hasattr(value, "ctypes") and hasattr(value.ctypes, "data"):
+                    # We got an numpy.ndarray
+                    if value.ndim != 1:
+                        raise TypeError("Only one-dimensional safearrays implemented so far, got %d-dim" % value.ndim)
+                    nbytes = len(value) * sizeof(cls._itemtype_)
+                    memmove(ptr, value.ctypes.data, nbytes)
+                else:
+                    for index, item in enumerate(value):
+                        ptr[index] = item
             finally:
                 _safearray.SafeArrayUnaccessData(pa)
             return pa
@@ -177,6 +190,32 @@ def _make_safearray_type(itemtype):
                     # objects, the containing safearray must be kept
                     # alive until all the elements are destroyed.
                     if not issubclass(self._itemtype_, Structure):
+                        # Creating and returning numpy arrays instead
+                        # of Python tuple from a safearray is a lot faster,
+                        # but only for large arrays because of a certain overhead.
+                        # Also, for backwards compatibility, some clients expect
+                        # a Python tuple - so there should be a way to select
+                        # what should be returned.  How could that work?
+##                        # A hack which would return numpy arrays
+##                        # instead of Python lists.  To be effective,
+##                        # the result must not converted into a tuple
+##                        # in the caller so there must be changes as
+##                        # well!
+##
+##                        # Crude hack to create and attach an
+##                        # __array_interface__ property to the
+##                        # pointer instance
+##                        array_type = ptr._type_ * num_elements
+##                        if not hasattr(array_type, "__array_interface__"):
+##                            import numpy.ctypeslib
+##                            numpy.ctypeslib.prep_array(array_type)
+##                        # use the array_type's __array_interface__, ...
+##                        aif = array_type.__array_interface__.__get__(ptr)
+##                        # overwrite the 'data' member so that it points to the
+##                        # address we want to use
+##                        aif["data"] = (cast(ptr, c_void_p).value, False)
+##                        ptr.__array_interface__ = aif
+##                        return numpy.array(ptr, copy=True)
                         return ptr[:num_elements]
                     def keep_safearray(v):
                         v.__keepref = self
