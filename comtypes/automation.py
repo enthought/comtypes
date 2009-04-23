@@ -747,6 +747,7 @@ for c, v in _ctype_to_vartype.iteritems():
     _vartype_to_ctype[v] = c
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
+_ctype_to_vartype[c_char] = VT_UI1
 
 
 try:
