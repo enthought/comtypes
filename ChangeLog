@@ -1,3 +1,16 @@
+2009-04-23  Thomas Heller  <theller@python.net>
+
+	* SAFEARRAYs can now also be created from array.array objects, and
+	from (one-dimensional) numpy arrays.  This is a lot faster than
+	creating them from Python lists or tuples, at least for large
+	arrays.
+
+	* ctypes instances like c_int, c_ubyte, and so on can now be
+	assigned to VARIANT().value.  This allows to force creation of
+	VARIANTs with the corresponding typecodes V_I4, VT_UI1 and alike.
+
+	* Accept typelibs that contain SAFEARRAY(char).
+
 2009-03-17  Thomas Heller  <theller@python.net>
 
 	* Fixed the return type of ITypeLib::ReleaseTLibAttr, which is
