@@ -3,6 +3,10 @@ from ctypes import *
 from comtypes import IUnknown, GUID
 from comtypes.automation import VARIANT, DISPPARAMS
 from comtypes.automation import VT_NULL, VT_EMPTY, VT_ERROR
+from comtypes.automation import VT_I1, VT_I2, VT_I4, VT_I8
+from comtypes.automation import VT_UI1, VT_UI2, VT_UI4, VT_UI8
+from comtypes.automation import VT_R4, VT_R8
+from comtypes.automation import BSTR, VT_BSTR, VT_DATE
 from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib
 from comtypes.test import is_resource_enabled
 
@@ -103,12 +107,10 @@ class VariantTestCase(unittest.TestCase):
 
         v = VARIANT()
         v.value = now
-        from comtypes.automation import VT_DATE
         self.failUnlessEqual(v.vt, VT_DATE)
         self.failUnlessEqual(v.value, now)
 
     def test_BSTR(self):
-        from comtypes.automation import BSTR, VT_BSTR
         v = VARIANT()
         v.value = u"abc\x00123\x00"
         self.failUnlessEqual(v.value, "abc\x00123\x00")
@@ -120,6 +122,22 @@ class VariantTestCase(unittest.TestCase):
         # NULL pointer BSTR should be handled as empty string
         v.vt = VT_BSTR
         self.failUnless(v.value in ("", None))
+
+    def test_ctypes_in_variant(self):
+        v = VARIANT()
+        objs = [(c_ubyte(3), VT_UI1),
+                (c_char("x"), VT_UI1),
+                (c_byte(3), VT_I1),
+                (c_ushort(3), VT_UI2),
+                (c_short(3), VT_I2),
+                (c_uint(3), VT_UI4),
+                (c_int(3), VT_I4),
+                (c_double(3.14), VT_R8),
+                (c_float(3.14), VT_R4),
+                ]
+        for value, vt in objs:
+            v.value = value
+            self.failUnlessEqual(v.vt, vt)
 
 class ArrayTest(unittest.TestCase):
     def test_double(self):

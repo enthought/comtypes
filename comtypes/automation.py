@@ -196,7 +196,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, bool):
             self.vt = VT_BOOL
             self._.VT_BOOL = value
-        elif isinstance(value, int):
+        elif isinstance(value, (int, c_int)):
             self.vt = VT_I4
             self._.VT_I4 = value
         elif isinstance(value, long):
@@ -231,7 +231,7 @@ class tagVARIANT(Structure):
             # VT_R8 is last resort.
             self.vt = VT_R8
             u.VT_R8 = float(value)
-        elif isinstance(value, float):
+        elif isinstance(value, (float, c_double)):
             self.vt = VT_R8
             self._.VT_R8 = value
         elif isinstance(value, (str, unicode)):
@@ -278,6 +278,27 @@ class tagVARIANT(Structure):
             self.vt = VT_DISPATCH
         elif isinstance(value, VARIANT):
             windll.oleaut32.VariantCopy(byref(self), byref(value))
+        elif isinstance(value, c_ubyte):
+            self._.VT_UI1 = value
+            self.vt = VT_UI1
+        elif isinstance(value, c_char):
+            self._.VT_UI1 = ord(value.value)
+            self.vt = VT_UI1
+        elif isinstance(value, c_byte):
+            self._.VT_I1 = value
+            self.vt = VT_I1
+        elif isinstance(value, c_ushort):
+            self._.VT_UI2 = value
+            self.vt = VT_UI2
+        elif isinstance(value, c_short):
+            self._.VT_I2 = value
+            self.vt = VT_I2
+        elif isinstance(value, c_uint):
+            self.vt = VT_UI4
+            self._.VT_UI4 = value
+        elif isinstance(value, c_float):
+            self.vt = VT_R4
+            self._.VT_R4 = value
         else:
             raise TypeError("Cannot put %r in VARIANT" % value)
         # buffer ->  SAFEARRAY of VT_UI1 ?
