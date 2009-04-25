@@ -6,6 +6,7 @@ from ctypes.wintypes import BOOL
 from comtypes.test.find_memleak import find_memleak
 from comtypes import BSTR, IUnknown
 from comtypes.test import is_resource_enabled
+import array
 
 from comtypes.automation import VARIANT, IDispatch, VT_ARRAY, VT_VARIANT, \
      VT_I4, VT_R4, VT_R8, VT_BSTR, VARIANT_BOOL, VT_DATE, VT_CY
@@ -31,7 +32,6 @@ class VariantTestCase(unittest.TestCase):
         self.assertRaises(TypeError, lambda: VARIANT(object()))
 
     def test_double_array(self):
-        import array
         a = array.array("d", (3.14, 2.78))
         v = VARIANT(a)
         self.failUnlessEqual(v.vt, VT_ARRAY | VT_R8)
@@ -45,7 +45,6 @@ class VariantTestCase(unittest.TestCase):
 
 
     def test_float_array(self):
-        import array
         a = array.array("f", (3.14, 2.78))
         v = VARIANT(a)
         self.failUnlessEqual(v.vt, VT_ARRAY | VT_R4)
@@ -142,6 +141,34 @@ class SafeArrayTestCase(unittest.TestCase):
 
         # TypeError: len() of unsized object
         self.assertRaises(TypeError, lambda: t.from_param(object()))
+
+    def test_array(self):
+        t = _midlSAFEARRAY(c_double)
+        pat = pointer(t())
+
+        try:
+            import numpy
+        except ImportError:
+            pass # numpy not available
+        else:
+            pat[0] = numpy.zeros(32, dtype=numpy.float)
+            self.failUnlessEqual(tuple(pat[0][0]),
+                                 (0.0,) * 32)
+
+            a = numpy.array([[1, 2, 3],
+                             [4, 5, 6],
+                             [7, 8, 9]],
+                            dtype=numpy.double)
+            pat[0] = a
+            print pat[0][0]
+
+            a = numpy.array([[1, 2],
+                             [3, 4],
+                             [5, 6]],
+                            dtype=numpy.double,
+                            order="F")
+            pat[0] = a
+            print pat[0][0]
 
     def test_VT_VARIANT(self):
         t = _midlSAFEARRAY(VARIANT)

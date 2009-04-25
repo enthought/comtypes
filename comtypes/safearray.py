@@ -60,9 +60,22 @@ def _make_safearray_type(itemtype):
 
 ##        @classmethod
         def create(cls, value, extra=None):
-            """Create a one-dimensional POINTER(SAFEARRAY_...)
-            instance of the correct type; value is a sequence
-            containing the items to store."""
+            """Create a POINTER(SAFEARRAY_...) instance of the correct
+            type; value is an object containing the items to store.
+
+            Python lists, tuples, and array.array instances containing
+            compatible item types can be passed to create
+            one-dimensional arrays.  To create multidimensional arrys,
+            numpy arrays must be passed.
+            """
+
+            try:
+                numpy = __import__("numpy.ctypeslib")
+            except ImportError:
+                numpy = None
+            else:
+                if isinstance(value, numpy.ndarray):
+                    return cls.create_from_ndarray(value, extra)
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
             # the GUID of the interface.
@@ -92,13 +105,6 @@ def _make_safearray_type(itemtype):
                     addr, n = value.buffer_info()
                     nbytes = len(value) * sizeof(cls._itemtype_)
                     memmove(ptr, addr, nbytes)
-                # test for a numpy array without importing numpy
-                elif hasattr(value, "ctypes") and hasattr(value.ctypes, "data"):
-                    # We got an numpy.ndarray
-                    if value.ndim != 1:
-                        raise TypeError("Only one-dimensional safearrays implemented so far, got %d-dim" % value.ndim)
-                    nbytes = len(value) * sizeof(cls._itemtype_)
-                    memmove(ptr, value.ctypes.data, nbytes)
                 else:
                     for index, item in enumerate(value):
                         ptr[index] = item
@@ -106,6 +112,58 @@ def _make_safearray_type(itemtype):
                 _safearray.SafeArrayUnaccessData(pa)
             return pa
         create = classmethod(create)
+
+##        @classmethod
+        def create_from_ndarray(cls, value, extra, lBound=0):
+            #c:/python25/lib/site-packages/numpy/ctypeslib.py
+            numpy = __import__("numpy.ctypeslib")
+
+            # SAFEARRAYs have Fortran order; convert the numpy array if needed
+            if not value.flags.f_contiguous:
+                value = numpy.array(value, order="F")
+                print "CONVERTED"
+            else:
+                print "NO CONVERSION"
+
+            ai = value.__array_interface__
+            if ai["version"] != 3:
+                raise TypeError("only __array_interface__ version 3 supported")
+            if cls._itemtype_ != numpy.ctypeslib._typecodes[ai["typestr"]]:
+                raise TypeError("Wrong array item type")
+
+            # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
+            # the GUID of the interface.
+            #
+            # For VT_RECORD, extra must be a pointer to an IRecordInfo
+            # describing the record.
+            rgsa = (_safearray.SAFEARRAYBOUND * value.ndim)()
+            nitems = 1
+            for i, d in enumerate(value.shape):
+                nitems *= d
+                rgsa[i].cElements = d
+                rgsa[i].lBound = lBound
+            pa = _safearray.SafeArrayCreateEx(cls._vartype_,
+                                              value.ndim, # cDims
+                                              rgsa, # rgsaBound
+                                              extra) # pvExtra
+            if not pa:
+                if cls._vartype_ == VT_RECORD and extra is None:
+                    raise TypeError("Cannot create SAFEARRAY type VT_RECORD without IRecordInfo.")
+                # Hm, there may be other reasons why the creation fails...
+                raise MemoryError()
+            # We now have a POINTER(tagSAFEARRAY) instance which we must cast
+            # to the correct type:
+            pa = cast(pa, cls)
+            # Now, fill the data in:
+            ptr = POINTER(cls._itemtype_)() # pointer to the item values
+            _safearray.SafeArrayAccessData(pa, byref(ptr))
+            try:
+                nbytes = nitems * sizeof(cls._itemtype_)
+                memmove(ptr, value.ctypes.data, nbytes)
+            finally:
+                _safearray.SafeArrayUnaccessData(pa)
+            return pa
+        create_from_ndarray = classmethod(create_from_ndarray)
 
 ##        @classmethod
         def from_param(cls, value):

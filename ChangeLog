@@ -1,4 +1,11 @@
+2009-04-25  Thomas Heller  <theller@python.net>
+
+	* SAFEARRAYs can now also be created from multi-dimensional numpy
+	arrays.
+
 2009-04-23  Thomas Heller  <theller@python.net>
+
+	* Change version number in repository to 0.6.0.1dev.
 
 	* SAFEARRAYs can now also be created from array.array objects, and
 	from (one-dimensional) numpy arrays.  This is a lot faster than
