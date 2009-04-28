@@ -155,20 +155,22 @@ class SafeArrayTestCase(unittest.TestCase):
             self.failUnlessEqual(tuple(pat[0][0]),
                                  (0.0,) * 32)
 
-            a = numpy.array([[1, 2, 3],
-                             [4, 5, 6],
-                             [7, 8, 9]],
+            data = ((1.0, 2.0, 3.0),
+                    (4.0, 5.0, 6.0),
+                    (7.0, 8.0, 9.0))
+            a = numpy.array(data.0,
                             dtype=numpy.double)
             pat[0] = a
-            print pat[0][0]
+            self.failUnlessEqual(pat[0][0],
+                                 data)
 
-            a = numpy.array([[1, 2],
-                             [3, 4],
-                             [5, 6]],
+            data = ((1.0, 2.0), (3.0, 4.0), (5.0, 6.0))
+            a = numpy.array(data,
                             dtype=numpy.double,
                             order="F")
             pat[0] = a
-            print pat[0][0]
+            self.failUnlessEqual(pat[0][0],
+                                 data)
 
     def test_VT_VARIANT(self):
         t = _midlSAFEARRAY(VARIANT)
