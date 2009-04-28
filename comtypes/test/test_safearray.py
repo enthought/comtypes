@@ -158,7 +158,7 @@ class SafeArrayTestCase(unittest.TestCase):
             data = ((1.0, 2.0, 3.0),
                     (4.0, 5.0, 6.0),
                     (7.0, 8.0, 9.0))
-            a = numpy.array(data.0,
+            a = numpy.array(data,
                             dtype=numpy.double)
             pat[0] = a
             self.failUnlessEqual(pat[0][0],
