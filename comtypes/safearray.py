@@ -121,9 +121,6 @@ def _make_safearray_type(itemtype):
             # SAFEARRAYs have Fortran order; convert the numpy array if needed
             if not value.flags.f_contiguous:
                 value = numpy.array(value, order="F")
-                print "CONVERTED"
-            else:
-                print "NO CONVERSION"
 
             ai = value.__array_interface__
             if ai["version"] != 3:
