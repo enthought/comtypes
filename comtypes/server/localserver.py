@@ -41,9 +41,11 @@ class ClassFactory(comtypes.COMObject):
         regcls = getattr(self._cls, "_regcls_", self.regcls)
         cookie = c_ulong()
         ptr = self._com_pointers_[comtypes.IUnknown._iid_]
+        clsctx = self._cls._reg_clsctx_
+        clsctx &= ~comtypes.CLSCTX_INPROC # reset the inproc flags
         oledll.ole32.CoRegisterClassObject(byref(comtypes.GUID(self._cls._reg_clsid_)),
                                            ptr,
-                                           self._cls._reg_clsctx_,
+                                           clsctx,
                                            regcls,
                                            byref(cookie))
         self.cookie = cookie
