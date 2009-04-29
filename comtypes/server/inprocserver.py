@@ -22,7 +22,6 @@ class ClassFactory(COMObject):
 
     def IClassFactory_CreateInstance(self, this, punkOuter, riid, ppv):
         _debug("ClassFactory.CreateInstance(%s)", riid[0])
-
         result = self._cls().IUnknown_QueryInterface(None, riid, ppv)
         _debug("CreateInstance() -> %s", result)
         return result
@@ -111,7 +110,7 @@ def DllGetClassObject(rclsid, riid, ppv):
         _setup_logging(clsid)
 
     # This function is directly called by C code, and receives C
-    # integers as parameters. rcslid is a pointer to the CLSID for the
+    # integers as parameters. rclsid is a pointer to the CLSID for the
     # coclass we want to be created, riid is a pointer to the
     # requested interface.
     try:
