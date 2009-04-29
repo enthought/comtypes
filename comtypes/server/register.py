@@ -297,7 +297,10 @@ class Registrar(object):
             else:
                 append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", "%s" % exe)
 
-        if clsctx & comtypes.CLSCTX_INPROC_SERVER:
+        # Register InprocServer32 only when run from script or from
+        # py2exe dll server, not from py2exe exe server.
+        if clsctx & comtypes.CLSCTX_INPROC_SERVER \
+               and getattr(sys, "frozen", None) in (None, "dll"):
             append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
                    "", self._get_serverdll())
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
