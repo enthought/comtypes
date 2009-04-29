@@ -84,9 +84,18 @@ def ReportError(text, iid,
     _oleaut32.SetErrorInfo(0, ei)
     return hresult
 
-def ReportException(hresult, iid, clsid=None, helpfile=None, helpcontext=None):
+def ReportException(hresult, iid, clsid=None, helpfile=None, helpcontext=None,
+                    stacklevel=None):
     """Report a COM exception.  Returns the passed in hresult value."""
-    text = "%s: %s" % sys.exc_info()[:2]
+    typ, value, tb = sys.exc_info()
+    if stacklevel is not None:
+        for _ in range(stacklevel):
+            tb = tb.tb_next
+        line = tb.tb_frame.f_lineno
+        name = tb.tb_frame.f_globals["__name__"]
+        text = "%s: %s (%s, line %d)" % (typ, value, name, line)
+    else:
+        text = "%s: %s" % (typ, value)
     return ReportError(text, iid,
                        clsid=clsid, helpfile=helpfile, helpcontext=helpcontext,
                        hresult=hresult)
