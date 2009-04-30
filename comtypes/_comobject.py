@@ -311,7 +311,7 @@ class LocalServer(object):
 class InprocServer(object):
 
     def __init__(self):
-        self.locks = c_ulong(0)
+        self.locks = c_long(0)
 
     def Lock(self):
         _InterlockedIncrement(self.locks)
