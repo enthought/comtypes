@@ -1,5 +1,7 @@
 2009-04-30  Thomas Heller  <theller@python.net>
 
+	* Change version number in repository to 0.6.0.2dev.
+
 	* Replace the VARIANTEnumerator implementation class in
 	comtypes.server.automation with a new one which should actually be
 	usable.
