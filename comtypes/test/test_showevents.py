@@ -2,6 +2,11 @@ import sys
 import unittest
 import doctest
 
+from comtypes.test import requires
+
+# This test is unreliable...
+requires("events")
+
 class EventsTest(unittest.TestCase):
 
     def test(self):
