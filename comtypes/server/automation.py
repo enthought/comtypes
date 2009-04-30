@@ -4,20 +4,22 @@ from ctypes import *
 from comtypes.hresult import *
 
 from comtypes import COMObject, IUnknown
-from comtypes.automation import IEnumVARIANT
+from comtypes.automation import IDispatch, IEnumVARIANT
 
 logger = logging.getLogger(__name__)
 
+# XXX When the COMCollection class is ready, insert it into __all__
 __all__ = ["VARIANTEnumerator"]
 
+
 class VARIANTEnumerator(COMObject):
+    """A universal VARIANTEnumerator class.  Instantiate it with a
+    collection of items that support the IDispatch interface."""
     _com_interfaces_ = [IEnumVARIANT]
 
-    def __init__(self, itemtype, jobs):
-        self.jobs = jobs # keep, so that we can restore our iterator (in Reset, and Clone).
-        self.itemtype = itemtype
-        self.item_interface = itemtype._com_interfaces_[0]
-        self.seq = iter(self.jobs)
+    def __init__(self, items):
+        self.items = items # keep, so that we can restore our iterator (in Reset, and Clone).
+        self.seq = iter(self.items)
         super(VARIANTEnumerator, self).__init__()
 
     def Next(self, this, celt, rgVar, pCeltFetched):
@@ -26,15 +28,17 @@ class VARIANTEnumerator(COMObject):
         pCeltFetched[0] = 0
         try:
             for index in range(celt):
-                job = self.itemtype(self.seq.next())
-                p = POINTER(self.item_interface)()
-                job.IUnknown_QueryInterface(None,
-                                            pointer(p._iid_),
-                                            byref(p))
+                item = self.seq.next()
+                p = item.QueryInterface(IDispatch)
                 rgVar[index].value = p
                 pCeltFetched[0] += 1
         except StopIteration:
             pass
+##        except:
+##            # ReportException? return E_FAIL?
+##            import traceback
+##            traceback.print_exc()
+
         if pCeltFetched[0] == celt:
             return S_OK
         return S_FALSE
@@ -49,12 +53,15 @@ class VARIANTEnumerator(COMObject):
         return S_OK
 
     def Reset(self, this):
-        self.seq = iter(self.jobs)
+        self.seq = iter(self.items)
         return S_OK
 
-    # Clone
+    # Clone not implemented
 
 ################################################################
+
+# XXX Shouldn't this be a mixin class?
+# And isn't this class borked anyway?
 
 class COMCollection(COMObject):
     """Abstract base class which implements Count, Item, and _NewEnum."""
