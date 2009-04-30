@@ -7,7 +7,6 @@ import Queue
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
-_critical = logger.critical
 
 REGCLS_SINGLEUSE = 0       # class object only generates one instance
 REGCLS_MULTIPLEUSE = 1     # same class object genereates multiple inst.
