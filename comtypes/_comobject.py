@@ -268,9 +268,66 @@ else:
     _InterlockedIncrement.restype = c_long
     _InterlockedDecrement.restype = c_long
 
+class LocalServer(object):
+
+    _queue = None
+    def run(self, classobjects):
+        result = windll.ole32.CoInitialize(None)
+        if RPC_E_CHANGED_MODE == result:
+            # we're running in MTA: no message pump needed
+            _debug("Server running in MTA")
+            self.run_mta()
+        else:
+            # we're running in STA: need a message pump
+            _debug("Server running in STA")
+            if result >= 0:
+                # we need a matching CoUninitialize() call for a successful CoInitialize().
+                windll.ole32.CoUninitialize()
+            self.run_sta()
+
+        for obj in classobjects:
+            obj._revoke_class()
+
+    def run_sta(self):
+        from comtypes import messageloop
+        messageloop.run()
+
+    def run_mta(self):
+        import Queue
+        self._queue = Queue.Queue()
+        self._queue.get()
+
+    def Lock(self):
+        oledll.ole32.CoAddRefServerProcess()
+
+    def Unlock(self):
+        rc = oledll.ole32.CoReleaseServerProcess()
+        if rc == 0:
+            if self._queue:
+                self._queue.put(42)
+            else:
+                windll.user32.PostQuitMessage(0)
+
+class InprocServer(object):
+
+    def __init__(self):
+        self.locks = c_ulong(0)
+
+    def Lock(self):
+        _InterlockedIncrement(self.locks)
+
+    def Unlock(self):
+        _InterlockedDecrement(self.locks)
+
+    def DllCanUnloadNow(self):
+        if self.locks.value:
+            return S_FALSE
+        if COMObject._instances_:
+            return S_FALSE
+        return S_OK
+
 class COMObject(object):
     _instances_ = {}
-    _factory = None
 
     def __new__(cls, *args, **kw):
         self = super(COMObject, cls).__new__(cls)
@@ -417,6 +474,47 @@ class COMObject(object):
         # found.
         return _MethodFinder(self)
 
+    ################################################################
+    # LocalServer / InprocServer stuff
+    __server__ = None
+    @staticmethod
+    def __run_inprocserver__():
+        if COMObject.__server__ is None:
+            COMObject.__server__ = InprocServer()
+        elif isinstance(COMObject.__server__, InprocServer):
+            pass
+        else:
+            raise RuntimeError("Wrong server type")
+
+    @staticmethod
+    def __run_localserver__(classobjects):
+        assert COMObject.__server__ is None
+        # XXX Decide whether we are in STA or MTA
+        server = COMObject.__server__ = LocalServer()
+        server.run(classobjects)
+        COMObject.__server__ = None
+
+    @staticmethod
+    def __keep__(obj):
+        COMObject._instances_[obj] = None
+        _debug("%d active COM objects: Added   %r", len(COMObject._instances_), obj)
+        if COMObject.__server__:
+            COMObject.__server__.Lock()
+
+    @staticmethod
+    def __unkeep__(obj):
+        try:
+            del COMObject._instances_[obj]
+        except AttributeError:
+            _debug("? active COM objects: Removed %r", obj)
+        else:
+            _debug("%d active COM objects: Removed %r", len(COMObject._instances_), obj)
+        _debug("Remaining: %s", COMObject._instances_.keys())
+        if COMObject.__server__:
+            COMObject.__server__.Unlock()
+    #
+    ################################################################
+
     #########################################################
     # IUnknown methods implementations
     def IUnknown_AddRef(self, this,
@@ -424,9 +522,7 @@ class COMObject(object):
                         _debug=_debug):
         result = __InterlockedIncrement(self._refcnt)
         if result == 1:
-            # keep reference to the object in a class variable.
-            COMObject._instances_[self] = None
-            _debug("%d active COM objects: Added   %r", len(COMObject._instances_), self)
+            self.__keep__(self)
         _debug("%r.AddRef() -> %s", self, result)
         return result
 
@@ -440,16 +536,7 @@ class COMObject(object):
         result = __InterlockedDecrement(self._refcnt)
         _debug("%r.Release() -> %s", self, result)
         if result == 0:
-            # For whatever reasons, at cleanup it may be that
-            # COMObject is already cleaned (set to None)
-            try:
-                del COMObject._instances_[self]
-            except AttributeError:
-                _debug("? active COM objects: Removed %r", self)
-            else:
-                _debug("%d active COM objects: Removed %r", len(COMObject._instances_), self)
-            if self._factory is not None:
-                self._factory.LockServer(None, 0)
+            self.__unkeep__(self)
         return result
 
     def IUnknown_QueryInterface(self, this, riid, ppvObj,

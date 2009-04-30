@@ -1,3 +1,14 @@
+2009-04-30  Thomas Heller  <theller@python.net>
+
+	* A completely new way how localserver and inproc server instances
+	are managed.
+
+	A comtypes.LocalServer or comtypes.InprocServer instance is
+	attached to the comtypes.COMObject class at runtime.
+
+	These changes keep localserver running as long as COMObject
+	instances are alive.
+
 2009-04-25  Thomas Heller  <theller@python.net>
 
 	* SAFEARRAYs can now also be created from multi-dimensional numpy

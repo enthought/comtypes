@@ -11,8 +11,6 @@ _critical = logger.critical
 
 ################################################################
 
-g_cLocks = 0
-
 class ClassFactory(COMObject):
     _com_interfaces_ = [IClassFactory]
 
@@ -27,11 +25,10 @@ class ClassFactory(COMObject):
         return result
 
     def IClassFactory_LockServer(self, this, fLock):
-        global g_cLocks
         if fLock:
-            g_cLocks += 1
+            COMObject.__server__.Lock()
         else:
-            g_cLocks -= 1
+            COMObject.__server__.Unlock()
         return S_OK
 
 # will be set by py2exe boot script 'from outside'
@@ -103,6 +100,8 @@ def _setup_logging(clsid):
         logging.getLogger(name).setLevel(level)
 
 def DllGetClassObject(rclsid, riid, ppv):
+    COMObject.__run_inprocserver__()
+
     iid = GUID.from_address(riid)
     clsid = GUID.from_address(rclsid)
 
@@ -128,12 +127,5 @@ def DllGetClassObject(rclsid, riid, ppv):
         return E_FAIL
 
 def DllCanUnloadNow():
-    from comtypes._comobject import COMObject
-    result = S_OK
-    if g_cLocks:
-        result = S_FALSE
-    elif COMObject._instances_:
-        result = S_FALSE
-    _debug("DllCanUnloadNow %d locks, %d instances -> result %s",
-           g_cLocks, len(COMObject._instances_), result)
-    return result
+    COMObject.__run_inprocserver__()
+    return COMObject.__server__.DllCanUnloadNow()
