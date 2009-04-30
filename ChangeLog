@@ -9,6 +9,16 @@
 	These changes keep localserver running as long as COMObject
 	instances are alive.
 
+2009-04-29  Thomas Heller  <theller@python.net>
+
+	* comtypes.errorinfo.ReportException now takes an additional
+	'stacklevel' named argument.
+
+	* Add E_OUTOFMEMORY hresult code.
+
+	* Register the InprocServer32 only when running as script or
+	py2exe dll, not when running as py2exe exe server.
+	
 2009-04-25  Thomas Heller  <theller@python.net>
 
 	* SAFEARRAYs can now also be created from multi-dimensional numpy
