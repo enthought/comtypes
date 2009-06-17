@@ -477,7 +477,7 @@ class COMObject(object):
     ################################################################
     # LocalServer / InprocServer stuff
     __server__ = None
-    @staticmethod
+##2.3    @staticmethod
     def __run_inprocserver__():
         if COMObject.__server__ is None:
             COMObject.__server__ = InprocServer()
@@ -485,23 +485,26 @@ class COMObject(object):
             pass
         else:
             raise RuntimeError("Wrong server type")
+    __run_inprocserver__ = staticmethod(__run_inprocserver__)
 
-    @staticmethod
+##2.3    @staticmethod
     def __run_localserver__(classobjects):
         assert COMObject.__server__ is None
         # XXX Decide whether we are in STA or MTA
         server = COMObject.__server__ = LocalServer()
         server.run(classobjects)
         COMObject.__server__ = None
+    __run_localserver__ = staticmethod(__run_localserver__)
 
-    @staticmethod
+##2.3    @staticmethod
     def __keep__(obj):
         COMObject._instances_[obj] = None
         _debug("%d active COM objects: Added   %r", len(COMObject._instances_), obj)
         if COMObject.__server__:
             COMObject.__server__.Lock()
+    __keep__ = staticmethod(__keep__)
 
-    @staticmethod
+##2.3    @staticmethod
     def __unkeep__(obj):
         try:
             del COMObject._instances_[obj]
@@ -512,6 +515,7 @@ class COMObject(object):
         _debug("Remaining: %s", COMObject._instances_.keys())
         if COMObject.__server__:
             COMObject.__server__.Unlock()
+    __unkeep__ = staticmethod(__unkeep__)
     #
     ################################################################
 
@@ -594,7 +598,7 @@ class COMObject(object):
 
     ################################################################
     # IDispatch methods
-##    @property
+##2.3    @property
     def __typeinfo(self):
         # XXX Looks like this better be a static property, set by the
         # code that sets __typelib also...

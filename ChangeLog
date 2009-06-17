@@ -1,5 +1,7 @@
 2009-06-17  Thomas Heller  <theller@python.net>
 
+	* comtypes._comobject: Restore compatibility with Python 2.3.
+
 	* Add the comtypes.IServiceProvider interface.  Based on a patch
 	from Michael Curran.
 
