@@ -1,5 +1,5 @@
 import unittest
-
+from ctypes import POINTER
 import comtypes
 import comtypes.client
 
