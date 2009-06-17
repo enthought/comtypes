@@ -1,5 +1,7 @@
 2009-06-17  Thomas Heller  <theller@python.net>
 
+	* comtypes.automation: Support VT_I8 and VT_UI8 SAFEARRAYs.
+
 	* comtypes._comobject: Restore compatibility with Python 2.3.
 
 	* Add the comtypes.IServiceProvider interface.  Based on a patch

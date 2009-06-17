@@ -753,6 +753,9 @@ _ctype_to_vartype = {
     c_float: VT_R4,
     c_double: VT_R8,
 
+    c_longlong: VT_I8,
+    c_ulonglong: VT_UI8,
+
     VARIANT_BOOL: VT_BOOL,
 
     BSTR: VT_BSTR,
