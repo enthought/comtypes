@@ -7,13 +7,13 @@
 	usable.
 
 	* A completely new way how localserver and inproc server instances
-	are managed.
+	are managed:
 
-	A comtypes.LocalServer or comtypes.InprocServer instance is
-	attached to the comtypes.COMObject class at runtime.
+		A comtypes.LocalServer or comtypes.InprocServer instance
+		is attached to the comtypes.COMObject class at runtime.
 
-	These changes keep localserver running as long as COMObject
-	instances are alive.
+		These changes keep localserver running as long as
+		COMObject instances are alive.
 
 2009-04-29  Thomas Heller  <theller@python.net>
 
