@@ -1097,6 +1097,23 @@ class IPersist(IUnknown):
                   ( ['out'], POINTER(GUID), 'pClassID' )),
         ]
 
+class IServiceProvider(IUnknown):
+    _iid_ = GUID('{6D5140C1-7436-11CE-8034-00AA006009FA}')
+
+    # Overridden QueryService to make it nicer to use (passing it an
+    # interface and it returns a pointer to that interface)
+    def QueryService(self, serviceIID, interface):
+        p = POINTER(interface)()
+        self._QueryService(byref(serviceIID), byref(interface._iid_), byref(p))
+        return p
+
+    _methods_ = [
+        COMMETHOD([], HRESULT, 'QueryService',
+                  ( ['in'], POINTER(GUID), 'guidService' ),
+                  ( ['in'], POINTER(GUID), 'riid' ),
+                  ( ['in'], POINTER(c_void_p), 'ppvObject' ))
+        ]
+
 ################################################################
 def CoGetObject(displayname, interface):
     """Convert a displayname to a moniker, then bind and return the object
