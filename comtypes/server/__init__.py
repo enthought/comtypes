@@ -1,4 +1,4 @@
-import comtypes, ctypes
+import comtypes.client, ctypes
 
 ################################################################
 # Interfaces
@@ -6,9 +6,24 @@ class IClassFactory(comtypes.IUnknown):
     _iid_ = comtypes.GUID("{00000001-0000-0000-C000-000000000046}")
     _methods_ = [
         comtypes.STDMETHOD(comtypes.HRESULT, "CreateInstance",
-                           [ctypes.c_int, ctypes.POINTER(comtypes.GUID), ctypes.POINTER(ctypes.c_ulong)]),
+                           [ctypes.POINTER(comtypes.IUnknown),
+                            ctypes.POINTER(comtypes.GUID),
+                            ctypes.POINTER(ctypes.c_void_p)]),
         comtypes.STDMETHOD(comtypes.HRESULT, "LockServer",
                            [ctypes.c_int])]
+
+    def CreateInstance(self, punkouter=None, interface=None, dynamic=False):
+        if dynamic:
+            if interface is not None:
+                raise ValueError("interface and dynamic are mutually exclusive")
+            interface = comtypes.automation.IDispatch
+        elif interface is None:
+            interface = comtypes.IUnknown
+        obj = ctypes.POINTER(interface)()
+        self.__com_CreateInstance(punkouter, interface._iid_, ctypes.byref(obj))
+        if dynamic:
+            return comtypes.client.dynamic.Dispatch(obj)
+        return comtypes.client.GetBestInterface(obj)
 
 ##class IExternalConnection(IUnknown):
 ##    _iid_ = GUID("{00000019-0000-0000-C000-000000000046}")

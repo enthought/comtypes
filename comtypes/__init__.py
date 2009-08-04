@@ -1141,6 +1141,20 @@ def CoCreateInstance(clsid, interface=None, clsctx=None, punkouter=None):
     _ole32.CoCreateInstance(byref(clsid), punkouter, clsctx, byref(iid), byref(p))
     return p
 
+def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
+    if clsctx is None:
+        clsctx = CLSCTX_SERVER
+    if interface is None:
+        import comtypes.server
+        interface = comtypes.server.IClassFactory
+    p = POINTER(interface)()
+    _CoGetClassObject(clsid,
+                      clsctx,
+                      pServerInfo,
+                      interface._iid_,
+                      byref(p))
+    return p
+
 def GetActiveObject(clsid, interface=None):
     """Retrieves a pointer to a running object"""
     p = POINTER(IUnknown)()
@@ -1186,6 +1200,9 @@ class _COSERVERINFO(Structure):
         ('dwReserved2', c_ulong),
     ]
 COSERVERINFO = _COSERVERINFO
+_CoGetClassObject = _ole32.CoGetClassObject
+_CoGetClassObject.argtypes = [POINTER(GUID), DWORD, POINTER(COSERVERINFO),
+                              POINTER(GUID), POINTER(c_void_p)]
 
 class tagBIND_OPTS(Structure):
     _fields_ = [

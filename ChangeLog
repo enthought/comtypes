@@ -1,5 +1,15 @@
 2009-08-04  Thomas Heller  <theller@python.net>
 
+	* Added comtypes.CoGetClassObject() low-level function,
+	comtypes.client.GetClassObject() high-level function, and
+	implemented a pythonic interface to IClassFactory's CreateInstance
+	method:
+
+	    def CreateInstance(self,
+			       punkouter=None,
+			       interface=None,
+			       dynamic=False)
+
 	* Added the 'dynamic=False' parameter to the
 	comtypes.client.CoGetObject and comtypes.client.GetActiveObject
 	functions.  Suggested by James Teh.

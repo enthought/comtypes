@@ -25,7 +25,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 __all__ = ["CreateObject", "GetActiveObject", "CoGetObject",
-           "GetEvents", "ShowEvents", "PumpEvents", "GetModule"]
+           "GetEvents", "ShowEvents", "PumpEvents", "GetModule",
+           "GetClassObject"]
 
 from comtypes.client._code_cache import _find_gen_dir
 
@@ -171,6 +172,13 @@ def _manage(obj, clsid, interface):
         obj = GetBestInterface(obj)
     return obj
 
+def GetClassObject(progid,
+                   clsctx=None,
+                   pServerInfo=None,
+                   interface=None):
+    clsid = comtypes.GUID.from_progid(progid)
+    return comtypes.CoGetClassObject(clsid,
+                                     clsctx, pServerInfo, interface)
 
 def CreateObject(progid,                  # which object to create
                  clsctx=None,             # how to create the object
