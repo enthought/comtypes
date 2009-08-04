@@ -152,11 +152,17 @@ class Constants(object):
 #
 # Object creation
 #
-def GetActiveObject(progid, interface=None):
+def GetActiveObject(progid, interface=None, dynamic=False):
     clsid = comtypes.GUID.from_progid(progid)
-    if interface is None:
+    if dynamic:
+        if interface is not None:
+            raise ValueError("interface and dynamic are mutually exclusive")
+        interface = comtypes.automation.IDispatch
+    elif interface is None:
         interface = getattr(progid, "_com_interfaces_", [None])[0]
     obj = comtypes.GetActiveObject(clsid, interface=interface)
+    if dynamic:
+        return comtypes.client.dynamic.Dispatch(obj)
     return _manage(obj, clsid, interface=interface)
 
 def _manage(obj, clsid, interface):
@@ -203,12 +209,18 @@ def CreateObject(progid,                  # which object to create
         return comtypes.client.dynamic.Dispatch(obj)
     return _manage(obj, clsid, interface=interface)
 
-def CoGetObject(displayname, interface=None):
+def CoGetObject(displayname, interface=None, dynamic=False):
     """Create an object by calling CoGetObject(displayname).
 
     Additional parameters have the same meaning as in CreateObject().
     """
+    if dynamic:
+        if interface is not None:
+            raise ValueError("interface and dynamic are mutually exclusive")
+        interface = comtypes.automation.IDispatch
     punk = comtypes.CoGetObject(displayname, interface)
+    if dynamic:
+        return comtypes.client.dynamic.Dispatch(punk)
     return _manage(punk,
                    clsid=None,
                    interface=interface)

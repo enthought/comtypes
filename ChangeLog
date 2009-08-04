@@ -1,3 +1,9 @@
+2009-08-04  Thomas Heller  <theller@python.net>
+
+	* Added the 'dynamic=False' parameter to the
+	comtypes.client.CoGetObject and comtypes.client.GetActiveObject
+	functions.  Suggested by James Teh.
+
 2009-06-17  Thomas Heller  <theller@python.net>
 
 	* comtypes.automation: Support VT_I8 and VT_UI8 SAFEARRAYs.
