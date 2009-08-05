@@ -154,6 +154,15 @@ class Constants(object):
 # Object creation
 #
 def GetActiveObject(progid, interface=None, dynamic=False):
+    """Return a pointer to a running COM object that has been
+    registered with COM.
+
+    'progid' may be a string like "Excel.Application",
+       a string specifying a clsid, a GUID instance, or an object with
+       a _clsid_ attribute which should be any of the above.
+    'interface' allows to force a certain interface.
+    'dynamic=True' will return a dynamic dispatch object.
+    """
     clsid = comtypes.GUID.from_progid(progid)
     if dynamic:
         if interface is not None:
@@ -176,6 +185,12 @@ def GetClassObject(progid,
                    clsctx=None,
                    pServerInfo=None,
                    interface=None):
+    """Create and return the class factory for a COM object.
+
+    'clsctx' specifies how to create the object, use the CLSCTX_... constants.
+    'pServerInfo', if used, must be an instance of comtypes.COSERVERINFO
+    'interface' may be used to request an interface other than IClassFactory
+    """
     clsid = comtypes.GUID.from_progid(progid)
     return comtypes.CoGetClassObject(clsid,
                                      clsctx, pServerInfo, interface)
@@ -194,6 +209,8 @@ def CreateObject(progid,                  # which object to create
        a _clsid_ attribute which should be any of the above.
     'clsctx' specifies how to create the object, use the CLSCTX_... constants.
     'machine' allows to specify a remote machine to create the object on.
+    'interface' allows to force a certain interface
+    'dynamic=True' will return a dynamic dispatch object
 
     You can also later request to receive events with GetEvents().
     """
