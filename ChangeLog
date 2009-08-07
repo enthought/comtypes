@@ -1,3 +1,9 @@
+2009-08-07  Thomas Heller  <theller@python.net>
+
+	* When an interface was specified in the call to
+	IClassObject.CreateInstance, return that instead of calling
+	GetBestInterface.  Patch from James Teh.
+
 2009-08-04  Thomas Heller  <theller@python.net>
 
 	* Added comtypes.CoGetClassObject() low-level function,

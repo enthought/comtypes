@@ -16,14 +16,20 @@ class IClassFactory(comtypes.IUnknown):
         if dynamic:
             if interface is not None:
                 raise ValueError("interface and dynamic are mutually exclusive")
-            interface = comtypes.automation.IDispatch
+            realInterface = comtypes.automation.IDispatch
         elif interface is None:
-            interface = comtypes.IUnknown
-        obj = ctypes.POINTER(interface)()
-        self.__com_CreateInstance(punkouter, interface._iid_, ctypes.byref(obj))
+            realInterface = comtypes.IUnknown
+        else:
+            realInterface = interface
+        obj = ctypes.POINTER(realInterface)()
+        self.__com_CreateInstance(punkouter, realInterface._iid_, ctypes.byref(obj))
         if dynamic:
             return comtypes.client.dynamic.Dispatch(obj)
-        return comtypes.client.GetBestInterface(obj)
+        elif interface is None:
+            # An interface was not specified, so return the best.
+            return comtypes.client.GetBestInterface(obj)
+        # An interface was specified and obj is already that interface.
+        return obj
 
 ##class IExternalConnection(IUnknown):
 ##    _iid_ = GUID("{00000019-0000-0000-C000-000000000046}")
