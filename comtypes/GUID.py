@@ -15,7 +15,7 @@ DWORD = c_ulong
 _ole32 = oledll.ole32
 
 _StringFromCLSID = _ole32.StringFromCLSID
-_CoTaskMemFree = _ole32.CoTaskMemFree
+_CoTaskMemFree = windll.ole32.CoTaskMemFree
 _ProgIDFromCLSID = _ole32.ProgIDFromCLSID
 _CLSIDFromString = _ole32.CLSIDFromString
 _CLSIDFromProgID = _ole32.CLSIDFromProgID
