@@ -307,12 +307,12 @@ def _make_safearray_type(itemtype):
         def from_param(cls, value):
             if isinstance(value, cls._type_):
                 return byref(value)
-            return byref(cls._type_.create(value))
+            return byref(cls._type_.create(value, extra))
         from_param = classmethod(from_param)
 
         def __setitem__(self, index, value):
             # create an LP_SAFEARRAY_... instance
-            pa = self._type_.create(value)
+            pa = self._type_.create(value, extra)
             # XXX Must we destroy the currently contained data?
             # fill it into self
             super(POINTER(POINTER(sa_type)), self).__setitem__(index, pa)

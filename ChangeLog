@@ -1,5 +1,8 @@
 2009-09-09  Thomas Heller  <theller@python.net>
 
+	* Fix returning SAFEARRAY of VT_RECORDs.  Based on a patch from
+	Eduardo Arias.
+
 	* New module comtypes.viewobject, contains the interfaces
 	IViewObject, IViewObject2, IViewObjectEx.  IAdviseSink is faked.
 
