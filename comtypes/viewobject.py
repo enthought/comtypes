@@ -1,12 +1,10 @@
 # XXX need to find out what the share from comtypes.dataobject.
 from ctypes import *
-from ctypes import HRESULT
-from ctypes.wintypes import _RECTL, SIZEL, HDC, tagRECT, tagPOINT, SIZEL
+from ctypes.wintypes import _RECTL, SIZEL, HDC, tagRECT, tagPOINT
 
 from comtypes import COMMETHOD
 from comtypes import GUID
 from comtypes import IUnknown
-import comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
 
 class tagPALETTEENTRY(Structure):
     _fields_ = [
@@ -60,7 +58,7 @@ DVEXTENTINFO = tagExtentInfo
 
 IAdviseSink = IUnknown # fake the interface
 
-class IViewObject(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IUnknown):
+class IViewObject(IUnknown):
     _case_insensitive_ = False
     _iid_ = GUID('{0000010D-0000-0000-C000-000000000046}')
     _idlflags_ = []
