@@ -1,3 +1,8 @@
+2009-10-02  Thomas Heller  <theller@python.net>
+
+	* comtypes\test\test_server.py: Start a better approach to test
+	both COM object calls and COM object implementations.
+
 2009-09-09  Thomas Heller  <theller@python.net>
 
 	* Fix returning SAFEARRAY of VT_RECORDs.  Based on a patch from
