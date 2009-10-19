@@ -70,7 +70,11 @@ def get_tests(package, mask, verbosity):
             if name.startswith("_"):
                 continue
             o = getattr(mod, name)
-            if type(o) is type(unittest.TestCase) and issubclass(o, unittest.TestCase):
+            try:
+                is_test = issubclass(o, unittest.TestCase)
+            except TypeError:
+                continue
+            if is_test:
                 tests.append(o)
     return skipped, tests
 
