@@ -1,3 +1,8 @@
+2009-10-19  Thomas Heller  <theller@python.net>
+
+	* Fix a memory leak in Python COM servers.  Thanks to Michael
+	Eddington for the patch.
+
 2009-10-02  Thomas Heller  <theller@python.net>
 
 	* comtypes\test\test_server.py: Start a better approach to test

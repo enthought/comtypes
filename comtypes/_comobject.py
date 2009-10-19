@@ -541,6 +541,8 @@ class COMObject(object):
         _debug("%r.Release() -> %s", self, result)
         if result == 0:
             self.__unkeep__(self)
+            # Hm, why isn't this cleaned up by the cycle gc?
+            self._com_pointers_ = {}
         return result
 
     def IUnknown_QueryInterface(self, this, riid, ppvObj,
