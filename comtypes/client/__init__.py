@@ -58,8 +58,15 @@ def GetBestInterface(punk):
     # find the typelib and the interface name
     logger.debug("GetBestInterface(%s)", punk)
     try:
-        pci = punk.QueryInterface(comtypes.typeinfo.IProvideClassInfo)
-        logger.debug("Does implement IProvideClassInfo")
+        try:
+            pci = punk.QueryInterface(comtypes.typeinfo.IProvideClassInfo)
+            logger.debug("Does implement IProvideClassInfo")
+        except comtypes.COMError:
+            # Some COM objects support IProvideClassInfo2, but not IProvideClassInfo.
+            # These objects are broken, but we support them anyway.
+            logger.debug("Does NOT implement IProvideClassInfo, trying IProvideClassInfo2")
+            pci = punk.QueryInterface(comtypes.typeinfo.IProvideClassInfo2)
+            logger.debug("Does implement IProvideClassInfo2")
         tinfo = pci.GetClassInfo() # TypeInfo for the CoClass
         # find the interface marked as default
         ta = tinfo.GetTypeAttr()
@@ -76,7 +83,7 @@ def GetBestInterface(punk):
         href = tinfo.GetRefTypeOfImplType(index)
         tinfo = tinfo.GetRefTypeInfo(href)
     except comtypes.COMError:
-        logger.debug("Does NOT implement IProvideClassInfo")
+        logger.debug("Does NOT implement IProvideClassInfo/IProvideClassInfo2")
         try:
             pdisp = punk.QueryInterface(comtypes.automation.IDispatch)
         except comtypes.COMError:

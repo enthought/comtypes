@@ -1,5 +1,10 @@
 2009-10-22  Thomas Heller  <theller@python.net>
 
+	* Support broken COM objects that provide IProvideClassInfo2, but
+	not IProvideClassInfo (although the latter is derived from the
+	former).  See
+	http://sourceforge.net/tracker/index.php?func=detail&aid=2829887&group_id=115265&atid=692942
+
 	* Fixed a regression from the 0.4 version, [out] parameters didn't
 	accept pointers or arrays any longer. Thanks again to Michael
 	Eddington.
