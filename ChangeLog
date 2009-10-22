@@ -1,3 +1,9 @@
+2009-10-22  Thomas Heller  <theller@python.net>
+
+	* Fixed a regression from the 0.4 version, [out] parameters didn't
+	accept pointers or arrays any longer. Thanks again to Michael
+	Eddington.
+
 2009-10-19  Thomas Heller  <theller@python.net>
 
 	* Fix a memory leak in Python COM servers.  Thanks to Michael

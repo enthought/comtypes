@@ -579,7 +579,11 @@ class _cominterface_meta(type):
                     else:
                         # parameter was passed, call .from_param() to
                         # convert it to a ctypes type.
-                        if type(atyp) is SIMPLETYPE:
+                        if getattr(v, "_type_", None) is atyp:
+                            # Array of or pointer to type 'atyp' was
+                            # passed, pointer to 'atyp' expected.
+                            pass
+                        elif type(atyp) is SIMPLETYPE:
                             # The from_param method of simple types
                             # (c_int, c_double, ...) returns a byref()
                             # object which we cannot use since later
