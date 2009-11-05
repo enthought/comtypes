@@ -1,3 +1,8 @@
+2009-11-05  Thomas Heller  <theller@python.net>
+
+	* comtypes\test\test_server.py: New way to test COM client and
+	server.  Work in progress.
+
 2009-10-22  Thomas Heller  <theller@python.net>
 
 	* Support broken COM objects that provide IProvideClassInfo2, but
