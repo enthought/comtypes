@@ -4,6 +4,7 @@ from comtypes.partial import partial
 import array
 
 _safearray_type_cache = {}
+_numpy = None
 
 ################################################################
 # This is THE PUBLIC function: the gateway to the SAFEARRAY functionality.
@@ -69,13 +70,14 @@ def _make_safearray_type(itemtype):
             numpy arrays must be passed.
             """
 
-            try:
-                numpy = __import__("numpy.ctypeslib")
-            except ImportError:
-                numpy = None
-            else:
-                if isinstance(value, numpy.ndarray):
-                    return cls.create_from_ndarray(value, extra)
+            global _numpy
+            if _numpy is None:
+                try:
+                    _numpy = __import__("numpy.ctypeslib")
+                except ImportError:
+                    _numpy = False
+            if _numpy and isinstance(value, _numpy.ndarray):
+                return cls.create_from_ndarray(value, extra)
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
             # the GUID of the interface.

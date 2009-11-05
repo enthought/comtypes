@@ -1,5 +1,8 @@
 2009-11-05  Thomas Heller  <theller@python.net>
 
+	* comtypes\safearray.py: When numpy is not installed, creating
+	safearrays took a very long time.  This is fixed now.
+
 	* comtypes\test\test_server.py: New way to test COM client and
 	server.  Work in progress.
 
