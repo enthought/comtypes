@@ -1,6 +1,6 @@
 import types, os, unittest, sys, tempfile
 
-if sys.version_info >= (3, 0):
+if sys.version_info >= (2, 6):
     from imp import reload
 
 import comtypes

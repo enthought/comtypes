@@ -131,6 +131,9 @@ class Dispatch(object):
         return isinstance(other, Dispatch) and \
                self._comobj == other._comobj
 
+    def __hash__(self):
+        return hash(self._comobj)
+
     def __getattr__(self, name):
         """Get a COM attribute."""
         if name.startswith("__") and name.endswith("__"):

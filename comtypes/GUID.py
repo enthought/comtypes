@@ -1,7 +1,7 @@
 from ctypes import *
 import sys
 
-if sys.version_info > (3,):
+if sys.version_info >= (2, 6):
     def binary(obj):
         return bytes(obj)
 else:

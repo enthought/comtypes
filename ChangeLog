@@ -1,5 +1,8 @@
 2009-11-05  Thomas Heller  <theller@python.net>
 
+	* Implement __hash__ method in dynamic dispatch classes.  This
+	fixes a 'python -3' warning.
+
 	* comtypes\safearray.py: When numpy is not installed, creating
 	safearrays took a very long time.  This is fixed now.
 

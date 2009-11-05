@@ -68,6 +68,9 @@ class _Dispatch(object):
             return 1 	 
         return cmp(self._comobj, other._comobj)
 
+    def __hash__(self):
+        return hash(self._comobj)
+
     def __getitem__(self, index):
         enum = self.__enum()
         if index > 0:
