@@ -530,6 +530,11 @@ class COMObject(object):
         _debug("%r.AddRef() -> %s", self, result)
         return result
 
+    def _final_release_(self):
+        """This method may be overridden in subclasses
+        to free allocated resources or so."""
+        pass
+
     def IUnknown_Release(self, this,
                          __InterlockedDecrement=_InterlockedDecrement,
                         _debug=_debug):
@@ -540,6 +545,7 @@ class COMObject(object):
         result = __InterlockedDecrement(self._refcnt)
         _debug("%r.Release() -> %s", self, result)
         if result == 0:
+            self._final_release_()
             self.__unkeep__(self)
             # Hm, why isn't this cleaned up by the cycle gc?
             self._com_pointers_ = {}

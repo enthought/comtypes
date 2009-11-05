@@ -1,5 +1,9 @@
 2009-11-05  Thomas Heller  <theller@python.net>
 
+	* COMObject subclasses can now implement a _final_release_()
+	method to free up resources, for example.  This method is called
+	when the COM reference count reaches zero.
+
 	* Implement __hash__ method in dynamic dispatch classes.  This
 	fixes a 'python -3' warning.
 
