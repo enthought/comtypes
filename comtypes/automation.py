@@ -48,9 +48,6 @@ INVOKEKIND = tagINVOKEKIND
 # helpers
 IID_NULL = GUID()
 riid_null = byref(IID_NULL)
-_VariantClear = oledll.oleaut32.VariantClear
-_SysAllocStringLen = oledll.oleaut32.SysAllocStringLen
-_VariantCopyInd = oledll.oleaut32.VariantCopyInd
 
 # 30. December 1899, midnight.  For VT_DATE.
 _com_null_date = datetime.datetime(1899, 12, 30, 0, 0, 0)
@@ -237,7 +234,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, (str, unicode)):
             self.vt = VT_BSTR
             # do the c_wchar_p auto unicode conversion
-            self._.c_void_p = _SysAllocStringLen(c_wchar_p.from_param(value), len(value))
+            self._.c_void_p = _SysAllocStringLen(value, len(value))
         elif isinstance(value, datetime.datetime):
             delta = value - _com_null_date
             # a day has 24 * 60 * 60 = 86400 seconds
@@ -277,7 +274,7 @@ class tagVARIANT(Structure):
             CopyComPointer(value._comobj, byref(self._))
             self.vt = VT_DISPATCH
         elif isinstance(value, VARIANT):
-            windll.oleaut32.VariantCopy(byref(self), byref(value))
+            _VariantCopy(byref(self), byref(value))
         elif isinstance(value, c_ubyte):
             self._.VT_UI1 = value
             self.vt = VT_UI1
@@ -447,13 +444,31 @@ class tagVARIANT(Structure):
         return result
 
     def ChangeType(self, typecode):
-        oledll.oleaut32.VariantChangeType(byref(self),
-                                          byref(self),
-                                          0,
-                                          typecode)
+        _VariantChangeType(byref(self),
+                           byref(self),
+                           0,
+                           typecode)
 
 VARIANT = tagVARIANT
 VARIANTARG = VARIANT
+
+
+
+_VariantChangeType = oledll.oleaut32.VariantChangeType
+_VariantChangeType.argtypes = (POINTER(VARIANT), POINTER(VARIANT), c_ushort, VARTYPE)
+
+_VariantClear = oledll.oleaut32.VariantClear
+_VariantClear.argtypes = (POINTER(VARIANT),)
+
+_SysAllocStringLen = windll.oleaut32.SysAllocStringLen
+_SysAllocStringLen.argtypes = c_wchar_p, c_uint
+_SysAllocStringLen.restype = c_void_p
+
+_VariantCopy = oledll.oleaut32.VariantCopy
+_VariantCopy.argtypes = POINTER(VARIANT), POINTER(VARIANT)
+
+_VariantCopyInd = oledll.oleaut32.VariantCopyInd
+_VariantCopyInd.argtypes = POINTER(VARIANT), POINTER(VARIANT)
 
 # some commonly used VARIANT instances
 VARIANT.null = VARIANT(None)
