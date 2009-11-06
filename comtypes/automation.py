@@ -160,7 +160,7 @@ class tagVARIANT(Structure):
         if self._b_needsfree_:
             # XXX This does not work.  _b_needsfree_ is never
             # set because the buffer is internal to the object.
-            _VariantClear(byref(self))
+            _VariantClear(self)
 
     def __repr__(self):
         if self.vt & VT_BYREF:
@@ -185,7 +185,7 @@ class tagVARIANT(Structure):
 
     # see also c:/sf/pywin32/com/win32com/src/oleargs.cpp 54
     def _set_value(self, value):
-        _VariantClear(byref(self))
+        _VariantClear(self)
         if value is None:
             self.vt = VT_NULL
         # since bool is a subclass of int, this check must come before
@@ -274,7 +274,7 @@ class tagVARIANT(Structure):
             CopyComPointer(value._comobj, byref(self._))
             self.vt = VT_DISPATCH
         elif isinstance(value, VARIANT):
-            _VariantCopy(byref(self), byref(value))
+            _VariantCopy(self, value)
         elif isinstance(value, c_ubyte):
             self._.VT_UI1 = value
             self.vt = VT_UI1
@@ -406,7 +406,7 @@ class tagVARIANT(Structure):
             return v.value
         else:
             v = VARIANT()
-            _VariantCopyInd(byref(v), byref(self))
+            _VariantCopyInd(v, self)
             return v.value
 
 
@@ -444,8 +444,8 @@ class tagVARIANT(Structure):
         return result
 
     def ChangeType(self, typecode):
-        _VariantChangeType(byref(self),
-                           byref(self),
+        _VariantChangeType(self,
+                           self,
                            0,
                            typecode)
 
