@@ -1,4 +1,4 @@
-import unittest as ut
+import unittest
 from ctypes import POINTER
 from comtypes.automation import IDispatch
 from comtypes.client import CreateObject
@@ -14,7 +14,7 @@ except WindowsError:
     pass
 else:
 
-    class Test(ut.TestCase):
+    class Test(unittest.TestCase):
         def test_jscript(self):
             engine = CreateObject("MSScriptControl.ScriptControl")
             engine.Language = "JScript"

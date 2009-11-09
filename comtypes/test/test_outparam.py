@@ -1,5 +1,5 @@
 from ctypes import *
-import unittest as ut
+import unittest
 
 import comtypes.test
 comtypes.test.requires("devel")
@@ -45,7 +45,7 @@ def comstring(text, typ=c_wchar_p):
     memmove(mem, text, size)
     return ptr
 
-class Test(ut.TestCase):
+class Test(unittest.TestCase):
     def test_c_char(self):
 ##        ptr = c_wchar_p("abc")
 ##        self.failUnlessEqual(ptr.__ctypes_from_outparam__(),
