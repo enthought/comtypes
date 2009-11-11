@@ -43,8 +43,8 @@ class TypeLib(object):
         # Unregister the typelib at interpreter exit...
         attr = tlib.GetLibAttr()
         guid, major, minor = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
-        atexit.register(lambda:
-                        comtypes.typeinfo.UnRegisterTypeLib(guid, major, minor))
+        atexit.register(comtypes.typeinfo.UnRegisterTypeLib,
+                        guid, major, minor)
         return tlb_path
     
 class Interface(object):
