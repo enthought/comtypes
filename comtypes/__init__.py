@@ -626,8 +626,7 @@ class _cominterface_meta(type):
 ##                # interface types, so suppress the warning in this case.
 ##                other = com_interface_registry[iid]
 ##                if self.__name__ != other.__name__ or self.__module__ != other.__module__:
-##                    text = "Multiple interface defn: %s, %s" % \
-##                           (self, other)
+##                    text = "Multiple interface defn: %s, %s" % (self, other)
 ##                    warnings.warn(text, UserWarning)
             com_interface_registry[iid] = self
             del iid
@@ -1027,8 +1026,8 @@ def COMMETHOD(idlflags, restype, methodname, *argspec):
                 elif typ is POINTER(VARIANT):
                     defval = pointer(VARIANT.missing)
                 else:
-##                    msg = "'optional' only allowed for VARIANT and VARIANT*, not for %s" \
-##                                  % typ.__name__
+##                    msg = ("'optional' only allowed for VARIANT and VARIANT*, not for %s"
+##                           % typ.__name__)
 ##                    warnings.warn(msg, IDLWarning, stacklevel=2)
                     defval = typ()
         if defval is _NOTHING:
