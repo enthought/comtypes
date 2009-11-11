@@ -150,7 +150,9 @@ setup(name="comtypes",
 
       license="MIT License",
       package_data = {"comtypes.test": ["TestComServer.idl",
-                                        "TestComServer.tlb"]},
+                                        "TestComServer.tlb",
+                                        "mytypelib.idl",
+                                        "mylib.idl", "mylib.tlb"]},
       classifiers=classifiers,
 
       scripts=["clear_comtypes_cache.py"],

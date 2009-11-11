@@ -1,0 +1,21 @@
+import "oaidl.idl";
+                    import "ocidl.idl";
+                    [uuid(f4f74946-4546-44bd-a073-9ea6f9fe78cb)] library TestLib {
+[object,
+                        // oleautomation,
+                        uuid(ed978f5f-cc45-4fcc-a7a6-751ffa8dfedd)]
+                       interface IMyInterface : IDispatch {
+[propget] HRESULT Name([out, retval] BSTR *pname);
+               [propput] HRESULT Name([in] BSTR name);
+HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);
+HRESULT MultiInOutArgs([in, out] int *pa, [in, out] int *pb);
+HRESULT MultiInOutArgs2([in, out] int *pa, [out] int *pb);
+HRESULT MultiInOutArgs3([out] int *pa, [out] int *pb);
+HRESULT MultiInOutArgs4([out] int *pa, [in, out] int *pb);
+HRESULT GetStackTrace([in] ULONG FrameOffset,
+                                     [in, out] INT *Frames,
+                                     [in] ULONG FramesSize,
+                                     [out, optional] ULONG *FramesFilled);
+}
+
+}
