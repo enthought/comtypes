@@ -1,3 +1,9 @@
+2009-11-13  Thomas Heller  <theller@python.net>
+
+	* To avoid a memory leak when PyInitialize()/PyUninitialize() are
+	called several times, return S_FALSE from inproc server's
+	DllCanUnloadNow().
+
 2009-11-05  Thomas Heller  <theller@python.net>
 
 	* COMObject subclasses can now implement a _final_release_()

@@ -128,4 +128,7 @@ def DllGetClassObject(rclsid, riid, ppv):
 
 def DllCanUnloadNow():
     COMObject.__run_inprocserver__()
-    return COMObject.__server__.DllCanUnloadNow()
+    result = COMObject.__server__.DllCanUnloadNow()
+    # To avoid a memory leak when PyInitialize()/PyUninitialize() are
+    # called several times, we refuse to unload the dll.
+    return S_FALSE
