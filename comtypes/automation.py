@@ -401,7 +401,7 @@ class tagVARIANT(Structure):
         if self.vt == VT_BYREF|VT_VARIANT:
             v = VARIANT()
             # apparently VariantCopyInd doesn't work always with
-            # VT_BREF|VT_VARIANT, so do it manually.
+            # VT_BYREF|VT_VARIANT, so do it manually.
             v = cast(self._.c_void_p, POINTER(VARIANT))[0]
             return v.value
         else:
