@@ -16,6 +16,7 @@ HRESULT GetStackTrace([in] ULONG FrameOffset,
                                      [in, out] INT *Frames,
                                      [in] ULONG FramesSize,
                                      [out, optional] ULONG *FramesFilled);
+HRESULT dummy([in] SAFEARRAY(VARIANT *) foo);
 }
 
 }

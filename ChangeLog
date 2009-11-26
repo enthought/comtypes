@@ -1,3 +1,9 @@
+2009-11-26  Thomas Heller  <theller@python.net>
+
+	* Allow typelib wrappers that contain 'SAFEARRAY(VARIANT*)'
+	parameter types to be imported.  Calling these methods will fail,
+	though.
+
 2009-11-13  Thomas Heller  <theller@python.net>
 
 	* To avoid a memory leak when PyInitialize()/PyUninitialize() are

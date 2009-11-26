@@ -776,6 +776,22 @@ _ctype_to_vartype = {
     BSTR: VT_BSTR,
     VARIANT: VT_VARIANT,
 
+    # SAFEARRAY(VARIANT *)
+    #
+    # It is unlear to me if this is allowed or not.  Apparently there
+    # are typelibs that define such an argument type, but it may be
+    # that these are buggy.
+    #
+    # Point is that SafeArrayCreateEx(VT_VARIANT|VT_BYREF, ..) fails.
+    # The MSDN docs for SafeArrayCreate() have a notice that neither
+    # VT_ARRAY not VT_BYREF may be set, this notice is missing however
+    # for SafeArrayCreateEx().
+    #
+    # We have this code here to make sure that comtypes can import
+    # such a typelib, although calling ths method will fail because
+    # such an array cannot be created.
+    POINTER(VARIANT): VT_BYREF|VT_VARIANT,
+
     # These are not yet implemented:
 ##    POINTER(IUnknown): VT_UNKNOWN,
 ##    POINTER(IDispatch): VT_DISPATCH,

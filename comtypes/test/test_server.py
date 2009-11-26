@@ -167,6 +167,20 @@ class MyServer(comtypes.CoClass):
         res = p.GetStackTrace(42, frames, 0)
 ##        print "RES_2", res
 
+    # It is unlear to me if this is allowed or not.  Apparently there
+    # are typelibs that define such an argument type, but it may be
+    # that these are buggy.
+    #
+    # Point is that SafeArrayCreateEx(VT_VARIANT|VT_BYREF, ..) fails.
+    # The MSDN docs for SafeArrayCreate() have a notice that neither
+    # VT_ARRAY not VT_BYREF may be set, this notice is missing however
+    # for SafeArrayCreateEx().
+    #
+    # We have this code here to make sure that comtypes can import
+    # such a typelib, although calling ths method will fail because
+    # such an array cannot be created.
+    itf.add("""HRESULT dummy([in] SAFEARRAY(VARIANT *) foo);""")
+
 path = tlb.compile()
 from comtypes.gen import TestLib
 
