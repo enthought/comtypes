@@ -1,5 +1,5 @@
-import os
-import atexit
+import atexit, os, unittest
+##import comtypes
 import comtypes.typeinfo, comtypes.client
 
 class TypeLib(object):
@@ -12,18 +12,22 @@ class TypeLib(object):
     def __init__(self, lib):
         self.lib = lib
         self.interfaces = []
+        self.coclasses = []
 
     def interface(self, header):
         itf = Interface(header)
         self.interfaces.append(itf)
         return itf
 
+    def coclass(self, definition):
+        self.coclasses.append(definition)
+
     def __str__(self):
         header = '''import "oaidl.idl";
                     import "ocidl.idl";
                     %s {''' % self.lib
         body = "\n".join([str(itf) for itf in self.interfaces])
-        footer = "}"
+        footer = "\n".join(self.coclasses) + "}"
         return "\n".join((header, body, footer))
 
     def compile(self):
@@ -43,8 +47,8 @@ class TypeLib(object):
         # Unregister the typelib at interpreter exit...
         attr = tlib.GetLibAttr()
         guid, major, minor = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
-        atexit.register(comtypes.typeinfo.UnRegisterTypeLib,
-                        guid, major, minor)
+##        atexit.register(comtypes.typeinfo.UnRegisterTypeLib,
+##                        guid, major, minor)
         return tlb_path
     
 class Interface(object):
@@ -66,9 +70,24 @@ from comtypes.client import wrap
 tlb = TypeLib("[uuid(f4f74946-4546-44bd-a073-9ea6f9fe78cb)] library TestLib")
 
 itf = tlb.interface("""[object,
-                        // oleautomation,
+                        oleautomation,
+                        dual,
                         uuid(ed978f5f-cc45-4fcc-a7a6-751ffa8dfedd)]
-                       interface IMyInterface : IDispatch""")
+                        interface IMyInterface : IDispatch""")
+
+outgoing = tlb.interface("""[object,
+                             oleautomation,
+                             dual,
+                             uuid(f7c48a90-64ea-4bb8-abf1-b3a3aa996848)]
+                             interface IMyEventInterface : IDispatch""")
+
+tlb.coclass("""
+[uuid(fa9de8f4-20de-45fc-b079-648572428817)]
+coclass MyServer {
+    [default] interface IMyInterface;
+    [default, source] interface IMyEventInterface;
+};
+""")
 
 # The purpose of the MyServer class is to locate three separate code
 # section snippets closely together:
@@ -77,13 +96,15 @@ itf = tlb.interface("""[object,
 # 2. The Python implementation of the COM method
 # 3. The unittest(s) for the COM method.
 #
-class MyServer(comtypes.CoClass):
+from comtypes.server.connectionpoints import ConnectableObjectMixin
+class MyServer(comtypes.CoClass, ConnectableObjectMixin):
     _reg_typelib_ = ('{f4f74946-4546-44bd-a073-9ea6f9fe78cb}', 0, 0)
+    _reg_clsid_ = comtypes.GUID('{fa9de8f4-20de-45fc-b079-648572428817}')
 
     ################
     # definition
-    itf.add("""[propget] HRESULT Name([out, retval] BSTR *pname);
-               [propput] HRESULT Name([in] BSTR name);""")
+    itf.add("""[id(100), propget] HRESULT Name([out, retval] BSTR *pname);
+               [id(100), propput] HRESULT Name([in] BSTR name);""")
     # implementation
     Name = "foo"
     # test
@@ -95,7 +116,7 @@ class MyServer(comtypes.CoClass):
 
     ################
     # definition
-    itf.add("HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);")
+    itf.add("[id(101)] HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);")
     # implementation
     def MixedInOut(self, a, c):
         return a+1, c+1
@@ -106,7 +127,7 @@ class MyServer(comtypes.CoClass):
 
     ################
     # definition
-    itf.add("HRESULT MultiInOutArgs([in, out] int *pa, [in, out] int *pb);")
+    itf.add("[id(102)] HRESULT MultiInOutArgs([in, out] int *pa, [in, out] int *pb);")
     # implementation
     def MultiInOutArgs(self, pa, pb):
         return pa[0] * 3, pb[0] * 4
@@ -181,16 +202,57 @@ class MyServer(comtypes.CoClass):
     # such an array cannot be created.
     itf.add("""HRESULT dummy([in] SAFEARRAY(VARIANT *) foo);""")
 
-path = tlb.compile()
-from comtypes.gen import TestLib
 
-MyServer._com_interfaces_ = [TestLib.IMyInterface]
+    # Test events.
+    itf.add("""HRESULT DoSomething();""")
+    outgoing.add("""[id(100)] HRESULT OnSomething();""")
+    # implementation
+    def DoSomething(self):
+        "Implement the DoSomething method"
+        self.Fire_Event(0, "OnSomething")
+    # test
+    def test_events(self):
+        p = wrap(self.create())
+        class Handler(object):
+            called = 0
+            def OnSomething(self):
+                "Handles the OnSomething event"
+                self.called += 1
+        handler = Handler()
+        ev = comtypes.client.GetEvents(p, handler)
+        p.DoSomething()
+        self.assertEqual(handler.called, 1)
+
+        class Handler(object):
+            called = 0
+            def IMyEventInterface_OnSomething(self):
+                "Handles the OnSomething event"
+                self.called += 1
+        handler = Handler()
+        ev = comtypes.client.GetEvents(p, handler)
+        p.DoSomething()
+        self.assertEqual(handler.called, 1)
+
 
 ################################################################
 
-import unittest
+path = tlb.compile()
+from comtypes.gen import TestLib
+from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
+from comtypes.connectionpoints import IConnectionPointContainer
+
+MyServer._com_interfaces_ = [TestLib.IMyInterface,
+                             IProvideClassInfo2,
+                             IConnectionPointContainer]
+MyServer._outgoing_interfaces_ = [TestLib.IMyEventInterface]
+
+################################################################
 
 class Test(unittest.TestCase, MyServer):
+    def __init__(self, *args):
+        unittest.TestCase.__init__(self, *args)
+        MyServer.__init__(self)
+
     def create(self):
         obj = MyServer()
         return obj.QueryInterface(comtypes.IUnknown)

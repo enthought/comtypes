@@ -1,3 +1,11 @@
+2009-12-11  Thomas Heller  <theller@python.net>
+
+	* COM servers implemented in Python can now fire events; it did
+	not work in some cases.
+
+	* When an exception occurs in a COM event handler, a traceback is
+	printed.
+
 2009-11-26  Thomas Heller  <theller@python.net>
 
 	* Allow typelib wrappers that contain 'SAFEARRAY(VARIANT*)'

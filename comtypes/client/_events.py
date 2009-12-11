@@ -1,6 +1,7 @@
 import ctypes
+import traceback
 import comtypes
-from comtypes.hresult import *
+import comtypes.hresult
 import comtypes.automation
 import comtypes.typeinfo
 import comtypes.connectionpoints
@@ -34,7 +35,7 @@ class _AdviseConnection(object):
 def FindOutgoingInterface(source):
     """XXX Describe the strategy that is used..."""
     # If the COM object implements IProvideClassInfo2, it is easy to
-    # find the default autgoing interface.
+    # find the default outgoing interface.
     try:
         pci = source.QueryInterface(comtypes.typeinfo.IProvideClassInfo2)
         guid = pci.GetGUID(1)
@@ -93,13 +94,55 @@ def find_single_connection_interface(source):
 
     return None
 
+def report_errors(func):
+    # This decorator preserves parts of the decorated function
+    # signature, so that the comtypes special-casing for the 'this'
+    # parameter still works.
+    if func.func_code.co_varnames[:2] == ('self', 'this'):
+        def error_printer(self, this, *args, **kw):
+            try:
+                return func(self, this, *args, **kw)
+            except:
+                traceback.print_exc()
+                raise
+    else:
+        def error_printer(*args, **kw):
+            try:
+                return func(*args, **kw)
+            except:
+                traceback.print_exc()
+                raise
+    return error_printer
+
 from comtypes._comobject import _MethodFinder
 class _SinkMethodFinder(_MethodFinder):
+    """Special MethodFinder, for finding and decorating event handler
+    methods.  Looks for methods on two objects. Also decorates the
+    event handlers with 'report_errors' which will print exceptions in
+    event handlers.
+    """
     def __init__(self, inst, sink):
         super(_SinkMethodFinder, self).__init__(inst)
         self.sink = sink
 
     def find_method(self, fq_name, mthname):
+        impl = self._find_method(fq_name, mthname)
+        # Caller of this method catches AttributeError,
+        # so we need to be careful in the following code
+        # not to raise one...
+        try:
+            # impl is a bound method, dissect it...
+            im_self, im_func = impl.im_self, impl.im_func
+            # decorate it with an error printer...
+            method = report_errors(im_func)
+            # and make a new bound method from it again.
+            return comtypes.instancemethod(method,
+                                           im_self,
+                                           type(im_self))
+        except AttributeError, details:
+            raise RuntimeError(details)
+
+    def _find_method(self, fq_name, mthname):
         try:
             return super(_SinkMethodFinder, self).find_method(fq_name, mthname)
         except AttributeError:
@@ -108,7 +151,7 @@ class _SinkMethodFinder(_MethodFinder):
             except AttributeError:
                 return getattr(self.sink, mthname)
 
-def CreateEventReceiver(interface, sink):
+def CreateEventReceiver(interface, handler):
 
     class Sink(comtypes.COMObject):
         _com_interfaces_ = [interface]
@@ -116,9 +159,27 @@ def CreateEventReceiver(interface, sink):
         def _get_method_finder_(self, itf):
             # Use a special MethodFinder that will first try 'self',
             # then the sink.
-            return _SinkMethodFinder(self, sink)
+            return _SinkMethodFinder(self, handler)
 
-    return Sink()
+    sink = Sink()
+
+    # Since our Sink object doesn't have typeinfo, it needs a
+    # _dispimpl_ dictionary to dispatch events received via Invoke.
+    if issubclass(interface, comtypes.automation.IDispatch) \
+           and not hasattr(sink, "_dispimpl_"):
+        finder = sink._get_method_finder_(interface)
+        dispimpl = sink._dispimpl_ = {}
+        for m in interface._methods_:
+            restype, mthname, argtypes, paramflags, idlflags, helptext = m
+            # Can dispid be at a different index? Should check code generator...
+            # ...but hand-written code should also work...
+            dispid = idlflags[0]
+            impl = finder.get_impl(interface, mthname, paramflags, idlflags)
+            # XXX Wouldn't work for 'propget', 'propput', 'propputref'
+            # methods - are they allowed on event interfaces?
+            dispimpl[(dispid, comtypes.automation.DISPATCH_METHOD)] = impl
+
+    return sink
 
 def GetEvents(source, sink, interface=None):
     """Receive COM events from 'source'.  Events will call methods on
@@ -146,7 +207,7 @@ class EventDumper(object):
             # XXX handler is called with 'this'.  Should we really print "None" instead?
             args = (None,) + args
             print "Event %s(%s)" % (name, ", ".join([repr(a) for a in args]))
-        return comtypes.instancemethod(handler, EventDumper, self)
+        return comtypes.instancemethod(handler, self, EventDumper)
 
 def ShowEvents(source, interface=None):
     """Receive COM events from 'source'.  A special event sink will be
