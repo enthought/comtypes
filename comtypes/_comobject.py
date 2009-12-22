@@ -469,7 +469,6 @@ class COMObject(object):
 
         dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator.
         impl = finder.get_impl(interface, mthname, paramflags, idlflags)
-        print "PARAMFLAGS", paramflags
         self._dispimpl_[(dispid, invkind)] = impl
         # invkind is really a set of flags; we allow both
         # DISPATCH_METHOD and DISPATCH_PROPERTYGET (win32com uses
