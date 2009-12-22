@@ -55,7 +55,7 @@ def _do_implement(interface_name, method_name):
         return E_NOTIMPL
     return _not_implemented
 
-def catch_errors(obj, mth, interface, mthname):
+def catch_errors(obj, mth, paramflags, interface, mthname):
     clsid = getattr(obj, "_reg_clsid_", None)
     def call_with_this(*args, **kw):
         try:
@@ -75,16 +75,22 @@ def catch_errors(obj, mth, interface, mthname):
         if result is None:
             return S_OK
         return result
+    if paramflags == None:
+        has_outargs = False
+    else:
+        has_outargs = bool([x[0] for x in paramflags
+                            if x[0] & 2])
+    call_with_this.has_outargs = has_outargs
     return call_with_this
 
 ################################################################
 
 def hack(inst, mth, paramflags, interface, mthname):
     if paramflags is None:
-        return catch_errors(inst, mth, interface, mthname)
+        return catch_errors(inst, mth, paramflags, interface, mthname)
     code = mth.func_code
     if code.co_varnames[1:2] == ("this",):
-        return catch_errors(inst, mth, interface, mthname)
+        return catch_errors(inst, mth, paramflags, interface, mthname)
     dirflags = [f[0] for f in paramflags]
     # An argument is an input arg either if flags are NOT set in the
     # idl file, or if the flags contain 'in'. In other words, the
@@ -151,7 +157,8 @@ def hack(inst, mth, paramflags, interface, mthname):
             _error("Exception in %s.%s implementation:", interface.__name__, mthname, exc_info=True)
             return ReportException(E_FAIL, interface._iid_, clsid=clsid)
         return S_OK
-
+    if args_out:
+        call_without_this.has_outargs = True
     return call_without_this
 
 class _MethodFinder(object):
@@ -462,6 +469,7 @@ class COMObject(object):
 
         dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator.
         impl = finder.get_impl(interface, mthname, paramflags, idlflags)
+        print "PARAMFLAGS", paramflags
         self._dispimpl_[(dispid, invkind)] = impl
         # invkind is really a set of flags; we allow both
         # DISPATCH_METHOD and DISPATCH_PROPERTYGET (win32com uses
@@ -716,7 +724,7 @@ class COMObject(object):
             indexes = named_indexes + unnamed_indexes
             args = [params.rgvarg[i].value for i in named_indexes + unnamed_indexes]
 
-            if pVarResult:
+            if pVarResult and getattr(mth, "has_outargs", False):
                 args.append(pVarResult)
             return mth(this, *args)
 
