@@ -19,6 +19,7 @@ HRESULT GetStackTrace([in] ULONG FrameOffset,
                                      [out, optional] ULONG *FramesFilled);
 HRESULT dummy([in] SAFEARRAY(VARIANT *) foo);
 HRESULT DoSomething();
+HRESULT DoSomethingElse();
 }
 
 [object,
@@ -26,7 +27,8 @@ HRESULT DoSomething();
                              dual,
                              uuid(f7c48a90-64ea-4bb8-abf1-b3a3aa996848)]
                              interface IMyEventInterface : IDispatch {
-[id(100)] HRESULT OnSomething();
+[id(103)] HRESULT OnSomething();
+[id(104)] HRESULT OnSomethingElse([out, retval] int *px);
 }
 
 

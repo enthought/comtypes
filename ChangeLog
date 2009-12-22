@@ -1,3 +1,7 @@
+2009-12-22  Thomas Heller  <theller@python.net>
+
+	* Bug fixes for event handlers implemented in Python.
+
 2009-12-11  Thomas Heller  <theller@python.net>
 
 	* COM servers implemented in Python can now fire events; it did

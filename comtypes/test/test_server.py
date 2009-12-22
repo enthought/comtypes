@@ -205,7 +205,7 @@ class MyServer(comtypes.CoClass, ConnectableObjectMixin):
 
     # Test events.
     itf.add("""HRESULT DoSomething();""")
-    outgoing.add("""[id(100)] HRESULT OnSomething();""")
+    outgoing.add("""[id(103)] HRESULT OnSomething();""")
     # implementation
     def DoSomething(self):
         "Implement the DoSomething method"
@@ -215,7 +215,7 @@ class MyServer(comtypes.CoClass, ConnectableObjectMixin):
         p = wrap(self.create())
         class Handler(object):
             called = 0
-            def OnSomething(self):
+            def OnSomething(self, this):
                 "Handles the OnSomething event"
                 self.called += 1
         handler = Handler()
@@ -233,6 +233,35 @@ class MyServer(comtypes.CoClass, ConnectableObjectMixin):
         p.DoSomething()
         self.assertEqual(handler.called, 1)
 
+    # events with out-parameters (these are probably very unlikely...)
+    itf.add("""HRESULT DoSomethingElse();""")
+    outgoing.add("""[id(104)] HRESULT OnSomethingElse([out, retval] int *px);""")
+    def DoSomethingElse(self):
+        "Implement the DoSomething method"
+        self.Fire_Event(0, "OnSomethingElse")
+    def test_DoSomethingElse(self):
+        p = wrap(self.create())
+        class Handler(object):
+            called = 0
+            def OnSomethingElse(self):
+                "Handles the OnSomething event"
+                self.called += 1
+                return 42
+        handler = Handler()
+        ev = comtypes.client.GetEvents(p, handler)
+        p.DoSomethingElse()
+        self.assertEqual(handler.called, 1)
+
+        class Handler(object):
+            called = 0
+            def OnSomethingElse(self, this, presult):
+                "Handles the OnSomething event"
+                self.called += 1
+                presult[0] = 42
+        handler = Handler()
+        ev = comtypes.client.GetEvents(p, handler)
+        p.DoSomethingElse()
+        self.assertEqual(handler.called, 1)
 
 ################################################################
 
