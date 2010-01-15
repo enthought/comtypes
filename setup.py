@@ -27,9 +27,11 @@ Mailing list:
 
     https://lists.sourceforge.net/lists/listinfo/comtypes-users/
 
-Releases can be downloaded in the sourceforge files_ section.
+Download:
 
-.. _files: http://sourceforge.net/project/showfiles.php?group_id=115265
+    Releases can be downloaded in the sourceforge files section:
+
+    http://sourceforge.net/projects/comtypes/files/
 
 .. _`https://comtypes.svn.sourceforge.net/svnroot/comtypes/`: https://comtypes.svn.sourceforge.net/svnroot/comtypes/#egg=comtypes-dev
 
