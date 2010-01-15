@@ -1,4 +1,4 @@
-import unittest, os
+import unittest, os, sys
 from ctypes import *
 from comtypes import IUnknown, GUID
 from comtypes.automation import VARIANT, DISPPARAMS
@@ -84,7 +84,6 @@ class VariantTestCase(unittest.TestCase):
             self.failUnlessEqual(x, v.value)
 
     def test_integers(self):
-        import sys
         v = VARIANT()
 
         if (hasattr(sys, "maxint")):
@@ -159,6 +158,61 @@ class ArrayTest(unittest.TestCase):
             self.failUnlessEqual(v.value, (1, 1, 1, 1))
 
 ################################################################
+def run_test(rep, msg, func=None, previous={}, results={}):
+##    items = [None] * rep
+    if func is None:
+        locals = sys._getframe(1).f_locals
+        func = eval("lambda: %s" % msg, locals)
+    items = xrange(rep)
+    from time import clock
+    start = clock()
+    for i in items:
+        func(); func(); func(); func(); func()
+    stop = clock()
+    duration = (stop-start)*1e6/5/rep
+    try:
+        prev = previous[msg]
+    except KeyError:
+        print >> sys.stderr, "%40s: %7.1f us" % (msg, duration)
+        delta = 0.0
+    else:
+        delta = duration / prev * 100.0
+        print >> sys.stderr, "%40s: %7.1f us, time = %5.1f%%" % (msg, duration, delta)
+    results[msg] = duration
+    return delta
+
+def check_perf(rep=20000):
+    from ctypes import c_int
+    from comtypes.automation import VARIANT
+
+    import cPickle
+    try:
+        previous = cPickle.load(open("result.pickle", "rb"))
+    except IOError:
+        previous = {}
+
+    results = {}
+
+    d = 0.0
+    d += run_test(rep, "VARIANT()", previous=previous, results=results)
+    d += run_test(rep, "VARIANT().value", previous=previous, results=results)
+    d += run_test(rep, "VARIANT(None).value", previous=previous, results=results)
+    d += run_test(rep, "VARIANT(42).value", previous=previous, results=results)
+    d += run_test(rep, "VARIANT(42L).value", previous=previous, results=results)
+    d += run_test(rep, "VARIANT(3.14).value", previous=previous, results=results)
+    d += run_test(rep, "VARIANT(u'Str').value", previous=previous, results=results)
+    d += run_test(rep, "VARIANT('Str').value", previous=previous, results=results)
+    d += run_test(rep, "VARIANT((42,)).value", previous=previous, results=results)
+    d += run_test(rep, "VARIANT([42,]).value", previous=previous, results=results)
+
+    print "Average duration %.1f%%" % (d / 10)
+##    cPickle.dump(results, open("result.pickle", "wb"))
 
 if __name__ == '__main__':
-    unittest.main()
+    try:
+        unittest.main()
+    except SystemExit:
+        pass
+    import comtypes
+    print "Running benchmark with comtypes %s/Python %s ..." % (comtypes.__version__, sys.version.split()[0],)
+    check_perf()
