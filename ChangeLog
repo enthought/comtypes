@@ -1,5 +1,7 @@
 2010-01-15  Thomas Heller  <theller@python.net>
 
+	* Bumped version number to 0.6.2.
+
 	* CoUninitialize() returns nothing, not HRESULT.
 
 2009-12-22  Thomas Heller  <theller@python.net>
