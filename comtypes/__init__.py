@@ -126,6 +126,7 @@ CLSCTX = tagCLSCTX
 ################################################################
 # Initialization and shutdown
 _ole32 = oledll.ole32
+_ole32_nohresult = windll.ole32 # use this for functions that don't return a HRESULT
 
 COINIT_MULTITHREADED     = 0x0
 COINIT_APARTMENTTHREADED = 0x2
@@ -158,9 +159,9 @@ CoInitializeEx()
 # in which we are using COM
 def CoUninitialize():
     logger.debug("CoUninitialize()")
-    _ole32.CoUninitialize()
+    _ole32_nohresult.CoUninitialize()
 
-def shutdown(func=_ole32.CoUninitialize,
+def shutdown(func=_ole32_nohresult.CoUninitialize,
              _debug=logger.debug,
              _exc_clear=getattr(sys, "exc_clear", lambda: None)):
     # Make sure no COM pointers stay in exception frames.

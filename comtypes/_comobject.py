@@ -279,6 +279,8 @@ class LocalServer(object):
 
     _queue = None
     def run(self, classobjects):
+        # Use windll instead of oledll so that we don't get an
+        # exception on a FAILED hresult:
         result = windll.ole32.CoInitialize(None)
         if RPC_E_CHANGED_MODE == result:
             # we're running in MTA: no message pump needed

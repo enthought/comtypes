@@ -1,3 +1,7 @@
+2010-01-15  Thomas Heller  <theller@python.net>
+
+	* CoUninitialize() returns nothing, not HRESULT.
+
 2009-12-22  Thomas Heller  <theller@python.net>
 
 	* Bug fixes for event handlers implemented in Python.
