@@ -3,7 +3,7 @@ import types, sys, os
 # comtypes version numbers follow the setuptools convention:
 # http://peak.telecommunity.com/DevCenter/setuptools#specifying-your-project-s-version
 # 0.6.0dev < 0.6.0a < 0.6.0.b < 0.6.0c < 0.6.0
-__version__ = "0.6.2"
+__version__ = "0.6.3dev"
 
 import logging
 class NullHandler(logging.Handler):

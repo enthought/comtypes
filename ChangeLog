@@ -1,5 +1,9 @@
 2010-01-15  Thomas Heller  <theller@python.net>
 
+	* Bump version number to 0.6.3dev: development version.
+
+2010-01-15  Thomas Heller  <theller@python.net>
+
 	* Bumped version number to 0.6.2.
 
 	* CoUninitialize() returns nothing, not HRESULT.
