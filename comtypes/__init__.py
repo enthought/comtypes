@@ -477,7 +477,7 @@ class _cominterface_meta(type):
                 # use propput (if any)
                 del methods[2]
             if nargs:
-                setattr(self, name, named_property(*methods))
+                setattr(self, name, named_property("%s.%s" % (self.__name__, name), *methods))
             else:
                 assert len(methods) <= 2
                 setattr(self, name, property(*methods))
@@ -758,7 +758,7 @@ class _cominterface_meta(type):
                 # Hm, must be a descriptor where the __get__ method
                 # returns a bound object having __getitem__ and
                 # __setitem__ methods.
-                prop = named_property(*methods + [doc])
+                prop = named_property("%s.%s" % (self.__name__, name), *methods + [doc])
             # Again, we should not overwrite class attributes that are
             # already present.
             if hasattr(self, name):
@@ -776,7 +776,8 @@ class _cominterface_meta(type):
 # Should they be implemented in C for speed?
 
 class bound_named_property(object):
-    def __init__(self, getter, setter, im_inst):
+    def __init__(self, name, getter, setter, im_inst):
+        self.name = name
         self.im_inst = im_inst
         self.getter = getter
         self.setter = setter
@@ -802,8 +803,12 @@ class bound_named_property(object):
         else:
             self.setter(self.im_inst, index, value)
 
+    def __repr__(self):
+        return "<bound_named_property %r at %x>" % (self.name, id(self))
+
 class named_property(object):
-    def __init__(self, fget=None, fset=None, doc=None):
+    def __init__(self, name, fget=None, fset=None, doc=None):
+        self.name = name
         self.getter = fget
         self.setter = fset
         self.__doc__ = doc
@@ -811,11 +816,14 @@ class named_property(object):
     def __get__(self, im_inst, im_class=None):
         if im_inst is None:
             return self
-        return bound_named_property(self.getter, self.setter, im_inst)
+        return bound_named_property(self.name, self.getter, self.setter, im_inst)
 
     # Make this a data descriptor
     def __set__(self, obj):
         raise AttributeError("Unsettable attribute")
+
+    def __repr__(self):
+        return "<named_property %r at %x>" % (self.name, id(self))
 
 ################################################################
 
