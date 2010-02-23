@@ -1,5 +1,6 @@
 # comtypes.automation module
 from ctypes import *
+from ctypes import _Pointer
 from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
@@ -48,6 +49,7 @@ INVOKEKIND = tagINVOKEKIND
 # helpers
 IID_NULL = GUID()
 riid_null = byref(IID_NULL)
+_byref_type = type(byref(c_int()))
 
 # 30. December 1899, midnight.  For VT_DATE.
 _com_null_date = datetime.datetime(1899, 12, 30, 0, 0, 0)
@@ -296,6 +298,16 @@ class tagVARIANT(Structure):
         elif isinstance(value, c_float):
             self.vt = VT_R4
             self._.VT_R4 = value
+        elif isinstance(value, _byref_type):
+            ref = value._obj
+            self._.c_void_p = addressof(ref)
+            self.__keepref = value
+            self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
+        elif isinstance(value, _Pointer):
+            ref = value.contents
+            self._.c_void_p = addressof(ref)
+            self.__keepref = value
+            self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         else:
             raise TypeError("Cannot put %r in VARIANT" % value)
         # buffer ->  SAFEARRAY of VT_UI1 ?

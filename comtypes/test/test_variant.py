@@ -5,7 +5,7 @@ from comtypes.automation import VARIANT, DISPPARAMS
 from comtypes.automation import VT_NULL, VT_EMPTY, VT_ERROR
 from comtypes.automation import VT_I1, VT_I2, VT_I4, VT_I8
 from comtypes.automation import VT_UI1, VT_UI2, VT_UI4, VT_UI8
-from comtypes.automation import VT_R4, VT_R8
+from comtypes.automation import VT_R4, VT_R8, VT_BYREF
 from comtypes.automation import BSTR, VT_BSTR, VT_DATE
 from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib
 from comtypes.test import is_resource_enabled
@@ -138,6 +138,22 @@ class VariantTestCase(unittest.TestCase):
             v.value = value
             self.failUnlessEqual(v.vt, vt)
 
+    def test_byref(self):
+        variable = c_int(42)
+        v = VARIANT(byref(variable))
+        self.failUnlessEqual(v[0], 42)
+        self.failUnlessEqual(v.vt, VT_BYREF | VT_I4)
+        variable.value = 96
+        self.failUnlessEqual(v[0], 96)
+
+        variable = c_int(42)
+        v = VARIANT(pointer(variable))
+        self.failUnlessEqual(v[0], 42)
+        self.failUnlessEqual(v.vt, VT_BYREF | VT_I4)
+        variable.value = 96
+        self.failUnlessEqual(v[0], 96)
+        
+
 class ArrayTest(unittest.TestCase):
     def test_double(self):
         import array
@@ -182,8 +198,13 @@ def run_test(rep, msg, func=None, previous={}, results={}):
     return delta
 
 def check_perf(rep=20000):
-    from ctypes import c_int
+    from ctypes import c_int, byref
     from comtypes.automation import VARIANT
+    import comtypes.automation
+    print comtypes.automation
+    variable = c_int()
+    by_var = byref(variable)
+    ptr_var = pointer(variable)
 
     import cPickle
     try:
@@ -195,6 +216,8 @@ def check_perf(rep=20000):
 
     d = 0.0
     d += run_test(rep, "VARIANT()", previous=previous, results=results)
+    d += run_test(rep, "VARIANT(by_var)", previous=previous, results=results)
+    d += run_test(rep, "VARIANT(ptr_var)", previous=previous, results=results)
     d += run_test(rep, "VARIANT().value", previous=previous, results=results)
     d += run_test(rep, "VARIANT(None).value", previous=previous, results=results)
     d += run_test(rep, "VARIANT(42).value", previous=previous, results=results)
