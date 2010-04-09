@@ -7,6 +7,17 @@
 	objects do not correctly differentiate methods and properties,
 	leading to problems when calling these methods.
 
+2010-02-23  Thomas Heller  <theller@python.net>
+
+	* pointers and byref() objects will now be stored in a VARIANT as
+	VT_BYREF type.  This allows to call dispinterface methods with
+	BYREF arguments.
+
+2010-01-21  Thomas Heller  <theller@python.net>
+
+	* Add a __repr__ method to named_property and bound_named_property
+	object.
+
 2010-01-15  Thomas Heller  <theller@python.net>
 
 	* Bump version number to 0.6.3dev: development version.
