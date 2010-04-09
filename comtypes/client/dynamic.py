@@ -58,6 +58,7 @@ class _Dispatch(object):
     def __init__(self, comobj):
         self.__dict__["_comobj"] = comobj
         self.__dict__["_ids"] = {} # Tiny optimization: trying not to use GetIDsOfNames more than once
+        self.__dict__["_methods"] = set()
 
     def __enum(self):
         e = self._comobj.Invoke(-4) # DISPID_NEWENUM
@@ -85,13 +86,34 @@ class _Dispatch(object):
         "QueryInterface is forwarded to the real com object."
         return self._comobj.QueryInterface(*args)
 
+    def _FlagAsMethod(self, *names):
+        """Flag these attribute names as being methods.
+        Some objects do not correctly differentiate methods and
+        properties, leading to problems when calling these methods.
+
+        Specifically, trying to say: ob.SomeFunc()
+        may yield an exception "None object is not callable"
+        In this case, an attempt to fetch the *property*has worked
+        and returned None, rather than indicating it is really a method.
+        Calling: ob._FlagAsMethod("SomeFunc")
+        should then allow this to work.
+        """
+        self._methods.update(names)
+
     def __getattr__(self, name):
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(name)
 ##        tc = self._comobj.GetTypeInfo(0).QueryInterface(comtypes.typeinfo.ITypeComp)
 ##        dispid = tc.Bind(name)[1].memid
         dispid = self._ids.get(name)
         if not dispid:
             dispid = self._comobj.GetIDsOfNames(name)[0]
             self._ids[name] = dispid
+
+        if name in self._methods:
+            result = MethodCaller(dispid, self)
+            self.__dict__[name] = result
+            return result
 
         flags = comtypes.automation.DISPATCH_PROPERTYGET
         try:
