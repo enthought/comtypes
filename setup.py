@@ -39,7 +39,8 @@ Download:
 """
 import sys, os
 import ctypes
-from distutils.core import setup, Command, DistutilsOptionError
+from distutils.core import setup, Command
+from distutils.errors import DistutilsOptionError
 
 try:
     from distutils.command.build_py import build_py_2to3 as build_py
