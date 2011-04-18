@@ -1,4 +1,6 @@
-import os, sys
+import os
+import sys
+import shutil
 from ctypes import windll
 
 def is_cache():
@@ -38,10 +40,7 @@ directory = is_cache()
 if directory:
     res = windll.user32.MessageBoxA(0, text, title, MB_YESNO|MB_ICONWARNING)
     if res == IDYES:
-        for f in os.listdir(directory):
-            fullpath = os.path.join(directory, f)
-            os.remove(fullpath)
-        os.rmdir(directory)
+        shutil.rmtree(directory)
         print("Removed directory %s" % directory)
     else:
         print("Directory %s NOT removed" % directory)
