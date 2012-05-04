@@ -5,14 +5,25 @@ from ctypes import *
 from ctypes.wintypes import BOOL
 from comtypes.test.find_memleak import find_memleak
 from comtypes import BSTR, IUnknown
-from comtypes.test import is_resource_enabled
+from comtypes.test import is_resource_enabled, get_numpy
 import array
 
 from comtypes.automation import VARIANT, IDispatch, VT_ARRAY, VT_VARIANT, \
      VT_I4, VT_R4, VT_R8, VT_BSTR, VARIANT_BOOL, VT_DATE, VT_CY
 from comtypes.automation import _midlSAFEARRAY
+from comtypes.safearray import safearray_as_ndarray
 
 from comtypes._safearray import SafeArrayGetVartype
+
+def get_array(sa):
+    '''Get an array from a safe array type'''
+    # Don't rely on context manager syntax - must support python < 2.5
+    try:
+        safearray_as_ndarray.__enter__()
+        return sa[0]
+    finally:
+        safearray_as_ndarray.__exit__(None, None, None)
+
 
 class VariantTestCase(unittest.TestCase):
     def test_VARIANT_array(self):
@@ -114,6 +125,22 @@ class SafeArrayTestCase(unittest.TestCase):
         self.failUnlessEqual(sa[0], ("a", "b", "c"))
         self.failUnlessEqual(SafeArrayGetVartype(sa), VT_BSTR)
 
+    def test_VT_BSTR_ndarray(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        t = _midlSAFEARRAY(BSTR)
+
+        sa = t.from_param(["a" ,"b", "c"])
+        arr = get_array(sa)
+
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnlessEqual(np.dtype('<U1'), arr.dtype)
+        self.failUnless((arr == ("a", "b", "c")).all())
+        self.failUnlessEqual(SafeArrayGetVartype(sa), VT_BSTR)
+
+
     def test_VT_BSTR_leaks(self):
         sb = _midlSAFEARRAY(BSTR)
         def doit():
@@ -142,35 +169,56 @@ class SafeArrayTestCase(unittest.TestCase):
         # TypeError: len() of unsized object
         self.assertRaises(TypeError, lambda: t.from_param(object()))
 
+    def test_VT_I4_ndarray(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        t = _midlSAFEARRAY(c_long)
+
+        sa = t.from_param([11, 22, 33])
+
+        arr = get_array(sa)
+
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnlessEqual(np.dtype(np.int), arr.dtype)
+        self.failUnless((arr == (11, 22, 33)).all())
+        self.failUnlessEqual(SafeArrayGetVartype(sa), VT_I4)
+
     def test_array(self):
+        np = get_numpy()
+        if np is None:
+            return
+
         t = _midlSAFEARRAY(c_double)
         pat = pointer(t())
 
-        try:
-            import numpy
-        except ImportError:
-            pass # numpy not available
-        else:
-            pat[0] = numpy.zeros(32, dtype=numpy.float)
-            self.failUnlessEqual(tuple(pat[0][0]),
-                                 (0.0,) * 32)
+        pat[0] = np.zeros(32, dtype=np.float)
+        arr = get_array(pat[0])
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnlessEqual(np.dtype(np.double), arr.dtype)
+        self.failUnless((arr == (0.0,) * 32).all())
 
-            data = ((1.0, 2.0, 3.0),
-                    (4.0, 5.0, 6.0),
-                    (7.0, 8.0, 9.0))
-            a = numpy.array(data,
-                            dtype=numpy.double)
-            pat[0] = a
-            self.failUnlessEqual(pat[0][0],
-                                 data)
+        data = ((1.0, 2.0, 3.0),
+                (4.0, 5.0, 6.0),
+                (7.0, 8.0, 9.0))
+        a = np.array(data,
+                        dtype=np.double)
+        pat[0] = a
+        arr = get_array(pat[0])
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnlessEqual(np.dtype(np.double), arr.dtype)
+        self.failUnless((arr == data).all())
 
-            data = ((1.0, 2.0), (3.0, 4.0), (5.0, 6.0))
-            a = numpy.array(data,
-                            dtype=numpy.double,
-                            order="F")
-            pat[0] = a
-            self.failUnlessEqual(pat[0][0],
-                                 data)
+        data = ((1.0, 2.0), (3.0, 4.0), (5.0, 6.0))
+        a = np.array(data,
+                        dtype=np.double,
+                        order="F")
+        pat[0] = a
+        arr = get_array(pat[0])
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnlessEqual(np.dtype(np.double), arr.dtype)
+        self.failUnlessEqual(pat[0][0], data)
 
     def test_VT_VARIANT(self):
         t = _midlSAFEARRAY(VARIANT)
@@ -181,11 +229,39 @@ class SafeArrayTestCase(unittest.TestCase):
 
         self.failUnlessEqual(SafeArrayGetVartype(sa), VT_VARIANT)
 
+    def test_VT_VARIANT_ndarray(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        t = _midlSAFEARRAY(VARIANT)
+
+        now = datetime.datetime.now()
+        sa = t.from_param([11, "22", None, True, now, Decimal("3.14")])
+        arr = get_array(sa)
+        self.failUnlessEqual(np.dtype(object), arr.dtype)
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnless((arr == (11, "22", None, True, now, Decimal("3.14"))).all())
+        self.failUnlessEqual(SafeArrayGetVartype(sa), VT_VARIANT)
+
     def test_VT_BOOL(self):
         t = _midlSAFEARRAY(VARIANT_BOOL)
 
         sa = t.from_param([True, False, True, False])
         self.failUnlessEqual(sa[0], (True, False, True, False))
+
+    def test_VT_BOOL_ndarray(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        t = _midlSAFEARRAY(VARIANT_BOOL)
+
+        sa = t.from_param([True, False, True, False])
+        arr = get_array(sa)
+        self.failUnlessEqual(np.dtype(np.bool_), arr.dtype)
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnless((arr == (True, False, True, False)).all())
 
     def test_VT_UNKNOWN_1(self):
         a = _midlSAFEARRAY(POINTER(IUnknown))
@@ -271,6 +347,60 @@ class SafeArrayTestCase(unittest.TestCase):
         del sa
         self.failUnlessEqual((a, b), (com_refcnt(plib), com_refcnt(punk)))
 
+    def test_VT_UNKNOWN_multi_ndarray(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        a = _midlSAFEARRAY(POINTER(IUnknown))
+        t = _midlSAFEARRAY(POINTER(IUnknown))
+        self.failUnless(a is t)
+
+        def com_refcnt(o):
+            "Return the COM refcount of an interface pointer"
+            import gc; gc.collect(); gc.collect()
+            o.AddRef()
+            return o.Release()
+
+        from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
+        punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
+
+        # initial refcount
+        initial = com_refcnt(punk)
+
+        # This should increase the refcount by 4
+        sa = t.from_param((punk,) * 4)
+        self.failUnlessEqual(initial + 4, com_refcnt(punk))
+
+        # Unpacking the array must not change the refcount, and must
+        # return an equal object. Creating an ndarray may change the
+        # refcount.
+        arr = get_array(sa)
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnlessEqual(np.dtype(object), arr.dtype)
+        self.failUnless((arr == (punk,)*4).all())
+        self.failUnlessEqual(initial + 8, com_refcnt(punk))
+
+        del arr
+        self.failUnlessEqual(initial + 4, com_refcnt(punk))
+
+        del sa
+        self.failUnlessEqual(initial, com_refcnt(punk))
+
+        # This should increase the refcount by 2
+        sa = t.from_param((punk, None, punk, None))
+        self.failUnlessEqual(initial + 2, com_refcnt(punk))
+
+        null = POINTER(IUnknown)()
+        arr = get_array(sa)
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnlessEqual(np.dtype(object), arr.dtype)
+        self.failUnless((arr == (punk, null, punk, null)).all())
+
+        del sa
+        del arr
+        self.failUnlessEqual(initial, com_refcnt(punk))
+
     def test_UDT(self):
         from comtypes.gen.TestComServerLib import MYCOLOR
 
@@ -286,6 +416,25 @@ class SafeArrayTestCase(unittest.TestCase):
             t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
         bytes = find_memleak(doit)
         self.failIf(bytes, "Leaks %d bytes" % bytes)
+
+    def test_UDT_ndarray(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        from comtypes.gen.TestComServerLib import MYCOLOR
+
+        t = _midlSAFEARRAY(MYCOLOR)
+        self.failUnless(t is _midlSAFEARRAY(MYCOLOR))
+
+        sa = t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
+        arr = get_array(sa)
+
+        self.failUnless(isinstance(arr, np.ndarray))
+        self.failUnlessEqual(np.dtype(object), arr.dtype)
+        self.failUnlessEqual([(x.red, x.green, x.blue) for x in arr],
+                             [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)])
+
 
 if is_resource_enabled("pythoncom"):
     try:

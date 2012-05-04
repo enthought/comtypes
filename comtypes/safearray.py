@@ -1,8 +1,43 @@
+import threading
 import array, sys
 from ctypes import *
 from comtypes import _safearray, GUID, IUnknown, com_interface_registry
 from comtypes.partial import partial
 _safearray_type_cache = {}
+
+class _SafeArrayAsNdArrayContextManager(object):
+    '''Context manager allowing safe arrays to be extracted as ndarrays.
+
+    This is thread-safe.
+
+    Example
+    -------
+
+    This works in python >= 2.5
+    >>> with safearray_as_ndarray:
+    >>>     my_arr = com_object.AsSafeArray
+    >>> type(my_arr)
+    numpy.ndarray
+
+    '''
+    thread_local = threading.local()
+
+    def __enter__(self):
+        self.thread_local.in_context = True
+        return
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.thread_local.in_context = False
+        return
+
+    def __nonzero__(self):
+        '''True if context manager is currently entered on given thread.
+        
+        '''
+        return getattr(self.thread_local, 'in_context', False)
+
+# Global _SafeArrayAsNdArrayContextManager
+safearray_as_ndarray = _SafeArrayAsNdArrayContextManager()
 
 ################################################################
 # This is THE PUBLIC function: the gateway to the SAFEARRAY functionality.
@@ -190,28 +225,41 @@ def _make_safearray_type(itemtype):
             return _safearray.SafeArrayGetUBound(self, dim)+1 - _safearray.SafeArrayGetLBound(self, dim)
 
         def unpack(self):
-            """Unpack a POINTER(SAFEARRAY_...) into a Python tuple."""
+            """Unpack a POINTER(SAFEARRAY_...) into a Python tuple or ndarray."""
             dim = _safearray.SafeArrayGetDim(self)
 
             if dim == 1:
                 num_elements = self._get_size(1)
-                return tuple(self._get_elements_raw(num_elements))
+                result = self._get_elements_raw(num_elements)
+                if safearray_as_ndarray:
+                    import numpy
+                    return numpy.asarray(result)
+                return tuple(result)
             elif dim == 2:
                 # get the number of elements in each dimension
                 rows, cols = self._get_size(1), self._get_size(2)
                 # get all elements
                 result = self._get_elements_raw(rows * cols)
-                # transpose the result, because it is in VB order
+                # this must be reshaped and transposed because it is
+                # flat, and in VB order
+                if safearray_as_ndarray:
+                    import numpy
+                    return numpy.asarray(result).reshape((cols, rows)).T
                 result = [tuple(result[r::rows]) for r in range(rows)]
                 return tuple(result)
             else:
                 lowerbounds = [_safearray.SafeArrayGetLBound(self, d) for d in range(1, dim+1)]
                 indexes = (c_long * dim)(*lowerbounds)
                 upperbounds = [_safearray.SafeArrayGetUBound(self, d) for d in range(1, dim+1)]
-                return self._get_row(0, indexes, lowerbounds, upperbounds)
+                row = self._get_row(0, indexes, lowerbounds, upperbounds)
+                if safearray_as_ndarray:
+                    import numpy
+                    return numpy.asarray(row)
+                return row
 
         def _get_elements_raw(self, num_elements):
-            """Returns a flat list containing ALL elements in the safearray."""
+            """Returns a flat list or ndarray containing ALL elements in
+            the safearray."""
             from comtypes.automation import VARIANT
             # XXX Not sure this is true:
             # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
@@ -220,6 +268,8 @@ def _make_safearray_type(itemtype):
             _safearray.SafeArrayAccessData(self, byref(ptr))
             try:
                 if self._itemtype_ == VARIANT:
+                    # We have to loop over each item, so we get no
+                    # speedup by creating an ndarray here.
                     return [i.value for i in ptr[:num_elements]]
                 elif issubclass(self._itemtype_, POINTER(IUnknown)):
                     iid = _safearray.SafeArrayGetIID(self)
@@ -228,6 +278,8 @@ def _make_safearray_type(itemtype):
                     # must be AddRef()'d if non-NULL.
                     elems = ptr[:num_elements]
                     result = []
+                    # We have to loop over each item, so we get no
+                    # speedup by creating an ndarray here.
                     for p in elems:
                         if bool(p):
                             p.AddRef()
@@ -241,32 +293,15 @@ def _make_safearray_type(itemtype):
                     # objects, the containing safearray must be kept
                     # alive until all the elements are destroyed.
                     if not issubclass(self._itemtype_, Structure):
-                        # Creating and returning numpy arrays instead
-                        # of Python tuple from a safearray is a lot faster,
-                        # but only for large arrays because of a certain overhead.
-                        # Also, for backwards compatibility, some clients expect
-                        # a Python tuple - so there should be a way to select
-                        # what should be returned.  How could that work?
-##                        # A hack which would return numpy arrays
-##                        # instead of Python lists.  To be effective,
-##                        # the result must not converted into a tuple
-##                        # in the caller so there must be changes as
-##                        # well!
-##
-##                        # Crude hack to create and attach an
-##                        # __array_interface__ property to the
-##                        # pointer instance
-##                        array_type = ptr._type_ * num_elements
-##                        if not hasattr(array_type, "__array_interface__"):
-##                            import numpy.ctypeslib
-##                            numpy.ctypeslib.prep_array(array_type)
-##                        # use the array_type's __array_interface__, ...
-##                        aif = array_type.__array_interface__.__get__(ptr)
-##                        # overwrite the 'data' member so that it points to the
-##                        # address we want to use
-##                        aif["data"] = (cast(ptr, c_void_p).value, False)
-##                        ptr.__array_interface__ = aif
-##                        return numpy.array(ptr, copy=True)
+                        # Create an ndarray if requested. This is where
+                        # we can get the most speed-up. 
+                        # XXX Only try to convert types known to
+                        #     numpy.ctypeslib.
+                        import numpy.ctypeslib
+                        if (safearray_as_ndarray and self._itemtype_ in
+                                numpy.ctypeslib._typecodes.values()):
+                            arr = numpy.ctypeslib.as_array(ptr, (num_elements,))
+                            return arr.copy()
                         return ptr[:num_elements]
                     def keep_safearray(v):
                         v.__keepref = self

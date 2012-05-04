@@ -8,7 +8,7 @@ from comtypes.automation import VT_UI1, VT_UI2, VT_UI4, VT_UI8
 from comtypes.automation import VT_R4, VT_R8, VT_BYREF
 from comtypes.automation import BSTR, VT_BSTR, VT_DATE
 from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib
-from comtypes.test import is_resource_enabled
+from comtypes.test import is_resource_enabled, get_numpy
 
 def get_refcnt(comptr):
     # return the COM reference count of a COM interface pointer
@@ -153,6 +153,31 @@ class VariantTestCase(unittest.TestCase):
         variable.value = 96
         self.failUnlessEqual(v[0], 96)
         
+
+class NdArrayTest(unittest.TestCase):
+    def test_double(self):
+        np = get_numpy()
+        if np is None:
+            return
+        for dtype in ('float32', 'float64'):
+            # because of FLOAT rounding errors, whi will only work for
+            # certain values!
+            a = np.array([1.0, 2.0, 3.0, 4.5], dtype=dtype)
+            v = VARIANT()
+            v.value = a
+            self.failUnlessEqual(v.value, (1.0, 2.0, 3.0, 4.5))
+
+    def test_int(self):
+        np = get_numpy()
+        if np is None:
+            return
+        for dtype in ('int8', 'int16', 'int32', 'int64', 'uint8',
+                'uint16', 'uint32', 'uint64'):
+            a = np.array((1, 1, 1, 1), dtype=dtype)
+            v = VARIANT()
+            v.value = a
+            self.failUnlessEqual(v.value, (1, 1, 1, 1))
+
 
 class ArrayTest(unittest.TestCase):
     def test_double(self):

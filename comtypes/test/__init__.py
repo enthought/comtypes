@@ -4,6 +4,14 @@ import glob, os, sys, unittest, getopt, time
 
 use_resources = []
 
+def get_numpy():
+    '''Get numpy if it is available.'''
+    try:
+        import numpy
+        return numpy
+    except ImportError:
+        return None
+
 class ResourceDenied(Exception):
     """Test skipped because it requested a disallowed resource.
 

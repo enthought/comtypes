@@ -18,6 +18,14 @@ try:
 except ImportError:
     decimal = None
 
+try:
+    from numpy import ndarray
+except ImportError:
+    class ndarray(object):
+        pass
+
+
+
 from ctypes.wintypes import VARIANT_BOOL
 from ctypes.wintypes import WORD
 from ctypes.wintypes import UINT
@@ -259,6 +267,20 @@ class tagVARIANT(Structure):
         elif isinstance(value, array.array):
             vartype = _arraycode_to_vartype[value.typecode]
             typ = _vartype_to_ctype[vartype]
+            obj = _midlSAFEARRAY(typ).create(value)
+            memmove(byref(self._), byref(obj), sizeof(obj))
+            self.vt = VT_ARRAY | obj._vartype_
+        elif isinstance(value, ndarray):
+            # Get the array type. This only works if we have a simple
+            # array.
+            descr = value.dtype.descr[0][1]
+            import numpy.ctypeslib
+            try:
+                typ = numpy.ctypeslib._typecodes[descr]
+            except KeyError:
+                msg = ('Cannot make safe array out of object of type '
+                       '"%s"' % descr)
+                raise ValueError(msg)
             obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
