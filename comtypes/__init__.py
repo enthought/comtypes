@@ -511,6 +511,8 @@ class _cominterface_meta(type):
             interface = restype.__com_interface__
             def func(s, *args, **kw):
                 result = self.Invoke(s, memid, _invkind=1, *args, **kw)
+                if result is None:
+                    return
                 return result.QueryInterface(interface)
         else:
             def func(obj, *args, **kw):
@@ -524,7 +526,10 @@ class _cominterface_meta(type):
         if "readonly" in idlflags:
             return property(_get)
         def _set(obj, value):
-            return obj.Invoke(memid, value, _invkind=4) # DISPATCH_PROPERTYPUT
+            # Detect whether to use DISPATCH_PROPERTYPUT or
+            # DISPATCH_PROPERTYPUTREF
+            invkind = 8 if _is_object(value) else 4
+            return obj.Invoke(memid, value, _invkind=invkind)
         return property(_get, _set)
 
     def __get_baseinterface_methodcount(self):
