@@ -247,7 +247,10 @@ class Generator(object):
         import textwrap
         wrapper = textwrap.TextWrapper(subsequent_indent="           ",
                                        break_long_words=False)
-        text = "__all__ = [%s]" % ", ".join([repr(str(n)) for n in self.names])
+        # XXX The space before '%s' is needed to make sure that the entire list
+        #     does not get pushed to the next line when the first name is
+        #     excessively long.
+        text = "__all__ = [ %s]" % ", ".join([repr(str(n)) for n in self.names])
 
         for line in wrapper.wrap(text):
             print >> self.output, line
