@@ -10,6 +10,12 @@ def is_cache():
         return
     return comtypes.gen.__path__[0]
 
+
+def _remove(directory):
+    shutil.rmtree(directory)
+    print("Removed directory %s" % directory)
+
+
 install_text = """\
 When installing a new comtypes version, it is recommended to remove
 the comtypes\gen directory and the automatically generated modules
@@ -24,12 +30,18 @@ automatically generates.
 
 Should this directory be removed?"""
 
-if len(sys.argv) > 1 and sys.argv[1] == "-install":
+if len(sys.argv) > 1 and "-install" in sys.argv[1:]:
     title = "Install comtypes"
     text = install_text
 else:
     title = "Remove comtypes"
     text = deinstall_text
+
+if len(sys.argv) > 1 and "-silent" in sys.argv[1:]:
+    silent = True
+else:
+    silent = False
+
 
 
 IDYES = 6
@@ -38,9 +50,12 @@ MB_YESNO = 4
 MB_ICONWARNING = 48
 directory = is_cache()
 if directory:
-    res = windll.user32.MessageBoxA(0, text, title, MB_YESNO|MB_ICONWARNING)
-    if res == IDYES:
-        shutil.rmtree(directory)
-        print("Removed directory %s" % directory)
+    if silent:
+        _remove(directory)
     else:
-        print("Directory %s NOT removed" % directory)
+        res = windll.user32.MessageBoxA(0, text, title,
+                MB_YESNO|MB_ICONWARNING)
+        if res == IDYES:
+            _remove(directory)
+        else:
+            print("Directory %s NOT removed" % directory)
