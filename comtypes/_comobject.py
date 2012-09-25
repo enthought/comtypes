@@ -12,7 +12,7 @@ _error = logger.error
 # COM object implementation
 from _ctypes import CopyComPointer
 
-from comtypes import COMError, ReturnHRESULT, instancemethod
+from comtypes import COMError, ReturnHRESULT, instancemethod, _encode_idl
 from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 from comtypes import IPersist
@@ -466,7 +466,6 @@ class COMObject(object):
         # We build a _dispmap_ entry now that maps invkind and
         # dispid to implementations that the finder finds;
         # IDispatch_Invoke will later call it.
-        from comtypes import _encode_idl
         paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec]
 
         dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator.

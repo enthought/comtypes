@@ -5,6 +5,7 @@ import comtypes.hresult
 import comtypes.automation
 import comtypes.typeinfo
 import comtypes.connectionpoints
+from comtypes.client._generate import GetModule
 import logging
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,6 @@ def FindOutgoingInterface(source):
         except KeyError:
             tinfo = pci.GetClassInfo()
             tlib, index = tinfo.GetContainingTypeLib()
-            from comtypes.client import GetModule
             GetModule(tlib)
             interface = comtypes.com_interface_registry[str(guid)]
         logger.debug("%s using sinkinterface %s", source, interface)
@@ -243,7 +243,7 @@ def PumpEvents(timeout):
     # If the calling thread resides in a multithread apartment (MTA),
     # CoWaitForMultipleHandles calls the Win32 function
     # MsgWaitForMultipleObjects.
-    
+
     hevt = ctypes.windll.kernel32.CreateEventA(None, True, False, None)
     handles = (ctypes.c_void_p * 1)(hevt)
     RPC_S_CALLPENDING = -2147417835
