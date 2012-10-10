@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 
 class _AdviseConnection(object):
     def __init__(self, source, interface, receiver):
+        self.cp = None
+        self.cookie = None
+        self.receiver = None
+        self._connect(source, interface, receiver)
+
+    def _connect(self, source, interface, receiver):
         cpc = source.QueryInterface(comtypes.connectionpoints.IConnectionPointContainer)
         self.cp = cpc.FindConnectionPoint(ctypes.byref(interface._iid_))
         logger.debug("Start advise %s", interface)
@@ -90,7 +96,7 @@ def find_single_connection_interface(source):
             logger.debug("%s using sinkinterface from iid %s", source, interface)
             return interface
     else:
-        logger.debug("%s has nore than one connection point", source)
+        logger.debug("%s has more than one connection point", source)
 
     return None
 
