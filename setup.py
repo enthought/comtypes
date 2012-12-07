@@ -39,8 +39,8 @@ Download:
 """
 import sys, os
 import ctypes
-from distutils.core import setup, Command
-from distutils.errors import DistutilsOptionError
+from distutils.core import Command
+from setuptools import setup
 
 try:
     from distutils.command.build_py import build_py_2to3 as build_py
@@ -72,7 +72,7 @@ class test(Command):
 
     def finalize_options(self):
         if self.refcounts and not hasattr(sys, "gettotalrefcount"):
-            raise DistutilsOptionError("refcount option requires Python debug build")
+            raise Exception("refcount option requires Python debug build")
         self.tests = self.tests.split(",")
         self.use_resources = self.use_resources.split(",")
 
@@ -154,8 +154,15 @@ setup(name="comtypes",
       license="MIT License",
       package_data = {"comtypes.test": ["TestComServer.idl",
                                         "TestComServer.tlb",
+                                        "TestDispServer.idl",
+                                        "TestDispServer.tlb",
                                         "mytypelib.idl",
-                                        "mylib.idl", "mylib.tlb"]},
+                                        "mylib.idl",
+                                        "mylib.tlb"
+                                        "urlhist.tlb",
+                                        "test_jscript.js",
+
+                                        ]},
       classifiers=classifiers,
 
       scripts=["clear_comtypes_cache.py"],
