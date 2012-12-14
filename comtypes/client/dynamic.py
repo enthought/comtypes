@@ -64,9 +64,9 @@ class _Dispatch(object):
         e = self._comobj.Invoke(-4) # DISPID_NEWENUM
         return e.QueryInterface(comtypes.automation.IEnumVARIANT)
 
-    def __cmp__(self, other): 	 
-        if not isinstance(other, _Dispatch): 	 
-            return 1 	 
+    def __cmp__(self, other):
+        if not isinstance(other, _Dispatch):
+            return 1
         return cmp(self._comobj, other._comobj)
 
     def __hash__(self):
@@ -137,16 +137,9 @@ class _Dispatch(object):
         if not dispid:
             dispid = self._comobj.GetIDsOfNames(name)[0]
             self._ids[name] = dispid
-        # First try propertyput, if that fails with
-        # DISP_E_MEMBERNOTFOUND then try propertyputref
-        flags = comtypes.automation.DISPATCH_PROPERTYPUT
-        try:
-            return self._comobj.Invoke(dispid, value, _invkind=flags)
-        except COMError, err:
-            (hresult, text, details) = err.args
-            if hresult == hres.DISP_E_MEMBERNOTFOUND: pass
-            else: raise
-        flags = comtypes.automation.DISPATCH_PROPERTYPUTREF
+        # Detect whether to use DISPATCH_PROPERTYPUT or
+        # DISPATCH_PROPERTYPUTREF
+        flags = 8 if _is_object(value) else 4
         return self._comobj.Invoke(dispid, value, _invkind=flags)
 
     def __iter__(self):
