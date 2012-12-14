@@ -562,7 +562,9 @@ class _cominterface_meta(type):
         BYREFTYPE = type(byref(c_int()))
         def call_with_inout(self_, *args, **kw):
             args = list(args)
-            outargs = []
+            # Indexed by order in the output
+            outargs = {}
+            outnum = 0
             for i, info in enumerate(paramflags):
                 direction = info[0]
                 if direction & 3 == 3:
@@ -603,18 +605,19 @@ class _cominterface_meta(type):
                         else:
                             v = atyp.from_param(v)
                             assert not isinstance(v, BYREFTYPE)
-                    outargs.append(v)
+                    outargs[outnum] = v
+                    outnum += 1
                     if len(args) > i:
                         args[i] = v
                     else:
                         kw[name] = v
+                elif direction & 2 == 2:
+                    outnum += 1
 
             rescode = func(self_, *args, **kw)
-            result = [o.__ctypes_from_outparam__() for o in outargs]
-            if len(result) > 1:
-                return tuple(result)
-            elif len(result) == 1:
-                return result[0]
+            rescode = list(rescode)
+            for outnum, o in outargs.items():
+                rescode[outnum] = o.__ctypes_from_outparam__()
             return rescode
         return call_with_inout
 
