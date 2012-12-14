@@ -2,6 +2,11 @@ from comtypes import automation, typeinfo, COMError
 from comtypes.tools import typedesc
 from ctypes import c_void_p, sizeof, alignment
 
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 ################################
 
 def PTR(typ):
@@ -321,18 +326,19 @@ class Parser(object):
         # methods even for this kind of interface.  I didn't find any
         # indication about these methods in the various flags, so we
         # have to exclude them by name.
-        basemethods = 0
-        if ta.cFuncs:
-            first_func_name = tinfo.GetDocumentation(tinfo.GetFuncDesc(0).memid)[0]
-            if first_func_name == "QueryInterface":
-                basemethods = 7
+        # CLF: 12/14/2012 Do this in a way that does not exclude other methods.
+        #      I have encountered typlibs where only "QueryInterface", "AddRef"
+        #      and "Release" are to be skipped.
+        ignored_names = set(["QueryInterface", "AddRef", "Release",
+                             "GetTypeInfoCount", "GetTypeInfo",
+                             "GetIDsOfNames", "Invoke"])
 
-        for i in range(basemethods, ta.cFuncs):
+        for i in range(ta.cFuncs):
             fd = tinfo.GetFuncDesc(i)
             func_name, func_doc = tinfo.GetDocumentation(fd.memid)[:2]
+            if func_name in ignored_names:
+                continue
             assert fd.funckind == typeinfo.FUNC_DISPATCH
-
-            assert func_name not in ("QueryInterface", "AddRef", "Release")
 
             returns = self.make_type(fd.elemdescFunc.tdesc, tinfo)
             names = tinfo.GetNames(fd.memid, fd.cParams+1)
