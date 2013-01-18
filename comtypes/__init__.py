@@ -905,6 +905,10 @@ class _compointer_base(c_void_p):
         which is QueryInterface()d."""
         if value is None:
             return None
+        # CLF: 2013-01-18
+        # A default value of 0, meaning null, can pass through to here.
+        if value == 0:
+            return None
         if isinstance(value, klass):
             return value
         # multiple python interface types for the same COM interface.
