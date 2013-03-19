@@ -116,8 +116,11 @@ class Parser(object):
                 ti = tinfo.GetRefTypeInfo(tdesc._.hreftype)
             except COMError, details:
                 type_name = "__error_hreftype_%d__" % tdesc._.hreftype
-                message = "\n\tGetRefTypeInfo failed: %s\n\tgenerating type '%s' instead" % \
-                          (details, type_name)
+                tlib_name = get_tlib_filename(self.tlib)
+                if tlib_name is None:
+                    tlib_name = "unknown typelib"
+                message = "\n\tGetRefTypeInfo failed in %s: %s\n\tgenerating type '%s' instead" % \
+                          (tlib_name, details, type_name)
                 import warnings
                 warnings.warn(message, UserWarning);
                 result = typedesc.Structure(type_name,
