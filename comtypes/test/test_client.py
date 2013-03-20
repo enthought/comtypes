@@ -1,6 +1,7 @@
 import unittest as ut
 import comtypes.client
-from ctypes import POINTER
+from comtypes import COSERVERINFO
+from ctypes import POINTER, byref
 
 # create the typelib wrapper and import it
 comtypes.client.GetModule("msscript.ocx")
@@ -28,6 +29,23 @@ class Test(ut.TestCase):
     def test_remote(self):
         ie = comtypes.client.CreateObject("InternetExplorer.Application",
                                           machine="localhost")
+        self.failUnlessEqual(ie.Visible, False)
+        ie.Visible = 1
+        # on a remote machine, this may not work.  Probably depends on
+        # how the server is run.
+        self.failUnlessEqual(ie.Visible, True)
+        self.failUnlessEqual(0, ie.Quit()) # 0 == S_OK
+
+    def test_server_info(self):
+        serverinfo = COSERVERINFO()
+        serverinfo.pwszName = 'localhost'
+        pServerInfo = byref(serverinfo)
+
+        self.assertRaises(ValueError, comtypes.client.CreateObject,
+                "InternetExplorer.Application", machine='localhost',
+                pServerInfo=pServerInfo)
+        ie = comtypes.client.CreateObject("InternetExplorer.Application",
+                                          pServerInfo=pServerInfo)
         self.failUnlessEqual(ie.Visible, False)
         ie.Visible = 1
         # on a remote machine, this may not work.  Probably depends on

@@ -126,6 +126,16 @@ CLSCTX_FROM_DEFAULT_CONTEXT = 131072
 tagCLSCTX = c_int # enum
 CLSCTX = tagCLSCTX
 
+# Constants for security setups
+SEC_WINNT_AUTH_IDENTITY_UNICODE = 0x2
+RPC_C_AUTHN_WINNT = 10
+RPC_C_AUTHZ_NONE = 0
+RPC_C_AUTHN_LEVEL_CONNECT = 2
+RPC_C_IMP_LEVEL_IMPERSONATE = 3
+EOAC_NONE = 0
+
+
+
 ################################################################
 # Initialization and shutdown
 _ole32 = oledll.ole32
@@ -163,6 +173,7 @@ CoInitializeEx()
 def CoUninitialize():
     logger.debug("CoUninitialize()")
     _ole32_nohresult.CoUninitialize()
+
 
 def shutdown(func=_ole32_nohresult.CoUninitialize,
              _debug=logger.debug,
@@ -1255,20 +1266,57 @@ class tagBIND_OPTS2(Structure):
 # XXX Add __init__ which sets cbStruct?
 BINDOPTS2 = tagBIND_OPTS2
 
+#Structures for security setups
+#########################################
+class _SEC_WINNT_AUTH_IDENTITY(Structure):
+    _fields_ = [
+        ('User', POINTER(c_ushort)),
+        ('UserLength', c_ulong),
+        ('Domain', POINTER(c_ushort)),
+        ('DomainLength', c_ulong),
+        ('Password', POINTER(c_ushort)),
+        ('PasswordLength', c_ulong),
+        ('Flags', c_ulong),
+    ]
+SEC_WINNT_AUTH_IDENTITY = _SEC_WINNT_AUTH_IDENTITY
+
+class _SOLE_AUTHENTICATION_INFO(Structure):
+    _fields_ = [
+        ('dwAuthnSvc', c_ulong),
+        ('dwAuthzSvc', c_ulong),
+        ('pAuthInfo', POINTER(_SEC_WINNT_AUTH_IDENTITY)),
+    ]
+SOLE_AUTHENTICATION_INFO = _SOLE_AUTHENTICATION_INFO
+
+class _SOLE_AUTHENTICATION_LIST(Structure):
+    _fields_ = [
+        ('cAuthInfo', c_ulong),
+        ('pAuthInfo', POINTER(_SOLE_AUTHENTICATION_INFO)),
+    ]
+SOLE_AUTHENTICATION_LIST = _SOLE_AUTHENTICATION_LIST
+
 def CoCreateInstanceEx(clsid, interface=None,
                        clsctx=None,
-                       machine=None):
+                       machine=None,
+                       pServerInfo=None):
     """The basic windows api to create a COM class object and return a
     pointer to an interface, possibly on another machine.
+
+    Passing both "machine" and "pServerInfo" results in a ValueError.
+
     """
     if clsctx is None:
         clsctx=CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER
-    if machine:
+
+    if pServerInfo is not None:
+        if machine is not None:
+            msg = "Can not specify both machine name and server info"
+            raise ValueError(msg)
+    elif machine is not None:
         serverinfo = COSERVERINFO()
         serverinfo.pwszName = machine
-        psi = byref(serverinfo)
-    else:
-        psi = None
+        pServerInfo = byref(serverinfo)
+
     if interface is None:
         interface = IUnknown
     multiqi = MULTI_QI()
@@ -1276,10 +1324,11 @@ def CoCreateInstanceEx(clsid, interface=None,
     _ole32.CoCreateInstanceEx(byref(clsid),
                              None,
                              clsctx,
-                             psi,
+                             pServerInfo,
                              1,
                              byref(multiqi))
     return cast(multiqi.pItf, POINTER(interface))
+
 
 ################################################################
 from comtypes._comobject import COMObject

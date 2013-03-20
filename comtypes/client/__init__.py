@@ -195,7 +195,7 @@ def GetClassObject(progid,
     """Create and return the class factory for a COM object.
 
     'clsctx' specifies how to create the object, use the CLSCTX_... constants.
-    'pServerInfo', if used, must be an instance of comtypes.COSERVERINFO
+    'pServerInfo', if used, must be a pointer to a comtypes.COSERVERINFO instance
     'interface' may be used to request an interface other than IClassFactory
     """
     clsid = comtypes.GUID.from_progid(progid)
@@ -206,7 +206,8 @@ def CreateObject(progid,                  # which object to create
                  clsctx=None,             # how to create the object
                  machine=None,            # where to create the object
                  interface=None,          # the interface we want
-                 dynamic=False):          # use dynamic dispatch
+                 dynamic=False,           # use dynamic dispatch
+                 pServerInfo=None):       # server info struct for remoting
     """Create a COM object from 'progid', and try to QueryInterface()
     it to the most useful interface, generating typelib support on
     demand.  A pointer to this interface is returned.
@@ -218,6 +219,8 @@ def CreateObject(progid,                  # which object to create
     'machine' allows to specify a remote machine to create the object on.
     'interface' allows to force a certain interface
     'dynamic=True' will return a dynamic dispatch object
+    'pServerInfo', if used, must be a pointer to a comtypes.COSERVERINFO instance
+        This supercedes 'machine'.
 
     You can also later request to receive events with GetEvents().
     """
@@ -229,14 +232,19 @@ def CreateObject(progid,                  # which object to create
         interface = comtypes.automation.IDispatch
     elif interface is None:
         interface = getattr(progid, "_com_interfaces_", [None])[0]
-    if machine is None:
+    if machine is None and pServerInfo is None:
         logger.debug("CoCreateInstance(%s, clsctx=%s, interface=%s)",
                      clsid, clsctx, interface)
         obj = comtypes.CoCreateInstance(clsid, clsctx=clsctx, interface=interface)
     else:
-        logger.debug("CoCreateInstanceEx(%s, clsctx=%s, interface=%s, machine=%s)",
-                     clsid, clsctx, interface, machine)
-        obj = comtypes.CoCreateInstanceEx(clsid, clsctx=clsctx, interface=interface, machine=machine)
+        logger.debug("CoCreateInstanceEx(%s, clsctx=%s, interface=%s, machine=%s,\
+                        pServerInfo=%s)",
+                     clsid, clsctx, interface, machine, pServerInfo)
+        if machine is not None and pServerInfo is not None:
+            msg = "You can notset both the machine name and server info."
+            raise ValueError(msg)
+        obj = comtypes.CoCreateInstanceEx(clsid, clsctx=clsctx,
+                interface=interface, machine=machine, pServerInfo=pServerInfo)
     if dynamic:
         return comtypes.client.dynamic.Dispatch(obj)
     return _manage(obj, clsid, interface=interface)
