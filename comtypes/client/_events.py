@@ -223,6 +223,8 @@ def ShowEvents(source, interface=None):
     """
     return comtypes.client.GetEvents(source, sink=EventDumper(), interface=interface)
 
+_handles_type = ctypes.c_void_p * 1
+
 def PumpEvents(timeout):
     """This following code waits for 'timeout' seconds in the way
     required for COM, internally doing the correct things depending
@@ -251,7 +253,7 @@ def PumpEvents(timeout):
     # MsgWaitForMultipleObjects.
 
     hevt = ctypes.windll.kernel32.CreateEventA(None, True, False, None)
-    handles = (ctypes.c_void_p * 1)(hevt)
+    handles = _handles_type(hevt)
     RPC_S_CALLPENDING = -2147417835
 
 ##    @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)
