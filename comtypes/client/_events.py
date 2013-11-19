@@ -223,6 +223,9 @@ def ShowEvents(source, interface=None):
     """
     return comtypes.client.GetEvents(source, sink=EventDumper(), interface=interface)
 
+# This type is used inside 'PumpEvents', but if we create the type
+# afresh each time 'PumpEvents' is called we end up creating cyclic
+# garbage for each call.  So we define it here instead.
 _handles_type = ctypes.c_void_p * 1
 
 def PumpEvents(timeout):
