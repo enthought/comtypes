@@ -515,7 +515,11 @@ del v
 _carg_obj = type(byref(c_int()))
 from _ctypes import Array as _CArrayType
 
+class _meta(type(partial), type(POINTER(VARIANT))):
+    pass
+
 class _(partial, POINTER(VARIANT)):
+    __metaclass__ = _meta
     # Override the default .from_param classmethod of POINTER(VARIANT).
     # This allows to pass values which can be stored in VARIANTs as
     # function parameters declared as POINTER(VARIANT).  See
