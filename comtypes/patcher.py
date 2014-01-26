@@ -19,6 +19,9 @@ class Patch(object):
     >>> ob = MyClass('foo')
     >>> ob.print_param()
     foo
+
+    The namespace is assigned None, so there's no mistaking the purpose
+    >>> JustANamespace
     """
 
     def __init__(self, target):
@@ -28,7 +31,18 @@ class Patch(object):
         for name, value in vars(patches).items():
             if name in vars(ReferenceEmptyClass):
                 continue
+            no_replace = getattr(value, '__no_replace', False)
+            if no_replace and hasattr(value, name):
+                continue
             setattr(self.target, name, value)
+
+def no_replace(f):
+    """
+    Method decorator to indicate that a method definition shall
+    silently be ignored if it already exists in the target class.
+    """
+    f.__no_replace = True
+    return f
 
 class ReferenceEmptyClass(object):
     """
