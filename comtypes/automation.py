@@ -4,7 +4,7 @@ from ctypes import _Pointer
 from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
-from comtypes.partial import partial
+from comtypes.patcher import Patch
 try:
     from comtypes import _safearray
 except (ImportError, AttributeError):
@@ -515,11 +515,8 @@ del v
 _carg_obj = type(byref(c_int()))
 from _ctypes import Array as _CArrayType
 
-class _meta(type(partial), type(POINTER(VARIANT))):
-    pass
-
-class _(partial, POINTER(VARIANT)):
-    __metaclass__ = _meta
+@Patch(POINTER(VARIANT))
+class _(object):
     # Override the default .from_param classmethod of POINTER(VARIANT).
     # This allows to pass values which can be stored in VARIANTs as
     # function parameters declared as POINTER(VARIANT).  See

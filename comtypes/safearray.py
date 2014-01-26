@@ -2,7 +2,7 @@ import threading
 import array, sys
 from ctypes import *
 from comtypes import _safearray, GUID, IUnknown, com_interface_registry
-from comtypes.partial import partial
+from comtypes.patcher import Patch
 _safearray_type_cache = {}
 
 class _SafeArrayAsNdArrayContextManager(object):
@@ -32,7 +32,7 @@ class _SafeArrayAsNdArrayContextManager(object):
 
     def __nonzero__(self):
         '''True if context manager is currently entered on given thread.
-        
+
         '''
         return getattr(self.thread_local, 'in_context', False)
 
@@ -86,7 +86,8 @@ def _make_safearray_type(itemtype):
         else:
             raise TypeError(itemtype)
 
-    class _(partial, POINTER(sa_type)):
+    @Patch(POINTER(sa_type))
+    class _(object):
         # Should explain the ideas how SAFEARRAY is used in comtypes
         _itemtype_ = itemtype # a ctypes type
         _vartype_ = vartype # a VARTYPE value: VT_...
@@ -294,7 +295,7 @@ def _make_safearray_type(itemtype):
                     # alive until all the elements are destroyed.
                     if not issubclass(self._itemtype_, Structure):
                         # Create an ndarray if requested. This is where
-                        # we can get the most speed-up. 
+                        # we can get the most speed-up.
                         # XXX Only try to convert types known to
                         #     numpy.ctypeslib.
                         import numpy.ctypeslib
@@ -332,7 +333,8 @@ def _make_safearray_type(itemtype):
             indices[dim] = restore
             return tuple(result) # for compatibility with pywin32.
 
-    class _(partial, POINTER(POINTER(sa_type))):
+    @Patch(POINTER(POINTER(sa_type)))
+    class __(object):
 
 ##        @classmethod
         def from_param(cls, value):
