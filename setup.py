@@ -105,14 +105,8 @@ classifiers = [
     'Operating System :: Microsoft :: Windows',
     'Operating System :: Microsoft :: Windows :: Windows CE',
     'Programming Language :: Python',
-    'Programming Language :: Python :: 2',
-    'Programming Language :: Python :: 2.3',
-    'Programming Language :: Python :: 2.4',
-    'Programming Language :: Python :: 2.5',
     'Programming Language :: Python :: 2.6',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.0',
-    'Programming Language :: Python :: 3.1',
     'Topic :: Software Development :: Libraries :: Python Modules',
     ]
 
