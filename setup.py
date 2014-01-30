@@ -136,34 +136,39 @@ setup_params = dict(
     author="Thomas Heller",
     author_email="theller@python.net",
     url="http://starship.python.net/crew/theller/comtypes",
-    download_url = "http://sourceforge.net/project/showfiles.php?group_id=115265",
+    download_url="http://sourceforge.net/project/showfiles.php?group_id=115265",
 
     license="MIT License",
-    package_data = {"comtypes.test": ["TestComServer.idl",
-                                    "TestComServer.tlb",
-                                    "TestDispServer.idl",
-                                    "TestDispServer.tlb",
-                                    "mytypelib.idl",
-                                    "mylib.idl",
-                                    "mylib.tlb"
-                                    "urlhist.tlb",
-                                    "test_jscript.js",
-
-                                    ]},
+    package_data={
+        "comtypes.test": [
+            "TestComServer.idl",
+            "TestComServer.tlb",
+            "TestDispServer.idl",
+            "TestDispServer.tlb",
+            "mytypelib.idl",
+            "mylib.idl",
+            "mylib.tlb"
+            "urlhist.tlb",
+            "test_jscript.js",
+        ]},
     classifiers=classifiers,
 
     scripts=["clear_comtypes_cache.py"],
     options=options,
 
-    cmdclass = {'test': test,
-              'build_py': build_py},
+    cmdclass={
+        'test': test,
+        'build_py': build_py,
+    },
 
     version=read_version(),
-    packages=["comtypes",
-            "comtypes.client",
-            "comtypes.server",
-            "comtypes.tools",
-            "comtypes.test"],
+    packages=[
+        "comtypes",
+        "comtypes.client",
+        "comtypes.server",
+        "comtypes.tools",
+        "comtypes.test",
+    ],
 )
 
 if __name__ == '__main__':
