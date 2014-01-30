@@ -15,11 +15,8 @@ Documentation:
 
     http://starship.python.net/crew/theller/comtypes/
 
-SVN repository:
-
-    checkout: `https://comtypes.svn.sourceforge.net/svnroot/comtypes/`_
-
-    ViewVC: https://comtypes.svn.sourceforge.net/comtypes/
+`Mercurial repository
+<https://sourceforge.net/p/comtypes/code/ci/default/tree/>`_
 
 Mailing list:
 
@@ -29,11 +26,9 @@ Mailing list:
 
 Download:
 
-    Releases can be downloaded in the sourceforge files section:
+    Releases can be downloaded in the PyPI page:
 
-    http://sourceforge.net/projects/comtypes/files/
-
-.. _`https://comtypes.svn.sourceforge.net/svnroot/comtypes/`: https://comtypes.svn.sourceforge.net/svnroot/comtypes/#egg=comtypes-dev
+    https://pypi.python.org/pypi/comtypes
 
 .. _ctypes: http://docs.python.org/lib/module-ctypes.html
 """
