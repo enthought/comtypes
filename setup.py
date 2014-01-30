@@ -129,37 +129,42 @@ if sys.version_info >= (3, 0):
 else:
     options={"bdist_wininst": {"install_script": "clear_comtypes_cache.py"}}
 
-setup(name="comtypes",
-      description="Pure Python COM package",
-      long_description = __doc__,
-      author="Thomas Heller",
-      author_email="theller@python.net",
-      url="http://starship.python.net/crew/theller/comtypes",
-      download_url = "http://sourceforge.net/project/showfiles.php?group_id=115265",
+setup_params = dict(
+    name="comtypes",
+    description="Pure Python COM package",
+    long_description = __doc__,
+    author="Thomas Heller",
+    author_email="theller@python.net",
+    url="http://starship.python.net/crew/theller/comtypes",
+    download_url = "http://sourceforge.net/project/showfiles.php?group_id=115265",
 
-      license="MIT License",
-      package_data = {"comtypes.test": ["TestComServer.idl",
-                                        "TestComServer.tlb",
-                                        "TestDispServer.idl",
-                                        "TestDispServer.tlb",
-                                        "mytypelib.idl",
-                                        "mylib.idl",
-                                        "mylib.tlb"
-                                        "urlhist.tlb",
-                                        "test_jscript.js",
+    license="MIT License",
+    package_data = {"comtypes.test": ["TestComServer.idl",
+                                    "TestComServer.tlb",
+                                    "TestDispServer.idl",
+                                    "TestDispServer.tlb",
+                                    "mytypelib.idl",
+                                    "mylib.idl",
+                                    "mylib.tlb"
+                                    "urlhist.tlb",
+                                    "test_jscript.js",
 
-                                        ]},
-      classifiers=classifiers,
+                                    ]},
+    classifiers=classifiers,
 
-      scripts=["clear_comtypes_cache.py"],
-      options=options,
+    scripts=["clear_comtypes_cache.py"],
+    options=options,
 
-      cmdclass = {'test': test,
-                  'build_py': build_py},
+    cmdclass = {'test': test,
+              'build_py': build_py},
 
-      version=read_version(),
-      packages=["comtypes",
-                "comtypes.client",
-                "comtypes.server",
-                "comtypes.tools",
-                "comtypes.test"])
+    version=read_version(),
+    packages=["comtypes",
+            "comtypes.client",
+            "comtypes.server",
+            "comtypes.tools",
+            "comtypes.test"],
+)
+
+if __name__ == '__main__':
+    setup(**setup_params)
