@@ -37,8 +37,10 @@ Download:
 
 .. _ctypes: http://docs.python.org/lib/module-ctypes.html
 """
-import sys, os
+import sys
+import os
 import ctypes
+
 from distutils.core import Command
 from setuptools import setup
 
@@ -68,15 +70,11 @@ class test(Command):
         self.refcounts = False
         self.tests = "comtypes.test"
 
-    # initialize_options()
-
     def finalize_options(self):
         if self.refcounts and not hasattr(sys, "gettotalrefcount"):
             raise Exception("refcount option requires Python debug build")
         self.tests = self.tests.split(",")
         self.use_resources = self.use_resources.split(",")
-
-    # finalize_options()
 
     def run(self):
         build = self.reinitialize_command('build')
@@ -100,14 +98,8 @@ class test(Command):
                                     self.verbose,
                                     self.refcounts)
 
-    # run()
-
-# class test
-
 classifiers = [
-##    'Development Status :: 3 - Alpha',
     'Development Status :: 4 - Beta',
-##    'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
     'Operating System :: Microsoft :: Windows',
