@@ -129,7 +129,7 @@ def read_version():
     # 'comtypes\__init__.py'.  We cannot import this file (with py3,
     # at least) because it is in py2.x syntax.
     ns = {}
-    for line in open("comtypes\__init__.py"):
+    for line in open("comtypes/__init__.py"):
         if line.startswith("__version__ = "):
             exec(line, ns)
             break
