@@ -1,12 +1,9 @@
-import types, sys, os
+import types
+import sys
+import os
 
-# comtypes version numbers follow the setuptools convention:
-# http://peak.telecommunity.com/DevCenter/setuptools#specifying-your-project-s-version
-# 0.6.0dev < 0.6.0a < 0.6.0.b < 0.6.0c < 0.6.0
-# XXX As of 0.6.3dev, versions follow the distutils2 numbering
-# http://packages.python.org/distribute/setuptools.html#specifying-your-project-s-version
-# 0.6.3dev was relabeled 0.6.3.dev1 and then promptly to 0.6.3
-__version__ = "0.6.5"
+# comtypes version numbers follow semver (http://semver.org/)
+__version__ = "1.0.0"
 
 import logging
 class NullHandler(logging.Handler):
