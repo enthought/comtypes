@@ -5,19 +5,33 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
 		Release MinDependency|Win32 = Release MinDependency|Win32
+		Release MinDependency|x64 = Release MinDependency|x64
 		Release MinSize|Win32 = Release MinSize|Win32
+		Release MinSize|x64 = Release MinSize|x64
 		Unicode Debug|Win32 = Unicode Debug|Win32
+		Unicode Debug|x64 = Unicode Debug|x64
 		Unicode Release MinDependency|Win32 = Unicode Release MinDependency|Win32
+		Unicode Release MinDependency|x64 = Unicode Release MinDependency|x64
 		Unicode Release MinSize|Win32 = Unicode Release MinSize|Win32
+		Unicode Release MinSize|x64 = Unicode Release MinSize|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{8B2CD355-6596-B892-F782-8DCDD607C496}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8B2CD355-6596-B892-F782-8DCDD607C496}.Debug|Win32.Build.0 = Debug|Win32
+		{8B2CD355-6596-B892-F782-8DCDD607C496}.Debug|x64.ActiveCfg = Debug|x64
+		{8B2CD355-6596-B892-F782-8DCDD607C496}.Debug|x64.Build.0 = Debug|x64
 		{8B2CD355-6596-B892-F782-8DCDD607C496}.Release MinDependency|Win32.ActiveCfg = Release MinDependency|Win32
+		{8B2CD355-6596-B892-F782-8DCDD607C496}.Release MinDependency|x64.ActiveCfg = Release MinDependency|x64
 		{8B2CD355-6596-B892-F782-8DCDD607C496}.Release MinSize|Win32.ActiveCfg = Release MinSize|Win32
+		{8B2CD355-6596-B892-F782-8DCDD607C496}.Release MinSize|x64.ActiveCfg = Release MinSize|x64
 		{8B2CD355-6596-B892-F782-8DCDD607C496}.Unicode Debug|Win32.ActiveCfg = Unicode Debug|Win32
+		{8B2CD355-6596-B892-F782-8DCDD607C496}.Unicode Debug|x64.ActiveCfg = Unicode Debug|x64
 		{8B2CD355-6596-B892-F782-8DCDD607C496}.Unicode Release MinDependency|Win32.ActiveCfg = Unicode Release MinDependency|Win32
+		{8B2CD355-6596-B892-F782-8DCDD607C496}.Unicode Release MinDependency|x64.ActiveCfg = Unicode Release MinDependency|x64
 		{8B2CD355-6596-B892-F782-8DCDD607C496}.Unicode Release MinSize|Win32.ActiveCfg = Unicode Release MinSize|Win32
+		{8B2CD355-6596-B892-F782-8DCDD607C496}.Unicode Release MinSize|x64.ActiveCfg = Unicode Release MinSize|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
