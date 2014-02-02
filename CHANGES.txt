@@ -1,0 +1,12 @@
+CHANGES
+=======
+
+1.0
+---
+
+* #27: Replaced the ``partial`` module with a ``patcher`` module. This new
+  technique patches the underlying classes explicitly. This technique avoids
+  the problems with the metaclass magic on Python 3.
+* Officially dropped support for Python 2.5.
+* #25: Allow installation on non-Windows systems.
+* #31: Improved 64-bit compatibility by specifying argtypes for GetMessage.
