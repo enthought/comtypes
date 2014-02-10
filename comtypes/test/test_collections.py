@@ -36,11 +36,12 @@ class Test(unittest.TestCase):
         cv.Skip(300)
         self.failUnlessEqual([p.ProcessImageFileName for p in cv], names[300:])
 
-        # Hm, do we want to allow random access to the iterator?
-        # Should the iterator support __getitem__ ???
-        self.failUnlessEqual(cv[0].ProcessImageFileName, names[0])
-        self.failUnlessEqual(cv[0].ProcessImageFileName, names[0])
-        self.failUnlessEqual(cv[0].ProcessImageFileName, names[0])
+        if len(names) > 0:
+            # Hm, do we want to allow random access to the iterator?
+            # Should the iterator support __getitem__ ???
+            self.failUnlessEqual(cv[0].Name, names[0])
+            self.failUnlessEqual(cv[0].Name, names[0])
+            self.failUnlessEqual(cv[0].Name, names[0])
 
         if len(names) > 1:
             self.failUnlessEqual(cv[1].ProcessImageFileName, names[1])
