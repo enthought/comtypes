@@ -433,8 +433,8 @@ class SafeArrayTestCase(unittest.TestCase):
         self.failUnless(isinstance(arr, np.ndarray))
         # The conversion code allows numpy to choose the dtype of
         # structured data.  This dtype is structured under numpy 1.5, 1.7 and
-        # 1.8, and object in 1.6. Instead of assume either of these, check
-        # array contents based on the chosen type.
+        # 1.8, and object in 1.6. Instead of assuming either of these, check
+        # the array contents based on the chosen type.
         if arr.dtype is np.dtype(object):
             data = [(x.red, x.green, x.blue) for x in arr]
         else:
