@@ -4,8 +4,8 @@ from comtypes import COSERVERINFO
 from ctypes import POINTER, byref
 
 # create the typelib wrapper and import it
-comtypes.client.GetModule("msscript.ocx")
-from comtypes.gen import MSScriptControl
+comtypes.client.GetModule("scrrun.dll")
+from comtypes.gen import Scripting
 
 import comtypes.test
 comtypes.test.requires("ui")
@@ -13,18 +13,18 @@ comtypes.test.requires("ui")
 class Test(ut.TestCase):
     def test_progid(self):
         # create from ProgID
-        obj = comtypes.client.CreateObject("MSScriptControl.ScriptControl")
-        self.failUnless(isinstance(obj, POINTER(MSScriptControl.IScriptControl)))
+        obj = comtypes.client.CreateObject("Scripting.Dictionary")
+        self.failUnless(isinstance(obj, POINTER(Scripting.IDictionary)))
 
     def test_clsid(self):
         # create from the CoClass' clsid
-        obj = comtypes.client.CreateObject(MSScriptControl.ScriptControl)
-        self.failUnless(isinstance(obj, POINTER(MSScriptControl.IScriptControl)))
+        obj = comtypes.client.CreateObject(Scripting.Dictionary)
+        self.failUnless(isinstance(obj, POINTER(Scripting.IDictionary)))
 
     def test_clsid_string(self):
         # create from string clsid
-        comtypes.client.CreateObject(unicode(MSScriptControl.ScriptControl._reg_clsid_))
-        comtypes.client.CreateObject(str(MSScriptControl.ScriptControl._reg_clsid_))
+        comtypes.client.CreateObject(unicode(Scripting.Dictionary._reg_clsid_))
+        comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
 
     def test_remote(self):
         ie = comtypes.client.CreateObject("InternetExplorer.Application",
