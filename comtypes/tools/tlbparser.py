@@ -1,3 +1,5 @@
+import sys
+
 from comtypes import automation, typeinfo, COMError
 from comtypes.tools import typedesc
 from ctypes import c_void_p, sizeof, alignment
@@ -6,6 +8,10 @@ try:
     set
 except NameError:
     from sets import Set as set
+
+# Is the process 64-bit?
+is_64bits = sys.maxsize > 2**32
+
 
 ################################
 
@@ -171,9 +177,16 @@ class Parser(object):
                                     size=ta.cbSizeInstance*8)
         self._register(struct_name, struct)
 
+        tlib, _ = tinfo.GetContainingTypeLib()
+        tlib_ta = tlib.GetLibAttr()
+        # If this is a 32-bit typlib being loaded in a 64-bit process, then the
+        # size and alignment are incorrect. Set the size to None to disable
+        # size checks and correct the alignment.
+        if is_64bits and tlib_ta.syskind == typeinfo.SYS_WIN32:
+            struct.size = None
+            struct.align = 64
+
         if ta.guid:
-            tlib, _ = tinfo.GetContainingTypeLib()
-            tlib_ta = tlib.GetLibAttr()
             struct._recordinfo_ = (str(tlib_ta.guid),
                                    tlib_ta.wMajorVerNum, tlib_ta.wMinorVerNum,
                                    tlib_ta.lcid,
@@ -506,6 +519,15 @@ class Parser(object):
                                bases=[],
                                size=ta.cbSizeInstance*8)
         self._register(union_name, union)
+
+        tlib, _ = tinfo.GetContainingTypeLib()
+        tlib_ta = tlib.GetLibAttr()
+        # If this is a 32-bit typlib being loaded in a 64-bit process, then the
+        # size and alignment are incorrect. Set the size to None to disable
+        # size checks and correct the alignment.
+        if is_64bits and tlib_ta.syskind == typeinfo.SYS_WIN32:
+            union.size = None
+            union.align = 64
 
         for i in range(ta.cVars):
             vd = tinfo.GetVarDesc(i)
