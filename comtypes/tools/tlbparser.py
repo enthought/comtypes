@@ -41,6 +41,10 @@ VARIANT_type = typedesc.Structure("VARIANT",
                                   size=sizeof(automation.VARIANT)*8)
 IDISPATCH_type = typedesc.Typedef("IDispatch", None)
 IUNKNOWN_type = typedesc.Typedef("IUnknown", None)
+DECIMAL_type = typedesc.Structure("DECIMAL",
+                                  align=alignment(automation.DECIMAL)*8,
+                                  members=[], bases=[],
+                                  size=sizeof(automation.DECIMAL)*8)
 
 def midlSAFEARRAY(typ):
     return typedesc.SAFEARRAYType(typ)
@@ -48,7 +52,6 @@ def midlSAFEARRAY(typ):
 # faked COM data types
 CURRENCY_type = longlong_type # slightly wrong; should be scaled by 10000 - use subclass of longlong?
 DATE_type = double_type # not *that* wrong...
-DECIMAL_type = double_type # wrong - it's a 12 byte structure (or was it 16 bytes?)
 
 COMTYPES = {
     automation.VT_I2: short_type, # 2
