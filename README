@@ -12,10 +12,10 @@ dispatch-based COM interfaces in pure Python.  It works on Windows,
 
 Documentation:
 
-    http://starship.python.net/crew/theller/comtypes/
+    https://pythonhosted.org/comtypes
 
-`Mercurial repository
-<https://sourceforge.net/p/comtypes/code/ci/default/tree/>`_
+    `Source repository and issue tracker
+<https://github.com/jaraco/comtypes/>`_
 
 Mailing list:
 
