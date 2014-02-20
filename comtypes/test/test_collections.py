@@ -70,7 +70,7 @@ class Test(unittest.TestCase):
         def doit():
             for item in iter(apps):
                 item.ProcessImageFileName
-        bytes = find_memleak(doit, (2, 20))
+        bytes = find_memleak(doit, (20, 20))
         self.failIf(bytes, "Leaks %d bytes" % bytes)
 
     def test_leaks_2(self):
@@ -81,7 +81,7 @@ class Test(unittest.TestCase):
 
         def doit():
             iter(apps).Next(99)
-        bytes = find_memleak(doit, (2, 20))
+        bytes = find_memleak(doit, (20, 20))
         self.failIf(bytes, "Leaks %d bytes" % bytes)
 
     def test_leaks_3(self):
@@ -94,7 +94,7 @@ class Test(unittest.TestCase):
             for i in range(2):
                 for what in iter(apps):
                     pass
-        bytes = find_memleak(doit, (2, 20))
+        bytes = find_memleak(doit, (20, 20))
         self.failIf(bytes, "Leaks %d bytes" % bytes)
 
 if __name__ == "__main__":
