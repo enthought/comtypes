@@ -431,9 +431,19 @@ class SafeArrayTestCase(unittest.TestCase):
         arr = get_array(sa)
 
         self.failUnless(isinstance(arr, np.ndarray))
-        self.failUnlessEqual(np.dtype(object), arr.dtype)
-        self.failUnlessEqual([(x.red, x.green, x.blue) for x in arr],
-                             [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)])
+        # The conversion code allows numpy to choose the dtype of
+        # structured data.  This dtype is structured under numpy 1.5, 1.7 and
+        # 1.8, and object in 1.6. Instead of assuming either of these, check
+        # the array contents based on the chosen type.
+        if arr.dtype is np.dtype(object):
+            data = [(x.red, x.green, x.blue) for x in arr]
+        else:
+            float_dtype = np.dtype('float64')
+            self.assertIs(arr.dtype[0], float_dtype)
+            self.assertIs(arr.dtype[1], float_dtype)
+            self.assertIs(arr.dtype[2], float_dtype)
+            data = [tuple(x) for x in arr]
+        self.failUnlessEqual(data, [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)])
 
 
 if is_resource_enabled("pythoncom"):
