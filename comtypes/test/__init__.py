@@ -1,6 +1,11 @@
 # comtypes.test package.
 
-import glob, os, sys, unittest, getopt, time
+import ctypes
+import getopt
+import os
+import sys
+import time
+import unittest
 
 use_resources = []
 
@@ -11,6 +16,24 @@ def get_numpy():
         return numpy
     except ImportError:
         return None
+
+def register_server(source_dir):
+    """ Register for testing server appropriate for the python architecture.
+
+    ``source_dir`` gives the absolute path of the comtype source in which the
+    32- and 64-bit testing servers, "AvmcIfc.dll" is defined.
+
+    If the server is already registered, do nothing.
+
+    """
+    # The 64-bitness of the python interpreter determines the testing dll to
+    # use.
+    dll_name = "AvmcIfc_x64.dll" if sys.maxsize > 2**32 else "AvmcIfc.dll"
+    dll_path = os.path.join(source_dir, "Debug", dll_name)
+    # Register our ATL COM tester dll
+    dll = ctypes.OleDLL(dll_path)
+    dll.DllRegisterServer()
+    return
 
 class ResourceDenied(Exception):
     """Test skipped because it requested a disallowed resource.

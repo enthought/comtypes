@@ -49,10 +49,11 @@ class test(Command):
             sys.path.insert(0, build.build_lib)
 
         # Register our ATL COM tester dll
-        dll = ctypes.OleDLL(r"source\debug\AvmcIfc.dll")
-        dll.DllRegisterServer()
-
         import comtypes.test
+        script_path = os.path.dirname(__file__)
+        source_dir = os.path.abspath(os.path.join(script_path, "source"))
+        comtypes.test.register_server(source_dir)
+
         comtypes.test.use_resources.extend(self.use_resources)
 
         for name in self.tests:

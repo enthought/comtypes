@@ -54,6 +54,7 @@
     <SccProjectName />
     <SccLocalPath />
     <Keyword>AtlProj</Keyword>
+    <ProjectGuid>{8B2CD355-6596-B892-F782-8DCDD607C496}</ProjectGuid>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release MinDependency|Win32'" Label="Configuration">
@@ -555,7 +556,7 @@ echo regsvr32 exec. time &gt; "$(OutDir)regsvr32.trg"
     </CustomBuildStep>
     <Link>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>.\Debug/AvmcIfc.dll</OutputFile>
+      <OutputFile>.\Debug/AvmcIfc_x64.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\AvmcIfc.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
