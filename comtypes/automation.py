@@ -5,6 +5,7 @@ from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
 from comtypes.patcher import Patch
+from comtypes import numpysupport
 try:
     from comtypes import _safearray
 except (ImportError, AttributeError):
@@ -17,14 +18,6 @@ try:
     import decimal # standard in Python 2.4 and up
 except ImportError:
     decimal = None
-
-try:
-    from numpy import ndarray
-except ImportError:
-    class ndarray(object):
-        pass
-
-
 
 from ctypes.wintypes import VARIANT_BOOL
 from ctypes.wintypes import WORD
@@ -150,7 +143,6 @@ class tagVARIANT(Structure):
             ("c_wchar_p", c_wchar_p),
             ("c_void_p", c_void_p),
             ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
-
             ("bstrVal", BSTR),
             ("_tagBRECORD", _tagBRECORD),
             ]
@@ -270,7 +262,7 @@ class tagVARIANT(Structure):
             obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
-        elif isinstance(value, ndarray):
+        elif isinstance(value, numpysupport.ndarray):
             # Get the array type. This only works if we have a simple
             # array.
             descr = value.dtype.descr[0][1]
