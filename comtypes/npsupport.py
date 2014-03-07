@@ -4,16 +4,10 @@ import sys
 try:
     import numpy
 except ImportError:
-    HAVE_NUMPY = False
-else:
-    HAVE_NUMPY = True
+    numpy = None
 
-try:
-    from numpy import datetime64
-except ImportError:
-    class datetime64(object):
-        def __call__(*args):
-            return
+
+HAVE_NUMPY = numpy is not None
 
 is_64bits = sys.maxsize > 2**32
 
@@ -24,7 +18,6 @@ def _make_variant_dtype():
     Returns None if the dtype cannot be created
 
     """
-    from numpy import dtype
 
     # pointer typecode
     ptr_typecode = '<u8' if is_64bits else '<u4'
@@ -57,17 +50,45 @@ def _make_variant_dtype():
         ("_", U_VARIANT_format),
     ]
 
-    return dtype(tagVARIANT_format)
+    return numpy.dtype(tagVARIANT_format)
 
 
-# Fill the module if numpy is available
+def isndarray(value):
+    """ Check if a value is an ndarray.
+
+    This cannot succeed if numpy is not available.
+
+    """
+    if not HAVE_NUMPY:
+        return False
+    return isinstance(value, numpy.ndarray)
+
+
+def isdatetime64(value):
+    """ Check if a value is a datetime64.
+
+    This cannot succeed if datetime64 is not available.
+
+    """
+    return isinstance(value, datetime64)
+
+
 if HAVE_NUMPY:
-
-    # Common imports
-    from numpy import ctypeslib
-    from numpy import ndarray
-    from numpy import issubdtype
 
     # dtype for VARIANT. This allows for packing of variants into an array, and
     # subsequent conversion to a multi-dimensional safearray.
     VARIANT_dtype = _make_variant_dtype()
+
+    # This simplifies dependent modules
+    try:
+        from numpy import datetime64
+    except ImportError:
+        datetime64 = None
+        com_null_date64 = None
+    else:
+        com_null_date64 = datetime64("1899-12-30T00:00:00", "ns")
+
+else:
+
+    VARIANT_dtype = None
+    datetime64 = None

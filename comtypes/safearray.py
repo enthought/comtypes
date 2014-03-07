@@ -104,7 +104,7 @@ def _make_safearray_type(itemtype):
             one-dimensional arrays.  To create multidimensional arrys,
             numpy arrays must be passed.
             """
-            if isinstance(value, npsupport.ndarray):
+            if npsupport.isndarray(value):
                 return cls.create_from_ndarray(value, extra)
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
@@ -355,14 +355,14 @@ def _make_safearray_type(itemtype):
 
 def _ndarray_to_variant_array(value):
     """ Convert an ndarray to VARIANT_dtype array """
+    numpy = npsupport.numpy
     # special cases
-    if npsupport.issubdtype(value.dtype, npsupport.datetime64):
+    if numpy.issubdtype(value.dtype, npsupport.datetime64):
         return _datetime64_ndarray_to_variant_array(value)
 
     from comtypes.automation import VARIANT
     # Empty array
-    varr = npsupport.numpy.zeros(
-        value.shape, npsupport.VARIANT_dtype, order='F')
+    varr = numpy.zeros(value.shape, npsupport.VARIANT_dtype, order='F')
     # Iterate over each value and cram it into the array.
     varr_flat = varr.flat
     # Loop to avoid consuming even more memory. This is regrettably slow.
@@ -376,10 +376,10 @@ def _datetime64_ndarray_to_variant_array(value):
     # The OLE automation date format is a floating point value, counting days
     # since midnight 30 December 1899. Hours and minutes are represented as
     # fractional days.
-    from comtypes.automation import VT_DATE, _com_null_date64
+    from comtypes.automation import VT_DATE
     numpy = npsupport.numpy
     value = numpy.array(value, "datetime64[ns]")
-    value = value - _com_null_date64
+    value = value - npsupport.com_null_date64
     # Convert to days
     value = value / numpy.timedelta64(1, 'D')
     varr = numpy.zeros(value.shape, npsupport.VARIANT_dtype, order='F')
