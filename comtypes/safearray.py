@@ -355,6 +355,10 @@ def _make_safearray_type(itemtype):
 
 def _ndarray_to_variant_array(value):
     """ Convert an ndarray to VARIANT_dtype array """
+    # special cases
+    if numpysupport.issubdtype(value.dtype, numpysupport.datetime64):
+        return _datetime64_ndarray_to_variant_array(value)
+
     from comtypes.automation import VARIANT
     # Empty array
     varr = numpysupport.numpy.zeros(
@@ -366,3 +370,21 @@ def _ndarray_to_variant_array(value):
         varr_flat[i] = VARIANT(v)
     return varr
 
+
+def _datetime64_ndarray_to_variant_array(value):
+    """ Convert an ndarray of datetime64 to VARIANT_dtype array """
+    # The OLE automation date format is a floating point value, counting days
+    # since midnight 30 December 1899. Hours and minutes are represented as
+    # fractional days.
+    from comtypes.automation import VT_DATE
+    numpy = numpysupport.numpy
+    import pdb; pdb.set_trace()
+    value = numpy.array(value, "datetime64[ns]")
+    offset = numpy.array("1899-12-30T00:00", "datetime64[ns]")
+    value = value - offset
+    # Convert to days
+    value = value / numpy.timedelta64(1, 'D')
+    varr = numpy.zeros(value.shape, numpysupport.VARIANT_dtype, order='F')
+    varr['vt'] = VT_DATE
+    varr['_']['VT_R8'].flat = value.flat
+    return varr

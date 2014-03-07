@@ -60,6 +60,11 @@ if HAVE_NUMPY:
     # Common imports
     from numpy import ctypeslib
     from numpy import ndarray
+    from numpy import issubdtype
+    try:
+        from numpy import datetime64
+    except ImportError:
+        datetime64 = None
 
     # dtype for VARIANT. This allows for packing of variants into an array, and
     # subsequent conversion to a multi-dimensional safearray.
