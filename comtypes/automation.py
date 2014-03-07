@@ -190,6 +190,8 @@ class tagVARIANT(Structure):
         _VariantClear(self)
         if value is None:
             self.vt = VT_NULL
+        elif hasattr(value, '__len__') and len(value) == 0:
+            self.vt = VT_NULL
         # since bool is a subclass of int, this check must come before
         # the check for int
         elif isinstance(value, bool):
@@ -263,17 +265,18 @@ class tagVARIANT(Structure):
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, numpysupport.ndarray):
-            # Get the array type. This only works if we have a simple
-            # array.
+            # Try to convert a simple array of basic types.
             descr = value.dtype.descr[0][1]
-            import numpy.ctypeslib
-            try:
-                typ = numpy.ctypeslib._typecodes[descr]
-            except KeyError:
-                msg = ('Cannot make safe array out of object of type '
-                       '"%s"' % descr)
-                raise ValueError(msg)
-            obj = _midlSAFEARRAY(typ).create(value)
+            typ = numpysupport.ctypeslib._typecodes.get(descr)
+            if typ is not None:
+                obj = _midlSAFEARRAY(typ).create(value)
+            # VARIANT_dtype array
+            elif value.dtype == numpysupport.VARIANT_dtype:
+                obj = _midlSAFEARRAY(VARIANT).create(value)
+            # Create VARIANT_dtype array
+            else:
+                varr = _object_array_to_variant_array(value)
+                obj = _midlSAFEARRAY(VARIANT).create(varr)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
@@ -830,6 +833,18 @@ for c, v in _ctype_to_vartype.iteritems():
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
 _ctype_to_vartype[c_char] = VT_UI1
+
+
+def _object_array_to_variant_array(value):
+    """ Convert an object array to VARIANT_dtype array """
+    # Empty array
+    varr = numpysupport.numpy.zeros(value.shape, numpysupport.VARIANT_dtype)
+    # Iterate over each value and cram it into the array.
+    varr_flat = varr.flat
+    # Loop to avoid consuming even more memory. This is regrettably slow.
+    for i, v in enumerate(value.flat):
+        varr_flat[i] = VARIANT(v)
+    return varr
 
 
 try:

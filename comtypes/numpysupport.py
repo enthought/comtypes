@@ -8,6 +8,8 @@ except ImportError:
 else:
     HAVE_NUMPY = True
 
+is_64bits = sys.maxsize > 2**32
+
 
 def _make_variant_dtype():
     """ Create a dtype for VARIANT. This requires support for Unions, which is
@@ -19,7 +21,6 @@ def _make_variant_dtype():
     from numpy import dtype
 
     # pointer typecode
-    is_64bits = sys.maxsize > 2**32
     ptr_typecode = '<u8' if is_64bits else '<u4'
 
     _tagBRECORD_format = [
@@ -56,7 +57,9 @@ def _make_variant_dtype():
 # Fill the module if numpy is available
 if HAVE_NUMPY:
 
-    from numpy import array
+    # Common imports
+    from numpy import ctypeslib
+    from numpy import ndarray
 
     # dtype for VARIANT. This allows for packing of variants into an array, and
     # subsequent conversion to a multi-dimensional safearray.

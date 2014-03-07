@@ -147,6 +147,7 @@ def _make_safearray_type(itemtype):
 
 ##        @classmethod
         def create_from_ndarray(cls, value, extra, lBound=0):
+            from comtypes.automation import VARIANT
             #c:/python25/lib/site-packages/numpy/ctypeslib.py
             numpy = __import__("numpy.ctypeslib")
 
@@ -157,7 +158,8 @@ def _make_safearray_type(itemtype):
             ai = value.__array_interface__
             if ai["version"] != 3:
                 raise TypeError("only __array_interface__ version 3 supported")
-            if cls._itemtype_ != numpy.ctypeslib._typecodes[ai["typestr"]]:
+            if (cls._itemtype_ is not VARIANT and
+                cls._itemtype_ != numpy.ctypeslib._typecodes[ai["typestr"]]):
                 raise TypeError("Wrong array item type")
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
