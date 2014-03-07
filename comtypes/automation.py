@@ -5,7 +5,7 @@ from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
 from comtypes.patcher import Patch
-from comtypes import numpysupport
+from comtypes import npsupport
 try:
     from comtypes import _safearray
 except (ImportError, AttributeError):
@@ -54,7 +54,7 @@ _byref_type = type(byref(c_int()))
 
 # 30. December 1899, midnight.  For VT_DATE.
 _com_null_date = datetime.datetime(1899, 12, 30, 0, 0, 0)
-_com_null_date64 = numpysupport.datetime64("1899-12-30T00:00:00", "ns")
+_com_null_date64 = npsupport.datetime64("1899-12-30T00:00:00", "ns")
 
 ################################################################
 # VARIANT, in all it's glory.
@@ -246,9 +246,9 @@ class tagVARIANT(Structure):
             com_days = delta.days + (delta.seconds + delta.microseconds * 1e-6) / 86400.
             self.vt = VT_DATE
             self._.VT_R8 = com_days
-        elif isinstance(value, numpysupport.datetime64):
+        elif isinstance(value, npsupport.datetime64):
             com_days = value - _com_null_date64
-            com_days /= numpysupport.numpy.timedelta64(1, 'D')
+            com_days /= npsupport.numpy.timedelta64(1, 'D')
             self.vt = VT_DATE
             self._.VT_R8 = com_days
         elif decimal is not None and isinstance(value, decimal.Decimal):
@@ -270,10 +270,10 @@ class tagVARIANT(Structure):
             obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
-        elif isinstance(value, numpysupport.ndarray):
+        elif isinstance(value, npsupport.ndarray):
             # Try to convert a simple array of basic types.
             descr = value.dtype.descr[0][1]
-            typ = numpysupport.ctypeslib._typecodes.get(descr)
+            typ = npsupport.ctypeslib._typecodes.get(descr)
             if typ is None:
                 # Try for variant
                 obj = _midlSAFEARRAY(VARIANT).create(value)
