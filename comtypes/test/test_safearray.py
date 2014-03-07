@@ -237,7 +237,8 @@ class SafeArrayTestCase(unittest.TestCase):
 
         now = datetime.datetime.now()
         inarr = np.array(
-            [11, "22", None, True, now, Decimal("3.14")]).reshape(2, 3)
+            [11, "22", u"33", 44.0, None, True, now, Decimal("3.14")]
+        ).reshape(2, 4)
         sa = t.from_param(inarr)
         arr = get_array(sa)
         self.failUnlessEqual(np.dtype(object), arr.dtype)

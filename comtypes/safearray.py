@@ -363,11 +363,8 @@ def _ndarray_to_variant_array(value):
     from comtypes.automation import VARIANT
     # Empty array
     varr = numpy.zeros(value.shape, npsupport.VARIANT_dtype, order='F')
-    # Iterate over each value and cram it into the array.
-    varr_flat = varr.flat
-    # Loop to avoid consuming even more memory. This is regrettably slow.
-    for i, v in enumerate(value.flat):
-        varr_flat[i] = VARIANT(v)
+    # Convert each value to a variant and put it in the array.
+    varr.flat = [VARIANT(v) for v in value.flat]
     return varr
 
 
