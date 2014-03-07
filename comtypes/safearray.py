@@ -1,7 +1,8 @@
 import threading
-import array, sys
+import array
 from ctypes import *
-from comtypes import _safearray, GUID, IUnknown, com_interface_registry
+from comtypes import _safearray, GUID, IUnknown, com_interface_registry, \
+                     numpysupport
 from comtypes.patcher import Patch
 _safearray_type_cache = {}
 
@@ -103,11 +104,8 @@ def _make_safearray_type(itemtype):
             one-dimensional arrays.  To create multidimensional arrys,
             numpy arrays must be passed.
             """
-
-            if "numpy" in sys.modules:
-                numpy = sys.modules["numpy"]
-                if isinstance(value, numpy.ndarray):
-                    return cls.create_from_ndarray(value, extra)
+            if isinstance(value, numpysupport.ndarray):
+                return cls.create_from_ndarray(value, extra)
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
             # the GUID of the interface.
@@ -150,16 +148,20 @@ def _make_safearray_type(itemtype):
             #c:/python25/lib/site-packages/numpy/ctypeslib.py
             numpy = __import__("numpy.ctypeslib")
 
+            # If processing VARIANT, makes sure the array type is correct.
+            if cls._itemtype_ is VARIANT:
+                if value.dtype != numpysupport.VARIANT_dtype:
+                    value = _ndarray_to_variant_array(value)
+            else:
+                ai = value.__array_interface__
+                if ai["version"] != 3:
+                    raise TypeError("only __array_interface__ version 3 supported")
+                if cls._itemtype_ != numpy.ctypeslib._typecodes[ai["typestr"]]:
+                    raise TypeError("Wrong array item type")
+
             # SAFEARRAYs have Fortran order; convert the numpy array if needed
             if not value.flags.f_contiguous:
                 value = numpy.array(value, order="F")
-
-            ai = value.__array_interface__
-            if ai["version"] != 3:
-                raise TypeError("only __array_interface__ version 3 supported")
-            if (cls._itemtype_ is not VARIANT and
-                cls._itemtype_ != numpy.ctypeslib._typecodes[ai["typestr"]]):
-                raise TypeError("Wrong array item type")
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
             # the GUID of the interface.
@@ -349,3 +351,18 @@ def _make_safearray_type(itemtype):
             super(POINTER(POINTER(sa_type)), self).__setitem__(index, pa)
 
     return sa_type
+
+
+def _ndarray_to_variant_array(value):
+    """ Convert an ndarray to VARIANT_dtype array """
+    from comtypes.automation import VARIANT
+    # Empty array
+    varr = numpysupport.numpy.zeros(
+        value.shape, numpysupport.VARIANT_dtype, order='F')
+    # Iterate over each value and cram it into the array.
+    varr_flat = varr.flat
+    # Loop to avoid consuming even more memory. This is regrettably slow.
+    for i, v in enumerate(value.flat):
+        varr_flat[i] = VARIANT(v)
+    return varr
+

@@ -38,7 +38,6 @@ class VariantTestCase(unittest.TestCase):
         bytes = find_memleak(func)
         self.failIf(bytes, "Leaks %d bytes" % bytes)
 
-
     def test_object(self):
         self.assertRaises(TypeError, lambda: VARIANT(object()))
 
@@ -176,13 +175,14 @@ class SafeArrayTestCase(unittest.TestCase):
 
         t = _midlSAFEARRAY(c_long)
 
-        sa = t.from_param([11, 22, 33])
+        inarr = np.array([11, 22, 33])
+        sa = t.from_param(inarr)
 
         arr = get_array(sa)
 
         self.failUnless(isinstance(arr, np.ndarray))
         self.failUnlessEqual(np.dtype(np.int), arr.dtype)
-        self.failUnless((arr == (11, 22, 33)).all())
+        self.failUnless((arr == inarr).all())
         self.failUnlessEqual(SafeArrayGetVartype(sa), VT_I4)
 
     def test_array(self):
@@ -202,8 +202,7 @@ class SafeArrayTestCase(unittest.TestCase):
         data = ((1.0, 2.0, 3.0),
                 (4.0, 5.0, 6.0),
                 (7.0, 8.0, 9.0))
-        a = np.array(data,
-                        dtype=np.double)
+        a = np.array(data, dtype=np.double)
         pat[0] = a
         arr = get_array(pat[0])
         self.failUnless(isinstance(arr, np.ndarray))
@@ -237,11 +236,13 @@ class SafeArrayTestCase(unittest.TestCase):
         t = _midlSAFEARRAY(VARIANT)
 
         now = datetime.datetime.now()
-        sa = t.from_param([11, "22", None, True, now, Decimal("3.14")])
+        inarr = np.array(
+            [11, "22", None, True, now, Decimal("3.14")]).reshape(2, 3)
+        sa = t.from_param(inarr)
         arr = get_array(sa)
         self.failUnlessEqual(np.dtype(object), arr.dtype)
         self.failUnless(isinstance(arr, np.ndarray))
-        self.failUnless((arr == (11, "22", None, True, now, Decimal("3.14"))).all())
+        self.failUnless((arr == inarr).all())
         self.failUnlessEqual(SafeArrayGetVartype(sa), VT_VARIANT)
 
     def test_VT_BOOL(self):
