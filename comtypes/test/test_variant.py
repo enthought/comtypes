@@ -113,6 +113,27 @@ class VariantTestCase(unittest.TestCase):
         self.failUnlessEqual(v.vt, VT_DATE)
         self.failUnlessEqual(v.value, now)
 
+    def test_datetime64(self):
+        np = get_numpy()
+        if np is None:
+            return
+        try:
+            np.datetime64
+        except AttributeError:
+            return
+
+        dates = [
+            np.datetime64("2000-01-01T05:30:00", "s"),
+            np.datetime64("1800-01-01T05:30:00", "ms"),
+            np.datetime64("2000-01-01T12:34:56", "us")
+        ]
+
+        for date in dates:
+            v = VARIANT()
+            v.value = date
+            self.failUnlessEqual(v.vt, VT_DATE)
+            self.failUnlessEqual(v.value, date.astype(datetime.datetime))
+
     def test_decimal(self):
         value = decimal.Decimal('3.14')
 

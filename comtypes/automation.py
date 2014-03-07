@@ -54,6 +54,7 @@ _byref_type = type(byref(c_int()))
 
 # 30. December 1899, midnight.  For VT_DATE.
 _com_null_date = datetime.datetime(1899, 12, 30, 0, 0, 0)
+_com_null_date64 = numpysupport.datetime64("1899-12-30T00:00:00", "ns")
 
 ################################################################
 # VARIANT, in all it's glory.
@@ -243,6 +244,11 @@ class tagVARIANT(Structure):
             delta = value - _com_null_date
             # a day has 24 * 60 * 60 = 86400 seconds
             com_days = delta.days + (delta.seconds + delta.microseconds * 1e-6) / 86400.
+            self.vt = VT_DATE
+            self._.VT_R8 = com_days
+        elif isinstance(value, numpysupport.datetime64):
+            com_days = value - _com_null_date64
+            com_days /= numpysupport.numpy.timedelta64(1, 'D')
             self.vt = VT_DATE
             self._.VT_R8 = com_days
         elif decimal is not None and isinstance(value, decimal.Decimal):

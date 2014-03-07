@@ -446,6 +446,27 @@ class SafeArrayTestCase(unittest.TestCase):
             data = [tuple(x) for x in arr]
         self.failUnlessEqual(data, [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)])
 
+    def test_datetime64_ndarray(self):
+        np = get_numpy()
+        if np is None:
+            return
+        try:
+            np.datetime64
+        except AttributeError:
+            return
+
+        dates = np.array([
+            np.datetime64("2000-01-01T05:30:00", "s"),
+            np.datetime64("1800-01-01T05:30:00", "ms"),
+            np.datetime64("2014-03-07T00:12:56", "us"),
+            np.datetime64("2000-01-01T12:34:56", "ns"),
+        ])
+
+        t = _midlSAFEARRAY(VARIANT)
+        sa = t.from_param(dates)
+        arr = get_array(sa).astype(dates.dtype)
+        self.failUnless((dates == arr).all())
+
 
 if is_resource_enabled("pythoncom"):
     try:

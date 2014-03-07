@@ -376,12 +376,10 @@ def _datetime64_ndarray_to_variant_array(value):
     # The OLE automation date format is a floating point value, counting days
     # since midnight 30 December 1899. Hours and minutes are represented as
     # fractional days.
-    from comtypes.automation import VT_DATE
+    from comtypes.automation import VT_DATE, _com_null_date64
     numpy = numpysupport.numpy
-    import pdb; pdb.set_trace()
     value = numpy.array(value, "datetime64[ns]")
-    offset = numpy.array("1899-12-30T00:00", "datetime64[ns]")
-    value = value - offset
+    value = value - _com_null_date64
     # Convert to days
     value = value / numpy.timedelta64(1, 'D')
     varr = numpy.zeros(value.shape, numpysupport.VARIANT_dtype, order='F')
