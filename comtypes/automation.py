@@ -274,11 +274,11 @@ class tagVARIANT(Structure):
             # Try to convert a simple array of basic types.
             descr = value.dtype.descr[0][1]
             typ = numpysupport.ctypeslib._typecodes.get(descr)
-            if typ is not None:
-                obj = _midlSAFEARRAY(typ).create(value)
-            else:
-            # Try for variant
+            if typ is None:
+                # Try for variant
                 obj = _midlSAFEARRAY(VARIANT).create(value)
+            else:
+                obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
