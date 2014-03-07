@@ -1,12 +1,17 @@
-import unittest, os, sys
 from ctypes import *
+import datetime
+import decimal
+import os
+import sys
+import unittest
+
 from comtypes import IUnknown, GUID
 from comtypes.automation import VARIANT, DISPPARAMS
 from comtypes.automation import VT_NULL, VT_EMPTY, VT_ERROR
 from comtypes.automation import VT_I1, VT_I2, VT_I4, VT_I8
 from comtypes.automation import VT_UI1, VT_UI2, VT_UI4, VT_UI8
 from comtypes.automation import VT_R4, VT_R8, VT_BYREF
-from comtypes.automation import BSTR, VT_BSTR, VT_DATE
+from comtypes.automation import BSTR, VT_BSTR, VT_DATE, VT_CY
 from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib
 from comtypes.test import is_resource_enabled, get_numpy
 
@@ -101,13 +106,20 @@ class VariantTestCase(unittest.TestCase):
         self.failUnlessEqual(type(v.value), int)
 
     def test_datetime(self):
-        import datetime
         now = datetime.datetime.now()
 
         v = VARIANT()
         v.value = now
         self.failUnlessEqual(v.vt, VT_DATE)
         self.failUnlessEqual(v.value, now)
+
+    def test_decimal(self):
+        value = decimal.Decimal('3.14')
+
+        v = VARIANT()
+        v.value = value
+        self.failUnlessEqual(v.vt, VT_CY)
+        self.failUnlessEqual(v.value, value)
 
     def test_BSTR(self):
         v = VARIANT()
@@ -165,7 +177,7 @@ class NdArrayTest(unittest.TestCase):
             a = np.array([1.0, 2.0, 3.0, 4.5], dtype=dtype)
             v = VARIANT()
             v.value = a
-            self.failUnlessEqual(v.value, (1.0, 2.0, 3.0, 4.5))
+            self.failUnless((v.value == a).all())
 
     def test_int(self):
         np = get_numpy()
@@ -176,7 +188,19 @@ class NdArrayTest(unittest.TestCase):
             a = np.array((1, 1, 1, 1), dtype=dtype)
             v = VARIANT()
             v.value = a
-            self.failUnlessEqual(v.value, (1, 1, 1, 1))
+            self.failUnless((v.value == a).all())
+
+    def test_mixed(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        now = datetime.datetime.now()
+        a = np.array(
+            [11, "22", None, True, now, decimal.Decimal("3.14")]).reshape(2,3)
+        v = VARIANT()
+        v.value = a
+        self.failUnless((v.value == a).all())
 
 
 class ArrayTest(unittest.TestCase):
