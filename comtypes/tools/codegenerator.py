@@ -506,8 +506,12 @@ class Generator(object):
                 else:
                     print >> self.stream, "    ('%s', %s, %s)," % (fieldname, self.type_name(f.typ), f.bits)
             print >> self.stream, "]"
-            # generate assert statements for size and alignment
-            if body.struct.size and body.struct.name not in dont_assert_size:
+
+            if body.struct.size is None:
+                msg = ("# The size provided by the typelib is incorrect.\n"
+                       "# The size and alignment check for %s is skipped.")
+                print >> self.stream, msg % body.struct.name
+            elif body.struct.name not in dont_assert_size:
                 size = body.struct.size // 8
                 print >> self.stream, "assert sizeof(%s) == %s, sizeof(%s)" % \
                       (body.struct.name, size, body.struct.name)
