@@ -1,28 +1,25 @@
-import unittest
-from decimal import Decimal
-import datetime
-from ctypes import *
-from ctypes.wintypes import BOOL
-from comtypes.test.find_memleak import find_memleak
+import array
 from comtypes import BSTR, IUnknown
 from comtypes.test import is_resource_enabled, get_numpy
-import array
+from comtypes.test.find_memleak import find_memleak
+from ctypes import *
+from ctypes.wintypes import BOOL
+import datetime
+from decimal import Decimal
+import unittest
 
-from comtypes.automation import VARIANT, IDispatch, VT_ARRAY, VT_VARIANT, \
-     VT_I4, VT_R4, VT_R8, VT_BSTR, VARIANT_BOOL, VT_DATE, VT_CY
+from comtypes.automation import (
+    VARIANT, VT_ARRAY, VT_VARIANT, VT_I4, VT_R4, VT_R8, VT_BSTR, VARIANT_BOOL)
 from comtypes.automation import _midlSAFEARRAY
 from comtypes.safearray import safearray_as_ndarray
 
 from comtypes._safearray import SafeArrayGetVartype
 
+
 def get_array(sa):
     '''Get an array from a safe array type'''
-    # Don't rely on context manager syntax - must support python < 2.5
-    try:
-        safearray_as_ndarray.__enter__()
+    with safearray_as_ndarray:
         return sa[0]
-    finally:
-        safearray_as_ndarray.__exit__(None, None, None)
 
 
 class VariantTestCase(unittest.TestCase):
@@ -33,13 +30,10 @@ class VariantTestCase(unittest.TestCase):
         self.failUnlessEqual(v.value, ((1, 2, 3), ("foo", "bar", None)))
 
         def func():
-            v = VARIANT((1, 2, 3), ("foo", "bar", None))
+            VARIANT((1, 2, 3), ("foo", "bar", None))
 
         bytes = find_memleak(func)
         self.failIf(bytes, "Leaks %d bytes" % bytes)
-
-    def test_object(self):
-        self.assertRaises(TypeError, lambda: VARIANT(object()))
 
     def test_double_array(self):
         a = array.array("d", (3.14, 2.78))
@@ -48,11 +42,10 @@ class VariantTestCase(unittest.TestCase):
         self.failUnlessEqual(tuple(a.tolist()), v.value)
 
         def func():
-            v = VARIANT(array.array("d", (3.14, 2.78)))
+            VARIANT(array.array("d", (3.14, 2.78)))
 
         bytes = find_memleak(func)
         self.failIf(bytes, "Leaks %d bytes" % bytes)
-
 
     def test_float_array(self):
         a = array.array("f", (3.14, 2.78))
@@ -66,36 +59,6 @@ class VariantTestCase(unittest.TestCase):
                 (9, 10, 11, 12))
         v = VARIANT(data)
         self.failUnlessEqual(v.value, data)
-
-    def test_datetime(self):
-        now = datetime.datetime.now()
-
-        v = VARIANT()
-        v.value = now
-        self.failUnlessEqual(v.value, now)
-        self.failUnlessEqual(v.vt, VT_DATE)
-
-    def test_decimal(self):
-        pi = Decimal("3.13")
-
-        v = VARIANT()
-        v.value = pi
-        self.failUnlessEqual(v.vt, VT_CY)
-        self.failUnlessEqual(v.value, pi)
-
-    def test_UDT(self):
-        from comtypes.gen.TestComServerLib import MYCOLOR
-        v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
-        value = v.value
-        self.failUnlessEqual((1.0, 2.0, 3.0),
-                             (value.red, value.green, value.blue))
-
-        def func():
-            v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
-            return v.value
-
-        bytes = find_memleak(func)
-        self.failIf(bytes, "Leaks %d bytes" % bytes)
 
 
 class SafeArrayTestCase(unittest.TestCase):
@@ -120,7 +83,7 @@ class SafeArrayTestCase(unittest.TestCase):
     def test_VT_BSTR(self):
         t = _midlSAFEARRAY(BSTR)
 
-        sa = t.from_param(["a" ,"b", "c"])
+        sa = t.from_param(["a", "b", "c"])
         self.failUnlessEqual(sa[0], ("a", "b", "c"))
         self.failUnlessEqual(SafeArrayGetVartype(sa), VT_BSTR)
 
@@ -131,14 +94,13 @@ class SafeArrayTestCase(unittest.TestCase):
 
         t = _midlSAFEARRAY(BSTR)
 
-        sa = t.from_param(["a" ,"b", "c"])
+        sa = t.from_param(["a", "b", "c"])
         arr = get_array(sa)
 
         self.failUnless(isinstance(arr, np.ndarray))
         self.failUnlessEqual(np.dtype('<U1'), arr.dtype)
         self.failUnless((arr == ("a", "b", "c")).all())
         self.failUnlessEqual(SafeArrayGetVartype(sa), VT_BSTR)
-
 
     def test_VT_BSTR_leaks(self):
         sb = _midlSAFEARRAY(BSTR)
@@ -276,7 +238,7 @@ class SafeArrayTestCase(unittest.TestCase):
             o.AddRef()
             return o.Release()
 
-        from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
+        from comtypes.typeinfo import CreateTypeLib
         punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
 
         # initial refcount
@@ -309,7 +271,7 @@ class SafeArrayTestCase(unittest.TestCase):
             o.AddRef()
             return o.Release()
 
-        from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
+        from comtypes.typeinfo import CreateTypeLib
         punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
 
         # initial refcount
@@ -364,7 +326,7 @@ class SafeArrayTestCase(unittest.TestCase):
             o.AddRef()
             return o.Release()
 
-        from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
+        from comtypes.typeinfo import CreateTypeLib
         punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
 
         # initial refcount
@@ -498,9 +460,10 @@ if is_resource_enabled("pythoncom"):
         _pack = _dll.PyCom_VariantFromPyObject
         _pack.argtypes = py_object, POINTER(VARIANT)
         _pack.restype = BOOL
+
         def pack(obj):
             var = VARIANT()
-            result = _pack(obj, byref(var))
+            _pack(obj, byref(var))
             return var
 
         class PyWinTest(unittest.TestCase):
