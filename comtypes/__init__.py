@@ -313,7 +313,7 @@ class _cominterface_meta(type):
                     # CopyComPointer should do if index != 0.
                     if bool(value):
                         value.AddRef()
-                    super(_, self).__setitem__(index, value)
+                    super(POINTER(p), self).__setitem__(index, value)
                     return
                 from _ctypes import CopyComPointer
                 CopyComPointer(value, self)
