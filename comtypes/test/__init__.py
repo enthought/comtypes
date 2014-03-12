@@ -186,6 +186,7 @@ class TestRunner(unittest.TextTestRunner):
 
 
 def run_tests(package, mask, verbosity, search_leaks):
+    """ Run tests for package and return True on failure, False otherwise  """
     skipped, testcases = get_tests(package, mask, verbosity)
     runner = TestRunner(verbosity=verbosity)
 
@@ -199,7 +200,7 @@ def run_tests(package, mask, verbosity, search_leaks):
         for t in testcases:
             test_with_refcounts(runner, verbosity, t)
 
-    return bool(result.errors)
+    return bool(result.errors) or bool(result.failures)
 
 class BasicTestRunner:
     def run(self, test):
@@ -208,6 +209,7 @@ class BasicTestRunner:
         return result
 
 def run(args = []):
+    """ Run tests and return True on failure, False otherwise """
     try:
         opts, args = getopt.getopt(args, "rqvu:")
     except getopt.error:
@@ -235,4 +237,4 @@ def run(args = []):
         mask = args[0]
 
     import comtypes.test
-    run_tests(comtypes.test, mask, verbosity, search_leaks)
+    return run_tests(comtypes.test, mask, verbosity, search_leaks)
