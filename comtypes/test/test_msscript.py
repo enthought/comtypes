@@ -9,8 +9,9 @@ from comtypes import GUID
 
 try:
     GUID.from_progid("MSScriptControl.ScriptControl")
+    CreateObject("MSScriptControl.ScriptControl")
 except WindowsError:
-    # doesn't exist on Windows CE
+    # doesn't exist on Windows CE or in 64-bit.
     pass
 else:
 

@@ -767,6 +767,18 @@ class IDispatch(IUnknown):
 
     # XXX Would separate methods for _METHOD, _PROPERTYGET and _PROPERTYPUT be better?
 
+
+################################################################
+# The Decimal type is bits dependent
+
+class tagDEC(Structure):
+    _fields_ = [("wReserved", c_ushort),
+                ("scale", c_ubyte),
+                ("sign", c_ubyte),
+                ("Hi32", c_ulong),
+                ("Lo64", c_ulonglong)]
+DECIMAL = tagDEC
+
 ################################################################
 # safearrays
 # XXX Only one-dimensional arrays are currently implemented

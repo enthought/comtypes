@@ -23,7 +23,7 @@ class Test(unittest.TestCase):
             self.assertEqual(d.eval2("1 + 2"), 3)
             self.assertEqual(d.eval2("[1 + 2, 'foo', None]"), (3, 'foo', None))
 
-            d.eval("__import__('comtypes.client').client.CreateObject('MSScriptControl.ScriptControl')")
+            d.eval("__import__('comtypes.client').client.CreateObject('Scripting.Dictionary')")
 
             server_id = d.eval("id(self)")
             self.assertEqual(d.id, server_id)
@@ -49,7 +49,7 @@ class Test(unittest.TestCase):
             self.assertEqual(d.eval2("1 + 2"), 3)
             self.assertEqual(d.eval2("[1 + 2, 'foo', None]"), (3, 'foo', None))
 
-            d.eval("__import__('comtypes.client').client.CreateObject('MSScriptControl.ScriptControl')")
+            d.eval("__import__('comtypes.client').client.CreateObject('Scripting.Dictionary')")
 
             self.assertEqual(d.EVAL("3.14"), 3.14)
             self.assertEqual(d.EVAL("1 + 2"), 3)
@@ -85,7 +85,7 @@ class Test(unittest.TestCase):
         self.assertEqual(d.eval2("1 + 2"), 3)
         self.assertEqual(d.eval2("[1 + 2, 'foo', None]"), (3, 'foo', None))
 
-        d.eval("__import__('comtypes.client').client.CreateObject('MSScriptControl.ScriptControl')")
+        d.eval("__import__('comtypes.client').client.CreateObject('Scripting.Dictionary')")
 
         self.assertEqual(d.EVAL("3.14"), 3.14)
         self.assertEqual(d.EVAL("1 + 2"), 3)
