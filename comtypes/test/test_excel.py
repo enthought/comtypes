@@ -22,7 +22,7 @@ class Test(unittest.TestCase):
 
     def _doit(self, dynamic):
         self.xl = CreateObject("Excel.Application", dynamic=dynamic)
-        
+
         xl = self.xl
         xl.Visible = 0
         self.failUnlessEqual(xl.Visible, False)
@@ -31,9 +31,11 @@ class Test(unittest.TestCase):
 
         wb = xl.Workbooks.Add()
 
+        # Test with empty-tuple argument
         xl.Range["A1", "C1"].Value[()] = (10,"20",31.4)
         xl.Range["A2:C2"].Value[()] = ('x','y','z')
-        xl.Range["A3:C3"].Value[()] = ('3','2','1')
+        # Test with empty slice argument
+        xl.Range["A3:C3"].Value[:] = ('3','2','1')
 ## not (yet?) implemented:
 ##        xl.Range["A4:C4"].Value = ('3','2','1')
 
@@ -47,11 +49,15 @@ class Test(unittest.TestCase):
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
+        # index with empty slice
+        self.failUnlessEqual(xl.Range["A1:C3"].Value[:],
+                             ((10.0, 20.0, 31.4),
+                              ("x", "y", "z"),
+                              (3.0, 2.0, 1.0)))
         self.failUnlessEqual(xl.Range["A1:C3"].Value[xlRangeValueDefault],
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
-
         self.failUnlessEqual(xl.Range["A1", "C3"].Value[()],
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
