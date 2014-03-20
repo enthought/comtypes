@@ -45,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'comtypes'
-copyright = '2014, Thomas Heller, Christopher L. Farrow, Jason R. Coombs'
+copyright = '2006 - 2013, Thomas Heller; 2014, Comtypes developers.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
