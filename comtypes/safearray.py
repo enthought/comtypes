@@ -1,10 +1,11 @@
 import threading
 import array
 from ctypes import *
-from comtypes import _safearray, GUID, IUnknown, com_interface_registry, \
+from comtypes import _safearray, IUnknown, com_interface_registry, \
                      npsupport
 from comtypes.patcher import Patch
 _safearray_type_cache = {}
+
 
 class _SafeArrayAsNdArrayContextManager(object):
     '''Context manager allowing safe arrays to be extracted as ndarrays.
@@ -356,6 +357,12 @@ def _make_safearray_type(itemtype):
 def _ndarray_to_variant_array(value):
     """ Convert an ndarray to VARIANT_dtype array """
     numpy = npsupport.numpy
+
+    # Check that variant arrays are supported
+    if npsupport.VARIANT_dtype is None:
+        msg = "VARIANT ndarrays require NumPy 1.7 or newer."
+        raise RuntimeError(msg)
+
     # special cases
     if numpy.issubdtype(value.dtype, npsupport.datetime64):
         return _datetime64_ndarray_to_variant_array(value)

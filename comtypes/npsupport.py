@@ -77,7 +77,10 @@ if HAVE_NUMPY:
 
     # dtype for VARIANT. This allows for packing of variants into an array, and
     # subsequent conversion to a multi-dimensional safearray.
-    VARIANT_dtype = _make_variant_dtype()
+    try:
+        VARIANT_dtype = _make_variant_dtype()
+    except ValueError:
+        VARIANT_dtype = None
 
     # This simplifies dependent modules
     try:
