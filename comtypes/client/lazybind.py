@@ -1,20 +1,17 @@
-from ctypes import c_uint, pointer
 import comtypes
 import comtypes.automation
 
-from comtypes.automation import VARIANT, DISPPARAMS
 from comtypes.automation import IEnumVARIANT
 from comtypes.automation import DISPATCH_METHOD
 from comtypes.automation import DISPATCH_PROPERTYGET
 from comtypes.automation import DISPATCH_PROPERTYPUT
 from comtypes.automation import DISPATCH_PROPERTYPUTREF
 
-from comtypes.automation import DISPID
-from comtypes.automation import DISPID_PROPERTYPUT
 from comtypes.automation import DISPID_VALUE
 from comtypes.automation import DISPID_NEWENUM
 
 from comtypes.typeinfo import FUNC_PUREVIRTUAL, FUNC_DISPATCH
+
 
 class FuncDesc(object):
     """Stores important FUNCDESC properties by copying them from a
@@ -26,6 +23,9 @@ class FuncDesc(object):
 # What is missing?
 #
 # Should NamedProperty support __call__()?
+
+_all_slice = slice(None, None, None)
+
 
 class NamedProperty(object):
     def __init__(self, disp, get, put, putref):
@@ -40,6 +40,10 @@ class NamedProperty(object):
                                              self.get.invkind,
                                              0,
                                              *arg)
+        elif arg == _all_slice:
+            return self.disp._comobj._invoke(self.get.memid,
+                                             self.get.invkind,
+                                             0)
         return self.disp._comobj._invoke(self.get.memid,
                                          self.get.invkind,
                                          0,
@@ -54,7 +58,7 @@ class NamedProperty(object):
     def __setitem__(self, name, value):
         # See discussion in Dispatch.__setattr__ below.
         if not self.put and not self.putref:
-            raise AttributeError(name) # XXX IndexError?
+            raise AttributeError(name)  # XXX IndexError?
         if comtypes._is_object(value):
             descr = self.putref or self.put
         else:
@@ -64,12 +68,18 @@ class NamedProperty(object):
                                       descr.invkind,
                                       0,
                                       *(name + (value,)))
+        elif name == _all_slice:
+            self.disp._comobj._invoke(descr.memid,
+                                      descr.invkind,
+                                      0,
+                                      value)
         else:
             self.disp._comobj._invoke(descr.memid,
                                       descr.invkind,
                                       0,
                                       name,
                                       value)
+
 
 # The following 'Dispatch' class, returned from
 #    CreateObject(progid, dynamic=True)

@@ -799,6 +799,9 @@ class _cominterface_meta(type):
 # helper classes for COM propget / propput
 # Should they be implemented in C for speed?
 
+_all_slice = slice(None, None, None)
+
+
 class bound_named_property(object):
     def __init__(self, name, getter, setter, im_inst):
         self.name = name
@@ -811,6 +814,8 @@ class bound_named_property(object):
             raise TypeError("unsubscriptable object")
         if isinstance(index, tuple):
             return self.getter(self.im_inst, *index)
+        elif index == _all_slice:
+            return self.getter(self.im_inst)
         else:
             return self.getter(self.im_inst, index)
 
@@ -824,6 +829,8 @@ class bound_named_property(object):
             raise TypeError("object does not support item assignment")
         if isinstance(index, tuple):
             self.setter(self.im_inst, *(index + (value,)))
+        elif index == _all_slice:
+            self.setter(self.im_inst, value)
         else:
             self.setter(self.im_inst, index, value)
 

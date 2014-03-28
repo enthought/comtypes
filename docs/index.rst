@@ -199,19 +199,22 @@ the property:
     (10, "20", 31.4)
     >>>
 
-It is also possible to index with an empty tuple:
+It is also possible to index with an empty slice or empty tuple:
 
 .. sourcecode:: pycon
 
+    >>> print xl.Range["A1", "C1"].Value[:]
+    (10, "20", 31.4)
     >>> print xl.Range["A1", "C1"].Value[()]
     (10, "20", 31.4)
     >>>
 
 To *set* a named property without passing any argument, you can
-also use the empty tuple index trick:
+also use the empty slice or tuple index trick:
 
 .. sourcecode:: pycon
 
+    >>> xl.Range["A1", "C1"].Value[:] = (3, 2, 1)
     >>> xl.Range["A1", "C1"].Value[()] = (1, 2, 3)
     >>>
 
