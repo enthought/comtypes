@@ -98,15 +98,17 @@ class SafeArrayTestCase(unittest.TestCase):
 
         first = sa[0]
         with safearray_as_ndarray:
+            second = sa[0]
             with safearray_as_ndarray:
-                second = sa[0]
-            third = sa[0]
-        fourth = sa[0]
+                third = sa[0]
+            fourth = sa[0]
+        fifth = sa[0]
 
         self.failUnless(isinstance(first, tuple))
         self.failUnless(isinstance(second, np.ndarray))
         self.failUnless(isinstance(third, np.ndarray))
-        self.failUnless(isinstance(fourth, tuple))
+        self.failUnless(isinstance(fourth, np.ndarray))
+        self.failUnless(isinstance(fifth, tuple))
 
     def test_VT_BSTR(self):
         t = _midlSAFEARRAY(BSTR)
