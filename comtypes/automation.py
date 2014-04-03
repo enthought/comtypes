@@ -5,6 +5,7 @@ from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
 from comtypes.patcher import Patch
+from comtypes import npsupport
 try:
     from comtypes import _safearray
 except (ImportError, AttributeError):
@@ -17,14 +18,6 @@ try:
     import decimal # standard in Python 2.4 and up
 except ImportError:
     decimal = None
-
-try:
-    from numpy import ndarray
-except ImportError:
-    class ndarray(object):
-        pass
-
-
 
 from ctypes.wintypes import VARIANT_BOOL
 from ctypes.wintypes import WORD
@@ -150,7 +143,6 @@ class tagVARIANT(Structure):
             ("c_wchar_p", c_wchar_p),
             ("c_void_p", c_void_p),
             ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
-
             ("bstrVal", BSTR),
             ("_tagBRECORD", _tagBRECORD),
             ]
@@ -197,6 +189,8 @@ class tagVARIANT(Structure):
     def _set_value(self, value):
         _VariantClear(self)
         if value is None:
+            self.vt = VT_NULL
+        elif hasattr(value, '__len__') and len(value) == 0:
             self.vt = VT_NULL
         # since bool is a subclass of int, this check must come before
         # the check for int
@@ -251,6 +245,11 @@ class tagVARIANT(Structure):
             com_days = delta.days + (delta.seconds + delta.microseconds * 1e-6) / 86400.
             self.vt = VT_DATE
             self._.VT_R8 = com_days
+        elif npsupport.isdatetime64(value):
+            com_days = value - npsupport.com_null_date64
+            com_days /= npsupport.numpy.timedelta64(1, 'D')
+            self.vt = VT_DATE
+            self._.VT_R8 = com_days
         elif decimal is not None and isinstance(value, decimal.Decimal):
             self._.VT_CY = int(round(value * 10000))
             self.vt = VT_CY
@@ -270,18 +269,15 @@ class tagVARIANT(Structure):
             obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
-        elif isinstance(value, ndarray):
-            # Get the array type. This only works if we have a simple
-            # array.
+        elif npsupport.isndarray(value):
+            # Try to convert a simple array of basic types.
             descr = value.dtype.descr[0][1]
-            import numpy.ctypeslib
-            try:
-                typ = numpy.ctypeslib._typecodes[descr]
-            except KeyError:
-                msg = ('Cannot make safe array out of object of type '
-                       '"%s"' % descr)
-                raise ValueError(msg)
-            obj = _midlSAFEARRAY(typ).create(value)
+            typ = npsupport.numpy.ctypeslib._typecodes.get(descr)
+            if typ is None:
+                # Try for variant
+                obj = _midlSAFEARRAY(VARIANT).create(value)
+            else:
+                obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
@@ -850,6 +846,7 @@ for c, v in _ctype_to_vartype.iteritems():
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
 _ctype_to_vartype[c_char] = VT_UI1
+
 
 
 try:

@@ -18,10 +18,10 @@ def get_numpy():
         return None
 
 def register_server(source_dir):
-    """ Register for testing server appropriate for the python architecture.
+    """ Register testing server appropriate for the python architecture.
 
-    ``source_dir`` gives the absolute path of the comtype source in which the
-    32- and 64-bit testing servers, "AvmcIfc.dll" is defined.
+    ``source_dir`` gives the absolute path to the comtype source in which the
+    32- and 64-bit testing server, "AvmcIfc.dll" is defined.
 
     If the server is already registered, do nothing.
 

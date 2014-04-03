@@ -1,14 +1,17 @@
-import unittest, os, sys
 from ctypes import *
+import datetime
+import decimal
+import sys
+import unittest
+
 from comtypes import IUnknown, GUID
-from comtypes.automation import VARIANT, DISPPARAMS
-from comtypes.automation import VT_NULL, VT_EMPTY, VT_ERROR
-from comtypes.automation import VT_I1, VT_I2, VT_I4, VT_I8
-from comtypes.automation import VT_UI1, VT_UI2, VT_UI4, VT_UI8
-from comtypes.automation import VT_R4, VT_R8, VT_BYREF
-from comtypes.automation import BSTR, VT_BSTR, VT_DATE
-from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib
-from comtypes.test import is_resource_enabled, get_numpy
+from comtypes.automation import (
+    VARIANT, DISPPARAMS, VT_NULL, VT_EMPTY, VT_ERROR, VT_I1, VT_I2, VT_I4,
+    VT_UI1, VT_UI2, VT_UI4, VT_R4, VT_R8, VT_BYREF, VT_BSTR, VT_DATE, VT_CY,)
+from comtypes.typeinfo import LoadRegTypeLib
+from comtypes.test import get_numpy
+from comtypes.test.find_memleak import find_memleak
+
 
 def get_refcnt(comptr):
     # return the COM reference count of a COM interface pointer
@@ -16,6 +19,7 @@ def get_refcnt(comptr):
         return 0
     comptr.AddRef()
     return comptr.Release()
+
 
 class VariantTestCase(unittest.TestCase):
 
@@ -64,7 +68,7 @@ class VariantTestCase(unittest.TestCase):
         p = POINTER(IUnknown)()
         self.failUnlessEqual(get_refcnt(p), 0)
 
-        v = VARIANT(p)
+        VARIANT(p)
         self.failUnlessEqual(get_refcnt(p), 0)
 
     def test_dispparams(self):
@@ -101,13 +105,41 @@ class VariantTestCase(unittest.TestCase):
         self.failUnlessEqual(type(v.value), int)
 
     def test_datetime(self):
-        import datetime
         now = datetime.datetime.now()
 
         v = VARIANT()
         v.value = now
         self.failUnlessEqual(v.vt, VT_DATE)
         self.failUnlessEqual(v.value, now)
+
+    def test_datetime64(self):
+        np = get_numpy()
+        if np is None:
+            return
+        try:
+            np.datetime64
+        except AttributeError:
+            return
+
+        dates = [
+            np.datetime64("2000-01-01T05:30:00", "s"),
+            np.datetime64("1800-01-01T05:30:00", "ms"),
+            np.datetime64("2000-01-01T12:34:56", "us")
+        ]
+
+        for date in dates:
+            v = VARIANT()
+            v.value = date
+            self.failUnlessEqual(v.vt, VT_DATE)
+            self.failUnlessEqual(v.value, date.astype(datetime.datetime))
+
+    def test_decimal(self):
+        value = decimal.Decimal('3.14')
+
+        v = VARIANT()
+        v.value = value
+        self.failUnlessEqual(v.vt, VT_CY)
+        self.failUnlessEqual(v.value, value)
 
     def test_BSTR(self):
         v = VARIANT()
@@ -121,6 +153,20 @@ class VariantTestCase(unittest.TestCase):
         # NULL pointer BSTR should be handled as empty string
         v.vt = VT_BSTR
         self.failUnless(v.value in ("", None))
+
+    def test_UDT(self):
+        from comtypes.gen.TestComServerLib import MYCOLOR
+        v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
+        value = v.value
+        self.failUnlessEqual((1.0, 2.0, 3.0),
+                             (value.red, value.green, value.blue))
+
+        def func():
+            v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
+            return v.value
+
+        bytes = find_memleak(func)
+        self.failIf(bytes, "Leaks %d bytes" % bytes)
 
     def test_ctypes_in_variant(self):
         v = VARIANT()
@@ -152,7 +198,7 @@ class VariantTestCase(unittest.TestCase):
         self.failUnlessEqual(v.vt, VT_BYREF | VT_I4)
         variable.value = 96
         self.failUnlessEqual(v[0], 96)
-        
+
 
 class NdArrayTest(unittest.TestCase):
     def test_double(self):
@@ -165,7 +211,7 @@ class NdArrayTest(unittest.TestCase):
             a = np.array([1.0, 2.0, 3.0, 4.5], dtype=dtype)
             v = VARIANT()
             v.value = a
-            self.failUnlessEqual(v.value, (1.0, 2.0, 3.0, 4.5))
+            self.failUnless((v.value == a).all())
 
     def test_int(self):
         np = get_numpy()
@@ -176,7 +222,19 @@ class NdArrayTest(unittest.TestCase):
             a = np.array((1, 1, 1, 1), dtype=dtype)
             v = VARIANT()
             v.value = a
-            self.failUnlessEqual(v.value, (1, 1, 1, 1))
+            self.failUnless((v.value == a).all())
+
+    def test_mixed(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        now = datetime.datetime.now()
+        a = np.array(
+            [11, "22", None, True, now, decimal.Decimal("3.14")]).reshape(2,3)
+        v = VARIANT()
+        v.value = a
+        self.failUnless((v.value == a).all())
 
 
 class ArrayTest(unittest.TestCase):
@@ -221,6 +279,7 @@ def run_test(rep, msg, func=None, previous={}, results={}):
         print >> sys.stderr, "%40s: %7.1f us, time = %5.1f%%" % (msg, duration, delta)
     results[msg] = duration
     return delta
+
 
 def check_perf(rep=20000):
     from ctypes import c_int, byref
