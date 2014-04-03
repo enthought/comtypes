@@ -80,6 +80,26 @@ class SafeArrayTestCase(unittest.TestCase):
         self.failUnlessEqual((c._itemtype_, c._vartype_),
                              (BSTR, VT_BSTR))
 
+    def test_nested_contexts(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        t = _midlSAFEARRAY(BSTR)
+        sa = t.from_param(["a", "b", "c"])
+
+        first = sa[0]
+        with safearray_as_ndarray:
+            with safearray_as_ndarray:
+                second = sa[0]
+            third = sa[0]
+        fourth = sa[0]
+
+        self.failUnless(isinstance(first, tuple))
+        self.failUnless(isinstance(second, np.ndarray))
+        self.failUnless(isinstance(third, np.ndarray))
+        self.failUnless(isinstance(fourth, tuple))
+
     def test_VT_BSTR(self):
         t = _midlSAFEARRAY(BSTR)
 

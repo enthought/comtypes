@@ -25,21 +25,24 @@ class _SafeArrayAsNdArrayContextManager(object):
     thread_local = threading.local()
 
     def __enter__(self):
-        self.thread_local.in_context = True
-        return
+        try:
+            self.thread_local.count += 1
+        except AttributeError:
+            self.thread_local.count = 1
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.thread_local.in_context = False
-        return
+        self.thread_local.count -= 1
 
     def __nonzero__(self):
         '''True if context manager is currently entered on given thread.
 
         '''
-        return getattr(self.thread_local, 'in_context', False)
+        return bool(getattr(self.thread_local, 'count', 0))
+
 
 # Global _SafeArrayAsNdArrayContextManager
 safearray_as_ndarray = _SafeArrayAsNdArrayContextManager()
+
 
 ################################################################
 # This is THE PUBLIC function: the gateway to the SAFEARRAY functionality.
