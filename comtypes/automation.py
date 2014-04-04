@@ -1,4 +1,8 @@
 # comtypes.automation module
+import array
+import datetime
+import decimal
+
 from ctypes import *
 from ctypes import _Pointer
 from _ctypes import CopyComPointer
@@ -12,20 +16,8 @@ except (ImportError, AttributeError):
     class _safearray(object):
         tagSAFEARRAY = None
 
-import datetime # for VT_DATE, standard in Python 2.3 and up
-import array
-try:
-    import decimal # standard in Python 2.4 and up
-except ImportError:
-    decimal = None
+from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 
-from ctypes.wintypes import VARIANT_BOOL
-from ctypes.wintypes import WORD
-from ctypes.wintypes import UINT
-from ctypes.wintypes import DWORD
-from ctypes.wintypes import LONG
-
-from ctypes.wintypes import WCHAR
 
 LCID = DWORD
 DISPID = LONG
@@ -111,48 +103,84 @@ VT_ILLEGAL = 65535
 VT_ILLEGALMASKED = 4095
 VT_TYPEMASK = 4095
 
+
 class tagCY(Structure):
     _fields_ = [("int64", c_longlong)]
 CY = tagCY
 CURRENCY = CY
 
+
+class tagDEC(Structure):
+    _fields_ = [("wReserved", c_ushort),
+                ("scale", c_ubyte),
+                ("sign", c_ubyte),
+                ("Hi32", c_ulong),
+                ("Lo64", c_ulonglong)]
+
+    def as_decimal(self):
+        """ Convert a tagDEC struct to Decimal.
+
+        See http://msdn.microsoft.com/en-us/library/cc234586.aspx for the tagDEC
+        specification.
+
+        """
+        digits = (self.Hi32 << 64) + self.Lo64
+        decimal_str = "{0}{1}e-{2}".format(
+            '-' if self.sign else '',
+            digits,
+            self.scale,
+        )
+        return decimal.Decimal(decimal_str)
+
+
+DECIMAL = tagDEC
+
+
 # The VARIANT structure is a good candidate for implementation in a C
 # helper extension.  At least the get/set methods.
 class tagVARIANT(Structure):
-    # The C Header file defn of VARIANT is much more complicated, but
-    # this is the ctypes version - functional as well.
-    class U_VARIANT(Union):
-        class _tagBRECORD(Structure):
-            _fields_ = [("pvRecord", c_void_p),
-                        ("pRecInfo", POINTER(IUnknown))]
-        _fields_ = [
-            ("VT_BOOL", VARIANT_BOOL),
-            ("VT_I1", c_byte),
-            ("VT_I2", c_short),
-            ("VT_I4", c_long),
-            ("VT_I8", c_longlong),
-            ("VT_INT", c_int),
-            ("VT_UI1", c_ubyte),
-            ("VT_UI2", c_ushort),
-            ("VT_UI4", c_ulong),
-            ("VT_UI8", c_ulonglong),
-            ("VT_UINT", c_uint),
-            ("VT_R4", c_float),
-            ("VT_R8", c_double),
-            ("VT_CY", c_longlong),
-            ("c_wchar_p", c_wchar_p),
-            ("c_void_p", c_void_p),
-            ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
-            ("bstrVal", BSTR),
-            ("_tagBRECORD", _tagBRECORD),
+    class U_VARIANT1(Union):
+        class __tagVARIANT(Structure):
+            # The C Header file defn of VARIANT is much more complicated, but
+            # this is the ctypes version - functional as well.
+            class U_VARIANT2(Union):
+                class _tagBRECORD(Structure):
+                    _fields_ = [("pvRecord", c_void_p),
+                                ("pRecInfo", POINTER(IUnknown))]
+                _fields_ = [
+                    ("VT_BOOL", VARIANT_BOOL),
+                    ("VT_I1", c_byte),
+                    ("VT_I2", c_short),
+                    ("VT_I4", c_long),
+                    ("VT_I8", c_longlong),
+                    ("VT_INT", c_int),
+                    ("VT_UI1", c_ubyte),
+                    ("VT_UI2", c_ushort),
+                    ("VT_UI4", c_ulong),
+                    ("VT_UI8", c_ulonglong),
+                    ("VT_UINT", c_uint),
+                    ("VT_R4", c_float),
+                    ("VT_R8", c_double),
+                    ("VT_CY", c_longlong),
+                    ("c_wchar_p", c_wchar_p),
+                    ("c_void_p", c_void_p),
+                    ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
+
+                    ("bstrVal", BSTR),
+                    ("_tagBRECORD", _tagBRECORD),
+                    ]
+                _anonymous_ = ["_tagBRECORD"]
+            _fields_ = [("vt", VARTYPE),
+                        ("wReserved1", c_ushort),
+                        ("wReserved2", c_ushort),
+                        ("wReserved3", c_ushort),
+                        ("_", U_VARIANT2)
             ]
-        _anonymous_ = ["_tagBRECORD"]
-    _fields_ = [("vt", VARTYPE),
-                ("wReserved1", c_ushort),
-                ("wReserved2", c_ushort),
-                ("wReserved3", c_ushort),
-                ("_", U_VARIANT)
-    ]
+        _fields_ = [("__VARIANT_NAME_2", __tagVARIANT),
+                    ("decVal", DECIMAL)]
+        _anonymous_ = ["__VARIANT_NAME_2"]
+    _fields_ = [("__VARIANT_NAME_1", U_VARIANT1)]
+    _anonymous_ = ["__VARIANT_NAME_1"]
 
     def __init__(self, *args):
         if args:
@@ -367,10 +395,7 @@ class tagVARIANT(Structure):
             days = self._.VT_R8
             return datetime.timedelta(days=days) + _com_null_date
         elif vt == VT_CY:
-            if decimal is not None:
-                return self._.VT_CY / decimal.Decimal("10000")
-            else:
-                return self._.VT_CY / 10000.
+            return self._.VT_CY / decimal.Decimal("10000")
         elif vt == VT_UNKNOWN:
             val = self._.c_void_p
             if not val:
@@ -382,6 +407,8 @@ class tagVARIANT(Structure):
             # cast doesn't call AddRef (it should, imo!)
             ptr.AddRef()
             return ptr.__ctypes_from_outparam__()
+        elif vt == VT_DECIMAL:
+            return self.decVal.as_decimal()
         elif vt == VT_DISPATCH:
             val = self._.c_void_p
             if not val:
@@ -767,17 +794,6 @@ class IDispatch(IUnknown):
 
     # XXX Would separate methods for _METHOD, _PROPERTYGET and _PROPERTYPUT be better?
 
-
-################################################################
-# The Decimal type is bits dependent
-
-class tagDEC(Structure):
-    _fields_ = [("wReserved", c_ushort),
-                ("scale", c_ubyte),
-                ("sign", c_ubyte),
-                ("Hi32", c_ulong),
-                ("Lo64", c_ulonglong)]
-DECIMAL = tagDEC
 
 ################################################################
 # safearrays

@@ -7,7 +7,8 @@ import unittest
 from comtypes import IUnknown, GUID
 from comtypes.automation import (
     VARIANT, DISPPARAMS, VT_NULL, VT_EMPTY, VT_ERROR, VT_I1, VT_I2, VT_I4,
-    VT_UI1, VT_UI2, VT_UI4, VT_R4, VT_R8, VT_BYREF, VT_BSTR, VT_DATE, VT_CY,)
+    VT_UI1, VT_UI2, VT_UI4, VT_R4, VT_R8, VT_BYREF, VT_BSTR, VT_DATE, VT_CY,
+    VT_DECIMAL)
 from comtypes.typeinfo import LoadRegTypeLib
 from comtypes.test import get_numpy
 from comtypes.test.find_memleak import find_memleak
@@ -133,13 +134,31 @@ class VariantTestCase(unittest.TestCase):
             self.failUnlessEqual(v.vt, VT_DATE)
             self.failUnlessEqual(v.value, date.astype(datetime.datetime))
 
-    def test_decimal(self):
+    def test_decimal_as_currency(self):
         value = decimal.Decimal('3.14')
 
         v = VARIANT()
         v.value = value
         self.failUnlessEqual(v.vt, VT_CY)
         self.failUnlessEqual(v.value, value)
+
+    def test_decimal_as_decimal(self):
+        v = VARIANT()
+        v.vt = VT_DECIMAL
+        v.decVal.Lo64 = 1234
+        v.decVal.scale = 3
+        self.failUnlessEqual(v.value, decimal.Decimal('1.234'))
+
+        v.decVal.sign = 0x80
+        self.failUnlessEqual(v.value, decimal.Decimal('-1.234'))
+
+        v.decVal.scale = 28
+        self.failUnlessEqual(v.value, decimal.Decimal('-1.234e-25'))
+
+        v.decVal.scale = 12
+        v.decVal.Hi32 = 100
+        self.failUnlessEqual(
+            v.value, decimal.Decimal('-1844674407.370955162834'))
 
     def test_BSTR(self):
         v = VARIANT()
