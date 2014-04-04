@@ -35,6 +35,8 @@ class NamedProperty(object):
         self.disp = disp
 
     def __getitem__(self, arg):
+        if self.get is None:
+            raise TypeError("unsubscriptable object")
         if isinstance(arg, tuple):
             return self.disp._comobj._invoke(self.get.memid,
                                              self.get.invkind,
@@ -50,15 +52,17 @@ class NamedProperty(object):
                                          *[arg])
 
     def __call__(self, *args):
-            return self.disp._comobj._invoke(self.get.memid,
-                                             self.get.invkind,
-                                             0,
-                                             *args)
+        if self.get is None:
+            raise TypeError("object is not callable")
+        return self.disp._comobj._invoke(self.get.memid,
+                                            self.get.invkind,
+                                            0,
+                                            *args)
 
     def __setitem__(self, name, value):
         # See discussion in Dispatch.__setattr__ below.
-        if not self.put and not self.putref:
-            raise IndexError(name)
+        if self.put is None and self.putref is None:
+            raise TypeError("object does not support item assignment")
         if comtypes._is_object(value):
             descr = self.putref or self.put
         else:
