@@ -4,6 +4,7 @@ from ctypes import ArgumentError
 
 from comtypes.test.find_memleak import find_memleak
 
+
 class Test(unittest.TestCase):
 
     def test_IEnumVARIANT(self):
@@ -98,6 +99,59 @@ class Test(unittest.TestCase):
                     pass
         bytes = find_memleak(doit, (20, 20))
         self.failIf(bytes, "Leaks %d bytes" % bytes)
+
+
+class TestCollectionInterface(unittest.TestCase):
+    """ Test the early-bound collection interface. """
+
+    def setUp(self):
+        self.d = CreateObject("Scripting.Dictionary", dynamic=False)
+
+    def tearDown(self):
+        del self.d
+
+    def assertAccessInterface(self, d):
+        """ Asserts access via indexing and named property """
+        self.assertEqual(d.CompareMode, 42)
+        self.assertEqual(d["foo"], 1)
+        self.assertEqual(d.Item["foo"], d["foo"])
+        self.assertEqual(d.Item("foo"), d["foo"])
+        self.assertEqual(d["bar"], "spam foo")
+        self.assertEqual(d.Item("bar"), "spam foo")
+        self.assertEqual(d["baz"], 3.14)
+        self.assertEqual(d.Item("baz"), d["baz"])
+        self.assertIsNone(d["asdlfkj"])
+        self.assertIsNone(d.Item["asdlfkj"])
+        self.assertIsNone(d.Item("asdlfkj"))
+
+        items = iter(d)
+        self.assertEqual(items[0], "foo")
+        self.assertEqual(items[1], "bar")
+        self.assertEqual(items[2], "baz")
+        self.assertEqual(items[3], "asdlfkj")
+
+    def test_index_setter(self):
+        d = self.d
+        d.CompareMode = 42
+        d["foo"] = 1
+        d["bar"] = "spam foo"
+        d["baz"] = 3.14
+        self.assertAccessInterface(d)
+
+    def test_named_property_setter(self):
+        d = self.d
+        d.CompareMode = 42
+        d.Item["foo"] = 1
+        d.Item["bar"] = "spam foo"
+        d.Item["baz"] = 3.14
+        self.assertAccessInterface(d)
+
+    def test_named_property_no_length(self):
+        self.assertRaises(TypeError, len, self.d.Item)
+
+    def test_named_property_not_iterable(self):
+        self.assertRaises(TypeError, list, self.d.Item)
+
 
 if __name__ == "__main__":
     unittest.main()

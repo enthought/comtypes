@@ -368,19 +368,44 @@ class _cominterface_meta(type):
                 @patcher.no_replace
                 def __getitem__(self, index):
                     "Return 'self.Item(index)'"
+                    # Handle tuples and all-slice
+                    if isinstance(index, tuple):
+                        args = index
+                    elif index == _all_slice:
+                        args = ()
+                    else:
+                        args = (index,)
+
                     try:
-                        result = self.Item(index)
+                        result = self.Item(*args)
                     except COMError, err:
                         (hresult, text, details) = err.args
-                        if hresult == -2147352565: # DISP_E_BADINDEX
+                        if hresult == -2147352565:  # DISP_E_BADINDEX
                             raise IndexError("invalid index")
                         else:
                             raise
-                    # Hm, this doesn't look correct...
-                    if not result: # we got a NULL com pointer
-                        raise IndexError("invalid index")
-                    # Hm, should we call __ctypes_from_outparam__ on the result?
+
+                    # Note that result may be NULL COM pointer. There is no way
+                    # to interpret this properly, so it is returned as-is.
+
+                    # Hm, should we call __ctypes_from_outparam__ on the
+                    # result?
                     return result
+
+                @patcher.no_replace
+                def __setitem__(self, index, value):
+                    "Attempt 'self.Item[index] = value'"
+                    try:
+                        self.Item[index] = value
+                    except COMError, err:
+                        (hresult, text, details) = err.args
+                        if hresult == -2147352565:  # DISP_E_BADINDEX
+                            raise IndexError("invalid index")
+                        else:
+                            raise
+                    except TypeError:
+                        msg = "%r object does not support item assignment"
+                        raise TypeError(msg % type(self))
 
         if has_name("_NewEnum"):
             @patcher.Patch(self)
@@ -836,6 +861,13 @@ class bound_named_property(object):
 
     def __repr__(self):
         return "<bound_named_property %r at %x>" % (self.name, id(self))
+
+    def __iter__(self):
+        """ Explicitly disallow iteration. """
+        msg = "%r is not iterable" % self.name
+        raise TypeError(msg)
+
+
 
 class named_property(object):
     def __init__(self, name, fget=None, fset=None, doc=None):
