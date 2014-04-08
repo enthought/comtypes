@@ -10,5 +10,3 @@ available:
 
 .. include:: scriptcontrol.txt
    :literal:
-
-.. include:: footer.rst
