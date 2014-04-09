@@ -316,6 +316,12 @@ class tagVARIANT(Structure):
         elif isinstance(value, c_float):
             self.vt = VT_R4
             self._.VT_R4 = value
+        elif isinstance(value, c_int64):
+            self.vt = VT_I8
+            self._.VT_I8 = value
+        elif isinstance(value, c_uint64):
+            self.vt = VT_UI8
+            self._.VT_UI8 = value
         elif isinstance(value, _byref_type):
             ref = value._obj
             self._.c_void_p = addressof(ref)
