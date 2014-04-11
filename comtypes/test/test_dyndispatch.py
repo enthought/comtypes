@@ -29,7 +29,6 @@ class Test(unittest.TestCase):
 
     def test_named_property_setter(self):
         d = self.d
-        d = CreateObject("Scripting.Dictionary", dynamic=True)
         d.CompareMode = 42
         d.Item["foo"] = 1
         d.Item["bar"] = "spam foo"
@@ -65,6 +64,12 @@ class Test(unittest.TestCase):
         self.assertEqual(d3.Item["foo"], 1)
         self.assertEqual(d3.Item["bar"], "spam foo")
         self.assertEqual(d3.Item["baz"], 3.14)
+
+    def test_named_property_no_length(self):
+        self.assertRaises(TypeError, len, self.d.Item)
+
+    def test_named_property_not_iterable(self):
+        self.assertRaises(TypeError, list, self.d.Item)
 
     def assertAccessInterface(self, d):
         """ Asserts access via indexing and named property """
