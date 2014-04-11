@@ -15,7 +15,9 @@ def _make_variant_dtype():
     """ Create a dtype for VARIANT. This requires support for Unions, which is
     available in numpy version 1.7 or greater.
 
-    Returns None if the dtype cannot be created
+    This does not support the decimal type.
+
+    Returns None if the dtype cannot be created.
 
     """
 

@@ -2,7 +2,7 @@ import array
 from comtypes import BSTR, IUnknown
 from comtypes.test import is_resource_enabled, get_numpy
 from comtypes.test.find_memleak import find_memleak
-from ctypes import *
+from ctypes import POINTER, PyDLL, byref, c_double, c_long, pointer, py_object
 from ctypes.wintypes import BOOL
 import datetime
 from decimal import Decimal
@@ -12,14 +12,22 @@ from comtypes.automation import (
     VARIANT, VT_ARRAY, VT_VARIANT, VT_I4, VT_R4, VT_R8, VT_BSTR, VARIANT_BOOL)
 from comtypes.automation import _midlSAFEARRAY
 from comtypes.safearray import safearray_as_ndarray
-
 from comtypes._safearray import SafeArrayGetVartype
 
 
 def get_array(sa):
-    '''Get an array from a safe array type'''
+    """Get an array from a safe array type"""
     with safearray_as_ndarray:
         return sa[0]
+
+
+def com_refcnt(o):
+    """Return the COM refcount of an interface pointer"""
+    import gc
+    gc.collect()
+    gc.collect()
+    o.AddRef()
+    return o.Release()
 
 
 class VariantTestCase(unittest.TestCase):
@@ -80,6 +88,28 @@ class SafeArrayTestCase(unittest.TestCase):
         self.failUnlessEqual((c._itemtype_, c._vartype_),
                              (BSTR, VT_BSTR))
 
+    def test_nested_contexts(self):
+        np = get_numpy()
+        if np is None:
+            return
+
+        t = _midlSAFEARRAY(BSTR)
+        sa = t.from_param(["a", "b", "c"])
+
+        first = sa[0]
+        with safearray_as_ndarray:
+            second = sa[0]
+            with safearray_as_ndarray:
+                third = sa[0]
+            fourth = sa[0]
+        fifth = sa[0]
+
+        self.failUnless(isinstance(first, tuple))
+        self.failUnless(isinstance(second, np.ndarray))
+        self.failUnless(isinstance(third, np.ndarray))
+        self.failUnless(isinstance(fourth, np.ndarray))
+        self.failUnless(isinstance(fifth, tuple))
+
     def test_VT_BSTR(self):
         t = _midlSAFEARRAY(BSTR)
 
@@ -104,6 +134,7 @@ class SafeArrayTestCase(unittest.TestCase):
 
     def test_VT_BSTR_leaks(self):
         sb = _midlSAFEARRAY(BSTR)
+
         def doit():
             sb.from_param(["foo", "bar"])
 
@@ -112,6 +143,7 @@ class SafeArrayTestCase(unittest.TestCase):
 
     def test_VT_I4_leaks(self):
         sa = _midlSAFEARRAY(c_long)
+
         def doit():
             sa.from_param([1, 2, 3, 4, 5, 6])
 
@@ -232,14 +264,9 @@ class SafeArrayTestCase(unittest.TestCase):
         t = _midlSAFEARRAY(POINTER(IUnknown))
         self.failUnless(a is t)
 
-        def com_refcnt(o):
-            "Return the COM refcount of an interface pointer"
-            import gc; gc.collect(); gc.collect()
-            o.AddRef()
-            return o.Release()
-
         from comtypes.typeinfo import CreateTypeLib
-        punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
+        # will never be saved to disk
+        punk = CreateTypeLib("spam").QueryInterface(IUnknown)
 
         # initial refcount
         initial = com_refcnt(punk)
@@ -259,20 +286,14 @@ class SafeArrayTestCase(unittest.TestCase):
         sa = t.from_param([None])
         self.failUnlessEqual((POINTER(IUnknown)(),), sa[0])
 
-
     def test_VT_UNKNOWN_multi(self):
         a = _midlSAFEARRAY(POINTER(IUnknown))
         t = _midlSAFEARRAY(POINTER(IUnknown))
         self.failUnless(a is t)
 
-        def com_refcnt(o):
-            "Return the COM refcount of an interface pointer"
-            import gc; gc.collect(); gc.collect()
-            o.AddRef()
-            return o.Release()
-
         from comtypes.typeinfo import CreateTypeLib
-        punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
+        # will never be saved to disk
+        punk = CreateTypeLib("spam").QueryInterface(IUnknown)
 
         # initial refcount
         initial = com_refcnt(punk)
@@ -320,14 +341,9 @@ class SafeArrayTestCase(unittest.TestCase):
         t = _midlSAFEARRAY(POINTER(IUnknown))
         self.failUnless(a is t)
 
-        def com_refcnt(o):
-            "Return the COM refcount of an interface pointer"
-            import gc; gc.collect(); gc.collect()
-            o.AddRef()
-            return o.Release()
-
         from comtypes.typeinfo import CreateTypeLib
-        punk = CreateTypeLib("spam").QueryInterface(IUnknown) # will never be saved to disk
+        # will never be saved to disk
+        punk = CreateTypeLib("spam").QueryInterface(IUnknown)
 
         # initial refcount
         initial = com_refcnt(punk)
