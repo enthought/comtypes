@@ -2,6 +2,28 @@ Comtypes CHANGELOG
 ==================
 
 
+Changes since 1.0.0
+-------------------
+
+* Update automation code to allow for incoming VT_DECIMAL type (#44).
+* Fixed an undocumented bug that would lead to improper behavior when nesting
+  the ``safearray_as_ndarray`` context (#41).
+* Added a license file and merged the ChangeLog into CHANGES.txt (#35, #39).
+* Extended and homogenized indexing across container and named property
+  interfaces (#32, #43). This introduces the ability to index with an empty
+  slice, which has the same meaning as indexing with an empty tuple.
+* Completed migration to ``patcher`` module (#31).
+* Extended NumPy support so object and datetime64 arrays can be converted to
+  VARIANT safearrays (#29).
+* Extended test runner so it can be run under 32- and 64-bit Python and be used
+  in an automated testing system (#25, #28).
+* Modified many tests so they run under 64-bit python (#21, #22, #23).
+* Removed reference cycle in PumpEvents (#19).
+* Fixed safearray test that would fail under NumPy 1.6 (#19).
+* Project migrated to http://github.com/enthought/comtypes. Issue numbers
+  refer to the new project page.
+
+
 Release 1.0.0
 -------------
 
