@@ -1,8 +1,8 @@
 import threading
 import array
-from ctypes import *
-from comtypes import _safearray, IUnknown, com_interface_registry, \
-                     npsupport
+from ctypes import (POINTER, Structure, byref, cast, c_long, memmove, pointer,
+                    sizeof)
+from comtypes import _safearray, IUnknown, com_interface_registry, npsupport
 from comtypes.patcher import Patch
 _safearray_type_cache = {}
 
@@ -25,21 +25,24 @@ class _SafeArrayAsNdArrayContextManager(object):
     thread_local = threading.local()
 
     def __enter__(self):
-        self.thread_local.in_context = True
-        return
+        try:
+            self.thread_local.count += 1
+        except AttributeError:
+            self.thread_local.count = 1
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.thread_local.in_context = False
-        return
+        self.thread_local.count -= 1
 
     def __nonzero__(self):
         '''True if context manager is currently entered on given thread.
 
         '''
-        return getattr(self.thread_local, 'in_context', False)
+        return bool(getattr(self.thread_local, 'count', 0))
+
 
 # Global _SafeArrayAsNdArrayContextManager
 safearray_as_ndarray = _SafeArrayAsNdArrayContextManager()
+
 
 ################################################################
 # This is THE PUBLIC function: the gateway to the SAFEARRAY functionality.
@@ -55,6 +58,7 @@ def _midlSAFEARRAY(itemtype):
         sa_type = _make_safearray_type(itemtype)
         _safearray_type_cache[itemtype] = sa_type
         return POINTER(sa_type)
+
 
 def _make_safearray_type(itemtype):
     # Create and return a subclass of tagSAFEARRAY
@@ -91,8 +95,8 @@ def _make_safearray_type(itemtype):
     @Patch(POINTER(sa_type))
     class _(object):
         # Should explain the ideas how SAFEARRAY is used in comtypes
-        _itemtype_ = itemtype # a ctypes type
-        _vartype_ = vartype # a VARTYPE value: VT_...
+        _itemtype_ = itemtype  # a ctypes type
+        _vartype_ = vartype  # a VARTYPE value: VT_...
         _needsfree = False
 
         @classmethod
@@ -129,7 +133,7 @@ def _make_safearray_type(itemtype):
             # to the correct type:
             pa = cast(pa, cls)
             # Now, fill the data in:
-            ptr = POINTER(cls._itemtype_)() # container for the values
+            ptr = POINTER(cls._itemtype_)()  # container for the values
             _safearray.SafeArrayAccessData(pa, byref(ptr))
             try:
                 if isinstance(value, array.array):
@@ -176,9 +180,9 @@ def _make_safearray_type(itemtype):
                 rgsa[i].cElements = d
                 rgsa[i].lBound = lBound
             pa = _safearray.SafeArrayCreateEx(cls._vartype_,
-                                              value.ndim, # cDims
-                                              rgsa, # rgsaBound
-                                              extra) # pvExtra
+                                              value.ndim,  # cDims
+                                              rgsa,  # rgsaBound
+                                              extra)  # pvExtra
             if not pa:
                 if cls._vartype_ == VT_RECORD and extra is None:
                     raise TypeError("Cannot create SAFEARRAY type VT_RECORD without IRecordInfo.")
@@ -188,7 +192,7 @@ def _make_safearray_type(itemtype):
             # to the correct type:
             pa = cast(pa, cls)
             # Now, fill the data in:
-            ptr = POINTER(cls._itemtype_)() # pointer to the item values
+            ptr = POINTER(cls._itemtype_)()  # pointer to the item values
             _safearray.SafeArrayAccessData(pa, byref(ptr))
             try:
                 nbytes = nitems * sizeof(cls._itemtype_)
@@ -225,7 +229,9 @@ def _make_safearray_type(itemtype):
 
         def _get_size(self, dim):
             "Return the number of elements for dimension 'dim'"
-            return _safearray.SafeArrayGetUBound(self, dim)+1 - _safearray.SafeArrayGetLBound(self, dim)
+            ub = _safearray.SafeArrayGetUBound(self, dim) + 1
+            lb = _safearray.SafeArrayGetLBound(self, dim)
+            return ub - lb
 
         def unpack(self):
             """Unpack a POINTER(SAFEARRAY_...) into a Python tuple or ndarray."""
@@ -251,9 +257,11 @@ def _make_safearray_type(itemtype):
                 result = [tuple(result[r::rows]) for r in range(rows)]
                 return tuple(result)
             else:
-                lowerbounds = [_safearray.SafeArrayGetLBound(self, d) for d in range(1, dim+1)]
+                lowerbounds = [_safearray.SafeArrayGetLBound(self, d)
+                               for d in range(1, dim+1)]
                 indexes = (c_long * dim)(*lowerbounds)
-                upperbounds = [_safearray.SafeArrayGetUBound(self, d) for d in range(1, dim+1)]
+                upperbounds = [_safearray.SafeArrayGetUBound(self, d)
+                               for d in range(1, dim+1)]
                 row = self._get_row(0, indexes, lowerbounds, upperbounds)
                 if safearray_as_ndarray:
                     import numpy
@@ -267,7 +275,7 @@ def _make_safearray_type(itemtype):
             # XXX Not sure this is true:
             # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
             # interface iid by SafeArrayGetIID().
-            ptr = POINTER(self._itemtype_)() # container for the values
+            ptr = POINTER(self._itemtype_)()  # container for the values
             _safearray.SafeArrayAccessData(self, byref(ptr))
             try:
                 if self._itemtype_ == VARIANT:
@@ -306,6 +314,7 @@ def _make_safearray_type(itemtype):
                             arr = numpy.ctypeslib.as_array(ptr, (num_elements,))
                             return arr.copy()
                         return ptr[:num_elements]
+
                     def keep_safearray(v):
                         v.__keepref = self
                         return v
