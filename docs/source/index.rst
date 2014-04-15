@@ -656,11 +656,8 @@ access a custom COM object.
 Downloads
 *********
 
-Releases can be downloaded in the sourceforge files_ section.
-
-The |comtypes| project is hosted on sourceforge_.
-
-.. include:: footer.rst
+The |comtypes| project is hosted on github_. Releases can be downloaded from
+the github releases_ section.
 
 .. |comtypes| replace:: **comtypes**
 
@@ -668,9 +665,9 @@ The |comtypes| project is hosted on sourceforge_.
 
 .. _ctypes: http://starship.python.net/crew/theller/ctypes
 
-.. _sourceforge: http://sourceforge.net/projects/comtypes
+.. _github: https://github.com/enthought/comtypes
 
-.. _files: http://sourceforge.net/project/showfiles.php?group_id=115265
+.. _releases: https://github.com/enthought/comtypes/releases
 
 .. _comtypes_server: server.html
 

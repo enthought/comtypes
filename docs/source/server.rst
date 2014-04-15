@@ -318,15 +318,8 @@ More details on COM objects
 
 To be written...
 
-
-.. include:: footer.rst
-
 .. |comtypes| replace:: **comtypes**
 
 .. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
 
 .. _ctypes: http://starship.python.net/crew/theller/ctypes
-
-.. _sourceforge: http://sourceforge.net/projects/comtypes
-
-.. _files: http://sourceforge.net/project/showfiles.php?group_id=115265
