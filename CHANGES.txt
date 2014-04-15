@@ -5,7 +5,9 @@ Comtypes CHANGELOG
 Changes since 1.0.0
 -------------------
 
-* Update automation code to allow for incoming VT_DECIMAL type (#44).
+* Updated automation code to convert c_int64 and c_uint64 to their VT_I8 and
+  VT_UI8, respectively (#49).
+* Update automation code to convert VT_DECIMAL VARIANT to Decimal type (#44).
 * Fixed an undocumented bug that would lead to improper behavior when nesting
   the ``safearray_as_ndarray`` context (#41).
 * Added a license file and merged the ChangeLog into CHANGES.txt (#35, #39).

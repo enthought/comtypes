@@ -1,4 +1,7 @@
-from ctypes import *
+from ctypes import (
+    POINTER, byref, c_byte, c_char, c_double, c_float, c_int, c_int64, c_short,
+    c_ubyte, c_ushort, c_uint, c_uint64, pointer,
+)
 import datetime
 import decimal
 import sys
@@ -7,8 +10,8 @@ import unittest
 from comtypes import IUnknown, GUID
 from comtypes.automation import (
     VARIANT, DISPPARAMS, VT_NULL, VT_EMPTY, VT_ERROR, VT_I1, VT_I2, VT_I4,
-    VT_UI1, VT_UI2, VT_UI4, VT_R4, VT_R8, VT_BYREF, VT_BSTR, VT_DATE, VT_CY,
-    VT_DECIMAL)
+    VT_I8, VT_UI1, VT_UI2, VT_UI4, VT_UI8, VT_R4, VT_R8, VT_BYREF, VT_BSTR,
+    VT_DATE, VT_DECIMAL, VT_CY,)
 from comtypes.typeinfo import LoadRegTypeLib
 from comtypes.test import get_numpy
 from comtypes.test.find_memleak import find_memleak
@@ -195,7 +198,9 @@ class VariantTestCase(unittest.TestCase):
                 (c_ushort(3), VT_UI2),
                 (c_short(3), VT_I2),
                 (c_uint(3), VT_UI4),
+                (c_uint64(2**64), VT_UI8),
                 (c_int(3), VT_I4),
+                (c_int64(2**32), VT_I8),
                 (c_double(3.14), VT_R8),
                 (c_float(3.14), VT_R4),
                 ]
