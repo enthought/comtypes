@@ -105,8 +105,7 @@ setup_params = dict(
     author="Thomas Heller",
     author_email="theller@python.net",
     url="http://starship.python.net/crew/theller/comtypes",
-    download_url="http://sourceforge.net/project/showfiles.php?group_id=115265",
-
+    download_url="https://github.com/enthought/comtypes/releases",
     license="MIT License",
     package_data={
         "comtypes.test": [
