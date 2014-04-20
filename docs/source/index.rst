@@ -13,7 +13,7 @@ for *dispatch based* COM interfaces, it is not possible to access
 The |comtypes| package makes it easy to access and implement both
 custom and dispatch based COM interfaces.
 
-This document describes |comtypes| version 0.4.1.
+This document describes |comtypes| version 1.0.0.
 
 NEW: The beginning of the documentation for implementing COM servers in
 comtypes is here: comtypes_server_
@@ -32,7 +32,7 @@ Creating and accessing COM objects
 **comtypes.client** exposes three functions that allow to create or
 access COM objects.
 
-``CreateObject(progid, clsctx=None, machine=None, interface=None)``
+``CreateObject(progid, clsctx=None, machine=None, interface=None, dynamic=False, pServerInfo=None)``
     Create a COM object and return an interface pointer to it.
 
     ``progid`` specifies which object to create.  It can be a string
@@ -53,6 +53,15 @@ access COM objects.
     returned, if not specified |comtypes| will determine a useful
     interface itself and return a pointer to that.
 
+    ``dynamic`` specifies that the generated interface should use
+    dynamic dispatch. This is only available for automation interfaces
+    and does not generate typelib wrapper.
+
+    ``pServerInfo`` that allows you to specify more information about
+    the remote machine than the ``machine`` parameter. It is a pointer
+    to a ``COSERVERINFO``. ``machine`` and ``pServerInfo`` may not be
+    simultaneously supplied.  DCOM must be enabled for this to work.
+
 ``CoGetObject(displayname, interface=None)``
     Create a named COM object and returns an interface pointer to it.
     For the interpretation of ``displayname`` consult the Microsoft
@@ -64,8 +73,8 @@ access COM objects.
 
         wmi = CoGetObject("winmgmts:")
 
-    ``interface`` has the same meaning as in the ``CreateObject``
-    function.
+    ``interface`` and ``dynamic`` have the same meaning as in the
+    ``CreateObject`` function.
 
 ``GetActiveObject(progid, interface=None)``
     Returns a pointer to an already running object.  ``progid``
@@ -73,7 +82,8 @@ access COM objects.
 
     The ``GetActiveObject`` function succeeds when the COM object is
     already running, and has registered itself in the COM running
-    object table.  Not all COM objects do this.
+    object table.  Not all COM objects do this. The arguments are as
+    described under ``CreateObject``.
 
 All the three functions mentioned above will create the typelib
 wrapper automatically if the object provides type information.  If the
@@ -86,7 +96,8 @@ Using COM objects
 
 The COM interface pointer that is returned by one of the creation
 functions (``CreateObject``, ``CoGetObject``, or ``GetActiveObject``)
-exposes methods and properties of the interface.
+exposes methods and properties of the interface (unless ``dynamic``
+is passed to the function).
 
 Since ``comtypes`` uses early binding to COM interfaces (when type
 information is exposed by the COM object), the interface methods and
@@ -249,12 +260,15 @@ parameters, the COM server will receive a VARIANT containing a
 SAFEARRAY of VARIANTs with the typecode ``VT_ARRAY | VT_VARIANT``.
 
 Some COM server methods, however, do not accept such arrays, they
-require for example an array of shorT integers with the typecode
+require for example an array of short integers with the typecode
 ``VT_ARRAY | VT_I2``, an array of integers with typecode ``VT_ARRAY |
 VT_INT``, or an array a strings with typecode ``VT_ARRAY | VT_BSTR``.
 
 To create these variants you must pass an instance of the Python
 ``array.array`` with the correct Python typecode to the COM method.
+Note that NumPy arrays are also an option here, as is described in
+the following section.
+
 The mapping of the ``array.array`` typecode to the ``VARIANT``
 typecode is defined in the comtypes.automation module by a
 dictionary:
@@ -288,39 +302,119 @@ parameters.  This code snippet was contributed by a user:
     create variants of different types using comtypes.  Such variants are
     required by many methods in AutoCAD COM API. AutoCAD needs to be
     running to test the following code."""
-    
+   
     import array
     import comtypes.client
-    
+   
     #Get running instance of the AutoCAD application
     app = comtypes.client.GetActiveObject("AutoCAD.Application")
-    
+   
     #Get the ModelSpace object
     ms = app.ActiveDocument.ModelSpace
-    
+   
     #Add a POINT in ModelSpace
     pt = array.array('d', [0,0,0])
     point = ms.AddPoint(pt)
-    
+   
     #Add a LINE in ModelSpace
     pt1 = array.array('d', [1.0,1.0,0])
     pt2 = array.array('d', [2.0,2.0,0])
     line = ms.AddLine(pt1, pt2)
-    
+   
     #Add an integer type xdata to the point.
     point.SetXData(array.array("h", [1001, 1070]), ['Test_Application1', 600])
-    
+   
     #Add a double type xdata to the line.
     line.SetXData(array.array("h", [1001, 1040]), ['Test_Application2', 132.65])
-    
+   
     #Add a string type xdata to the line.
     line.SetXData(array.array("h", [1001, 1000]), ['Test_Application3', 'TestData'])
-    
+   
     #Add a list type (a point coordinate in this case) xdata to the line.
     line.SetXData(array.array("h", [1001, 1010]),
 	          ['Test_Application4', array.array('d', [2.0,0,0])])
-    
+   
     print "Done."
+
+
+NumPy interop
++++++++++++++
+
+NumPy provides the *de facto* array standard for Python. Though NumPy
+is not required to use comtypes, comtypes provides various options for
+NumPy interoperability. Numpy version 1.7 or greater is required to access
+all of these features.
+
+
+Numpy Arrays as Input Arguments
+-------------------------------
+
+NumPy arrays can be passed as VARIANT arrays arguments. The array is
+converted to a SAFEARRAY according to its type. The type conversion
+is defined by the ``numpy.ctypeslib`` module.  The following table
+shows type conversions that can be performed quickly by (nearly) direct
+conversion of a numpy array to a SAFEARRAY. Arrays with type that do not
+appear in this table, including object arrays, can still be converted to
+SAFEARRAYs on an item-by-item basis.
+
++------------------------------------------------+---------------+
+| Numpy type                                     | VARIANT type  |
++================================================+===============+
+| ``int8``                                       | VT_I1         |
++------------------------------------------------+---------------+
+| ``int16``, ``short``                           | VT_I2         |
++------------------------------------------------+---------------+
+| ``int32``, ``int``, ``intc``, ``int_``         | VT_I4         |
++------------------------------------------------+---------------+
+| ``int64``, ``long``, ``longlong``, ``intp``    | VT_I8         |
++------------------------------------------------+---------------+
+| ``uint8``, ``ubyte``                           | VT_UI1        |
++------------------------------------------------+---------------+
+| ``uint16``, ``ushort``                         | VT_UI2        |
++------------------------------------------------+---------------+
+| ``uint32``, ``uint``, ``uintc``                | VT_UI4        |
++------------------------------------------------+---------------+
+| ``uint64``, ``ulonglong``, ``uintp``           | VT_UI8        |
++------------------------------------------------+---------------+
+| ``float32``                                    | VT_R4         |
++------------------------------------------------+---------------+
+| ``float64``, ``float_``                        | VT_R8         |
++------------------------------------------------+---------------+
+| ``datetime64``                                 | VT_DATE       |
++------------------------------------------------+---------------+
+
+Numpy Arrays as Output Arguments
+--------------------------------
+
+By default, comtypes converts SAFEARRAY output arguments to tuples of
+python objects on an item-by-item basis.  When dealing with large
+SAFEARRAYs, this conversion can be costly.  Comtypes provides a the
+``safearray_as_ndarray`` contect manager (from ``comtypes.safearray``)
+for modifying this behavior to return a NumPy array. This altered
+behavior is to put an ndarray over a copy of the SAFEARRAY's memory,
+which is faster than calling into python for each item. When this fails,
+a NumPy array can still be created on an item-by-item basis.  The context
+manager is thread-safe, in that usage of the context manager on one
+thread does not affect behavior on other threads.
+
+This is a hypothetical example of using the context manager. The context
+manager can be used around any property or method call to retrieve a
+NumPy array rather than a tuple.
+
+
+.. sourcecode:: python
+
+    """Sample demonstrating use of safearray_as_ndarray context manager """
+
+    from comtypes.safearray import safearray_as_ndarray
+
+    # Hypothetically, this returns a SAFEARRAY as a tuple
+    data1 = some_interface.some_property
+
+    # This will return a NumPy array, and will be faster for basic types.
+    with safearray_as_ndarray:
+        data2 = some_interface.some_property
+
 
 COM events
 ++++++++++
@@ -386,7 +480,7 @@ from Excel:
     >>> xl.Visible = True
     >>> print xl
     <POINTER(_Application) ptr=0x29073c at c156c0>
-    >>> 
+    >>>
 
 The ``ShowEvents`` function is a useful helper to get started with the
 events of an object in the interactive Python interpreter.
