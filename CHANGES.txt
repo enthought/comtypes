@@ -2,8 +2,8 @@ Comtypes CHANGELOG
 ==================
 
 
-Changes since 1.0.0
--------------------
+Release 1.1.0
+-------------
 
 * Updated automation code to convert c_int64 and c_uint64 to their VT_I8 and
   VT_UI8, respectively (#49).
