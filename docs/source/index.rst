@@ -342,11 +342,11 @@ NumPy interop
 
 NumPy provides the *de facto* array standard for Python. Though NumPy
 is not required to use comtypes, comtypes provides various options for
-NumPy interoperability. Numpy version 1.7 or greater is required to access
+NumPy interoperability. NumPy version 1.7 or greater is required to access
 all of these features.
 
 
-Numpy Arrays as Input Arguments
+NumPy Arrays as Input Arguments
 -------------------------------
 
 NumPy arrays can be passed as VARIANT arrays arguments. The array is
@@ -358,7 +358,7 @@ appear in this table, including object arrays, can still be converted to
 SAFEARRAYs on an item-by-item basis.
 
 +------------------------------------------------+---------------+
-| Numpy type                                     | VARIANT type  |
+| NumPy type                                     | VARIANT type  |
 +================================================+===============+
 | ``int8``                                       | VT_I1         |
 +------------------------------------------------+---------------+
@@ -383,7 +383,7 @@ SAFEARRAYs on an item-by-item basis.
 | ``datetime64``                                 | VT_DATE       |
 +------------------------------------------------+---------------+
 
-Numpy Arrays as Output Arguments
+NumPy Arrays as Output Arguments
 --------------------------------
 
 By default, comtypes converts SAFEARRAY output arguments to tuples of
