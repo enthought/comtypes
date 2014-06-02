@@ -32,7 +32,7 @@ class Patch(object):
             if name in vars(ReferenceEmptyClass):
                 continue
             no_replace = getattr(value, '__no_replace', False)
-            if no_replace and hasattr(value, name):
+            if no_replace and hasattr(self.target, name):
                 continue
             setattr(self.target, name, value)
 
