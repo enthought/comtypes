@@ -389,7 +389,7 @@ NumPy Arrays as Output Arguments
 By default, comtypes converts SAFEARRAY output arguments to tuples of
 python objects on an item-by-item basis.  When dealing with large
 SAFEARRAYs, this conversion can be costly.  Comtypes provides a the
-``safearray_as_ndarray`` contect manager (from ``comtypes.safearray``)
+``safearray_as_ndarray`` context manager (from ``comtypes.safearray``)
 for modifying this behavior to return a NumPy array. This altered
 behavior is to put an ndarray over a copy of the SAFEARRAY's memory,
 which is faster than calling into python for each item. When this fails,
