@@ -4,6 +4,8 @@ from ctypes import (POINTER, Structure, byref, cast, c_long, memmove, pointer,
                     sizeof)
 from comtypes import _safearray, IUnknown, com_interface_registry, npsupport
 from comtypes.patcher import Patch
+
+numpy = npsupport.numpy
 _safearray_type_cache = {}
 
 
@@ -150,9 +152,6 @@ def _make_safearray_type(itemtype):
         @classmethod
         def create_from_ndarray(cls, value, extra, lBound=0):
             from comtypes.automation import VARIANT
-            #c:/python25/lib/site-packages/numpy/ctypeslib.py
-            numpy = __import__("numpy.ctypeslib")
-
             # If processing VARIANT, makes sure the array type is correct.
             if cls._itemtype_ is VARIANT:
                 if value.dtype != npsupport.VARIANT_dtype:
@@ -308,10 +307,10 @@ def _make_safearray_type(itemtype):
                         # we can get the most speed-up.
                         # XXX Only try to convert types known to
                         #     numpy.ctypeslib.
-                        import numpy.ctypeslib
                         if (safearray_as_ndarray and self._itemtype_ in
                                 numpy.ctypeslib._typecodes.values()):
-                            arr = numpy.ctypeslib.as_array(ptr, (num_elements,))
+                            arr = numpy.ctypeslib.as_array(ptr,
+                                                           (num_elements,))
                             return arr.copy()
                         return ptr[:num_elements]
 
@@ -365,8 +364,6 @@ def _make_safearray_type(itemtype):
 
 def _ndarray_to_variant_array(value):
     """ Convert an ndarray to VARIANT_dtype array """
-    numpy = npsupport.numpy
-
     # Check that variant arrays are supported
     if npsupport.VARIANT_dtype is None:
         msg = "VARIANT ndarrays require NumPy 1.7 or newer."
@@ -390,7 +387,6 @@ def _datetime64_ndarray_to_variant_array(value):
     # since midnight 30 December 1899. Hours and minutes are represented as
     # fractional days.
     from comtypes.automation import VT_DATE
-    numpy = npsupport.numpy
     value = numpy.array(value, "datetime64[ns]")
     value = value - npsupport.com_null_date64
     # Convert to days
