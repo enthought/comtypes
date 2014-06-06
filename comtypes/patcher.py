@@ -12,7 +12,7 @@ class Patch(object):
     ...     def bar(self):
     ...         print("orig bar")
 
-    To add attributes to MyClass, you can use MonkeyPatch:
+    To add attributes to MyClass, you can use Patch:
 
     >>> @Patch(MyClass)
     ... class JustANamespace:
