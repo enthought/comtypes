@@ -75,7 +75,7 @@ def catch_errors(obj, mth, paramflags, interface, mthname):
         if result is None:
             return S_OK
         return result
-    if paramflags == None:
+    if paramflags is None:
         has_outargs = False
     else:
         has_outargs = bool([x[0] for x in paramflags
@@ -221,7 +221,6 @@ class _MethodFinder(object):
         return instancemethod(set, self.inst, type(self.inst))
 
     def getter(self, propname):
-        #
         def get(self):
             try:
                 return getattr(self, propname)
@@ -485,7 +484,7 @@ class COMObject(object):
     ################################################################
     # LocalServer / InprocServer stuff
     __server__ = None
-##2.3    @staticmethod
+    @staticmethod
     def __run_inprocserver__():
         if COMObject.__server__ is None:
             COMObject.__server__ = InprocServer()
@@ -493,26 +492,23 @@ class COMObject(object):
             pass
         else:
             raise RuntimeError("Wrong server type")
-    __run_inprocserver__ = staticmethod(__run_inprocserver__)
 
-##2.3    @staticmethod
+    @staticmethod
     def __run_localserver__(classobjects):
         assert COMObject.__server__ is None
         # XXX Decide whether we are in STA or MTA
         server = COMObject.__server__ = LocalServer()
         server.run(classobjects)
         COMObject.__server__ = None
-    __run_localserver__ = staticmethod(__run_localserver__)
 
-##2.3    @staticmethod
+    @staticmethod
     def __keep__(obj):
         COMObject._instances_[obj] = None
         _debug("%d active COM objects: Added   %r", len(COMObject._instances_), obj)
         if COMObject.__server__:
             COMObject.__server__.Lock()
-    __keep__ = staticmethod(__keep__)
 
-##2.3    @staticmethod
+    @staticmethod
     def __unkeep__(obj):
         try:
             del COMObject._instances_[obj]
@@ -523,7 +519,6 @@ class COMObject(object):
         _debug("Remaining: %s", COMObject._instances_.keys())
         if COMObject.__server__:
             COMObject.__server__.Unlock()
-    __unkeep__ = staticmethod(__unkeep__)
     #
     ################################################################
 
@@ -614,13 +609,12 @@ class COMObject(object):
 
     ################################################################
     # IDispatch methods
-##2.3    @property
+    @property
     def __typeinfo(self):
         # XXX Looks like this better be a static property, set by the
         # code that sets __typelib also...
         iid = self._com_interfaces_[0]._iid_
         return self.__typelib.GetTypeInfoOfGuid(iid)
-    __typeinfo = property(__typeinfo)
 
     def IDispatch_GetTypeInfoCount(self):
         try:
@@ -722,7 +716,7 @@ class COMObject(object):
             # It seems that this code calculates the indexes of the
             # parameters in the params.rgvarg array correctly.
             indexes = named_indexes + unnamed_indexes
-            args = [params.rgvarg[i].value for i in named_indexes + unnamed_indexes]
+            args = [params.rgvarg[i].value for i in indexes]
 
             if pVarResult and getattr(mth, "has_outargs", False):
                 args.append(pVarResult)
