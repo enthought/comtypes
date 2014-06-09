@@ -446,6 +446,9 @@ class COMObject(object):
                     self.__make_dispentry(finder, interface, mthname,
                                           idlflags, argspec, invkind)
                 elif what == "DISPPROPERTY":
+                    # DISPPROPERTY have implicit "out"
+                    if restype:
+                        argspec += ((['out'], restype, ""),)
                     self.__make_dispentry(finder, interface,
                                           "_get_" + mthname,
                                           idlflags, argspec,
