@@ -117,9 +117,8 @@ class TestComServer(
 
     _name = u"spam, spam, spam"
 
-    def ITestComServer__get_name(self, this, pname):
-        pname[0] = self._name
-        return S_OK
+    def _get_name(self):
+        return self._name
 
     def ITestComServer__set_name(self, this, name):
         self._name = name
