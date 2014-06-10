@@ -72,6 +72,8 @@ def isdatetime64(value):
     This cannot succeed if datetime64 is not available.
 
     """
+    if not HAVE_NUMPY:
+        return False
     return isinstance(value, datetime64)
 
 
