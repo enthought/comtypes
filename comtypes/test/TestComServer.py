@@ -117,9 +117,8 @@ class TestComServer(
 
     _name = u"spam, spam, spam"
 
-    def ITestComServer__get_name(self, this, pname):
-        pname[0] = self._name
-        return S_OK
+    def _get_name(self):
+        return self._name
 
     def ITestComServer__set_name(self, this, name):
         self._name = name
@@ -139,7 +138,7 @@ class TestComServer(
 ##    HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);
     def MixedInOut(self, a, c):
         return a+1, c+1
-    
+
 if __name__ == "__main__":
     try:
         from comtypes.server.register import UseCommandLine

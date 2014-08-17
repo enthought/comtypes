@@ -1,8 +1,21 @@
-from ctypes import *
-from comtypes.hresult import *
-
-import os
+from ctypes import (
+    FormatError, POINTER, Structure, WINFUNCTYPE, byref, c_long, c_void_p,
+    oledll, pointer, windll
+)
+from _ctypes import CopyComPointer
 import logging
+import os
+
+from comtypes import COMError, ReturnHRESULT, instancemethod, _encode_idl
+from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
+from comtypes import IPersist
+from comtypes.hresult import (
+    DISP_E_BADINDEX, DISP_E_MEMBERNOTFOUND, E_FAIL, E_NOINTERFACE,
+    E_INVALIDARG, E_NOTIMPL, RPC_E_CHANGED_MODE, S_FALSE, S_OK
+)
+from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
+
+
 logger = logging.getLogger(__name__)
 _debug = logger.debug
 _warning = logger.warning
@@ -10,12 +23,6 @@ _error = logger.error
 
 ################################################################
 # COM object implementation
-from _ctypes import CopyComPointer
-
-from comtypes import COMError, ReturnHRESULT, instancemethod, _encode_idl
-from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
-from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
-from comtypes import IPersist
 
 # so we don't have to import comtypes.automation
 DISPATCH_METHOD = 1
@@ -23,8 +30,10 @@ DISPATCH_PROPERTYGET = 2
 DISPATCH_PROPERTYPUT = 4
 DISPATCH_PROPERTYPUTREF = 8
 
+
 class E_NotImplemented(Exception):
     """COM method is not implemented"""
+
 
 def HRESULT_FROM_WIN32(errcode):
     "Convert a Windows error code into a HRESULT value."
@@ -33,6 +42,7 @@ def HRESULT_FROM_WIN32(errcode):
     if errcode & 0x80000000:
         return errcode
     return (errcode & 0xFFFF) | 0x80070000
+
 
 def winerror(exc):
     """Return the windows error code from a WindowsError or COMError
@@ -48,40 +58,49 @@ def winerror(exc):
     # cases we return a generic error code.
     return E_FAIL
 
+
 def _do_implement(interface_name, method_name):
     def _not_implemented(*args):
         """Return E_NOTIMPL because the method is not implemented."""
-        _debug("unimplemented method %s_%s called", interface_name, method_name)
+        _debug("unimplemented method %s_%s called", interface_name,
+               method_name)
         return E_NOTIMPL
     return _not_implemented
 
+
 def catch_errors(obj, mth, paramflags, interface, mthname):
     clsid = getattr(obj, "_reg_clsid_", None)
+
     def call_with_this(*args, **kw):
         try:
             result = mth(*args, **kw)
         except ReturnHRESULT, err:
             (hresult, text) = err.args
-            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)
+            return ReportError(text, iid=interface._iid_, clsid=clsid,
+                               hresult=hresult)
         except (COMError, WindowsError), details:
-            _error("Exception in %s.%s implementation:", interface.__name__, mthname, exc_info=True)
+            _error("Exception in %s.%s implementation:", interface.__name__,
+                   mthname, exc_info=True)
             return HRESULT_FROM_WIN32(winerror(details))
         except E_NotImplemented:
-            _warning("Unimplemented method %s.%s called", interface.__name__, mthname)
+            _warning("Unimplemented method %s.%s called", interface.__name__,
+                     mthname)
             return E_NOTIMPL
         except:
-            _error("Exception in %s.%s implementation:", interface.__name__, mthname, exc_info=True)
+            _error("Exception in %s.%s implementation:", interface.__name__,
+                   mthname, exc_info=True)
             return ReportException(E_FAIL, interface._iid_, clsid=clsid)
         if result is None:
             return S_OK
         return result
-    if paramflags == None:
+    if paramflags is None:
         has_outargs = False
     else:
         has_outargs = bool([x[0] for x in paramflags
                             if x[0] & 2])
     call_with_this.has_outargs = has_outargs
     return call_with_this
+
 
 ################################################################
 
@@ -97,9 +116,9 @@ def hack(inst, mth, paramflags, interface, mthname):
     # direction flag is either exactly '0' or has the '1' bit set:
     # Output arguments have flag '2'
 
-    args_out_idx=[]
-    args_in_idx=[]
-    for i,a in enumerate(dirflags):
+    args_out_idx = []
+    args_in_idx = []
+    for i, a in enumerate(dirflags):
         if a&2:
             args_out_idx.append(i)
         if a&1 or a==0:
@@ -111,6 +130,7 @@ def hack(inst, mth, paramflags, interface, mthname):
 ##        return catch_errors(inst, mth, interface, mthname)
 
     clsid = getattr(inst, "_reg_clsid_", None)
+
     def call_without_this(this, *args):
         # Method implementations could check for and return E_POINTER
         # themselves.  Or an error will be raised when
@@ -120,7 +140,7 @@ def hack(inst, mth, paramflags, interface, mthname):
 ##                return E_POINTER
 
         #make argument list for handler by index array built above
-        inargs=[]
+        inargs = []
         for a in args_in_idx:
             inargs.append(args[a])
         try:
@@ -129,15 +149,18 @@ def hack(inst, mth, paramflags, interface, mthname):
                 args[args_out_idx[0]][0] = result
             elif args_out != 0:
                 if len(result) != args_out:
-                    raise ValueError("Method should have returned a %s-tuple" % args_out)
+                    msg = "Method should have returned a %s-tuple" % args_out
+                    raise ValueError(msg)
                 for i, value in enumerate(result):
                     args[args_out_idx[i]][0] = value
         except ReturnHRESULT, err:
             (hresult, text) = err.args
-            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)
+            return ReportError(text, iid=interface._iid_, clsid=clsid,
+                               hresult=hresult)
         except COMError, err:
             (hr, text, details) = err.args
-            _error("Exception in %s.%s implementation:", interface.__name__, mthname, exc_info=True)
+            _error("Exception in %s.%s implementation:", interface.__name__,
+                   mthname, exc_info=True)
             try:
                 descr, source, helpfile, helpcontext, progid = details
             except (ValueError, TypeError):
@@ -145,21 +168,26 @@ def hack(inst, mth, paramflags, interface, mthname):
             else:
                 msg = "%s: %s" % (source, descr)
             hr = HRESULT_FROM_WIN32(hr)
-            return ReportError(msg, iid=interface._iid_, clsid=clsid, hresult=hr)
+            return ReportError(msg, iid=interface._iid_, clsid=clsid,
+                               hresult=hr)
         except WindowsError, details:
-            _error("Exception in %s.%s implementation:", interface.__name__, mthname, exc_info=True)
+            _error("Exception in %s.%s implementation:", interface.__name__,
+                   mthname, exc_info=True)
             hr = HRESULT_FROM_WIN32(winerror(details))
             return ReportException(hr, interface._iid_, clsid=clsid)
         except E_NotImplemented:
-            _warning("Unimplemented method %s.%s called", interface.__name__, mthname)
+            _warning("Unimplemented method %s.%s called", interface.__name__,
+                     mthname)
             return E_NOTIMPL
         except:
-            _error("Exception in %s.%s implementation:", interface.__name__, mthname, exc_info=True)
+            _error("Exception in %s.%s implementation:", interface.__name__,
+                   mthname, exc_info=True)
             return ReportException(E_FAIL, interface._iid_, clsid=clsid)
         return S_OK
     if args_out:
         call_without_this.has_outargs = True
     return call_without_this
+
 
 class _MethodFinder(object):
     def __init__(self, inst):
@@ -195,7 +223,7 @@ class _MethodFinder(object):
             return self.find_method(fq_name, mthname)
         except AttributeError:
             pass
-        propname = mthname[5:] # strip the '_get_' or '_set' prefix
+        propname = mthname[5:]  # strip the '_get_' or '_set' prefix
         if interface._case_insensitive_:
             propname = self.names.get(propname.lower(), propname)
         # propput and propget is done with 'normal' attribute access,
@@ -206,7 +234,8 @@ class _MethodFinder(object):
             return self.getter(propname)
         if "propput" in idlflags and len(paramflags) == 1:
             return self.setter(propname)
-        _debug("%r: %s.%s not implemented", self.inst, interface.__name__, mthname)
+        _debug("%r: %s.%s not implemented", self.inst, interface.__name__,
+               mthname)
         return None
 
     def setter(self, propname):
@@ -221,13 +250,13 @@ class _MethodFinder(object):
         return instancemethod(set, self.inst, type(self.inst))
 
     def getter(self, propname):
-        #
         def get(self):
             try:
                 return getattr(self, propname)
             except AttributeError:
                 raise E_NotImplemented()
         return instancemethod(get, self.inst, type(self.inst))
+
 
 def _create_vtbl_type(fields, itf):
     try:
@@ -257,12 +286,14 @@ except AttributeError:
     _acquire = _lock.acquire
     _release = _lock.release
     # win 64 doesn't have these functions
+
     def _InterlockedIncrement(ob):
         _acquire()
         refcnt = ob.value + 1
         ob.value = refcnt
         _release()
         return refcnt
+
     def _InterlockedDecrement(ob):
         _acquire()
         refcnt = ob.value - 1
@@ -275,9 +306,11 @@ else:
     _InterlockedIncrement.restype = c_long
     _InterlockedDecrement.restype = c_long
 
+
 class LocalServer(object):
 
     _queue = None
+
     def run(self, classobjects):
         # Use windll instead of oledll so that we don't get an
         # exception on a FAILED hresult:
@@ -290,7 +323,8 @@ class LocalServer(object):
             # we're running in STA: need a message pump
             _debug("Server running in STA")
             if result >= 0:
-                # we need a matching CoUninitialize() call for a successful CoInitialize().
+                # we need a matching CoUninitialize() call for a successful
+                # CoInitialize().
                 windll.ole32.CoUninitialize()
             self.run_sta()
 
@@ -317,6 +351,7 @@ class LocalServer(object):
             else:
                 windll.user32.PostQuitMessage(0)
 
+
 class InprocServer(object):
 
     def __init__(self):
@@ -334,6 +369,7 @@ class InprocServer(object):
         if COMObject._instances_:
             return S_FALSE
         return S_OK
+
 
 class COMObject(object):
     _instances_ = {}
@@ -364,7 +400,8 @@ class COMObject(object):
         # - ISupportErrorInfo
         # - IPersist (if the subclass has a _reg_clsid_ attribute)
         # - IProvideClassInfo (if the subclass has a _reg_clsid_ attribute)
-        # - IProvideClassInfo2 (if the subclass has a _outgoing_interfaces_ attribute)
+        # - IProvideClassInfo2 (if the subclass has a _outgoing_interfaces_
+        #   attribute)
         #
         # Add these if they are not listed in _com_interfaces_.
         interfaces = tuple(self._com_interfaces_)
@@ -386,9 +423,9 @@ class COMObject(object):
             self.__make_interface_pointer(itf)
 
     def __make_interface_pointer(self, itf):
-        methods = [] # method implementations
-        fields = [] # (name, prototype) for virtual function table
-        iids = [] # interface identifiers.
+        methods = []  # method implementations
+        fields = []  # (name, prototype) for virtual function table
+        iids = []  # interface identifiers.
         # iterate over interface inheritance in reverse order to build the
         # virtual function table, and leave out the 'object' base class.
         finder = self._get_method_finder_(itf)
@@ -412,7 +449,8 @@ class COMObject(object):
                 # What we have:
                 #
                 # restypes is a ctypes type or None
-                # argspec is seq. of (['in'], paramtype, paramname) tuples (or lists?)
+                # argspec is seq. of (['in'], paramtype, paramname) tuples (or
+                # lists?)
                 #################
                 # What we need:
                 #
@@ -432,33 +470,35 @@ class COMObject(object):
 
                 if what == "DISPMETHOD":
                     if 'propget' in idlflags:
-                        invkind = 2 # DISPATCH_PROPERTYGET
+                        invkind = 2  # DISPATCH_PROPERTYGET
                         mthname = "_get_" + mthname
                     elif 'propput' in idlflags:
-                        invkind = 4 # DISPATCH_PROPERTYPUT
+                        invkind = 4  # DISPATCH_PROPERTYPUT
                         mthname = "_set_" + mthname
                     elif 'propputref' in idlflags:
-                        invkind = 8 # DISPATCH_PROPERTYPUTREF
+                        invkind = 8  # DISPATCH_PROPERTYPUTREF
                         mthname = "_setref_" + mthname
                     else:
-                        invkind = 1 # DISPATCH_METHOD
+                        invkind = 1  # DISPATCH_METHOD
                         if restype:
                             argspec = argspec + ((['out'], restype, ""),)
                     self.__make_dispentry(finder, interface, mthname,
                                           idlflags, argspec, invkind)
                 elif what == "DISPPROPERTY":
+                    # DISPPROPERTY have implicit "out"
+                    if restype:
+                        argspec += ((['out'], restype, ""),)
                     self.__make_dispentry(finder, interface,
                                           "_get_" + mthname,
                                           idlflags, argspec,
-                                          2 # DISPATCH_PROPERTYGET
+                                          2  # DISPATCH_PROPERTYGET
                                           )
                     if not 'readonly' in idlflags:
                         self.__make_dispentry(finder, interface,
                                               "_set_" + mthname,
                                               idlflags, argspec,
-                                              4) # DISPATCH_PROPERTYPUT
+                                              4)  # DISPATCH_PROPERTYPUT
                         # Add DISPATCH_PROPERTYPUTREF also?
-
 
     def __make_dispentry(self,
                          finder, interface, mthname,
@@ -466,9 +506,10 @@ class COMObject(object):
         # We build a _dispmap_ entry now that maps invkind and
         # dispid to implementations that the finder finds;
         # IDispatch_Invoke will later call it.
-        paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec]
-
-        dispid = idlflags[0] # XXX can the dispid be at a different index?  Check codegenerator.
+        paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:]))
+                      for x in argspec]
+        # XXX can the dispid be at a different index?  Check codegenerator.
+        dispid = idlflags[0]
         impl = finder.get_impl(interface, mthname, paramflags, idlflags)
         self._dispimpl_[(dispid, invkind)] = impl
         # invkind is really a set of flags; we allow both
@@ -485,7 +526,8 @@ class COMObject(object):
     ################################################################
     # LocalServer / InprocServer stuff
     __server__ = None
-##2.3    @staticmethod
+
+    @staticmethod
     def __run_inprocserver__():
         if COMObject.__server__ is None:
             COMObject.__server__ = InprocServer()
@@ -493,37 +535,35 @@ class COMObject(object):
             pass
         else:
             raise RuntimeError("Wrong server type")
-    __run_inprocserver__ = staticmethod(__run_inprocserver__)
 
-##2.3    @staticmethod
+    @staticmethod
     def __run_localserver__(classobjects):
         assert COMObject.__server__ is None
         # XXX Decide whether we are in STA or MTA
         server = COMObject.__server__ = LocalServer()
         server.run(classobjects)
         COMObject.__server__ = None
-    __run_localserver__ = staticmethod(__run_localserver__)
 
-##2.3    @staticmethod
+    @staticmethod
     def __keep__(obj):
         COMObject._instances_[obj] = None
-        _debug("%d active COM objects: Added   %r", len(COMObject._instances_), obj)
+        _debug("%d active COM objects: Added   %r", len(COMObject._instances_),
+               obj)
         if COMObject.__server__:
             COMObject.__server__.Lock()
-    __keep__ = staticmethod(__keep__)
 
-##2.3    @staticmethod
+    @staticmethod
     def __unkeep__(obj):
         try:
             del COMObject._instances_[obj]
         except AttributeError:
             _debug("? active COM objects: Removed %r", obj)
         else:
-            _debug("%d active COM objects: Removed %r", len(COMObject._instances_), obj)
+            _debug("%d active COM objects: Removed %r",
+                   len(COMObject._instances_), obj)
         _debug("Remaining: %s", COMObject._instances_.keys())
         if COMObject.__server__:
             COMObject.__server__.Unlock()
-    __unkeep__ = staticmethod(__unkeep__)
     #
     ################################################################
 
@@ -545,7 +585,7 @@ class COMObject(object):
 
     def IUnknown_Release(self, this,
                          __InterlockedDecrement=_InterlockedDecrement,
-                        _debug=_debug):
+                         _debug=_debug):
         # If this is called at COM shutdown, _InterlockedDecrement()
         # must still be available, although module level variables may
         # have been deleted already - so we supply it as default
@@ -559,8 +599,7 @@ class COMObject(object):
             self._com_pointers_ = {}
         return result
 
-    def IUnknown_QueryInterface(self, this, riid, ppvObj,
-                        _debug=_debug):
+    def IUnknown_QueryInterface(self, this, riid, ppvObj, _debug=_debug):
         # XXX This is probably too slow.
         # riid[0].hashcode() alone takes 33 us!
         iid = riid[0]
@@ -614,13 +653,12 @@ class COMObject(object):
 
     ################################################################
     # IDispatch methods
-##2.3    @property
+    @property
     def __typeinfo(self):
         # XXX Looks like this better be a static property, set by the
         # code that sets __typelib also...
         iid = self._com_interfaces_[0]._iid_
         return self.__typelib.GetTypeInfoOfGuid(iid)
-    __typeinfo = property(__typeinfo)
 
     def IDispatch_GetTypeInfoCount(self):
         try:
@@ -639,7 +677,8 @@ class COMObject(object):
         except AttributeError:
             return E_NOTIMPL
 
-    def IDispatch_GetIDsOfNames(self, this, riid, rgszNames, cNames, lcid, rgDispId):
+    def IDispatch_GetIDsOfNames(self, this, riid, rgszNames, cNames, lcid,
+                                rgDispId):
         # This call uses windll instead of oledll so that a failed
         # call to DispGetIDsOfNames will return a HRESULT instead of
         # raising an error.
@@ -669,10 +708,10 @@ class COMObject(object):
             # an error.
             interface = self._com_interfaces_[0]
             ptr = self._com_pointers_[interface._iid_]
-            return windll.oleaut32.DispInvoke(ptr,
-                                              tinfo,
-                                              dispIdMember, wFlags, pDispParams,
-                                              pVarResult, pExcepInfo, puArgErr)
+            return windll.oleaut32.DispInvoke(
+                ptr, tinfo, dispIdMember, wFlags, pDispParams, pVarResult,
+                pExcepInfo, puArgErr
+            )
 
         try:
             # XXX Hm, wFlags should be considered a SET of flags...
@@ -699,11 +738,8 @@ class COMObject(object):
             # How are the parameters unpacked for propertyput
             # operations with additional parameters?  Can propput
             # have additional args?
-            #
-            # 2to3 has problems to translate 'range(...)[::-1]'
-            # correctly, so use 'list(range)[::-1]' instead (will be
-            # fixed in Python 3.1, probably):
-            args = [params.rgvarg[i].value for i in list(range(params.cNamedArgs))[::-1]]
+            args = [params.rgvarg[i].value
+                    for i in reversed(range(params.cNamedArgs))]
             # MSDN: pVarResult is ignored if DISPATCH_PROPERTYPUT or
             # DISPATCH_PROPERTYPUTREF is specified.
             return mth(this, *args)
@@ -716,13 +752,15 @@ class COMObject(object):
             # 2to3 has problems to translate 'range(...)[::-1]'
             # correctly, so use 'list(range)[::-1]' instead (will be
             # fixed in Python 3.1, probably):
-            named_indexes = [params.rgdispidNamedArgs[i] for i in range(params.cNamedArgs)]
+            named_indexes = [params.rgdispidNamedArgs[i]
+                             for i in range(params.cNamedArgs)]
             # the positions of unnamed arguments
-            unnamed_indexes = list(range(params.cArgs - params.cNamedArgs))[::-1]
+            num_unnamed = params.cArgs - params.cNamedArgs
+            unnamed_indexes = list(reversed(range(num_unnamed)))
             # It seems that this code calculates the indexes of the
             # parameters in the params.rgvarg array correctly.
             indexes = named_indexes + unnamed_indexes
-            args = [params.rgvarg[i].value for i in named_indexes + unnamed_indexes]
+            args = [params.rgvarg[i].value for i in indexes]
 
             if pVarResult and getattr(mth, "has_outargs", False):
                 args.append(pVarResult)
