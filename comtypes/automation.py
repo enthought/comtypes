@@ -218,7 +218,8 @@ class tagVARIANT(Structure):
         _VariantClear(self)
         if value is None:
             self.vt = VT_NULL
-        elif hasattr(value, '__len__') and len(value) == 0:
+        elif (hasattr(value, '__len__') and len(value) == 0
+                and not isinstance(value, basestring)):
             self.vt = VT_NULL
         # since bool is a subclass of int, this check must come before
         # the check for int
