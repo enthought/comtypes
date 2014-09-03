@@ -176,6 +176,11 @@ class VariantTestCase(unittest.TestCase):
         v.vt = VT_BSTR
         self.failUnless(v.value in ("", None))
 
+    def test_empty_BSTR(self):
+        v = VARIANT()
+        v.value = ""
+        self.assertEqual(v.vt, VT_BSTR)
+
     def test_UDT(self):
         from comtypes.gen.TestComServerLib import MYCOLOR
         v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
