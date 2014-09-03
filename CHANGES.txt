@@ -2,6 +2,21 @@ Comtypes CHANGELOG
 ==================
 
 
+Release 1.1.1
+-------------
+
+ * Fixed backwards-incompatible change where empty strings in VARIANTs were
+   being converted to NULL (#68). Thanks to shgohh for the bug report.
+ * Fixed npsupport module to fail gracefully when numpy is not present (#62).
+   Thanks to kyleMR for the patch.
+ * Fixed low-level property machinery in _comobject (#60).
+ * Fixed bug where numpy would be imported when using safe arrays (#59). Thanks
+   to Paul Moore (pfmoore) for submitting the bug and a patch.
+ * Fixed bug in patching machinery (#57). Thanks to Paul Moore (pfmoore) for
+   the patch.
+ * Various documentation cleanups.
+
+
 Release 1.1.0
 -------------
 
