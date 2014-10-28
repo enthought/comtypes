@@ -101,7 +101,7 @@ is passed to the function).
 
 Since ``comtypes`` uses early binding to COM interfaces (when type
 information is exposed by the COM object), the interface methods and
-properties are available for introspection.  The Python builtin
+properties are available for introspection.  The Python built-in
 ``help`` function can be used to get an overview of them.
 
 ``MSScriptControl.ScriptControl`` is the progid of the MS scripting
@@ -127,10 +127,10 @@ Calling COM methods is straightforward just like with other Python
 objects.  They can be called with positional and named arguments.
 
 Arguments marked ``[out]`` or ``[out, retval]`` in the IDL are
-returned from a sucessful method call, in a tuple if there is more
+returned from a successful method call, in a tuple if there is more
 than one.  If no ``[out]`` or ``[out, retval]`` arguments are present,
 the ``HRESULT`` returned by the method call is returned.  When
-``[out]`` or ``[out, retval]`` arguments are returned from a sucessful
+``[out]`` or ``[out, retval]`` arguments are returned from a successful
 call, the ``HRESULT`` value is lost.
 
 If the COM method call fails, a ``COMError`` exception is raised,
@@ -239,7 +239,7 @@ The lcid parameter
 ------------------
 
 Some COM methods or properties have an optional ``lcid`` parameter.
-This parameter is used to specify a langauge identifier.  The
+This parameter is used to specify a language identifier.  The
 generated modules always pass 0 (zero) for this parameter.  If this is
 not what you want you have to edit the generated code.
 
@@ -458,8 +458,8 @@ comtypes server document.
 
 ``PumpEvents(timeout)``
     This functions runs for a certain time in a way that is required
-    for COM to work correctly.  In a single-theaded apartment it runs
-    a windows message loop, in a multithreaded apparment it simply
+    for COM to work correctly.  In a single-threaded apartment it runs
+    a windows message loop, in a multi-threaded apartment it simply
     waits.  The ``timeout`` argument may be a floating point number to
     indicate a time of less than a second.
 
@@ -589,7 +589,7 @@ Note that event handler methods support the same calling convention as
 COM method implementations in comtypes.  So the remarks about
 implementing_COM_methods_ should be observed.
 
-Typelibraries
+Type Libraries
 +++++++++++++
 
 Accessing type libraries
@@ -603,26 +603,26 @@ that is somewhat similar to IDL notation.
 It should be possible to write the interface classes manually,
 fortunately |comtypes| includes a code generator that does create
 modules containing the Python interface class (and more) automatically
-from COM typelibraries.
+from COM type libraries.
 
 ``GetModule(tlib)``
 
-    This function generates a Python wrapper for a COM typelibrary.
+    This function generates a Python wrapper for a COM type library.
     When a COM object exposes its own typeinfo, this function is
     called automatically when the object is created.
 
     ``tlib`` can be an **ITypeLib** COM pointer from a loaded
-    typelibrary, the pathname of a file containing a type library
+    type library, the pathname of a file containing a type library
     (.tlb, .exe or .dll), a tuple or list containing the GUID of a
-    typelibrary, a major and a minor version number, plus optionally a
+    type library, a major and a minor version number, plus optionally a
     LCID, or any object that has a _reg_libid_ and _reg_version_
     attributes specifying a type library.
 
     ``GetModule(tlib)`` generates a Python module (if not already
-    present) from the typelibrary, containing interface classes,
+    present) from the type library, containing interface classes,
     coclasses, constants, and structures and returns the module object
     itself.  The modules are generated inside the ``comtypes.gen``
-    package.  The module name is derived from the typelibrary guid,
+    package.  The module name is derived from the type library guid,
     version number and lcid.  The module name is a valid Python module
     name, so it can be imported with an import statement.  A second
     wrapper module is also created in the comtypes.gen package with a
@@ -630,7 +630,7 @@ from COM typelibraries.
     this does import everything from the real wrapper module but can
     be imported easier because the module name is easier to type.
 
-    For example, the typelibrary for Internet Explorer has the name
+    For example, the type library for Internet Explorer has the name
     ``SHDocVw`` (this is the name specified in the type library IDL
     file, it is not the filename), the guid is
     ``{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}``, and the version number
@@ -660,7 +660,7 @@ from COM typelibraries.
 
     In a script frozen with py2exe the directory of **comtypes.gen**
     is somewhere in a zip-archive, ``gen_dir`` is ``None``, and even
-    if tyelib wrappers are created at runtime no attempt is made to
+    if typelib wrappers are created at runtime no attempt is made to
     write them to the file system.  Instead, the modules are generated
     only in memory.
 
@@ -678,7 +678,7 @@ Internet Explorer with the ``GetModule`` function:
 
    >>> from comtypes.client import GetModule
    >>> GetModule("shdocvw.dll")
-   >>> GetModule(["{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}", 1, 1)
+   >>> GetModule(["{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}", 1, 1])
    >>>
 
 This code snippet could be used to generate the typelib wrapper module
@@ -727,7 +727,7 @@ the ``_case_insensitive_`` attribute to ``False``.
 Threading
 +++++++++
 
-XXX mention single threaded apartments, multi threaded apartments.
+XXX mention single-threaded apartments, multi-threaded apartments.
 ``sys.coinit_flags``, ``CoInitialize``, ``CoUninitialize`` and so on.
 All this is pretty advanced stuff.
 
