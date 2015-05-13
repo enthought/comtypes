@@ -108,7 +108,7 @@ def _is_writeable(path):
         return False
     try:
         tempfile.TemporaryFile(dir=path[0])
-    except OSError, details:
+    except (OSError, IOError), details:
         logger.debug("Path is unwriteable: %s", details)
         return False
     return True
