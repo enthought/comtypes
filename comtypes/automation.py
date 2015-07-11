@@ -858,6 +858,9 @@ _ctype_to_vartype = {
     # such an array cannot be created.
     POINTER(VARIANT): VT_BYREF|VT_VARIANT,
 
+    # This is needed to import Esri ArcObjects (esriSystem.olb).
+    POINTER(BSTR): VT_BYREF|VT_BSTR,
+
     # These are not yet implemented:
 ##    POINTER(IUnknown): VT_UNKNOWN,
 ##    POINTER(IDispatch): VT_DISPATCH,
