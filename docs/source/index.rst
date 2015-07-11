@@ -13,7 +13,7 @@ for *dispatch based* COM interfaces, it is not possible to access
 The |comtypes| package makes it easy to access and implement both
 custom and dispatch based COM interfaces.
 
-This document describes |comtypes| version 1.1.1.
+This document describes |comtypes| version 1.1.2.
 
 NEW: The beginning of the documentation for implementing COM servers in
 comtypes is here: comtypes_server_

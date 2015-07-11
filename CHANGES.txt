@@ -1,6 +1,21 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.2
+-------------
+
+ * Fix TypeError when interfaces return a single in-out result (#84). Thanks to
+   FranOis for the bug report and max-egger for suggesting the fix.
+ * Fix AttributeError when cleaning up safe arrays at shutdown (#83). Thanks to
+   mitaa for the bug report and fix.
+ * Fix 64-bit ULONG_PTR definition in typeinfo module (#82). Thanks to aparamon
+   for the bug report. 
+ * Add POINTER(BSTR) to supported VARIANT types (#81). This allows the Esri
+   ArcObjects library to be loaded. Thanks to Matt Wilkie for the patch.
+ * Properly catch error when attempting to cache code to an unwritable
+   directory (#78). Thanks to Robin Dunn for the patch.
+
+
 
 Release 1.1.1
 -------------
