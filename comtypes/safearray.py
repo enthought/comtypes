@@ -222,9 +222,9 @@ def _make_safearray_type(itemtype):
             self._needsfree = True
             return self[0]
 
-        def __del__(self):
+        def __del__(self, _SafeArrayDestroy=_safearray.SafeArrayDestroy):
             if self._needsfree:
-                _safearray.SafeArrayDestroy(self)
+                _SafeArrayDestroy(self)
 
         def _get_size(self, dim):
             "Return the number of elements for dimension 'dim'"
