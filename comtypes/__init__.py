@@ -656,11 +656,17 @@ class _cominterface_meta(type):
             # If there is only a single output value, then do not expect it to
             # be iterable.
             if len(outargs) == 1:  # rescode is not iterable
-                return rescode.__ctypes_from_outparam__()
+                try:
+                    return rescode.__ctypes_from_outparam__()
+                except: #sometimes rescode is tuple
+                    return rescode
 
             rescode = list(rescode)
             for outnum, o in outargs.items():
-                rescode[outnum] = o.__ctypes_from_outparam__()
+                try:
+                    rescode[outnum] = o.__ctypes_from_outparam__()
+                except:
+                    rescode[outnum] = o
             return rescode
         return call_with_inout
 
