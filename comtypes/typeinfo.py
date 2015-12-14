@@ -482,7 +482,7 @@ if hasattr(_oleaut32, "LoadTypeLibEx"):
     def LoadTypeLibEx(szFile, regkind=REGKIND_NONE):
         "Load, and optionally register a type library file"
         ptl = POINTER(ITypeLib)()
-        _oleaut32.LoadTypeLibEx(c_wchar_p(szFile), regkind, byref(ptl))
+        _oleaut32.LoadTypeLibEx(str(szFile, encoding='UTF-8'), regkind, byref(ptl))
         return ptl
 else:
     def LoadTypeLibEx(szFile, regkind=REGKIND_NONE):
