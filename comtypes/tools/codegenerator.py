@@ -347,6 +347,9 @@ class Generator(object):
     def EnumValue(self, tp):
         value = int(tp.value)
         if keyword.iskeyword(tp.name):
+            # XXX use logging!
+            if __debug__:
+                print "# Fixing keyword as EnumValue for %s" % tp.name
             tp.name += "_"
         print >> self.stream, \
               "%s = %d" % (tp.name, value)
