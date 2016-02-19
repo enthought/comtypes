@@ -3,7 +3,7 @@ import sys
 import os
 
 # comtypes version numbers follow semver (http://semver.org/)
-__version__ = "1.1.2"
+__version__ = "1.1.3-0.fixIssue92"
 
 import logging
 class NullHandler(logging.Handler):
