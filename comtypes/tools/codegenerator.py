@@ -2,11 +2,14 @@
 # libraries.
 import os
 import cStringIO
+import keyword
 from comtypes.tools import typedesc
 import comtypes.client
 import comtypes.client._generate
 
 version = "$Rev$"[6:-2]
+
+__warn_on_munge__ = __debug__
 
 
 class lcid(object):
@@ -345,6 +348,11 @@ class Generator(object):
     _enumvalues = 0
     def EnumValue(self, tp):
         value = int(tp.value)
+        if keyword.iskeyword(tp.name):
+            # XXX use logging!
+            if __warn_on_munge__:
+                print "# Fixing keyword as EnumValue for %s" % tp.name
+            tp.name += "_"
         print >> self.stream, \
               "%s = %d" % (tp.name, value)
         self.names.add(tp.name)
