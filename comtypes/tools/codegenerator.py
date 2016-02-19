@@ -2,6 +2,7 @@
 # libraries.
 import os
 import cStringIO
+import keyword
 from comtypes.tools import typedesc
 import comtypes.client
 import comtypes.client._generate
@@ -345,6 +346,8 @@ class Generator(object):
     _enumvalues = 0
     def EnumValue(self, tp):
         value = int(tp.value)
+        if keyword.iskeyword(tp.name):
+            tp.name += "_"
         print >> self.stream, \
               "%s = %d" % (tp.name, value)
         self.names.add(tp.name)
