@@ -127,8 +127,8 @@ def GetModule(tlib):
     else:
         return mod
     # the module is always regenerated if the import fails
-    if __verbose__:
-        print "# Generating comtypes.gen.%s" % modulename
+    logger.debug("# Generating comtypes.gen.%s", modulename)
+
     # determine the Python module name
     fullname = _name_module(tlib)
     modname = fullname.split(".")[-1]
@@ -171,8 +171,8 @@ def _CreateWrapper(tlib, pathname=None):
     else:
         ofi = open(os.path.join(comtypes.client.gen_dir, modname + ".py"), "w")
     # XXX use logging!
-    if __verbose__:
-        print "# Generating comtypes.gen.%s" % modname
+    logger.debug("# Generating comtypes.gen.%s", modname)
+
     generate_module(tlib, ofi, pathname)
 
     if comtypes.client.gen_dir is None:
