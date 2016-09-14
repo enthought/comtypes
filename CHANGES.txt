@@ -1,6 +1,12 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.3
+-------------
+
+ * Fix SyntaxError caused by enums containing python keywords. Thanks to
+   laripk for the fix and janbrohl for the bug report.
+
 Release 1.1.2
 -------------
 
