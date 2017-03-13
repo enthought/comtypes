@@ -3,6 +3,7 @@ import os
 import sys
 import comtypes.client
 import comtypes.tools.codegenerator
+import imp
 
 import logging
 logger = logging.getLogger(__name__)
@@ -23,7 +24,11 @@ def _my_import(fullname):
     if comtypes.client.gen_dir \
            and comtypes.client.gen_dir not in comtypes.gen.__path__:
         comtypes.gen.__path__.append(comtypes.client.gen_dir)
-    return __import__(fullname, globals(), locals(), ['DUMMY'])
+
+    mod = imp.reload(eval(fullname)) if fullname in sys.modules \
+            else __import__(fullname, globals(), locals(), ['DUMMY'])
+    mod._comtypes_validate_file()
+    return mod
 
 def _name_module(tlib):
     # Determine the name of a typelib wrapper module.
@@ -152,8 +157,10 @@ def _CreateWrapper(tlib, pathname=None):
     # helper which creates and imports the real typelib wrapper module.
     fullname = _name_module(tlib)
     try:
-        return sys.modules[fullname]
-    except KeyError:
+        mod = sys.modules[fullname]
+        mod._comtypes_validate_file()
+        return mod
+    except (KeyError, AttributeError):
         pass
 
     modname = fullname.split(".")[-1]

@@ -258,6 +258,7 @@ class Generator(object):
         for line in wrapper.wrap(text):
             print >> self.output, line
         print >> self.output, "from comtypes import _check_version; _check_version(%r)" % version
+        print >> self.output, "def _comtypes_validate_file(): pass"
         return loops
 
     def type_name(self, t, generate=True):
@@ -627,7 +628,7 @@ class Generator(object):
         modname = comtypes.client._generate._name_module(ext.tlib)
         ext.name = "%s.%s" % (modname, ext.symbol_name)
         self._externals[libdesc] = modname
-        print >> self.imports, "import", modname
+        print >> self.imports, "import %s; %s._comtypes_validate_file()" % (modname, modname)
         comtypes.client.GetModule(ext.tlib)
 
     def Constant(self, tp):
