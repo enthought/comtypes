@@ -20,5 +20,5 @@ environment:
      - py: Python36
      - py: Python36-x64
 
-install:
+test_script:
    - C:\%py%\python.exe setup.py install
