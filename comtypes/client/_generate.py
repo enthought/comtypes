@@ -7,8 +7,6 @@ import comtypes.tools.codegenerator
 import logging
 logger = logging.getLogger(__name__)
 
-__verbose__ = __debug__
-
 if os.name == "ce":
     # Windows CE has a hard coded PATH
     # XXX Additionally there's an OEM path, plus registry settings.
@@ -127,8 +125,7 @@ def GetModule(tlib):
     else:
         return mod
     # the module is always regenerated if the import fails
-    if __verbose__:
-        print "# Generating comtypes.gen.%s" % modulename
+    logger.info("# Generating comtypes.gen.%s", modulename)
     # determine the Python module name
     fullname = _name_module(tlib)
     modname = fullname.split(".")[-1]
@@ -171,8 +168,7 @@ def _CreateWrapper(tlib, pathname=None):
     else:
         ofi = open(os.path.join(comtypes.client.gen_dir, modname + ".py"), "w")
     # XXX use logging!
-    if __verbose__:
-        print "# Generating comtypes.gen.%s" % modname
+    logger.info("# Generating comtypes.gen.%s", modname)
     generate_module(tlib, ofi, pathname)
 
     if comtypes.client.gen_dir is None:
