@@ -22,4 +22,4 @@ environment:
      - py: Python36-x64
 
 test_script:
-   - C:\%py%\python.exe setup.py install
+   - C:\%py%\Scripts\pip.exe install .
