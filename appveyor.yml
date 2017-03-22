@@ -1,5 +1,5 @@
 image: Visual Studio 2015
-
+build: off
 
 init:
   - git config --global core.autocrlf input
@@ -22,4 +22,4 @@ environment:
      - py: Python36-x64
 
 test_script:
-   - C:\%py%\Scripts\pip.exe install .
+   - C:\%py%\python.exe setup.py install
