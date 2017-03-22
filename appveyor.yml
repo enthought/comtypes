@@ -24,4 +24,3 @@ environment:
 
 test_script:
    - C:\%py%\python.exe setup.py install
-   - C:\%py%\python.exe setup.py test
