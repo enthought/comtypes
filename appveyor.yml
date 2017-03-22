@@ -1,0 +1,26 @@
+image: Visual Studio 2015
+build: off
+max_jobs: 3
+
+init:
+  - git config --global core.autocrlf input
+  
+shallow_clone: true
+ 
+environment:
+   matrix:
+     - py: Python26
+     - py: Python26-x64
+     - py: Python27
+     - py: Python27-x64
+     - py: Python33
+     - py: Python33-x64
+     - py: Python34
+     - py: Python34-x64
+     - py: Python35
+     - py: Python35-x64
+     - py: Python36
+     - py: Python36-x64
+
+test_script:
+   - C:\%py%\python.exe setup.py install
