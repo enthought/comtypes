@@ -1,5 +1,6 @@
 image: Visual Studio 2015
 build: off
+max_jobs: 3
 
 init:
   - git config --global core.autocrlf input
