@@ -2,7 +2,8 @@ import threading
 import array
 from ctypes import (POINTER, Structure, byref, cast, c_long, memmove, pointer,
                     sizeof)
-from comtypes import _safearray, IUnknown, com_interface_registry, npsupport
+from comtypes import (_safearray, IUnknown, BSTR, com_interface_registry,
+                      npsupport)
 from comtypes.patcher import Patch
 
 numpy = npsupport.numpy
@@ -281,6 +282,8 @@ def _make_safearray_type(itemtype):
                     # We have to loop over each item, so we get no
                     # speedup by creating an ndarray here.
                     return [i.value for i in ptr[:num_elements]]
+                elif self._itemtype_ == BSTR:
+                    return ptr[:num_elements]
                 elif issubclass(self._itemtype_, POINTER(IUnknown)):
                     iid = _safearray.SafeArrayGetIID(self)
                     itf = com_interface_registry[str(iid)]
