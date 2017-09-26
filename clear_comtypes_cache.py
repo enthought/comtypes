@@ -8,7 +8,7 @@ def is_cache():
         import comtypes.gen
     except ImportError:
         return
-    return comtypes.gen.__path__[0]
+    return list(comtypes.gen.__path__)[0]
 
 
 def _remove(directory):
