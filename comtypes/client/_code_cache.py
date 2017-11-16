@@ -55,7 +55,7 @@ def _find_gen_dir():
             logger.info("Creating writeable comtypes cache directory: '%s'", gen_dir)
             os.makedirs(gen_dir)
         gen.__path__.append(gen_dir)
-    result = os.path.abspath(gen.__path__[-1])
+    result = os.path.abspath(list(gen.__path__)[-1])
     logger.info("Using writeable comtypes cache directory: '%s'", result)
     return result
 
