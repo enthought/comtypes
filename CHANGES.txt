@@ -1,6 +1,13 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.4 (pending)
+-------------
+
+* Fix TypeError when gen folder is unwriteable and it is a
+  namespace package (#102). Thanks to orf for the bug report. Thanks
+  to jornb for the initial proposal demonstrating a workaround.
+
 Release 1.1.3
 -------------
 
@@ -15,7 +22,7 @@ Release 1.1.2
  * Fix AttributeError when cleaning up safe arrays at shutdown (#83). Thanks to
    mitaa for the bug report and fix.
  * Fix 64-bit ULONG_PTR definition in typeinfo module (#82). Thanks to aparamon
-   for the bug report. 
+   for the bug report.
  * Add POINTER(BSTR) to supported VARIANT types (#81). This allows the Esri
    ArcObjects library to be loaded. Thanks to Matt Wilkie for the patch.
  * Properly catch error when attempting to cache code to an unwritable
@@ -241,7 +248,7 @@ Earlier Changes
 
 	* Register the InprocServer32 only when running as script or
 	py2exe dll, not when running as py2exe exe server.
-	
+
 2009-04-25  Thomas Heller  <theller@python.net>
 
 	* SAFEARRAYs can now also be created from multi-dimensional numpy
@@ -271,7 +278,7 @@ Earlier Changes
 2009-01-29  Thomas Heller  <theller@python.net>
 
 	* Restore compatibility with Python 2.3.
-	
+
 	* comtypes\client\_code_cache.py: Add missing 'import types' in
 	comtypes\client\_code_cache.py.
 
@@ -294,7 +301,7 @@ Earlier Changes
 	* Fix memoryleak in IEnumVARIANT.
 
 2008-12-12  Thomas Heller  <theller@python.net>
-	
+
 	* Merged changes from the dyndispatch branch:
 
 	    * Add a comtypes.client.Constants class that provides a way to
@@ -322,7 +329,7 @@ Earlier Changes
 	    * Started changes based on ideas from Michael Curran: better
 	    dynamic dispatch support, and a way to disable the
 	    time-consuming wrapper code generation on demand.
-	
+
 	    * comtypes\client: Add a new 'dynamic=False' parameter to the
 	    CreateObject function.  This parameter allows to create a
 	    dynamic dispatch object, bypassing the code generation.
@@ -339,7 +346,7 @@ Earlier Changes
 
 
 2008-12-12  Thomas Heller  <theller@python.net>
-	
+
 	* Bumped version number to 0.5.3.
 
 	* Added VARIANT support for VT_I8 and VT_UI8 typecodes.
@@ -484,7 +491,7 @@ Earlier Changes
 
 	This makes sure that generated modules will *always* cached in the
 	file system.
-	
+
 2008-08-13  Thomas Heller  <theller@python.net>
 
 	* comtypes\automation.py: Allow this module to be imported on
@@ -616,7 +623,7 @@ Earlier Changes
 	* The badly named comtypes.client.wrap function was renamed into
 	comtypes.client.GetBestInterface.  For backwards compatibility the
 	old name stays as an alias.
-	
+
 	* Replaced the comtypes.messageloop.add_filter(filter) function
 	with comtypes-messageloop.insert_filter(index, filter).  This
 	allows to specify the order in which the filters are applied.
@@ -701,11 +708,11 @@ Earlier Changes
 	TypeError because we cannot handle this case for now.
 
 	* Fixed infinit recursion error in __getattr__ implementation.
-	
+
 	* comtypes.dynamic._Dispatch now implements a __setattr__ methods
 	that will call to Invoke() with DISPATCH_PROPERTYPUT or
 	DISPATCH_PROPERTYPUTREF.
-	
+
 	* Handle DISPATCH_PROPERTYPUTREF in IDispatch.Invoke
 	implementation.
 
@@ -723,9 +730,9 @@ Earlier Changes
 	not work yet.
 
 	* More multidimensional safearray tests, bug fixes.
-	
+
 	* Speed up the unpacking of 1- and 2-dimensional safearrays.
-	
+
 	* Lots of refatoring of the new SAFEARRAY code; added a docstring
 	to the public function comtypes.safearray._midlSAFEARRAY.
 
@@ -735,7 +742,7 @@ Earlier Changes
 2007-10-16  Thomas Heller  <theller@python.net>
 
 	* Changed version number to 0.3.4.
-	
+
 	* Mega-patch: Completely rewritten safearray support.  SAFERARRAYs
 	are now automatically converted to Python tuples when they are
 	received as [out] parameters in COM methods, and sequences are
@@ -797,7 +804,7 @@ Earlier Changes
 	* comtypes.client: Fix ShowEvents(): COM methods must return a
 	HRESULT value, not None.  Fix several NameErrors in the
 	PumpWaitingMessages function.
-	
+
 2007-08-14  Thomas Heller  <theller@python.net>
 
 	* comtypes\tools\codegenerator.py: Generate the needed imports
@@ -851,7 +858,7 @@ Earlier Changes
 	* Fixed several memory leaks and other problems in the BSTR
 	implementation.  The previous change that requires ctypes version
 	1.0.2 was backed out again because it was the wrong approach.
-	
+
 2007-01-25  Thomas Heller  <theller@python.net>
 
 	NOTE: This comment is no longer true, see above.
@@ -887,7 +894,7 @@ Earlier Changes
 
 	* Iterating over COM collections retrived the _NewEnum property
 	twice.
-	
+
 	* Cleaned up the codegeneration.  Generated modules now have a
 	'typelib_path' variable that points to the type library used to
 	generate them, 'CoClass' subclasses have '_typelib_path_' which is
@@ -965,7 +972,7 @@ Earlier Changes
 	* Added a COM server for testing to the comtypes.test package,
 	plus tests for it.  There are still several memory leaks in
 	comtypes, as the tests show.
-	
+
 2006-08-03  Thomas Heller  <theller@python.net>
 
 	* comtypes\server\register.py: For localserver, the wrong script
@@ -995,7 +1002,7 @@ Earlier Changes
 	- Changes in the COM shutdown code: maybe the win32com way of
 	never calling CoUninitialize() is the best compromise ;-), but I
 	have not yet given up.
-	
+
 2006-07-11  Thomas Heller  <theller@python.net>
 
 	* Imported comtypes 0.2.1 into the python.org svn repository.
@@ -1036,7 +1043,7 @@ Earlier Changes
 
 	* comtypes\tools\codegenerator.py: Don't generate dispid() for
 	non-dispatch based interfaces.
-	
+
 	* comtypes\client\__init__.py: Add logging for easier debugging.
 
 	* comtypes\persist.py: Remove dispid() from non-dispatch based
