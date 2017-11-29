@@ -7,6 +7,18 @@ be written to.
 import ctypes, logging, os, sys, tempfile, types
 logger = logging.getLogger(__name__)
 
+
+def _ensure_list(path):
+    """
+    On Python 3.4 and later, when a package is imported from
+    an empty directory, its `__path__` will be a _NamespacePath
+    object and not a list, and _NamespacePath objects cannot
+    be indexed, leading to the error reported in #102.
+    This wrapper ensures that the path is a list for that reason.
+    """
+    return list(path)
+
+
 def _find_gen_dir():
     """Create, if needed, and return a directory where automatically
     generated modules will be created.
@@ -27,7 +39,8 @@ def _find_gen_dir():
     """
     _create_comtypes_gen_package()
     from comtypes import gen
-    if not _is_writeable(gen.__path__):
+    gen_path = _ensure_list(gen.__path__)
+    if not _is_writeable(gen_path):
         # check type of executable image to determine a subdirectory
         # where generated modules are placed.
         ftype = getattr(sys, "frozen", None)
@@ -55,7 +68,7 @@ def _find_gen_dir():
             logger.info("Creating writeable comtypes cache directory: '%s'", gen_dir)
             os.makedirs(gen_dir)
         gen.__path__.append(gen_dir)
-    result = os.path.abspath(gen.__path__[-1])
+    result = os.path.abspath(gen_path[-1])
     logger.info("Using writeable comtypes cache directory: '%s'", result)
     return result
 
