@@ -55,7 +55,7 @@ def _find_gen_dir():
             logger.info("Creating writeable comtypes cache directory: '%s'", gen_dir)
             os.makedirs(gen_dir)
         gen.__path__.append(gen_dir)
-    result = os.path.abspath(gen.__path__[-1])
+    result = os.path.abspath(list(gen.__path__)[-1])
     logger.info("Using writeable comtypes cache directory: '%s'", result)
     return result
 
@@ -107,7 +107,7 @@ def _is_writeable(path):
     if not path:
         return False
     try:
-        tempfile.TemporaryFile(dir=path[0])
+        tempfile.TemporaryFile(dir=list(path)[0])
     except (OSError, IOError), details:
         logger.debug("Path is unwriteable: %s", details)
         return False
