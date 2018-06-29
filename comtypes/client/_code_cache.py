@@ -119,12 +119,7 @@ def _is_writeable(path):
     which we can create files."""
     if not path:
         return False
-    try:
-        tempfile.TemporaryFile(dir=path[0])
-    except (OSError, IOError), details:
-        logger.debug("Path is unwriteable: %s", details)
-        return False
-    return True
+    return os.access(path, os.W_OK)
 
 def _get_module_filename(hmodule):
     """Call the Windows GetModuleFileName function which determines
