@@ -105,9 +105,9 @@ class post_install(install):
             if not os.path.isfile(filename):
                 raise RuntimeError("Can't find '%s'" % (filename,))
             print("Executing post install script...")
-            print('"' + sys.executable + '" "' + filename + '"')
+            print('"' + sys.executable + '" "' + filename + '" -y')
             try:
-                subprocess.check_call([sys.executable, filename])
+                subprocess.check_call([sys.executable, filename, '-y'])
             except subprocess.CalledProcessError:
                 print("Failed to run post install script!")
 
