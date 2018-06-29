@@ -3,17 +3,17 @@ import sys
 import shutil
 
 def get_next_cache_dir():
+    work_dir = os.getcwd()
     try:
-        print("import comtypes.gen")
         # change working directory to avoid import from local folder
         # during installation process
         os.chdir(os.path.dirname(sys.executable))
-        import comtypes
         import comtypes.client
-        print("DONE")
         return comtypes.client._code_cache._find_gen_dir()
     except ImportError:
         return None
+    finally:
+        os.chdir(work_dir)
 
 
 def _remove(directory):
@@ -27,9 +27,9 @@ def remove_directory(directory, silent):
             _remove(directory)
         else:
             try:
-                confirm = raw_input('Remove directory "%s" ? (y/n)' % directory)
+                confirm = raw_input('Remove comtypes cache directories? (y/n): ')
             except NameError:
-                confirm = input('Remove cache directory "%s" ? (y/n)' % directory)
+                confirm = input('Remove comtypes cache directories? (y/n): ')
             if confirm.lower() == 'y':
                 _remove(directory)
             else:
@@ -52,5 +52,6 @@ removed = remove_directory(directory, silent)
 if removed:
     directory = get_next_cache_dir()
 
-    # do not request confirmation if already confirmed and removed
+    # do not request the second confirmation
+    # if the first folder was already removed
     remove_directory(directory, silent=removed)

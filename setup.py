@@ -3,8 +3,10 @@
 import sys
 import os
 import ctypes
+import subprocess
 
 from distutils.core import Command
+from distutils.command.install import install
 from setuptools import setup
 
 try:
@@ -86,17 +88,31 @@ def read_version():
     ns = {}
     for line in open("comtypes/__init__.py"):
         if line.startswith("__version__ = "):
-            exec(line, ns)
-            break
-    return ns["__version__"]
+            var, value = line.split('=')
+            return value.strip().strip('"').strip("'")
+    raise NotImplementedError("__version__ is not found in __init__.py")
 
-if sys.version_info >= (3, 0):
-    # install_script does not work in Python 3 (python bug)
-    # Another distutils bug: it doesn't accept an empty options dict
-    options = {"foo": {}}
-##    options = {}
-else:
-    options={"bdist_wininst": {"install_script": "clear_comtypes_cache.py"}}
+
+class post_install(install):
+    def run(self):
+        install.run(self)
+        # Custom script we run at the end of installing - this is the same script
+        # run by bdist_wininst
+        if not self.dry_run and not self.root:
+            # We must run the script we just installed into Scripts, as it
+            # may have had 2to3 run over it.
+            filename = os.path.join(self.prefix, "Scripts", "clear_comtypes_cache.py")
+            if not os.path.isfile(filename):
+                raise RuntimeError("Can't find '%s'" % (filename,))
+            print("Executing post install script...")
+            print('"' + sys.executable + '" "' + filename + '"')
+            try:
+                subprocess.check_call([sys.executable, filename])
+            except subprocess.CalledProcessError:
+                print("Failed to run post install script!")
+
+
+options={"bdist_wininst": {"install_script": "clear_comtypes_cache.py"}}
 
 setup_params = dict(
     name="comtypes",
@@ -104,7 +120,7 @@ setup_params = dict(
     long_description = readme,
     author="Thomas Heller",
     author_email="theller@python.net",
-    url="http://starship.python.net/crew/theller/comtypes",
+    url="https://github.com/enthought/comtypes",
     download_url="https://github.com/enthought/comtypes/releases",
     license="MIT License",
     package_data={
@@ -127,6 +143,7 @@ setup_params = dict(
     cmdclass={
         'test': test,
         'build_py': build_py,
+        'install': post_install,
     },
 
     version=read_version(),
