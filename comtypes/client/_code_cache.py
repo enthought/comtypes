@@ -119,12 +119,8 @@ def _is_writeable(path):
     which we can create files."""
     if not path:
         return False
-    try:
-        tempfile.TemporaryFile(dir=path[0])
-    except (OSError, IOError), details:
-        logger.debug("Path is unwriteable: %s", details)
-        return False
-    return True
+    # TODO: should we add os.X_OK flag as well? It seems unnecessary on Windows.
+    return os.access(path[0], os.W_OK)
 
 def _get_module_filename(hmodule):
     """Call the Windows GetModuleFileName function which determines
