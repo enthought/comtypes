@@ -1,5 +1,4 @@
-"comtypes package install script"
-
+"""comtypes package install script"""
 import sys
 import os
 import ctypes
@@ -94,6 +93,20 @@ def read_version():
 
 
 class post_install(install):
+
+    # both this static variable and method initialize_options() help to avoid
+    # weird setuptools error during "pip install comtypes"
+    user_options = install.user_options + [
+        ('old-and-unmanageable', None, "Try not to use this!"),
+        ('single-version-externally-managed', None,
+         "used by system package builders to create 'flat' eggs"),
+    ]
+
+    def initialize_options(self):
+        install.initialize_options(self)
+        self.old_and_unmanageable = None
+        self.single_version_externally_managed = None
+
     def run(self):
         install.run(self)
         # Custom script we run at the end of installing - this is the same script
