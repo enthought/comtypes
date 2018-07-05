@@ -16,7 +16,7 @@ def read_version():
 # prepare the same package that is usually uploaded to PyPI
 subprocess.check_call([sys.executable, 'setup.py', 'sdist', '--format=zip'])
 
-filename_for_upload = 'comtypes-{}.zip'.format(read_version())
+filename_for_upload = 'comtypes-%s.zip' % read_version()
 target_package = os.path.join(os.getcwd(), 'dist', filename_for_upload)
 
 # run "pip install comtypes-x.y.z.zip"
