@@ -14,11 +14,11 @@ def read_version():
     raise NotImplementedError("__version__ is not found in __init__.py")
 
 # prepare the same package that is usually uploaded to PyPI
-subprocess.check_output([sys.executable, 'setup.py', 'sdist', '--format=zip'])
+subprocess.check_call([sys.executable, 'setup.py', 'sdist', '--format=zip'])
 
 filename_for_upload = 'comtypes-{}.zip'.format(read_version())
-target_package = os.path.join(os.getcwd(), 'sdist', filename_for_upload)
+target_package = os.path.join(os.getcwd(), 'dist', filename_for_upload)
 
 # run "pip install comtypes-x.y.z.zip"
 pip_exe = os.path.join(os.path.dirname(sys.executable), 'Scripts', 'pip.exe')
-subprocess.check_output([pip_exe, 'install', target_package])
+subprocess.check_call([pip_exe, 'install', target_package])
