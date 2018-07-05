@@ -84,7 +84,6 @@ def read_version():
     # Determine the version number by reading it from the file
     # 'comtypes\__init__.py'.  We cannot import this file (with py3,
     # at least) because it is in py2.x syntax.
-    ns = {}
     for line in open("comtypes/__init__.py"):
         if line.startswith("__version__ = "):
             var, value = line.split('=')
