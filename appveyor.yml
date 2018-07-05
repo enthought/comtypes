@@ -24,3 +24,5 @@ environment:
 
 test_script:
    - C:\%py%\python.exe setup.py install
+   - C:\%py%\Scripts\pip.exe uninstall comtypes -y
+   - C:\%py%\python.exe test_pip_install.py
