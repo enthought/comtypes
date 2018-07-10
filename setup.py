@@ -94,7 +94,10 @@ def read_version():
 class post_install(install):
 
     # both this static variable and method initialize_options() help to avoid
-    # weird setuptools error during "pip install comtypes"
+    # weird setuptools error with "pip install comtypes", details are here:
+    # https://github.com/enthought/comtypes/issues/155
+    # the working solution was found here:
+    # https://github.com/pypa/setuptools/blob/3b90be7bb6323eb44d0f28864509c1d47aa098de/setuptools/command/install.py
     user_options = install.user_options + [
         ('old-and-unmanageable', None, "Try not to use this!"),
         ('single-version-externally-managed', None,
