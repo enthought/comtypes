@@ -1,3 +1,4 @@
+"""This test covers 'pip install' issue #155"""
 import os
 import sys
 import subprocess
