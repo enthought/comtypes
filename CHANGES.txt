@@ -1,6 +1,15 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.7
+-------------
+ * Fix command ``pip install comtypes --no-cache-dir --target="C:\tmp"`` (issue #158).
+
+Release 1.1.6
+-------------
+ * Fix ``pip install comtypes`` error: "option --single-version-externally-managed
+   not recognized" (issue #155).
+
 Release 1.1.5
 -------------
  * Fix using temp directory as a cache folder when it has no write permission.

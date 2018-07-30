@@ -37,6 +37,7 @@ class TestPipInstall(unittest.TestCase):
             shutil.rmtree(custom_dir)
         os.makedirs(custom_dir)
 
+        # this test catches issue #158
         subprocess.check_call('{0} install {1} --no-cache-dir --target="{2}"'.format(self.pip_exe, self.target_package, custom_dir))
 
 
