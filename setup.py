@@ -114,9 +114,7 @@ class post_install(install):
         # Custom script we run at the end of installing - this is the same script
         # run by bdist_wininst
         if not self.dry_run and not self.root:
-            # We must run the script we just installed into Scripts, as it
-            # may have had 2to3 run over it.
-            filename = os.path.join(self.prefix, "Scripts", "clear_comtypes_cache.py")
+            filename = os.path.join(self.install_scripts, "clear_comtypes_cache.py")
             if not os.path.isfile(filename):
                 raise RuntimeError("Can't find '%s'" % (filename,))
             print("Executing post install script...")
