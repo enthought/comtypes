@@ -837,6 +837,8 @@ _ctype_to_vartype = {
     c_longlong: VT_I8,
     c_ulonglong: VT_UI8,
 
+    HRESULT: VT_HRESULT,
+
     VARIANT_BOOL: VT_BOOL,
 
     BSTR: VT_BSTR,
