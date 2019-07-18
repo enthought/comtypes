@@ -275,8 +275,8 @@ def PumpEvents(timeout):
                                                                int(timeout * 1000),
                                                                len(handles), handles,
                                                                ctypes.byref(ctypes.c_ulong()))
-        except WindowsError, details:
-            if details.args[0] != RPC_S_CALLPENDING: # timeout expired
+        except WindowsError as details:
+            if details.winerror != RPC_S_CALLPENDING: # timeout expired
                 raise
         else:
             raise KeyboardInterrupt
