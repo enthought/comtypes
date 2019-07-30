@@ -167,6 +167,7 @@ setup_params = dict(
         "comtypes.tools",
         "comtypes.test",
     ],
+    zip_safe=False
 )
 
 if __name__ == '__main__':
