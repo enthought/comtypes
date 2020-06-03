@@ -26,6 +26,10 @@ class Test(ut.TestCase):
         comtypes.client.CreateObject(unicode(Scripting.Dictionary._reg_clsid_))
         comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
 
+    def test_GetModule_clsid(self):
+        clsid = comtypes.GUID.from_progid("MediaPlayer.MediaPlayer")
+        tlib = comtypes.client.GetModule(clsid)
+
     def test_remote(self):
         ie = comtypes.client.CreateObject("InternetExplorer.Application",
                                           machine="localhost")
