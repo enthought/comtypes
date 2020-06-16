@@ -7,13 +7,7 @@ import comtypes.tools.codegenerator
 import logging
 logger = logging.getLogger(__name__)
 
-if os.name == "ce":
-    # Windows CE has a hard coded PATH
-    # XXX Additionally there's an OEM path, plus registry settings.
-    # We don't currently use the latter.
-    PATH = ["\\Windows", "\\"]
-else:
-    PATH = os.environ["PATH"].split(os.pathsep)
+PATH = os.environ["PATH"].split(os.pathsep)
 
 def _my_import(fullname):
     # helper function to import dotted modules

@@ -275,12 +275,8 @@ _vtbl_types = {}
 ################################################################
 
 try:
-    if os.name == "ce":
-        _InterlockedIncrement = windll.coredll.InterlockedIncrement
-        _InterlockedDecrement = windll.coredll.InterlockedDecrement
-    else:
-        _InterlockedIncrement = windll.kernel32.InterlockedIncrement
-        _InterlockedDecrement = windll.kernel32.InterlockedDecrement
+    _InterlockedIncrement = windll.kernel32.InterlockedIncrement
+    _InterlockedDecrement = windll.kernel32.InterlockedDecrement
 except AttributeError:
     import threading
     _lock = threading.Lock()

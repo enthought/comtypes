@@ -148,10 +148,7 @@ def CoInitialize():
 
 def CoInitializeEx(flags=None):
     if flags is None:
-        if os.name == "ce":
-            flags = getattr(sys, "coinit_flags", COINIT_MULTITHREADED)
-        else:
-            flags = getattr(sys, "coinit_flags", COINIT_APARTMENTTHREADED)
+        flags = getattr(sys, "coinit_flags", COINIT_APARTMENTTHREADED)
     logger.debug("CoInitializeEx(None, %s)", flags)
     _ole32.CoInitializeEx(None, flags)
 

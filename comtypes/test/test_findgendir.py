@@ -39,13 +39,8 @@ class Test(unittest.TestCase):
 
     def test_script(self):
         # %APPDATA%\Python\Python25\comtypes_cache
-        if os.name == "ce":
-            ma, mi = sys.version_info[:2]
-            path = r"%s\Python\Python%d%d\comtypes_cache" % \
-                       (_get_appdata_dir(), ma, mi)
-        else:
-            template = r"$APPDATA\Python\Python%d%d\comtypes_cache"
-            path = os.path.expandvars(template % sys.version_info[:2])
+        template = r"$APPDATA\Python\Python%d%d\comtypes_cache"
+        path = os.path.expandvars(template % sys.version_info[:2])
         gen_dir = comtypes.client._find_gen_dir()
         self.failUnlessEqual(path, gen_dir)
 

@@ -74,12 +74,8 @@ def _find_gen_dir():
 
 ################################################################
 
-if os.name == "ce":
-    SHGetSpecialFolderPath = ctypes.OleDLL("coredll").SHGetSpecialFolderPath
-    GetModuleFileName = ctypes.WinDLL("coredll").GetModuleFileNameW
-else:
-    SHGetSpecialFolderPath = ctypes.OleDLL("shell32.dll").SHGetSpecialFolderPathW
-    GetModuleFileName = ctypes.WinDLL("kernel32.dll").GetModuleFileNameW
+SHGetSpecialFolderPath = ctypes.OleDLL("shell32.dll").SHGetSpecialFolderPathW
+GetModuleFileName = ctypes.WinDLL("kernel32.dll").GetModuleFileNameW
 SHGetSpecialFolderPath.argtypes = [ctypes.c_ulong, ctypes.c_wchar_p,
                                    ctypes.c_int, ctypes.c_int]
 GetModuleFileName.restype = ctypes.c_ulong
