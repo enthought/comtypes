@@ -111,8 +111,7 @@ class post_install(install):
 
     def run(self):
         install.run(self)
-        # Custom script we run at the end of installing - this is the same script
-        # run by bdist_wininst
+        # Custom script we run at the end of installing
         if not self.dry_run and not self.root:
             filename = os.path.join(self.install_scripts, "clear_comtypes_cache.py")
             if not os.path.isfile(filename):
@@ -124,8 +123,6 @@ class post_install(install):
             except subprocess.CalledProcessError:
                 print("Failed to run post install script!")
 
-
-options={"bdist_wininst": {"install_script": "clear_comtypes_cache.py"}}
 
 setup_params = dict(
     name="comtypes",
@@ -151,7 +148,6 @@ setup_params = dict(
     classifiers=classifiers,
 
     scripts=["clear_comtypes_cache.py"],
-    options=options,
 
     cmdclass={
         'test': test,
