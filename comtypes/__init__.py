@@ -169,7 +169,7 @@ def CoUninitialize():
     _ole32_nohresult.CoUninitialize()
 
 
-def shutdown(func=_ole32_nohresult.CoUninitialize,
+def _shutdown(func=_ole32_nohresult.CoUninitialize,
              _debug=logger.debug,
              _exc_clear=getattr(sys, "exc_clear", lambda: None)):
     # Make sure no COM pointers stay in exception frames.
@@ -190,8 +190,7 @@ def shutdown(func=_ole32_nohresult.CoUninitialize,
     _debug("CoUnititialize() done.")
 
 import atexit
-atexit.register(shutdown)
-del shutdown
+atexit.register(_shutdown)
 
 ################################################################
 # global registries.
