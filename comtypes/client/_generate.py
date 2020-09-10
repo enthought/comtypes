@@ -3,6 +3,7 @@ import os
 import sys
 import comtypes.client
 import comtypes.tools.codegenerator
+import importlib
 
 import logging
 logger = logging.getLogger(__name__)
@@ -150,6 +151,9 @@ def GetModule(tlib):
     ofi = open(os.path.join(comtypes.client.gen_dir, modulename + ".py"), "w")
     ofi.write(code)
     ofi.close()
+    # clear the import cache to make sure Python sees newly created modules
+    if hasattr(importlib, "invalidate_caches"):
+        importlib.invalidate_caches()
     return _my_import("comtypes.gen." + modulename)
 
 def _CreateWrapper(tlib, pathname=None):
@@ -188,6 +192,9 @@ def _CreateWrapper(tlib, pathname=None):
         setattr(comtypes.gen, modname, mod)
     else:
         ofi.close()
+        # clear the import cache to make sure Python sees newly created modules
+        if hasattr(importlib, "invalidate_caches"):
+            importlib.invalidate_caches()
         mod = _my_import(fullname)
     return mod
 
