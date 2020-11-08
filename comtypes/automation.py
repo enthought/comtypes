@@ -301,7 +301,7 @@ class tagVARIANT(Structure):
         elif npsupport.isndarray(value):
             # Try to convert a simple array of basic types.
             descr = value.dtype.descr[0][1]
-            typ = npsupport.numpy.ctypeslib._typecodes.get(descr)
+            typ = npsupport.typecodes.get(descr)
             if typ is None:
                 # Try for variant
                 obj = _midlSAFEARRAY(VARIANT).create(value)
