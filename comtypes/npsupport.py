@@ -78,12 +78,33 @@ def isdatetime64(value):
     return isinstance(value, datetime64)
 
 
+def _check_ctypeslib_typecodes():
+    import numpy as np
+    from numpy import ctypeslib
+    try:
+        from numpy.ctypeslib import _typecodes
+    except ImportError:
+        from numpy.ctypeslib import as_ctypes_type
+
+        ctypes_to_dtypes = {}
+
+        for tp in set(np.sctypeDict.values()):
+            try:
+                ctype_for = as_ctypes_type(tp)
+                ctypes_to_dtypes[ctype_for] = tp
+            except NotImplementedError:
+                continue
+        ctypeslib._typecodes = ctypes_to_dtypes
+    return ctypeslib._typecodes
+
+
 com_null_date64 = None
 datetime64 = None
 VARIANT_dtype = None
+typecodes = {}
 
 if HAVE_NUMPY:
-
+    typecodes = _check_ctypeslib_typecodes()
     # dtype for VARIANT. This allows for packing of variants into an array, and
     # subsequent conversion to a multi-dimensional safearray.
     try:
