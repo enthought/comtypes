@@ -257,7 +257,9 @@ class Generator(object):
 
         for line in wrapper.wrap(text):
             print >> self.output, line
-        print >> self.output, "from comtypes import _check_version; _check_version(%r)" % version
+
+        tlib_mtime = os.stat(self.filename).st_mtime
+        print >> self.output, "from comtypes import _check_version; _check_version(%r, %f)" % (version, tlib_mtime)
         return loops
 
     def type_name(self, t, generate=True):

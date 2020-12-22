@@ -23,21 +23,19 @@ from ctypes import *
 from _ctypes import COMError
 from comtypes import patcher
 
-def _check_version(actual):
+def _check_version(actual, tlib_cached_mtime=None):
     from comtypes.tools.codegenerator import version as required
     if actual != required:
         raise ImportError("Wrong version")
     if not hasattr(sys, "frozen"):
         g = sys._getframe(1).f_globals
-        mod_path = g.get("__file__")
         tlb_path = g.get("typelib_path")
         try:
-            mod_mtime = os.stat(mod_path).st_mtime
-            tlib_mtime = os.stat(tlb_path).st_mtime
+            tlib_curr_mtime = os.stat(tlb_path).st_mtime
         except (OSError, TypeError):
             return
-        if mod_mtime < tlib_mtime:
-            raise ImportError("Typelib newer than module")
+        if not tlib_cached_mtime or abs(tlib_curr_mtime - tlib_cached_mtime) >= 1:
+            raise ImportError("Typelib different than module")
 
 try:
     COMError()
