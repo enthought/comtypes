@@ -3,7 +3,7 @@ import sys
 import os
 
 # comtypes version numbers follow semver (http://semver.org/) and PEP 440
-__version__ = "1.1.7"
+__version__ = "1.1.8"
 
 import logging
 class NullHandler(logging.Handler):
