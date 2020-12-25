@@ -1,6 +1,17 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.8
+-------------
+ * Fix No module named 'comtypes.gen.stdole'. Thanks @fxthomas.
+ * Fix NumPy >= 1.16 support. Thanks @mobiusklein.
+ * Use the embedded timestamp for cache invalidation. Thanks @vijairaj.
+ * Allow customization of shutdown behavior (It fixes crash during exit in applications that embed Python). Thanks @lassoan.
+ * Extend GetModule() with CLSID support. Thanks @forderud.
+ * Fix invalid handling of WindowsError on Python 3. Thanks @leonardder.
+ * End bdist_wininst support in setup.py. Thanks @wkschwartz.
+ * Drop Windows CE support. Thanks @forderud.
+
 Release 1.1.7
 -------------
  * Fix command ``pip install comtypes --no-cache-dir --target="C:\tmp"`` (issue #158).
