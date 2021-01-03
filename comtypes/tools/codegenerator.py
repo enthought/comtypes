@@ -3,9 +3,12 @@
 import os
 import cStringIO
 import keyword
+import ctypes
+
 from comtypes.tools import typedesc
 import comtypes.client
 import comtypes.client._generate
+import comtypes.client._code_cache
 
 version = "$Rev$"[6:-2]
 
@@ -258,7 +261,12 @@ class Generator(object):
         for line in wrapper.wrap(text):
             print >> self.output, line
 
-        tlib_mtime = os.stat(self.filename).st_mtime
+        # get full path to DLL first (os.stat can't work with relative DLL paths properly)
+        dll = ctypes.OleDLL(self.filename)
+        full_filename = comtypes.client._code_cache._get_module_filename(dll._handle)
+
+        # get DLL timestamp at the moment of wrapper generation
+        tlib_mtime = os.stat(full_filename).st_mtime
         print >> self.output, "from comtypes import _check_version; _check_version(%r, %f)" % (version, tlib_mtime)
         return loops
 
