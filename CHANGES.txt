@@ -1,6 +1,11 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.9
+-------------
+ * Fix loading module from relative path.
+ * Use comtypes release version in code generator version check.
+
 Release 1.1.8
 -------------
  * Fix No module named 'comtypes.gen.stdole'. Thanks @fxthomas.
