@@ -9,7 +9,6 @@ from comtypes.tools import typedesc
 import comtypes
 import comtypes.client
 import comtypes.client._generate
-import comtypes.client._code_cache
 
 version = comtypes.__version__
 
@@ -263,8 +262,8 @@ class Generator(object):
             print >> self.output, line
 
         # get full path to DLL first (os.stat can't work with relative DLL paths properly)
-        dll = ctypes.OleDLL(self.filename)
-        full_filename = comtypes.client._code_cache._get_module_filename(dll._handle)
+        loaded_typelib = comtypes.typeinfo.LoadTypeLib(self.filename)
+        full_filename = comtypes.tools.tlbparser.get_tlib_filename(loaded_typelib)
 
         # get DLL timestamp at the moment of wrapper generation
         tlib_mtime = os.stat(full_filename).st_mtime
