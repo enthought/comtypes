@@ -6,11 +6,12 @@ import keyword
 import ctypes
 
 from comtypes.tools import typedesc
+import comtypes
 import comtypes.client
 import comtypes.client._generate
 import comtypes.client._code_cache
 
-version = "$Rev$"[6:-2]
+version = comtypes.__version__
 
 __warn_on_munge__ = __debug__
 
