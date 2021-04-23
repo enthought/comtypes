@@ -4,6 +4,7 @@ import os
 import cStringIO
 import keyword
 import ctypes
+import errno
 
 from comtypes.tools import typedesc
 import comtypes
@@ -268,7 +269,14 @@ class Generator(object):
             full_filename = comtypes.tools.tlbparser.get_tlib_filename(loaded_typelib)
 
             # get DLL timestamp at the moment of wrapper generation
-            tlib_mtime = os.stat(full_filename).st_mtime
+            try:
+                tlib_mtime = os.stat(full_filename).st_mtime
+            except IOError as e:
+                if e.errno == errno.ENOENT:
+                    # quirk: Win 7 sometimes does not return full path
+                    tlib_mtime = 0
+                else:
+                    raise
 
         print >> self.output, "from comtypes import _check_version; _check_version(%r, %f)" % (version, tlib_mtime)
         return loops
