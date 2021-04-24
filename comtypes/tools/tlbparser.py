@@ -1,8 +1,15 @@
+import os
 import sys
+from ctypes import windll
+from ctypes import c_void_p
+from ctypes import sizeof
+from ctypes import alignment
 
-from comtypes import automation, typeinfo, COMError
+from comtypes import automation
+from comtypes import typeinfo
+from comtypes import COMError
 from comtypes.tools import typedesc
-from ctypes import c_void_p, sizeof, alignment
+from comtypes.client._code_cache import _get_module_filename
 
 try:
     set
@@ -708,7 +715,16 @@ def get_tlib_filename(tlib):
                                                   0, # lcid
                                                   byref(name)
                                                   ):
-        return name.value.split("\0")[0]
+        full_filename = name.value.split("\0")[0]
+        if not os.path.isabs(full_filename):
+            # workaround Windows 7 bug in QueryPathOfRegTypeLib returning relative path
+            try:
+                dll = windll.LoadLibrary(full_filename)
+                full_filename = _get_module_filename(dll._handle)
+                del dll
+            except OSError:
+                return None
+        return full_filename
     return None
 
 def _py2exe_hint():

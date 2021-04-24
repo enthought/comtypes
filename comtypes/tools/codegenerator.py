@@ -267,8 +267,11 @@ class Generator(object):
             loaded_typelib = comtypes.typeinfo.LoadTypeLib(self.filename)
             full_filename = comtypes.tools.tlbparser.get_tlib_filename(loaded_typelib)
 
-            # get DLL timestamp at the moment of wrapper generation
-            tlib_mtime = os.stat(full_filename).st_mtime
+            if full_filename is None:
+                tlib_mtime = 0
+            else:
+                # get DLL timestamp at the moment of wrapper generation
+                tlib_mtime = os.stat(full_filename).st_mtime
 
         print >> self.output, "from comtypes import _check_version; _check_version(%r, %f)" % (version, tlib_mtime)
         return loops
