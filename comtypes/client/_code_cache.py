@@ -5,6 +5,7 @@ comtypes.gen package and returns a directory where generated code can
 be written to.
 """
 import ctypes, logging, os, sys, tempfile, types
+from ctypes import wintypes
 logger = logging.getLogger(__name__)
 
 
@@ -79,7 +80,7 @@ GetModuleFileName = ctypes.WinDLL("kernel32.dll").GetModuleFileNameW
 SHGetSpecialFolderPath.argtypes = [ctypes.c_ulong, ctypes.c_wchar_p,
                                    ctypes.c_int, ctypes.c_int]
 GetModuleFileName.restype = ctypes.c_ulong
-GetModuleFileName.argtypes = [ctypes.c_ulong, ctypes.c_wchar_p, ctypes.c_ulong]
+GetModuleFileName.argtypes = [wintypes.HMODULE, ctypes.c_wchar_p, ctypes.c_ulong]
 
 CSIDL_APPDATA = 26
 MAX_PATH = 260
