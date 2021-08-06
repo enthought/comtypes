@@ -315,7 +315,7 @@ def _make_safearray_type(itemtype):
                         # XXX Only try to convert types known to
                         #     numpy.ctypeslib.
                         if (safearray_as_ndarray and self._itemtype_ in
-                                list(npsupport.typecodes.values())):
+                                list(npsupport.typecodes.keys())):
                             arr = numpy.ctypeslib.as_array(ptr,
                                                            (num_elements,))
                             return arr.copy()
