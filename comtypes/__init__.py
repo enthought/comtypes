@@ -34,7 +34,7 @@ def _check_version(actual, tlib_cached_mtime=None):
             tlib_curr_mtime = os.stat(tlb_path).st_mtime
         except (OSError, TypeError):
             return
-        if not tlib_cached_mtime or abs(tlib_curr_mtime - tlib_cached_mtime) >= 1:
+        if tlib_cached_mtime is None or abs(tlib_curr_mtime - tlib_cached_mtime) >= 1:
             raise ImportError("Typelib different than module")
 
 try:
