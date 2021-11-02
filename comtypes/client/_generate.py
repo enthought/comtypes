@@ -1,8 +1,10 @@
 import types
 import os
 import sys
+import comtypes
 import comtypes.client
 import comtypes.tools.codegenerator
+import comtypes.tools.tlbparser
 import importlib
 
 import logging
@@ -32,6 +34,36 @@ def _name_module(tlib):
                libattr.wMajorVerNum,
                libattr.wMinorVerNum)
     return "comtypes.gen." + modname
+
+def _resolve_filename(tlib_string, dirpath):
+    """Tries to make sense of a type library specified as a string.
+    
+    Args:
+        tlib_string: type library designator
+        dirpath: a directory to relativize the location
+
+    Returns:
+
+      (abspath, True) or (relpath, False), 
+    
+    where relpath is an unresolved path."""
+    assert isinstance(tlib_string, basestring)
+    # pathname of type library
+    if os.path.isabs(tlib_string):
+        # a specific location
+        return tlib_string, True
+    elif dirpath:
+        abspath = os.path.normpath(os.path.join(dirpath, tlib_string))
+        if os.path.exists(abspath):
+            return abspath, True
+    # try with respect to cwd (if _getmodule executed from command line)
+    abspath = os.path.abspath(tlib_string)
+    if os.path.exists(abspath):
+        return abspath, True
+    # Otherwise it may still be that the file is on Windows search
+    # path for typelibs, and we leave the pathname alone.
+    return tlib_string, False
+
 
 def GetModule(tlib):
     """Create a module wrapping a COM typelibrary on demand.
@@ -76,23 +108,24 @@ def GetModule(tlib):
     """
     pathname = None
     if isinstance(tlib, base_text_type):
-        # pathname of type library
-        if not os.path.isabs(tlib):
-            # If a relative pathname is used, we try to interpret
-            # this pathname as relative to the callers __file__.
-            frame = sys._getframe(1)
-            _file_ = frame.f_globals.get("__file__", None)
-            if _file_ is not None:
-                directory = os.path.dirname(os.path.abspath(_file_))
-                abspath = os.path.normpath(os.path.join(directory, tlib))
-                # If the file does exist, we use it.  Otherwise it may
-                # still be that the file is on Windows search path for
-                # typelibs, and we leave the pathname alone.
-                if os.path.isfile(abspath):
-                    tlib = abspath
-        logger.debug("GetModule(%s)", tlib)
-        pathname = tlib
-        tlib = comtypes.typeinfo.LoadTypeLibEx(tlib)
+        tlib_string = tlib
+        # if a relative pathname is used, we try to interpret it relative to the 
+        # directory of the calling module (if not from command line)
+        frame = sys._getframe(1)
+        _file_ = frame.f_globals.get("__file__", None)
+        pathname, path_exists = _resolve_filename(tlib, _file_ and os.path.dirname(_file_))
+        logger.debug("GetModule(%s), resolved: %s", pathname, path_exists)
+        # in any case, attempt to load and if tlib_string is not valid, then raise
+        # as "OSError: [WinError -2147312566] Error loading type library/DLL"
+        tlib = comtypes.typeinfo.LoadTypeLibEx(pathname) # don't register
+        if not path_exists:
+            # try to get path after loading, but this only works if already registered            
+            pathname = comtypes.tools.tlbparser.get_tlib_filename(tlib)
+            if pathname is None:
+                logger.info("GetModule(%s): could not resolve to a filename", tlib)
+                pathname = tlib_string
+        # if above path torture resulted in an absolute path, then the file exists (at this point)!
+        assert not(os.path.isabs(pathname)) or os.path.exists(pathname)
     elif isinstance(tlib, comtypes.GUID):
         # tlib contain a clsid
         clsid = str(tlib)
@@ -164,7 +197,7 @@ def GetModule(tlib):
         importlib.invalidate_caches()
     return _my_import("comtypes.gen." + modulename)
 
-def _CreateWrapper(tlib, pathname=None):
+def _CreateWrapper(tlib, pathname):
     # helper which creates and imports the real typelib wrapper module.
     fullname = _name_module(tlib)
     try:
