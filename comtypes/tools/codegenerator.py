@@ -12,6 +12,9 @@ import comtypes.client._generate
 
 version = comtypes.__version__
 
+import logging
+logger = logging.getLogger(__name__)
+
 __warn_on_munge__ = __debug__
 
 
@@ -212,8 +215,12 @@ class Generator(object):
         parts2 = path2.split("\\")
         return "..\\" * len(parts2) + path1
 
-    def generate_code(self, items, filename=None):
-        self.filename = filename
+    def _generate_typelib_path(self, filename):
+        # NOTE: the logic in this function appears completely different from that
+        # of the handling of tlib (given as a string) in GetModule. There, relative 
+        # references are resolved wrt to the directory of the calling module. Here, 
+        # resolution is with respect to current working directory -- later to be 
+        # relativized to comtypes.gen.
         if filename is not None:
             # Hm, what is the CORRECT encoding?
             print >> self.output, "# -*- coding: mbcs -*-"
@@ -234,6 +241,10 @@ class Generator(object):
                 p = os.path.normpath(os.path.abspath(os.path.join(comtypes.gen.__path__[0],
                                                                   path)))
                 assert os.path.isfile(p)
+
+    def generate_code(self, items, filename):
+        self.filename = filename
+        self._generate_typelib_path(filename)
         print >> self.imports, "_lcid = 0 # change this if required"
         print >> self.imports, "from ctypes import *"
         items = set(items)
@@ -261,17 +272,12 @@ class Generator(object):
         for line in wrapper.wrap(text):
             print >> self.output, line
 
-        tlib_mtime = None
-        if self.filename is not None:
-            # get full path to DLL first (os.stat can't work with relative DLL paths properly)
-            loaded_typelib = comtypes.typeinfo.LoadTypeLib(self.filename)
-            full_filename = comtypes.tools.tlbparser.get_tlib_filename(loaded_typelib)
-
-            if full_filename is not None:
-                # get DLL timestamp at the moment of wrapper generation
-                tlib_mtime = os.stat(full_filename).st_mtime
-
-        print >> self.output, "from comtypes import _check_version; _check_version(%r, %f)" % (version, tlib_mtime)
+        if os.path.exists(filename):
+            tlib_mtime = os.stat(filename).st_mtime
+        else:
+            tlib_mtime = None
+        logger.debug("filename: \"%s\": tlib_mtime: %s", filename, tlib_mtime)
+        print >> self.output, "from comtypes import _check_version; _check_version(%r, %s)" % (version, tlib_mtime)
         return loops
 
     def type_name(self, t, generate=True):
