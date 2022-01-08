@@ -124,13 +124,13 @@ class post_install(install):
 
 
 setup_params = dict(
-    name="comtypes",
+    name="axisvm.comtypes",
     description="Pure Python COM package",
     long_description = readme,
     author="Thomas Heller",
     author_email="theller@python.net",
-    url="https://github.com/enthought/comtypes",
-    download_url="https://github.com/enthought/comtypes/releases",
+    url="https://github.com/BALOGHBence/comtypes",
+    download_url="https://github.com/BALOGHBence/comtypes/releases",
     license="MIT License",
     package_data={
         "comtypes.test": [
