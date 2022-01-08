@@ -235,7 +235,8 @@ def _make_safearray_type(itemtype):
         def unpack(self):
             """Unpack a POINTER(SAFEARRAY_...) into a Python tuple or ndarray."""
             dim = _safearray.SafeArrayGetDim(self)
-
+            if dim == 0:
+              return tuple()
             if dim == 1:
                 num_elements = self._get_size(1)
                 result = self._get_elements_raw(num_elements)
