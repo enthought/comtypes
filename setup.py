@@ -16,6 +16,9 @@ except ImportError:
 with open('README') as readme_stream:
     readme = readme_stream.read()
 
+SETUPTOOLS_PY3_SUPPORT = "setuptools<=57.5.0"
+
+
 class test(Command):
     # Original version of this class posted
     # by Berthold Hoellmann to distutils-sig@python.org
@@ -124,7 +127,7 @@ class post_install(install):
 
 
 setup_params = dict(
-    name="comtypes",
+    name="comtypes-fork",
     description="Pure Python COM package",
     long_description = readme,
     author="Thomas Heller",
@@ -162,6 +165,10 @@ setup_params = dict(
         "comtypes.tools",
         "comtypes.test",
     ],
+    # Preserve Python 3 compatibility during building & installation with pip.
+    setup_requires=[SETUPTOOLS_PY3_SUPPORT,],
+    # Also trick pip to put the forked package replacement on top of the official one.
+    install_requires=[SETUPTOOLS_PY3_SUPPORT, "comtypes"],
 )
 
 if __name__ == '__main__':
