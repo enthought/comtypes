@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 """comtypes package install script"""
 import sys
 import os
