@@ -169,7 +169,7 @@ setup_params = dict(
     ],
     # Preserve Python 3 compatibility during building & installation with pip.
     setup_requires=[SETUPTOOLS_PY3_SUPPORT,],
-    install_requires=[SETUPTOOLS_PY3_SUPPORT],
+    install_requires=[SETUPTOOLS_PY3_SUPPORT,],
 )
 
 if __name__ == '__main__':
