@@ -36,7 +36,7 @@ Now, debug the object, and when done delete logging info:
   python mycomobj.py /nodebug
 """
 import sys, os
-import _winreg
+import winreg
 import logging
 
 import comtypes
@@ -68,9 +68,9 @@ except NameError:
     from sets import Set #as set
 
 
-_KEYS = {_winreg.HKEY_CLASSES_ROOT: "HKCR",
-         _winreg.HKEY_LOCAL_MACHINE: "HKLM",
-         _winreg.HKEY_CURRENT_USER: "HKCU"}
+_KEYS = {winreg.HKEY_CLASSES_ROOT: "HKCR",
+         winreg.HKEY_LOCAL_MACHINE: "HKLM",
+         winreg.HKEY_CURRENT_USER: "HKCU"}
 
 def _explain(hkey):
     return _KEYS.get(hkey, hkey)
@@ -89,10 +89,10 @@ class Registrar(object):
         clsid = cls._reg_clsid_
         try:
             _debug('DeleteKey( %s\\CLSID\\%s\\Logging"' % \
-                    (_explain(_winreg.HKEY_CLASSES_ROOT), clsid))
-            hkey = _winreg.OpenKey(_winreg.HKEY_CLASSES_ROOT, r"CLSID\%s" % clsid)
-            _winreg.DeleteKey(hkey, "Logging")
-        except WindowsError, detail:
+                    (_explain(winreg.HKEY_CLASSES_ROOT), clsid))
+            hkey = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s" % clsid)
+            winreg.DeleteKey(hkey, "Logging")
+        except WindowsError as detail:
             if get_winerror(detail) != 2:
                 raise
 
@@ -102,22 +102,22 @@ class Registrar(object):
         # format
         clsid = cls._reg_clsid_
         _debug('CreateKey( %s\\CLSID\\%s\\Logging"' % \
-                (_explain(_winreg.HKEY_CLASSES_ROOT), clsid))
-        hkey = _winreg.CreateKey(_winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Logging" % clsid)
+                (_explain(winreg.HKEY_CLASSES_ROOT), clsid))
+        hkey = winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Logging" % clsid)
         for item in levels:
             name, value = item.split("=")
             v = getattr(logging, value)
             assert isinstance(v, int)
         _debug('SetValueEx(levels, %s)' % levels)
-        _winreg.SetValueEx(hkey, "levels", None, _winreg.REG_MULTI_SZ, levels)
+        winreg.SetValueEx(hkey, "levels", None, winreg.REG_MULTI_SZ, levels)
         if format:
             _debug('SetValueEx(format, %s)' % format)
-            _winreg.SetValueEx(hkey, "format", None, _winreg.REG_SZ, format)
+            winreg.SetValueEx(hkey, "format", None, winreg.REG_SZ, format)
         else:
             _debug('DeleteValue(format)')
             try:
-                _winreg.DeleteValue(hkey, "format")
-            except WindowsError, detail:
+                winreg.DeleteValue(hkey, "format")
+            except WindowsError as detail:
                 if get_winerror(detail) != 2:
                     raise
 
@@ -141,8 +141,8 @@ class Registrar(object):
         for hkey, subkey, valuename, value in table:
             _debug ('[%s\\%s]', _explain(hkey), subkey)
             _debug('%s="%s"', valuename or "@", value)
-            k = _winreg.CreateKey(hkey, subkey)
-            _winreg.SetValueEx(k, valuename, None, _winreg.REG_SZ, str(value))
+            k = winreg.CreateKey(hkey, subkey)
+            winreg.SetValueEx(k, valuename, None, winreg.REG_SZ, str(value))
 
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
@@ -185,8 +185,8 @@ class Registrar(object):
                     SHDeleteKey(hkey, subkey)
                 else:
                     _debug("DeleteKey %s\\%s", _explain(hkey), subkey)
-                    _winreg.DeleteKey(hkey, subkey)
-            except WindowsError, detail:
+                    winreg.DeleteKey(hkey, subkey)
+            except WindowsError as detail:
                 if get_winerror(detail) != 2:
                     raise
         tlib = getattr(cls, "_reg_typelib_", None)
@@ -194,7 +194,7 @@ class Registrar(object):
             try:
                 _debug("UnRegisterTypeLib(%s, %s, %s)", *tlib)
                 UnRegisterTypeLib(*tlib)
-            except WindowsError, detail:
+            except WindowsError as detail:
                 if not get_winerror(detail) in (TYPE_E_REGISTRYACCESS, TYPE_E_CANTLOADLIBRARY):
                     raise
         _debug("Done")
@@ -243,7 +243,7 @@ class Registrar(object):
         Note that the first part of the progid string is typically the
         IDL library name of the type library containing the coclass.
         """
-        HKCR = _winreg.HKEY_CLASSES_ROOT
+        HKCR = winreg.HKEY_CLASSES_ROOT
 
         # table format: rootkey, subkey, valuename, value
         table = []

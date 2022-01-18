@@ -112,7 +112,7 @@ class Test(unittest.TestCase):
         import os
         jscript = os.path.join(os.path.dirname(__file__), "test_jscript.js")
         errcode = os.system("cscript -nologo %s" % jscript)
-        self.failUnlessEqual(errcode, 0)
+        self.assertEqual(errcode, 0)
 
 if __name__ == "__main__":
     unittest.main()

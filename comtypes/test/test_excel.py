@@ -25,9 +25,9 @@ class Test(unittest.TestCase):
 
         xl = self.xl
         xl.Visible = 0
-        self.failUnlessEqual(xl.Visible, False)
+        self.assertEqual(xl.Visible, False)
         xl.Visible = 1
-        self.failUnlessEqual(xl.Visible, True)
+        self.assertEqual(xl.Visible, True)
 
         wb = xl.Workbooks.Add()
 
@@ -40,25 +40,25 @@ class Test(unittest.TestCase):
 ##        xl.Range["A4:C4"].Value = ('3','2','1')
 
         # call property to retrieve value
-        self.failUnlessEqual(xl.Range["A1:C3"].Value(),
+        self.assertEqual(xl.Range["A1:C3"].Value(),
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
         # index with empty tuple
-        self.failUnlessEqual(xl.Range["A1:C3"].Value[()],
+        self.assertEqual(xl.Range["A1:C3"].Value[()],
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
         # index with empty slice
-        self.failUnlessEqual(xl.Range["A1:C3"].Value[:],
+        self.assertEqual(xl.Range["A1:C3"].Value[:],
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
-        self.failUnlessEqual(xl.Range["A1:C3"].Value[xlRangeValueDefault],
+        self.assertEqual(xl.Range["A1:C3"].Value[xlRangeValueDefault],
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
-        self.failUnlessEqual(xl.Range["A1", "C3"].Value[()],
+        self.assertEqual(xl.Range["A1", "C3"].Value[()],
                              ((10.0, 20.0, 31.4),
                               ("x", "y", "z"),
                               (3.0, 2.0, 1.0)))
@@ -67,7 +67,7 @@ class Test(unittest.TestCase):
         i = iter(r)
 
         # Test for iteration support in 'Range' interface
-        self.failUnlessEqual([c.Value() for c in xl.Range["A1:C3"]],
+        self.assertEqual([c.Value() for c in xl.Range["A1:C3"]],
                              [10.0, 20.0, 31.4,
                               "x", "y", "z",
                               3.0, 2.0, 1.0])
@@ -75,26 +75,26 @@ class Test(unittest.TestCase):
         # With pywin32, one could write xl.Cells(a, b)
         # With comtypes, one must write xl.Cells.Item(1, b)
 
-        for i in xrange(20):
+        for i in range(20):
             xl.Cells.Item[i+1,i+1].Value[()] = "Hi %d" % i
-            print xl.Cells.Item[i+1, i+1].Value[()]
+            print(xl.Cells.Item[i+1, i+1].Value[()])
 
-        for i in xrange(20):
+        for i in range(20):
             xl.Cells(i+1,i+1).Value[()] = "Hi %d" % i
-            print xl.Cells(i+1, i+1).Value[()]
+            print(xl.Cells(i+1, i+1).Value[()])
 
         # test dates out with Excel
         xl.Range["A5"].Value[()] = "Excel time"
         xl.Range["B5"].Formula = "=Now()"
-        self.failUnlessEqual(xl.Cells.Item[5,2].Formula, "=NOW()")
+        self.assertEqual(xl.Cells.Item[5,2].Formula, "=NOW()")
 
         xl.Range["A6"].Calculate()
         excel_time = xl.Range["B5"].Value[()]
-        self.failUnlessEqual(type(excel_time), datetime.datetime)
+        self.assertEqual(type(excel_time), datetime.datetime)
         python_time = datetime.datetime.now()
 
-        self.failUnless(python_time >= excel_time)
-        self.failUnless(python_time - excel_time < datetime.timedelta(seconds=1))
+        self.assertTrue(python_time >= excel_time)
+        self.assertTrue(python_time - excel_time < datetime.timedelta(seconds=1))
 
         # some random code, grabbed from c.l.p
         sh = wb.Worksheets[1]

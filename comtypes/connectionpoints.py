@@ -26,7 +26,7 @@ class IEnumConnections(IUnknown):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         cp, fetched = self.Next(1)
         if fetched == 0:
             raise StopIteration
@@ -39,7 +39,7 @@ class IEnumConnectionPoints(IUnknown):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         cp, fetched = self.Next(1)
         if fetched == 0:
             raise StopIteration

@@ -115,7 +115,7 @@ class TestComServer(
     def ITestComServer_Exec2(self, what):
         exec(what)
 
-    _name = u"spam, spam, spam"
+    _name = "spam, spam, spam"
 
     def _get_name(self):
         return self._name
@@ -147,4 +147,4 @@ if __name__ == "__main__":
     except Exception:
         import traceback
         traceback.print_exc()
-        raw_input()
+        input()

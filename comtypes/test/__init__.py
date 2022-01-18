@@ -73,7 +73,7 @@ def find_package_modules(package, mask):
     if hasattr(package, "__loader__"):
         path = package.__name__.replace(".", os.path.sep)
         mask = os.path.join(path, mask)
-        for fnm in package.__loader__._files.iterkeys():
+        for fnm in package.__loader__._files.keys():
             if fnmatch.fnmatchcase(fnm, mask):
                 yield os.path.splitext(fnm)[0].replace(os.path.sep, ".")
     else:
@@ -89,13 +89,13 @@ def get_tests(package, mask, verbosity):
     for modname in find_package_modules(package, mask):
         try:
             mod = __import__(modname, globals(), locals(), ['*'])
-        except ResourceDenied, detail:
+        except ResourceDenied as detail:
             skipped.append(modname)
             if verbosity > 1:
-                print >> sys.stderr, "Skipped %s: %s" % (modname, detail)
+                print("Skipped %s: %s" % (modname, detail), file=sys.stderr)
             continue
-        except Exception, detail:
-            print >> sys.stderr, "Warning: could not import %s: %s" % (modname, detail)
+        except Exception as detail:
+            print("Warning: could not import %s: %s" % (modname, detail), file=sys.stderr)
             continue
         for name in dir(mod):
             if name.startswith("_"):
@@ -110,7 +110,7 @@ def get_tests(package, mask, verbosity):
     return skipped, tests
 
 def usage():
-    print __doc__
+    print(__doc__)
     return 1
 
 def test_with_refcounts(runner, verbosity, testcase):
@@ -141,10 +141,10 @@ def test_with_refcounts(runner, verbosity, testcase):
         runner.run(test)
         cleanup()
         refcounts[i] = sys.gettotalrefcount() - rc
-    if filter(None, refcounts):
-        print "%s leaks:\n\t" % testcase, refcounts
+    if [_f for _f in refcounts if _f]:
+        print("%s leaks:\n\t" % testcase, refcounts)
     elif verbosity:
-        print "%s: ok." % testcase
+        print("%s: ok." % testcase)
 
 class TestRunner(unittest.TextTestRunner):
     def run(self, test, skipped):
@@ -160,7 +160,7 @@ class TestRunner(unittest.TextTestRunner):
         self.stream.writeln(result.separator2)
         run = result.testsRun
         if _unavail: #skipped:
-            requested = _unavail.keys()
+            requested = list(_unavail.keys())
             requested.sort()
             self.stream.writeln("Ran %d test%s in %.3fs (%s module%s skipped)" %
                                 (run, run != 1 and "s" or "", timeTaken,
@@ -173,7 +173,7 @@ class TestRunner(unittest.TextTestRunner):
         self.stream.writeln()
         if not result.wasSuccessful():
             self.stream.write("FAILED (")
-            failed, errored = map(len, (result.failures, result.errors))
+            failed, errored = list(map(len, (result.failures, result.errors)))
             if failed:
                 self.stream.write("failures=%d" % failed)
             if errored:
@@ -226,7 +226,7 @@ def run(args = []):
             try:
                 sys.gettotalrefcount
             except AttributeError:
-                print >> sys.stderr, "-r flag requires Python debug build"
+                print("-r flag requires Python debug build", file=sys.stderr)
                 return -1
             search_leaks = True
         elif flag == "-u":

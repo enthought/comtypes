@@ -66,29 +66,29 @@ class Test(unittest.TestCase):
         o = MyComObject()
         p = comtypes2pywin(o, IDispatch)
         disp = win32com.client.Dispatch(p)
-        self.failUnlessEqual(repr(disp), "<COMObject <unknown>>")
+        self.assertEqual(repr(disp), "<COMObject <unknown>>")
 
     def test_ie(self):
         # Convert a comtypes COM interface pointer into a win32com COM
         # pointer.
         ie = self.ie = CreateObject("InternetExplorer.Application")
         # The COM refcount of the created object is 1:
-        self.failUnlessEqual(comtypes_get_refcount(ie), 1)
+        self.assertEqual(comtypes_get_refcount(ie), 1)
         # IE starts invisible:
-        self.failUnlessEqual(ie.Visible, False)
+        self.assertEqual(ie.Visible, False)
 
         # Create a pythoncom PyIDispatch object from it:
         p = comtypes2pywin(ie, interface=IDispatch)
-        self.failUnlessEqual(comtypes_get_refcount(ie), 2)
+        self.assertEqual(comtypes_get_refcount(ie), 2)
 
         # Make it usable...
         disp = win32com.client.Dispatch(p)
-        self.failUnlessEqual(comtypes_get_refcount(ie), 2)
-        self.failUnlessEqual(disp.Visible, False)
+        self.assertEqual(comtypes_get_refcount(ie), 2)
+        self.assertEqual(disp.Visible, False)
 
         # Cleanup and make sure that the COM refcounts are correct
         del p, disp
-        self.failUnlessEqual(comtypes_get_refcount(ie), 1)
+        self.assertEqual(comtypes_get_refcount(ie), 1)
 
 if __name__ == "__main__":
     unittest.main()

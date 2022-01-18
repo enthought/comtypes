@@ -10,18 +10,18 @@ from comtypes.test.find_memleak import find_memleak
 class Test(unittest.TestCase):
     def check_leaks(self, func, limit=0):
         bytes = find_memleak(func)
-        self.failIf(bytes > limit, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes > limit, "Leaks %d bytes" % bytes)
 
     def test_creation(self):
         def doit():
-            BSTR(u"abcdef" * 100)
+            BSTR("abcdef" * 100)
         # It seems this test is unreliable.  Sometimes it leaks 4096
         # bytes, sometimes not.  Try to workaround that...
         self.check_leaks(doit, limit=4096)
 
     def test_from_param(self):
         def doit():
-            BSTR.from_param(u"abcdef")
+            BSTR.from_param("abcdef")
         self.check_leaks(doit)
 
     def test_paramflags(self):
@@ -30,9 +30,9 @@ class Test(unittest.TestCase):
         func.restype = c_void_p
         func.argtypes = (BSTR, )
         def doit():
-            func(u"abcdef")
-            func(u"abc xyz")
-            func(BSTR(u"abc def"))
+            func("abcdef")
+            func("abc xyz")
+            func(BSTR("abc def"))
         self.check_leaks(doit)
 
     def test_inargs(self):
@@ -40,11 +40,11 @@ class Test(unittest.TestCase):
         SysStringLen.argtypes = BSTR,
         SysStringLen.restype = c_uint
 
-        self.failUnlessEqual(SysStringLen("abc xyz"), 7)
+        self.assertEqual(SysStringLen("abc xyz"), 7)
         def doit():
             SysStringLen("abc xyz")
-            SysStringLen(u"abc xyz")
-            SysStringLen(BSTR(u"abc def"))
+            SysStringLen("abc xyz")
+            SysStringLen(BSTR("abc def"))
         self.check_leaks(doit)
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ from comtypes.test.find_memleak import find_memleak
 class Test(unittest.TestCase):
     def check_leaks(self, func):
         bytes = find_memleak(func, (5, 10))
-        self.failIf(bytes, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     def test_creation(self):
         hist = CreateObject(urlhistLib.UrlHistory)

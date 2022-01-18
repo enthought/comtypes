@@ -32,10 +32,10 @@ class GUID(Structure):
 
     def __init__(self, name=None):
         if name is not None:
-            _CLSIDFromString(unicode(name), byref(self))
+            _CLSIDFromString(str(name), byref(self))
 
     def __repr__(self):
-        return u'GUID("%s")' % unicode(self)
+        return 'GUID("%s")' % str(self)
 
     def __unicode__(self):
         p = c_wchar_p()
@@ -50,7 +50,7 @@ class GUID(Structure):
             return cmp(binary(self), binary(other))
         return -1
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self != GUID_null
 
     def __eq__(self, other):
@@ -62,7 +62,7 @@ class GUID(Structure):
         return hash(binary(self))
 
     def copy(self):
-        return GUID(unicode(self))
+        return GUID(str(self))
 
     def from_progid(cls, progid):
         """Get guid from progid, ...
@@ -71,11 +71,11 @@ class GUID(Structure):
             progid = progid._reg_clsid_
         if isinstance(progid, cls):
             return progid
-        elif isinstance(progid, basestring):
+        elif isinstance(progid, str):
             if progid.startswith("{"):
                 return cls(progid)
             inst = cls()
-            _CLSIDFromProgID(unicode(progid), byref(inst))
+            _CLSIDFromProgID(str(progid), byref(inst))
             return inst
         else:
             raise TypeError("Cannot construct guid from %r" % progid)

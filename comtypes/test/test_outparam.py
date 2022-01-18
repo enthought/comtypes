@@ -37,10 +37,10 @@ def from_outparm(self):
 c_wchar_p.__ctypes_from_outparam__ = from_outparm
 
 def comstring(text, typ=c_wchar_p):
-    text = unicode(text)
+    text = str(text)
     size = (len(text) + 1) * sizeof(c_wchar)
     mem = windll.ole32.CoTaskMemAlloc(size)
-    print "malloc'd 0x%x, %d bytes" % (mem, size)
+    print("malloc'd 0x%x, %d bytes" % (mem, size))
     ptr = cast(mem, typ)
     memmove(mem, text, size)
     return ptr
@@ -58,7 +58,7 @@ class Test(unittest.TestCase):
         z = comstring("spam, spam, and spam")
 
 ##        (x.__ctypes_from_outparam__(), x.__ctypes_from_outparam__())
-        print (x.__ctypes_from_outparam__(), None) #x.__ctypes_from_outparam__())
+        print((x.__ctypes_from_outparam__(), None)) #x.__ctypes_from_outparam__())
 
 ##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
 ##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()

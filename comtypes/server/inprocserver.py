@@ -3,7 +3,7 @@ from comtypes import COMObject, GUID
 from comtypes.server import IClassFactory
 from comtypes.hresult import *
 
-import sys, _winreg, logging
+import sys, winreg, logging
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -38,9 +38,9 @@ def inproc_find_class(clsid):
     if _clsid_to_class:
         return _clsid_to_class[clsid]
 
-    key = _winreg.OpenKey(_winreg.HKEY_CLASSES_ROOT, "CLSID\\%s\\InprocServer32" % clsid)
+    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, "CLSID\\%s\\InprocServer32" % clsid)
     try:
-        pathdir = _winreg.QueryValueEx(key, "PythonPath")[0]
+        pathdir = winreg.QueryValueEx(key, "PythonPath")[0]
     except:
         _debug("NO path to insert")
     else:
@@ -49,7 +49,7 @@ def inproc_find_class(clsid):
             _debug("insert path %r", pathdir)
         else:
             _debug("Already in path %r", pathdir)
-    pythonclass = _winreg.QueryValueEx(key, "PythonClass")[0]
+    pythonclass = winreg.QueryValueEx(key, "PythonClass")[0]
     parts = pythonclass.split(".")
     modname = ".".join(parts[:-1])
     classname = parts[-1]
@@ -73,25 +73,25 @@ def _setup_logging(clsid):
     _logging_configured = True
 
     try:
-        hkey = _winreg.OpenKey(_winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Logging" % clsid)
+        hkey = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Logging" % clsid)
     except WindowsError:
         return
     from comtypes.logutil import NTDebugHandler
     handler = NTDebugHandler()
     try:
-        val, typ = _winreg.QueryValueEx(hkey, "format")
+        val, typ = winreg.QueryValueEx(hkey, "format")
         formatter = logging.Formatter(val)
     except:
         formatter = logging.Formatter("(Thread %(thread)s):%(levelname)s:%(message)s")
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
     try:
-        values, typ = _winreg.QueryValueEx(hkey, "levels")
+        values, typ = winreg.QueryValueEx(hkey, "levels")
     except:
         return
-    if typ == _winreg.REG_SZ:
+    if typ == winreg.REG_SZ:
         values = [values]
-    elif typ != _winreg.REG_MULTI_SZ:
+    elif typ != winreg.REG_MULTI_SZ:
         # this is an error
         return
     for val in values:
@@ -119,7 +119,7 @@ def DllGetClassObject(rclsid, riid, ppv):
         if not cls:
             return CLASS_E_CLASSNOTAVAILABLE
 
-        result = ClassFactory(cls).IUnknown_QueryInterface(None, ctypes.pointer(iid), ctypes.c_void_p(ppv))
+        result = ClassFactory(cls).IUnknown_QueryInterface(None, ctypes.pointer(iid), ppv)
         _debug("DllGetClassObject() -> %s", result)
         return result
     except Exception:

@@ -28,7 +28,7 @@ class Test(unittest.TestCase):
         w2 = comtypes.client.GetActiveObject("Word.Application")
 
         # check if they are referring to the same object
-        self.failUnlessEqual(w1.QueryInterface(comtypes.IUnknown),
+        self.assertEqual(w1.QueryInterface(comtypes.IUnknown),
                              w2.QueryInterface(comtypes.IUnknown))
 
         w1.Quit()
@@ -39,9 +39,9 @@ class Test(unittest.TestCase):
 
         try:
             w2.Visible
-        except comtypes.COMError, err:
+        except comtypes.COMError as err:
             variables = err.hresult, err.text, err.details
-            self.failUnlessEqual(variables, err[:])
+            self.assertEqual(variables, err[:])
         else:
             raise AssertionError("COMError not raised")
 

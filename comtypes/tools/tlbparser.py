@@ -130,7 +130,7 @@ class Parser(object):
         elif tdesc.vt == automation.VT_USERDEFINED:
             try:
                 ti = tinfo.GetRefTypeInfo(tdesc._.hreftype)
-            except COMError, details:
+            except COMError as details:
                 type_name = "__error_hreftype_%d__" % tdesc._.hreftype
                 tlib_name = get_tlib_filename(self.tlib)
                 if tlib_name is None:
@@ -620,7 +620,7 @@ class Parser(object):
         elif tkind == typeinfo.TKIND_UNION: # 7
             return self.ParseUnion(tinfo, ta)
         else:
-            print "NYI", tkind
+            print("NYI", tkind)
 ##            raise "NYI", tkind
 
     def parse_LibraryDescription(self):
@@ -757,12 +757,12 @@ def generate_module(tlib, ofi, pathname):
         pathname = get_tlib_filename(tlib)
     items = p.parse()
 
-    from codegenerator import Generator
+    from .codegenerator import Generator
 
     gen = Generator(ofi,
                     known_symbols=known_symbols,
                     )
 
-    gen.generate_code(items.values(), filename=pathname)
+    gen.generate_code(list(items.values()), filename=pathname)
 
 # -eof-

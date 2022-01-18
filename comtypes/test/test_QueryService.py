@@ -21,7 +21,7 @@ class TestCase(unittest.TestCase):
         ie.navigate2("about:blank", 0)
         sp = ie.Document.Body.QueryInterface(comtypes.IServiceProvider)
         pacc = sp.QueryService(IAccessible._iid_, IAccessible)
-        self.failUnlessEqual(type(pacc), POINTER(IAccessible))
+        self.assertEqual(type(pacc), POINTER(IAccessible))
 
 if __name__ == "__main__":
     unittest.main()

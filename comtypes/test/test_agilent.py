@@ -24,7 +24,7 @@ else:
             # the OANOCACHE environ variable is set.
             import os
             if "OANOCACHE" in os.environ:
-                print "Cannot test. buggy COM object?"
+                print("Cannot test. buggy COM object?")
                 return
 
             # Initialize the driver in simulation mode.  Resource descriptor is ignored.
@@ -72,17 +72,18 @@ else:
             self._check_result(pMeasurement.ReadWaveform(20000, psaWaveform))
             self._check_result(pMeasurement.ReadWaveform(20000, pXIncrement=9.0))
 
-        def _check_result(self, (array, initial_x, x_increment)):
+        def _check_result(self, xxx_todo_changeme):
             # ReadWaveform, in simulation mode, returns three values:
             #
             # - a safearray containing 100 random double values,
             #   unpacked and returned as tuple
             # - the initial_x value: 0.0
             # - the x_increment value: 0.0
-            self.failUnlessEqual(len(array), 100)
-            self.failIf([x for x in array if not isinstance(x, float)])
-            self.failUnlessEqual(initial_x, 0.0)
-            self.failUnlessEqual(x_increment, 0.0)
+            (array, initial_x, x_increment) = xxx_todo_changeme
+            self.assertEqual(len(array), 100)
+            self.assertFalse([x for x in array if not isinstance(x, float)])
+            self.assertEqual(initial_x, 0.0)
+            self.assertEqual(x_increment, 0.0)
 
 
 

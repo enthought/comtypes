@@ -39,7 +39,7 @@ class _MessageLoop(object):
                 DispatchMessage(lpmsg)
 
     def filter_message(self, lpmsg):
-        return any(filter(lpmsg) for filter in self._filters)
+        return any(list(filter(lpmsg)) for filter in self._filters)
 
 _messageloop = _MessageLoop()
 

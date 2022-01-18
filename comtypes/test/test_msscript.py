@@ -50,19 +50,19 @@ else:
             # comtypes.client works around this bug, by not trying to
             # high-level wrap the dispatch pointer because QI for the real
             # interface fails.
-            self.failUnlessEqual(type(res), POINTER(IDispatch))
+            self.assertEqual(type(res), POINTER(IDispatch))
 
             tinfo_1 = engine.Eval("[1, 2, 3]")._comobj.GetTypeInfo(0)
             tinfo_2 = engine.Eval("[1, 2, 3, 4]")._comobj.GetTypeInfo(0)
             tinfo_3 = engine.Eval("[1, 2, 3, 4, 5]")._comobj.GetTypeInfo(0)
 
 
-            self.failUnlessEqual(tinfo_1.GetTypeAttr().cVars, 3)
-            self.failUnlessEqual(tinfo_2.GetTypeAttr().cVars, 4)
-            self.failUnlessEqual(tinfo_3.GetTypeAttr().cVars, 5)
+            self.assertEqual(tinfo_1.GetTypeAttr().cVars, 3)
+            self.assertEqual(tinfo_2.GetTypeAttr().cVars, 4)
+            self.assertEqual(tinfo_3.GetTypeAttr().cVars, 5)
 
             # These tests simply describe the current behaviour ;-)
-            self.failUnlessEqual(tinfo_1.GetTypeAttr().guid,
+            self.assertEqual(tinfo_1.GetTypeAttr().guid,
                                  tinfo_1.GetTypeAttr().guid)
 
             ## print (res[0], res[1], res[2])

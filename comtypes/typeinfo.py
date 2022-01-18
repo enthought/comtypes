@@ -315,7 +315,7 @@ class ITypeInfo(IUnknown):
 
     def AddressOfMember(self, memid, invkind):
         "Get the address of a function in a dll"
-        raise "Check Me"
+        raise RuntimeError("Check Me")
         p = c_void_p()
         self.__com_AddressOfMember(memid, invkind, byref(p))
         # XXX Would the default impl return the value of p?

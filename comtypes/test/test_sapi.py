@@ -18,11 +18,11 @@ class Test(unittest.TestCase):
 
         # engine.AudioStream is a propputref property
         engine.AudioOutputStream = stream
-        self.failUnlessEqual(engine.AudioOutputStream, stream)
+        self.assertEqual(engine.AudioOutputStream, stream)
         engine.speak("Hello, World", 0)
         stream.Close()
         filesize = os.stat(fname).st_size
-        self.failUnless(filesize > 100, "filesize only %d bytes" % filesize)
+        self.assertTrue(filesize > 100, "filesize only %d bytes" % filesize)
         os.unlink(fname)
 
     def test_dyndisp(self):

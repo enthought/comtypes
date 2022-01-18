@@ -219,7 +219,7 @@ class tagVARIANT(Structure):
         if value is None:
             self.vt = VT_NULL
         elif (hasattr(value, '__len__') and len(value) == 0
-                and not isinstance(value, basestring)):
+                and not isinstance(value, str)):
             self.vt = VT_NULL
         # since bool is a subclass of int, this check must come before
         # the check for int
@@ -229,7 +229,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, (int, c_int)):
             self.vt = VT_I4
             self._.VT_I4 = value
-        elif isinstance(value, long):
+        elif isinstance(value, int):
             u = self._
             # try VT_I4 first.
             u.VT_I4 = value
@@ -264,7 +264,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, (float, c_double)):
             self.vt = VT_R8
             self._.VT_R8 = value
-        elif isinstance(value, (str, unicode)):
+        elif isinstance(value, str):
             self.vt = VT_BSTR
             # do the c_wchar_p auto unicode conversion
             self._.c_void_p = _SysAllocStringLen(value, len(value))
@@ -539,7 +539,7 @@ VARIANT.null = VARIANT(None)
 VARIANT.empty = VARIANT()
 VARIANT.missing = v = VARIANT()
 v.vt = VT_ERROR
-v._.VT_I4 = 0x80020004L
+v._.VT_I4 = 0x80020004
 del v
 
 _carg_obj = type(byref(c_int()))
@@ -583,7 +583,7 @@ class IEnumVARIANT(IUnknown):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         item, fetched = self.Next(1)
         if fetched:
             return item
@@ -773,7 +773,7 @@ class IDispatch(IUnknown):
         try:
             self.__com_Invoke(dispid, riid_null, _lcid, _invkind, byref(dp),
                               byref(result), byref(excepinfo), byref(argerr))
-        except COMError, err:
+        except COMError as err:
             (hresult, text, details) = err.args
             if hresult == DISP_E_EXCEPTION:
                 details = (excepinfo.bstrDescription, excepinfo.bstrSource,
@@ -867,7 +867,7 @@ _ctype_to_vartype = {
     }
 
 _vartype_to_ctype = {}
-for c, v in _ctype_to_vartype.iteritems():
+for c, v in _ctype_to_vartype.items():
     _vartype_to_ctype[v] = c
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]

@@ -121,7 +121,7 @@ class EventsTest(unittest.TestCase):
             >>>
             '''
         
-    def IE_GetEvents():
+    def IE_GetEvents(self):
         """
         >>> from comtypes.client import CreateObject, GetEvents, PumpEvents
         >>>
