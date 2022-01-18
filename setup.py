@@ -129,7 +129,7 @@ class post_install(install):
 
 
 setup_params = dict(
-    name="comtypes-fork",
+    name="comtypes",
     description="Pure Python COM package",
     long_description = readme,
     author="Thomas Heller",
@@ -169,8 +169,7 @@ setup_params = dict(
     ],
     # Preserve Python 3 compatibility during building & installation with pip.
     setup_requires=[SETUPTOOLS_PY3_SUPPORT,],
-    # Also trick pip to put the forked package replacement on top of the official one.
-    install_requires=[SETUPTOOLS_PY3_SUPPORT, "comtypes"],
+    install_requires=[SETUPTOOLS_PY3_SUPPORT],
 )
 
 if __name__ == '__main__':
