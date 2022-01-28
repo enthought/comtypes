@@ -20,18 +20,18 @@ if os.name == "nt":
 
             self.assertRaises(WindowsError, lambda: LoadTypeLibEx("<xxx.xx>"))
             tlib = LoadTypeLibEx(dllname)
-            self.failUnless(tlib.GetTypeInfoCount())
+            self.assertTrue(tlib.GetTypeInfoCount())
             tlib.GetDocumentation(-1)
-            self.failUnlessEqual(tlib.IsName("iwebbrowser"), "IWebBrowser")
-            self.failUnlessEqual(tlib.IsName("IWEBBROWSER"), "IWebBrowser")
-            self.failUnless(tlib.FindName("IWebBrowser"))
-            self.failUnlessEqual(tlib.IsName("Spam"), None)
+            self.assertEqual(tlib.IsName("iwebbrowser"), "IWebBrowser")
+            self.assertEqual(tlib.IsName("IWEBBROWSER"), "IWebBrowser")
+            self.assertTrue(tlib.FindName("IWebBrowser"))
+            self.assertEqual(tlib.IsName("Spam"), None)
             tlib.GetTypeComp()
 
             attr = tlib.GetLibAttr()
             info = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
             other_tlib = LoadRegTypeLib(*info)
-            self.failUnlessEqual(tlib, other_tlib)
+            self.assertEqual(tlib, other_tlib)
 
     ##         for n in dir(attr):
     ##             if not n.startswith("_"):
@@ -44,17 +44,17 @@ if os.name == "nt":
                 tlib.GetTypeInfoType(i)
 
                 c_tlib, index = ti.GetContainingTypeLib()
-                self.failUnlessEqual(c_tlib, tlib)
-                self.failUnlessEqual(index, i)
+                self.assertEqual(c_tlib, tlib)
+                self.assertEqual(index, i)
 
             guid_null = GUID()
             self.assertRaises(COMError, lambda: tlib.GetTypeInfoOfGuid(guid_null))
 
-            self.failUnless(tlib.GetTypeInfoOfGuid(GUID("{EAB22AC1-30C1-11CF-A7EB-0000C05BAE0B}")))
+            self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{EAB22AC1-30C1-11CF-A7EB-0000C05BAE0B}")))
 
             path = QueryPathOfRegTypeLib(*info)
             path = path.split("\0")[0]
-            self.failUnless(path.lower().endswith(dllname))
+            self.assertTrue(path.lower().endswith(dllname))
 
         def test_TypeInfo(self):
             tlib = LoadTypeLibEx("shdocvw.dll")

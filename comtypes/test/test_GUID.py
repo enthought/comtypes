@@ -4,13 +4,13 @@ from comtypes import GUID
 
 class Test(unittest.TestCase):
     def test(self):
-        self.failUnlessEqual(GUID(), GUID())
-        self.failUnlessEqual(GUID("{00000000-0000-0000-C000-000000000046}"),
+        self.assertEqual(GUID(), GUID())
+        self.assertEqual(GUID("{00000000-0000-0000-C000-000000000046}"),
                              GUID("{00000000-0000-0000-C000-000000000046}"))
 
-        self.failUnlessEqual(str(GUID("{0002DF01-0000-0000-C000-000000000046}")),
+        self.assertEqual(str(GUID("{0002DF01-0000-0000-C000-000000000046}")),
                              "{0002DF01-0000-0000-C000-000000000046}")
-        self.failUnlessEqual(repr(GUID("{0002DF01-0000-0000-C000-000000000046}")),
+        self.assertEqual(repr(GUID("{0002DF01-0000-0000-C000-000000000046}")),
                              'GUID("{0002DF01-0000-0000-C000-000000000046}")')
 
         self.assertRaises(WindowsError, GUID, "abc")
@@ -21,12 +21,12 @@ class Test(unittest.TestCase):
 
 
         if os.name == "nt":
-            self.failUnlessEqual(GUID.from_progid("InternetExplorer.Application"),
+            self.assertEqual(GUID.from_progid("InternetExplorer.Application"),
                                  GUID("{0002DF01-0000-0000-C000-000000000046}"))
-            self.failUnlessEqual(GUID("{0002DF01-0000-0000-C000-000000000046}").as_progid(),
-                                 u'InternetExplorer.Application.1')
+            self.assertEqual(GUID("{0002DF01-0000-0000-C000-000000000046}").as_progid(),
+                                 'InternetExplorer.Application.1')
 
-        self.failIfEqual(GUID.create_new(), GUID.create_new())
+        self.assertNotEqual(GUID.create_new(), GUID.create_new())
 
 if __name__ == "__main__":
     unittest.main()

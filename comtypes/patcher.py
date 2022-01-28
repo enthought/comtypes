@@ -52,7 +52,7 @@ class Patch(object):
         self.target = target
 
     def __call__(self, patches):
-        for name, value in vars(patches).items():
+        for name, value in list(vars(patches).items()):
             if name in vars(ReferenceEmptyClass):
                 continue
             no_replace = getattr(value, '__no_replace', False)

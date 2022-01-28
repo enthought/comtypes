@@ -58,10 +58,10 @@ class ConnectionPointImpl(COMObject):
         if hasattr(self._sink_interface, "Invoke"):
             # for better performance, we could cache the dispids.
             dispid = self._typeinfo.GetIDsOfNames(name)[0]
-            for key, p in self._connections.items():
+            for key, p in list(self._connections.items()):
                 try:
                     result = p.Invoke(dispid, *args, **kw)
-                except COMError, details:
+                except COMError as details:
                     if details.hresult == -2147023174:
                         logger.warning("_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
                                        self, name, args, kw,
@@ -76,10 +76,10 @@ class ConnectionPointImpl(COMObject):
                 else:
                     results.append(result)
         else:
-            for p in self._connections.values():
+            for p in list(self._connections.values()):
                 try:
                     result = getattr(p, name)(*args, **kw)
-                except COMError, details:
+                except COMError as details:
                     if details.hresult == -2147023174:
                         logger.warning("_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
                                        self, name, args, kw,

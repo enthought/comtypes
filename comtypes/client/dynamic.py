@@ -118,7 +118,7 @@ class _Dispatch(object):
         flags = comtypes.automation.DISPATCH_PROPERTYGET
         try:
             result = self._comobj.Invoke(dispid, _invkind=flags)
-        except COMError, err:
+        except COMError as err:
             (hresult, text, details) = err.args
             if hresult in ERRORS_BAD_CONTEXT:
                 result = MethodCaller(dispid, self)
@@ -153,7 +153,7 @@ class _Collection(object):
     def __init__(self, enum):
         self.enum = enum
 
-    def next(self):
+    def __next__(self):
         item, fetched = self.enum.Next(1)
         if fetched:
             return item

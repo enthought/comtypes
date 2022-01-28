@@ -18,11 +18,11 @@ class TestInproc(unittest.TestCase):
 
     def _find_memleak(self, func):
         bytes = find_memleak(func)
-        self.failIf(bytes, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     def test_mixedinout(self):
         o = self.create_object()
-        self.failUnlessEqual(o.MixedInOut(2, 4), (3, 5))
+        self.assertEqual(o.MixedInOut(2, 4), (3, 5))
 
     def test_getname(self):
         from ctypes import byref, pointer
@@ -45,7 +45,7 @@ class TestInproc(unittest.TestCase):
         for i in range(10):
             BSTR("f" * len(name))
         # Make sure the pointer is still valid:
-        self.failUnlessEqual(pb[0], name)
+        self.assertEqual(pb[0], name)
 
     if is_resource_enabled("memleaks"):
         def test_get_id(self):
@@ -59,13 +59,13 @@ class TestInproc(unittest.TestCase):
         def test_set_name(self):
             obj = self.create_object()
             def func():
-                obj.name = u"abcde"
+                obj.name = "abcde"
             self._find_memleak(func)
 
         def test_SetName(self):
             obj = self.create_object()
             def func():
-                obj.SetName(u"abcde")
+                obj.SetName("abcde")
             self._find_memleak(func)
 
 
@@ -73,7 +73,7 @@ class TestInproc(unittest.TestCase):
             obj = self.create_object()
             def func():
                 return obj.eval("(1, 2, 3)")
-            self.failUnlessEqual(func(), (1, 2, 3))
+            self.assertEqual(func(), (1, 2, 3))
             self._find_memleak(func)
 
         def test_get_typeinfo(self):
@@ -179,7 +179,7 @@ class TestCase(unittest.TestCase):
             >>>
             '''
 
-    def GetEvents():
+    def GetEvents(self):
         """
         >>> from comtypes.client import CreateObject, GetEvents
         >>>

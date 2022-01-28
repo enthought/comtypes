@@ -73,7 +73,7 @@ def ReportError(text, iid,
     if helpcontext is not None:
         ei.SetHelpContext(helpcontext)
     if clsid is not None:
-        if isinstance(clsid, basestring):
+        if isinstance(clsid, str):
             clsid = GUID(clsid)
         try:
             progid = clsid.as_progid()

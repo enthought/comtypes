@@ -31,22 +31,22 @@ class Test(ut.TestCase):
             a = item.Properties_["Caption"].Value
             b = item.Properties_.Item("Caption").Value
             c = item.Properties_("Caption").Value
-            self.failUnlessEqual(a, b)
-            self.failUnlessEqual(a, c)
-            self.failUnless(isinstance(a, basestring))
-            self.failUnless(isinstance(b, basestring))
-            self.failUnless(isinstance(c, basestring))
+            self.assertEqual(a, b)
+            self.assertEqual(a, c)
+            self.assertTrue(isinstance(a, str))
+            self.assertTrue(isinstance(b, str))
+            self.assertTrue(isinstance(c, str))
             result = {}
             for prop in item.Properties_:
-                self.failUnless(isinstance(prop.Name, basestring))
+                self.assertTrue(isinstance(prop.Name, str))
                 prop.Value
                 result[prop.Name] = prop.Value
 ##                print "\t", (prop.Name, prop.Value)
-            self.failUnlessEqual(len(item.Properties_), item.Properties_.Count)
-            self.failUnlessEqual(len(item.Properties_), len(result))
-            self.failUnless(isinstance(item.Properties_["Description"].Value, unicode))
+            self.assertEqual(len(item.Properties_), item.Properties_.Count)
+            self.assertEqual(len(item.Properties_), len(result))
+            self.assertTrue(isinstance(item.Properties_["Description"].Value, str))
         # len(obj) is forwared to obj.Count
-        self.failUnlessEqual(len(disks), disks.Count)
+        self.assertEqual(len(disks), disks.Count)
 
 if __name__ == "__main__":
     ut.main()

@@ -86,7 +86,7 @@ def find_single_connection_interface(source):
     enum = cpc.EnumConnectionPoints()
     iid = enum.next().GetConnectionInterface()
     try:
-        enum.next()
+        next(enum)
     except StopIteration:
         try:
             interface = comtypes.com_interface_registry[str(iid)]
@@ -104,7 +104,7 @@ def report_errors(func):
     # This decorator preserves parts of the decorated function
     # signature, so that the comtypes special-casing for the 'this'
     # parameter still works.
-    if func.func_code.co_varnames[:2] == ('self', 'this'):
+    if func.__code__.co_varnames[:2] == ('self', 'this'):
         def error_printer(self, this, *args, **kw):
             try:
                 return func(self, this, *args, **kw)
@@ -138,14 +138,14 @@ class _SinkMethodFinder(_MethodFinder):
         # not to raise one...
         try:
             # impl is a bound method, dissect it...
-            im_self, im_func = impl.im_self, impl.im_func
+            im_self, im_func = impl.__self__, impl.__func__
             # decorate it with an error printer...
             method = report_errors(im_func)
             # and make a new bound method from it again.
             return comtypes.instancemethod(method,
                                            im_self,
                                            type(im_self))
-        except AttributeError, details:
+        except AttributeError as details:
             raise RuntimeError(details)
 
     def _find_method(self, fq_name, mthname):
@@ -208,11 +208,11 @@ class EventDumper(object):
         "Create event handler methods on demand"
         if name.startswith("__") and name.endswith("__"):
             raise AttributeError(name)
-        print "# event found:", name
+        print("# event found:", name)
         def handler(self, this, *args, **kw):
             # XXX handler is called with 'this'.  Should we really print "None" instead?
             args = (None,) + args
-            print "Event %s(%s)" % (name, ", ".join([repr(a) for a in args]))
+            print("Event %s(%s)" % (name, ", ".join([repr(a) for a in args])))
         return comtypes.instancemethod(handler, self, EventDumper)
 
 def ShowEvents(source, interface=None):
@@ -275,7 +275,7 @@ def PumpEvents(timeout):
                                                                int(timeout * 1000),
                                                                len(handles), handles,
                                                                ctypes.byref(ctypes.c_ulong()))
-        except WindowsError, details:
+        except WindowsError as details:
             if details.winerror != RPC_S_CALLPENDING: # timeout expired
                 raise
         else:

@@ -78,7 +78,7 @@ class Test(ut.TestCase):
         ie.Visible = False
         ie.Quit()
 
-        self.failUnlessEqual(sink._events, ['OnVisible', 'BeforeNavigate2',
+        self.assertEqual(sink._events, ['OnVisible', 'BeforeNavigate2',
                                             'NavigateComplete2', 'DocumentComplete',
                                             'OnVisible'])
 
@@ -100,7 +100,7 @@ class Test(ut.TestCase):
         ie.Visible = False
         ie.Quit()
 
-        self.failUnlessEqual(sink._events, ['BeforeNavigate', 'NavigateComplete'])
+        self.assertEqual(sink._events, ['BeforeNavigate', 'NavigateComplete'])
         del ie
 
 if __name__ == "__main__":

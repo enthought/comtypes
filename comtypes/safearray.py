@@ -35,7 +35,7 @@ class _SafeArrayAsNdArrayContextManager(object):
     def __exit__(self, exc_type, exc_value, traceback):
         self.thread_local.count -= 1
 
-    def __nonzero__(self):
+    def __bool__(self):
         '''True if context manager is currently entered on given thread.
 
         '''
@@ -308,7 +308,7 @@ def _make_safearray_type(itemtype):
                         # XXX Only try to convert types known to
                         #     numpy.ctypeslib.
                         if (safearray_as_ndarray and self._itemtype_ in
-                                npsupport.typecodes.values()):
+                                list(npsupport.typecodes.values())):
                             arr = numpy.ctypeslib.as_array(ptr,
                                                            (num_elements,))
                             return arr.copy()

@@ -51,7 +51,7 @@ def winerror(exc):
         return exc.hresult
     elif isinstance(exc, WindowsError):
         code = exc.winerror
-        if isinstance(code, (int, long)):
+        if isinstance(code, int):
             return code
         # Sometimes, a WindowsError instance has no error code.  An access
         # violation raised by ctypes has only text, for example.  In this
@@ -75,11 +75,11 @@ def catch_errors(obj, mth, paramflags, interface, mthname):
     def call_with_this(*args, **kw):
         try:
             result = mth(*args, **kw)
-        except ReturnHRESULT, err:
+        except ReturnHRESULT as err:
             (hresult, text) = err.args
             return ReportError(text, iid=interface._iid_, clsid=clsid,
                                hresult=hresult)
-        except (COMError, WindowsError), details:
+        except (COMError, WindowsError) as details:
             _error("Exception in %s.%s implementation:", interface.__name__,
                    mthname, exc_info=True)
             return HRESULT_FROM_WIN32(winerror(details))
@@ -108,7 +108,7 @@ def catch_errors(obj, mth, paramflags, interface, mthname):
 def hack(inst, mth, paramflags, interface, mthname):
     if paramflags is None:
         return catch_errors(inst, mth, paramflags, interface, mthname)
-    code = mth.func_code
+    code = mth.__code__
     if code.co_varnames[1:2] == ("this",):
         return catch_errors(inst, mth, paramflags, interface, mthname)
     dirflags = [f[0] for f in paramflags]
@@ -154,11 +154,11 @@ def hack(inst, mth, paramflags, interface, mthname):
                     raise ValueError(msg)
                 for i, value in enumerate(result):
                     args[args_out_idx[i]][0] = value
-        except ReturnHRESULT, err:
+        except ReturnHRESULT as err:
             (hresult, text) = err.args
             return ReportError(text, iid=interface._iid_, clsid=clsid,
                                hresult=hresult)
-        except COMError, err:
+        except COMError as err:
             (hr, text, details) = err.args
             _error("Exception in %s.%s implementation:", interface.__name__,
                    mthname, exc_info=True)
@@ -171,7 +171,7 @@ def hack(inst, mth, paramflags, interface, mthname):
             hr = HRESULT_FROM_WIN32(hr)
             return ReportError(msg, iid=interface._iid_, clsid=clsid,
                                hresult=hr)
-        except WindowsError, details:
+        except WindowsError as details:
             _error("Exception in %s.%s implementation:", interface.__name__,
                    mthname, exc_info=True)
             hr = HRESULT_FROM_WIN32(winerror(details))
@@ -333,8 +333,8 @@ class LocalServer(object):
         messageloop.run()
 
     def run_mta(self):
-        import Queue
-        self._queue = Queue.Queue()
+        import queue
+        self._queue = queue.Queue()
         self._queue.get()
 
     def Lock(self):
@@ -558,7 +558,7 @@ class COMObject(object):
         else:
             _debug("%d active COM objects: Removed %r",
                    len(COMObject._instances_), obj)
-        _debug("Remaining: %s", COMObject._instances_.keys())
+        _debug("Remaining: %s", list(COMObject._instances_.keys()))
         if COMObject.__server__:
             COMObject.__server__.Unlock()
     #
@@ -736,7 +736,7 @@ class COMObject(object):
             # operations with additional parameters?  Can propput
             # have additional args?
             args = [params.rgvarg[i].value
-                    for i in reversed(range(params.cNamedArgs))]
+                    for i in reversed(list(range(params.cNamedArgs)))]
             # MSDN: pVarResult is ignored if DISPATCH_PROPERTYPUT or
             # DISPATCH_PROPERTYPUTREF is specified.
             return mth(this, *args)
@@ -753,7 +753,7 @@ class COMObject(object):
                              for i in range(params.cNamedArgs)]
             # the positions of unnamed arguments
             num_unnamed = params.cArgs - params.cNamedArgs
-            unnamed_indexes = list(reversed(range(num_unnamed)))
+            unnamed_indexes = list(reversed(list(range(num_unnamed))))
             # It seems that this code calculates the indexes of the
             # parameters in the params.rgvarg array correctly.
             indexes = named_indexes + unnamed_indexes

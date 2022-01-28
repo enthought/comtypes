@@ -3,7 +3,7 @@ import comtypes
 from comtypes.hresult import *
 from comtypes.server import IClassFactory
 import logging
-import Queue
+import queue
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug

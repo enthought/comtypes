@@ -15,8 +15,8 @@ class TestCase(unittest.TestCase):
 
 ##        print iem.IWebBrowser2.mro()
 
-        self.failUnless(issubclass(iem.IWebBrowser2, iem.IWebBrowserApp))
-        self.failUnless(issubclass(iem.IWebBrowserApp, iem.IWebBrowser))
+        self.assertTrue(issubclass(iem.IWebBrowser2, iem.IWebBrowserApp))
+        self.assertTrue(issubclass(iem.IWebBrowserApp, iem.IWebBrowser))
 
 ##        print sorted(iem.IWebBrowser.__map_case__.keys())
 ##        print "=" * 42
@@ -28,11 +28,11 @@ class TestCase(unittest.TestCase):
         # names in the base class __map_case__ must also appear in the
         # subclass.
         for name in iem.IWebBrowser.__map_case__:
-            self.failUnless(name in iem.IWebBrowserApp.__map_case__, "%s missing" % name)
-            self.failUnless(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
+            self.assertTrue(name in iem.IWebBrowserApp.__map_case__, "%s missing" % name)
+            self.assertTrue(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
 
         for name in iem.IWebBrowserApp.__map_case__:
-            self.failUnless(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
+            self.assertTrue(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
 
 if __name__ == "__main__":
     unittest.main()

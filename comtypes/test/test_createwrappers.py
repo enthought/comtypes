@@ -75,7 +75,7 @@ for fname in glob.glob(os.path.join(progdir, r"Microsoft Office\Office*\*.olb"))
 
 path = os.path.join(progdir, r"Microsoft Visual Studio .NET 2003\Visual Studio SDKs\DIA SDK\bin\msdia71.dll")
 if os.path.isfile(path):
-    print "ADD", path
+    print("ADD", path)
     add_test(path)
 
 for fname in glob.glob(os.path.join(common_progdir, r"Microsoft Shared\Speech\*.dll")):

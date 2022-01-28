@@ -1,4 +1,5 @@
 import types, os, unittest, sys, tempfile
+import importlib
 
 if sys.version_info >= (2, 6):
     from imp import reload
@@ -35,14 +36,14 @@ class Test(unittest.TestCase):
         # restore the original comtypes.gen module
         comtypes.gen = self.orig_comtypesgen
         sys.modules["comtypes.gen"] = self.orig_comtypesgen
-        reload(comtypes.gen)
+        importlib.reload(comtypes.gen)
 
     def test_script(self):
         # %APPDATA%\Python\Python25\comtypes_cache
         template = r"$APPDATA\Python\Python%d%d\comtypes_cache"
         path = os.path.expandvars(template % sys.version_info[:2])
         gen_dir = comtypes.client._find_gen_dir()
-        self.failUnlessEqual(path, gen_dir)
+        self.assertEqual(path, gen_dir)
 
     def test_frozen_dll(self):
         sys.frozen = "dll"
@@ -53,7 +54,7 @@ class Test(unittest.TestCase):
         path = os.path.join(tempfile.gettempdir(),
                             r"comtypes_cache\%s%d%d-%d%d" % (imgbase, ma, mi, ma, mi))
         gen_dir = comtypes.client._find_gen_dir()
-        self.failUnlessEqual(path, gen_dir)
+        self.assertEqual(path, gen_dir)
 
     def test_frozen_console_exe(self):
         sys.frozen = "console_exe"
@@ -62,7 +63,7 @@ class Test(unittest.TestCase):
                             r"comtypes_cache\%s-%d%d" % (
             imgbase, sys.version_info[0], sys.version_info[1]))
         gen_dir = comtypes.client._find_gen_dir()
-        self.failUnlessEqual(path, gen_dir)
+        self.assertEqual(path, gen_dir)
 
     def test_frozen_windows_exe(self):
         sys.frozen = "windows_exe"
@@ -71,7 +72,7 @@ class Test(unittest.TestCase):
                             r"comtypes_cache\%s-%d%d" % (
             imgbase, sys.version_info[0], sys.version_info[1]))
         gen_dir = comtypes.client._find_gen_dir()
-        self.failUnlessEqual(path, gen_dir)
+        self.assertEqual(path, gen_dir)
 
 
 def main():

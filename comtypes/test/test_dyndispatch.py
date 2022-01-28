@@ -17,7 +17,7 @@ class Test(unittest.TestCase):
         del self.d
 
     def test_type(self):
-        self.failUnless(isinstance(self.d, Dispatch))
+        self.assertTrue(isinstance(self.d, Dispatch))
 
     def test_index_setter(self):
         d = self.d

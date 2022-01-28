@@ -28,7 +28,7 @@ class VARIANTEnumerator(COMObject):
         pCeltFetched[0] = 0
         try:
             for index in range(celt):
-                item = self.seq.next()
+                item = next(self.seq)
                 p = item.QueryInterface(IDispatch)
                 rgVar[index].value = p
                 pCeltFetched[0] += 1
@@ -47,7 +47,7 @@ class VARIANTEnumerator(COMObject):
         # skip some elements.
         try:
             for _ in range(celt):
-                self.seq.next()
+                next(self.seq)
         except StopIteration:
             return S_FALSE
         return S_OK

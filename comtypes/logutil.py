@@ -9,13 +9,13 @@ class NTDebugHandler(logging.Handler):
         if isinstance(text, str):
             writeA(text + "\n")
         else:
-            writeW(text + u"\n")
+            writeW(text + "\n")
 logging.NTDebugHandler = NTDebugHandler
 
 def setup_logging(*pathnames):
-    import ConfigParser
+    import configparser
 
-    parser = ConfigParser.ConfigParser()
+    parser = configparser.ConfigParser()
     parser.optionxform = str # use case sensitive option names!
 
     parser.read(pathnames)
@@ -27,7 +27,7 @@ def setup_logging(*pathnames):
     def get(section, option):
         try:
             return parser.get(section, option, True)
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        except (configparser.NoOptionError, configparser.NoSectionError):
             return DEFAULTS[option]
 
     levelname = get("logging", "level")
@@ -47,5 +47,5 @@ def setup_logging(*pathnames):
         for name, value in parser.items("logging.levels", True):
             value = getattr(logging, value)
             logging.getLogger(name).setLevel(value)
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         pass

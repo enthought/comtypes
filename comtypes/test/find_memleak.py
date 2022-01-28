@@ -20,7 +20,7 @@ class PROCESS_MEMORY_COUNTERS(Structure):
 
     def dump(self):
         for n, _ in self._fields_[2:]:
-            print n, getattr(self, n)/1e6
+            print(n, getattr(self, n)/1e6)
 
 try:
     windll.psapi.GetProcessMemoryInfo.argtypes = (HANDLE, POINTER(PROCESS_MEMORY_COUNTERS), DWORD)
@@ -41,8 +41,8 @@ else:
     def find_memleak(func, loops=LOOPS):
         # call 'func' several times, so that memory consumption
         # stabilizes:
-        for j in xrange(loops[0]):
-            for k in xrange(loops[1]):
+        for j in range(loops[0]):
+            for k in range(loops[1]):
                 func()
         gc.collect(); gc.collect(); gc.collect()
         bytes = wss()
@@ -50,8 +50,8 @@ else:
         # memory consumption before and after the call.  Repeat this a
         # few times, and return a list containing the memory
         # consumption differences.
-        for j in xrange(loops[0]):
-            for k in xrange(loops[1]):
+        for j in range(loops[0]):
+            for k in range(loops[1]):
                 func()
         gc.collect(); gc.collect(); gc.collect()
         # return the increased in process size
