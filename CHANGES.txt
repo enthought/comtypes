@@ -1,6 +1,12 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.11
+-------------
+ * Fix Python 3 compatibility. Thanks @kdschlosser.
+ * Fix `tlib_mtime` in the absence of typelib.
+ * Fix 64bit inproc server.
+
 Release 1.1.10
 -------------
  * Fix loading module from relative path on Windows 7.
