@@ -19,7 +19,7 @@ class BasicTest(ut.TestCase):
 
     def test_refcounts(self):
         p = POINTER(IUnknown)()
-        windll.oleaut32.CreateTypeLib2(1, "blabla", byref(p))
+        windll.oleaut32.CreateTypeLib2(1, u"blabla", byref(p))
         # initial refcount is 2
         for i in range(2, 10):
             self.assertEqual(p.AddRef(), i)
@@ -28,7 +28,7 @@ class BasicTest(ut.TestCase):
 
     def test_qi(self):
         p = POINTER(IUnknown)()
-        windll.oleaut32.CreateTypeLib2(1, "blabla", byref(p))
+        windll.oleaut32.CreateTypeLib2(1, u"blabla", byref(p))
         self.assertEqual(p.AddRef(), 2)
         self.assertEqual(p.Release(), 1)
 

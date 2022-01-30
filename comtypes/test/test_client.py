@@ -1,3 +1,4 @@
+import sys
 import unittest as ut
 import comtypes.client
 from comtypes import COSERVERINFO
@@ -9,6 +10,11 @@ from comtypes.gen import Scripting
 
 import comtypes.test
 comtypes.test.requires("ui")
+
+if sys.version_info >= (3, 0):
+    text_type = str
+else:
+    text_type = unicode
 
 class Test(ut.TestCase):
     def test_progid(self):
@@ -23,7 +29,7 @@ class Test(ut.TestCase):
 
     def test_clsid_string(self):
         # create from string clsid
-        comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
+        comtypes.client.CreateObject(text_type(Scripting.Dictionary._reg_clsid_))
         comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
 
     def test_GetModule_clsid(self):

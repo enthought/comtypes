@@ -1,7 +1,11 @@
 # Code generator to generate code for everything contained in COM type
 # libraries.
 import os
-import io
+import sys
+if sys.version_info >= (3, 0):
+    import io
+else:
+    import cStringIO as io
 import keyword
 import ctypes
 

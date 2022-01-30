@@ -8,6 +8,11 @@ import importlib
 import logging
 logger = logging.getLogger(__name__)
 
+if sys.version_info >= (3, 0):
+    base_text_type = str
+else:
+    base_text_type = basestring
+
 PATH = os.environ["PATH"].split(os.pathsep)
 
 def _my_import(fullname):
@@ -70,7 +75,7 @@ def GetModule(tlib):
     latter is a short stub loading the former.
     """
     pathname = None
-    if isinstance(tlib, str):
+    if isinstance(tlib, base_text_type):
         # pathname of type library
         if not os.path.isabs(tlib):
             # If a relative pathname is used, we try to interpret
@@ -93,7 +98,10 @@ def GetModule(tlib):
         clsid = str(tlib)
         
         # lookup associated typelib in registry
-        import winreg
+        if sys.version_info >= (3, 0):
+            import winreg
+        else:
+            import _winreg as winreg
         with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\TypeLib" % clsid, 0, winreg.KEY_READ) as key:
             typelib = winreg.EnumValue(key, 0)[1]
         with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Version" % clsid, 0, winreg.KEY_READ) as key:
@@ -174,7 +182,10 @@ def _CreateWrapper(tlib, pathname=None):
     # generate the module since it doesn't exist or is out of date
     from comtypes.tools.tlbparser import generate_module
     if comtypes.client.gen_dir is None:
-        import io
+        if sys.version_info >= (3, 0):
+            import io
+        else:
+            import cStringIO as io
         ofi = io.StringIO()
     else:
         ofi = open(os.path.join(comtypes.client.gen_dir, modname + ".py"), "w")
