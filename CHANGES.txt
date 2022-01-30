@@ -3,9 +3,10 @@ Comtypes CHANGELOG
 
 Release 1.1.11
 -------------
- * Fix Python 3 compatibility. Thanks @kdschlosser.
- * Fix `tlib_mtime` in the absence of typelib.
+ * Fix Python 3.9+ compatibility. Thanks @kdschlosser.
+ * Fix timestamping for typelib. Thanks @fusentasticus.
  * Fix 64bit inproc server.
+ * Python 2.6 support is dropped.
 
 Release 1.1.10
 -------------
