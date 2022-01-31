@@ -82,7 +82,7 @@ class TestDispServer(
     def DTestDispServer_Exec2(self, what):
         exec(what)
 
-    _name = "spam, spam, spam"
+    _name = u"spam, spam, spam"
 
     # Implementation of the DTestDispServer::Name propget
     def DTestDispServer__get_name(self, this, pname):

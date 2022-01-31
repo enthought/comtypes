@@ -3,7 +3,12 @@ from comtypes import COMObject, GUID
 from comtypes.server import IClassFactory
 from comtypes.hresult import *
 
-import sys, winreg, logging
+import sys
+import logging
+if sys.version_info >= (3, 0):
+    import winreg
+else:
+    import _winreg as winreg
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug

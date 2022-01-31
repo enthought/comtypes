@@ -1,9 +1,13 @@
+import sys
 from ctypes import *
 import comtypes
 from comtypes.hresult import *
 from comtypes.server import IClassFactory
 import logging
-import queue
+if sys.version_info >= (3, 0):
+    import queue
+else:
+    import Queue as queue
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug

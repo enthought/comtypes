@@ -1,7 +1,11 @@
 # Code generator to generate code for everything contained in COM type
 # libraries.
 import os
-import io
+import sys
+if sys.version_info >= (3, 0):
+    import io
+else:
+    import cStringIO as io
 import keyword
 import ctypes
 
@@ -11,6 +15,9 @@ import comtypes.client
 import comtypes.client._generate
 
 version = comtypes.__version__
+
+import logging
+logger = logging.getLogger(__name__)
 
 __warn_on_munge__ = __debug__
 
@@ -212,8 +219,12 @@ class Generator(object):
         parts2 = path2.split("\\")
         return "..\\" * len(parts2) + path1
 
-    def generate_code(self, items, filename=None):
-        self.filename = filename
+    def _generate_typelib_path(self, filename):
+        # NOTE: the logic in this function appears completely different from that
+        # of the handling of tlib (given as a string) in GetModule. There, relative
+        # references are resolved wrt to the directory of the calling module. Here,
+        # resolution is with respect to current working directory -- later to be
+        # relativized to comtypes.gen.
         if filename is not None:
             # Hm, what is the CORRECT encoding?
             print("# -*- coding: mbcs -*-", file=self.output)
@@ -234,6 +245,10 @@ class Generator(object):
                 p = os.path.normpath(os.path.abspath(os.path.join(comtypes.gen.__path__[0],
                                                                   path)))
                 assert os.path.isfile(p)
+
+    def generate_code(self, items, filename):
+        self.filename = filename
+        self._generate_typelib_path(filename)
         print("_lcid = 0 # change this if required", file=self.imports)
         print("from ctypes import *", file=self.imports)
         items = set(items)
