@@ -9,7 +9,7 @@ class NTDebugHandler(logging.Handler):
         if isinstance(text, str):
             writeA(text + "\n")
         else:
-            writeW(text + "\n")
+            writeW(text + u"\n")
 logging.NTDebugHandler = NTDebugHandler
 
 def setup_logging(*pathnames):

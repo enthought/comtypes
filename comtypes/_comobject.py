@@ -5,6 +5,7 @@ from ctypes import (
 from _ctypes import CopyComPointer
 import logging
 import os
+import sys
 
 from comtypes import COMError, ReturnHRESULT, instancemethod, _encode_idl
 from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
@@ -20,6 +21,11 @@ logger = logging.getLogger(__name__)
 _debug = logger.debug
 _warning = logger.warning
 _error = logger.error
+
+if sys.version_info >= (3, 0):
+    int_types = (int, )
+else:
+    int_types = (int, long)
 
 ################################################################
 # COM object implementation
@@ -51,7 +57,7 @@ def winerror(exc):
         return exc.hresult
     elif isinstance(exc, WindowsError):
         code = exc.winerror
-        if isinstance(code, int):
+        if isinstance(code, int_types):
             return code
         # Sometimes, a WindowsError instance has no error code.  An access
         # violation raised by ctypes has only text, for example.  In this
@@ -333,7 +339,10 @@ class LocalServer(object):
         messageloop.run()
 
     def run_mta(self):
-        import queue
+        if sys.version_info >= (3, 0):
+            import queue
+        else:
+            import Queue as queue
         self._queue = queue.Queue()
         self._queue.get()
 
