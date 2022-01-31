@@ -267,9 +267,7 @@ class Generator(object):
             loaded_typelib = comtypes.typeinfo.LoadTypeLib(self.filename)
             full_filename = comtypes.tools.tlbparser.get_tlib_filename(loaded_typelib)
 
-            if full_filename is None:
-                tlib_mtime = 0
-            else:
+            if full_filename is not None:
                 # get DLL timestamp at the moment of wrapper generation
                 tlib_mtime = os.stat(full_filename).st_mtime
 

@@ -119,7 +119,7 @@ def DllGetClassObject(rclsid, riid, ppv):
         if not cls:
             return CLASS_E_CLASSNOTAVAILABLE
 
-        result = ClassFactory(cls).IUnknown_QueryInterface(None, ctypes.pointer(iid), ppv)
+        result = ClassFactory(cls).IUnknown_QueryInterface(None, ctypes.pointer(iid), ctypes.c_void_p(ppv))
         _debug("DllGetClassObject() -> %s", result)
         return result
     except Exception:
