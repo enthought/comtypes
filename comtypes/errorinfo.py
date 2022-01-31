@@ -6,6 +6,11 @@ from comtypes.hresult import *
 LPCOLESTR = c_wchar_p
 DWORD = c_ulong
 
+if sys.version_info >= (3, 0):
+    base_text_type = str
+else:
+    base_text_type = basestring
+
 class ICreateErrorInfo(IUnknown):
     _iid_ = GUID("{22F03340-547D-101B-8E65-08002B2BD119}")
     _methods_ = [
@@ -73,7 +78,7 @@ def ReportError(text, iid,
     if helpcontext is not None:
         ei.SetHelpContext(helpcontext)
     if clsid is not None:
-        if isinstance(clsid, str):
+        if isinstance(clsid, base_text_type):
             clsid = GUID(clsid)
         try:
             progid = clsid.as_progid()

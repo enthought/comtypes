@@ -14,14 +14,14 @@ class Test(unittest.TestCase):
 
     def test_creation(self):
         def doit():
-            BSTR("abcdef" * 100)
+            BSTR(u"abcdef" * 100)
         # It seems this test is unreliable.  Sometimes it leaks 4096
         # bytes, sometimes not.  Try to workaround that...
         self.check_leaks(doit, limit=4096)
 
     def test_from_param(self):
         def doit():
-            BSTR.from_param("abcdef")
+            BSTR.from_param(u"abcdef")
         self.check_leaks(doit)
 
     def test_paramflags(self):
@@ -30,9 +30,9 @@ class Test(unittest.TestCase):
         func.restype = c_void_p
         func.argtypes = (BSTR, )
         def doit():
-            func("abcdef")
-            func("abc xyz")
-            func(BSTR("abc def"))
+            func(u"abcdef")
+            func(u"abc xyz")
+            func(BSTR(u"abc def"))
         self.check_leaks(doit)
 
     def test_inargs(self):
@@ -43,8 +43,8 @@ class Test(unittest.TestCase):
         self.assertEqual(SysStringLen("abc xyz"), 7)
         def doit():
             SysStringLen("abc xyz")
-            SysStringLen("abc xyz")
-            SysStringLen(BSTR("abc def"))
+            SysStringLen(u"abc xyz")
+            SysStringLen(BSTR(u"abc def"))
         self.check_leaks(doit)
 
 if __name__ == "__main__":

@@ -36,7 +36,10 @@ Now, debug the object, and when done delete logging info:
   python mycomobj.py /nodebug
 """
 import sys, os
-import winreg
+if sys.version_info >= (3, 0):
+    import winreg
+else:
+    import _winreg as winreg
 import logging
 
 import comtypes

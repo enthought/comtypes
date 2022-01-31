@@ -8,6 +8,13 @@ else:
     def binary(obj):
         return buffer(obj)
 
+if sys.version_info >= (3, 0):
+    text_type = str
+    base_text_type = str
+else:
+    text_type = unicode
+    base_text_type = basestring
+
 BYTE = c_byte
 WORD = c_ushort
 DWORD = c_ulong
@@ -32,10 +39,10 @@ class GUID(Structure):
 
     def __init__(self, name=None):
         if name is not None:
-            _CLSIDFromString(str(name), byref(self))
+            _CLSIDFromString(text_type(name), byref(self))
 
     def __repr__(self):
-        return 'GUID("%s")' % str(self)
+        return 'GUID("%s")' % text_type(self)
 
     def __unicode__(self):
         p = c_wchar_p()
@@ -62,7 +69,7 @@ class GUID(Structure):
         return hash(binary(self))
 
     def copy(self):
-        return GUID(str(self))
+        return GUID(text_type(self))
 
     def from_progid(cls, progid):
         """Get guid from progid, ...
@@ -71,11 +78,11 @@ class GUID(Structure):
             progid = progid._reg_clsid_
         if isinstance(progid, cls):
             return progid
-        elif isinstance(progid, str):
+        elif isinstance(progid, base_text_type):
             if progid.startswith("{"):
                 return cls(progid)
             inst = cls()
-            _CLSIDFromProgID(str(progid), byref(inst))
+            _CLSIDFromProgID(text_type(progid), byref(inst))
             return inst
         else:
             raise TypeError("Cannot construct guid from %r" % progid)

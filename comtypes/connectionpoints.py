@@ -1,3 +1,4 @@
+import sys
 from ctypes import *
 from comtypes import IUnknown, COMMETHOD, GUID, HRESULT, dispid
 _GUID = GUID
@@ -26,11 +27,18 @@ class IEnumConnections(IUnknown):
     def __iter__(self):
         return self
 
-    def __next__(self):
-        cp, fetched = self.Next(1)
-        if fetched == 0:
-            raise StopIteration
-        return cp
+    if sys.version_info >= (3, 0):
+        def __next__(self):
+            cp, fetched = self.Next(1)
+            if fetched == 0:
+                raise StopIteration
+            return cp
+    else:
+        def next(self):
+            cp, fetched = self.Next(1)
+            if fetched == 0:
+                raise StopIteration
+            return cp
 
 class IEnumConnectionPoints(IUnknown):
     _iid_ = GUID('{B196B285-BAB4-101A-B69C-00AA00341D07}')
@@ -39,11 +47,18 @@ class IEnumConnectionPoints(IUnknown):
     def __iter__(self):
         return self
 
-    def __next__(self):
-        cp, fetched = self.Next(1)
-        if fetched == 0:
-            raise StopIteration
-        return cp
+    if sys.version_info >= (3, 0):
+        def __next__(self):
+            cp, fetched = self.Next(1)
+            if fetched == 0:
+                raise StopIteration
+            return cp
+    else:
+        def next(self):
+            cp, fetched = self.Next(1)
+            if fetched == 0:
+                raise StopIteration
+            return cp
 
 ################################################################
 

@@ -1,4 +1,3 @@
-from __future__ import print_function
 from ctypes import *
 import unittest
 
@@ -6,6 +5,12 @@ import comtypes.test
 comtypes.test.requires("devel")
 
 from comtypes import BSTR, IUnknown, GUID, COMMETHOD, HRESULT
+
+if sys.version_info >= (3, 0):
+    text_type = str
+else:
+    text_type = unicode
+
 class IMalloc(IUnknown):
     _iid_ = GUID("{00000002-0000-0000-C000-000000000046}")
     _methods_ = [
@@ -38,7 +43,7 @@ def from_outparm(self):
 c_wchar_p.__ctypes_from_outparam__ = from_outparm
 
 def comstring(text, typ=c_wchar_p):
-    text = str(text)
+    text = text_type(text)
     size = (len(text) + 1) * sizeof(c_wchar)
     mem = windll.ole32.CoTaskMemAlloc(size)
     print("malloc'd 0x%x, %d bytes" % (mem, size))

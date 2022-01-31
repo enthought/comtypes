@@ -5,6 +5,11 @@ import os
 # comtypes version numbers follow semver (http://semver.org/) and PEP 440
 __version__ = "1.1.11"
 
+if sys.version_info >= (3, 0):
+    text_type = str
+else:
+    text_type = unicode
+
 import logging
 class NullHandler(logging.Handler):
     """A Handler that does nothing."""
@@ -488,7 +493,7 @@ class _cominterface_meta(type):
                 if is_prop:
                     self.__map_case__[name[5:].lower()] = name[5:]
 
-        for (name, nargs), methods in list(properties.items()):
+        for (name, nargs), methods in properties.items():
             # methods contains [propget or None, propput or None, propputref or None]
             if methods[1] is not None and methods[2] is not None:
                 # both propput and propputref.
@@ -655,7 +660,7 @@ class _cominterface_meta(type):
                 return rescode
 
             rescode = list(rescode)
-            for outnum, o in list(outargs.items()):
+            for outnum, o in outargs.items():
                 rescode[outnum] = o.__ctypes_from_outparam__()
             return rescode
         return call_with_inout
@@ -670,7 +675,7 @@ class _cominterface_meta(type):
         except KeyError:
             raise AttributeError("this class must define an _iid_")
         else:
-            iid = str(iid)
+            iid = text_type(iid)
 ##            if iid in com_interface_registry:
 ##                # Warn when multiple interfaces are defined with identical iids.
 ##                # This would also trigger if we reload() a module that contains
@@ -779,7 +784,7 @@ class _cominterface_meta(type):
                     self.__map_case__[name[5:].lower()] = name[5:]
 
         # create public properties / attribute accessors
-        for (name, doc, nargs), methods in list(properties.items()):
+        for (name, doc, nargs), methods in properties.items():
             # methods contains [propget or None, propput or None, propputref or None]
             if methods[1] is not None and methods[2] is not None:
                 # both propput and propputref.
@@ -891,11 +896,51 @@ class named_property(object):
 
 ################################################################
 
+def add_metaclass(metaclass):
+    """Class decorator from six.py for creating a class with a metaclass.
+
+    Copyright (c) 2010-2020 Benjamin Peterson
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of
+    this software and associated documentation files (the "Software"), to deal in
+    the Software without restriction, including without limitation the rights to
+    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+    the Software, and to permit persons to whom the Software is furnished to do so,
+    subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    """
+    def wrapper(cls):
+        orig_vars = cls.__dict__.copy()
+        slots = orig_vars.get('__slots__')
+        if slots is not None:
+            if isinstance(slots, text_type):
+                slots = [slots]
+            for slots_var in slots:
+                orig_vars.pop(slots_var)
+        orig_vars.pop('__dict__', None)
+        orig_vars.pop('__weakref__', None)
+        if hasattr(cls, '__qualname__'):
+            orig_vars['__qualname__'] = cls.__qualname__
+        return metaclass(cls.__name__, cls.__bases__, orig_vars)
+    return wrapper
+
+################################################################
+
 class _compointer_meta(type(c_void_p), _cominterface_meta):
     "metaclass for COM interface pointer classes"
     # no functionality, but needed to avoid a metaclass conflict
 
-class _compointer_base(c_void_p, metaclass=_compointer_meta):
+@add_metaclass(_compointer_meta)
+class _compointer_base(c_void_p):
     "base class for COM interface pointer classes"
     def __del__(self, _debug=logger.debug):
         "Release the COM refcount we own."
@@ -1016,7 +1061,7 @@ class BSTR(_SimpleCData):
 ################################################################
 # IDL stuff
 
-class helpstring(str):
+class helpstring(text_type):
     "Specifies the helpstring for a COM method or property."
 
 class defaultvalue(object):
@@ -1122,7 +1167,8 @@ def COMMETHOD(idlflags, restype, methodname, *argspec):
 ################################################################
 # IUnknown, the root of all evil...
 
-class IUnknown(object, metaclass=_cominterface_meta):
+@add_metaclass(_cominterface_meta)
+class IUnknown(object):
     """The most basic COM interface.
 
     Each subclasses of IUnknown must define these class attributes:
@@ -1200,7 +1246,7 @@ def CoGetObject(displayname, interface):
         interface = IUnknown
     punk = POINTER(interface)()
     # Do we need a way to specify the BIND_OPTS parameter?
-    _ole32.CoGetObject(str(displayname),
+    _ole32.CoGetObject(text_type(displayname),
                        None,
                        byref(interface._iid_),
                        byref(punk))
@@ -1379,6 +1425,7 @@ from comtypes._comobject import COMObject
 
 from comtypes._meta import _coclass_meta
 
-class CoClass(COMObject, metaclass=_coclass_meta):
+@add_metaclass(_coclass_meta)
+class CoClass(COMObject):
     pass
 ################################################################

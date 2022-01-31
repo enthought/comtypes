@@ -87,7 +87,10 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(result, values)
 
     def test_pythonobjects(self):
-        objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
+        if sys.version_info >= (3, 0):
+            objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
+        else:
+            objects = [None, 42, 3.14, True, False, "abc", u"abc", 7L]
         for x in objects:
             v = VARIANT(x)
             self.assertEqual(x, v.value)
@@ -103,9 +106,15 @@ class VariantTestCase(unittest.TestCase):
 
             v.value += 1
             self.assertEqual(v.value, sys.maxsize+1)
-            self.assertEqual(type(v.value), int)
+            if sys.version_info >= (3, 0):
+                self.assertEqual(type(v.value), int)
+            else:
+                self.assertEqual(type(v.value), long)
 
-        v.value = 1
+        if sys.version_info >= (3, 0):
+            v.value = 1
+        else:
+            v.value = 1L
         self.assertEqual(v.value, 1)
         self.assertEqual(type(v.value), int)
 
@@ -166,7 +175,7 @@ class VariantTestCase(unittest.TestCase):
 
     def test_BSTR(self):
         v = VARIANT()
-        v.value = "abc\x00123\x00"
+        v.value = u"abc\x00123\x00"
         self.assertEqual(v.value, "abc\x00123\x00")
 
         v.value = None
@@ -320,7 +329,10 @@ def check_perf(rep=20000):
     by_var = byref(variable)
     ptr_var = pointer(variable)
 
-    import pickle
+    if sys.version_info >= (3, 0):
+        import pickle
+    else:
+        import cPickle as pickle
     try:
         previous = pickle.load(open("result.pickle", "rb"))
     except IOError:

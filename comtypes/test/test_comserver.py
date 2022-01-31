@@ -59,13 +59,13 @@ class TestInproc(unittest.TestCase):
         def test_set_name(self):
             obj = self.create_object()
             def func():
-                obj.name = "abcde"
+                obj.name = u"abcde"
             self._find_memleak(func)
 
         def test_SetName(self):
             obj = self.create_object()
             def func():
-                obj.SetName("abcde")
+                obj.SetName(u"abcde")
             self._find_memleak(func)
 
 
