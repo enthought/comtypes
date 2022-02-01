@@ -1,5 +1,6 @@
 # Code generator to generate code for everything contained in COM type
 # libraries.
+from __future__ import print_function
 import os
 import sys
 if sys.version_info >= (3, 0):

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest, gc
 from ctypes import *
 from ctypes.wintypes import *

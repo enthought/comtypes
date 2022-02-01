@@ -1,4 +1,5 @@
 # -*- coding: latin-1 -*-
+from __future__ import print_function
 import unittest
 
 import comtypes.test

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from ctypes import *
 from ctypes.wintypes import DWORD, WIN32_FIND_DATAA, WIN32_FIND_DATAW, MAX_PATH
 from comtypes import IUnknown, GUID, COMMETHOD, HRESULT, CoClass
