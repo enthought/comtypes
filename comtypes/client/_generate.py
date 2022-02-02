@@ -47,7 +47,7 @@ def _resolve_filename(tlib_string, dirpath):
       (abspath, True) or (relpath, False), 
     
     where relpath is an unresolved path."""
-    assert isinstance(tlib_string, basestring)
+    assert isinstance(tlib_string, base_text_type)
     # pathname of type library
     if os.path.isabs(tlib_string):
         # a specific location
