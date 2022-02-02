@@ -549,10 +549,7 @@ VARIANT.null = VARIANT(None)
 VARIANT.empty = VARIANT()
 VARIANT.missing = v = VARIANT()
 v.vt = VT_ERROR
-if sys.version_info >= (3, 0):
-    v._.VT_I4 = 0x80020004
-else:
-    v._.VT_I4 = 0x80020004L
+v._.VT_I4 = 0x80020004
 del v
 
 _carg_obj = type(byref(c_int()))

@@ -111,10 +111,8 @@ class VariantTestCase(unittest.TestCase):
             else:
                 self.assertEqual(type(v.value), long)
 
-        if sys.version_info >= (3, 0):
-            v.value = 1
-        else:
-            v.value = 1L
+        v.value = 1
+
         self.assertEqual(v.value, 1)
         self.assertEqual(type(v.value), int)
 
