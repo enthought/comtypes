@@ -1,0 +1,5 @@
+comtypes/__pycache__/*.pyc
+comtypes/client/__pycache__/*.pyc
+comtypes/gen/__pycache__/*.pyc
+comtypes/tools/__pycache__/*.pyc
+comtypes.egg-info/*
