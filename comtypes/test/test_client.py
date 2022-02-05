@@ -34,6 +34,10 @@ class Test(ut.TestCase):
         clsid = comtypes.GUID.from_progid("MediaPlayer.MediaPlayer")
         tlib = comtypes.client.GetModule(clsid)
 
+    @ut.skip(
+            "This test uses IE which is not available on all machines anymore. "
+            "Find another API to use."
+    )
     def test_remote(self):
         ie = comtypes.client.CreateObject("InternetExplorer.Application",
                                           machine="localhost")
@@ -44,6 +48,10 @@ class Test(ut.TestCase):
         self.assertEqual(ie.Visible, True)
         self.assertEqual(0, ie.Quit()) # 0 == S_OK
 
+    @ut.skip(
+            "This test uses IE which is not available on all machines anymore. "
+            "Find another API to use."
+    )
     def test_server_info(self):
         serverinfo = COSERVERINFO()
         serverinfo.pwszName = 'localhost'
