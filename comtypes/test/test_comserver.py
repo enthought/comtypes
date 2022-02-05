@@ -1,4 +1,6 @@
 import unittest, sys
+raise unittest.SkipTest("This test requires the tests to be run as admin since it tries to "
+                        "register the test COM server.  Is this a good idea?")
 from ctypes import *
 from ctypes.wintypes import *
 from comtypes.client import CreateObject, GetEvents, ShowEvents

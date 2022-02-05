@@ -1,5 +1,7 @@
 import unittest
 
+raise unittest.SkipTest("This test requires the tests to be run as admin since it tries to "
+                        "register the test COM server.  Is this a good idea?")
 from comtypes.server.register import register#, unregister
 from comtypes.test import is_resource_enabled
 
