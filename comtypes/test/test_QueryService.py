@@ -6,7 +6,7 @@ from comtypes.client import CreateObject, GetModule
 GetModule('oleacc.dll')
 from comtypes.gen.Accessibility import IAccessible
 
-
+@unittest.skip("This IE test is not working.  We need to move it to using some other win32 API.")
 class TestCase(unittest.TestCase):
 
     def setUp(self):
