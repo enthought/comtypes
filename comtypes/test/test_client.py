@@ -8,8 +8,6 @@ from ctypes import POINTER, byref
 comtypes.client.GetModule("scrrun.dll")
 from comtypes.gen import Scripting
 
-import comtypes.test
-comtypes.test.requires("ui")
 
 if sys.version_info >= (3, 0):
     text_type = str
