@@ -64,6 +64,7 @@ class Test(unittest.TestCase):
         cv.Reset()
         self.assertRaises(ArgumentError, lambda: cv[:])
 
+    @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_1(self):
         # The XP firewall manager.
         fwmgr = CreateObject('HNetCfg.FwMgr')
@@ -76,6 +77,7 @@ class Test(unittest.TestCase):
         bytes = find_memleak(doit, (20, 20))
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
+    @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_2(self):
         # The XP firewall manager.
         fwmgr = CreateObject('HNetCfg.FwMgr')
@@ -87,6 +89,7 @@ class Test(unittest.TestCase):
         bytes = find_memleak(doit, (20, 20))
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
+    @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_3(self):
         # The XP firewall manager.
         fwmgr = CreateObject('HNetCfg.FwMgr')
