@@ -3,10 +3,10 @@ Comtypes CHANGELOG
 
 Release 1.1.11
 -------------
- * Fix setuptools>=60.0.0 compatibility. Thanks @kdschlosser.
+ * Fix setuptools>=57.5.0 compatibility. Thanks @kdschlosser.
  * Fix timestamping for typelib. Thanks @fusentasticus.
- * Fix 64bit inproc server.
- * Drop Python 2.6 support.
+ * Fix 64bit inproc server. Thanks @klusidy.
+ * Drop Python 2.6 support (Python 2.7 is still supported).
  * Fix IndexError for empty safearray. Thanks @BALOGHBence.
 
 Release 1.1.10

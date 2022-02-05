@@ -41,6 +41,8 @@ class _SafeArrayAsNdArrayContextManager(object):
         '''
         return bool(getattr(self.thread_local, 'count', 0))
 
+    __nonzero__ = __bool__ # for Py2.7 compatibility
+
 
 # Global _SafeArrayAsNdArrayContextManager
 safearray_as_ndarray = _SafeArrayAsNdArrayContextManager()
