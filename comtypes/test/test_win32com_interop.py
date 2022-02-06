@@ -1,5 +1,6 @@
 import unittest
-
+raise unittest.SkipTest("This test requires the pythoncom library installed.  If this is "
+                        "important tests then we need to add dev dependencies to the project that include pythoncom.")
 from ctypes import PyDLL, py_object, c_void_p, byref, POINTER
 from ctypes.wintypes import BOOL
 
