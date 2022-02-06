@@ -208,7 +208,7 @@ class VariantTestCase(unittest.TestCase):
     def test_ctypes_in_variant(self):
         v = VARIANT()
         objs = [(c_ubyte(3), VT_UI1),
-                (c_char("x"), VT_UI1),
+                (c_char(b"x"), VT_UI1),
                 (c_byte(3), VT_I1),
                 (c_ushort(3), VT_UI2),
                 (c_short(3), VT_I2),
