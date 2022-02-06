@@ -1,4 +1,7 @@
 import unittest
+
+raise unittest.SkipTest("External test dependencies like this seem bad.  Find a different "
+                        "built-in win32 API to use.")
 import time
 import comtypes.client
 
