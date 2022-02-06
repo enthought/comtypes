@@ -171,6 +171,7 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(
             v.value, decimal.Decimal('-1844674407.370955162834'))
 
+    @unittest.skip("This test causes python to crash.")
     def test_BSTR(self):
         v = VARIANT()
         v.value = u"abc\x00123\x00"
