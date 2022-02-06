@@ -1,4 +1,8 @@
 import unittest as ut
+
+raise ut.SkipTest("External test dependencies like this seem bad.  Find a different built-in "
+                  "win32 API to use.")
+
 from ctypes import *
 from comtypes.client import CreateObject, GetEvents
 
