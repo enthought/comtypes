@@ -9,6 +9,8 @@ requires("events")
 
 class EventsTest(unittest.TestCase):
 
+    @unittest.skip("This test depends on Internet Explorer and Excel.  Need to use something "
+                   "built-in to Windows for sure.")
     def test(self):
         import comtypes.test.test_showevents
         doctest.testmod(comtypes.test.test_showevents, optionflags=doctest.ELLIPSIS)
@@ -120,7 +122,7 @@ class EventsTest(unittest.TestCase):
             Event DWebBrowserEvents2_OnQuit(None)
             >>>
             '''
-        
+
     def IE_GetEvents(self):
         """
         >>> from comtypes.client import CreateObject, GetEvents, PumpEvents
