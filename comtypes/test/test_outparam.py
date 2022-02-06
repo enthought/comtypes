@@ -1,4 +1,5 @@
 from ctypes import *
+import sys
 import unittest
 
 import comtypes.test
