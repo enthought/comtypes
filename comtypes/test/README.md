@@ -15,3 +15,5 @@ TODO
   unit test.
 - [ ] Remove the custom test runner stuff. See `comtypes/test/__init__.py`
   and `. /settup.py` for details.
+- [ ] If python 2.whatever is going to be supported we need to set up tox or something 
+  to run the tests on python 3 and python 2.
