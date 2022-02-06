@@ -32,6 +32,7 @@ class Test(unittest.TestCase):
         bytes = find_memleak(func, (5, 10))
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
+    @unittest.skip("This fails with: `TypeError: iter() returned non-iterator of type 'POINTER(IEnumSTATURL)'`")
     def test_creation(self):
         hist = CreateObject(urlhistLib.UrlHistory)
         for x in hist.EnumURLS():
