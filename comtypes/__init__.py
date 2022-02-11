@@ -1429,3 +1429,9 @@ from comtypes._meta import _coclass_meta
 class CoClass(COMObject):
     pass
 ################################################################
+
+from .typelib_loader import typelib as _typelib  # NOQA
+
+typelib = _typelib
+del _typelib
+
