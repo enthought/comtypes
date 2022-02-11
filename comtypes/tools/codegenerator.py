@@ -248,8 +248,28 @@ class Generator(object):
                 assert os.path.isfile(p)
 
     def generate_code(self, items, filename):
+        tlib_mtime = None
+
+        if filename is not None:
+            # get full path to DLL first (os.stat can't work with relative DLL paths properly)
+            loaded_typelib = comtypes.typeinfo.LoadTypeLib(filename)
+            full_filename = comtypes.tools.tlbparser.get_tlib_filename(
+                loaded_typelib)
+
+            while full_filename and not os.path.exists(full_filename):
+                full_filename = os.path.split(full_filename)[0]
+
+            if full_filename and os.path.isfile(full_filename):
+                # get DLL timestamp at the moment of wrapper generation
+
+                tlib_mtime = os.stat(full_filename).st_mtime
+
+                if not full_filename.endswith(filename):
+                    filename = full_filename
+
         self.filename = filename
         self._generate_typelib_path(filename)
+
         print("_lcid = 0 # change this if required", file=self.imports)
         print("from ctypes import *", file=self.imports)
         items = set(items)
@@ -277,12 +297,10 @@ class Generator(object):
         for line in wrapper.wrap(text):
             print(line, file=self.output)
 
-        if os.path.exists(filename):
-            tlib_mtime = os.stat(filename).st_mtime
-        else:
-            tlib_mtime = None
-        logger.debug("filename: \"%s\": tlib_mtime: %s", filename, tlib_mtime)
-        print("from comtypes import _check_version; _check_version(%r, %s)" % (version, tlib_mtime), file=self.output)
+        if tlib_mtime is not None:
+            logger.debug("filename: \"%s\": tlib_mtime: %s", filename, tlib_mtime)
+            print("from comtypes import _check_version; _check_version(%r, %f)" % (version, tlib_mtime), file=self.output)
+
         return loops
 
     def type_name(self, t, generate=True):
