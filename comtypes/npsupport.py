@@ -86,15 +86,15 @@ def _check_ctypeslib_typecodes():
     except ImportError:
         from numpy.ctypeslib import as_ctypes_type
 
-        ctypes_to_dtypes = {}
+        dtypes_to_ctypes = {}
 
         for tp in set(np.sctypeDict.values()):
             try:
                 ctype_for = as_ctypes_type(tp)
-                ctypes_to_dtypes[ctype_for] = tp
+                dtypes_to_ctypes[np.dtype(tp).str] = ctype_for
             except NotImplementedError:
                 continue
-        ctypeslib._typecodes = ctypes_to_dtypes
+        ctypeslib._typecodes = dtypes_to_ctypes
     return ctypeslib._typecodes
 
 
