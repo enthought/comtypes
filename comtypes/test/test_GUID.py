@@ -19,13 +19,6 @@ class Test(unittest.TestCase):
         self.assertRaises(WindowsError, lambda guid: guid.as_progid(),
                           GUID("{00000000-0000-0000-C000-000000000046}"))
 
-
-        if os.name == "nt":
-            self.assertEqual(GUID.from_progid("InternetExplorer.Application"),
-                                 GUID("{0002DF01-0000-0000-C000-000000000046}"))
-            self.assertEqual(GUID("{0002DF01-0000-0000-C000-000000000046}").as_progid(),
-                                 'InternetExplorer.Application.1')
-
         self.assertNotEqual(GUID.create_new(), GUID.create_new())
 
 if __name__ == "__main__":
