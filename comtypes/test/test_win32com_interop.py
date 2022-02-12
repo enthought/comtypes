@@ -1,6 +1,5 @@
 import unittest
-raise unittest.SkipTest("This test requires the pythoncom library installed.  If this is "
-                        "important tests then we need to add dev dependencies to the project that include pythoncom.")
+
 from ctypes import PyDLL, py_object, c_void_p, byref, POINTER
 from ctypes.wintypes import BOOL
 
@@ -10,20 +9,34 @@ from comtypes.automation import IDispatch
 from comtypes.test import requires
 
 requires("pythoncom")
-import pythoncom
-import win32com.client
+try:
+    import pythoncom
+    import win32com.client
+    skip = False
+    # We use the PyCom_PyObjectFromIUnknown function in pythoncom25.dll to
+    # convert a comtypes COM pointer into a pythoncom COM pointer.
+    # Fortunately this function is exported by the dll...
+    #
+    # This is the C prototype; we must pass 'True' as third argument:
+    #
+    # PyObject *PyCom_PyObjectFromIUnknown(IUnknown *punk, REFIID riid, BOOL bAddRef)
 
-# We use the PyCom_PyObjectFromIUnknown function in pythoncom25.dll to
-# convert a comtypes COM pointer into a pythoncom COM pointer.
-# Fortunately this function is exported by the dll...
-#
-# This is the C prototype; we must pass 'True' as third argument:
-#
-# PyObject *PyCom_PyObjectFromIUnknown(IUnknown *punk, REFIID riid, BOOL bAddRef)
+    _PyCom_PyObjectFromIUnknown = PyDLL(pythoncom.__file__).PyCom_PyObjectFromIUnknown
+    _PyCom_PyObjectFromIUnknown.restype = py_object
+    _PyCom_PyObjectFromIUnknown.argtypes = (POINTER(IUnknown), c_void_p, BOOL)
+except ImportError:
+    # this test depends on pythoncom but it is not available.  Maybe we should just skip it even
+    # if it is available since pythoncom is not a project dependency and adding tests depending
+    # on the vagaries of various testing environments is not deterministic.
+    # TODO: Evaluate if we should just remove this test or what.
+    skip = True
 
-_PyCom_PyObjectFromIUnknown = PyDLL(pythoncom.__file__).PyCom_PyObjectFromIUnknown
-_PyCom_PyObjectFromIUnknown.restype = py_object
-_PyCom_PyObjectFromIUnknown.argtypes = (POINTER(IUnknown), c_void_p, BOOL)
+
+def setUpModule():
+    if skip:
+        raise unittest.SkipTest("This test requires the pythoncom library installed.  If this is "
+                                "important tests then we need to add dev dependencies to the project that include pythoncom.")
+
 
 def comtypes2pywin(ptr, interface=None):
     """Convert a comtypes pointer 'ptr' into a pythoncom
