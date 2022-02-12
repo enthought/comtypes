@@ -98,23 +98,22 @@ class VariantTestCase(unittest.TestCase):
     def test_integers(self):
         v = VARIANT()
 
+        int_type = int if sys.version_info >= (3,0) else (int, long)
+
         if (hasattr(sys, "maxint")):
             # this test doesn't work in Python 3000
             v.value = sys.maxsize
             self.assertEqual(v.value, sys.maxsize)
-            self.assertEqual(type(v.value), int)
+            self.assertIsInstance(v.value, int_type)
 
             v.value += 1
             self.assertEqual(v.value, sys.maxsize+1)
-            if sys.version_info >= (3, 0):
-                self.assertEqual(type(v.value), int)
-            else:
-                self.assertEqual(type(v.value), long)
+            self.assertIsInstance(v.value, int_type)
 
         v.value = 1
 
         self.assertEqual(v.value, 1)
-        self.assertEqual(type(v.value), int)
+        self.assertIsInstance(v.value, int_type)
 
     def test_datetime(self):
         now = datetime.datetime.now()
@@ -171,7 +170,7 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(
             v.value, decimal.Decimal('-1844674407.370955162834'))
 
-    @unittest.skip("This test causes python to crash.")
+    @unittest.skip("This test causes python(3?) to crash.")
     def test_BSTR(self):
         v = VARIANT()
         v.value = u"abc\x00123\x00"
