@@ -8,6 +8,7 @@ Release 1.1.11
  * Fix 64bit inproc server. Thanks @klusidy.
  * Drop Python 2.6 support (Python 2.7 is still supported).
  * Fix IndexError for empty safearray. Thanks @BALOGHBence.
+ * Make numpy typecodes consistent across numpy versions. Thanks @bennyrowland.
 
 Release 1.1.10
 -------------
