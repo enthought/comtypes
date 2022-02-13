@@ -41,7 +41,7 @@ class TypeLib(object):
         tlb_path = os.path.join(curdir, "mylib.tlb")
 
         if not os.path.isfile(idl_path) or open(idl_path, "r").read() != code:
-            from . import msvc
+            from comtypes.test import msvc
             environment = msvc.setup_environment()
             print(environment)
 
