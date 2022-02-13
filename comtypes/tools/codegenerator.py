@@ -167,12 +167,14 @@ class Generator(object):
         self._externals = {}
         self.output = ofi
         self.stream = io.StringIO()
-        self.imports = io.StringIO()
+        self.imports = {}
+        self.declarations = io.StringIO()
 ##        self.stream = self.imports = self.output
         self.known_symbols = known_symbols or {}
 
         self.done = set() # type descriptions that have been generated
         self.names = set() # names that have been generated
+        self.last_item_class = False
 
     def generate(self, item):
         if item in self.done:
@@ -183,7 +185,9 @@ class Generator(object):
             name = getattr(item, "name", None)
         if name in self.known_symbols:
             mod = self.known_symbols[name]
-            print("from %s import %s" % (mod, name), file=self.imports)
+            if name not in self.imports:
+                self.imports[name] = mod
+
             self.done.add(item)
             if isinstance(item, typedesc.Structure):
                 self.done.add(item.get_head())
@@ -222,26 +226,29 @@ class Generator(object):
 
     def _generate_typelib_path(self, filename):
         # NOTE: the logic in this function appears completely different from that
-        # of the handling of tlib (given as a string) in GetModule. There, relative 
-        # references are resolved wrt to the directory of the calling module. Here, 
-        # resolution is with respect to current working directory -- later to be 
+        # of the handling of tlib (given as a string) in GetModule. There, relative
+        # references are resolved wrt to the directory of the calling module. Here,
+        # resolution is with respect to current working directory -- later to be
         # relativized to comtypes.gen.
         if filename is not None:
             # Hm, what is the CORRECT encoding?
             print("# -*- coding: mbcs -*-", file=self.output)
+            print(file=self.output)
+
             if os.path.isabs(filename):
                 # absolute path
-                print("typelib_path = %r" % filename, file=self.output)
+                print("typelib_path = %r" % filename, file=self.declarations)
             elif not os.path.dirname(filename) and not os.path.isfile(filename):
                 # no directory given, and not in current directory.
-                print("typelib_path = %r" % filename, file=self.output)
+                print("typelib_path = %r" % filename, file=self.declarations)
             else:
                 # relative path; make relative to comtypes.gen.
                 path = self._make_relative_path(filename, comtypes.gen.__path__[0])
-                print("import os", file=self.output)
-                print("typelib_path = os.path.normpath(", file=self.output)
-                print("    os.path.abspath(os.path.join(os.path.dirname(__file__),", file=self.output)
-                print("                                 %r)))" % path, file=self.output)
+                self.imports['os'] = None
+
+                print("typelib_path = os.path.normpath(", file=self.declarations)
+                print("    os.path.abspath(os.path.join(os.path.dirname(__file__),", file=self.declarations)
+                print("                                 %r)))" % path, file=self.declarations)
 
                 p = os.path.normpath(os.path.abspath(os.path.join(comtypes.gen.__path__[0],
                                                                   path)))
@@ -249,9 +256,10 @@ class Generator(object):
 
     def generate_code(self, items, filename):
         self.filename = filename
+        print("_lcid = 0  # change this if required", file=self.declarations)
         self._generate_typelib_path(filename)
-        print("_lcid = 0 # change this if required", file=self.imports)
-        print("from ctypes import *", file=self.imports)
+        self.imports['*'] = 'ctypes'
+        self.imports['_check_version'] = 'comtypes'
         items = set(items)
         loops = 0
         while items:
@@ -262,27 +270,46 @@ class Generator(object):
             items |= self.more
             items -= self.done
 
-        self.output.write(self.imports.getvalue())
-        self.output.write("\n\n")
-        self.output.write(self.stream.getvalue())
+        stream = self.stream.getvalue()
+        for key, value in self.imports.items():
+            if value is None:
+                self.output.write('import ' + key + '\n')
+            elif key == '*':
+                self.output.write('from ' + value + ' import *\n')
+            elif key == '_check_version' or key in stream:
+                self.output.write('from ' + value + ' import ' + key + '\n')
 
-        import textwrap
-        wrapper = textwrap.TextWrapper(subsequent_indent="           ",
-                                       break_long_words=False)
+        self.output.write("\n\n")
+        self.output.write(self.declarations.getvalue())
+        self.output.write(stream)
+
+
         # XXX The space before '%s' is needed to make sure that the entire list
         #     does not get pushed to the next line when the first name is
         #     excessively long.
-        text = "__all__ = [ %s]" % ", ".join([repr(str(n)) for n in self.names])
+        text = "__all__ = [%s]" % ", ".join([repr(str(n)) for n in self.names])
 
-        for line in wrapper.wrap(text):
-            print(line, file=self.output)
+        if len(text) > 80:
+            import textwrap
+            wrapper = textwrap.TextWrapper(subsequent_indent="    ",
+                                           break_long_words=False)
+
+            print("__all__ = [", file=self.output)
+
+            text = '    ' + (", ".join([repr(str(n)) for n in self.names]))
+            for line in wrapper.wrap(text):
+                print(line, file=self.output)
+
+            print("]", file=self.output)
+        else:
+            print(text, file=self.output)
 
         if os.path.exists(filename):
             tlib_mtime = os.stat(filename).st_mtime
         else:
             tlib_mtime = None
         logger.debug("filename: \"%s\": tlib_mtime: %s", filename, tlib_mtime)
-        print("from comtypes import _check_version; _check_version(%r, %s)" % (version, tlib_mtime), file=self.output)
+        print("_check_version(%r, %s)" % (version, tlib_mtime), file=self.output)
         return loops
 
     def type_name(self, t, generate=True):
@@ -339,29 +366,29 @@ class Generator(object):
     def need_VARIANT_imports(self, value):
         text = repr(value)
         if "Decimal(" in text:
-            print("from decimal import Decimal", file=self.imports)
+            self.imports['Decimal'] = 'decimal'
         if "datetime.datetime(" in text:
-            print("import datetime", file=self.imports)
+            self.imports['datetime'] = None
 
     _STRING_defined = False
     def need_STRING(self):
         if self._STRING_defined:
             return
-        print("STRING = c_char_p", file=self.imports)
+        print("STRING = c_char_p", file=self.declarations)
         self._STRING_defined = True
 
     _WSTRING_defined = False
     def need_WSTRING(self):
         if self._WSTRING_defined:
             return
-        print("WSTRING = c_wchar_p", file=self.imports)
+        print("WSTRING = c_wchar_p", file=self.declarations)
         self._WSTRING_defined = True
 
     _OPENARRAYS_defined = False
     def need_OPENARRAYS(self):
         if self._OPENARRAYS_defined:
             return
-        print("OPENARRAY = POINTER(c_ubyte) # hack, see comtypes/tools/codegenerator.py", file=self.imports)
+        print("OPENARRAY = POINTER(c_ubyte) # hack, see comtypes/tools/codegenerator.py", file=self.declarations)
         self._OPENARRAYS_defined = True
 
     _arraytypes = 0
@@ -372,6 +399,7 @@ class Generator(object):
 
     _enumvalues = 0
     def EnumValue(self, tp):
+        self.last_item_class = False
         value = int(tp.value)
         if keyword.iskeyword(tp.name):
             # XXX use logging!
@@ -385,7 +413,7 @@ class Generator(object):
     _enumtypes = 0
     def Enumeration(self, tp):
         self._enumtypes += 1
-        print(file=self.stream)
+        self.last_item_class = False
         if tp.name:
             print("# values for enumeration '%s'" % tp.name, file=self.stream)
         else:
@@ -397,17 +425,18 @@ class Generator(object):
         for item in tp.values:
             self.generate(item)
         if tp.name:
-            print("%s = c_int # enum" % tp.name, file=self.stream)
+            print("%s = c_int  # enum" % tp.name, file=self.declarations)
             self.names.add(tp.name)
 
     _GUID_defined = False
     def need_GUID(self):
         if self._GUID_defined:
             return
+
         self._GUID_defined = True
         modname = self.known_symbols.get("GUID")
-        if modname:
-            print("from %s import GUID" % modname, file=self.imports)
+        if modname and 'GUID' not in self.imports:
+            self.imports['GUID'] = modname
 
     _typedefs = 0
     def Typedef(self, tp):
@@ -418,10 +447,13 @@ class Generator(object):
         else:
             self.generate(tp.typ)
         if self.type_name(tp.typ) in self.known_symbols:
-            stream = self.imports
+            stream = self.declarations
         else:
             stream = self.stream
         if tp.name != self.type_name(tp.typ):
+            if stream == self.stream:
+                self.last_item_class = False
+
             print("%s = %s" % \
                   (tp.name, self.type_name(tp.typ)), file=stream)
         self.names.add(tp.name)
@@ -434,10 +466,18 @@ class Generator(object):
             self.generate(struct.get_head())
             self.more.add(struct)
         if head.struct.location:
+            self.last_item_class = False
             print("# %s %s" % head.struct.location, file=self.stream)
         basenames = [self.type_name(b) for b in head.struct.bases]
         if basenames:
             self.need_GUID()
+
+            if not self.last_item_class:
+                print(file=self.stream)
+                print(file=self.stream)
+
+            self.last_item_class = True
+
             method_names = [m.name for m in head.struct.members if type(m) is typedesc.Method]
             print("class %s(%s):" % (head.struct.name, ", ".join(basenames)), file=self.stream)
             print("    _iid_ = GUID('{}') # please look up iid and fill in!", file=self.stream)
@@ -453,22 +493,51 @@ class Generator(object):
                 print("         if fetched == 0:", file=self.stream)
                 print("             raise StopIteration", file=self.stream)
                 print("         return arr[0]", file=self.stream)
+
+            print(file=self.stream)
+            print(file=self.stream)
+
         else:
             methods = [m for m in head.struct.members if type(m) is typedesc.Method]
+
             if methods:
                 # Hm. We cannot generate code for IUnknown...
+                if not self.last_item_class:
+                    print(file=self.stream)
+
+                self.last_item_class = True
                 print("assert 0, 'cannot generate code for IUnknown'", file=self.stream)
+                print(file=self.stream)
+                print(file=self.stream)
                 print("class %s(_com_interface):" % head.struct.name, file=self.stream)
                 print("    pass", file=self.stream)
+                print(file=self.stream)
+                print(file=self.stream)
             elif type(head.struct) == typedesc.Structure:
+                if not self.last_item_class:
+                    print(file=self.stream)
+                    print(file=self.stream)
+
+                self.last_item_class = True
+
                 print("class %s(Structure):" % head.struct.name, file=self.stream)
                 if hasattr(head.struct, "_recordinfo_"):
                     print("    _recordinfo_ = %r" % (head.struct._recordinfo_,), file=self.stream)
                 else:
                     print("    pass", file=self.stream)
+                print(file=self.stream)
+                print(file=self.stream)
             elif type(head.struct) == typedesc.Union:
+                if not self.last_item_class:
+                    print(file=self.stream)
+                    print(file=self.stream)
+
+                self.last_item_class = True
+
                 print("class %s(Union):" % head.struct.name, file=self.stream)
                 print("    pass", file=self.stream)
+                print(file=self.stream)
+                print(file=self.stream)
         self.names.add(head.struct.name)
 
     _structures = 0
@@ -501,6 +570,7 @@ class Generator(object):
             try:
                 pack = calc_packing(body.struct, fields)
                 if pack is not None:
+                    self.last_item_class = False
                     print("%s._pack_ = %s" % (body.struct.name, pack), file=self.stream)
             except PackingError as details:
                 # if packing fails, write a warning comment to the output.
@@ -508,6 +578,7 @@ class Generator(object):
                 message = "Structure %s: %s" % (body.struct.name, details)
                 warnings.warn(message, UserWarning)
                 print("# WARNING: %s" % details, file=self.stream)
+                self.last_item_class = False
 
         if fields:
             if body.struct.bases:
@@ -518,6 +589,12 @@ class Generator(object):
             # So, call type_name for each field once,
             for f in fields:
                 self.type_name(f.typ)
+
+            if not self.last_item_class:
+                print(file=self.stream)
+
+            self.last_item_class = False
+
             print("%s._fields_ = [" % body.struct.name, file=self.stream)
             if body.struct.location:
                 print("    # %s %s" % body.struct.location, file=self.stream)
@@ -540,10 +617,12 @@ class Generator(object):
             print("]", file=self.stream)
 
             if body.struct.size is None:
+                print(file=self.stream)
                 msg = ("# The size provided by the typelib is incorrect.\n"
                        "# The size and alignment check for %s is skipped.")
                 print(msg % body.struct.name, file=self.stream)
             elif body.struct.name not in dont_assert_size:
+                print(file=self.stream)
                 size = body.struct.size // 8
                 print("assert sizeof(%s) == %s, sizeof(%s)" % \
                       (body.struct.name, size, body.struct.name), file=self.stream)
@@ -560,6 +639,11 @@ class Generator(object):
                 self.type_name(m.returns)
                 for a in m.iterArgTypes():
                     self.type_name(a)
+
+            if not self.last_item_class:
+                print(file=self.stream)
+
+            self.last_item_class = False
             print("%s._methods_ = [" % body.struct.name, file=self.stream)
             if body.struct.location:
                 print("# %s %s" % body.struct.location, file=self.stream)
@@ -567,49 +651,75 @@ class Generator(object):
             for m in methods:
                 if m.location:
                     print("    # %s %s" % m.location, file=self.stream)
-                print("    COMMETHOD([], %s, '%s'," % (
-                    self.type_name(m.returns),
-                    m.name), file=self.stream)
+                print(
+                    (
+                        "    COMMETHOD(\n"
+                        "        [], \n"
+                        "        %s,\n"
+                        "        '%s',\n"
+                    ) % (self.type_name(m.returns), m.name),
+                    file=self.stream
+                )
                 for a in m.iterArgTypes():
-                    print("               ( [], %s, )," % self.type_name(a), file=self.stream)
-                    print("             ),", file=self.stream)
+                    print("        ([], %s),\n" % self.type_name(a), file=self.stream)
+                    print("    ),", file=self.stream)
             print("]", file=self.stream)
 
     _midlSAFEARRAY_defined = False
     def need_midlSAFEARRAY(self):
         if self._midlSAFEARRAY_defined:
             return
-        print("from comtypes.automation import _midlSAFEARRAY", file=self.imports)
+
+        self.imports['_midlSAFEARRAY'] = 'comtypes.automation'
         self._midlSAFEARRAY_defined = True
 
     _CoClass_defined = False
     def need_CoClass(self):
         if self._CoClass_defined:
             return
-        print("from comtypes import CoClass", file=self.imports)
+
+        self.imports['CoClass'] = 'comtypes'
         self._CoClass_defined = True
+
+    _helpstring_defined = False
+    def need_helpstring(self):
+        if self._helpstring_defined:
+            return
+
+        self.imports['helpstring'] = 'comtypes'
+        self._helpstring_defined = True
 
     _dispid_defined = False
     def need_dispid(self):
         if self._dispid_defined:
             return
-        print("from comtypes import dispid", file=self.imports)
+
+        self.imports['dispid'] = 'comtypes'
         self._dispid_defined = True
 
     _COMMETHOD_defined = False
     def need_COMMETHOD(self):
         if self._COMMETHOD_defined:
             return
-        print("from comtypes import helpstring", file=self.imports)
-        print("from comtypes import COMMETHOD", file=self.imports)
+
+        self.imports['COMMETHOD'] = 'comtypes'
         self._COMMETHOD_defined = True
 
     _DISPMETHOD_defined = False
     def need_DISPMETHOD(self):
         if self._DISPMETHOD_defined:
             return
-        print("from comtypes import DISPMETHOD, DISPPROPERTY, helpstring", file=self.imports)
+
+        self.imports['DISPMETHOD'] = 'comtypes'
         self._DISPMETHOD_defined = True
+
+    _DISPPROPERTY_defined = False
+    def need_DISPPROPERTY(self):
+        if self._DISPPROPERTY_defined:
+            return
+
+        self.imports['DISPPROPERTY'] = 'comtypes'
+        self._DISPPROPERTY_defined = True
 
     ################################################################
     # top-level typedesc generators
@@ -625,12 +735,21 @@ class Generator(object):
         # Should the '_reg_typelib_' attribute be at top-level in the
         # generated code, instead as being an attribute of the
         # 'Library' symbol?
+        if not self.last_item_class:
+            print(file=self.stream)
+            print(file=self.stream)
+
+        self.last_item_class = True
+
         print("class Library(object):", file=self.stream)
         if lib.doc:
-            print("    %r" % lib.doc, file=self.stream)
+            print('    """%s"""' % lib.doc, file=self.stream)
+
         if lib.name:
             print("    name = %r" % lib.name, file=self.stream)
+
         print("    _reg_typelib_ = (%r, %r, %r)" % (lib.guid, lib.major, lib.minor), file=self.stream)
+        print(file=self.stream)
         print(file=self.stream)
 
     def External(self, ext):
@@ -650,11 +769,13 @@ class Generator(object):
         modname = comtypes.client._generate._name_module(ext.tlib)
         ext.name = "%s.%s" % (modname, ext.symbol_name)
         self._externals[libdesc] = modname
-        print("import", modname, file=self.imports)
+
+        self.imports[modname] = None
         comtypes.client.GetModule(ext.tlib)
 
     def Constant(self, tp):
-        print("%s = %r # Constant %s" % (tp.name,
+        self.last_item_class = False
+        print("%s = %r  # Constant %s" % (tp.name,
                                          tp.value,
                                          self.type_name(tp.typ, False)), file=self.stream)
         self.names.add(tp.name)
@@ -684,10 +805,16 @@ class Generator(object):
     def CoClass(self, coclass):
         self.need_GUID()
         self.need_CoClass()
+        if not self.last_item_class:
+            print(file=self.stream)
+            print(file=self.stream)
+
+        self.last_item_class = True
+
         print("class %s(CoClass):" % coclass.name, file=self.stream)
         doc = getattr(coclass, "doc", None)
         if doc:
-            print("    %r" % doc, file=self.stream)
+            print('    """%s"""' % doc, file=self.stream)
         print("    _reg_clsid_ = GUID(%r)" % coclass.clsid, file=self.stream)
         print("    _idlflags_ = %s" % coclass.idlflags, file=self.stream)
         if self.filename is not None:
@@ -697,6 +824,8 @@ class Generator(object):
         libid = coclass.tlibattr.guid
         wMajor, wMinor = coclass.tlibattr.wMajorVerNum, coclass.tlibattr.wMinorVerNum
         print("    _reg_typelib_ = (%r, %s, %s)" % (str(libid), wMajor, wMinor), file=self.stream)
+        print(file=self.stream)
+        print(file=self.stream)
 
         for itf, idlflags in coclass.interfaces:
             self.generate(itf.get_head())
@@ -715,11 +844,14 @@ class Generator(object):
                 where.insert(0, item[0].name)
             else:
                 where.append(item[0].name)
+
         if implemented:
+            self.last_item_class = False
             print("%s._com_interfaces_ = [%s]" % (coclass.name, ", ".join(implemented)), file=self.stream)
         if sources:
+            self.last_item_class = False
             print("%s._outgoing_interfaces_ = [%s]" % (coclass.name, ", ".join(sources)), file=self.stream)
-        print(file=self.stream)
+
         self.names.add(coclass.name)
 
     def ComInterface(self, itf):
@@ -749,15 +881,24 @@ class Generator(object):
         basename = self.type_name(head.itf.base)
 
         self.need_GUID()
+
+        if not self.last_item_class:
+            print(file=self.stream)
+            print(file=self.stream)
+
+        self.last_item_class = True
+
         print("class %s(%s):" % (head.itf.name, basename), file=self.stream)
-        print("    _case_insensitive_ = True", file=self.stream)
         doc = getattr(head.itf, "doc", None)
         if doc:
-            print("    %r" % doc, file=self.stream)
+            print('    """%s"""' % doc, file=self.stream)
+
+        print("    _case_insensitive_ = True", file=self.stream)
         print("    _iid_ = GUID(%r)" % head.itf.iid, file=self.stream)
         print("    _idlflags_ = %s" % head.itf.idlflags, file=self.stream)
 
         if self._is_enuminterface(head.itf):
+            print(file=self.stream)
             print("    def __iter__(self):", file=self.stream)
             print("        return self", file=self.stream)
             print(file=self.stream)
@@ -776,7 +917,9 @@ class Generator(object):
             print("        if fetched:", file=self.stream)
             print("            return item", file=self.stream)
             print("        raise IndexError(index)", file=self.stream)
-            print(file=self.stream)
+
+        print(file=self.stream)
+        print(file=self.stream)
 
     def ComInterfaceBody(self, body):
         # The base class must be fully generated, including the
@@ -789,8 +932,10 @@ class Generator(object):
                 self.generate(a[0])
             self.generate(m.returns)
 
-        self.need_COMMETHOD()
-        self.need_dispid()
+        if not self.last_item_class:
+            print(file=self.stream)
+
+        self.last_item_class = False
         print("%s._methods_ = [" % body.itf.name, file=self.stream)
         for m in body.itf.members:
             if isinstance(m, typedesc.ComMethod):
@@ -799,9 +944,10 @@ class Generator(object):
                 raise TypeError("what's this?")
 
         print("]", file=self.stream)
+        print(file=self.stream)
         print("################################################################", file=self.stream)
-        print("## code template for %s implementation" % body.itf.name, file=self.stream)
-        print("##class %s_Impl(object):" % body.itf.name, file=self.stream)
+        print("# code template for %s implementation" % body.itf.name, file=self.stream)
+        print("# class %s_Impl(object):" % body.itf.name, file=self.stream)
 
         methods = {}
         for m in body.itf.members:
@@ -822,29 +968,28 @@ class Generator(object):
 
         for name, (typ, inargs, outargs, doc) in methods.items():
             if typ == 0: # method
-                print("##    def %s(%s):" % (name, ", ".join(["self"] + inargs)), file=self.stream)
-                print("##        %r" % (doc or "-no docstring-"), file=self.stream)
-                print("##        #return %s" % (", ".join(outargs)), file=self.stream)
+                print("#     def %s(%s):" % (name, ", ".join(["self"] + inargs)), file=self.stream)
+                print("#         %r" % (doc or "-no docstring-"), file=self.stream)
+                print("#         #return %s" % (", ".join(outargs)), file=self.stream)
             elif typ == 1: # propget
-                print("##    @property", file=self.stream)
-                print("##    def %s(%s):" % (name, ", ".join(["self"] + inargs)), file=self.stream)
-                print("##        %r" % (doc or "-no docstring-"), file=self.stream)
-                print("##        #return %s" % (", ".join(outargs)), file=self.stream)
+                print("#     @property", file=self.stream)
+                print("#     def %s(%s):" % (name, ", ".join(["self"] + inargs)), file=self.stream)
+                print("#         %r" % (doc or "-no docstring-"), file=self.stream)
+                print("#         #return %s" % (", ".join(outargs)), file=self.stream)
             elif typ == 2: # propput
-                print("##    def _set(%s):" % ", ".join(["self"] + inargs + outargs), file=self.stream)
-                print("##        %r" % (doc or "-no docstring-"), file=self.stream)
-                print("##    %s = property(fset = _set, doc = _set.__doc__)" % name, file=self.stream)
+                print("#     def _set(%s):" % ", ".join(["self"] + inargs + outargs), file=self.stream)
+                print("#         %r" % (doc or "-no docstring-"), file=self.stream)
+                print("#     %s = property(fset = _set, doc = _set.__doc__)" % name, file=self.stream)
             elif typ == 3: # propget + propput
-                print("##    def _get(%s):" % ", ".join(["self"] + inargs), file=self.stream)
-                print("##        %r" % (doc or "-no docstring-"), file=self.stream)
-                print("##        #return %s" % (", ".join(outargs)), file=self.stream)
-                print("##    def _set(%s):" % ", ".join(["self"] + inargs + outargs), file=self.stream)
-                print("##        %r" % (doc or "-no docstring-"), file=self.stream)
-                print("##    %s = property(_get, _set, doc = _set.__doc__)" % name, file=self.stream)
+                print("#     def _get(%s):" % ", ".join(["self"] + inargs), file=self.stream)
+                print("#         %r" % (doc or "-no docstring-"), file=self.stream)
+                print("#         #return %s" % (", ".join(outargs)), file=self.stream)
+                print("#     def _set(%s):" % ", ".join(["self"] + inargs + outargs), file=self.stream)
+                print("#         %r" % (doc or "-no docstring-"), file=self.stream)
+                print("#     %s = property(_get, _set, doc = _set.__doc__)" % name, file=self.stream)
             else:
                 raise RuntimeError("BUG")
-            print("##", file=self.stream)
-        print(file=self.stream)
+            print("#", file=self.stream)
 
     def DispInterface(self, itf):
         self.generate(itf.get_head())
@@ -856,6 +1001,12 @@ class Generator(object):
         basename = self.type_name(head.itf.base)
 
         self.need_GUID()
+        if not self.last_item_class:
+            print(file=self.stream)
+            print(file=self.stream)
+
+        self.last_item_class = True
+
         print("class %s(%s):" % (head.itf.name, basename), file=self.stream)
         print("    _case_insensitive_ = True", file=self.stream)
         doc = getattr(head.itf, "doc", None)
@@ -864,6 +1015,8 @@ class Generator(object):
         print("    _iid_ = GUID(%r)" % head.itf.iid, file=self.stream)
         print("    _idlflags_ = %s" % head.itf.idlflags, file=self.stream)
         print("    _methods_ = []", file=self.stream)
+        print(file=self.stream)
+        print(file=self.stream)
 
     def DispInterfaceBody(self, body):
         # make sure we can generate the body
@@ -877,8 +1030,11 @@ class Generator(object):
             else:
                 raise TypeError(m)
 
-        self.need_dispid()
-        self.need_DISPMETHOD()
+        if not self.last_item_class:
+            print(file=self.stream)
+
+        self.last_item_class = False
+
         print("%s._disp_methods_ = [" % body.itf.name, file=self.stream)
         for m in body.itf.members:
             if isinstance(m, typedesc.DispMethod):
@@ -893,24 +1049,40 @@ class Generator(object):
     # non-toplevel method generators
     #
     def make_ComMethod(self, m, isdual):
+        self.need_COMMETHOD()
         # typ, name, idlflags, default
         if isdual:
+            self.need_dispid()
             idlflags = [dispid(m.memid)] + m.idlflags
         else:
             # We don't include the dispid for non-dispatch COM interfaces
             idlflags = m.idlflags
         if __debug__ and m.doc:
+            self.need_helpstring()
             idlflags.insert(1, helpstring(m.doc))
-        code = "    COMMETHOD(%r, %s, '%s'" % (
-            idlflags,
-            self.type_name(m.returns),
-            m.name)
 
+        self.last_item_class = False
         if not m.arguments:
-            print("%s)," % code, file=self.stream)
+            code = "    COMMETHOD(%r, %s, '%s')," % (idlflags, self.type_name(m.returns), m.name)
+            if len(code) > 80:
+                code = (
+                    "    COMMETHOD(\n"
+                    "        %r,\n"
+                    "        %s,\n"
+                    "        '%s',\n"
+                    "    ),"
+                ) % (idlflags, self.type_name(m.returns), m.name)
+
+            print(code, file=self.stream)
         else:
-            print("%s," % code, file=self.stream)
-            self.stream.write("              ")
+            code = (
+                "    COMMETHOD(\n"
+                "        %r,\n"
+                "        %s,\n"
+                "        '%s',"
+            ) % (idlflags, self.type_name(m.returns), m.name)
+            print(code, file=self.stream)
+            # self.stream.write("")
             arglist = []
             for typ, name, idlflags, default in m.arguments:
                 type_name = self.type_name(typ)
@@ -963,60 +1135,120 @@ class Generator(object):
                     default = lcid
                 if default is not None:
                     self.need_VARIANT_imports(default)
-                    arglist.append("( %r, %s, '%s', %r )" % (
-                        idlflags,
-                        type_name,
-                        name,
-                        default))
+
+                    code = "        (%r, %s, '%s', %r)" % (idlflags, type_name, name, default)
+
+                    if len(code) > 80:
+                        code = (
+                            "        (\n"
+                            "            %r,\n"
+                            "            %s,\n"
+                            "            '%s',\n"
+                            "            %r\n"
+                            "        )"
+                        ) % (idlflags, type_name, name, default)
                 else:
-                    arglist.append("( %r, %s, '%s' )" % (
-                        idlflags,
-                        type_name,
-                        name))
-            self.stream.write(",\n              ".join(arglist))
-            print("),", file=self.stream)
+                    code = "        (%r, %s, '%s')" % (idlflags, type_name, name)
+                    if len(code) > 80:
+                        code = (
+                            "        (\n"
+                            "            %r,\n"
+                            "            %s,\n"
+                            "            '%s',\n"
+                            "        )"
+                        ) % (idlflags, type_name, name)
+
+                arglist.append(code)
+
+            self.stream.write(",\n".join(arglist))
+            print("\n    ),", file=self.stream)
 
     def make_DispMethod(self, m):
+        self.need_DISPMETHOD()
+        self.need_dispid()
         idlflags = [dispid(m.dispid)] + m.idlflags
         if __debug__ and m.doc:
+            self.need_helpstring()
             idlflags.insert(1, helpstring(m.doc))
-        # typ, name, idlflags, default
-        code = "    DISPMETHOD(%r, %s, '%s'" % (
-            idlflags,
-            self.type_name(m.returns),
-            m.name)
 
+        self.last_item_class = False
+
+        # typ, name, idlflags, default
         if not m.arguments:
-            print("%s)," % code, file=self.stream)
+            code = "    DISPMETHOD(%r, %s, '%s')," % (idlflags, self.type_name(m.returns), m.name)
+            if len(code) > 80:
+                code = (
+                    "    DISPMETHOD(\n"
+                    "        %r,\n"
+                    "        %s,\n"
+                    "        '%s'\n"
+                    "    ),"
+                ) % (idlflags, self.type_name(m.returns), m.name)
+
+            print(code, file=self.stream)
         else:
-            print("%s," % code, file=self.stream)
-            self.stream.write("               ")
+            code = (
+                "    DISPMETHOD(\n"
+                "        %r,\n"
+                "        %s,\n"
+                "        '%s',"
+                ) % (idlflags, self.type_name(m.returns), m.name)
+
+            print(code, file=self.stream)
+
             arglist = []
             for typ, name, idlflags, default in m.arguments:
                 self.need_VARIANT_imports(default)
                 if default is not None:
-                    arglist.append("( %r, %s, '%s', %r )" % (
-                        idlflags,
-                        self.type_name(typ),
-                        name,
-                        default))
+                    code = "        (%r, %s, '%s', %r)" % (idlflags, self.type_name(typ), name, default)
+                    if len(code) > 80:
+                        code = (
+                            "        (\n"
+                            "            %r,\n"
+                            "            %s,\n"
+                            "            '%s',\n"
+                            "            %r\n"
+                            "        )"
+                        ) % (idlflags, self.type_name(typ), name, default)
+
+
                 else:
-                    arglist.append("( %r, %s, '%s' )" % (
-                        idlflags,
-                        self.type_name(typ),
-                        name,
-                        ))
-            self.stream.write(",\n               ".join(arglist))
-            print("),", file=self.stream)
+                    code = "        (%r, %s, '%s')" % (idlflags, self.type_name(typ), name)
+
+                    if len(code) > 80:
+                        code = (
+                            "        (\n"
+                            "            %r,\n"
+                            "            %s,\n"
+                            "            '%s'\n"
+                            "        )"
+                        ) % (idlflags, self.type_name(typ), name)
+
+                arglist.append(code)
+
+            self.stream.write(",\n".join(arglist))
+            print("\n    ),", file=self.stream)
 
     def make_DispProperty(self, prop):
+        self.need_DISPPROPERTY()
+        self.need_dispid()
         idlflags = [dispid(prop.dispid)] + prop.idlflags
         if __debug__ and prop.doc:
+            self.need_helpstring()
             idlflags.insert(1, helpstring(prop.doc))
-        print("    DISPPROPERTY(%r, %s, '%s')," % (
-            idlflags,
-            self.type_name(prop.typ),
-            prop.name), file=self.stream)
+
+        self.last_item_class = False
+        code = "    DISPPROPERTY(%r, %s, '%s')," % (idlflags, self.type_name(prop.typ), prop.name)
+        if len(code) > 80:
+            code = (
+                "    DISPPROPERTY(\n"
+                "        %r,\n"
+                "        %s,\n"
+                "        '%s'\n"
+                "    ),"
+            ) % (idlflags, self.type_name(prop.typ), prop.name)
+
+        print(code, file=self.stream)
 
 # shortcut for development
 if __name__ == "__main__":
