@@ -13,7 +13,7 @@ from comtypes.gen import urlhistLib
 # freed by the caller.  The only way to do this without patching the
 # generated code directly is to monkey-patch the
 # _STATURL.__ctypes_from_outparam__ method like this.
-@Patch(urlhistLib._STATURL)
+@Patch(urlhistlib._STATURL)
 class _(object):
     def __ctypes_from_outparam__(self):
         from comtypes.util import cast_field

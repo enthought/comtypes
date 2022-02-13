@@ -90,7 +90,7 @@ class VariantTestCase(unittest.TestCase):
         if sys.version_info >= (3, 0):
             objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
         else:
-            objects = [None, 42, 3.14, True, False, "abc", u"abc", 7]
+            objects = [None, 42, 3.14, True, False, "abc", u"abc", 7L]
         for x in objects:
             v = VARIANT(x)
             self.assertEqual(x, v.value)

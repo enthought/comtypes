@@ -553,7 +553,6 @@ class Generator(object):
 
         if methods:
             self.need_COMMETHOD()
-            self.need_helpstring()
             # method definitions normally span several lines.
             # Before we generate them, we need to 'import' everything they need.
             # So, call type_name for each field once,
@@ -601,6 +600,7 @@ class Generator(object):
     def need_COMMETHOD(self):
         if self._COMMETHOD_defined:
             return
+        print("from comtypes import helpstring", file=self.imports)
         print("from comtypes import COMMETHOD", file=self.imports)
         self._COMMETHOD_defined = True
 
@@ -608,17 +608,8 @@ class Generator(object):
     def need_DISPMETHOD(self):
         if self._DISPMETHOD_defined:
             return
-        print("from comtypes import DISPMETHOD", file=self.imports)
-        print("from comtypes import DISPPROPERTY", file=self.imports)
-
+        print("from comtypes import DISPMETHOD, DISPPROPERTY, helpstring", file=self.imports)
         self._DISPMETHOD_defined = True
-
-    _helpstring_defined = False
-    def need_helpstring(self):
-        if self._helpstring_defined:
-            return
-        print("from comtypes import helpstring", file=self.imports)
-        self._helpstring_defined = True
 
     ################################################################
     # top-level typedesc generators
@@ -800,7 +791,6 @@ class Generator(object):
 
         self.need_COMMETHOD()
         self.need_dispid()
-        self.need_helpstring()
         print("%s._methods_ = [" % body.itf.name, file=self.stream)
         for m in body.itf.members:
             if isinstance(m, typedesc.ComMethod):
@@ -889,7 +879,6 @@ class Generator(object):
 
         self.need_dispid()
         self.need_DISPMETHOD()
-        self.need_helpstring()
         print("%s._disp_methods_ = [" % body.itf.name, file=self.stream)
         for m in body.itf.members:
             if isinstance(m, typedesc.DispMethod):
