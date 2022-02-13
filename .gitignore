@@ -50,4 +50,6 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
-
+# generated files when tests are run
+/comtypes/test/mylib.tlb
+/comtypes/test/mylib.idl
