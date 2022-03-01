@@ -130,7 +130,9 @@ def calc_packing(struct, fields):
         else:
             if pack is None:
                 return None
-            return pack/8
+
+            return int(pack / 8)
+
     raise PackingError("PACKING FAILED: %s" % details)
 
 class PackingError(Exception):
