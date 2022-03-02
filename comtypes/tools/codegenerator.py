@@ -257,11 +257,31 @@ class Generator(object):
                 assert os.path.isfile(p)
 
     def generate_code(self, items, filename):
+
+        tlib_mtime = None
+
+        if filename is not None:
+            # get full path to DLL first (os.stat can't work with relative DLL paths properly)
+            loaded_typelib = comtypes.typeinfo.LoadTypeLib(filename)
+            full_filename = comtypes.tools.tlbparser.get_tlib_filename(
+                loaded_typelib)
+
+            while full_filename and not os.path.exists(full_filename):
+                full_filename = os.path.split(full_filename)[0]
+
+            if full_filename and os.path.isfile(full_filename):
+                # get DLL timestamp at the moment of wrapper generation
+
+                tlib_mtime = os.stat(full_filename).st_mtime
+
+                if not full_filename.endswith(filename):
+                    filename = full_filename
+
         self.filename = filename
-        print("_lcid = 0  # change this if required", file=self.declarations)
+        print("_lcid = 0  # change this if required",
+              file=self.declarations)
         self._generate_typelib_path(filename)
-        self.imports['*'] = 'ctypes'
-        self.imports['_check_version'] = 'comtypes'
+
         items = set(items)
         loops = 0
         while items:
@@ -285,11 +305,11 @@ class Generator(object):
         self.output.write(self.declarations.getvalue())
         self.output.write(stream)
 
-
         # XXX The space before '%s' is needed to make sure that the entire list
         #     does not get pushed to the next line when the first name is
         #     excessively long.
-        text = "__all__ = [%s]" % ", ".join([repr(str(n)) for n in self.names])
+        text = "__all__ = [%s]" % ", ".join(
+            [repr(str(n)) for n in self.names])
 
         if len(text) > 80:
             import textwrap
@@ -306,12 +326,14 @@ class Generator(object):
         else:
             print(text, file=self.output)
 
-        if os.path.exists(filename):
-            tlib_mtime = os.stat(filename).st_mtime
-        else:
-            tlib_mtime = None
-        logger.debug("filename: \"%s\": tlib_mtime: %s", filename, tlib_mtime)
-        print("_check_version(%r, %s)" % (version, tlib_mtime), file=self.output)
+        if tlib_mtime is not None:
+            self.imports['*'] = 'ctypes'
+            self.imports['_check_version'] = 'comtypes'
+            logger.debug("filename: \"%s\": tlib_mtime: %s", filename,
+                         tlib_mtime)
+            print("_check_version(%r, %f)" % (version, tlib_mtime),
+                  file=self.output)
+
         return loops
 
     def type_name(self, t, generate=True):
