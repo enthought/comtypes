@@ -1,8 +1,13 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.12
+--------------
+ * Fix ``_pack_`` being returned as a float. Thanks @kdschlosser.
+ * More general fix for timestamping a type library. Thanks @kdschlosser.
+
 Release 1.1.11
--------------
+--------------
  * Fix setuptools>=57.5.0 compatibility. Thanks @kdschlosser.
  * Fix timestamping for typelib. Thanks @fusentasticus.
  * Fix 64bit inproc server. Thanks @klusidy.
@@ -11,7 +16,7 @@ Release 1.1.11
  * Make numpy typecodes consistent across numpy versions. Thanks @bennyrowland.
 
 Release 1.1.10
--------------
+--------------
  * Fix loading module from relative path on Windows 7.
 
 Release 1.1.9
