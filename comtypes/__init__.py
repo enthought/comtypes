@@ -3,7 +3,7 @@ import sys
 import os
 
 # comtypes version numbers follow semver (http://semver.org/) and PEP 440
-__version__ = "1.1.11"
+__version__ = "1.1.12"
 
 if sys.version_info >= (3, 0):
     text_type = str
