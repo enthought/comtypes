@@ -1,6 +1,4 @@
 import unittest, sys
-raise unittest.SkipTest("This test requires the tests to be run as admin since it tries to "
-                        "register the test COM server.  Is this a good idea?")
 from ctypes import *
 from ctypes.wintypes import *
 from comtypes.client import CreateObject, GetEvents, ShowEvents
@@ -10,7 +8,15 @@ from comtypes.test.find_memleak import find_memleak
 
 ################################################################
 import comtypes.test.TestComServer
-register(comtypes.test.TestComServer.TestComServer)
+
+
+def setUpModule():
+    raise unittest.SkipTest("This test requires the tests to be run as admin since it tries to "
+                            "register the test COM server.  Is this a good idea?")
+
+    # If this test is ever NOT skipped, then this line needs to run.  Keeping it here for posterity.
+    register(comtypes.test.TestComServer.TestComServer)
+
 
 class TestInproc(unittest.TestCase):
 

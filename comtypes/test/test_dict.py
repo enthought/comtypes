@@ -6,6 +6,11 @@ from comtypes.client import CreateObject
 from comtypes.client.lazybind import Dispatch
 from comtypes.automation import VARIANT
 
+
+def setUpModule():
+    raise unittest.SkipTest("Depends on `comtypes.safearray` which depends on numpy which isn't "
+                            "listed in project dependencies.")
+
 class Test(unittest.TestCase):
     def test_dict(self):
         d = CreateObject("Scripting.Dictionary", dynamic=True)
@@ -72,7 +77,7 @@ class Test(unittest.TestCase):
         d.Item["value"] = s.CompareMode
 
         a = d.Item["object"]
- 
+
         self.assertEqual(d.Item["object"], s)
         self.assertEqual(d.Item["object"].CompareMode, 42)
         self.assertEqual(d.Item["value"], 42)

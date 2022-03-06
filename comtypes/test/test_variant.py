@@ -274,7 +274,8 @@ class NdArrayTest(unittest.TestCase):
         v.value = a
         self.assertTrue((v.value == a).all())
 
-
+@unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
+               "the project dependencies.")
 class ArrayTest(unittest.TestCase):
     def test_double(self):
         import array
