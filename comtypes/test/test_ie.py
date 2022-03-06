@@ -1,10 +1,9 @@
 import unittest as ut
-
-
 from ctypes import *
-from comtypes.client import CreateObject, GetEvents
 
 import comtypes.test
+from comtypes.client import CreateObject, GetEvents
+
 comtypes.test.requires("ui")
 
 

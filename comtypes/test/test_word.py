@@ -1,6 +1,5 @@
-import unittest
-
 import time
+import unittest
 
 import comtypes.client
 import comtypes.test

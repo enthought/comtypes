@@ -1,13 +1,13 @@
 # -*- coding: latin-1 -*-
 from __future__ import print_function
+
+import datetime
 import unittest
 
 import comtypes.test
-comtypes.test.requires("ui")
-
-import datetime
-
 from comtypes.client import CreateObject
+
+comtypes.test.requires("ui")
 
 
 def setUpModule():

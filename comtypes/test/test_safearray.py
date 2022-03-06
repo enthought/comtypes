@@ -1,18 +1,16 @@
 import array
-from comtypes import BSTR, IUnknown
-from comtypes.test import is_resource_enabled, get_numpy
-from comtypes.test.find_memleak import find_memleak
+import datetime
+import unittest
 from ctypes import POINTER, PyDLL, byref, c_double, c_long, pointer, py_object
 from ctypes.wintypes import BOOL
-import datetime
 from decimal import Decimal
-import unittest
 
-from comtypes.automation import (
-    VARIANT, VT_ARRAY, VT_VARIANT, VT_I4, VT_R4, VT_R8, VT_BSTR, VARIANT_BOOL)
-from comtypes.automation import _midlSAFEARRAY
-from comtypes.safearray import safearray_as_ndarray
+from comtypes import BSTR, IUnknown
 from comtypes._safearray import SafeArrayGetVartype
+from comtypes.automation import VARIANT, VARIANT_BOOL, VT_ARRAY, VT_BSTR, VT_I4, VT_R4, VT_R8, VT_VARIANT, _midlSAFEARRAY
+from comtypes.safearray import safearray_as_ndarray
+from comtypes.test import get_numpy, is_resource_enabled
+from comtypes.test.find_memleak import find_memleak
 
 
 def get_array(sa):
