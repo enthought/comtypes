@@ -1,11 +1,9 @@
 import unittest
 
-
-
 import comtypes
 import comtypes.client
-
 import comtypes.test
+
 comtypes.test.requires("ui")
 
 

@@ -1,13 +1,11 @@
-import unittest, sys
-from ctypes import *
-from ctypes.wintypes import *
-from comtypes.client import CreateObject, GetEvents, ShowEvents
-from comtypes.server.register import register#, unregister
+import sys
+import unittest
+
+import comtypes.test.TestComServer
+from comtypes.client import CreateObject
+from comtypes.server.register import register  # , unregister
 from comtypes.test import is_resource_enabled
 from comtypes.test.find_memleak import find_memleak
-
-################################################################
-import comtypes.test.TestComServer
 
 
 def setUpModule():
@@ -33,7 +31,7 @@ class TestInproc(unittest.TestCase):
         self.assertEqual(o.MixedInOut(2, 4), (3, 5))
 
     def test_getname(self):
-        from ctypes import byref, pointer
+        from ctypes import pointer
         from comtypes import BSTR
 
         # This tests a tricky bug, introduced with this patch:

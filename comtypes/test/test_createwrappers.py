@@ -1,12 +1,13 @@
 from __future__ import print_function
+
 import glob
 import os
 import unittest
 import warnings
-import comtypes.typeinfo
+
 import comtypes.client
 import comtypes.client._generate
-from comtypes.test import requires
+import comtypes.typeinfo
 
 
 def setUpModule():

@@ -1,11 +1,8 @@
 import unittest
 
-
-from comtypes.server.register import register#, unregister
-from comtypes.test import is_resource_enabled
-
-################################################################
 import comtypes.test.TestDispServer
+from comtypes.server.register import register  # , unregister
+from comtypes.test import is_resource_enabled
 
 
 def setUpModule():

@@ -1,10 +1,10 @@
 """Use Scripting.Dictionary to test the lazybind module."""
 
 import unittest
-from comtypes import COMError
+
+from comtypes.automation import VARIANT
 from comtypes.client import CreateObject
 from comtypes.client.lazybind import Dispatch
-from comtypes.automation import VARIANT
 
 
 def setUpModule():
