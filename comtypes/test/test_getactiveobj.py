@@ -1,13 +1,18 @@
 import unittest
 
-raise unittest.SkipTest("External test dependencies like this seem bad.  Find a different "
-                        "built-in win32 API to use.")
+
 
 import comtypes
 import comtypes.client
 
 import comtypes.test
 comtypes.test.requires("ui")
+
+
+def setUpModule():
+    raise unittest.SkipTest("External test dependencies like this seem bad.  Find a different "
+                            "built-in win32 API to use.")
+
 
 class Test(unittest.TestCase):
     def tearDown(self):
