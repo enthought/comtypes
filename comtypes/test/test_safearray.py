@@ -57,12 +57,16 @@ class VariantTestCase(unittest.TestCase):
         bytes = find_memleak(func)
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
+    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
+                   "the project dependencies.")
     def test_float_array(self):
         a = array.array("f", (3.14, 2.78))
         v = VARIANT(a)
         self.assertEqual(v.vt, VT_ARRAY | VT_R4)
         self.assertEqual(tuple(a.tolist()), v.value)
 
+    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
+                   "the project dependencies.")
     def test_2dim_array(self):
         data = ((1, 2, 3, 4),
                 (5, 6, 7, 8),
@@ -112,6 +116,8 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertTrue(isinstance(fourth, np.ndarray))
         self.assertTrue(isinstance(fifth, tuple))
 
+    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
+                   "the project dependencies.")
     def test_VT_BSTR(self):
         t = _midlSAFEARRAY(BSTR)
 
@@ -154,6 +160,8 @@ class SafeArrayTestCase(unittest.TestCase):
         bytes = find_memleak(doit)
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
+    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
+                   "the project dependencies.")
     def test_VT_I4(self):
         t = _midlSAFEARRAY(c_long)
 
@@ -217,6 +225,8 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertEqual(np.dtype(np.double), arr.dtype)
         self.assertEqual(pat[0][0], data)
 
+    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
+                   "the project dependencies.")
     def test_VT_VARIANT(self):
         t = _midlSAFEARRAY(VARIANT)
 
@@ -244,6 +254,8 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertTrue((arr == inarr).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_VARIANT)
 
+    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
+                   "the project dependencies.")
     def test_VT_BOOL(self):
         t = _midlSAFEARRAY(VARIANT_BOOL)
 
@@ -263,6 +275,8 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertTrue(isinstance(arr, np.ndarray))
         self.assertTrue((arr == (True, False, True, False)).all())
 
+    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
+                   "the project dependencies.")
     def test_VT_UNKNOWN_1(self):
         a = _midlSAFEARRAY(POINTER(IUnknown))
         t = _midlSAFEARRAY(POINTER(IUnknown))
@@ -290,6 +304,8 @@ class SafeArrayTestCase(unittest.TestCase):
         sa = t.from_param([None])
         self.assertEqual((POINTER(IUnknown)(),), sa[0])
 
+    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
+                   "the project dependencies.")
     def test_VT_UNKNOWN_multi(self):
         a = _midlSAFEARRAY(POINTER(IUnknown))
         t = _midlSAFEARRAY(POINTER(IUnknown))
