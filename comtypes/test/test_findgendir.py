@@ -1,16 +1,17 @@
-import types, os, unittest, sys, tempfile
-
-if sys.version_info[0] == 3:
-    from importlib import reload
-elif sys.version_info[0] == 2:
-    from imp import reload
-
+import os
+import sys
+import tempfile
+import types
+import unittest
 
 import comtypes
 import comtypes.client
 import comtypes.gen
 
-from comtypes.client._code_cache import _get_appdata_dir
+if sys.version_info[0] == 3:
+    from importlib import reload
+elif sys.version_info[0] == 2:
+    from imp import reload
 
 imgbase = os.path.splitext(os.path.basename(sys.executable))[0]
 
