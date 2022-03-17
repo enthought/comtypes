@@ -293,7 +293,7 @@ class Generator(object):
             items -= self.done
 
         stream = self.stream.getvalue()
-        self.imports['*'] = 'ctypes'  # XXX wildcard import is so ugly, it should be fixed in future version.
+        self.imports['*'] = 'ctypes'  # HACK: wildcard import is so ugly, it should be fixed in future version.
         if tlib_mtime is not None:
             self.imports['_check_version'] = 'comtypes'
         for key, value in self.imports.items():
