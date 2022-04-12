@@ -177,10 +177,10 @@ def _shutdown(func=_ole32_nohresult.CoUninitialize,
              _exc_clear=getattr(sys, "exc_clear", lambda: None)):
     # Make sure no COM pointers stay in exception frames.
     _exc_clear()
-    # Sometimes, CoUnititialize, running at Python shutdown,
+    # Sometimes, CoUninitialize, running at Python shutdown,
     # raises an exception.  We suppress this when __debug__ is
     # False.
-    _debug("Calling CoUnititialize()")
+    _debug("Calling CoUninitialize()")
     if __debug__:
         func()
     else:
@@ -190,7 +190,7 @@ def _shutdown(func=_ole32_nohresult.CoUninitialize,
     # needed.
     if _cominterface_meta is not None:
         _cominterface_meta._com_shutting_down = True
-    _debug("CoUnititialize() done.")
+    _debug("CoUninitialize() done.")
 
 import atexit
 atexit.register(_shutdown)
@@ -227,7 +227,7 @@ class _cominterface_meta(type):
     """
 
     # This flag is set to True by the atexit handler which calls
-    # CoUnititialize.
+    # CoUninitialize.
     _com_shutting_down = False
 
     # Creates also a POINTER type for the newly created class.
@@ -945,7 +945,7 @@ class _compointer_base(c_void_p):
     def __del__(self, _debug=logger.debug):
         "Release the COM refcount we own."
         if self:
-            # comtypes calls CoUnititialize() when the atexit handlers
+            # comtypes calls CoUninitialize() when the atexit handlers
             # runs.  CoUninitialize() cleans up the COM objects that
             # are still alive. Python COM pointers may still be
             # present but we can no longer call Release() on them -
