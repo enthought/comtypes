@@ -1,4 +1,5 @@
-from ctypes import *
+from ctypes import Structure, byref, c_byte, c_ulong, c_ushort, c_wchar_p, \
+                    oledll, windll
 import sys
 
 if sys.version_info >= (2, 6):

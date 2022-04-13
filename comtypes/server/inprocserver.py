@@ -1,7 +1,7 @@
 import ctypes
 from comtypes import COMObject, GUID
 from comtypes.server import IClassFactory
-from comtypes.hresult import *
+from comtypes.hresult import CLASS_E_CLASSNOTAVAILABLE, E_FAIL, S_FALSE, S_OK
 
 import sys
 import logging

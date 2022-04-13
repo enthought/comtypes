@@ -10,6 +10,7 @@ from comtypes import automation
 from comtypes import typeinfo
 from comtypes import COMError
 from comtypes.tools import typedesc
+from comtypes.tools import typedesc_base
 from comtypes.client._code_cache import _get_module_filename
 
 try:
@@ -24,38 +25,38 @@ is_64bits = sys.maxsize > 2**32
 ################################
 
 def PTR(typ):
-    return typedesc.PointerType(typ,
+    return typedesc_base.PointerType(typ,
                                 sizeof(c_void_p)*8,
                                 alignment(c_void_p)*8)
 
 # basic C data types, with size and alignment in bits
-char_type = typedesc.FundamentalType("char", 8, 8)
-uchar_type = typedesc.FundamentalType("unsigned char", 8, 8)
-wchar_t_type = typedesc.FundamentalType("wchar_t", 16, 16)
-short_type = typedesc.FundamentalType("short int", 16, 16)
-ushort_type = typedesc.FundamentalType("short unsigned int", 16, 16)
-int_type = typedesc.FundamentalType("int", 32, 32)
-uint_type = typedesc.FundamentalType("unsigned int", 32, 32)
-long_type = typedesc.FundamentalType("long int", 32, 32)
-ulong_type = typedesc.FundamentalType("long unsigned int", 32, 32)
-longlong_type = typedesc.FundamentalType("long long int", 64, 64)
-ulonglong_type = typedesc.FundamentalType("long long unsigned int", 64, 64)
-float_type = typedesc.FundamentalType("float", 32, 32)
-double_type = typedesc.FundamentalType("double", 64, 64)
+char_type = typedesc_base.FundamentalType("char", 8, 8)
+uchar_type = typedesc_base.FundamentalType("unsigned char", 8, 8)
+wchar_t_type = typedesc_base.FundamentalType("wchar_t", 16, 16)
+short_type = typedesc_base.FundamentalType("short int", 16, 16)
+ushort_type = typedesc_base.FundamentalType("short unsigned int", 16, 16)
+int_type = typedesc_base.FundamentalType("int", 32, 32)
+uint_type = typedesc_base.FundamentalType("unsigned int", 32, 32)
+long_type = typedesc_base.FundamentalType("long int", 32, 32)
+ulong_type = typedesc_base.FundamentalType("long unsigned int", 32, 32)
+longlong_type = typedesc_base.FundamentalType("long long int", 64, 64)
+ulonglong_type = typedesc_base.FundamentalType("long long unsigned int", 64, 64)
+float_type = typedesc_base.FundamentalType("float", 32, 32)
+double_type = typedesc_base.FundamentalType("double", 64, 64)
 
 # basic COM data types
-BSTR_type = typedesc.Typedef("BSTR", PTR(wchar_t_type))
-SCODE_type = typedesc.Typedef("SCODE", int_type)
-VARIANT_BOOL_type = typedesc.Typedef("VARIANT_BOOL", short_type)
-HRESULT_type = typedesc.Typedef("HRESULT", ulong_type)
+BSTR_type = typedesc_base.Typedef("BSTR", PTR(wchar_t_type))
+SCODE_type = typedesc_base.Typedef("SCODE", int_type)
+VARIANT_BOOL_type = typedesc_base.Typedef("VARIANT_BOOL", short_type)
+HRESULT_type = typedesc_base.Typedef("HRESULT", ulong_type)
 
-VARIANT_type = typedesc.Structure("VARIANT",
+VARIANT_type = typedesc_base.Structure("VARIANT",
                                   align=alignment(automation.VARIANT)*8,
                                   members=[], bases=[],
                                   size=sizeof(automation.VARIANT)*8)
-IDISPATCH_type = typedesc.Typedef("IDispatch", None)
-IUNKNOWN_type = typedesc.Typedef("IUnknown", None)
-DECIMAL_type = typedesc.Structure("DECIMAL",
+IDISPATCH_type = typedesc_base.Typedef("IDispatch", None)
+IUNKNOWN_type = typedesc_base.Typedef("IUnknown", None)
+DECIMAL_type = typedesc_base.Structure("DECIMAL",
                                   align=alignment(automation.DECIMAL)*8,
                                   members=[], bases=[],
                                   size=sizeof(automation.DECIMAL)*8)
@@ -90,7 +91,7 @@ COMTYPES = {
     automation.VT_UI8: ulonglong_type, # 21
     automation.VT_INT: int_type, # 22
     automation.VT_UINT: uint_type, # 23
-    automation.VT_VOID: typedesc.FundamentalType("void", 0, 0), # 24
+    automation.VT_VOID: typedesc_base.FundamentalType("void", 0, 0), # 24
     automation.VT_HRESULT: HRESULT_type, # 25
     automation.VT_LPSTR: PTR(char_type), # 30
     automation.VT_LPWSTR: PTR(wchar_t_type), # 31
@@ -119,7 +120,7 @@ class Parser(object):
         if tdesc.vt == automation.VT_CARRAY:
             typ = self.make_type(tdesc._.lpadesc[0].tdescElem, tinfo)
             for i in range(tdesc._.lpadesc[0].cDims):
-                typ = typedesc.ArrayType(typ,
+                typ = typedesc_base.ArrayType(typ,
                                          tdesc._.lpadesc[0].rgbounds[i].lLbound,
                                          tdesc._.lpadesc[0].rgbounds[i].cElements-1)
             return typ
@@ -140,7 +141,7 @@ class Parser(object):
                           (tlib_name, details, type_name)
                 import warnings
                 warnings.warn(message, UserWarning);
-                result = typedesc.Structure(type_name,
+                result = typedesc_base.Structure(type_name,
                                             align=8,
                                             members=[], bases=[],
                                             size=0)
@@ -162,7 +163,7 @@ class Parser(object):
     def ParseEnum(self, tinfo, ta):
         ta = tinfo.GetTypeAttr()
         enum_name = tinfo.GetDocumentation(-1)[0]
-        enum = typedesc.Enumeration(enum_name, 32, 32)
+        enum = typedesc_base.Enumeration(enum_name, 32, 32)
         self._register(enum_name, enum)
 
         for i in range(ta.cVars):
@@ -170,7 +171,7 @@ class Parser(object):
             name = tinfo.GetDocumentation(vd.memid)[0]
             assert vd.varkind == typeinfo.VAR_CONST
             num_val = vd._.lpvarValue[0].value
-            v = typedesc.EnumValue(name, num_val, enum)
+            v = typedesc_base.EnumValue(name, num_val, enum)
             enum.add_value(v)
         return enum
 
@@ -178,7 +179,7 @@ class Parser(object):
     def ParseRecord(self, tinfo, ta):
         members = [] # will be filled later
         struct_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
-        struct = typedesc.Structure(struct_name,
+        struct = typedesc_base.Structure(struct_name,
                                     align=ta.cbAlignment*8,
                                     members=members,
                                     bases=[],
@@ -206,7 +207,7 @@ class Parser(object):
             offset = vd._.oInst * 8
             assert vd.varkind == typeinfo.VAR_PERINSTANCE
             typ = self.make_type(vd.elemdescVar.tdesc, tinfo)
-            field = typedesc.Field(name,
+            field = typedesc_base.Field(name,
                                    typ,
                                    None, # bits
                                    offset)
@@ -234,7 +235,7 @@ class Parser(object):
             else:
                 raise ValueError("calling convention %d" % fd.callconv)
 
-            func = typedesc.Function(func_name, returns, attributes, extern=1)
+            func = typedesc_base.Function(func_name, returns, attributes, extern=1)
             if func_doc is not None:
                 func.doc = func_doc.encode("mbcs")
             func.dllname = dllname
@@ -513,7 +514,7 @@ class Parser(object):
     def ParseAlias(self, tinfo, ta):
         name = tinfo.GetDocumentation(-1)[0]
         typ = self.make_type(ta.tdescAlias, tinfo)
-        alias = typedesc.Typedef(name, typ)
+        alias = typedesc_base.Typedef(name, typ)
         self._register(name, alias)
         return alias
 
@@ -521,7 +522,7 @@ class Parser(object):
     def ParseUnion(self, tinfo, ta):
         union_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
         members = []
-        union = typedesc.Union(union_name,
+        union = typedesc_base.Union(union_name,
                                align=ta.cbAlignment*8,
                                members=members,
                                bases=[],
@@ -543,7 +544,7 @@ class Parser(object):
             offset = vd._.oInst * 8
             assert vd.varkind == typeinfo.VAR_PERINSTANCE
             typ = self.make_type(vd.elemdescVar.tdesc, tinfo)
-            field = typedesc.Field(name,
+            field = typedesc_base.Field(name,
                                    typ,
                                    None, # bits
                                    offset)

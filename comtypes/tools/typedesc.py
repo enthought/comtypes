@@ -2,7 +2,7 @@
 # in typedesc_base
 
 import ctypes
-from comtypes.tools.typedesc_base import *
+# from comtypes.tools.typedesc_base import 
 
 class TypeLib(object):
     def __init__(self, name, guid, major, minor, doc=None):

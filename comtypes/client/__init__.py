@@ -13,7 +13,6 @@ import sys, os
 import ctypes
 
 import comtypes
-from comtypes.hresult import *
 import comtypes.automation
 import comtypes.typeinfo
 import comtypes.client.dynamic

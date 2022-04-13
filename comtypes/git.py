@@ -3,7 +3,7 @@
 The global interface table provides a way to marshal interface pointers
 between different threading appartments.
 """
-from ctypes import *
+from ctypes import POINTER, c_ulong
 from comtypes import IUnknown, STDMETHOD, COMMETHOD, \
      GUID, HRESULT, CoCreateInstance, CLSCTX_INPROC_SERVER
 

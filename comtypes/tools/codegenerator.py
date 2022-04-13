@@ -11,6 +11,7 @@ import keyword
 import ctypes
 
 from comtypes.tools import typedesc
+from comtypes.tools import typedesc_base
 import comtypes
 import comtypes.client
 import comtypes.client._generate
@@ -72,9 +73,9 @@ ctypes_names = {
 }
 
 def get_real_type(tp):
-    if type(tp) is typedesc.Typedef:
+    if type(tp) is typedesc_base.Typedef:
         return get_real_type(tp.typ)
-    elif isinstance(tp, typedesc.CvQualifiedType):
+    elif isinstance(tp, typedesc_base.CvQualifiedType):
         return get_real_type(tp.typ)
     return tp
 
@@ -121,7 +122,7 @@ def _calc_packing(struct, fields, pack, isStruct):
 
 def calc_packing(struct, fields):
     # try several packings, starting with unspecified packing
-    isStruct = isinstance(struct, typedesc.Structure)
+    isStruct = isinstance(struct, typedesc_base.Structure)
     for pack in [None, 16*8, 8*8, 4*8, 2*8, 1*8]:
         try:
             _calc_packing(struct, fields, pack, isStruct)
@@ -154,9 +155,9 @@ dont_assert_size = set(
 
 def storage(t):
     # return the size and alignment of a type
-    if isinstance(t, typedesc.Typedef):
+    if isinstance(t, typedesc_base.Typedef):
         return storage(t.typ)
-    elif isinstance(t, typedesc.ArrayType):
+    elif isinstance(t, typedesc_base.ArrayType):
         s, a = storage(t.typ)
         return s * (int(t.max) - int(t.min) + 1), a
     return int(t.size), int(t.align)
@@ -181,7 +182,7 @@ class Generator(object):
     def generate(self, item):
         if item in self.done:
             return
-        if isinstance(item, typedesc.StructureHead):
+        if isinstance(item, typedesc_base.StructureHead):
             name = getattr(item.struct, "name", None)
         else:
             name = getattr(item, "name", None)
@@ -191,7 +192,7 @@ class Generator(object):
                 self.imports[name] = mod
 
             self.done.add(item)
-            if isinstance(item, typedesc.Structure):
+            if isinstance(item, typedesc_base.Structure):
                 self.done.add(item.get_head())
                 self.done.add(item.get_body())
             return
@@ -345,12 +346,12 @@ class Generator(object):
             return "_midlSAFEARRAY(%s)" % self.type_name(t.typ)
 ##        if isinstance(t, typedesc.CoClass):
 ##            return "%s._com_interfaces_[0]" % t.name
-        if isinstance(t, typedesc.Typedef):
+        if isinstance(t, typedesc_base.Typedef):
             return t.name
-        if isinstance(t, typedesc.PointerType):
+        if isinstance(t, typedesc_base.PointerType):
             if ASSUME_STRINGS:
                 x = get_real_type(t.typ)
-                if isinstance(x, typedesc.FundamentalType):
+                if isinstance(x, typedesc_base.FundamentalType):
                     if x.name == "char":
                         self.need_STRING()
                         return "STRING"
@@ -367,22 +368,22 @@ class Generator(object):
             elif result == "POINTER(None)":
                 return "c_void_p"
             return result
-        elif isinstance(t, typedesc.ArrayType):
+        elif isinstance(t, typedesc_base.ArrayType):
             return "%s * %s" % (self.type_name(t.typ, generate), int(t.max)+1)
-        elif isinstance(t, typedesc.FunctionType):
+        elif isinstance(t, typedesc_base.FunctionType):
             args = [self.type_name(x, generate) for x in [t.returns] + list(t.iterArgTypes())]
             if "__stdcall__" in t.attributes:
                 return "WINFUNCTYPE(%s)" % ", ".join(args)
             else:
                 return "CFUNCTYPE(%s)" % ", ".join(args)
-        elif isinstance(t, typedesc.CvQualifiedType):
+        elif isinstance(t, typedesc_base.CvQualifiedType):
             # const and volatile are ignored
             return "%s" % self.type_name(t.typ, generate)
-        elif isinstance(t, typedesc.FundamentalType):
+        elif isinstance(t, typedesc_base.FundamentalType):
             return ctypes_names[t.name]
-        elif isinstance(t, typedesc.Structure):
+        elif isinstance(t, typedesc_base.Structure):
             return t.name
-        elif isinstance(t, typedesc.Enumeration):
+        elif isinstance(t, typedesc_base.Enumeration):
             if t.name:
                 return t.name
             return "c_int" # enums are integers
@@ -466,7 +467,7 @@ class Generator(object):
     _typedefs = 0
     def Typedef(self, tp):
         self._typedefs += 1
-        if type(tp.typ) in (typedesc.Structure, typedesc.Union):
+        if type(tp.typ) in (typedesc_base.Structure, typedesc_base.Union):
             self.generate(tp.typ.get_head())
             self.more.add(tp.typ)
         else:
@@ -503,7 +504,7 @@ class Generator(object):
 
             self.last_item_class = True
 
-            method_names = [m.name for m in head.struct.members if type(m) is typedesc.Method]
+            method_names = [m.name for m in head.struct.members if type(m) is typedesc_base.Method]
             print("class %s(%s):" % (head.struct.name, ", ".join(basenames)), file=self.stream)
             print("    _iid_ = GUID('{}') # please look up iid and fill in!", file=self.stream)
             if "Enum" in method_names:
@@ -523,7 +524,7 @@ class Generator(object):
             print(file=self.stream)
 
         else:
-            methods = [m for m in head.struct.members if type(m) is typedesc.Method]
+            methods = [m for m in head.struct.members if type(m) is typedesc_base.Method]
 
             if methods:
                 # Hm. We cannot generate code for IUnknown...
@@ -538,7 +539,7 @@ class Generator(object):
                 print("    pass", file=self.stream)
                 print(file=self.stream)
                 print(file=self.stream)
-            elif type(head.struct) == typedesc.Structure:
+            elif type(head.struct) == typedesc_base.Structure:
                 if not self.last_item_class:
                     print(file=self.stream)
                     print(file=self.stream)
@@ -552,7 +553,7 @@ class Generator(object):
                     print("    pass", file=self.stream)
                 print(file=self.stream)
                 print(file=self.stream)
-            elif type(head.struct) == typedesc.Union:
+            elif type(head.struct) == typedesc_base.Union:
                 if not self.last_item_class:
                     print(file=self.stream)
                     print(file=self.stream)
@@ -577,16 +578,16 @@ class Generator(object):
         fields = []
         methods = []
         for m in body.struct.members:
-            if type(m) is typedesc.Field:
+            if type(m) is typedesc_base.Field:
                 fields.append(m)
-                if type(m.typ) is typedesc.Typedef:
+                if type(m.typ) is typedesc_base.Typedef:
                     self.generate(get_real_type(m.typ))
                 self.generate(m.typ)
-            elif type(m) is typedesc.Method:
+            elif type(m) is typedesc_base.Method:
                 methods.append(m)
                 self.generate(m.returns)
                 self.generate_all(m.iterArgTypes())
-            elif type(m) is typedesc.Constructor:
+            elif type(m) is typedesc_base.Constructor:
                 pass
 
         # we don't need _pack_ on Unions (I hope, at least), and not
@@ -817,12 +818,12 @@ class Generator(object):
             self.generate(tp.typ.get_head())
             # this defines the _methods_
             self.more.add(tp.typ)
-        elif type(tp.typ) is typedesc.PointerType:
+        elif type(tp.typ) is typedesc_base.PointerType:
             self.generate(tp.typ)
-        elif type(tp.typ) in (typedesc.Union, typedesc.Structure):
+        elif type(tp.typ) in (typedesc_base.Union, typedesc_base.Structure):
             self.generate(tp.typ.get_head())
             self.more.add(tp.typ)
-        elif type(tp.typ) is typedesc.Typedef:
+        elif type(tp.typ) is typedesc_base.Typedef:
             self.generate(tp.typ)
         else:
             self.generate(tp.typ)

@@ -1,6 +1,7 @@
-from ctypes import *
+from ctypes import pointer
 from comtypes import IUnknown, COMObject, COMError
-from comtypes.hresult import *
+from comtypes.hresult import CONNECT_E_CANNOTCONNECT, CONNECT_E_NOCONNECTION, \
+                              E_NOTIMPL, E_POINTER, S_OK
 from comtypes.typeinfo import LoadRegTypeLib
 from comtypes.connectionpoints import IConnectionPoint
 from comtypes.automation import IDispatch

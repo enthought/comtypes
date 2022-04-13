@@ -1,6 +1,16 @@
+import atexit
+import logging
 import types
 import sys
 import os
+from ctypes import (HRESULT, POINTER, WINFUNCTYPE, Structure, _SimpleCData,
+                    byref, c_int, c_ulong, c_ushort, c_void_p, c_wchar_p, cast,
+                    oledll, pointer, py_object, pythonapi, windll)
+
+from _ctypes import COMError
+
+from comtypes import patcher
+from comtypes.GUID import GUID
 
 # comtypes version numbers follow semver (http://semver.org/) and PEP 440
 __version__ = "1.1.12"
@@ -10,7 +20,6 @@ if sys.version_info >= (3, 0):
 else:
     text_type = unicode
 
-import logging
 class NullHandler(logging.Handler):
     """A Handler that does nothing."""
     def emit(self, record):
@@ -23,10 +32,6 @@ logger = logging.getLogger(__name__)
 #    No handlers could be found for logger "comtypes"
 # when logging is not configured and logger.error() is called.
 logger.addHandler(NullHandler())
-
-from ctypes import *
-from _ctypes import COMError
-from comtypes import patcher
 
 def _check_version(actual, tlib_cached_mtime=None):
     from comtypes.tools.codegenerator import version as required
@@ -85,7 +90,6 @@ class ReturnHRESULT(Exception):
 ##class IDLWarning(UserWarning):
 ##    "Warn about questionable type information"
 
-from comtypes.GUID import GUID
 _GUID = GUID
 IID = GUID
 DWORD = c_ulong
@@ -192,7 +196,6 @@ def _shutdown(func=_ole32_nohresult.CoUninitialize,
         _cominterface_meta._com_shutting_down = True
     _debug("CoUnititialize() done.")
 
-import atexit
 atexit.register(_shutdown)
 
 ################################################################
@@ -209,6 +212,7 @@ def _is_object(obj):
     is used in several places to determine whether propputref or
     propput setters have to be used."""
     from comtypes.automation import VARIANT
+
     # A COM pointer is an 'Object'
     if isinstance(obj, POINTER(IUnknown)):
         return True
@@ -1028,8 +1032,6 @@ class _compointer_base(c_void_p):
 
 ################################################################
 
-from ctypes import _SimpleCData
-
 class BSTR(_SimpleCData):
     "The windows BSTR data type"
     _type_ = "X"
@@ -1418,12 +1420,12 @@ def CoCreateInstanceEx(clsid, interface=None,
 
 ################################################################
 from comtypes._comobject import COMObject
+from comtypes._meta import _coclass_meta
 
 # What's a coclass?
 # a POINTER to a coclass is allowed as parameter in a function declaration:
 # http://msdn.microsoft.com/library/en-us/midl/midl/oleautomation.asp
 
-from comtypes._meta import _coclass_meta
 
 @add_metaclass(_coclass_meta)
 class CoClass(COMObject):

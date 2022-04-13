@@ -44,7 +44,7 @@ import logging
 
 import comtypes
 from comtypes.typeinfo import LoadTypeLibEx, UnRegisterTypeLib, REGKIND_REGISTER
-from comtypes.hresult import *
+from comtypes.hresult import TYPE_E_CANTLOADLIBRARY, TYPE_E_REGISTRYACCESS
 from comtypes.server import w_getopt
 import comtypes.server.inprocserver
 from ctypes import windll, c_ulong, c_wchar_p, WinError, sizeof, create_string_buffer
