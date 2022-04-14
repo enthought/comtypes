@@ -5,10 +5,10 @@ import decimal
 import sys
 
 from ctypes import HRESULT, POINTER, OleDLL, Structure, Union, _Pointer, \
-                    _pointer, addressof, byref, c_byte, c_char, c_double, \
-                    c_float, c_int, c_int64, c_long, c_longlong, c_short, \
-                    c_ubyte, c_uint, c_uint64, c_ulong, c_ulonglong, c_ushort, \
-                    c_void_p, c_wchar_p, cast, memmove, sizeof, windll
+                    addressof, byref, c_byte, c_char, c_double, c_float, c_int, \
+                    c_int64, c_long, c_longlong, c_short, c_ubyte, c_uint, \
+                    c_uint64, c_ulong, c_ulonglong, c_ushort, c_void_p, \
+                    c_wchar_p, cast, memmove, pointer, sizeof, windll
 from _ctypes import CopyComPointer, Array as _CArrayType
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import (DISP_E_EXCEPTION, DISP_E_PARAMNOTFOUND,
