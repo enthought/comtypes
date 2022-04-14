@@ -3,9 +3,9 @@ import logging
 import types
 import sys
 import os
-from ctypes import (HRESULT, POINTER, WINFUNCTYPE, Structure, _SimpleCData,
-                    byref, c_int, c_ulong, c_ushort, c_void_p, c_wchar_p, cast,
-                    oledll, pointer, py_object, pythonapi, windll)
+from ctypes import HRESULT, POINTER, WINFUNCTYPE, Structure, _SimpleCData, \
+                    byref, c_int, c_ulong, c_ushort, c_void_p, c_wchar_p, cast, \
+                    oledll, pointer, py_object, pythonapi, windll
 
 from _ctypes import COMError
 

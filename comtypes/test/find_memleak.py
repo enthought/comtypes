@@ -1,8 +1,7 @@
 from __future__ import print_function
 import unittest, gc
-from ctypes import POINTER, Structure, byref, c_size_t, sizeof, windll, \
-                    WinError
-from ctypes.wintypes import DWORD, HANDLE
+from ctypes import *
+from ctypes.wintypes import *
 
 ################################################################
 
