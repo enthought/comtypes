@@ -18,7 +18,7 @@ def cleanup_gen_dir(gen_dir: Path):
 			if p.is_dir():
 				shutil.rmtree(p, ignore_errors=True)
 			if p.is_file() and p.name != "__init__.py" and p.suffix == ".py":
-				p.unlink(missing_ok=True)
+				p.unlink()
 	
 	_cleanup()
 	yield
