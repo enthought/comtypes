@@ -11,11 +11,10 @@ import pytest
 
 @pytest.fixture(scope="module", autouse=True)
 def _setup():
-	mod = GetModule("scrrun.dll")
-	sys.modules.pop(f"comtypes.gen.{Path(mod.__file__).stem}")  # type: ignore
-	sys.modules.pop(mod.__name__)
-
-	del mod
+	GetModule("scrrun.dll")
+	gen_mod_names = [k for k in sys.modules if k.startswith("comtypes.gen")]
+	for k in gen_mod_names:
+		sys.modules.pop(k)
 
 
 class Test_Scripting_Dictionary:

@@ -1,5 +1,7 @@
 from pathlib import Path
 import shutil
+import sys
+from typing import Iterator
 
 import comtypes
 import pytest
@@ -12,7 +14,7 @@ def gen_dir() -> Path:
 
 
 @pytest.fixture(autouse=True, scope="module")
-def cleanup_gen_dir(gen_dir: Path):
+def cleanup_gen_dir(gen_dir: Path) -> Iterator[None]:
 	def _cleanup():
 		for p in gen_dir.iterdir():
 			if p.is_dir():
