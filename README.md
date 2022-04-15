@@ -1,5 +1,4 @@
-comtypes
-========
+# `comtypes`
 
 **comtypes** is a lightweight Python COM package, based on the ctypes_
 FFI library, in less than 10000 lines of code (not counting the
