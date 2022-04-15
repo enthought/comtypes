@@ -12,7 +12,9 @@ import pytest
 @pytest.fixture(scope="module", autouse=True)
 def _setup():
 	mod = GetModule("scrrun.dll")
+	sys.modules.pop(f"comtypes.gen.{Path(mod.__file__).stem}")  # type: ignore
 	sys.modules.pop(mod.__name__)
+
 	del mod
 
 
