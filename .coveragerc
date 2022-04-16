@@ -9,4 +9,4 @@ exclude_lines =
 	raise
 	except
 	pass
-	if sys.version_info >= 
+	if sys.version_info
