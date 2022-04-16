@@ -1,0 +1,12 @@
+[report]
+omit = 
+	*/gen/*
+	*/tests/*
+	*/npsupport.py
+
+exclude_lines = 
+	continue
+	raise
+	except
+	pass
+	if sys.version_info

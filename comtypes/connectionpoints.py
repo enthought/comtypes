@@ -1,5 +1,5 @@
 import sys
-from ctypes import *
+from ctypes import POINTER, Structure, c_ulong
 from comtypes import IUnknown, COMMETHOD, GUID, HRESULT, dispid
 _GUID = GUID
 

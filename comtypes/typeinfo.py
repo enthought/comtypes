@@ -7,7 +7,9 @@ import os
 import sys
 import weakref
 
-from ctypes import *
+from ctypes import HRESULT, POINTER, Structure, Union, byref, c_int, c_short, \
+                    c_uint, c_uint64, c_ulong, c_ushort, c_void_p, c_wchar_p, \
+                    oledll
 from ctypes.wintypes import ULONG
 from comtypes import STDMETHOD
 from comtypes import COMMETHOD

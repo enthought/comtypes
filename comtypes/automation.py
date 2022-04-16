@@ -4,20 +4,24 @@ import datetime
 import decimal
 import sys
 
-from ctypes import *
-from ctypes import _Pointer
-from _ctypes import CopyComPointer
+from ctypes import HRESULT, POINTER, OleDLL, Structure, Union, _Pointer, \
+                    addressof, byref, c_byte, c_char, c_double, c_float, c_int, \
+                    c_int64, c_long, c_longlong, c_short, c_ubyte, c_uint, \
+                    c_uint64, c_ulong, c_ulonglong, c_ushort, c_void_p, \
+                    c_wchar_p, cast, memmove, pointer, sizeof, windll
+from _ctypes import CopyComPointer, Array as _CArrayType
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
-from comtypes.hresult import *
+from comtypes.hresult import DISP_E_EXCEPTION, DISP_E_PARAMNOTFOUND, \
+                              DISP_E_TYPEMISMATCH
 from comtypes.patcher import Patch
+from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
+
 from comtypes import npsupport
 try:
     from comtypes import _safearray
 except (ImportError, AttributeError):
     class _safearray(object):
         tagSAFEARRAY = None
-
-from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 
 
 if sys.version_info >= (3, 0):
@@ -553,7 +557,6 @@ v._.VT_I4 = 0x80020004
 del v
 
 _carg_obj = type(byref(c_int()))
-from _ctypes import Array as _CArrayType
 
 @Patch(POINTER(VARIANT))
 class _(object):

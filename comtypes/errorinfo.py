@@ -1,7 +1,7 @@
 import sys
-from ctypes import *
+from ctypes import byref, POINTER, c_ulong, c_wchar_p, oledll
 from comtypes import IUnknown, HRESULT, COMMETHOD, GUID, BSTR
-from comtypes.hresult import *
+from comtypes.hresult import DISP_E_EXCEPTION, S_OK
 
 LPCOLESTR = c_wchar_p
 DWORD = c_ulong

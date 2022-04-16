@@ -9,7 +9,7 @@
 The 'DictPropertyBag' class is a class implementing the IPropertyBag
 interface, useful in client code.
 """
-from ctypes import *
+from ctypes import POINTER, Structure, c_int, c_ulong, c_ushort, c_wchar_p
 from ctypes.wintypes import WORD, DWORD, BOOL
 from comtypes import GUID, IUnknown, COMMETHOD, HRESULT, dispid
 from comtypes import IPersist
@@ -178,7 +178,7 @@ class IPersistFile(IPersist):
 
 
 from comtypes import COMObject
-from comtypes.hresult import *
+from comtypes.hresult import E_INVALIDARG, S_OK
 class DictPropertyBag(COMObject):
     """An object implementing the IProperty interface on a dictionary.
 

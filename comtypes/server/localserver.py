@@ -1,7 +1,7 @@
 import sys
-from ctypes import *
+from ctypes import byref, c_ulong, oledll
 import comtypes
-from comtypes.hresult import *
+from comtypes.hresult import S_OK
 from comtypes.server import IClassFactory
 import logging
 if sys.version_info >= (3, 0):

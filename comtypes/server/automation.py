@@ -1,7 +1,7 @@
 import logging
 
-from ctypes import *
-from comtypes.hresult import *
+from ctypes import pointer
+from comtypes.hresult import E_POINTER, S_FALSE, S_OK
 
 from comtypes import COMObject, IUnknown
 from comtypes.automation import IDispatch, IEnumVARIANT
