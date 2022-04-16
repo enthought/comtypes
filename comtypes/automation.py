@@ -11,8 +11,8 @@ from ctypes import HRESULT, POINTER, OleDLL, Structure, Union, _Pointer, \
                     c_wchar_p, cast, memmove, pointer, sizeof, windll
 from _ctypes import CopyComPointer, Array as _CArrayType
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
-from comtypes.hresult import (DISP_E_EXCEPTION, DISP_E_PARAMNOTFOUND,
-                              DISP_E_TYPEMISMATCH)
+from comtypes.hresult import DISP_E_EXCEPTION, DISP_E_PARAMNOTFOUND, \
+                              DISP_E_TYPEMISMATCH
 from comtypes.patcher import Patch
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 
