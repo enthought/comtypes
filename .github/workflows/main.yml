@@ -1,0 +1,30 @@
+on:
+  - pull_request
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Display Python version
+        run: python --version
+      - name: Install testing packages
+        run: pip install -r github_actions_requirements.txt
+      - name: Display pip list
+        run: python -m pip list
+      - name: Display assoc
+        run: cmd /c assoc
+      - name: Display ftype
+        run: cmd /c ftype
+      - name: Display set
+        run: cmd /c set
+      - name: Run pytest
+        run: python -m pytest --cov -p no:faulthandler comtypes\ -vv

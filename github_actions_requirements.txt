@@ -1,0 +1,4 @@
+typing-extensions
+pytest
+pytest-cov
+pytest-mock
