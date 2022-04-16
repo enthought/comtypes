@@ -1,7 +1,5 @@
-from ctypes import (
-    FormatError, POINTER, Structure, WINFUNCTYPE, byref, c_long, c_void_p,
-    oledll, pointer, windll
-)
+from ctypes import POINTER, WINFUNCTYPE, FormatError, Structure, byref, \
+                    c_long, c_void_p, oledll, pointer, windll
 from _ctypes import CopyComPointer
 import logging
 import os
@@ -10,10 +8,9 @@ import sys
 from comtypes import COMError, ReturnHRESULT, instancemethod, _encode_idl
 from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
 from comtypes import IPersist
-from comtypes.hresult import (
-    DISP_E_BADINDEX, DISP_E_MEMBERNOTFOUND, E_FAIL, E_NOINTERFACE,
-    E_INVALIDARG, E_NOTIMPL, RPC_E_CHANGED_MODE, S_FALSE, S_OK
-)
+from comtypes.hresult import DISP_E_BADINDEX, DISP_E_MEMBERNOTFOUND, E_FAIL, \
+                              E_INVALIDARG, E_NOINTERFACE, E_NOTIMPL, \
+                              RPC_E_CHANGED_MODE, S_FALSE, S_OK
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 
 

@@ -1,7 +1,7 @@
 import threading
 import array
-from ctypes import (POINTER, Structure, byref, cast, c_long, memmove, pointer,
-                    sizeof)
+from ctypes import POINTER, Structure, byref, cast, c_long, memmove, pointer, \
+                    sizeof
 from comtypes import _safearray, IUnknown, com_interface_registry, npsupport
 from comtypes.patcher import Patch
 
