@@ -1174,7 +1174,7 @@ class ImportedNamespaces(object):
             from collections import OrderedDict
             self.data = OrderedDict()
 
-    def add(self, *names, symbols=None):
+    def add(self, name1, name2=None, symbols=None):
         """Adds a namespace will be imported.
 
         Examples:
@@ -1195,16 +1195,14 @@ class ImportedNamespaces(object):
                 GUID, IUnknown
             import ctypes.wintypes
         """
-        if not names or len(names) > 2:
-            raise ValueError
-        if len(names) == 1:
-            (import_,) = names
+        if name2 is None:
+            import_ = name1
             if not symbols:
                 self.data[import_] = None
                 return
             from_ = symbols[import_]
         else:
-            from_, import_ = names
+            from_, import_ = name1, name2
         self.data[import_] = from_
 
     def _make_line(self, import_, from_=None):
