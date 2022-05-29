@@ -171,7 +171,7 @@ class Generator(object):
         self.output = ofi
         self.stream = io.StringIO()
         self.imports = ImportedNamespaces()
-        self.declarations = DeclaredNameSpaces()
+        self.declarations = DeclaredNamespaces()
         self.known_symbols = known_symbols or {}
 
         self.done = set() # type descriptions that have been generated
@@ -1234,7 +1234,7 @@ class ImportedNamespaces(object):
         return "\n".join(lines)
 
 
-class DeclaredNameSpaces(object):
+class DeclaredNamespaces(object):
     def __init__(self):
         if sys.version_info >= (3, 7):
             self.data = {}
@@ -1246,7 +1246,7 @@ class DeclaredNameSpaces(object):
         """Adds a namespace will be declared.
 
         Examples:
-            >>> declarations = DeclaredNameSpaces()
+            >>> declarations = DeclaredNamespaces()
             >>> declarations.add('STRING', 'c_char_p')
             >>> declarations.add('_lcid', '0', 'change this if required')
             >>> print(declarations.getvalue())
