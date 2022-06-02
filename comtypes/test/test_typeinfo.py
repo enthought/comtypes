@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 from ctypes import POINTER, byref
 from comtypes import GUID, COMError
@@ -10,6 +11,8 @@ from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib, \
 if os.name == "nt":
     class Test(unittest.TestCase):
         # No LoadTypeLibEx on windows ce
+        @unittest.skipUnless(sys.maxsize > 2 ** 32, "This test was failed in AppVeyor CI. Need to use something "
+                                                    "built-in to Windows for sure.")
         def test_LoadTypeLibEx(self):
             dllname = "scrrun.dll"
             self.assertRaises(WindowsError, lambda: LoadTypeLibEx("<xxx.xx>"))
