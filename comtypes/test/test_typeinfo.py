@@ -11,20 +11,14 @@ if os.name == "nt":
     class Test(unittest.TestCase):
         # No LoadTypeLibEx on windows ce
         def test_LoadTypeLibEx(self):
-            # IE 6 uses shdocvw.dll, IE 7 uses ieframe.dll
-            if os.path.exists(os.path.join(os.environ["SystemRoot"],
-                                           "system32", "ieframe.dll")):
-                dllname = "ieframe.dll"
-            else:
-                dllname = "shdocvw.dll"
-
+            dllname = "scrrun.dll"
             self.assertRaises(WindowsError, lambda: LoadTypeLibEx("<xxx.xx>"))
             tlib = LoadTypeLibEx(dllname)
             self.assertTrue(tlib.GetTypeInfoCount())
             tlib.GetDocumentation(-1)
-            self.assertEqual(tlib.IsName("iwebbrowser"), "IWebBrowser")
-            self.assertEqual(tlib.IsName("IWEBBROWSER"), "IWebBrowser")
-            self.assertTrue(tlib.FindName("IWebBrowser"))
+            self.assertEqual(tlib.IsName("idictionary"), "IDictionary")
+            self.assertEqual(tlib.IsName("IDICTIONARY"), "IDictionary")
+            self.assertTrue(tlib.FindName("IDictionary"))
             self.assertEqual(tlib.IsName("Spam"), None)
             tlib.GetTypeComp()
 
@@ -32,10 +26,6 @@ if os.name == "nt":
             info = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
             other_tlib = LoadRegTypeLib(*info)
             self.assertEqual(tlib, other_tlib)
-
-    ##         for n in dir(attr):
-    ##             if not n.startswith("_"):
-    ##                 print "\t", n, getattr(attr, n)
 
             for i in range(tlib.GetTypeInfoCount()):
                 ti = tlib.GetTypeInfo(i)
@@ -50,14 +40,14 @@ if os.name == "nt":
             guid_null = GUID()
             self.assertRaises(COMError, lambda: tlib.GetTypeInfoOfGuid(guid_null))
 
-            self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{EAB22AC1-30C1-11CF-A7EB-0000C05BAE0B}")))
+            self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{42C642C1-97E1-11CF-978F-00A02463E06F}")))
 
             path = QueryPathOfRegTypeLib(*info)
             path = path.split("\0")[0]
             self.assertTrue(path.lower().endswith(dllname))
 
         def test_TypeInfo(self):
-            tlib = LoadTypeLibEx("shdocvw.dll")
+            tlib = LoadTypeLibEx("scrrun.dll")
             for index in range(tlib.GetTypeInfoCount()):
                 ti = tlib.GetTypeInfo(index)
                 ta = ti.GetTypeAttr()
