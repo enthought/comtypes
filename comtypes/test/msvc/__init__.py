@@ -39,15 +39,8 @@ import ctypes
 import subprocess
 import winreg
 import distutils.log
-from typing import Optional, Union
-
-_IS_WIN = sys.platform.startswith('win')
-
-if _IS_WIN:
-    try:
-        from . import vswhere
-    except ImportError:
-        import vswhere
+if sys.version_info == (2, 7) or sys.version_info >= (3,5):
+	from typing import Optional, Union
 
 _HRESULT = ctypes.c_long
 _BOOL = ctypes.c_bool
@@ -65,7 +58,13 @@ _CHAR = _INT
 _PUINT = _POINTER(_UINT)
 _LPDWORD = _POINTER(_DWORD)
 
+_IS_WIN = sys.platform.startswith('win')
+
 if _IS_WIN:
+    try:
+        from . import vswhere
+    except ImportError:
+        import vswhere
     try:
         _vswhere = vswhere.SetupConfiguration.GetSetupConfiguration()
     except:  # NOQA
@@ -419,11 +418,11 @@ class VisualCInfo(object):
     def __init__(
             self,
             environ: "Environment",
-            minimum_c_version: Optional[Union[int, float]] = None,
-            strict_c_version: Optional[Union[int, float]] = None,
-            minimum_toolkit_version: Optional[int] = None,
-            strict_toolkit_version: Optional[int] = None,
-            vs_version: Optional[Union[str, int]] = None
+            minimum_c_version: "Optional[Union[int, float]]" = None,
+            strict_c_version: "Optional[Union[int, float]]" = None,
+            minimum_toolkit_version: "Optional[int]" = None,
+            strict_toolkit_version: "Optional[int]" = None,
+            vs_version: "Optional[Union[str, int]]" = None
     ):
         self.environment = environ
         self.platform = environ.platform
@@ -735,11 +734,11 @@ class VisualCInfo(object):
     @property
     def cpp_installation(
             self
-    ) -> Union[vswhere.ISetupInstance, vswhere.ISetupInstance2]:
+    ) -> "Union[vswhere.ISetupInstance, vswhere.ISetupInstance2]":
         return self._cpp_installation
 
     @property
-    def f_sharp_path(self) -> Optional[str]:
+    def f_sharp_path(self) -> "Optional[str]":
         version = float(int(self.version.split('.')[0]))
 
         reg_path = (
@@ -1042,7 +1041,7 @@ class VisualCInfo(object):
         return self._toolset_version
 
     @property
-    def msvc_dll_version(self) -> Optional[str]:
+    def msvc_dll_version(self) -> "Optional[str]":
         msvc_dll_path = self.msvc_dll_path
         if not msvc_dll_path:
             return
@@ -1055,7 +1054,7 @@ class VisualCInfo(object):
                 return '.'.join(str(ver) for ver in version)
 
     @property
-    def msvc_dll_path(self) -> Optional[str]:
+    def msvc_dll_path(self) -> "Optional[str]":
         if self._msvc_dll_path is None:
             x64 = self.platform == 'x64'
 
@@ -1102,7 +1101,7 @@ class VisualCInfo(object):
         return self._msvc_dll_path
 
     @property
-    def tools_redist_directory(self) -> Optional[str]:
+    def tools_redist_directory(self) -> "Optional[str]":
         if self._tools_redist_directory is None:
             tools_install_path = self.tools_install_directory
 
@@ -1176,7 +1175,7 @@ class VisualCInfo(object):
         return self._tools_redist_directory
 
     @property
-    def tools_install_directory(self) -> Optional[str]:
+    def tools_install_directory(self) -> "Optional[str]":
         """
         Visual C compiler tools path.
         :return: Path to the compiler tools
@@ -1232,7 +1231,7 @@ class VisualCInfo(object):
         return self._tools_install_directory
 
     @property
-    def msbuild_version(self) -> Optional[str]:
+    def msbuild_version(self) -> "Optional[str]":
         """
         MSBuild versions are specific to the Visual C version
         :return: MSBuild version, 3.5, 4.0, 12, 14, 15
@@ -1249,7 +1248,7 @@ class VisualCInfo(object):
         return self._msbuild_version
 
     @property
-    def msbuild_path(self) -> Optional[str]:
+    def msbuild_path(self) -> "Optional[str]":
         if self._msbuild_path is not None:
             program_files = os.environ.get(
                 'ProgramFiles(x86)',
@@ -1280,7 +1279,7 @@ class VisualCInfo(object):
         return self._msbuild_path
 
     @property
-    def html_help_path(self) -> Optional[str]:
+    def html_help_path(self) -> "Optional[str]":
 
         reg_path = (
             winreg.HKEY_LOCAL_MACHINE,
@@ -1433,7 +1432,7 @@ class VisualCInfo(object):
         return path
 
     @property
-    def atlmfc_lib_path(self) -> Optional[str]:
+    def atlmfc_lib_path(self) -> "Optional[str]":
         atlmfc_path = self.atlmfc_path
         if not atlmfc_path:
             return
@@ -1516,7 +1515,7 @@ class VisualCInfo(object):
         return lib_path
 
     @property
-    def atlmfc_path(self) -> Optional[str]:
+    def atlmfc_path(self) -> "Optional[str]":
         tools_path = self.tools_install_directory
         atlmfc_path = os.path.join(tools_path, 'ATLMFC')
 
@@ -1524,7 +1523,7 @@ class VisualCInfo(object):
             return atlmfc_path
 
     @property
-    def atlmfc_include_path(self) -> Optional[str]:
+    def atlmfc_include_path(self) -> "Optional[str]":
         atlmfc_path = self.atlmfc_path
         if atlmfc_path is None:
             return
@@ -1825,15 +1824,15 @@ class VisualStudioInfo(object):
         return self.__devenv_version
 
     @property
-    def common_version(self) -> Optional[str]:
+    def common_version(self) -> "Optional[str]":
         return self.__version[0]
 
     @property
-    def uncommon_version(self) -> Optional[str]:
+    def uncommon_version(self) -> "Optional[str]":
         return self.__version[1]
 
     @property
-    def version(self) -> Optional[float]:
+    def version(self) -> "Optional[float]":
         version = self.uncommon_version
 
         if version is not None:
@@ -1949,8 +1948,8 @@ class WindowsSDKInfo(object):
             self,
             environ: "Environment",
             c_info: VisualCInfo,
-            minimum_sdk_version: Optional[str] = None,
-            strict_sdk_version: Optional[str] = None
+            minimum_sdk_version: "Optional[str]" = None,
+            strict_sdk_version: "Optional[str]" = None
     ):
         self.environment = environ
         self.c_info = c_info
@@ -1979,7 +1978,7 @@ class WindowsSDKInfo(object):
         self._version = None
 
     @property
-    def extension_sdk_directory(self) -> Optional[str]:
+    def extension_sdk_directory(self) -> "Optional[str]":
         version = self.version
 
         if version.startswith('10'):
@@ -2031,11 +2030,11 @@ class WindowsSDKInfo(object):
             return bin_path
 
     @property
-    def mssdk(self) -> Optional[str]:
+    def mssdk(self) -> "Optional[str]":
         return self.directory
 
     @property
-    def ucrt_version(self) -> Optional[str]:
+    def ucrt_version(self) -> "Optional[str]":
         if self.version == '10.0':
             sdk_version = self.sdk_version
         else:
@@ -2058,7 +2057,7 @@ class WindowsSDKInfo(object):
             return sdk_version[:-1]
 
     @property
-    def ucrt_lib_directory(self) -> Optional[str]:
+    def ucrt_lib_directory(self) -> "Optional[str]":
         if self.version == '10.0':
             directory = self.directory
             directory = os.path.join(
@@ -2102,7 +2101,7 @@ class WindowsSDKInfo(object):
             return directory
 
     @property
-    def ucrt_headers_directory(self) -> Optional[str]:
+    def ucrt_headers_directory(self) -> "Optional[str]":
         if self.version == '10.0':
             directory = self.directory
             directory = os.path.join(
@@ -2144,7 +2143,7 @@ class WindowsSDKInfo(object):
             return directory
 
     @property
-    def ucrt_sdk_directory(self) -> Optional[str]:
+    def ucrt_sdk_directory(self) -> "Optional[str]":
         directory = self.directory
 
         if self.version != '10.0':
@@ -2168,7 +2167,7 @@ class WindowsSDKInfo(object):
             return directory
 
     @property
-    def bin_path(self) -> Optional[str]:
+    def bin_path(self) -> "Optional[str]":
         directory = self.directory
         if directory:
             bin_path = os.path.join(
@@ -2274,7 +2273,7 @@ class WindowsSDKInfo(object):
         return path
 
     @property
-    def type_script_path(self) -> Optional[str]:
+    def type_script_path(self) -> "Optional[str]":
         program_files = os.environ.get(
             'ProgramFiles(x86)',
             'C:\\Program Files (x86)'
@@ -2529,7 +2528,7 @@ class WindowsSDKInfo(object):
         return self._sdk_version
 
     @property
-    def directory(self) -> Optional[str]:
+    def directory(self) -> "Optional[str]":
         """
         Path to the Windows SDK version that has been found.
         :return: Windows SDK path
@@ -2666,8 +2665,8 @@ class NETInfo(object):
             environ: "Environment",
             c_info: VisualCInfo,
             sdk_version: str,
-            minimum_net_version: Optional[str] = None,
-            strict_net_version: Optional[str] = None
+            minimum_net_version: "Optional[str]" = None,
+            strict_net_version: "Optional[str]" = None
     ):
 
         self.environment = environ
@@ -3021,7 +3020,7 @@ class NETInfo(object):
         return '32' if self.platform == 'x86' else '64'
 
     @property
-    def netfx_sdk_directory(self) -> Optional[str]:
+    def netfx_sdk_directory(self) -> "Optional[str]":
         framework = '.'.join(self.version[1:].split('.')[:2])
         ver = float(int(self.vc_version.split('.')[0]))
 
@@ -3040,7 +3039,7 @@ class NETInfo(object):
             return net_fx_path
 
     @property
-    def net_fx_tools_directory(self) -> Optional[str]:
+    def net_fx_tools_directory(self) -> "Optional[str]":
         framework = self.version[1:].split('.')[:2]
 
         if framework[0] == '4':
@@ -3114,7 +3113,7 @@ class NETInfo(object):
         return tools
 
     @property
-    def executable_path_x64(self) -> Optional[str]:
+    def executable_path_x64(self) -> "Optional[str]":
         tools_directory = self.net_fx_tools_directory
         if not tools_directory:
             return
@@ -3128,7 +3127,7 @@ class NETInfo(object):
                     return tools_directory
 
     @property
-    def executable_path_x86(self) -> Optional[str]:
+    def executable_path_x86(self) -> "Optional[str]":
         tools_directory = self.net_fx_tools_directory
         if not tools_directory:
             return
@@ -3382,15 +3381,15 @@ class Environment(object):
 
     def __init__(
             self,
-            minimum_c_version: Optional[Union[int, float]] = None,
-            strict_c_version: Optional[Union[int, float]] = None,
-            minimum_toolkit_version: Optional[int] = None,
-            strict_toolkit_version: Optional[int] = None,
-            minimum_sdk_version: Optional[str] = None,
-            strict_sdk_version: Optional[str] = None,
-            minimum_net_version: Optional[str] = None,
-            strict_net_version: Optional[str] = None,
-            vs_version: Optional[Union[str, int]] = None
+            minimum_c_version: "Optional[Union[int, float]]" = None,
+            strict_c_version: "Optional[Union[int, float]]" = None,
+            minimum_toolkit_version: "Optional[int]" = None,
+            strict_toolkit_version: "Optional[int]" = None,
+            minimum_sdk_version: "Optional[str]" = None,
+            strict_sdk_version: "Optional[str]" = None,
+            minimum_net_version: "Optional[str]" = None,
+            strict_net_version: "Optional[str]" = None,
+            vs_version: "Optional[Union[str, int]]" = None
     ):
         self.python = PythonInfo()
 
@@ -3568,15 +3567,15 @@ class Environment(object):
 
 
 def setup_environment(
-        minimum_c_version: Optional[Union[int, float]] = None,
-        strict_c_version: Optional[Union[int, float]] = None,
-        minimum_toolkit_version: Optional[int] = None,
-        strict_toolkit_version: Optional[int] = None,
-        minimum_sdk_version: Optional[str] = None,
-        strict_sdk_version: Optional[str] = None,
-        minimum_net_version: Optional[str] = None,
-        strict_net_version: Optional[str] = None,
-        vs_version: Optional[Union[str, int]] = None
+        minimum_c_version: "Optional[Union[int, float]]" = None,
+        strict_c_version: "Optional[Union[int, float]]" = None,
+        minimum_toolkit_version: "Optional[int]" = None,
+        strict_toolkit_version: "Optional[int]" = None,
+        minimum_sdk_version: "Optional[str]" = None,
+        strict_sdk_version: "Optional[str]" = None,
+        minimum_net_version: "Optional[str]" = None,
+        strict_net_version: "Optional[str]" = None,
+        vs_version: "Optional[Union[str, int]]" = None
 ):
     """
     Main entry point.
