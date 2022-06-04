@@ -207,11 +207,11 @@ class tagVARIANT(Structure):
             return "VARIANT(vt=0x%x, byref(%r))" % (self.vt, self[0])
         return "VARIANT(vt=0x%x, %r)" % (self.vt, self.value)
 
+    @classmethod
     def from_param(cls, value):
         if isinstance(value, cls):
             return value
         return cls(value)
-    from_param = classmethod(from_param)
 
     def __setitem__(self, index, value):
         # This method allows to change the value of a
@@ -562,6 +562,7 @@ class _(object):
     # function parameters declared as POINTER(VARIANT).  See
     # InternetExplorer's Navigate2() method, or Word's Close() method, for
     # examples.
+    @classmethod
     def from_param(cls, arg):
         # accept POINTER(VARIANT) instance
         if isinstance(arg, POINTER(VARIANT)):
@@ -577,7 +578,6 @@ class _(object):
             return arg
         # anything else which can be converted to a VARIANT.
         return byref(VARIANT(arg))
-    from_param = classmethod(from_param)
 
     def __setitem__(self, index, value):
         # This is to support the same sematics as a pointer instance:
