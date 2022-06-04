@@ -71,6 +71,7 @@ class GUID(Structure):
     def copy(self):
         return GUID(text_type(self))
 
+    @classmethod
     def from_progid(cls, progid):
         """Get guid from progid, ...
         """
@@ -86,7 +87,6 @@ class GUID(Structure):
             return inst
         else:
             raise TypeError("Cannot construct guid from %r" % progid)
-    from_progid = classmethod(from_progid)
 
     def as_progid(self):
         "Convert a GUID into a progid"
@@ -96,12 +96,13 @@ class GUID(Structure):
         _CoTaskMemFree(progid)
         return result
 
+    @classmethod
     def create_new(cls):
         "Create a brand new guid"
         guid = cls()
         _CoCreateGuid(byref(guid))
         return guid
-    create_new = classmethod(create_new)
+
 
 GUID_null = GUID()
 
