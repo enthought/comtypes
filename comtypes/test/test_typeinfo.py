@@ -28,7 +28,8 @@ if os.name == "nt":
             attr = tlib.GetLibAttr()
             info = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
             other_tlib = LoadRegTypeLib(*info)
-            self.assertEqual(tlib, other_tlib)
+            other_attr = other_tlib.GetLibAttr()
+            self.assertEqual(attr, other_attr)
 
             for i in range(tlib.GetTypeInfoCount()):
                 ti = tlib.GetTypeInfo(i)
