@@ -8,24 +8,24 @@ init:
 shallow_clone: true
 
 environment:
-   matrix:
-     - py: Python27
-     - py: Python27-x64
-     - py: Python33
-     - py: Python33-x64
-     - py: Python34
-     - py: Python34-x64
-     - py: Python35
-     - py: Python35-x64
-     - py: Python36
-     - py: Python36-x64
-     - py: Python39
-     - py: Python39-x64
-     - py: Python310
-     - py: Python310-x64
+  matrix:
+    - py: Python27
+    - py: Python27-x64
+    - py: Python33
+    - py: Python33-x64
+    - py: Python34
+    - py: Python34-x64
+    - py: Python35
+    - py: Python35-x64
+    - py: Python36
+    - py: Python36-x64
+    - py: Python39
+    - py: Python39-x64
+    - py: Python310
+    - py: Python310-x64
 
 test_script:
-   - C:\%py%\python.exe setup.py install
-   - C:\%py%\Scripts\pip.exe uninstall comtypes -y
-   - C:\%py%\python.exe test_pip_install.py
-   - "powershell ./ci/runTestsuite.ps1"
+  - C:\%py%\python.exe setup.py install
+  - C:\%py%\Scripts\pip.exe uninstall comtypes -y
+  - C:\%py%\python.exe test_pip_install.py
+  - C:\%py%\python.exe -m unittest discover -s -v ./comtypes/test -t comtypes\test
