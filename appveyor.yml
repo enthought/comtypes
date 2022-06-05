@@ -28,4 +28,4 @@ test_script:
    - C:\%py%\python.exe setup.py install
    - C:\%py%\Scripts\pip.exe uninstall comtypes -y
    - C:\%py%\python.exe test_pip_install.py
-   - C:\%py%\python.exe -m unittest discover -s ./comtypes/test -t comtypes\test
+   - "powershell ./ci/runTestsuite.ps1"
