@@ -8,9 +8,9 @@ import comtypes
 import comtypes.client
 import comtypes.gen
 
-if sys.version_info >= (3, 4):
+if sys.version_info[0] == 3:
     from importlib import reload
-else:
+elif sys.version_info[0] == 2:
     from imp import reload
 
 imgbase = os.path.splitext(os.path.basename(sys.executable))[0]
