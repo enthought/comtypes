@@ -9,10 +9,11 @@ def read_version():
     # Determine the version number by reading it from the file
     # 'comtypes\__init__.py'.  We cannot import this file (with py3,
     # at least) because it is in py2.x syntax.
-    for line in open("comtypes/__init__.py"):
-        if line.startswith("__version__ = "):
-            var, value = line.split('=')
-            return value.strip().strip('"').strip("'")
+    with open("comtypes/__init__.py") as ofi:
+        for line in ofi:
+            if line.startswith("__version__ = "):
+                var, value = line.split('=')
+                return value.strip().strip('"').strip("'")
     raise NotImplementedError("__version__ is not found in __init__.py")
 
 
