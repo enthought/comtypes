@@ -10,8 +10,11 @@ from setuptools import setup
 
 from distutils.command.build_py import build_py
 
-with open('README') as readme_stream:
+
+readme_path = os.path.join(os.path.dirname(__file__), "README.md")
+with open(readme_path) as readme_stream:
     readme = readme_stream.read()
+
 
 class test(Command):
     # Original version of this class posted
