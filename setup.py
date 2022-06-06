@@ -9,8 +9,7 @@ from setuptools.command.install import install
 from setuptools.command.build_py import build_py
 
 
-readme_path = os.path.join(os.path.dirname(__file__), "README.md")
-with open(readme_path) as readme_stream:
+with open("README.md") as readme_stream:
     readme = readme_stream.read()
 
 
