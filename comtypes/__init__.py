@@ -834,36 +834,36 @@ _all_slice = slice(None, None, None)
 
 
 class bound_named_property(object):
-    def __init__(self, name, getter, setter, im_inst):
+    def __init__(self, name, fget, fset, instance):
         self.name = name
-        self.im_inst = im_inst
-        self.getter = getter
-        self.setter = setter
+        self.instance = instance
+        self.fget = fget
+        self.fset = fset
 
     def __getitem__(self, index):
-        if self.getter is None:
+        if self.fget is None:
             raise TypeError("unsubscriptable object")
         if isinstance(index, tuple):
-            return self.getter(self.im_inst, *index)
+            return self.fget(self.instance, *index)
         elif index == _all_slice:
-            return self.getter(self.im_inst)
+            return self.fget(self.instance)
         else:
-            return self.getter(self.im_inst, index)
+            return self.fget(self.instance, index)
 
     def __call__(self, *args):
-        if self.getter is None:
+        if self.fget is None:
             raise TypeError("object is not callable")
-        return self.getter(self.im_inst, *args)
+        return self.fget(self.instance, *args)
 
     def __setitem__(self, index, value):
-        if self.setter is None:
+        if self.fset is None:
             raise TypeError("object does not support item assignment")
         if isinstance(index, tuple):
-            self.setter(self.im_inst, *(index + (value,)))
+            self.fset(self.instance, *(index + (value,)))
         elif index == _all_slice:
-            self.setter(self.im_inst, value)
+            self.fset(self.instance, value)
         else:
-            self.setter(self.im_inst, index, value)
+            self.fset(self.instance, index, value)
 
     def __repr__(self):
         return "<bound_named_property %r at %x>" % (self.name, id(self))
@@ -874,21 +874,20 @@ class bound_named_property(object):
         raise TypeError(msg)
 
 
-
 class named_property(object):
     def __init__(self, name, fget=None, fset=None, doc=None):
         self.name = name
-        self.getter = fget
-        self.setter = fset
+        self.fget = fget
+        self.fset = fset
         self.__doc__ = doc
 
-    def __get__(self, im_inst, im_class=None):
-        if im_inst is None:
+    def __get__(self, instance, owner=None):
+        if instance is None:
             return self
-        return bound_named_property(self.name, self.getter, self.setter, im_inst)
+        return bound_named_property(self.name, self.fget, self.fset, instance)
 
     # Make this a data descriptor
-    def __set__(self, obj):
+    def __set__(self, instance):
         raise AttributeError("Unsettable attribute")
 
     def __repr__(self):
