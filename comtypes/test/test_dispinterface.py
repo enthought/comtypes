@@ -1,11 +1,17 @@
 import unittest
 
-from comtypes.server.register import register#, unregister
+import comtypes.test.TestDispServer
+from comtypes.server.register import register  # , unregister
 from comtypes.test import is_resource_enabled
 
-################################################################
-import comtypes.test.TestDispServer
-register(comtypes.test.TestDispServer.TestDispServer)
+
+def setUpModule():
+    raise unittest.SkipTest("This test requires the tests to be run as admin since it tries to "
+                            "register the test COM server.  Is this a good idea?")
+
+    # If this test is ever NOT skipped, then this line needs to run.  Keeping it here for posterity.
+    register(comtypes.test.TestDispServer.TestDispServer)
+
 
 class Test(unittest.TestCase):
 

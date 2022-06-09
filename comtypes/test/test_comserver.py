@@ -1,14 +1,20 @@
-import unittest, sys
-from ctypes import *
-from ctypes.wintypes import *
-from comtypes.client import CreateObject, GetEvents, ShowEvents
-from comtypes.server.register import register#, unregister
+import sys
+import unittest
+
+import comtypes.test.TestComServer
+from comtypes.client import CreateObject
+from comtypes.server.register import register  # , unregister
 from comtypes.test import is_resource_enabled
 from comtypes.test.find_memleak import find_memleak
 
-################################################################
-import comtypes.test.TestComServer
-register(comtypes.test.TestComServer.TestComServer)
+
+def setUpModule():
+    raise unittest.SkipTest("This test requires the tests to be run as admin since it tries to "
+                            "register the test COM server.  Is this a good idea?")
+
+    # If this test is ever NOT skipped, then this line needs to run.  Keeping it here for posterity.
+    register(comtypes.test.TestComServer.TestComServer)
+
 
 class TestInproc(unittest.TestCase):
 
@@ -25,7 +31,7 @@ class TestInproc(unittest.TestCase):
         self.assertEqual(o.MixedInOut(2, 4), (3, 5))
 
     def test_getname(self):
-        from ctypes import byref, pointer
+        from ctypes import pointer
         from comtypes import BSTR
 
         # This tests a tricky bug, introduced with this patch:

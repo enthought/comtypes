@@ -31,7 +31,14 @@ if os.name == "nt":
             attr = tlib.GetLibAttr()
             info = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
             other_tlib = LoadRegTypeLib(*info)
-            self.assertEqual(tlib, other_tlib)
+            other_attr = other_tlib.GetLibAttr()
+            # `assert tlib == other_tlib` will fail in some environments.
+            # But their attributes are equal even if difference of environments.
+            self.assertEqual(attr.guid, other_attr.guid)
+            self.assertEqual(attr.wMajorVerNum, other_attr.wMajorVerNum)
+            self.assertEqual(attr.wMinorVerNum, other_attr.wMinorVerNum)
+            self.assertEqual(attr.lcid, other_attr.lcid)
+            self.assertEqual(attr.wLibFlags, other_attr.wLibFlags)
 
     ##         for n in dir(attr):
     ##             if not n.startswith("_"):

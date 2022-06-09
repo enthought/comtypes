@@ -8,7 +8,7 @@ import sys
 import time
 import unittest
 
-use_resources = []
+use_resources = ["*"]
 
 def get_numpy():
     '''Get numpy if it is available.'''

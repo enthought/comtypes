@@ -1,14 +1,17 @@
-import types, os, unittest, sys, tempfile
-import importlib
-
-if sys.version_info >= (2, 6):
-    from imp import reload
+import os
+import sys
+import tempfile
+import types
+import unittest
 
 import comtypes
 import comtypes.client
 import comtypes.gen
 
-from comtypes.client._code_cache import _get_appdata_dir
+if sys.version_info >= (3, 4):
+    from importlib import reload
+else:
+    from imp import reload
 
 imgbase = os.path.splitext(os.path.basename(sys.executable))[0]
 
@@ -36,7 +39,7 @@ class Test(unittest.TestCase):
         # restore the original comtypes.gen module
         comtypes.gen = self.orig_comtypesgen
         sys.modules["comtypes.gen"] = self.orig_comtypesgen
-        importlib.reload(comtypes.gen)
+        reload(comtypes.gen)
 
     def test_script(self):
         # %APPDATA%\Python\Python25\comtypes_cache

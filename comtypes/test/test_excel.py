@@ -1,13 +1,19 @@
 # -*- coding: latin-1 -*-
 from __future__ import print_function
+
+import datetime
 import unittest
 
 import comtypes.test
+from comtypes.client import CreateObject
+
 comtypes.test.requires("ui")
 
-import datetime
 
-from comtypes.client import CreateObject
+def setUpModule():
+    raise unittest.SkipTest("External test dependencies like this seem bad.  Find a different "
+                            "built-in win32 API to use.")
+
 
 xlRangeValueDefault = 10
 xlRangeValueXMLSpreadsheet = 11

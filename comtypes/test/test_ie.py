@@ -1,9 +1,16 @@
 import unittest as ut
 from ctypes import *
-from comtypes.client import CreateObject, GetEvents
 
 import comtypes.test
+from comtypes.client import CreateObject, GetEvents
+
 comtypes.test.requires("ui")
+
+
+def setUpModule():
+    raise ut.SkipTest("External test dependencies like this seem bad.  Find a different built-in "
+                      "win32 API to use.")
+
 
 class EventSink:
     def __init__(self):

@@ -4,9 +4,9 @@ max_jobs: 3
 
 init:
   - git config --global core.autocrlf input
-  
+
 shallow_clone: true
- 
+
 environment:
    matrix:
      - py: Python27
@@ -28,3 +28,4 @@ test_script:
    - C:\%py%\python.exe setup.py install
    - C:\%py%\Scripts\pip.exe uninstall comtypes -y
    - C:\%py%\python.exe test_pip_install.py
+   - C:\%py%\python.exe -m unittest discover -v -s ./comtypes/test -t comtypes\test
