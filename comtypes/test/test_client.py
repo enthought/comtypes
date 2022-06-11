@@ -20,7 +20,7 @@ else:
 class Test_GetModule(ut.TestCase):
     def test_tlib_string(self):
         mod = comtypes.client.GetModule("scrrun.dll")
-        self.assertIs(mod, comtypes.client.GetModule(mod.Library._reg_typelib_))
+        self.assertIs(mod, Scripting)
 
     def test_abspath(self):
         mod = comtypes.client.GetModule(Scripting.typelib_path)
