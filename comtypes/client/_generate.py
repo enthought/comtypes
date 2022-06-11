@@ -194,10 +194,14 @@ def GetModule(tlib):
     ofi = open(os.path.join(comtypes.client.gen_dir, modulename + ".py"), "w")
     ofi.write(code)
     ofi.close()
-    # clear the import cache to make sure Python sees newly created modules
+    _invalidate_import_caches()
+    return _my_import("comtypes.gen." + modulename)
+
+
+def _invalidate_import_caches():
+    """clear the import cache to make sure Python sees newly created modules"""
     if hasattr(importlib, "invalidate_caches"):
         importlib.invalidate_caches()
-    return _my_import("comtypes.gen." + modulename)
 
 
 def _create_wrapper_module(tlib, pathname):
@@ -235,9 +239,7 @@ def _create_wrapper_module(tlib, pathname):
         setattr(comtypes.gen, modname, mod)
     else:
         ofi.close()
-        # clear the import cache to make sure Python sees newly created modules
-        if hasattr(importlib, "invalidate_caches"):
-            importlib.invalidate_caches()
+        _invalidate_import_caches()
         mod = _my_import(fullname)
     return mod
 
