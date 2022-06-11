@@ -3,8 +3,10 @@ import os
 import sys
 import comtypes
 import comtypes.client
+from comtypes import GUID
 import comtypes.tools.codegenerator
 import comtypes.tools.tlbparser
+from comtypes.typeinfo import LoadRegTypeLib, LoadTypeLibEx
 import importlib
 
 import logging
@@ -113,7 +115,6 @@ def GetModule(tlib):
     Internet Explorer.  The former module contains all the code, the
     latter is a short stub loading the former.
     """
-    pathname = None
     if isinstance(tlib, base_text_type):
         tlib_string = tlib
         # if a relative pathname is used, we try to interpret it relative to the 
@@ -122,9 +123,7 @@ def GetModule(tlib):
         _file_ = frame.f_globals.get("__file__", None)
         pathname, path_exists = _resolve_filename(tlib, _file_ and os.path.dirname(_file_))
         logger.debug("GetModule(%s), resolved: %s", pathname, path_exists)
-        # in any case, attempt to load and if tlib_string is not valid, then raise
-        # as "OSError: [WinError -2147312566] Error loading type library/DLL"
-        tlib = comtypes.typeinfo.LoadTypeLibEx(pathname) # don't register
+        tlib = _load_tlib(pathname)  # don't register
         if not path_exists:
             # try to get path after loading, but this only works if already registered            
             pathname = comtypes.tools.tlbparser.get_tlib_filename(tlib)
@@ -133,30 +132,10 @@ def GetModule(tlib):
                 pathname = tlib_string
         # if above path torture resulted in an absolute path, then the file exists (at this point)!
         assert not(os.path.isabs(pathname)) or os.path.exists(pathname)
-    elif isinstance(tlib, comtypes.GUID):
-        # tlib contain a clsid
-        clsid = str(tlib)
-        # lookup associated typelib in registry
-        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\TypeLib" % clsid, 0, winreg.KEY_READ) as key:
-            typelib = winreg.EnumValue(key, 0)[1]
-        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Version" % clsid, 0, winreg.KEY_READ) as key:
-            version = winreg.EnumValue(key, 0)[1].split(".")
-        
-        logger.debug("GetModule(%s)", typelib)
-        tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(typelib), int(version[0]), int(version[1]), 0)
-    elif isinstance(tlib, (tuple, list)):
-        # sequence containing libid and version numbers
-        logger.debug("GetModule(%s)", (tlib,))
-        tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(tlib[0]), *tlib[1:])
-    elif hasattr(tlib, "_reg_libid_"):
-        # a COMObject implementation
-        logger.debug("GetModule(%s)", tlib)
-        tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(tlib._reg_libid_),
-                                                *tlib._reg_version_)
     else:
-        # an ITypeLib pointer
-        logger.debug("GetModule(%s)", tlib.GetLibAttr())
-
+        pathname = None
+        tlib = _load_tlib(tlib)
+    logger.debug("GetModule(%s)", tlib.GetLibAttr())
     # create and import the real typelib wrapper module
     mod = _create_wrapper_module(tlib, pathname)
     try:
@@ -169,6 +148,33 @@ def GetModule(tlib):
         modulename = modulename.encode("mbcs")
     # create and import the friendly-named module
     return _create_friendly_module(tlib, modulename)
+
+
+def _load_tlib(obj):
+    """Load a pointer of ITypeLib on demand."""
+    # obj is a filepath or a ProgID
+    if isinstance(obj, base_text_type):
+        # in any case, attempt to load and if tlib_string is not valid, then raise
+        # as "OSError: [WinError -2147312566] Error loading type library/DLL"
+        return LoadTypeLibEx(obj)
+    # obj is a tlib GUID contain a clsid
+    elif isinstance(obj, GUID):
+        clsid = str(obj)
+        # lookup associated typelib in registry
+        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\TypeLib" % clsid) as key:
+            libid = winreg.EnumValue(key, 0)[1]
+        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Version" % clsid) as key:
+            version = winreg.EnumValue(key, 0)[1].split(".")
+        return LoadRegTypeLib(GUID(libid), int(version[0]), int(version[1]), 0)
+    # obj is a sequence containing libid and version numbers
+    elif isinstance(obj, (tuple, list)):
+        libid, version = obj[0], obj[1:]
+        return LoadRegTypeLib(GUID(libid), *version)
+    # obj is a COMObject implementation
+    elif hasattr(obj, "_reg_libid_"):
+        return LoadRegTypeLib(GUID(obj._reg_libid_), *obj._reg_version_)
+    # perhaps obj is a pointer of ITypeLib
+    return obj
 
 
 def _invalidate_import_caches():
