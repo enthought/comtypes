@@ -19,7 +19,9 @@ else:
     import _winreg as winreg
     import cStringIO as io
 
+
 PATH = os.environ["PATH"].split(os.pathsep)
+
 
 def _my_import(fullname):
     # helper function to import dotted modules
@@ -28,6 +30,7 @@ def _my_import(fullname):
            and comtypes.client.gen_dir not in comtypes.gen.__path__:
         comtypes.gen.__path__.append(comtypes.client.gen_dir)
     return __import__(fullname, globals(), locals(), ['DUMMY'])
+
 
 def _name_module(tlib):
     # Determine the name of a typelib wrapper module.
@@ -38,6 +41,7 @@ def _name_module(tlib):
                libattr.wMajorVerNum,
                libattr.wMinorVerNum)
     return "comtypes.gen." + modname
+
 
 def _resolve_filename(tlib_string, dirpath):
     """Tries to make sense of a type library specified as a string.
@@ -195,6 +199,7 @@ def GetModule(tlib):
     if hasattr(importlib, "invalidate_caches"):
         importlib.invalidate_caches()
     return _my_import("comtypes.gen." + modulename)
+
 
 def _CreateWrapper(tlib, pathname):
     # helper which creates and imports the real typelib wrapper module.
