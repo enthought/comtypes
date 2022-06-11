@@ -157,7 +157,7 @@ def GetModule(tlib):
         # an ITypeLib pointer
         logger.debug("GetModule(%s)", tlib.GetLibAttr())
 
-    # create and import the module
+    # create and import the real typelib wrapper module
     mod = _create_wrapper_module(tlib, pathname)
     try:
         modulename = tlib.GetDocumentation(-1)[0]
@@ -167,8 +167,18 @@ def GetModule(tlib):
         return mod
     if sys.version_info < (3, 0):
         modulename = modulename.encode("mbcs")
-
     # create and import the friendly-named module
+    return _create_friendly_module(tlib, modulename)
+
+
+def _invalidate_import_caches():
+    """clear the import cache to make sure Python sees newly created modules"""
+    if hasattr(importlib, "invalidate_caches"):
+        importlib.invalidate_caches()
+
+
+def _create_friendly_module(tlib, modulename):
+    """helper which creates and imports the friendly-named module."""
     try:
         mod = _my_import("comtypes.gen." + modulename)
     except Exception as details:
@@ -196,12 +206,6 @@ def GetModule(tlib):
     ofi.close()
     _invalidate_import_caches()
     return _my_import("comtypes.gen." + modulename)
-
-
-def _invalidate_import_caches():
-    """clear the import cache to make sure Python sees newly created modules"""
-    if hasattr(importlib, "invalidate_caches"):
-        importlib.invalidate_caches()
 
 
 def _create_wrapper_module(tlib, pathname):
