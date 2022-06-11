@@ -1,9 +1,11 @@
+from __future__ import print_function
 import types
 import os
 import sys
+
 import comtypes
-import comtypes.client
 from comtypes import GUID
+import comtypes.client
 import comtypes.tools.codegenerator
 import comtypes.tools.tlbparser
 from comtypes.typeinfo import LoadRegTypeLib, LoadTypeLibEx
@@ -31,7 +33,7 @@ def _my_import(fullname):
     if comtypes.client.gen_dir \
            and comtypes.client.gen_dir not in comtypes.gen.__path__:
         comtypes.gen.__path__.append(comtypes.client.gen_dir)
-    return __import__(fullname, globals(), locals(), ['DUMMY'])
+    return importlib.import_module(fullname)
 
 
 def _name_module(tlib):
@@ -121,7 +123,7 @@ def GetModule(tlib):
         # directory of the calling module (if not from command line)
         frame = sys._getframe(1)
         _file_ = frame.f_globals.get("__file__", None)
-        pathname, is_abs = _resolve_filename(tlib_string, _file_ and os.path.dirname(_file_))
+        pathname, is_abs = _resolve_filename(tlib_string, _file_)
         logger.debug("GetModule(%s), resolved: %s", pathname, is_abs)
         tlib = _load_tlib(pathname)  # don't register
         if not is_abs:
@@ -138,6 +140,7 @@ def GetModule(tlib):
     logger.debug("GetModule(%s)", tlib.GetLibAttr())
     # create and import the real typelib wrapper module
     mod = _create_wrapper_module(tlib, pathname)
+    # try to get the friendly-name, if not, returns the real typelib wrapper module
     try:
         modulename = tlib.GetDocumentation(-1)[0]
     except comtypes.COMError:
@@ -215,7 +218,7 @@ def _create_friendly_module(tlib, modulename):
 
 
 def _create_wrapper_module(tlib, pathname):
-    """helper which creates and imports the friendly-named module."""
+    """helper which creates and imports the real typelib wrapper module."""
     fullname = _name_module(tlib)
     if fullname in sys.modules:
         return sys.modules[fullname]
@@ -228,24 +231,19 @@ def _create_wrapper_module(tlib, pathname):
         logger.info("Could not import %s: %s", fullname, details)
 
     # generate the module since it doesn't exist or is out of date
-    from comtypes.tools.tlbparser import generate_module
-    if comtypes.client.gen_dir is None:
-        ofi = io.StringIO()
-    else:
-        ofi = open(os.path.join(comtypes.client.gen_dir, modname + ".py"), "w")
-    # XXX use logging!
+    stream = io.StringIO()
     logger.info("# Generating comtypes.gen.%s", modname)
-    generate_module(tlib, ofi, pathname)
-
+    comtypes.tools.tlbparser.generate_module(tlib, stream, pathname)
     if comtypes.client.gen_dir is None:
-        code = ofi.getvalue()
         mod = types.ModuleType(fullname)
         mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
                                     "<memory>")
-        exec(code, mod.__dict__)
+        exec(stream.getvalue(), mod.__dict__)
         sys.modules[fullname] = mod
         setattr(comtypes.gen, modname, mod)
     else:
+        ofi = open(os.path.join(comtypes.client.gen_dir, modname + ".py"), "w")
+        ofi.write(stream.getvalue())
         ofi.close()
         _invalidate_import_caches()
         mod = _my_import(fullname)
