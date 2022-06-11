@@ -1,9 +1,10 @@
+from ctypes import POINTER, byref
 import os
 import sys
 import unittest as ut
+
 import comtypes.client
 from comtypes import COSERVERINFO
-from ctypes import POINTER, byref
 
 # create the typelib wrapper and import it
 comtypes.client.GetModule("scrrun.dll")
