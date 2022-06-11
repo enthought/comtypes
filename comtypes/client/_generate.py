@@ -211,7 +211,7 @@ def _create_friendly_module(tlib, modulename):
         return mod
     # create in file system, and import it
     with open(os.path.join(comtypes.client.gen_dir, modulename + ".py"), "w") as ofi:
-        ofi.write(code)
+        print(code, file=ofi)
     _invalidate_import_caches()
     return _my_import("comtypes.gen." + modulename)
 
@@ -242,7 +242,7 @@ def _create_wrapper_module(tlib, pathname):
         setattr(comtypes.gen, modname, mod)
     else:
         with open(os.path.join(comtypes.client.gen_dir, modname + ".py"), "w") as ofi:
-            ofi.write(stream.getvalue())
+            print(stream.getvalue(), file=ofi)
         _invalidate_import_caches()
         mod = _my_import(fullname)
     return mod
