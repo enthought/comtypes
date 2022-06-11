@@ -1,3 +1,4 @@
+import os
 import sys
 import unittest as ut
 import comtypes.client
@@ -16,6 +17,34 @@ else:
 
 
 class Test_GetModule(ut.TestCase):
+    def test_tlib_string(self):
+        mod = comtypes.client.GetModule("scrrun.dll")
+        self.assertIs(mod, comtypes.client.GetModule(mod.Library._reg_typelib_))
+
+    def test_abspath(self):
+        mod = comtypes.client.GetModule(Scripting.typelib_path)
+        self.assertIs(mod, Scripting)
+
+    @ut.skipUnless(
+        os.path.splitdrive(Scripting.typelib_path)[0] == os.path.splitdrive(__file__)[0],
+        "This depends on typelib and test module are in same drive")
+    def test_relpath(self):
+        relpath = os.path.relpath(Scripting.typelib_path, __file__)
+        mod = comtypes.client.GetModule(relpath)
+        self.assertIs(mod, Scripting)
+
+    def test_libid_and_version_numbers(self):
+        mod = comtypes.client.GetModule(Scripting.Library._reg_typelib_)
+        self.assertIs(mod, Scripting)
+
+    def test_obj_has_reg_libid_and_reg_version(self):
+        typelib = Scripting.Library._reg_typelib_
+        libid, version = typelib[0], typelib[1:]
+        # HACK: Prefer to use Mock, but `unittest.mock` is not available in py27!
+        info = type("info", (object,), dict(_reg_libid_=libid, _reg_version_=version))
+        mod = comtypes.client.GetModule(info)
+        self.assertIs(mod, Scripting)
+
     def test_clsid(self):
         clsid = comtypes.GUID.from_progid("MediaPlayer.MediaPlayer")
         mod = comtypes.client.GetModule(clsid)
