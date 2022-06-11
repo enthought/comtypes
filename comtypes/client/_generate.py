@@ -121,10 +121,10 @@ def GetModule(tlib):
         # directory of the calling module (if not from command line)
         frame = sys._getframe(1)
         _file_ = frame.f_globals.get("__file__", None)
-        pathname, path_exists = _resolve_filename(tlib, _file_ and os.path.dirname(_file_))
-        logger.debug("GetModule(%s), resolved: %s", pathname, path_exists)
+        pathname, is_abs = _resolve_filename(tlib_string, _file_ and os.path.dirname(_file_))
+        logger.debug("GetModule(%s), resolved: %s", pathname, is_abs)
         tlib = _load_tlib(pathname)  # don't register
-        if not path_exists:
+        if not is_abs:
             # try to get path after loading, but this only works if already registered            
             pathname = comtypes.tools.tlbparser.get_tlib_filename(tlib)
             if pathname is None:
