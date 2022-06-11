@@ -12,8 +12,12 @@ logger = logging.getLogger(__name__)
 
 if sys.version_info >= (3, 0):
     base_text_type = str
+    import winreg
+    import io
 else:
     base_text_type = basestring
+    import _winreg as winreg
+    import cStringIO as io
 
 PATH = os.environ["PATH"].split(os.pathsep)
 
@@ -129,12 +133,7 @@ def GetModule(tlib):
     elif isinstance(tlib, comtypes.GUID):
         # tlib contain a clsid
         clsid = str(tlib)
-        
         # lookup associated typelib in registry
-        if sys.version_info >= (3, 0):
-            import winreg
-        else:
-            import _winreg as winreg
         with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\TypeLib" % clsid, 0, winreg.KEY_READ) as key:
             typelib = winreg.EnumValue(key, 0)[1]
         with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Version" % clsid, 0, winreg.KEY_READ) as key:
@@ -215,10 +214,6 @@ def _CreateWrapper(tlib, pathname):
     # generate the module since it doesn't exist or is out of date
     from comtypes.tools.tlbparser import generate_module
     if comtypes.client.gen_dir is None:
-        if sys.version_info >= (3, 0):
-            import io
-        else:
-            import cStringIO as io
         ofi = io.StringIO()
     else:
         ofi = open(os.path.join(comtypes.client.gen_dir, modname + ".py"), "w")
