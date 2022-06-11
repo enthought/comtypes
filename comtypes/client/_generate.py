@@ -158,7 +158,7 @@ def GetModule(tlib):
         logger.debug("GetModule(%s)", tlib.GetLibAttr())
 
     # create and import the module
-    mod = _CreateWrapper(tlib, pathname)
+    mod = _create_wrapper_module(tlib, pathname)
     try:
         modulename = tlib.GetDocumentation(-1)[0]
     except comtypes.COMError:
@@ -200,7 +200,7 @@ def GetModule(tlib):
     return _my_import("comtypes.gen." + modulename)
 
 
-def _CreateWrapper(tlib, pathname):
+def _create_wrapper_module(tlib, pathname):
     """helper which creates and imports the friendly-named module."""
     fullname = _name_module(tlib)
     try:
