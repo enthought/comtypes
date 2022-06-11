@@ -14,7 +14,15 @@ if sys.version_info >= (3, 0):
 else:
     text_type = unicode
 
-class Test(ut.TestCase):
+
+class Test_GetModule(ut.TestCase):
+    def test_clsid(self):
+        clsid = comtypes.GUID.from_progid("MediaPlayer.MediaPlayer")
+        mod = comtypes.client.GetModule(clsid)
+        self.assertEqual(mod.MediaPlayer._reg_clsid_, clsid)
+
+
+class Test_CreateObject(ut.TestCase):
     def test_progid(self):
         # create from ProgID
         obj = comtypes.client.CreateObject("Scripting.Dictionary")
@@ -29,10 +37,6 @@ class Test(ut.TestCase):
         # create from string clsid
         comtypes.client.CreateObject(text_type(Scripting.Dictionary._reg_clsid_))
         comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
-
-    def test_GetModule_clsid(self):
-        clsid = comtypes.GUID.from_progid("MediaPlayer.MediaPlayer")
-        tlib = comtypes.client.GetModule(clsid)
 
     @ut.skip(
             "This test uses IE which is not available on all machines anymore. "
