@@ -207,10 +207,8 @@ def _invalidate_import_caches():
 def _create_wrapper_module(tlib, pathname):
     """helper which creates and imports the friendly-named module."""
     fullname = _name_module(tlib)
-    try:
+    if fullname in sys.modules:
         return sys.modules[fullname]
-    except KeyError:
-        pass
 
     modname = fullname.split(".")[-1]
 
