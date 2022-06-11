@@ -24,7 +24,7 @@ PATH = os.environ["PATH"].split(os.pathsep)
 
 
 def _my_import(fullname):
-    # helper function to import dotted modules
+    """helper function to import dotted modules"""
     import comtypes.gen
     if comtypes.client.gen_dir \
            and comtypes.client.gen_dir not in comtypes.gen.__path__:
@@ -33,7 +33,7 @@ def _my_import(fullname):
 
 
 def _name_module(tlib):
-    # Determine the name of a typelib wrapper module.
+    """Determine the name of a typelib wrapper module"""
     libattr = tlib.GetLibAttr()
     modname = "_%s_%s_%s_%s" % \
               (str(libattr.guid)[1:-1].replace("-", "_"),
@@ -51,10 +51,9 @@ def _resolve_filename(tlib_string, dirpath):
         dirpath: a directory to relativize the location
 
     Returns:
-
-      (abspath, True) or (relpath, False), 
-    
-    where relpath is an unresolved path."""
+        (abspath, True) or (relpath, False):
+            where relpath is an unresolved path.
+    """
     assert isinstance(tlib_string, base_text_type)
     # pathname of type library
     if os.path.isabs(tlib_string):
@@ -202,7 +201,7 @@ def GetModule(tlib):
 
 
 def _CreateWrapper(tlib, pathname):
-    # helper which creates and imports the real typelib wrapper module.
+    """helper which creates and imports the friendly-named module."""
     fullname = _name_module(tlib)
     try:
         return sys.modules[fullname]
