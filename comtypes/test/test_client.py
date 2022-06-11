@@ -69,9 +69,6 @@ class Test(ut.TestCase):
         self.assertEqual(ie.Visible, True)
         self.assertEqual(0, ie.Quit()) # 0 == S_OK
 
-def test_main():
-    from test import test_support
-    test_support.run_unittest(Test)
 
 if __name__ == "__main__":
     ut.main()
