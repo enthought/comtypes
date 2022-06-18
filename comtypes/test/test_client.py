@@ -104,5 +104,16 @@ class Test_CreateObject(ut.TestCase):
         self.assertEqual(0, ie.Quit()) # 0 == S_OK
 
 
+class Test_Constants(ut.TestCase):
+    def test_punk(self):
+        obj = comtypes.client.CreateObject(Scripting.Dictionary)
+        consts = comtypes.client.Constants(obj)
+        self.assertEqual(consts.BinaryCompare, Scripting.BinaryCompare)
+        self.assertEqual(consts.TextCompare, Scripting.TextCompare)
+        self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
+        with self.assertRaises(AttributeError):
+            consts.CompareMethod
+
+
 if __name__ == "__main__":
     ut.main()
