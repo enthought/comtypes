@@ -69,9 +69,17 @@ class Test(ut.TestCase):
         self.assertEqual(ie.Visible, True)
         self.assertEqual(0, ie.Quit()) # 0 == S_OK
 
-def test_main():
-    from test import test_support
-    test_support.run_unittest(Test)
+
+class Test_Constants(ut.TestCase):
+    def test_punk(self):
+        obj = comtypes.client.CreateObject(Scripting.Dictionary)
+        consts = comtypes.client.Constants(obj)
+        self.assertEqual(consts.BinaryCompare, Scripting.BinaryCompare)
+        self.assertEqual(consts.TextCompare, Scripting.TextCompare)
+        self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
+        with self.assertRaises(AttributeError):
+            consts.CompareMethod
+
 
 if __name__ == "__main__":
     ut.main()
