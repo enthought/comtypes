@@ -1,8 +1,10 @@
+from ctypes import POINTER, byref
+import os
 import sys
 import unittest as ut
+
 import comtypes.client
 from comtypes import COSERVERINFO
-from ctypes import POINTER, byref
 
 # create the typelib wrapper and import it
 comtypes.client.GetModule("scrrun.dll")
@@ -14,7 +16,43 @@ if sys.version_info >= (3, 0):
 else:
     text_type = unicode
 
-class Test(ut.TestCase):
+
+class Test_GetModule(ut.TestCase):
+    def test_tlib_string(self):
+        mod = comtypes.client.GetModule("scrrun.dll")
+        self.assertIs(mod, Scripting)
+
+    def test_abspath(self):
+        mod = comtypes.client.GetModule(Scripting.typelib_path)
+        self.assertIs(mod, Scripting)
+
+    @ut.skipUnless(
+        os.path.splitdrive(Scripting.typelib_path)[0] == os.path.splitdrive(__file__)[0],
+        "This depends on typelib and test module are in same drive")
+    def test_relpath(self):
+        relpath = os.path.relpath(Scripting.typelib_path, __file__)
+        mod = comtypes.client.GetModule(relpath)
+        self.assertIs(mod, Scripting)
+
+    def test_libid_and_version_numbers(self):
+        mod = comtypes.client.GetModule(Scripting.Library._reg_typelib_)
+        self.assertIs(mod, Scripting)
+
+    def test_obj_has_reg_libid_and_reg_version(self):
+        typelib = Scripting.Library._reg_typelib_
+        libid, version = typelib[0], typelib[1:]
+        # HACK: Prefer to use Mock, but `unittest.mock` is not available in py27!
+        info = type("info", (object,), dict(_reg_libid_=libid, _reg_version_=version))
+        mod = comtypes.client.GetModule(info)
+        self.assertIs(mod, Scripting)
+
+    def test_clsid(self):
+        clsid = comtypes.GUID.from_progid("MediaPlayer.MediaPlayer")
+        mod = comtypes.client.GetModule(clsid)
+        self.assertEqual(mod.MediaPlayer._reg_clsid_, clsid)
+
+
+class Test_CreateObject(ut.TestCase):
     def test_progid(self):
         # create from ProgID
         obj = comtypes.client.CreateObject("Scripting.Dictionary")
@@ -29,10 +67,6 @@ class Test(ut.TestCase):
         # create from string clsid
         comtypes.client.CreateObject(text_type(Scripting.Dictionary._reg_clsid_))
         comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
-
-    def test_GetModule_clsid(self):
-        clsid = comtypes.GUID.from_progid("MediaPlayer.MediaPlayer")
-        tlib = comtypes.client.GetModule(clsid)
 
     @ut.skip(
             "This test uses IE which is not available on all machines anymore. "
@@ -69,9 +103,6 @@ class Test(ut.TestCase):
         self.assertEqual(ie.Visible, True)
         self.assertEqual(0, ie.Quit()) # 0 == S_OK
 
-def test_main():
-    from test import test_support
-    test_support.run_unittest(Test)
 
 if __name__ == "__main__":
     ut.main()
