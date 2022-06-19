@@ -26,10 +26,10 @@ class Test(unittest.TestCase):
         attr = tlib.GetLibAttr()
         info = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
         other_tlib = LoadRegTypeLib(*info)
-        other_attr = other_tlib.GetLibAttr()
-        self.assert_tlibattr_equal(attr, other_attr)
+        self.assert_tlibattr_equal(tlib, other_tlib)
     
-    def assert_tlibattr_equal(self, attr, other_attr):
+    def assert_tlibattr_equal(self, tlib, other_tlib):
+        attr, other_attr = tlib.GetLibAttr(), other_tlib.GetLibAttr()
         # `assert tlib == other_tlib` will fail in some environments.
         # But their attributes are equal even if difference of environments.
         self.assertEqual(attr.guid, other_attr.guid)
@@ -83,7 +83,7 @@ class Test(unittest.TestCase):
         ti = tlib.GetTypeInfoOfGuid(guid)
         c_tlib, c_index = ti.GetContainingTypeLib()
         c_ti = c_tlib.GetTypeInfo(c_index)
-        self.assert_tlibattr_equal(c_tlib.GetLibAttr(), tlib.GetLibAttr())
+        self.assert_tlibattr_equal(c_tlib, tlib)
         self.assertEqual(c_ti, ti)
         self.assertEqual(guid, ti.GetTypeAttr().guid)
 
