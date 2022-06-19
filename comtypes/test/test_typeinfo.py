@@ -10,7 +10,8 @@ from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib, \
 class Test(unittest.TestCase):
     def test_LoadTypeLibEx(self):
         dllname = "scrrun.dll"
-        self.assertRaises(WindowsError, lambda: LoadTypeLibEx("<xxx.xx>"))
+        with self.assertRaises(WindowsError):
+            LoadTypeLibEx("<xxx.xx>")
         tlib = LoadTypeLibEx(dllname)
         self.assertTrue(tlib.GetTypeInfoCount())
         tlib.GetDocumentation(-1)
@@ -47,7 +48,8 @@ class Test(unittest.TestCase):
             self.assertEqual(index, i)
 
         guid_null = GUID()
-        self.assertRaises(COMError, lambda: tlib.GetTypeInfoOfGuid(guid_null))
+        with self.assertRaises(COMError):
+            tlib.GetTypeInfoOfGuid(guid_null)
 
         self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")))
 
