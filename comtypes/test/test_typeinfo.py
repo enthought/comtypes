@@ -21,6 +21,8 @@ class Test(unittest.TestCase):
         self.assertEqual(tlib.IsName("Spam"), None)
         tlib.GetTypeComp()
 
+    def test_LoadRegTypeLib(self):
+        tlib = LoadTypeLibEx("scrrun.dll")
         attr = tlib.GetLibAttr()
         info = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
         other_tlib = LoadRegTypeLib(*info)
