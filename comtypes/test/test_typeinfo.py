@@ -43,10 +43,6 @@ class Test(unittest.TestCase):
             tlib.GetDocumentation(i)
             tlib.GetTypeInfoType(i)
 
-            c_tlib, index = ti.GetContainingTypeLib()
-            self.assertEqual(c_tlib, tlib)
-            self.assertEqual(index, i)
-
         guid_null = GUID()
         with self.assertRaises(COMError):
             tlib.GetTypeInfoOfGuid(guid_null)
@@ -68,6 +64,9 @@ class Test(unittest.TestCase):
             ti = tlib.GetTypeInfo(index)
             ta = ti.GetTypeAttr()
             ti.GetDocumentation(-1)
+            c_tlib, index = ti.GetContainingTypeLib()
+            self.assertEqual(c_tlib, tlib)
+            self.assertEqual(index, i)
             if ta.typekind in (TKIND_INTERFACE, TKIND_DISPATCH):
                 if ta.cImplTypes:
                     href = ti.GetRefTypeOfImplType(0)
