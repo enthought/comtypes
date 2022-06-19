@@ -27,6 +27,9 @@ class Test(unittest.TestCase):
         info = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
         other_tlib = LoadRegTypeLib(*info)
         other_attr = other_tlib.GetLibAttr()
+        self.assert_tlibattr_equal(attr, other_attr)
+    
+    def assert_tlibattr_equal(self, attr, other_attr):
         # `assert tlib == other_tlib` will fail in some environments.
         # But their attributes are equal even if difference of environments.
         self.assertEqual(attr.guid, other_attr.guid)
@@ -76,7 +79,13 @@ class Test(unittest.TestCase):
         with self.assertRaises(COMError):
             tlib.GetTypeInfoOfGuid(guid_null)
 
-        self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")))
+        guid = GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")
+        ti = tlib.GetTypeInfoOfGuid(guid)
+        c_tlib, c_index = ti.GetContainingTypeLib()
+        c_ti = c_tlib.GetTypeInfo(c_index)
+        self.assert_tlibattr_equal(c_tlib.GetLibAttr(), tlib.GetLibAttr())
+        self.assertEqual(c_ti, ti)
+        self.assertEqual(guid, ti.GetTypeAttr().guid)
 
 
 if __name__ == "__main__":
