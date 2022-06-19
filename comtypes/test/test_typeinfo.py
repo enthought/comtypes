@@ -58,7 +58,7 @@ class Test(unittest.TestCase):
             ta = ti.GetTypeAttr()
             ti.GetDocumentation(-1)
             c_tlib, c_index = ti.GetContainingTypeLib()
-            self.assertEqual(c_tlib, tlib)
+            self.assert_tlibattr_equal(c_tlib, tlib)
             self.assertEqual(c_index, index)
             if ta.typekind in (TKIND_INTERFACE, TKIND_DISPATCH):
                 if ta.cImplTypes:
