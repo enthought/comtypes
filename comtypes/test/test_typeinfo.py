@@ -39,12 +39,6 @@ class Test(unittest.TestCase):
         #     if not n.startswith("_"):
         #         print "\t", n, getattr(attr, n)
 
-        guid_null = GUID()
-        with self.assertRaises(COMError):
-            tlib.GetTypeInfoOfGuid(guid_null)
-
-        self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")))
-
     def test_QueryPathOfRegTypeLib(self):
         dllname = "scrrun.dll"
         tlib = LoadTypeLibEx(dllname)
@@ -77,6 +71,12 @@ class Test(unittest.TestCase):
 
             for v in range(ta.cVars):
                 ti.GetVarDesc(v)
+
+        guid_null = GUID()
+        with self.assertRaises(COMError):
+            tlib.GetTypeInfoOfGuid(guid_null)
+
+        self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")))
 
 
 if __name__ == "__main__":
