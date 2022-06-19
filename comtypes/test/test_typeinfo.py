@@ -9,20 +9,14 @@ from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib, \
 
 class Test(unittest.TestCase):
     def test_LoadTypeLibEx(self):
-        # IE 6 uses shdocvw.dll, IE 7 uses ieframe.dll
-        if os.path.exists(os.path.join(os.environ["SystemRoot"],
-                                        "system32", "ieframe.dll")):
-            dllname = "ieframe.dll"
-        else:
-            dllname = "shdocvw.dll"
-
+        dllname = "scrrun.dll"
         self.assertRaises(WindowsError, lambda: LoadTypeLibEx("<xxx.xx>"))
         tlib = LoadTypeLibEx(dllname)
         self.assertTrue(tlib.GetTypeInfoCount())
         tlib.GetDocumentation(-1)
-        self.assertEqual(tlib.IsName("iwebbrowser"), "IWebBrowser")
-        self.assertEqual(tlib.IsName("IWEBBROWSER"), "IWebBrowser")
-        self.assertTrue(tlib.FindName("IWebBrowser"))
+        self.assertEqual(tlib.IsName("ifile"), "IFile")
+        self.assertEqual(tlib.IsName("IFILE"), "IFile")
+        self.assertTrue(tlib.FindName("IFile"))
         self.assertEqual(tlib.IsName("Spam"), None)
         tlib.GetTypeComp()
 
@@ -55,14 +49,14 @@ class Test(unittest.TestCase):
         guid_null = GUID()
         self.assertRaises(COMError, lambda: tlib.GetTypeInfoOfGuid(guid_null))
 
-        self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{EAB22AC1-30C1-11CF-A7EB-0000C05BAE0B}")))
+        self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")))
 
         path = QueryPathOfRegTypeLib(*info)
         path = path.split("\0")[0]
         self.assertTrue(path.lower().endswith(dllname))
 
     def test_TypeInfo(self):
-        tlib = LoadTypeLibEx("shdocvw.dll")
+        tlib = LoadTypeLibEx("scrrun.dll")
         for index in range(tlib.GetTypeInfoCount()):
             ti = tlib.GetTypeInfo(index)
             ta = ti.GetTypeAttr()
