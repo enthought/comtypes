@@ -32,9 +32,9 @@ class Test(unittest.TestCase):
         self.assertEqual(attr.lcid, other_attr.lcid)
         self.assertEqual(attr.wLibFlags, other_attr.wLibFlags)
 
-##         for n in dir(attr):
-##             if not n.startswith("_"):
-##                 print "\t", n, getattr(attr, n)
+        # for n in dir(attr):
+        #     if not n.startswith("_"):
+        #         print "\t", n, getattr(attr, n)
 
         for i in range(tlib.GetTypeInfoCount()):
             ti = tlib.GetTypeInfo(i)
