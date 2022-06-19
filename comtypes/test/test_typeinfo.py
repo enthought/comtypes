@@ -53,6 +53,11 @@ class Test(unittest.TestCase):
 
         self.assertTrue(tlib.GetTypeInfoOfGuid(GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")))
 
+    def test_QueryPathOfRegTypeLib(self):
+        dllname = "scrrun.dll"
+        tlib = LoadTypeLibEx(dllname)
+        attr = tlib.GetLibAttr()
+        info = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
         path = QueryPathOfRegTypeLib(*info)
         path = path.split("\0")[0]
         self.assertTrue(path.lower().endswith(dllname))
