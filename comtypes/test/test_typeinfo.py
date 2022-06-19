@@ -37,12 +37,6 @@ class Test(unittest.TestCase):
         #     if not n.startswith("_"):
         #         print "\t", n, getattr(attr, n)
 
-        for i in range(tlib.GetTypeInfoCount()):
-            ti = tlib.GetTypeInfo(i)
-            ti.GetTypeAttr()
-            tlib.GetDocumentation(i)
-            tlib.GetTypeInfoType(i)
-
         guid_null = GUID()
         with self.assertRaises(COMError):
             tlib.GetTypeInfoOfGuid(guid_null)
