@@ -64,9 +64,9 @@ class Test(unittest.TestCase):
             ti = tlib.GetTypeInfo(index)
             ta = ti.GetTypeAttr()
             ti.GetDocumentation(-1)
-            c_tlib, index = ti.GetContainingTypeLib()
+            c_tlib, c_index = ti.GetContainingTypeLib()
             self.assertEqual(c_tlib, tlib)
-            self.assertEqual(index, i)
+            self.assertEqual(c_index, index)
             if ta.typekind in (TKIND_INTERFACE, TKIND_DISPATCH):
                 if ta.cImplTypes:
                     href = ti.GetRefTypeOfImplType(0)
