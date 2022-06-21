@@ -96,7 +96,7 @@ def GetModule(tlib):
     module doesn't exist, the module is generated into the
     comtypes.gen package.
 
-    It is possible to delete the whole comtypes\gen directory to
+    It is possible to delete the whole `comtypes/gen` directory to
     remove all generated modules, the directory and the __init__.py
     file in it will be recreated when needed.
 
