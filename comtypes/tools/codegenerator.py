@@ -167,7 +167,6 @@ def storage(t):
 class Generator(object):
 
     def __init__(self, ofi, known_symbols=None):
-        self._externals = {}
         self.output = ofi
         self.stream = io.StringIO()
         self.imports = ImportedNamespaces()
@@ -673,20 +672,11 @@ class Generator(object):
         # ext.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
         #
         # ext.name filled in here
-
-        libdesc = str(ext.tlib.GetLibAttr()) # str(TLIBATTR) is unique for a given typelib
-        if libdesc in self._externals: # typelib wrapper already created
-            modname = self._externals[libdesc]
-            # we must fill in ext.name, it is used by self.type_name()
-            ext.name = "%s.%s" % (modname, ext.symbol_name)
-            return
-
         modname = comtypes.client._generate._name_module(ext.tlib)
+        if modname not in self.imports:
+            comtypes.client.GetModule(ext.tlib)
+            self.imports.add(modname)
         ext.name = "%s.%s" % (modname, ext.symbol_name)
-        self._externals[libdesc] = modname
-
-        self.imports.add(modname)
-        comtypes.client.GetModule(ext.tlib)
 
     def Constant(self, tp):
         self.last_item_class = False
@@ -1204,6 +1194,32 @@ class ImportedNamespaces(object):
         else:
             from_, import_ = name1, name2
         self.data[import_] = from_
+
+    def __contains__(self, item):
+        """Returns item has already added.
+
+        Examples:
+            >>> imports = ImportedNamespaces()
+            >>> imports.add('datetime')
+            >>> imports.add('ctypes', '*')
+            >>> 'datetime' in imports
+            True
+            >>> ('ctypes', '*') in imports
+            True
+            >>> 'os' in imports
+            False
+            >>> 'ctypes' in imports
+            False
+            >>> ('ctypes', 'c_int') in imports
+            False
+        """
+        if isinstance(item, tuple):
+            from_, import_ = item
+        else:
+            from_, import_ = None, item
+        if import_ in self.data:
+            return self.data[import_] == from_
+        return False
 
     def _make_line(self, import_, from_=None):
         if from_ is None:
