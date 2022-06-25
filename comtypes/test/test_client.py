@@ -114,6 +114,18 @@ class Test_Constants(ut.TestCase):
         with self.assertRaises(AttributeError):
             consts.CompareMethod
 
+    def test_returns_other_than_int(self):
+        obj = comtypes.client.CreateObject("SAPI.SpVoice")
+        from comtypes.gen import SpeechLib as sapi
+        consts = comtypes.client.Constants(obj)
+        # str (Constant BSTR)
+        self.assertEqual(consts.SpeechVoiceSkipTypeSentence, sapi.SpeechVoiceSkipTypeSentence)
+        self.assertEqual(consts.SpeechAudioFormatGUIDWave, sapi.SpeechAudioFormatGUIDWave)
+        self.assertEqual(consts.SpeechRegistryLocalMachineRoot, sapi.SpeechRegistryLocalMachineRoot)
+        self.assertEqual(consts.SpeechGrammarTagDictation, sapi.SpeechGrammarTagDictation)
+        # float (Constant c_float)
+        self.assertEqual(consts.Speech_Default_Weight, sapi.Speech_Default_Weight)
+
 
 if __name__ == "__main__":
     ut.main()
