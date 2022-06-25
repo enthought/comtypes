@@ -38,6 +38,11 @@ class Test_GetModule(ut.TestCase):
         mod = comtypes.client.GetModule(Scripting.Library._reg_typelib_)
         self.assertIs(mod, Scripting)
 
+    def test_one_length_sequence_containing_libid(self):
+        libid, _, _ = Scripting.Library._reg_typelib_
+        mod = comtypes.client.GetModule((libid,))
+        self.assertIs(mod, Scripting)
+
     def test_obj_has_reg_libid_and_reg_version(self):
         typelib = Scripting.Library._reg_typelib_
         libid, version = typelib[0], typelib[1:]
