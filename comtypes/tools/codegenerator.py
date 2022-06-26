@@ -355,6 +355,15 @@ class Generator(object):
             if t.name:
                 return t.name
             return "c_int" # enums are integers
+        elif isinstance(t, typedesc.EnumValue):
+            if keyword.iskeyword(t.name):
+                return t.name + "_"
+            return t.name
+        elif isinstance(t, typedesc.External):
+            # t.symbol_name - symbol to generate
+            # ext.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
+            modname = comtypes.client._generate._name_module(t.tlib)
+            return "%s.%s" % (modname, t.symbol_name)
         return t.name
 
     def need_VARIANT_imports(self, value):
@@ -382,9 +391,9 @@ class Generator(object):
             # XXX use logging!
             if __warn_on_munge__:
                 print("# Fixing keyword as EnumValue for %s" % tp.name)
-            tp.name += "_"
-        print("%s = %d" % (tp.name, value), file=self.stream)
-        self.names.add(tp.name)
+        tp_name = self.type_name(tp)
+        print("%s = %d" % (tp_name, value), file=self.stream)
+        self.names.add(tp_name)
         self._enumvalues += 1
 
     _enumtypes = 0
@@ -661,16 +670,10 @@ class Generator(object):
         print(file=self.stream)
 
     def External(self, ext):
-        # ext.docs - docstring of typelib
-        # ext.symbol_name - symbol to generate
-        # ext.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
-        #
-        # ext.name filled in here
         modname = comtypes.client._generate._name_module(ext.tlib)
         if modname not in self.imports:
             comtypes.client.GetModule(ext.tlib)
             self.imports.add(modname)
-        ext.name = "%s.%s" % (modname, ext.symbol_name)
 
     def Constant(self, tp):
         self.last_item_class = False
@@ -740,9 +743,9 @@ class Generator(object):
                 where = implemented
             if item[1] & 1: # IMPLTYPEFLAG_FDEAULT
                 # The default interface should be the first item on the list
-                where.insert(0, item[0].name)
+                where.insert(0, self.type_name(item[0]))
             else:
-                where.append(item[0].name)
+                where.append(self.type_name(item[0]))
 
         if implemented:
             self.last_item_class = False
