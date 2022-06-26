@@ -66,6 +66,8 @@ class Constants(object):
         True
         >>> 'IOMode' in c.enums  # as is `key in dict`
         True
+        >>> 'ForReading' in c.IOMode  # as is `key in dict`
+        True
         >>> 'FileAttribute' in c.enums  # It's alias of `__MIDL___MIDL...`
         False
         >>> 'FileAttribute' in c.alias  # as is `key in dict`
