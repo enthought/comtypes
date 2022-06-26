@@ -321,10 +321,8 @@ class Generator(object):
                 x = get_real_type(t.typ)
                 if isinstance(x, typedesc.FundamentalType):
                     if x.name == "char":
-                        self.declarations.add("STRING", "c_char_p")
                         return "STRING"
                     elif x.name == "wchar_t":
-                        self.declarations.add("WSTRING", "c_wchar_p")
                         return "WSTRING"
 
             result = "POINTER(%s)" % self.type_name(t.typ, generate)
@@ -703,6 +701,14 @@ class Generator(object):
             self.generate(tp.typ)
         else:
             self.generate(tp.typ)
+        if not ASSUME_STRINGS:
+            return
+        real_type = get_real_type(tp.typ)
+        if isinstance(real_type, typedesc.FundamentalType):
+            if real_type.name == "char":
+                self.declarations.add("STRING", "c_char_p")
+            elif real_type.name == "wchar_t":
+                self.declarations.add("WSTRING", "c_wchar_p")
 
     def CoClass(self, coclass):
         self.need_GUID()
