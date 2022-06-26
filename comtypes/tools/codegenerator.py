@@ -359,7 +359,7 @@ class Generator(object):
             return t.name
         elif isinstance(t, typedesc.External):
             # t.symbol_name - symbol to generate
-            # ext.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
+            # t.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
             modname = comtypes.client._generate._name_module(t.tlib)
             return "%s.%s" % (modname, t.symbol_name)
         return t.name
