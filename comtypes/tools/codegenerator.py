@@ -96,7 +96,7 @@ def _calc_packing(struct, fields, pack, isStruct):
         total_align = 8 # in bits
     for i, f in enumerate(fields):
         if f.bits: # this code cannot handle bit field sizes.
-##            print "##XXX FIXME"
+            # print "##XXX FIXME"
             return -2 # XXX FIXME
         s, a = storage(f.typ)
         if pack is not None:
@@ -318,8 +318,8 @@ class Generator(object):
         # namespace is available.
         if isinstance(t, typedesc.SAFEARRAYType):
             return "_midlSAFEARRAY(%s)" % self.type_name(t.typ)
-##        if isinstance(t, typedesc.CoClass):
-##            return "%s._com_interfaces_[0]" % t.name
+        # if isinstance(t, typedesc.CoClass):
+        #     return "%s._com_interfaces_[0]" % t.name
         if isinstance(t, typedesc.Typedef):
             return t.name
         if isinstance(t, typedesc.PointerType):
@@ -724,7 +724,7 @@ class Generator(object):
         print("    _idlflags_ = %s" % coclass.idlflags, file=self.stream)
         if self.filename is not None:
             print("    _typelib_path_ = typelib_path", file=self.stream)
-##X        print >> self.stream, "POINTER(%s).__ctypes_from_outparam__ = wrap" % coclass.name
+        # X print >> self.stream, "POINTER(%s).__ctypes_from_outparam__ = wrap" % coclass.name
 
         libid = coclass.tlibattr.guid
         wMajor, wMinor = coclass.tlibattr.wMajorVerNum, coclass.tlibattr.wMinorVerNum
