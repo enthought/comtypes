@@ -117,12 +117,54 @@ class Test_Constants(ut.TestCase):
         self.assertEqual(consts.TextCompare, Scripting.TextCompare)
         self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
         with self.assertRaises(AttributeError):
-            consts.CompareMethod
+            consts.Foo
+        CompareMethod = consts.CompareMethod
+        self.assertEqual(CompareMethod.BinaryCompare, Scripting.BinaryCompare)
+        self.assertEqual(CompareMethod.TextCompare, Scripting.TextCompare)
+        self.assertEqual(CompareMethod.DatabaseCompare, Scripting.DatabaseCompare)
+        with self.assertRaises(AttributeError):
+            CompareMethod.Foo
+        with self.assertRaises(AttributeError):
+            CompareMethod.TextCompare = 1
+        with self.assertRaises(AttributeError):
+            CompareMethod.Foo = 1
+        with self.assertRaises(TypeError):
+            CompareMethod["Foo"] = 1
+        with self.assertRaises(TypeError):
+            del CompareMethod["Foo"]
+        with self.assertRaises(TypeError):
+            CompareMethod |= {"Foo": 3}
+        with self.assertRaises(TypeError):
+            CompareMethod.clear()
+        with self.assertRaises(TypeError):
+            CompareMethod.pop("TextCompare")
+        with self.assertRaises(TypeError):
+            CompareMethod.popitem()
+        with self.assertRaises(TypeError):
+            CompareMethod.setdefault("Bar", 3)
 
-    def test_returns_other_than_int(self):
+    def test_alias(self):
+        obj = comtypes.client.CreateObject(Scripting.FileSystemObject)
+        consts = comtypes.client.Constants(obj)
+        StandardStreamTypes = consts.StandardStreamTypes
+        real_name = "__MIDL___MIDL_itf_scrrun_0001_0001_0003"
+        self.assertEqual(StandardStreamTypes, getattr(consts, real_name))
+        self.assertEqual(StandardStreamTypes.StdIn, Scripting.StdIn)
+        self.assertEqual(StandardStreamTypes.StdOut, Scripting.StdOut)
+        self.assertEqual(StandardStreamTypes.StdErr, Scripting.StdErr)
+
+    def test_progid(self):
+        consts = comtypes.client.Constants("scrrun.dll")
+        self.assertEqual(consts.BinaryCompare, Scripting.BinaryCompare)
+        self.assertEqual(consts.TextCompare, Scripting.TextCompare)
+        self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
+
+    def test_returns_other_than_enum_members(self):
         obj = comtypes.client.CreateObject("SAPI.SpVoice")
         from comtypes.gen import SpeechLib as sapi
         consts = comtypes.client.Constants(obj)
+        # int (Constant c_int)
+        self.assertEqual(consts.Speech_Max_Word_Length, sapi.Speech_Max_Word_Length)
         # str (Constant BSTR)
         self.assertEqual(consts.SpeechVoiceSkipTypeSentence, sapi.SpeechVoiceSkipTypeSentence)
         self.assertEqual(consts.SpeechAudioFormatGUIDWave, sapi.SpeechAudioFormatGUIDWave)
