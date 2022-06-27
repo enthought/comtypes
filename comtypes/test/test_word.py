@@ -1,6 +1,7 @@
 import time
 import unittest
 
+from comtypes import COMError
 import comtypes.client
 import comtypes.test
 
@@ -32,7 +33,6 @@ class Test(unittest.TestCase):
         del self.word
 
     def test(self):
-        # create a word instance
         word = self.word
         from comtypes.gen import Word
 
@@ -70,11 +70,9 @@ class Test(unittest.TestCase):
         tb = word.CommandBars("Standard")
         btn = tb.Controls[1]
 
-        if 0: # word does not allow programmatic access, so this does fail
-            evt = word.VBE.Events.CommandBarEvents(btn)
-            from comtypes.gen import Word, VBIDE
-            comtypes.client.ShowEvents(evt, interface=VBIDE._dispCommandBarControlEvents)
-            comtypes.client.ShowEvents(evt)
+        # word does not allow programmatic access, so this does fail
+        with self.assertRaises(COMError):
+            word.VBE.Events.CommandBarEvents(btn)
 
 
 if __name__ == "__main__":
