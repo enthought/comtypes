@@ -13,16 +13,16 @@ def setUpModule():
                             "built-in win32 API to use.")
 
 
-class Test(unittest.TestCase):
-
-    def setUp(self):
-        self._events = []
+class _Sink(object):
+    def __init__(self):
+        self.events = []
 
     # Word Application Event
     def DocumentChange(self, this, *args):
-##        print "DocumentChange", args
-        self._events.append("DocumentChange")
+        self.events.append("DocumentChange")
 
+
+class Test(unittest.TestCase):
     def test(self):
         # create a word instance
         word = comtypes.client.CreateObject("Word.Application")
@@ -30,7 +30,8 @@ class Test(unittest.TestCase):
 
         # Get the instance again, and receive events from that
         w2 = comtypes.client.GetActiveObject("Word.Application")
-        conn = comtypes.client.GetEvents(w2, sink=self)
+        sink = _Sink()
+        conn = comtypes.client.GetEvents(w2, sink=sink)
 
         word.Visible = 1
 
@@ -53,7 +54,7 @@ class Test(unittest.TestCase):
 
         time.sleep(0.5)
 
-##        self.failUnlessEqual(self._events, ["DocumentChange", "DocumentChange"])
+        self.assertEqual(sink.events, ["DocumentChange", "DocumentChange"])
 
     def test_commandbar(self):
         word = comtypes.client.CreateObject("Word.Application")
