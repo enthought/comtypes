@@ -1,8 +1,4 @@
 # typedesc.py - classes representing C type descriptions
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 class Argument(object):
     "a Parameter in the argument list of a callable (Function, Method, ...)"

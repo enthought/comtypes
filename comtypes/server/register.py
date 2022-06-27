@@ -65,10 +65,7 @@ SHDeleteKey = windll.shlwapi.SHDeleteKeyW
 SHDeleteKey.errcheck = _non_zero
 SHDeleteKey.argtypes = c_ulong, c_wchar_p
 
-try:
-    Set = set
-except NameError:
-    from sets import Set #as set
+Set = set
 
 
 _KEYS = {winreg.HKEY_CLASSES_ROOT: "HKCR",

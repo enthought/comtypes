@@ -12,10 +12,6 @@ from comtypes import COMError
 from comtypes.tools import typedesc
 from comtypes.client._code_cache import _get_module_filename
 
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 # Is the process 64-bit?
 is_64bits = sys.maxsize > 2**32
