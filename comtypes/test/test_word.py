@@ -14,6 +14,14 @@ def setUpModule():
                             "built-in win32 API to use.")
 
 
+try:
+    comtypes.client.GetModule(('{00020905-0000-0000-C000-000000000046}',))  # Word libUUID
+    from comtypes.gen import Word
+    IMPORT_FAILED = False
+except (ImportError, OSError):
+    IMPORT_FAILED = True
+
+
 class _Sink(object):
     def __init__(self):
         self.events = []
@@ -34,8 +42,6 @@ class Test(unittest.TestCase):
 
     def test(self):
         word = self.word
-        from comtypes.gen import Word
-
         # Get the instance again, and receive events from that
         w2 = comtypes.client.GetActiveObject("Word.Application")
         sink = _Sink()
