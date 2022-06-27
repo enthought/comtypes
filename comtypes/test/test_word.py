@@ -3,16 +3,6 @@ import unittest
 
 from comtypes import COMError
 import comtypes.client
-import comtypes.test
-
-# XXX leaks references.
-
-comtypes.test.requires("ui")
-
-def setUpModule():
-    raise unittest.SkipTest("External test dependencies like this seem bad.  Find a different "
-                            "built-in win32 API to use.")
-
 
 try:
     comtypes.client.GetModule(('{00020905-0000-0000-C000-000000000046}',))  # Word libUUID
@@ -20,6 +10,17 @@ try:
     IMPORT_FAILED = False
 except (ImportError, OSError):
     IMPORT_FAILED = True
+
+
+################################################################
+#
+# TODO:
+#
+# It seems bad that only external test like this
+# can verify the behavior of `comtypes` implementation.
+# Find a different built-in win32 API to use.
+#
+################################################################
 
 
 class _Sink(object):
@@ -31,6 +32,7 @@ class _Sink(object):
         self.events.append("DocumentChange")
 
 
+@unittest.skipIf(IMPORT_FAILED, "This depends on Word.")
 class Test(unittest.TestCase):
     def setUp(self):
         # create a word instance
@@ -79,6 +81,8 @@ class Test(unittest.TestCase):
         # word does not allow programmatic access, so this does fail
         with self.assertRaises(COMError):
             word.VBE.Events.CommandBarEvents(btn)
+
+        del word
 
 
 if __name__ == "__main__":
