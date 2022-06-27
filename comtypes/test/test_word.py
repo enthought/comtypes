@@ -23,9 +23,17 @@ class _Sink(object):
 
 
 class Test(unittest.TestCase):
+    def setUp(self):
+        # create a word instance
+        self.word = comtypes.client.CreateObject("Word.Application")
+
+    def tearDown(self):
+        self.word.Quit()
+        del self.word
+
     def test(self):
         # create a word instance
-        word = comtypes.client.CreateObject("Word.Application")
+        word = self.word
         from comtypes.gen import Word
 
         # Get the instance again, and receive events from that
@@ -49,7 +57,6 @@ class Test(unittest.TestCase):
 
         doc.Close(SaveChanges = Word.wdDoNotSaveChanges)
 
-        word.Quit()
         del word, w2
 
         time.sleep(0.5)
@@ -57,7 +64,7 @@ class Test(unittest.TestCase):
         self.assertEqual(sink.events, ["DocumentChange", "DocumentChange"])
 
     def test_commandbar(self):
-        word = comtypes.client.CreateObject("Word.Application")
+        word = self.word
         word.Visible = 1
         tb = word.CommandBars("Standard")
         btn = tb.Controls[1]
@@ -68,7 +75,6 @@ class Test(unittest.TestCase):
             comtypes.client.ShowEvents(evt, interface=VBIDE._dispCommandBarControlEvents)
             comtypes.client.ShowEvents(evt)
 
-        word.Quit()
 
 if __name__ == "__main__":
     unittest.main()
