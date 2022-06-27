@@ -60,6 +60,7 @@ class Test(unittest.TestCase):
         del word, w2
 
         time.sleep(0.5)
+        conn.disconnect()
 
         self.assertEqual(sink.events, ["DocumentChange", "DocumentChange"])
 
