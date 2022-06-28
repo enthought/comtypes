@@ -10,7 +10,7 @@ from setuptools import setup
 
 from distutils.command.build_py import build_py
 
-with open('README') as readme_stream:
+with open('README.md') as readme_stream:
     readme = readme_stream.read()
 
 class test(Command):
