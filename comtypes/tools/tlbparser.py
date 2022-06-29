@@ -706,17 +706,8 @@ def get_tlib_filename(tlib):
     la = tlib.GetLibAttr()
     name = BSTR()
     try:
-        windll.oleaut32.QueryPathOfRegTypeLib
-    except AttributeError:
-        # Windows CE doesn't have this function
-        return None
-    if 0 == windll.oleaut32.QueryPathOfRegTypeLib(byref(la.guid),
-                                                  la.wMajorVerNum,
-                                                  la.wMinorVerNum,
-                                                  0, # lcid
-                                                  byref(name)
-                                                  ):
-        full_filename = name.value.split("\0")[0]
+        full_filename = typeinfo.QueryPathOfRegTypeLib(
+            str(la.guid), la.wMajorVerNum, la.wMinorVerNum)
         if not os.path.isabs(full_filename):
             # workaround Windows 7 bug in QueryPathOfRegTypeLib returning relative path
             try:
@@ -726,6 +717,8 @@ def get_tlib_filename(tlib):
             except OSError:
                 return None
         return full_filename
+    except OSError:  # there's no way to determine the filename.
+        pass
     return None
 
 def _py2exe_hint():
