@@ -1,10 +1,7 @@
 from __future__ import print_function
 import os
 import sys
-from ctypes import windll
-from ctypes import c_void_p
-from ctypes import sizeof
-from ctypes import alignment
+from ctypes import alignment, c_void_p, sizeof, windll
 
 from comtypes import automation
 from comtypes import typeinfo
@@ -701,10 +698,7 @@ class TypeLibParser(Parser):
 def get_tlib_filename(tlib):
     # seems if the typelib is not registered, there's no way to
     # determine the filename.
-    from ctypes import windll, byref
-    from comtypes import BSTR
     la = tlib.GetLibAttr()
-    name = BSTR()
     try:
         full_filename = typeinfo.QueryPathOfRegTypeLib(
             str(la.guid), la.wMajorVerNum, la.wMinorVerNum)
