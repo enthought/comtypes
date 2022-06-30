@@ -980,9 +980,10 @@ class _compointer_base(c_void_p):
         return hash(super(_compointer_base, self).value)
 
     # redefine the .value property; return the object itself.
-    def __get_value(self):
+    @property
+    def value(self):
+        """Return self."""
         return self
-    value = property(__get_value, doc="""Return self.""")
 
     def __repr__(self):
         ptr = super(_compointer_base, self).value
