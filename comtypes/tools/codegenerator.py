@@ -306,7 +306,7 @@ class Generator(object):
 
         return loops
 
-    def type_name(self, t, generate=True):
+    def type_name(self, t):
         # Return a string, containing an expression which can be used
         # to refer to the type. Assumes the 'from ctypes import *'
         # namespace is available.
@@ -325,7 +325,7 @@ class Generator(object):
                     elif x.name == "wchar_t":
                         return "WSTRING"
 
-            result = "POINTER(%s)" % self.type_name(t.typ, generate)
+            result = "POINTER(%s)" % self.type_name(t.typ)
             # XXX Better to inspect t.typ!
             if result.startswith("POINTER(WINFUNCTYPE"):
                 return result[len("POINTER("):-1]
@@ -335,16 +335,16 @@ class Generator(object):
                 return "c_void_p"
             return result
         elif isinstance(t, typedesc.ArrayType):
-            return "%s * %s" % (self.type_name(t.typ, generate), int(t.max)+1)
+            return "%s * %s" % (self.type_name(t.typ), int(t.max)+1)
         elif isinstance(t, typedesc.FunctionType):
-            args = [self.type_name(x, generate) for x in [t.returns] + list(t.iterArgTypes())]
+            args = [self.type_name(x) for x in [t.returns] + list(t.iterArgTypes())]
             if "__stdcall__" in t.attributes:
                 return "WINFUNCTYPE(%s)" % ", ".join(args)
             else:
                 return "CFUNCTYPE(%s)" % ", ".join(args)
         elif isinstance(t, typedesc.CvQualifiedType):
             # const and volatile are ignored
-            return "%s" % self.type_name(t.typ, generate)
+            return "%s" % self.type_name(t.typ)
         elif isinstance(t, typedesc.FundamentalType):
             return ctypes_names[t.name]
         elif isinstance(t, typedesc.Structure):
@@ -677,7 +677,7 @@ class Generator(object):
         self.last_item_class = False
         print("%s = %r  # Constant %s" % (tp.name,
                                          tp.value,
-                                         self.type_name(tp.typ, False)), file=self.stream)
+                                         self.type_name(tp.typ)), file=self.stream)
         self.names.add(tp.name)
 
     def SAFEARRAYType(self, sa):
