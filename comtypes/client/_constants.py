@@ -3,6 +3,7 @@
 # Typelib constants
 #
 ################################################################
+import keyword
 import sys
 
 import comtypes
@@ -117,6 +118,12 @@ class Constants(object):
             vdesc = tinfo.GetVarDesc(i)
             if vdesc.varkind == comtypes.typeinfo.VAR_CONST:
                 name = tinfo.GetDocumentation(vdesc.memid)[0]
+                if keyword.iskeyword(name):  # same as `tools.codegenerator`
+                    # XXX is necessary warning? should use logging?
+                    # import comtypes.tools
+                    # if comtypes.tools.__warn_on_munge__:
+                    #     print("# Fixing keyword as VAR_CONST for %s" % name)
+                    name += "_"
                 members[name] = vdesc._.lpvarValue[0].value
         return _frozen_attr_dict(members)
 
