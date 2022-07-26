@@ -56,6 +56,21 @@ class Test_GetModule(ut.TestCase):
         mod = comtypes.client.GetModule(clsid)
         self.assertEqual(mod.MediaPlayer._reg_clsid_, clsid)
 
+    def test_imports_IEnumVARIANT_from_other_generated_modules(self):
+        # NOTE: `codegenerator` generates code that contains unused imports,
+        # but removing them are attracting wierd bugs in library-wrappers
+        # which depend on externals.
+        # NOTE: `mscorlib`, which imports `IEnumVARIANT` from `stdole`.
+        comtypes.client.GetModule(("{BED7F4EA-1A96-11D2-8F08-00A0C9A6186D}",))
+
+    def test_no_replacing_Patch_namespace(self):
+        # NOTE: An object named `Patch` is defined in some dll.
+        # Depending on how the namespace is defined in the static module,
+        # `Patch` in generated modules will be replaced with
+        # `comtypes.patcher.Patch`, and generating module will fail.
+        # NOTE: `WindowsInstaller`, which has `Patch` definition in dll.
+        comtypes.client.GetModule("msi.dll")
+
 
 class Test_CreateObject(ut.TestCase):
     def test_progid(self):

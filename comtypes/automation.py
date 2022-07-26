@@ -9,7 +9,7 @@ from ctypes import _Pointer
 from _ctypes import CopyComPointer
 from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
-from comtypes.patcher import Patch
+import comtypes.patcher
 from comtypes import npsupport
 try:
     from comtypes import _safearray
@@ -555,7 +555,7 @@ del v
 _carg_obj = type(byref(c_int()))
 from _ctypes import Array as _CArrayType
 
-@Patch(POINTER(VARIANT))
+@comtypes.patcher.Patch(POINTER(VARIANT))
 class _(object):
     # Override the default .from_param classmethod of POINTER(VARIANT).
     # This allows to pass values which can be stored in VARIANTs as
