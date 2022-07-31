@@ -96,7 +96,7 @@ def _calc_packing(struct, fields, pack, isStruct):
         total_align = 8 # in bits
     for i, f in enumerate(fields):
         if f.bits: # this code cannot handle bit field sizes.
-##            print "##XXX FIXME"
+            # print "##XXX FIXME"
             return -2 # XXX FIXME
         s, a = storage(f.typ)
         if pack is not None:
@@ -138,12 +138,6 @@ def calc_packing(struct, fields):
 
 class PackingError(Exception):
     pass
-
-try:
-    set
-except NameError:
-    # Python 2.3
-    from sets import Set as set
 
 # XXX These should be filtered out in gccxmlparser.
 dont_assert_size = set(
@@ -312,14 +306,14 @@ class Generator(object):
 
         return loops
 
-    def type_name(self, t, generate=True):
+    def type_name(self, t):
         # Return a string, containing an expression which can be used
         # to refer to the type. Assumes the 'from ctypes import *'
         # namespace is available.
         if isinstance(t, typedesc.SAFEARRAYType):
             return "_midlSAFEARRAY(%s)" % self.type_name(t.typ)
-##        if isinstance(t, typedesc.CoClass):
-##            return "%s._com_interfaces_[0]" % t.name
+        # if isinstance(t, typedesc.CoClass):
+        #     return "%s._com_interfaces_[0]" % t.name
         if isinstance(t, typedesc.Typedef):
             return t.name
         if isinstance(t, typedesc.PointerType):
@@ -327,13 +321,11 @@ class Generator(object):
                 x = get_real_type(t.typ)
                 if isinstance(x, typedesc.FundamentalType):
                     if x.name == "char":
-                        self.declarations.add("STRING", "c_char_p")
                         return "STRING"
                     elif x.name == "wchar_t":
-                        self.declarations.add("WSTRING", "c_wchar_p")
                         return "WSTRING"
 
-            result = "POINTER(%s)" % self.type_name(t.typ, generate)
+            result = "POINTER(%s)" % self.type_name(t.typ)
             # XXX Better to inspect t.typ!
             if result.startswith("POINTER(WINFUNCTYPE"):
                 return result[len("POINTER("):-1]
@@ -343,16 +335,16 @@ class Generator(object):
                 return "c_void_p"
             return result
         elif isinstance(t, typedesc.ArrayType):
-            return "%s * %s" % (self.type_name(t.typ, generate), int(t.max)+1)
+            return "%s * %s" % (self.type_name(t.typ), int(t.max)+1)
         elif isinstance(t, typedesc.FunctionType):
-            args = [self.type_name(x, generate) for x in [t.returns] + list(t.iterArgTypes())]
+            args = [self.type_name(x) for x in [t.returns] + list(t.iterArgTypes())]
             if "__stdcall__" in t.attributes:
                 return "WINFUNCTYPE(%s)" % ", ".join(args)
             else:
                 return "CFUNCTYPE(%s)" % ", ".join(args)
         elif isinstance(t, typedesc.CvQualifiedType):
             # const and volatile are ignored
-            return "%s" % self.type_name(t.typ, generate)
+            return "%s" % self.type_name(t.typ)
         elif isinstance(t, typedesc.FundamentalType):
             return ctypes_names[t.name]
         elif isinstance(t, typedesc.Structure):
@@ -361,6 +353,15 @@ class Generator(object):
             if t.name:
                 return t.name
             return "c_int" # enums are integers
+        elif isinstance(t, typedesc.EnumValue):
+            if keyword.iskeyword(t.name):
+                return t.name + "_"
+            return t.name
+        elif isinstance(t, typedesc.External):
+            # t.symbol_name - symbol to generate
+            # t.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
+            modname = comtypes.client._generate._name_module(t.tlib)
+            return "%s.%s" % (modname, t.symbol_name)
         return t.name
 
     def need_VARIANT_imports(self, value):
@@ -388,9 +389,9 @@ class Generator(object):
             # XXX use logging!
             if __warn_on_munge__:
                 print("# Fixing keyword as EnumValue for %s" % tp.name)
-            tp.name += "_"
-        print("%s = %d" % (tp.name, value), file=self.stream)
-        self.names.add(tp.name)
+        tp_name = self.type_name(tp)
+        print("%s = %d" % (tp_name, value), file=self.stream)
+        self.names.add(tp_name)
         self._enumvalues += 1
 
     _enumtypes = 0
@@ -667,22 +668,16 @@ class Generator(object):
         print(file=self.stream)
 
     def External(self, ext):
-        # ext.docs - docstring of typelib
-        # ext.symbol_name - symbol to generate
-        # ext.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
-        #
-        # ext.name filled in here
         modname = comtypes.client._generate._name_module(ext.tlib)
         if modname not in self.imports:
             comtypes.client.GetModule(ext.tlib)
             self.imports.add(modname)
-        ext.name = "%s.%s" % (modname, ext.symbol_name)
 
     def Constant(self, tp):
         self.last_item_class = False
         print("%s = %r  # Constant %s" % (tp.name,
                                          tp.value,
-                                         self.type_name(tp.typ, False)), file=self.stream)
+                                         self.type_name(tp.typ)), file=self.stream)
         self.names.add(tp.name)
 
     def SAFEARRAYType(self, sa):
@@ -706,6 +701,14 @@ class Generator(object):
             self.generate(tp.typ)
         else:
             self.generate(tp.typ)
+        if not ASSUME_STRINGS:
+            return
+        real_type = get_real_type(tp.typ)
+        if isinstance(real_type, typedesc.FundamentalType):
+            if real_type.name == "char":
+                self.declarations.add("STRING", "c_char_p")
+            elif real_type.name == "wchar_t":
+                self.declarations.add("WSTRING", "c_wchar_p")
 
     def CoClass(self, coclass):
         self.need_GUID()
@@ -724,7 +727,7 @@ class Generator(object):
         print("    _idlflags_ = %s" % coclass.idlflags, file=self.stream)
         if self.filename is not None:
             print("    _typelib_path_ = typelib_path", file=self.stream)
-##X        print >> self.stream, "POINTER(%s).__ctypes_from_outparam__ = wrap" % coclass.name
+        # X print >> self.stream, "POINTER(%s).__ctypes_from_outparam__ = wrap" % coclass.name
 
         libid = coclass.tlibattr.guid
         wMajor, wMinor = coclass.tlibattr.wMajorVerNum, coclass.tlibattr.wMinorVerNum
@@ -746,9 +749,9 @@ class Generator(object):
                 where = implemented
             if item[1] & 1: # IMPLTYPEFLAG_FDEAULT
                 # The default interface should be the first item on the list
-                where.insert(0, item[0].name)
+                where.insert(0, self.type_name(item[0]))
             else:
-                where.append(item[0].name)
+                where.append(self.type_name(item[0]))
 
         if implemented:
             self.last_item_class = False
