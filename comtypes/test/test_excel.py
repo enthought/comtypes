@@ -24,10 +24,7 @@ except (ImportError, OSError):
     IMPORT_FAILED = True
 
 
-@unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
-@unittest.skip("There is difference of `Range.Value` behavior "
-    "between Python >= 3.8.x and Python <= 3.7.x.")
-class BaseTest(unittest.TestCase):
+class Base(object):
     # `dynamic = True/False` must be defined in subclasses!
 
     def setUp(self):
@@ -43,9 +40,9 @@ class BaseTest(unittest.TestCase):
     def test(self):
         xl = self.xl
         xl.Visible = 0
-        self.assertEqual(xl.Visible, False)
+        self.assertEqual(xl.Visible, False)  # type: ignore
         xl.Visible = 1
-        self.assertEqual(xl.Visible, True)
+        self.assertEqual(xl.Visible, True)  # type: ignore
 
         wb = xl.Workbooks.Add()
 
@@ -117,15 +114,16 @@ class BaseTest(unittest.TestCase):
         sh.Range[sh.Cells.Item[4,1],sh.Cells.Item[6,3]].Select()
 
 
-class Test_EarlyBind(BaseTest):
+@unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
+@unittest.skip("There is difference of `Range.Value` behavior "
+    "between Python >= 3.8.x and Python <= 3.7.x.")
+class Test_EarlyBind(Base, unittest.TestCase):
     dynamic = False
 
 
-class Test_LateBind(BaseTest):
+@unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
+class Test_LateBind(Base, unittest.TestCase):
     dynamic = True
-
-
-del BaseTest  # to avoid running `BaseTest`
 
 
 if __name__ == "__main__":
