@@ -24,7 +24,7 @@ except (ImportError, OSError):
     IMPORT_FAILED = True
 
 
-class Base(object):
+class BaseBindTest(object):
     # `dynamic = True/False` must be defined in subclasses!
 
     def setUp(self):
@@ -117,12 +117,12 @@ class Base(object):
 @unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
 @unittest.skip("There is difference of `Range.Value` behavior "
     "between Python >= 3.8.x and Python <= 3.7.x.")
-class Test_EarlyBind(Base, unittest.TestCase):
+class Test_EarlyBind(BaseBindTest, unittest.TestCase):
     dynamic = False
 
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
-class Test_LateBind(Base, unittest.TestCase):
+class Test_LateBind(BaseBindTest, unittest.TestCase):
     dynamic = True
 
 
