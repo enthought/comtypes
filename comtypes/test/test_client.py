@@ -1,3 +1,4 @@
+import contextlib
 from ctypes import POINTER, byref
 import os
 import sys
@@ -15,6 +16,18 @@ if sys.version_info >= (3, 0):
     text_type = str
 else:
     text_type = unicode
+
+
+# HACK: Prefer to use `contextlib.redirect_stdout`, but it's New in version 3.4
+@contextlib.contextmanager
+def silence_stdout():
+    old_target = sys.stdout
+    try:
+        with open(os.devnull, "w") as new_target:
+            sys.stdout = new_target
+            yield new_target
+    finally:
+        sys.stdout = old_target
 
 
 class Test_GetModule(ut.TestCase):
@@ -132,12 +145,54 @@ class Test_Constants(ut.TestCase):
         self.assertEqual(consts.TextCompare, Scripting.TextCompare)
         self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
         with self.assertRaises(AttributeError):
-            consts.CompareMethod
+            consts.Foo
+        CompareMethod = consts.CompareMethod
+        self.assertEqual(CompareMethod.BinaryCompare, Scripting.BinaryCompare)
+        self.assertEqual(CompareMethod.TextCompare, Scripting.TextCompare)
+        self.assertEqual(CompareMethod.DatabaseCompare, Scripting.DatabaseCompare)
+        with self.assertRaises(AttributeError):
+            CompareMethod.Foo
+        with self.assertRaises(AttributeError):
+            CompareMethod.TextCompare = 1
+        with self.assertRaises(AttributeError):
+            CompareMethod.Foo = 1
+        with self.assertRaises(TypeError):
+            CompareMethod["Foo"] = 1
+        with self.assertRaises(TypeError):
+            del CompareMethod["Foo"]
+        with self.assertRaises(TypeError):
+            CompareMethod |= {"Foo": 3}
+        with self.assertRaises(TypeError):
+            CompareMethod.clear()
+        with self.assertRaises(TypeError):
+            CompareMethod.pop("TextCompare")
+        with self.assertRaises(TypeError):
+            CompareMethod.popitem()
+        with self.assertRaises(TypeError):
+            CompareMethod.setdefault("Bar", 3)
 
-    def test_returns_other_than_int(self):
+    def test_alias(self):
+        obj = comtypes.client.CreateObject(Scripting.FileSystemObject)
+        consts = comtypes.client.Constants(obj)
+        StandardStreamTypes = consts.StandardStreamTypes
+        real_name = "__MIDL___MIDL_itf_scrrun_0001_0001_0003"
+        self.assertEqual(StandardStreamTypes, getattr(consts, real_name))
+        self.assertEqual(StandardStreamTypes.StdIn, Scripting.StdIn)
+        self.assertEqual(StandardStreamTypes.StdOut, Scripting.StdOut)
+        self.assertEqual(StandardStreamTypes.StdErr, Scripting.StdErr)
+
+    def test_progid(self):
+        consts = comtypes.client.Constants("scrrun.dll")
+        self.assertEqual(consts.BinaryCompare, Scripting.BinaryCompare)
+        self.assertEqual(consts.TextCompare, Scripting.TextCompare)
+        self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
+
+    def test_returns_other_than_enum_members(self):
         obj = comtypes.client.CreateObject("SAPI.SpVoice")
         from comtypes.gen import SpeechLib as sapi
         consts = comtypes.client.Constants(obj)
+        # int (Constant c_int)
+        self.assertEqual(consts.Speech_Max_Word_Length, sapi.Speech_Max_Word_Length)
         # str (Constant BSTR)
         self.assertEqual(consts.SpeechVoiceSkipTypeSentence, sapi.SpeechVoiceSkipTypeSentence)
         self.assertEqual(consts.SpeechAudioFormatGUIDWave, sapi.SpeechAudioFormatGUIDWave)
@@ -145,6 +200,15 @@ class Test_Constants(ut.TestCase):
         self.assertEqual(consts.SpeechGrammarTagDictation, sapi.SpeechGrammarTagDictation)
         # float (Constant c_float)
         self.assertEqual(consts.Speech_Default_Weight, sapi.Speech_Default_Weight)
+
+    @ut.skipUnless(sys.version_info >= (3, 0), "Some words are not in Python2 keywords")
+    def test_munged_definitions(self):
+        with silence_stdout():  # supress warnings
+            MSVidCtlLib = comtypes.client.GetModule("msvidctl.dll")
+            consts = comtypes.client.Constants("msvidctl.dll")
+        # `None` is a Python3 keyword.
+        self.assertEqual(consts.MSVidCCService.None_, consts.None_)
+        self.assertEqual(MSVidCtlLib.None_, consts.None_)
 
 
 if __name__ == "__main__":
