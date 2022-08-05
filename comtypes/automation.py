@@ -286,7 +286,7 @@ class tagVARIANT(Structure):
             self._.VT_R8 = com_days
         elif npsupport.isdatetime64(value):
             com_days = value - npsupport.com_null_date64
-            com_days /= npsupport.numpy.timedelta64(1, 'D')
+            com_days /= npsupport.get_numpy().timedelta64(1, 'D')
             self.vt = VT_DATE
             self._.VT_R8 = com_days
         elif decimal is not None and isinstance(value, decimal.Decimal):

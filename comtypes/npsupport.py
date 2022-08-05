@@ -1,16 +1,13 @@
 """ Consolidation of numpy support utilities. """
 import sys
 
-try:
-    import numpy
-except ImportError:
-    numpy = None
-
-
-HAVE_NUMPY = numpy is not None
-
 is_64bits = sys.maxsize > 2**32
-
+HAVE_NUMPY = False
+com_null_date64 = None
+numpy = None
+datetime64 = None
+VARIANT_dtype = None
+typecodes = {}
 
 def _make_variant_dtype():
     """ Create a dtype for VARIANT. This requires support for Unions, which is
@@ -21,6 +18,7 @@ def _make_variant_dtype():
     Returns None if the dtype cannot be created.
 
     """
+    numpy = get_numpy()
 
     # pointer typecode
     ptr_typecode = '<u8' if is_64bits else '<u4'
@@ -64,6 +62,7 @@ def isndarray(value):
     """
     if not HAVE_NUMPY:
         return False
+    numpy = get_numpy()
     return isinstance(value, numpy.ndarray)
 
 
@@ -98,20 +97,27 @@ def _check_ctypeslib_typecodes():
     return ctypeslib._typecodes
 
 
-com_null_date64 = None
-datetime64 = None
-VARIANT_dtype = None
-typecodes = {}
+def enable_numpy_interop():
+    """ Import the numpy library (if not already imported) and set up the
+    necessary functions for comtypes to work with ndarrays.
 
-if HAVE_NUMPY:
+    """
+    global numpy
+    import numpy
+
+    global HAVE_NUMPY
+    HAVE_NUMPY = True
+    global typecodes
     typecodes = _check_ctypeslib_typecodes()
     # dtype for VARIANT. This allows for packing of variants into an array, and
     # subsequent conversion to a multi-dimensional safearray.
+    global VARIANT_dtype
     try:
         VARIANT_dtype = _make_variant_dtype()
     except ValueError:
         pass
-
+    global datetime64
+    global com_null_date64
     # This simplifies dependent modules
     try:
         from numpy import datetime64
@@ -123,3 +129,18 @@ if HAVE_NUMPY:
             com_null_date64 = datetime64("1899-12-30T00:00:00", "ns")
         except TypeError:
             pass
+
+
+def get_numpy():
+    """ Returns the numpy package if numpy interop is enabled, otherwise raises
+    an import error to remind the user they need to manually enable numpy
+    interop
+
+    """
+    if HAVE_NUMPY:
+        return numpy
+    raise ImportError(
+        "In comtypes>=1.2.0 numpy interop must be explicitly enabled with "
+        "comtypes.npsupport.enable_numpy_interop before attempting to use "
+        "numpy features."
+    )

@@ -13,8 +13,9 @@ use_resources = ["*"]
 def get_numpy():
     '''Get numpy if it is available.'''
     try:
-        import numpy
-        return numpy
+        import comtypes.npsupport
+        comtypes.npsupport.enable_numpy_interop()
+        return comtypes.npsupport.get_numpy()
     except ImportError:
         return None
 
