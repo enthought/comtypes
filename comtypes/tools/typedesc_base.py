@@ -127,6 +127,10 @@ class StructureBody(object):
 
 class _Struct_Union_Base(object):
     location = None
+    def __init__(self):
+        self.struct_body = StructureBody(self)
+        self.struct_head = StructureHead(self)
+
     def get_body(self):
         return self.struct_body
 
@@ -144,8 +148,7 @@ class Structure(_Struct_Union_Base):
             self.size = int(size)
         else:
             self.size = None
-        self.struct_body = StructureBody(self)
-        self.struct_head = StructureHead(self)
+        super(Structure, self).__init__()
 
 class Union(_Struct_Union_Base):
     def __init__(self, name, align, members, bases, size, artificial=None):
@@ -158,8 +161,7 @@ class Union(_Struct_Union_Base):
             self.size = int(size)
         else:
             self.size = None
-        self.struct_body = StructureBody(self)
-        self.struct_head = StructureHead(self)
+        super(Union, self).__init__()
 
 class Field(object):
     def __init__(self, name, typ, bits, offset):
