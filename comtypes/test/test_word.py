@@ -1,36 +1,53 @@
 import time
 import unittest
 
+from comtypes import COMError
 import comtypes.client
-import comtypes.test
 
-# XXX leaks references.
-
-comtypes.test.requires("ui")
-
-def setUpModule():
-    raise unittest.SkipTest("External test dependencies like this seem bad.  Find a different "
-                            "built-in win32 API to use.")
+try:
+    comtypes.client.GetModule(('{00020905-0000-0000-C000-000000000046}',))  # Word libUUID
+    from comtypes.gen import Word
+    IMPORT_FAILED = False
+except (ImportError, OSError):
+    IMPORT_FAILED = True
 
 
-class Test(unittest.TestCase):
+################################################################
+#
+# TODO:
+#
+# It seems bad that only external test like this
+# can verify the behavior of `comtypes` implementation.
+# Find a different built-in win32 API to use.
+#
+################################################################
 
-    def setUp(self):
-        self._events = []
+
+class _Sink(object):
+    def __init__(self):
+        self.events = []
 
     # Word Application Event
     def DocumentChange(self, this, *args):
-##        print "DocumentChange", args
-        self._events.append("DocumentChange")
+        self.events.append("DocumentChange")
+
+
+@unittest.skipIf(IMPORT_FAILED, "This depends on Word.")
+class Test(unittest.TestCase):
+    def setUp(self):
+        # create a word instance
+        self.word = comtypes.client.CreateObject("Word.Application")
+
+    def tearDown(self):
+        self.word.Quit()
+        del self.word
 
     def test(self):
-        # create a word instance
-        word = comtypes.client.CreateObject("Word.Application")
-        from comtypes.gen import Word
-
+        word = self.word
         # Get the instance again, and receive events from that
         w2 = comtypes.client.GetActiveObject("Word.Application")
-        conn = comtypes.client.GetEvents(w2, sink=self)
+        sink = _Sink()
+        conn = comtypes.client.GetEvents(w2, sink=sink)
 
         word.Visible = 1
 
@@ -48,26 +65,25 @@ class Test(unittest.TestCase):
 
         doc.Close(SaveChanges = Word.wdDoNotSaveChanges)
 
-        word.Quit()
         del word, w2
 
         time.sleep(0.5)
+        conn.disconnect()
 
-##        self.failUnlessEqual(self._events, ["DocumentChange", "DocumentChange"])
+        self.assertEqual(sink.events, ["DocumentChange", "DocumentChange"])
 
     def test_commandbar(self):
-        word = comtypes.client.CreateObject("Word.Application")
+        word = self.word
         word.Visible = 1
         tb = word.CommandBars("Standard")
         btn = tb.Controls[1]
 
-        if 0: # word does not allow programmatic access, so this does fail
-            evt = word.VBE.Events.CommandBarEvents(btn)
-            from comtypes.gen import Word, VBIDE
-            comtypes.client.ShowEvents(evt, interface=VBIDE._dispCommandBarControlEvents)
-            comtypes.client.ShowEvents(evt)
+        # word does not allow programmatic access, so this does fail
+        with self.assertRaises(COMError):
+            word.VBE.Events.CommandBarEvents(btn)
 
-        word.Quit()
+        del word
+
 
 if __name__ == "__main__":
     unittest.main()
