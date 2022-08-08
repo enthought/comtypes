@@ -109,10 +109,13 @@ def enable_numpy_interop():
     necessary functions for comtypes to work with ndarrays.
 
     """
+    global HAVE_NUMPY
+    if HAVE_NUMPY:
+        return
+
     global numpy
     import numpy
 
-    global HAVE_NUMPY
     HAVE_NUMPY = True
     global typecodes
     typecodes = _check_ctypeslib_typecodes()

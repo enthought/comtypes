@@ -26,6 +26,8 @@ class _SafeArrayAsNdArrayContextManager(object):
     thread_local = threading.local()
 
     def __enter__(self):
+        if not npsupport.HAVE_NUMPY:
+            npsupport.enable_numpy_interop()
         try:
             self.thread_local.count += 1
         except AttributeError:
