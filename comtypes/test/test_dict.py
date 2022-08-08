@@ -7,10 +7,6 @@ from comtypes.client import CreateObject
 from comtypes.client.lazybind import Dispatch
 
 
-def setUpModule():
-    raise unittest.SkipTest("Depends on `comtypes.safearray` which depends on numpy which isn't "
-                            "listed in project dependencies.")
-
 class Test(unittest.TestCase):
     def test_dict(self):
         d = CreateObject("Scripting.Dictionary", dynamic=True)

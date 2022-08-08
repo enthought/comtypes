@@ -10,14 +10,6 @@ import unittest
 
 use_resources = ["*"]
 
-def get_numpy():
-    '''Get numpy if it is available.'''
-    try:
-        import comtypes.npsupport
-        comtypes.npsupport.enable_numpy_interop()
-        return comtypes.npsupport.get_numpy()
-    except ImportError:
-        return None
 
 def register_server(source_dir):
     """ Register testing server appropriate for the python architecture.

@@ -1,7 +1,7 @@
 import array
 import datetime
 import unittest
-from ctypes import POINTER, PyDLL, byref, c_double, c_long, pointer, py_object
+from ctypes import POINTER, PyDLL, byref, c_long, py_object
 from ctypes.wintypes import BOOL
 from decimal import Decimal
 
@@ -9,7 +9,7 @@ from comtypes import BSTR, IUnknown
 from comtypes._safearray import SafeArrayGetVartype
 from comtypes.automation import VARIANT, VARIANT_BOOL, VT_ARRAY, VT_BSTR, VT_I4, VT_R4, VT_R8, VT_VARIANT, _midlSAFEARRAY
 from comtypes.safearray import safearray_as_ndarray
-from comtypes.test import get_numpy, is_resource_enabled
+from comtypes.test import is_resource_enabled
 from comtypes.test.find_memleak import find_memleak
 
 
@@ -55,16 +55,12 @@ class VariantTestCase(unittest.TestCase):
         bytes = find_memleak(func)
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
-    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
-                   "the project dependencies.")
     def test_float_array(self):
         a = array.array("f", (3.14, 2.78))
         v = VARIANT(a)
         self.assertEqual(v.vt, VT_ARRAY | VT_R4)
         self.assertEqual(tuple(a.tolist()), v.value)
 
-    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
-                   "the project dependencies.")
     def test_2dim_array(self):
         data = ((1, 2, 3, 4),
                 (5, 6, 7, 8),
@@ -92,50 +88,11 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertEqual((c._itemtype_, c._vartype_),
                              (BSTR, VT_BSTR))
 
-    def test_nested_contexts(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        t = _midlSAFEARRAY(BSTR)
-        sa = t.from_param(["a", "b", "c"])
-
-        first = sa[0]
-        with safearray_as_ndarray:
-            second = sa[0]
-            with safearray_as_ndarray:
-                third = sa[0]
-            fourth = sa[0]
-        fifth = sa[0]
-
-        self.assertTrue(isinstance(first, tuple))
-        self.assertTrue(isinstance(second, np.ndarray))
-        self.assertTrue(isinstance(third, np.ndarray))
-        self.assertTrue(isinstance(fourth, np.ndarray))
-        self.assertTrue(isinstance(fifth, tuple))
-
-    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
-                   "the project dependencies.")
     def test_VT_BSTR(self):
         t = _midlSAFEARRAY(BSTR)
 
         sa = t.from_param(["a", "b", "c"])
         self.assertEqual(sa[0], ("a", "b", "c"))
-        self.assertEqual(SafeArrayGetVartype(sa), VT_BSTR)
-
-    def test_VT_BSTR_ndarray(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        t = _midlSAFEARRAY(BSTR)
-
-        sa = t.from_param(["a", "b", "c"])
-        arr = get_array(sa)
-
-        self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertEqual(np.dtype('<U1'), arr.dtype)
-        self.assertTrue((arr == ("a", "b", "c")).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_BSTR)
 
     @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
@@ -158,8 +115,6 @@ class SafeArrayTestCase(unittest.TestCase):
         bytes = find_memleak(doit)
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
-    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
-                   "the project dependencies.")
     def test_VT_I4(self):
         t = _midlSAFEARRAY(c_long)
 
@@ -172,59 +127,6 @@ class SafeArrayTestCase(unittest.TestCase):
         # TypeError: len() of unsized object
         self.assertRaises(TypeError, lambda: t.from_param(object()))
 
-    def test_VT_I4_ndarray(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        t = _midlSAFEARRAY(c_long)
-
-        inarr = np.array([11, 22, 33])
-        sa = t.from_param(inarr)
-
-        arr = get_array(sa)
-
-        self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertEqual(np.dtype(np.int), arr.dtype)
-        self.assertTrue((arr == inarr).all())
-        self.assertEqual(SafeArrayGetVartype(sa), VT_I4)
-
-    def test_array(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        t = _midlSAFEARRAY(c_double)
-        pat = pointer(t())
-
-        pat[0] = np.zeros(32, dtype=np.float)
-        arr = get_array(pat[0])
-        self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertEqual(np.dtype(np.double), arr.dtype)
-        self.assertTrue((arr == (0.0,) * 32).all())
-
-        data = ((1.0, 2.0, 3.0),
-                (4.0, 5.0, 6.0),
-                (7.0, 8.0, 9.0))
-        a = np.array(data, dtype=np.double)
-        pat[0] = a
-        arr = get_array(pat[0])
-        self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertEqual(np.dtype(np.double), arr.dtype)
-        self.assertTrue((arr == data).all())
-
-        data = ((1.0, 2.0), (3.0, 4.0), (5.0, 6.0))
-        a = np.array(data,
-                        dtype=np.double,
-                        order="F")
-        pat[0] = a
-        arr = get_array(pat[0])
-        self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertEqual(np.dtype(np.double), arr.dtype)
-        self.assertEqual(pat[0][0], data)
-
-    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
-                   "the project dependencies.")
     def test_VT_VARIANT(self):
         t = _midlSAFEARRAY(VARIANT)
 
@@ -234,47 +136,12 @@ class SafeArrayTestCase(unittest.TestCase):
 
         self.assertEqual(SafeArrayGetVartype(sa), VT_VARIANT)
 
-    def test_VT_VARIANT_ndarray(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        t = _midlSAFEARRAY(VARIANT)
-
-        now = datetime.datetime.now()
-        inarr = np.array(
-            [11, "22", "33", 44.0, None, True, now, Decimal("3.14")]
-        ).reshape(2, 4)
-        sa = t.from_param(inarr)
-        arr = get_array(sa)
-        self.assertEqual(np.dtype(object), arr.dtype)
-        self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertTrue((arr == inarr).all())
-        self.assertEqual(SafeArrayGetVartype(sa), VT_VARIANT)
-
-    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
-                   "the project dependencies.")
     def test_VT_BOOL(self):
         t = _midlSAFEARRAY(VARIANT_BOOL)
 
         sa = t.from_param([True, False, True, False])
         self.assertEqual(sa[0], (True, False, True, False))
 
-    def test_VT_BOOL_ndarray(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        t = _midlSAFEARRAY(VARIANT_BOOL)
-
-        sa = t.from_param([True, False, True, False])
-        arr = get_array(sa)
-        self.assertEqual(np.dtype(np.bool_), arr.dtype)
-        self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertTrue((arr == (True, False, True, False)).all())
-
-    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
-                   "the project dependencies.")
     def test_VT_UNKNOWN_1(self):
         a = _midlSAFEARRAY(POINTER(IUnknown))
         t = _midlSAFEARRAY(POINTER(IUnknown))
@@ -302,8 +169,6 @@ class SafeArrayTestCase(unittest.TestCase):
         sa = t.from_param([None])
         self.assertEqual((POINTER(IUnknown)(),), sa[0])
 
-    @unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
-                   "the project dependencies.")
     def test_VT_UNKNOWN_multi(self):
         a = _midlSAFEARRAY(POINTER(IUnknown))
         t = _midlSAFEARRAY(POINTER(IUnknown))
@@ -350,55 +215,6 @@ class SafeArrayTestCase(unittest.TestCase):
         del sa
         self.assertEqual((a, b), (com_refcnt(plib), com_refcnt(punk)))
 
-    def test_VT_UNKNOWN_multi_ndarray(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        a = _midlSAFEARRAY(POINTER(IUnknown))
-        t = _midlSAFEARRAY(POINTER(IUnknown))
-        self.assertTrue(a is t)
-
-        from comtypes.typeinfo import CreateTypeLib
-        # will never be saved to disk
-        punk = CreateTypeLib("spam").QueryInterface(IUnknown)
-
-        # initial refcount
-        initial = com_refcnt(punk)
-
-        # This should increase the refcount by 4
-        sa = t.from_param((punk,) * 4)
-        self.assertEqual(initial + 4, com_refcnt(punk))
-
-        # Unpacking the array must not change the refcount, and must
-        # return an equal object. Creating an ndarray may change the
-        # refcount.
-        arr = get_array(sa)
-        self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertEqual(np.dtype(object), arr.dtype)
-        self.assertTrue((arr == (punk,)*4).all())
-        self.assertEqual(initial + 8, com_refcnt(punk))
-
-        del arr
-        self.assertEqual(initial + 4, com_refcnt(punk))
-
-        del sa
-        self.assertEqual(initial, com_refcnt(punk))
-
-        # This should increase the refcount by 2
-        sa = t.from_param((punk, None, punk, None))
-        self.assertEqual(initial + 2, com_refcnt(punk))
-
-        null = POINTER(IUnknown)()
-        arr = get_array(sa)
-        self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertEqual(np.dtype(object), arr.dtype)
-        self.assertTrue((arr == (punk, null, punk, null)).all())
-
-        del sa
-        del arr
-        self.assertEqual(initial, com_refcnt(punk))
-
     @unittest.skip("This fails with a 'library not registered' error.  Need to figure out how to "
                    "register TestComServerLib (without admin if possible).")
     def test_UDT(self):
@@ -416,55 +232,6 @@ class SafeArrayTestCase(unittest.TestCase):
             t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
         bytes = find_memleak(doit)
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
-
-    def test_UDT_ndarray(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        from comtypes.gen.TestComServerLib import MYCOLOR
-
-        t = _midlSAFEARRAY(MYCOLOR)
-        self.assertTrue(t is _midlSAFEARRAY(MYCOLOR))
-
-        sa = t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
-        arr = get_array(sa)
-
-        self.assertTrue(isinstance(arr, np.ndarray))
-        # The conversion code allows numpy to choose the dtype of
-        # structured data.  This dtype is structured under numpy 1.5, 1.7 and
-        # 1.8, and object in 1.6. Instead of assuming either of these, check
-        # the array contents based on the chosen type.
-        if arr.dtype is np.dtype(object):
-            data = [(x.red, x.green, x.blue) for x in arr]
-        else:
-            float_dtype = np.dtype('float64')
-            self.assertIs(arr.dtype[0], float_dtype)
-            self.assertIs(arr.dtype[1], float_dtype)
-            self.assertIs(arr.dtype[2], float_dtype)
-            data = [tuple(x) for x in arr]
-        self.assertEqual(data, [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)])
-
-    def test_datetime64_ndarray(self):
-        np = get_numpy()
-        if np is None:
-            return
-        try:
-            np.datetime64
-        except AttributeError:
-            return
-
-        dates = np.array([
-            np.datetime64("2000-01-01T05:30:00", "s"),
-            np.datetime64("1800-01-01T05:30:00", "ms"),
-            np.datetime64("2014-03-07T00:12:56", "us"),
-            np.datetime64("2000-01-01T12:34:56", "ns"),
-        ])
-
-        t = _midlSAFEARRAY(VARIANT)
-        sa = t.from_param(dates)
-        arr = get_array(sa).astype(dates.dtype)
-        self.assertTrue((dates == arr).all())
 
 
 if is_resource_enabled("pythoncom"):
