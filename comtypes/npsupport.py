@@ -61,6 +61,13 @@ def isndarray(value):
 
     """
     if not HAVE_NUMPY:
+        if hasattr(value, "__array_interface__"):
+            raise ValueError(
+                f"Argument {value} appears to be a numpy.ndarray, but "
+                "comtypes numpy support has not been enabled. Please "
+                "try calling comtypes.npsupport.enable_numpy_interop() "
+                "before passing ndarrays as parameters."
+            )
         return False
     numpy = get_numpy()
     return isinstance(value, numpy.ndarray)
