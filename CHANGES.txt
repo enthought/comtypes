@@ -1,6 +1,20 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.13
+--------------
+ * Many fixes in code generator. Thanks @junkmd.
+ * Make tests runnable on AppVeyor CI. Many improvements in tests. Thanks @junkmd and @dmwyatt.
+ * Update (bound_)named_property args and attributes names to be similar to builtin property. Thanks @junkmd.
+ * Refactor function ``GetModule`` and fix type lib timestamping for incomplete generated module. Thanks @junkmd.
+ * Fix recent numpy versions support. Thanks @mworion.
+ * Split ``Constants`` into a separate module. Thanks @junkmd.
+ * ``client.GetModule`` can take a one liner containing lib UUID. Thanks @junkmd.
+ * Use ``Generator.imports`` instead of ``Generator._externals``. Thanks @junkmd.
+ * Rename README to README.md. Thanks @junkmd and @filipporomani.
+ * No patching or modifying ``typedesc.Obj.name`` in ``tools.codegenerator``. Thanks @junkmd.
+ * Load enumerations into ``client.Constants``. Thanks @junkmd.
+
 Release 1.1.12
 --------------
  * Fix ``_pack_`` being returned as a float. Thanks @kdschlosser.
