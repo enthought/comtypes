@@ -48,7 +48,7 @@ def com_refcnt(o):
 
 
 class NumpySupportTestCase(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         # we reload the module in between tests to disable the previously
         # enabled interop functionality
         importlib.reload(comtypes.npsupport)
@@ -254,7 +254,7 @@ class NumpySupportTestCase(unittest.TestCase):
 
 
 class NumpyVariantTest(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         # we reload the module in between tests to disable the previously
         # enabled interop functionality
         importlib.reload(comtypes.npsupport)
