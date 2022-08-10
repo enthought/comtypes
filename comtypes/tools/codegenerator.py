@@ -375,6 +375,10 @@ class Generator(object):
         if "GUID" in self.known_symbols:
             self.imports.add("GUID", symbols=self.known_symbols)
 
+    def _to_docstring(self, orig):
+        # some chars are replaced to avoid causing a `SyntaxError`
+        return '"""%s"""' % orig.replace("\\", r"\\").replace("\"", r"'")
+
     _arraytypes = 0
     def ArrayType(self, tp):
         self._arraytypes += 1
@@ -658,7 +662,7 @@ class Generator(object):
 
         print("class Library(object):", file=self.stream)
         if lib.doc:
-            print('    """%s"""' % lib.doc, file=self.stream)
+            print('    %s' % self._to_docstring(lib.doc), file=self.stream)
 
         if lib.name:
             print("    name = %r" % lib.name, file=self.stream)
@@ -722,7 +726,7 @@ class Generator(object):
         print("class %s(CoClass):" % coclass.name, file=self.stream)
         doc = getattr(coclass, "doc", None)
         if doc:
-            print('    """%s"""' % doc, file=self.stream)
+            print('    %s' % self._to_docstring(doc), file=self.stream)
         print("    _reg_clsid_ = GUID(%r)" % coclass.clsid, file=self.stream)
         print("    _idlflags_ = %s" % coclass.idlflags, file=self.stream)
         if self.filename is not None:
@@ -799,7 +803,7 @@ class Generator(object):
         print("class %s(%s):" % (head.itf.name, basename), file=self.stream)
         doc = getattr(head.itf, "doc", None)
         if doc:
-            print('    """%s"""' % doc, file=self.stream)
+            print('    %s' % self._to_docstring(doc), file=self.stream)
 
         print("    _case_insensitive_ = True", file=self.stream)
         print("    _iid_ = GUID(%r)" % head.itf.iid, file=self.stream)
