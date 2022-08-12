@@ -54,10 +54,11 @@ class NumpySupportTestCase(unittest.TestCase):
         importlib.reload(comtypes.npsupport)
 
     def test_not_imported_imported(self):
-        self.assertRaises(ImportError, comtypes.npsupport.get_numpy)
-        comtypes.npsupport.enable_numpy_interop()
+        with self.assertRaises(ImportError):
+            a = comtypes.npsupport.interop.numpy
+        comtypes.npsupport.interop.enable()
         import numpy
-        self.assertEqual(numpy, comtypes.npsupport.get_numpy())
+        self.assertEqual(numpy, comtypes.npsupport.interop.numpy)
 
     def test_nested_contexts(self):
         t = _midlSAFEARRAY(BSTR)
@@ -82,7 +83,7 @@ class NumpySupportTestCase(unittest.TestCase):
         "Skipping because this version of numpy does not support datetime64"
     )
     def test_datetime64_ndarray(self):
-        comtypes.npsupport.enable_numpy_interop()
+        comtypes.npsupport.interop.enable()
         dates = numpy.array([
             numpy.datetime64("2000-01-01T05:30:00", "s"),
             numpy.datetime64("1800-01-01T05:30:00", "ms"),
@@ -144,7 +145,7 @@ class NumpySupportTestCase(unittest.TestCase):
         self.assertEqual(SafeArrayGetVartype(sa), VT_BSTR)
 
     def test_VT_I4_ndarray(self):
-        comtypes.npsupport.enable_numpy_interop()
+        comtypes.npsupport.interop.enable()
         t = _midlSAFEARRAY(c_long)
 
         in_arr = numpy.array([11, 22, 33])
@@ -158,7 +159,7 @@ class NumpySupportTestCase(unittest.TestCase):
         self.assertEqual(SafeArrayGetVartype(sa), VT_I4)
 
     def test_array(self):
-        comtypes.npsupport.enable_numpy_interop()
+        comtypes.npsupport.interop.enable()
         t = _midlSAFEARRAY(c_double)
         pat = pointer(t())
 
@@ -238,7 +239,7 @@ class NumpySupportTestCase(unittest.TestCase):
         "because it doesn't recognise the VARIANT_BOOL typecode 'v'."
     )
     def test_VT_VARIANT_ndarray(self):
-        comtypes.npsupport.enable_numpy_interop()
+        comtypes.npsupport.interop.enable()
         t = _midlSAFEARRAY(VARIANT)
 
         now = datetime.datetime.now()
@@ -260,7 +261,7 @@ class NumpyVariantTest(unittest.TestCase):
         importlib.reload(comtypes.npsupport)
 
     def test_double(self):
-        comtypes.npsupport.enable_numpy_interop()
+        comtypes.npsupport.interop.enable()
         for dtype in ('float32', 'float64'):
             # because of FLOAT rounding errors, whi will only work for
             # certain values!
@@ -270,7 +271,7 @@ class NumpyVariantTest(unittest.TestCase):
             self.assertTrue((v.value == a).all())
 
     def test_int(self):
-        comtypes.npsupport.enable_numpy_interop()
+        comtypes.npsupport.interop.enable()
         for dtype in ('int8', 'int16', 'int32', 'int64', 'uint8',
                 'uint16', 'uint32', 'uint64'):
             a = numpy.array((1, 1, 1, 1), dtype=dtype)
@@ -283,7 +284,7 @@ class NumpyVariantTest(unittest.TestCase):
         "Skipping because this version of numpy does not support datetime64"
     )
     def test_datetime64(self):
-        comtypes.npsupport.enable_numpy_interop()
+        comtypes.npsupport.interop.enable()
         dates = [
             numpy.datetime64("2000-01-01T05:30:00", "s"),
             numpy.datetime64("1800-01-01T05:30:00", "ms"),
@@ -301,7 +302,7 @@ class NumpyVariantTest(unittest.TestCase):
         "because it doesn't recognise the VARIANT_BOOL typecode 'v'."
     )
     def test_mixed(self):
-        comtypes.npsupport.enable_numpy_interop()
+        comtypes.npsupport.interop.enable()
         now = datetime.datetime.now()
         a = numpy.array(
             [11, "22", None, True, now, Decimal("3.14")]).reshape(2, 3)
