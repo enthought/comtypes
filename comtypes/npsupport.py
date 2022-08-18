@@ -78,7 +78,7 @@ class Interop:
                 except NotImplementedError:
                     continue
             ctypeslib._typecodes = dtypes_to_ctypes
-        return dtypes_to_ctypes
+        return ctypeslib._typecodes
 
     def isndarray(self, value):
         """ Check if a value is an ndarray.
