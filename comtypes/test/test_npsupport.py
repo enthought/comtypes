@@ -19,16 +19,15 @@ from comtypes.automation import (
 )
 from comtypes.safearray import safearray_as_ndarray
 
-numpy = None
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 
 def setUpModule():
     """Only run the module if we can import numpy."""
-
-    try:
-        global numpy
-        import numpy
-    except ImportError:
+    if numpy is None:
         raise unittest.SkipTest("Skipping test_npsupport as numpy not installed.")
 
 
@@ -78,9 +77,9 @@ class NumpySupportTestCase(unittest.TestCase):
         self.assertTrue(isinstance(fourth, numpy.ndarray))
         self.assertTrue(isinstance(fifth, tuple))
 
-    @unittest.skipUnless(
-        hasattr(numpy, "datetime64"),
-        "Skipping because this version of numpy does not support datetime64"
+    @unittest.skip(
+        "Skipping because numpy cannot currently create an array of variants "
+        "because it doesn't recognise the VARIANT_BOOL typecode 'v'."
     )
     def test_datetime64_ndarray(self):
         comtypes.npsupport.interop.enable()
@@ -279,10 +278,6 @@ class NumpyVariantTest(unittest.TestCase):
             v.value = a
             self.assertTrue((v.value == a).all())
 
-    @unittest.skipUnless(
-        hasattr(numpy, "datetime64"),
-        "Skipping because this version of numpy does not support datetime64"
-    )
     def test_datetime64(self):
         comtypes.npsupport.interop.enable()
         dates = [

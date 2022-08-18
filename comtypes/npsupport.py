@@ -108,7 +108,7 @@ class Interop:
         """
         if not self.enabled:
             return False
-        return isinstance(value, self.datetime64)
+        return isinstance(value, self.numpy.datetime64)
 
     @property
     def numpy(self):
@@ -135,17 +135,7 @@ class Interop:
         self.enabled = True
         self.VARIANT_dtype = self._make_variant_dtype()
         self.typecodes = self._check_ctypeslib_typecodes()
-        try:
-            from numpy import datetime64
-            self.datetime64 = datetime64
-        except ImportError:
-            self.datetime64 = None
-        if self.datetime64:
-            try:
-                # This does not work on numpy 1.6
-                self.com_null_date64 = self.datetime64("1899-12-30T00:00:00", "ns")
-            except TypeError:
-                self.com_null_date64 = None
+        self.com_null_date64 = self.numpy.datetime64("1899-12-30T00:00:00", "ns")
 
 
 interop = Interop()
