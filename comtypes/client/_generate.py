@@ -129,10 +129,7 @@ def GetModule(tlib):
     # create and import the real typelib wrapper module
     mod = _create_wrapper_module(tlib, pathname)
     # try to get the friendly-name, if not, returns the real typelib wrapper module
-    try:
-        modulename = tlib.GetDocumentation(-1)[0]
-    except comtypes.COMError:
-        return mod
+    modulename = codegenerator.name_friendly_module(tlib)
     if modulename is None:
         return mod
     if sys.version_info < (3, 0):
@@ -180,31 +177,31 @@ def _invalidate_import_caches():
 def _create_friendly_module(tlib, modulename):
     """helper which creates and imports the friendly-named module."""
     try:
-        mod = _my_import("comtypes.gen." + modulename)
+        mod = _my_import(modulename)
     except Exception as details:
-        logger.info("Could not import comtypes.gen.%s: %s", modulename, details)
+        logger.info("Could not import %s: %s", modulename, details)
     else:
         return mod
     # the module is always regenerated if the import fails
-    logger.info("# Generating comtypes.gen.%s", modulename)
+    logger.info("# Generating %s", modulename)
     # determine the Python module name
     fullname = codegenerator.name_wrapper_module(tlib)
     modname = fullname.split(".")[-1]
     code = "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
-    code += "__name__ = 'comtypes.gen.%s'" % modulename
+    code += "__name__ = '%s'" % modulename
     if comtypes.client.gen_dir is None:
-        mod = types.ModuleType("comtypes.gen." + modulename)
+        mod = types.ModuleType(modulename)
         mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
                                     "<memory>")
         exec(code, mod.__dict__)
-        sys.modules["comtypes.gen." + modulename] = mod
+        sys.modules[modulename] = mod
         setattr(comtypes.gen, modulename, mod)
         return mod
     # create in file system, and import it
-    with open(os.path.join(comtypes.client.gen_dir, modulename + ".py"), "w") as ofi:
+    with open(os.path.join(comtypes.client.gen_dir, modulename.split(".")[-1] + ".py"), "w") as ofi:
         print(code, file=ofi)
     _invalidate_import_caches()
-    return _my_import("comtypes.gen." + modulename)
+    return _my_import(modulename)
 
 
 def _create_wrapper_module(tlib, pathname):
