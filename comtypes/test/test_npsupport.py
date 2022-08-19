@@ -1,10 +1,12 @@
 import datetime
+import functools
 import importlib
+import inspect
 import unittest
 from ctypes import c_long, c_double, pointer, POINTER
 from decimal import Decimal
 
-import comtypes.npsupport
+import comtypes._npsupport
 from comtypes import IUnknown
 from comtypes._safearray import SafeArrayGetVartype
 from comtypes.automation import (
@@ -46,18 +48,48 @@ def com_refcnt(o):
     return o.Release()
 
 
+def enabled_disabled(disabled_error):
+    """Decorator for testing which will replace the original test method with
+    two new methods in the same local frame, one will be called where npsupport
+    is enabled, the other where it is disabled. For the disabled version, it is
+    expected that disabled_error will be raised by the function.
+    """
+    frame_locals = inspect.currentframe().f_back.f_locals
+
+    def decorator_enabled_disabled(func):
+        @functools.wraps(func)
+        def call_enabled(self):
+            from comtypes import npsupport
+            npsupport.enable()
+            func(self)
+
+        @functools.wraps(func)
+        def call_disabled(self):
+            from comtypes import npsupport
+            if npsupport.enabled:
+                raise EnvironmentError(
+                    "Expected numpy interop not to be enabled but it is."
+                )
+            with self.assertRaises(disabled_error):
+                func(self)
+
+        frame_locals[func.__name__ + "_enabled"] = call_enabled
+        frame_locals[func.__name__ + "_disabled"] = call_disabled
+
+    return decorator_enabled_disabled
+
+
 class NumpySupportTestCase(unittest.TestCase):
     def setUp(self):
         # we reload the module in between tests to disable the previously
         # enabled interop functionality
-        importlib.reload(comtypes.npsupport)
+        importlib.reload(comtypes._npsupport)
+        comtypes.npsupport = comtypes._npsupport.interop
 
+    @enabled_disabled(disabled_error=ImportError)
     def test_not_imported_imported(self):
-        with self.assertRaises(ImportError):
-            a = comtypes.npsupport.interop.numpy
-        comtypes.npsupport.interop.enable()
-        import numpy
-        self.assertEqual(numpy, comtypes.npsupport.interop.numpy)
+        np = comtypes.npsupport.numpy
+        self.assertEqual(np, numpy)
 
     def test_nested_contexts(self):
         t = _midlSAFEARRAY(BSTR)
@@ -82,7 +114,7 @@ class NumpySupportTestCase(unittest.TestCase):
         "because it doesn't recognise the VARIANT_BOOL typecode 'v'."
     )
     def test_datetime64_ndarray(self):
-        comtypes.npsupport.interop.enable()
+        comtypes.npsupport.enable()
         dates = numpy.array([
             numpy.datetime64("2000-01-01T05:30:00", "s"),
             numpy.datetime64("1800-01-01T05:30:00", "ms"),
@@ -143,8 +175,8 @@ class NumpySupportTestCase(unittest.TestCase):
         self.assertTrue((arr == ("a", "b", "c")).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_BSTR)
 
+    @enabled_disabled(disabled_error=ValueError)
     def test_VT_I4_ndarray(self):
-        comtypes.npsupport.interop.enable()
         t = _midlSAFEARRAY(c_long)
 
         in_arr = numpy.array([11, 22, 33])
@@ -157,8 +189,8 @@ class NumpySupportTestCase(unittest.TestCase):
         self.assertTrue((arr == in_arr).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_I4)
 
+    @enabled_disabled(disabled_error=ValueError)
     def test_array(self):
-        comtypes.npsupport.interop.enable()
         t = _midlSAFEARRAY(c_double)
         pat = pointer(t())
 
@@ -238,7 +270,7 @@ class NumpySupportTestCase(unittest.TestCase):
         "because it doesn't recognise the VARIANT_BOOL typecode 'v'."
     )
     def test_VT_VARIANT_ndarray(self):
-        comtypes.npsupport.interop.enable()
+        comtypes.npsupport.enable()
         t = _midlSAFEARRAY(VARIANT)
 
         now = datetime.datetime.now()
@@ -257,10 +289,11 @@ class NumpyVariantTest(unittest.TestCase):
     def setUp(self):
         # we reload the module in between tests to disable the previously
         # enabled interop functionality
-        importlib.reload(comtypes.npsupport)
+        importlib.reload(comtypes._npsupport)
+        comtypes.npsupport = comtypes._npsupport.interop
 
+    @enabled_disabled(disabled_error=ValueError)
     def test_double(self):
-        comtypes.npsupport.interop.enable()
         for dtype in ('float32', 'float64'):
             # because of FLOAT rounding errors, whi will only work for
             # certain values!
@@ -269,8 +302,8 @@ class NumpyVariantTest(unittest.TestCase):
             v.value = a
             self.assertTrue((v.value == a).all())
 
+    @enabled_disabled(disabled_error=ValueError)
     def test_int(self):
-        comtypes.npsupport.interop.enable()
         for dtype in ('int8', 'int16', 'int32', 'int64', 'uint8',
                 'uint16', 'uint32', 'uint64'):
             a = numpy.array((1, 1, 1, 1), dtype=dtype)
@@ -278,8 +311,8 @@ class NumpyVariantTest(unittest.TestCase):
             v.value = a
             self.assertTrue((v.value == a).all())
 
+    @enabled_disabled(disabled_error=ValueError)
     def test_datetime64(self):
-        comtypes.npsupport.interop.enable()
         dates = [
             numpy.datetime64("2000-01-01T05:30:00", "s"),
             numpy.datetime64("1800-01-01T05:30:00", "ms"),
@@ -297,7 +330,7 @@ class NumpyVariantTest(unittest.TestCase):
         "because it doesn't recognise the VARIANT_BOOL typecode 'v'."
     )
     def test_mixed(self):
-        comtypes.npsupport.interop.enable()
+        comtypes.npsupport.enable()
         now = datetime.datetime.now()
         a = numpy.array(
             [11, "22", None, True, now, Decimal("3.14")]).reshape(2, 3)

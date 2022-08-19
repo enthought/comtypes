@@ -27,6 +27,7 @@ logger.addHandler(NullHandler())
 from ctypes import *
 from _ctypes import COMError
 from comtypes import patcher
+from comtypes._npsupport import interop as npsupport
 
 def _check_version(actual, tlib_cached_mtime=None):
     from comtypes.tools.codegenerator import version as required
