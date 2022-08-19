@@ -6,8 +6,7 @@ import sys
 import comtypes
 from comtypes import GUID
 import comtypes.client
-import comtypes.tools.codegenerator
-import comtypes.tools.tlbparser
+from comtypes.tools import codegenerator, tlbparser
 from comtypes.typeinfo import LoadRegTypeLib, LoadTypeLibEx
 import importlib
 
@@ -34,17 +33,6 @@ def _my_import(fullname):
            and comtypes.client.gen_dir not in comtypes.gen.__path__:
         comtypes.gen.__path__.append(comtypes.client.gen_dir)
     return importlib.import_module(fullname)
-
-
-def _name_module(tlib):
-    """Determine the name of a typelib wrapper module"""
-    libattr = tlib.GetLibAttr()
-    modname = "_%s_%s_%s_%s" % \
-              (str(libattr.guid)[1:-1].replace("-", "_"),
-               libattr.lcid,
-               libattr.wMajorVerNum,
-               libattr.wMinorVerNum)
-    return "comtypes.gen." + modname
 
 
 def _resolve_filename(tlib_string, dirpath):
@@ -128,7 +116,7 @@ def GetModule(tlib):
         tlib = _load_tlib(pathname)  # don't register
         if not is_abs:
             # try to get path after loading, but this only works if already registered            
-            pathname = comtypes.tools.tlbparser.get_tlib_filename(tlib)
+            pathname = tlbparser.get_tlib_filename(tlib)
             if pathname is None:
                 logger.info("GetModule(%s): could not resolve to a filename", tlib)
                 pathname = tlib_string
@@ -200,7 +188,7 @@ def _create_friendly_module(tlib, modulename):
     # the module is always regenerated if the import fails
     logger.info("# Generating comtypes.gen.%s", modulename)
     # determine the Python module name
-    fullname = _name_module(tlib)
+    fullname = codegenerator.name_wrapper_module(tlib)
     modname = fullname.split(".")[-1]
     code = "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
     code += "__name__ = 'comtypes.gen.%s'" % modulename
@@ -221,7 +209,7 @@ def _create_friendly_module(tlib, modulename):
 
 def _create_wrapper_module(tlib, pathname):
     """helper which creates and imports the real typelib wrapper module."""
-    fullname = _name_module(tlib)
+    fullname = codegenerator.name_wrapper_module(tlib)
     if fullname in sys.modules:
         return sys.modules[fullname]
 
@@ -235,7 +223,7 @@ def _create_wrapper_module(tlib, pathname):
     # generate the module since it doesn't exist or is out of date
     stream = io.StringIO()
     logger.info("# Generating comtypes.gen.%s", modname)
-    comtypes.tools.tlbparser.generate_module(tlib, stream, pathname)
+    generate_module(tlib, stream, pathname)
     if comtypes.client.gen_dir is None:
         mod = types.ModuleType(fullname)
         mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
@@ -249,6 +237,37 @@ def _create_wrapper_module(tlib, pathname):
         _invalidate_import_caches()
         mod = _my_import(fullname)
     return mod
+
+
+def generate_module(tlib, ofi, pathname):
+    known_symbols = {}
+    for name in ("comtypes.persist",
+                 "comtypes.typeinfo",
+                 "comtypes.automation",
+                 "comtypes._others",
+                 "comtypes",
+                 "ctypes.wintypes",
+                 "ctypes"):
+        try:
+            mod = __import__(name)
+        except ImportError:
+            if name == "comtypes._others":
+                continue
+            raise
+        for submodule in name.split(".")[1:]:
+            mod = getattr(mod, submodule)
+        for name in mod.__dict__:
+            known_symbols[name] = mod.__name__
+    p = tlbparser.TypeLibParser(tlib)
+    if pathname is None:
+        pathname = tlbparser.get_tlib_filename(tlib)
+    items = p.parse()
+
+    gen = codegenerator.Generator(ofi,
+                    known_symbols=known_symbols,
+                    )
+
+    gen.generate_code(list(items.values()), filename=pathname)
 
 ################################################################
 
