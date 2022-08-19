@@ -5,7 +5,6 @@ from ctypes import (POINTER, Structure, byref, cast, c_long, memmove, pointer,
 from comtypes import _safearray, IUnknown, com_interface_registry, npsupport
 from comtypes.patcher import Patch
 
-numpy = npsupport.numpy
 _safearray_type_cache = {}
 
 
@@ -27,6 +26,7 @@ class _SafeArrayAsNdArrayContextManager(object):
     thread_local = threading.local()
 
     def __enter__(self):
+        npsupport.interop.enable()
         try:
             self.thread_local.count += 1
         except AttributeError:
@@ -113,7 +113,7 @@ def _make_safearray_type(itemtype):
             one-dimensional arrays.  To create multidimensional arrys,
             numpy arrays must be passed.
             """
-            if npsupport.isndarray(value):
+            if npsupport.interop.isndarray(value):
                 return cls.create_from_ndarray(value, extra)
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
@@ -156,18 +156,18 @@ def _make_safearray_type(itemtype):
             from comtypes.automation import VARIANT
             # If processing VARIANT, makes sure the array type is correct.
             if cls._itemtype_ is VARIANT:
-                if value.dtype != npsupport.VARIANT_dtype:
+                if value.dtype != npsupport.interop.VARIANT_dtype:
                     value = _ndarray_to_variant_array(value)
             else:
                 ai = value.__array_interface__
                 if ai["version"] != 3:
                     raise TypeError("only __array_interface__ version 3 supported")
-                if cls._itemtype_ != npsupport.typecodes[ai["typestr"]]:
+                if cls._itemtype_ != npsupport.interop.typecodes[ai["typestr"]]:
                     raise TypeError("Wrong array item type")
 
             # SAFEARRAYs have Fortran order; convert the numpy array if needed
             if not value.flags.f_contiguous:
-                value = numpy.array(value, order="F")
+                value = npsupport.interop.numpy.array(value, order="F")
 
             # For VT_UNKNOWN or VT_DISPATCH, extra must be a pointer to
             # the GUID of the interface.
@@ -240,15 +240,13 @@ def _make_safearray_type(itemtype):
 
             if dim == 0:
                 if safearray_as_ndarray:
-                    import numpy
-                    return numpy.array()
+                    return npsupport.interop.numpy.array()
                 return tuple()
             elif dim == 1:
                 num_elements = self._get_size(1)
                 result = self._get_elements_raw(num_elements)
                 if safearray_as_ndarray:
-                    import numpy
-                    return numpy.asarray(result)
+                    return npsupport.interop.numpy.asarray(result)
                 return tuple(result)
             elif dim == 2:
                 # get the number of elements in each dimension
@@ -258,8 +256,7 @@ def _make_safearray_type(itemtype):
                 # this must be reshaped and transposed because it is
                 # flat, and in VB order
                 if safearray_as_ndarray:
-                    import numpy
-                    return numpy.asarray(result).reshape((cols, rows)).T
+                    return npsupport.interop.numpy.asarray(result).reshape((cols, rows)).T
                 result = [tuple(result[r::rows]) for r in range(rows)]
                 return tuple(result)
             else:
@@ -270,8 +267,7 @@ def _make_safearray_type(itemtype):
                                for d in range(1, dim+1)]
                 row = self._get_row(0, indexes, lowerbounds, upperbounds)
                 if safearray_as_ndarray:
-                    import numpy
-                    return numpy.asarray(row)
+                    return npsupport.interop.numpy.asarray(row)
                 return row
 
         def _get_elements_raw(self, num_elements):
@@ -315,8 +311,8 @@ def _make_safearray_type(itemtype):
                         # XXX Only try to convert types known to
                         #     numpy.ctypeslib.
                         if (safearray_as_ndarray and self._itemtype_ in
-                                list(npsupport.typecodes.keys())):
-                            arr = numpy.ctypeslib.as_array(ptr,
+                                list(npsupport.interop.typecodes.keys())):
+                            arr = npsupport.interop.numpy.ctypeslib.as_array(ptr,
                                                            (num_elements,))
                             return arr.copy()
                         return ptr[:num_elements]
@@ -372,17 +368,18 @@ def _make_safearray_type(itemtype):
 def _ndarray_to_variant_array(value):
     """ Convert an ndarray to VARIANT_dtype array """
     # Check that variant arrays are supported
-    if npsupport.VARIANT_dtype is None:
+    if npsupport.interop.VARIANT_dtype is None:
         msg = "VARIANT ndarrays require NumPy 1.7 or newer."
         raise RuntimeError(msg)
+    numpy = npsupport.interop.numpy
 
     # special cases
-    if numpy.issubdtype(value.dtype, npsupport.datetime64):
+    if numpy.issubdtype(value.dtype, npsupport.interop.datetime64):
         return _datetime64_ndarray_to_variant_array(value)
 
     from comtypes.automation import VARIANT
     # Empty array
-    varr = numpy.zeros(value.shape, npsupport.VARIANT_dtype, order='F')
+    varr = numpy.zeros(value.shape, npsupport.interop.VARIANT_dtype, order='F')
     # Convert each value to a variant and put it in the array.
     varr.flat = [VARIANT(v) for v in value.flat]
     return varr
@@ -394,11 +391,12 @@ def _datetime64_ndarray_to_variant_array(value):
     # since midnight 30 December 1899. Hours and minutes are represented as
     # fractional days.
     from comtypes.automation import VT_DATE
+    numpy = npsupport.interop.numpy
     value = numpy.array(value, "datetime64[ns]")
-    value = value - npsupport.com_null_date64
+    value = value - npsupport.interop.com_null_date64
     # Convert to days
     value = value / numpy.timedelta64(1, 'D')
-    varr = numpy.zeros(value.shape, npsupport.VARIANT_dtype, order='F')
+    varr = numpy.zeros(value.shape, npsupport.interop.VARIANT_dtype, order='F')
     varr['vt'] = VT_DATE
     varr['_']['VT_R8'].flat = value.flat
     return varr

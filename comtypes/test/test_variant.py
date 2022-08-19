@@ -14,7 +14,6 @@ from comtypes.automation import (
     DISPPARAMS, VARIANT, VT_BSTR, VT_BYREF, VT_CY, VT_DATE, VT_DECIMAL, VT_EMPTY, VT_ERROR, VT_I1,
     VT_I2, VT_I4, VT_I8, VT_NULL, VT_R4, VT_R8, VT_UI1, VT_UI2, VT_UI4, VT_UI8,
 )
-from comtypes.test import get_numpy
 from comtypes.test.find_memleak import find_memleak
 from comtypes.typeinfo import LoadRegTypeLib
 
@@ -124,27 +123,6 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(v.vt, VT_DATE)
         self.assertEqual(v.value, now)
 
-    def test_datetime64(self):
-        np = get_numpy()
-        if np is None:
-            return
-        try:
-            np.datetime64
-        except AttributeError:
-            return
-
-        dates = [
-            np.datetime64("2000-01-01T05:30:00", "s"),
-            np.datetime64("1800-01-01T05:30:00", "ms"),
-            np.datetime64("2000-01-01T12:34:56", "us")
-        ]
-
-        for date in dates:
-            v = VARIANT()
-            v.value = date
-            self.assertEqual(v.vt, VT_DATE)
-            self.assertEqual(v.value, date.astype(datetime.datetime))
-
     def test_decimal_as_currency(self):
         value = decimal.Decimal('3.14')
 
@@ -239,44 +217,6 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(v[0], 96)
 
 
-class NdArrayTest(unittest.TestCase):
-    def test_double(self):
-        np = get_numpy()
-        if np is None:
-            return
-        for dtype in ('float32', 'float64'):
-            # because of FLOAT rounding errors, whi will only work for
-            # certain values!
-            a = np.array([1.0, 2.0, 3.0, 4.5], dtype=dtype)
-            v = VARIANT()
-            v.value = a
-            self.assertTrue((v.value == a).all())
-
-    def test_int(self):
-        np = get_numpy()
-        if np is None:
-            return
-        for dtype in ('int8', 'int16', 'int32', 'int64', 'uint8',
-                'uint16', 'uint32', 'uint64'):
-            a = np.array((1, 1, 1, 1), dtype=dtype)
-            v = VARIANT()
-            v.value = a
-            self.assertTrue((v.value == a).all())
-
-    def test_mixed(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        now = datetime.datetime.now()
-        a = np.array(
-            [11, "22", None, True, now, decimal.Decimal("3.14")]).reshape(2,3)
-        v = VARIANT()
-        v.value = a
-        self.assertTrue((v.value == a).all())
-
-@unittest.skip("This depends on comtypes.safearray which depends on numpy, which is not in "
-               "the project dependencies.")
 class ArrayTest(unittest.TestCase):
     def test_double(self):
         import array

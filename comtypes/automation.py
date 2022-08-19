@@ -284,9 +284,9 @@ class tagVARIANT(Structure):
             com_days = delta.days + (delta.seconds + delta.microseconds * 1e-6) / 86400.
             self.vt = VT_DATE
             self._.VT_R8 = com_days
-        elif npsupport.isdatetime64(value):
+        elif npsupport.interop.isdatetime64(value):
             com_days = value - npsupport.com_null_date64
-            com_days /= npsupport.numpy.timedelta64(1, 'D')
+            com_days /= npsupport.interop.numpy.timedelta64(1, 'D')
             self.vt = VT_DATE
             self._.VT_R8 = com_days
         elif decimal is not None and isinstance(value, decimal.Decimal):
@@ -308,10 +308,10 @@ class tagVARIANT(Structure):
             obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
-        elif npsupport.isndarray(value):
+        elif npsupport.interop.isndarray(value):
             # Try to convert a simple array of basic types.
             descr = value.dtype.descr[0][1]
-            typ = npsupport.typecodes.get(descr)
+            typ = npsupport.interop.typecodes.get(descr)
             if typ is None:
                 # Try for variant
                 obj = _midlSAFEARRAY(VARIANT).create(value)

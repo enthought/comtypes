@@ -10,13 +10,6 @@ import unittest
 
 use_resources = ["*"]
 
-def get_numpy():
-    '''Get numpy if it is available.'''
-    try:
-        import numpy
-        return numpy
-    except ImportError:
-        return None
 
 def register_server(source_dir):
     """ Register testing server appropriate for the python architecture.
