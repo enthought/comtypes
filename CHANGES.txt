@@ -1,6 +1,10 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.1.14
+--------------
+ * Fix ``SyntaxError`` in generated docstring. Thanks @junkmd.
+
 Release 1.1.13
 --------------
  * Many fixes in code generator. Thanks @junkmd.
