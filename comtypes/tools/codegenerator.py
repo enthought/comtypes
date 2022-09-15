@@ -13,7 +13,6 @@ import textwrap
 
 from comtypes.tools import tlbparser, typedesc
 import comtypes
-import comtypes.client
 import comtypes.typeinfo
 
 version = comtypes.__version__
@@ -192,6 +191,7 @@ class Generator(object):
 
         self.done = set() # type descriptions that have been generated
         self.names = set() # names that have been generated
+        self.externals = []  # typelibs imported to generated module
         self.last_item_class = False
 
     def generate(self, item):
@@ -701,7 +701,7 @@ class Generator(object):
     def External(self, ext):
         modname = name_wrapper_module(ext.tlib)
         if modname not in self.imports:
-            comtypes.client.GetModule(ext.tlib)
+            self.externals.append(ext.tlib)
             self.imports.add(modname)
 
     def Constant(self, tp):
