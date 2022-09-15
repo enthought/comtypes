@@ -730,36 +730,4 @@ def _py2exe_hint():
     import comtypes.typeinfo
     import comtypes.automation
 
-def generate_module(tlib, ofi, pathname):
-    known_symbols = {}
-    for name in ("comtypes.persist",
-                 "comtypes.typeinfo",
-                 "comtypes.automation",
-                 "comtypes._others",
-                 "comtypes",
-                 "ctypes.wintypes",
-                 "ctypes"):
-        try:
-            mod = __import__(name)
-        except ImportError:
-            if name == "comtypes._others":
-                continue
-            raise
-        for submodule in name.split(".")[1:]:
-            mod = getattr(mod, submodule)
-        for name in mod.__dict__:
-            known_symbols[name] = mod.__name__
-    p = TypeLibParser(tlib)
-    if pathname is None:
-        pathname = get_tlib_filename(tlib)
-    items = p.parse()
-
-    from .codegenerator import Generator
-
-    gen = Generator(ofi,
-                    known_symbols=known_symbols,
-                    )
-
-    gen.generate_code(list(items.values()), filename=pathname)
-
 # -eof-

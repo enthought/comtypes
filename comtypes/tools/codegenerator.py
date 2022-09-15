@@ -11,10 +11,10 @@ import keyword
 import ctypes
 import textwrap
 
-from comtypes.tools import typedesc
+from comtypes.tools import tlbparser, typedesc
 import comtypes
 import comtypes.client
-import comtypes.client._generate
+import comtypes.typeinfo
 
 version = comtypes.__version__
 
@@ -158,6 +158,29 @@ def storage(t):
 
 ################################################################
 
+def name_wrapper_module(tlib):
+    """Determine the name of a typelib wrapper module"""
+    libattr = tlib.GetLibAttr()
+    modname = "_%s_%s_%s_%s" % \
+              (str(libattr.guid)[1:-1].replace("-", "_"),
+               libattr.lcid,
+               libattr.wMajorVerNum,
+               libattr.wMinorVerNum)
+    return "comtypes.gen.%s" % modname
+
+
+def name_friendly_module(tlib):
+    """Determine the friendly-name of a typelib module.
+    If cannot get friendly-name from typelib, returns `None`.
+    """
+    try:
+        modulename = tlib.GetDocumentation(-1)[0]
+    except comtypes.COMError:
+        return
+    return "comtypes.gen.%s" % modulename
+
+################################################################
+
 class Generator(object):
 
     def __init__(self, ofi, known_symbols=None):
@@ -249,7 +272,7 @@ class Generator(object):
         if filename is not None:
             # get full path to DLL first (os.stat can't work with relative DLL paths properly)
             loaded_typelib = comtypes.typeinfo.LoadTypeLib(filename)
-            full_filename = comtypes.tools.tlbparser.get_tlib_filename(
+            full_filename = tlbparser.get_tlib_filename(
                 loaded_typelib)
 
             while full_filename and not os.path.exists(full_filename):
@@ -360,7 +383,7 @@ class Generator(object):
         elif isinstance(t, typedesc.External):
             # t.symbol_name - symbol to generate
             # t.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
-            modname = comtypes.client._generate._name_module(t.tlib)
+            modname = name_wrapper_module(t.tlib)
             return "%s.%s" % (modname, t.symbol_name)
         return t.name
 
@@ -676,7 +699,7 @@ class Generator(object):
         print(file=self.stream)
 
     def External(self, ext):
-        modname = comtypes.client._generate._name_module(ext.tlib)
+        modname = name_wrapper_module(ext.tlib)
         if modname not in self.imports:
             comtypes.client.GetModule(ext.tlib)
             self.imports.add(modname)
@@ -1290,9 +1313,3 @@ class DeclaredNamespaces(object):
                 code = code + "  # %s" % comment
             lines.append(code)
         return "\n".join(lines)
-
-
-# shortcut for development
-if __name__ == "__main__":
-    from . import tlbparser
-    tlbparser.main()
