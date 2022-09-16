@@ -314,12 +314,12 @@ class Generator(object):
         print(self.declarations.getvalue(), file=self.output)
         print(file=self.output)
         print(self.stream.getvalue(), file=self.output)
-        dunder_all = "__all__ = [%s]" % ", ".join(repr(str(n)) for n in self.names)
+        names = ", ".join(repr(str(n)) for n in self.names)
+        dunder_all = "__all__ = [%s]" % names
         if len(dunder_all) > 80:
             wrapper = textwrap.TextWrapper(subsequent_indent="    ",
                                            initial_indent="    ",
                                            break_long_words=False)
-            names = ", ".join(repr(str(n)) for n in self.names)
             dunder_all = "__all__ = [\n%s\n]" % "\n".join(wrapper.wrap(names))
         print(dunder_all, file=self.output)
         print(file=self.output)
