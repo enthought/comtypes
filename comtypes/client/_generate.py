@@ -265,6 +265,8 @@ def generate_module(tlib, ofi, pathname):
                     )
 
     gen.generate_code(list(items.values()), filename=pathname)
+    for ext_tlib in gen.externals:
+        GetModule(ext_tlib)
 
 ################################################################
 
