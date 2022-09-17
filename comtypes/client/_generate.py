@@ -168,10 +168,28 @@ def _load_tlib(obj):
     return obj
 
 
-def _invalidate_import_caches():
-    """clear the import cache to make sure Python sees newly created modules"""
+def _create_module_in_file(modulename, code):
+    """create module in file system, and import it"""
+    # `modulename` is 'comtypes.gen.xxx'
+    filename = "%s.py" % modulename.split(".")[-1]
+    with open(os.path.join(comtypes.client.gen_dir, filename), "w") as ofi:
+        print(code, file=ofi)
+    # clear the import cache to make sure Python sees newly created modules
     if hasattr(importlib, "invalidate_caches"):
         importlib.invalidate_caches()
+    return _my_import(modulename)
+
+
+def _create_module_in_memory(modulename, code):
+    """create module in memory system, and import it"""
+    # `modulename` is 'comtypes.gen.xxx'
+    mod = types.ModuleType(modulename)
+    abs_gen_path = os.path.abspath(comtypes.gen.__path__[0])
+    mod.__file__ = os.path.join(abs_gen_path, "<memory>")
+    exec(code, mod.__dict__)
+    sys.modules[modulename] = mod
+    setattr(comtypes.gen, modulename.split(".")[-1], mod)
+    return mod
 
 
 def _create_friendly_module(tlib, modulename):
@@ -185,55 +203,32 @@ def _create_friendly_module(tlib, modulename):
     # the module is always regenerated if the import fails
     logger.info("# Generating %s", modulename)
     # determine the Python module name
-    fullname = codegenerator.name_wrapper_module(tlib)
-    modname = fullname.split(".")[-1]
-    code = "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
+    modname = codegenerator.name_wrapper_module(tlib).split(".")[-1]
+    code = "from comtypes.gen import %s\n" % modname
+    code += "globals().update(%s.__dict__)\n" % modname
     code += "__name__ = '%s'" % modulename
     if comtypes.client.gen_dir is None:
-        mod = types.ModuleType(modulename)
-        mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
-                                    "<memory>")
-        exec(code, mod.__dict__)
-        sys.modules[modulename] = mod
-        setattr(comtypes.gen, modulename, mod)
-        return mod
-    # create in file system, and import it
-    with open(os.path.join(comtypes.client.gen_dir, modulename.split(".")[-1] + ".py"), "w") as ofi:
-        print(code, file=ofi)
-    _invalidate_import_caches()
-    return _my_import(modulename)
+        return _create_module_in_memory(modulename, code)
+    return _create_module_in_file(modulename, code)
 
 
 def _create_wrapper_module(tlib, pathname):
     """helper which creates and imports the real typelib wrapper module."""
-    fullname = codegenerator.name_wrapper_module(tlib)
-    if fullname in sys.modules:
-        return sys.modules[fullname]
-
-    modname = fullname.split(".")[-1]
-
+    modulename = codegenerator.name_wrapper_module(tlib)
+    if modulename in sys.modules:
+        return sys.modules[modulename]
     try:
-        return _my_import(fullname)
+        return _my_import(modulename)
     except Exception as details:
-        logger.info("Could not import %s: %s", fullname, details)
-
+        logger.info("Could not import %s: %s", modulename, details)
     # generate the module since it doesn't exist or is out of date
+    logger.info("# Generating %s", modulename)
     stream = io.StringIO()
-    logger.info("# Generating comtypes.gen.%s", modname)
     generate_module(tlib, stream, pathname)
+    code = stream.getvalue()
     if comtypes.client.gen_dir is None:
-        mod = types.ModuleType(fullname)
-        mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
-                                    "<memory>")
-        exec(stream.getvalue(), mod.__dict__)
-        sys.modules[fullname] = mod
-        setattr(comtypes.gen, modname, mod)
-    else:
-        with open(os.path.join(comtypes.client.gen_dir, modname + ".py"), "w") as ofi:
-            print(stream.getvalue(), file=ofi)
-        _invalidate_import_caches()
-        mod = _my_import(fullname)
-    return mod
+        return _create_module_in_memory(modulename, code)
+    return _create_module_in_file(modulename, code)
 
 
 def generate_module(tlib, ofi, pathname):
