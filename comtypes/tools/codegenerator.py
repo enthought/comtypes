@@ -186,6 +186,7 @@ class CodeGenerator(object):
         self.stream = io.StringIO()
         self.imports = ImportedNamespaces()
         self.declarations = DeclaredNamespaces()
+        self.type_name = TypeNamer().type_name
         self.known_symbols = known_symbols or {}
 
         self.done = set() # type descriptions that have been generated
@@ -326,66 +327,6 @@ class CodeGenerator(object):
             print("_check_version(%r, %f)" % (version, tlib_mtime),
                     file=output)
         return output.getvalue()
-
-    def _inspect_PointerType(self, t, count=0):
-        if ASSUME_STRINGS:
-            x = get_real_type(t.typ)
-            if isinstance(x, typedesc.FundamentalType):
-                if x.name == "char":
-                    return typedesc.Typedef("STRING", x), count
-                elif x.name == "wchar_t":
-                    return typedesc.Typedef("WSTRING", x), count
-        if isinstance(t.typ, typedesc.FunctionType):
-            return t.typ, count
-        if isinstance(t.typ, typedesc.FundamentalType):
-            if t.typ.name == "void":
-                return typedesc.Typedef("c_void_p", t.typ), count
-        if isinstance(t.typ, typedesc.PointerType):
-            return self._inspect_PointerType(t.typ, count + 1)
-        return t.typ, count + 1
-
-    def type_name(self, t):
-        # Return a string, containing an expression which can be used
-        # to refer to the type. Assumes the 'from ctypes import *'
-        # namespace is available.
-        if isinstance(t, typedesc.SAFEARRAYType):
-            return "_midlSAFEARRAY(%s)" % self.type_name(t.typ)
-        # if isinstance(t, typedesc.CoClass):
-        #     return "%s._com_interfaces_[0]" % t.name
-        if isinstance(t, typedesc.Typedef):
-            return t.name
-        if isinstance(t, typedesc.PointerType):
-            _t, pcnt = self._inspect_PointerType(t)
-            return "%s%s%s" % ("POINTER("*pcnt, self.type_name(_t), ")"*pcnt)
-        elif isinstance(t, typedesc.ArrayType):
-            return "%s * %s" % (self.type_name(t.typ), int(t.max)+1)
-        elif isinstance(t, typedesc.FunctionType):
-            args = [self.type_name(x) for x in [t.returns] + list(t.iterArgTypes())]
-            if "__stdcall__" in t.attributes:
-                return "WINFUNCTYPE(%s)" % ", ".join(args)
-            else:
-                return "CFUNCTYPE(%s)" % ", ".join(args)
-        elif isinstance(t, typedesc.CvQualifiedType):
-            # const and volatile are ignored
-            return "%s" % self.type_name(t.typ)
-        elif isinstance(t, typedesc.FundamentalType):
-            return ctypes_names[t.name]
-        elif isinstance(t, typedesc.Structure):
-            return t.name
-        elif isinstance(t, typedesc.Enumeration):
-            if t.name:
-                return t.name
-            return "c_int" # enums are integers
-        elif isinstance(t, typedesc.EnumValue):
-            if keyword.iskeyword(t.name):
-                return t.name + "_"
-            return t.name
-        elif isinstance(t, typedesc.External):
-            # t.symbol_name - symbol to generate
-            # t.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
-            modname = name_wrapper_module(t.tlib)
-            return "%s.%s" % (modname, t.symbol_name)
-        return t.name
 
     def need_VARIANT_imports(self, value):
         text = repr(value)
@@ -1188,6 +1129,69 @@ class CodeGenerator(object):
             ) % (idlflags, self.type_name(prop.typ), prop.name)
 
         print(code, file=self.stream)
+
+
+class TypeNamer(object):
+    def type_name(self, t):
+        # type: (...) -> str
+        # Return a string, containing an expression which can be used
+        # to refer to the type. Assumes the 'from ctypes import *'
+        # namespace is available.
+        if isinstance(t, typedesc.SAFEARRAYType):
+            return "_midlSAFEARRAY(%s)" % self.type_name(t.typ)
+        # if isinstance(t, typedesc.CoClass):
+        #     return "%s._com_interfaces_[0]" % t.name
+        if isinstance(t, typedesc.Typedef):
+            return t.name
+        if isinstance(t, typedesc.PointerType):
+            _t, pcnt = self._inspect_PointerType(t)
+            return "%s%s%s" % ("POINTER("*pcnt, self.type_name(_t), ")"*pcnt)
+        elif isinstance(t, typedesc.ArrayType):
+            return "%s * %s" % (self.type_name(t.typ), int(t.max)+1)
+        elif isinstance(t, typedesc.FunctionType):
+            args = [self.type_name(x) for x in [t.returns] + list(t.iterArgTypes())]
+            if "__stdcall__" in t.attributes:
+                return "WINFUNCTYPE(%s)" % ", ".join(args)
+            else:
+                return "CFUNCTYPE(%s)" % ", ".join(args)
+        elif isinstance(t, typedesc.CvQualifiedType):
+            # const and volatile are ignored
+            return "%s" % self.type_name(t.typ)
+        elif isinstance(t, typedesc.FundamentalType):
+            return ctypes_names[t.name]
+        elif isinstance(t, typedesc.Structure):
+            return t.name
+        elif isinstance(t, typedesc.Enumeration):
+            if t.name:
+                return t.name
+            return "c_int" # enums are integers
+        elif isinstance(t, typedesc.EnumValue):
+            if keyword.iskeyword(t.name):
+                return t.name + "_"
+            return t.name
+        elif isinstance(t, typedesc.External):
+            # t.symbol_name - symbol to generate
+            # t.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
+            modname = name_wrapper_module(t.tlib)
+            return "%s.%s" % (modname, t.symbol_name)
+        return t.name
+
+    def _inspect_PointerType(self, t, count=0):
+        if ASSUME_STRINGS:
+            x = get_real_type(t.typ)
+            if isinstance(x, typedesc.FundamentalType):
+                if x.name == "char":
+                    return typedesc.Typedef("STRING", x), count
+                elif x.name == "wchar_t":
+                    return typedesc.Typedef("WSTRING", x), count
+        if isinstance(t.typ, typedesc.FunctionType):
+            return t.typ, count
+        if isinstance(t.typ, typedesc.FundamentalType):
+            if t.typ.name == "void":
+                return typedesc.Typedef("c_void_p", t.typ), count
+        if isinstance(t.typ, typedesc.PointerType):
+            return self._inspect_PointerType(t.typ, count + 1)
+        return t.typ, count + 1
 
 
 class ImportedNamespaces(object):
