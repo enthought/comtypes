@@ -225,9 +225,9 @@ def _create_wrapper_module(tlib, pathname):
     if pathname is None:
         pathname = tlbparser.get_tlib_filename(tlib)
     items = list(p.parse().values())
-    gen = codegenerator.Generator(_get_known_symbols())
-    code = gen.generate_code(items, filename=pathname)
-    for ext_tlib in gen.externals:  # generating dependency COM-lib modules
+    codegen = codegenerator.CodeGenerator(_get_known_symbols())
+    code = codegen.generate_code(items, filename=pathname)
+    for ext_tlib in codegen.externals:  # generates dependency COM-lib modules
         GetModule(ext_tlib)
     if comtypes.client.gen_dir is None:
         return _create_module_in_memory(modulename, code)

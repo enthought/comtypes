@@ -180,7 +180,7 @@ def name_friendly_module(tlib):
 
 ################################################################
 
-class Generator(object):
+class CodeGenerator(object):
 
     def __init__(self, known_symbols=None):
         self.stream = io.StringIO()
