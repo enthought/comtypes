@@ -16,11 +16,9 @@ logger = logging.getLogger(__name__)
 if sys.version_info >= (3, 0):
     base_text_type = str
     import winreg
-    import io
 else:
     base_text_type = basestring
     import _winreg as winreg
-    import cStringIO as io
 
 
 PATH = os.environ["PATH"].split(os.pathsep)
@@ -223,18 +221,14 @@ def _create_wrapper_module(tlib, pathname):
         logger.info("Could not import %s: %s", modulename, details)
     # generate the module since it doesn't exist or is out of date
     logger.info("# Generating %s", modulename)
-    stream = io.StringIO()
     p = tlbparser.TypeLibParser(tlib)
     if pathname is None:
         pathname = tlbparser.get_tlib_filename(tlib)
     items = p.parse()
-    gen = codegenerator.Generator(stream,
-                    known_symbols=_get_known_symbols(),
-                    )
-    gen.generate_code(list(items.values()), filename=pathname)
-    for ext_tlib in gen.externals:
+    gen = codegenerator.Generator(known_symbols=_get_known_symbols())
+    code = gen.generate_code(list(items.values()), filename=pathname)
+    for ext_tlib in gen.externals:  # generating dependency COM-lib modules
         GetModule(ext_tlib)
-    code = stream.getvalue()
     if comtypes.client.gen_dir is None:
         return _create_module_in_memory(modulename, code)
     return _create_module_in_file(modulename, code)
