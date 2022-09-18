@@ -327,6 +327,23 @@ class CodeGenerator(object):
                     file=output)
         return output.getvalue()
 
+    def _inspect_PointerType(self, t, count=0):
+        if ASSUME_STRINGS:
+            x = get_real_type(t.typ)
+            if isinstance(x, typedesc.FundamentalType):
+                if x.name == "char":
+                    return typedesc.Typedef("STRING", x), count
+                elif x.name == "wchar_t":
+                    return typedesc.Typedef("WSTRING", x), count
+        if isinstance(t.typ, typedesc.FunctionType):
+            return t.typ, count
+        if isinstance(t.typ, typedesc.FundamentalType):
+            if t.typ.name == "void":
+                return typedesc.Typedef("c_void_p", t.typ), count
+        if isinstance(t.typ, typedesc.PointerType):
+            return self._inspect_PointerType(t.typ, count + 1)
+        return t.typ, count + 1
+
     def type_name(self, t):
         # Return a string, containing an expression which can be used
         # to refer to the type. Assumes the 'from ctypes import *'
@@ -338,23 +355,8 @@ class CodeGenerator(object):
         if isinstance(t, typedesc.Typedef):
             return t.name
         if isinstance(t, typedesc.PointerType):
-            if ASSUME_STRINGS:
-                x = get_real_type(t.typ)
-                if isinstance(x, typedesc.FundamentalType):
-                    if x.name == "char":
-                        return "STRING"
-                    elif x.name == "wchar_t":
-                        return "WSTRING"
-
-            result = "POINTER(%s)" % self.type_name(t.typ)
-            # XXX Better to inspect t.typ!
-            if result.startswith("POINTER(WINFUNCTYPE"):
-                return result[len("POINTER("):-1]
-            if result.startswith("POINTER(CFUNCTYPE"):
-                return result[len("POINTER("):-1]
-            elif result == "POINTER(None)":
-                return "c_void_p"
-            return result
+            _t, pcnt = self._inspect_PointerType(t)
+            return "%s%s%s" % ("POINTER("*pcnt, self.type_name(_t), ")"*pcnt)
         elif isinstance(t, typedesc.ArrayType):
             return "%s * %s" % (self.type_name(t.typ), int(t.max)+1)
         elif isinstance(t, typedesc.FunctionType):
