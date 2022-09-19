@@ -180,10 +180,9 @@ def name_friendly_module(tlib):
 
 ################################################################
 
-class Generator(object):
+class CodeGenerator(object):
 
-    def __init__(self, ofi, known_symbols=None):
-        self.output = ofi
+    def __init__(self, known_symbols=None):
         self.stream = io.StringIO()
         self.imports = ImportedNamespaces()
         self.declarations = DeclaredNamespaces()
@@ -304,16 +303,16 @@ class Generator(object):
         if tlib_mtime is not None:
             logger.debug("filename: \"%s\": tlib_mtime: %s", filename, tlib_mtime)
             self.imports.add('comtypes', '_check_version')
-
+        output = io.StringIO()
         if filename is not None:
             # Hm, what is the CORRECT encoding?
-            print("# -*- coding: mbcs -*-", file=self.output)
-            print(file=self.output)
-        print(self.imports.getvalue(), file=self.output)
-        print(file=self.output)
-        print(self.declarations.getvalue(), file=self.output)
-        print(file=self.output)
-        print(self.stream.getvalue(), file=self.output)
+            print("# -*- coding: mbcs -*-", file=output)
+            print(file=output)
+        print(self.imports.getvalue(), file=output)
+        print(file=output)
+        print(self.declarations.getvalue(), file=output)
+        print(file=output)
+        print(self.stream.getvalue(), file=output)
         names = ", ".join(repr(str(n)) for n in self.names)
         dunder_all = "__all__ = [%s]" % names
         if len(dunder_all) > 80:
@@ -321,13 +320,12 @@ class Generator(object):
                                            initial_indent="    ",
                                            break_long_words=False)
             dunder_all = "__all__ = [\n%s\n]" % "\n".join(wrapper.wrap(names))
-        print(dunder_all, file=self.output)
-        print(file=self.output)
+        print(dunder_all, file=output)
+        print(file=output)
         if tlib_mtime is not None:
             print("_check_version(%r, %f)" % (version, tlib_mtime),
-                    file=self.output)
-
-        return loops
+                    file=output)
+        return output.getvalue()
 
     def type_name(self, t):
         # Return a string, containing an expression which can be used

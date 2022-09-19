@@ -16,11 +16,9 @@ logger = logging.getLogger(__name__)
 if sys.version_info >= (3, 0):
     base_text_type = str
     import winreg
-    import io
 else:
     base_text_type = basestring
     import _winreg as winreg
-    import cStringIO as io
 
 
 PATH = os.environ["PATH"].split(os.pathsep)
@@ -223,15 +221,20 @@ def _create_wrapper_module(tlib, pathname):
         logger.info("Could not import %s: %s", modulename, details)
     # generate the module since it doesn't exist or is out of date
     logger.info("# Generating %s", modulename)
-    stream = io.StringIO()
-    generate_module(tlib, stream, pathname)
-    code = stream.getvalue()
+    p = tlbparser.TypeLibParser(tlib)
+    if pathname is None:
+        pathname = tlbparser.get_tlib_filename(tlib)
+    items = list(p.parse().values())
+    codegen = codegenerator.CodeGenerator(_get_known_symbols())
+    code = codegen.generate_code(items, filename=pathname)
+    for ext_tlib in codegen.externals:  # generates dependency COM-lib modules
+        GetModule(ext_tlib)
     if comtypes.client.gen_dir is None:
         return _create_module_in_memory(modulename, code)
     return _create_module_in_file(modulename, code)
 
 
-def generate_module(tlib, ofi, pathname):
+def _get_known_symbols():
     known_symbols = {}
     for name in ("comtypes.persist",
                  "comtypes.typeinfo",
@@ -250,18 +253,7 @@ def generate_module(tlib, ofi, pathname):
             mod = getattr(mod, submodule)
         for name in mod.__dict__:
             known_symbols[name] = mod.__name__
-    p = tlbparser.TypeLibParser(tlib)
-    if pathname is None:
-        pathname = tlbparser.get_tlib_filename(tlib)
-    items = p.parse()
-
-    gen = codegenerator.Generator(ofi,
-                    known_symbols=known_symbols,
-                    )
-
-    gen.generate_code(list(items.values()), filename=pathname)
-    for ext_tlib in gen.externals:
-        GetModule(ext_tlib)
+    return known_symbols
 
 ################################################################
 
