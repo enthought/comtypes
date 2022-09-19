@@ -553,7 +553,7 @@ v._.VT_I4 = 0x80020004
 del v
 
 _carg_obj = type(byref(c_int()))
-from _ctypes import Array as _CArrayType
+from ctypes import Array as _CArrayType
 
 @comtypes.patcher.Patch(POINTER(VARIANT))
 class _(object):
