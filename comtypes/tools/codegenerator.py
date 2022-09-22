@@ -186,7 +186,7 @@ class CodeGenerator(object):
         self.stream = io.StringIO()
         self.imports = ImportedNamespaces()
         self.declarations = DeclaredNamespaces()
-        self.type_name = TypeNamer().type_name
+        self.type_name = TypeNamer()
         self.known_symbols = known_symbols or {}
 
         self.done = set() # type descriptions that have been generated
@@ -1132,31 +1132,31 @@ class CodeGenerator(object):
 
 
 class TypeNamer(object):
-    def type_name(self, t):
+    def __call__(self, t):
         # type: (...) -> str
         # Return a string, containing an expression which can be used
         # to refer to the type. Assumes the 'from ctypes import *'
         # namespace is available.
         if isinstance(t, typedesc.SAFEARRAYType):
-            return "_midlSAFEARRAY(%s)" % self.type_name(t.typ)
+            return "_midlSAFEARRAY(%s)" % self(t.typ)
         # if isinstance(t, typedesc.CoClass):
         #     return "%s._com_interfaces_[0]" % t.name
         if isinstance(t, typedesc.Typedef):
             return t.name
         if isinstance(t, typedesc.PointerType):
             _t, pcnt = self._inspect_PointerType(t)
-            return "%s%s%s" % ("POINTER("*pcnt, self.type_name(_t), ")"*pcnt)
+            return "%s%s%s" % ("POINTER("*pcnt, self(_t), ")"*pcnt)
         elif isinstance(t, typedesc.ArrayType):
-            return "%s * %s" % (self.type_name(t.typ), int(t.max)+1)
+            return "%s * %s" % (self(t.typ), int(t.max)+1)
         elif isinstance(t, typedesc.FunctionType):
-            args = [self.type_name(x) for x in [t.returns] + list(t.iterArgTypes())]
+            args = [self(x) for x in [t.returns] + list(t.iterArgTypes())]
             if "__stdcall__" in t.attributes:
                 return "WINFUNCTYPE(%s)" % ", ".join(args)
             else:
                 return "CFUNCTYPE(%s)" % ", ".join(args)
         elif isinstance(t, typedesc.CvQualifiedType):
             # const and volatile are ignored
-            return "%s" % self.type_name(t.typ)
+            return "%s" % self(t.typ)
         elif isinstance(t, typedesc.FundamentalType):
             return ctypes_names[t.name]
         elif isinstance(t, typedesc.Structure):
