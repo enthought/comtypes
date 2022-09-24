@@ -1205,16 +1205,33 @@ class ImportedNamespaces(object):
             >>> imports.add('ctypes', '*')
             >>> imports.add('decimal', 'Decimal')
             >>> imports.add('GUID', symbols={'GUID': 'comtypes'})
-            >>> for name in ('COMMETHOD', 'IUnknown', 'dispid', 'CoClass',
-            ...              'BSTR', 'DISPPROPERTY'):
+            >>> for name in ('COMMETHOD', 'DISPMETHOD', 'IUnknown', 'dispid',
+            ...              'CoClass', 'BSTR', 'DISPPROPERTY'):
             ...     imports.add('comtypes', name)
             >>> imports.add('ctypes.wintypes')
             >>> print(imports.getvalue())
             from ctypes import *
             import datetime
             from decimal import Decimal
-            from comtypes import BSTR, CoClass, COMMETHOD, dispid, DISPPROPERTY, \\
-                GUID, IUnknown
+            from comtypes import (
+                BSTR, CoClass, COMMETHOD, dispid, DISPMETHOD, DISPPROPERTY, GUID,
+                IUnknown
+            )
+            import ctypes.wintypes
+            >>> print(imports.getvalue(for_stub=True))
+            from ctypes import *
+            import datetime
+            from decimal import Decimal as Decimal
+            from comtypes import (
+                BSTR as BSTR,
+                CoClass as CoClass,
+                COMMETHOD as COMMETHOD,
+                dispid as dispid,
+                DISPMETHOD as DISPMETHOD,
+                DISPPROPERTY as DISPPROPERTY,
+                GUID as GUID,
+                IUnknown as IUnknown,
+            )
             import ctypes.wintypes
         """
         if name2 is None:
@@ -1253,32 +1270,40 @@ class ImportedNamespaces(object):
             return self.data[import_] == from_
         return False
 
-    def _make_line(self, import_, from_=None):
-        if from_ is None:
-            return "import %s" % import_
+    def _make_line(self, from_, imports, for_stub):
+        if for_stub:
+            import_ = ", ".join("%s as %s" % (n, n) for n in imports)
+        else:
+            import_ = ", ".join(imports)
         code = "from %s import %s" % (from_, import_)
-        if len(code) > 80:
+        if len(code) <= 80:
+            return code
+        if for_stub:
+            import_ = "\n".join("    %s as %s," % (n, n) for n in imports)
+        else:
             wrapper = textwrap.TextWrapper(subsequent_indent="    ",
+                                           initial_indent="    ",
                                            break_long_words=False)
-            code = " \\\n".join(wrapper.wrap(code))
+            import_ = "\n".join(wrapper.wrap(import_))
+        code = "from %s import (\n%s\n)" % (from_, import_)
         return code
 
-    def getvalue(self):
+    def getvalue(self, for_stub=False):
         ns = {}
         lines = []
         for key, val in self.data.items():
             if val is None:
                 ns[key] = val
             elif key == "*":
-                lines.append(self._make_line("*", val))
+                lines.append("from %s import *" % val)
             else:
                 ns.setdefault(val, set()).add(key)
         for key, val in ns.items():
             if val is None:
-                lines.append(self._make_line(key))
+                lines.append("import %s" % key)
             else:
-                names = ", ".join(sorted(val, key=lambda s: s.lower()))
-                lines.append(self._make_line(names, key))
+                names = sorted(val, key=lambda s: s.lower())
+                lines.append(self._make_line(key, names, for_stub=for_stub))
         return "\n".join(lines)
 
 
