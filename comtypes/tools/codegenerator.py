@@ -392,10 +392,6 @@ class CodeGenerator(object):
         if "datetime.datetime(" in text:
             self.imports.add("datetime")
 
-    def need_GUID(self):
-        if "GUID" in self.known_symbols:
-            self.imports.add("GUID", symbols=self.known_symbols)
-
     def _to_docstring(self, orig, depth=1):
         # type: (str, int) -> str
         # increasing `depth` by one increases indentation by one
@@ -470,7 +466,7 @@ class CodeGenerator(object):
             print("# %s %s" % head.struct.location, file=self.stream)
         basenames = [self.type_name(b) for b in head.struct.bases]
         if basenames:
-            self.need_GUID()
+            self.imports.add("comtypes", "GUID")
 
             if not self.last_item_class:
                 print(file=self.stream)
@@ -740,7 +736,7 @@ class CodeGenerator(object):
                 self.declarations.add("WSTRING", "c_wchar_p")
 
     def CoClass(self, coclass):
-        self.need_GUID()
+        self.imports.add("comtypes", "GUID")
         self.imports.add("comtypes", "CoClass")
         if not self.last_item_class:
             print(file=self.stream)
@@ -817,7 +813,7 @@ class CodeGenerator(object):
         self.more.add(base)
         basename = self.type_name(head.itf.base)
 
-        self.need_GUID()
+        self.imports.add("comtypes", "GUID")
 
         if not self.last_item_class:
             print(file=self.stream)
@@ -937,7 +933,7 @@ class CodeGenerator(object):
         self.generate(head.itf.base)
         basename = self.type_name(head.itf.base)
 
-        self.need_GUID()
+        self.imports.add("comtypes", "GUID")
         if not self.last_item_class:
             print(file=self.stream)
             print(file=self.stream)
