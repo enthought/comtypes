@@ -235,23 +235,19 @@ def _create_wrapper_module(tlib, pathname):
 
 
 def _get_known_symbols():
-    known_symbols = {}
-    for name in ("comtypes.persist",
+    known_symbols = {}  # type: dict[str, str]
+    for mod_name in ("comtypes.persist",
                  "comtypes.typeinfo",
                  "comtypes.automation",
-                 "comtypes._others",
                  "comtypes",
                  "ctypes.wintypes",
                  "ctypes"):
-        try:
-            mod = __import__(name)
-        except ImportError:
-            if name == "comtypes._others":
-                continue
-            raise
-        for submodule in name.split(".")[1:]:
-            mod = getattr(mod, submodule)
-        for name in mod.__dict__:
+        mod = importlib.import_module(mod_name)
+        if hasattr(mod, "__known_symbols__"):
+            names = mod.__known_symbols__  # type: list[str]
+        else:
+            names = list(mod.__dict__)
+        for name in names:
             known_symbols[name] = mod.__name__
     return known_symbols
 
