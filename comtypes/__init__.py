@@ -81,6 +81,8 @@ if TYPE_CHECKING:
     # instead of `A | B` and `None | A`. see PEP604.
     from typing import Union as _UnionT  #  avoiding confusion with `ctypes.Union`
     from typing import Optional
+    # utilities or workarounds for annotations.
+    from comtypes import hints as hints
 
 ################################################################
 
@@ -1182,8 +1184,26 @@ def COMMETHOD(idlflags, restype, methodname, *argspec):
 ################################################################
 # IUnknown, the root of all evil...
 
+if TYPE_CHECKING:
+    _T_IUnknown = TypeVar("_T_IUnknown", bound="IUnknown")
+
+    class _IUnknown_Base(c_void_p):
+        """This is workaround to avoid false-positive of static type checking.
+
+        `IUnknown` behaves as a ctypes type, and `POINTER` can take it.
+        This behavior is defined by some metaclasses in runtime.
+
+        In runtime, this symbol in the namespace is just alias for
+        `builtins.object`.
+        """
+        __com_QueryInterface = hints.AnnoField()  # type: Callable[[Any, Any], int]
+        __com_AddRef = hints.AnnoField()  # type: Callable[[], int]
+        __com_Release = hints.AnnoField()  # type: Callable[[], int]
+else:
+    _IUnknown_Base = object
+
 @add_metaclass(_cominterface_meta)
-class IUnknown(object):
+class IUnknown(_IUnknown_Base):
     """The most basic COM interface.
 
     Each subclasses of IUnknown must define these class attributes:
@@ -1195,18 +1215,24 @@ class IUnknown(object):
     The _methods_ list must in VTable order.  Methods are specified
     with STDMETHOD or COMMETHOD calls.
     """
-    _case_insensitive_ = False
-    _iid_ = GUID("{00000000-0000-0000-C000-000000000046}")
+    _case_insensitive_ = False  # type: ClassVar[bool]
+    _iid_ = GUID("{00000000-0000-0000-C000-000000000046}")  # type: ClassVar[GUID]
 
     _methods_ = [
         STDMETHOD(HRESULT, "QueryInterface",
                   [POINTER(GUID), POINTER(c_void_p)]),
         STDMETHOD(c_ulong, "AddRef"),
         STDMETHOD(c_ulong, "Release")
-    ]
+    ]  # XXX too complex tuples! we should define classes for `_methods_` and `_disp_methods_`
 
+    # NOTE: Why not `QueryInterface(T) -> _Pointer[T]`?
+    # Any static type checkers is not able to provide members of `T` from `_Pointer[T]`,
+    # regardless of the pointer is able to access members of contents in runtime.
+    # And if `isinstance(p, POINTER(T))` is `True`, then `isinstance(p, T)` is also `True`.
+    # So returning `T` is not a lie, and good way to know what members the class has.
     def QueryInterface(self, interface, iid=None):
-        "QueryInterface(interface) -> instance"
+        # type: (Type[_T_IUnknown], Optional[GUID]) -> _T_IUnknown
+        """QueryInterface(interface) -> instance"""
         p = POINTER(interface)()
         if iid is None:
             iid = interface._iid_
@@ -1214,16 +1240,18 @@ class IUnknown(object):
         clsid = self.__dict__.get('__clsid')
         if clsid is not None:
             p.__dict__['__clsid'] = clsid
-        return p
+        return p  # type: ignore
 
     # these are only so that they get a docstring.
     # XXX There should be other ways to install a docstring.
     def AddRef(self):
-        "Increase the internal refcount by one and return it."
+        # type: () -> int
+        """Increase the internal refcount by one and return it."""
         return self.__com_AddRef()
 
     def Release(self):
-        "Decrease the internal refcount by one and return it."
+        # type: () -> int
+        """Decrease the internal refcount by one and return it."""
         return self.__com_Release()
 
 # IPersist is a trivial interface, which allows to ask an object about
