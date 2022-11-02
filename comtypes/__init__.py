@@ -43,25 +43,6 @@ def _check_version(actual, tlib_cached_mtime=None):
         if not tlib_cached_mtime or abs(tlib_curr_mtime - tlib_cached_mtime) >= 1:
             raise ImportError("Typelib different than module")
 
-try:
-    COMError()
-except TypeError:
-    pass
-else:
-    # Python 2.5 and 2.5.1 have a bug in the COMError implementation:
-    # The type has no __init__ method, and no hresult, text, and
-    # details instance vars.  Work around this bug by monkeypatching
-    # COMError.
-    def monkeypatch_COMError():
-        def __init__(self, hresult, text, details):
-            self.hresult = hresult
-            self.text = text
-            self.details = details
-            super(COMError, self).__init__(hresult, text, details)
-        COMError.__init__ = __init__
-    monkeypatch_COMError()
-    del monkeypatch_COMError
-
 if sys.version_info >= (3, 0):
     pythonapi.PyInstanceMethod_New.argtypes = [py_object]
     pythonapi.PyInstanceMethod_New.restype = py_object
