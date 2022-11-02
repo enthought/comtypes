@@ -872,10 +872,10 @@ class CodeGenerator(object):
         self.last_item_class = True
 
         print("class %s(%s):" % (head.itf.name, basename), file=self.stream)
-        print("    _case_insensitive_ = True", file=self.stream)
         doc = getattr(head.itf, "doc", None)
         if doc:
-            print("    %r" % doc, file=self.stream)
+            print(self._to_docstring(doc), file=self.stream)
+        print("    _case_insensitive_ = True", file=self.stream)
         print("    _iid_ = GUID(%r)" % head.itf.iid, file=self.stream)
         print("    _idlflags_ = %s" % head.itf.idlflags, file=self.stream)
         print("    _methods_ = []", file=self.stream)
