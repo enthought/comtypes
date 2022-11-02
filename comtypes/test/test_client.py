@@ -85,6 +85,32 @@ class Test_GetModule(ut.TestCase):
         comtypes.client.GetModule("msi.dll")
 
 
+class Test_KnownSymbols(ut.TestCase):
+    # It is guaranteed that each element of `__known_symbols__` is in
+    # each module's namespace.
+    # If this test fails, `ImportError` or `AttributeError` may be raised
+    # when generating a `comtypes.gen._xxx...` in runtime.
+    def _doit(self, mod):
+        for s in mod.__known_symbols__:
+            self.assertTrue(hasattr(mod, s))
+
+    def test_symbols_in_comtypes(self):
+        import comtypes
+        self._doit(comtypes)
+
+    def test_symbols_in_comtypes_automation(self):
+        import comtypes.automation
+        self._doit(comtypes.automation)
+
+    def test_symbols_in_comtypes_typeinfo(self):
+        import comtypes.typeinfo
+        self._doit(comtypes.typeinfo)
+
+    def test_symbols_in_comtypes_persist(self):
+        import comtypes.persist
+        self._doit(comtypes.persist)
+
+
 class Test_CreateObject(ut.TestCase):
     def test_progid(self):
         # create from ProgID
