@@ -1,16 +1,100 @@
-import types
-import sys
-import os
-
 # comtypes version numbers follow semver (http://semver.org/) and PEP 440
 __version__ = "1.1.14"
 
+import atexit
+from ctypes import *
+from ctypes import _SimpleCData
+from _ctypes import COMError
+import logging
+import os
+import sys
+import types
+
+################################################################
+
+def add_metaclass(metaclass):
+    """Class decorator from six.py for creating a class with a metaclass.
+
+    Copyright (c) 2010-2020 Benjamin Peterson
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of
+    this software and associated documentation files (the "Software"), to deal in
+    the Software without restriction, including without limitation the rights to
+    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+    the Software, and to permit persons to whom the Software is furnished to do so,
+    subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    """
+    def wrapper(cls):
+        orig_vars = cls.__dict__.copy()
+        slots = orig_vars.get('__slots__')
+        if slots is not None:
+            if isinstance(slots, text_type):
+                slots = [slots]
+            for slots_var in slots:
+                orig_vars.pop(slots_var)
+        orig_vars.pop('__dict__', None)
+        orig_vars.pop('__weakref__', None)
+        if hasattr(cls, '__qualname__'):
+            orig_vars['__qualname__'] = cls.__qualname__
+        return metaclass(cls.__name__, cls.__bases__, orig_vars)
+    return wrapper
+
+################################################################
+
+# type hinting symbols
+#
+# `if TYPE_CHECKING:` code block must not be executed because `TYPE_CHECKING`
+# is always `False` in runtime.
+# see https://peps.python.org/pep-0484/#runtime-or-type-checking
+#
+if sys.version_info >= (3, 5):
+    from typing import TYPE_CHECKING
+else:  # typehints in this package don't support Py<3.5 due to importing symbols.
+    TYPE_CHECKING = False
+#
+# Annotations must be placed in a `# type:` comment in according to PEP484.
+# see https://peps.python.org/pep-0484/#suggested-syntax-for-python-2-7-and-straddling-code
+# - `NameError` never raises by using those symbols.
+# - It is not able to use any runtime introspections, such as
+#   `typing.get_type_hints` or `typing.get_origin`.
+#
+if TYPE_CHECKING:
+    from ctypes import _CData  # only in `typeshed`, private in runtime
+    # _CData = _SimpleCData.__mro__[:-1][-1]  # defining in runtime
+    from ctypes import _Pointer
+    from typing import Any, ClassVar, overload, TypeVar
+    # XXX: symbols for backward compatibility.
+    # instead of `builtins`. see PEP585.
+    from typing import Dict, List, Tuple, Type
+    # instead of `collections.abc`. see PEP585.
+    from typing import Callable, Iterable, Iterator
+    # instead of `A | B` and `None | A`. see PEP604.
+    from typing import Union as _UnionT  #  avoiding confusion with `ctypes.Union`
+    from typing import Optional
+
+################################################################
+
+from comtypes.GUID import GUID
+from comtypes import patcher
+from comtypes._npsupport import interop as npsupport
+
+################################################################
 if sys.version_info >= (3, 0):
     text_type = str
 else:
     text_type = unicode
+_all_slice = slice(None, None, None)
 
-import logging
 class NullHandler(logging.Handler):
     """A Handler that does nothing."""
     def emit(self, record):
@@ -24,10 +108,6 @@ logger = logging.getLogger(__name__)
 # when logging is not configured and logger.error() is called.
 logger.addHandler(NullHandler())
 
-from ctypes import *
-from _ctypes import COMError
-from comtypes import patcher
-from comtypes._npsupport import interop as npsupport
 
 def _check_version(actual, tlib_cached_mtime=None):
     from comtypes.tools.codegenerator import version as required
@@ -67,7 +147,6 @@ class ReturnHRESULT(Exception):
 ##class IDLWarning(UserWarning):
 ##    "Warn about questionable type information"
 
-from comtypes.GUID import GUID
 _GUID = GUID
 IID = GUID
 DWORD = c_ulong
@@ -174,7 +253,6 @@ def _shutdown(func=_ole32_nohresult.CoUninitialize,
         _cominterface_meta._com_shutting_down = True
     _debug("CoUninitialize() done.")
 
-import atexit
 atexit.register(_shutdown)
 
 ################################################################
@@ -812,9 +890,6 @@ class _cominterface_meta(type):
 # helper classes for COM propget / propput
 # Should they be implemented in C for speed?
 
-_all_slice = slice(None, None, None)
-
-
 class bound_named_property(object):
     def __init__(self, name, fget, fset, instance):
         self.name = name
@@ -874,45 +949,6 @@ class named_property(object):
 
     def __repr__(self):
         return "<named_property %r at %x>" % (self.name, id(self))
-
-################################################################
-
-def add_metaclass(metaclass):
-    """Class decorator from six.py for creating a class with a metaclass.
-
-    Copyright (c) 2010-2020 Benjamin Peterson
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy of
-    this software and associated documentation files (the "Software"), to deal in
-    the Software without restriction, including without limitation the rights to
-    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-    the Software, and to permit persons to whom the Software is furnished to do so,
-    subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-    """
-    def wrapper(cls):
-        orig_vars = cls.__dict__.copy()
-        slots = orig_vars.get('__slots__')
-        if slots is not None:
-            if isinstance(slots, text_type):
-                slots = [slots]
-            for slots_var in slots:
-                orig_vars.pop(slots_var)
-        orig_vars.pop('__dict__', None)
-        orig_vars.pop('__weakref__', None)
-        if hasattr(cls, '__qualname__'):
-            orig_vars['__qualname__'] = cls.__qualname__
-        return metaclass(cls.__name__, cls.__bases__, orig_vars)
-    return wrapper
 
 ################################################################
 
@@ -1008,8 +1044,6 @@ class _compointer_base(c_void_p):
         return value.QueryInterface(cls.__com_interface__)
 
 ################################################################
-
-from ctypes import _SimpleCData
 
 class BSTR(_SimpleCData):
     "The windows BSTR data type"
