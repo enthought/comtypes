@@ -523,11 +523,6 @@ class CodeGenerator(object):
             if body.struct.bases:
                 assert len(body.struct.bases) == 1
                 self.generate(body.struct.bases[0].get_body())
-            # field definition normally span several lines.
-            # Before we generate them, we need to 'import' everything they need.
-            # So, call type_name for each field once,
-            for f in fields:
-                self.type_name(f.typ)
 
             if not self.last_item_class:
                 print(file=self.stream)
@@ -571,13 +566,6 @@ class CodeGenerator(object):
 
         if methods:
             self.imports.add("comtypes", "COMMETHOD")
-            # method definitions normally span several lines.
-            # Before we generate them, we need to 'import' everything they need.
-            # So, call type_name for each field once,
-            for m in methods:
-                self.type_name(m.returns)
-                for a in m.iterArgTypes():
-                    self.type_name(a)
 
             if not self.last_item_class:
                 print(file=self.stream)
