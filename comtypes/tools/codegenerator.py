@@ -186,7 +186,7 @@ class CodeGenerator(object):
         self.stream = io.StringIO()
         self.imports = ImportedNamespaces()
         self.declarations = DeclaredNamespaces()
-        self.type_name = TypeNamer()
+        self._to_type_name = TypeNamer()
         self.known_symbols = known_symbols or {}
 
         self.done = set() # type descriptions that have been generated
@@ -357,7 +357,7 @@ class CodeGenerator(object):
             # XXX use logging!
             if __warn_on_munge__:
                 print("# Fixing keyword as EnumValue for %s" % tp.name)
-        tp_name = self.type_name(tp)
+        tp_name = self._to_type_name(tp)
         print("%s = %d" % (tp_name, value), file=self.stream)
         self.names.add(tp_name)
         self._enumvalues += 1
@@ -388,7 +388,7 @@ class CodeGenerator(object):
             self.more.add(tp.typ)
         else:
             self.generate(tp.typ)
-        definition = self.type_name(tp.typ)
+        definition = self._to_type_name(tp.typ)
         if tp.name != definition:
             if definition in self.known_symbols:
                 self.declarations.add(tp.name, definition)
@@ -407,7 +407,7 @@ class CodeGenerator(object):
         if head.struct.location:
             self.last_item_class = False
             print("# %s %s" % head.struct.location, file=self.stream)
-        basenames = [self.type_name(b) for b in head.struct.bases]
+        basenames = [self._to_type_name(b) for b in head.struct.bases]
         if basenames:
             self.imports.add("comtypes", "GUID")
 
@@ -545,9 +545,9 @@ class CodeGenerator(object):
                 else:
                     fieldname = f.name
                 if f.bits is None:
-                    print("    ('%s', %s)," % (fieldname, self.type_name(f.typ)), file=self.stream)
+                    print("    ('%s', %s)," % (fieldname, self._to_type_name(f.typ)), file=self.stream)
                 else:
-                    print("    ('%s', %s, %s)," % (fieldname, self.type_name(f.typ), f.bits), file=self.stream)
+                    print("    ('%s', %s, %s)," % (fieldname, self._to_type_name(f.typ), f.bits), file=self.stream)
             print("]", file=self.stream)
 
             if body.struct.size is None:
@@ -584,11 +584,11 @@ class CodeGenerator(object):
                         "        [], \n"
                         "        %s,\n"
                         "        '%s',\n"
-                    ) % (self.type_name(m.returns), m.name),
+                    ) % (self._to_type_name(m.returns), m.name),
                     file=self.stream
                 )
                 for a in m.iterArgTypes():
-                    print("        ([], %s),\n" % self.type_name(a), file=self.stream)
+                    print("        ([], %s),\n" % self._to_type_name(a), file=self.stream)
                     print("    ),", file=self.stream)
             print("]", file=self.stream)
 
@@ -633,7 +633,7 @@ class CodeGenerator(object):
         self.last_item_class = False
         print("%s = %r  # Constant %s" % (tp.name,
                                          tp.value,
-                                         self.type_name(tp.typ)), file=self.stream)
+                                         self._to_type_name(tp.typ)), file=self.stream)
         self.names.add(tp.name)
 
     def SAFEARRAYType(self, sa):
@@ -705,9 +705,9 @@ class CodeGenerator(object):
                 where = implemented
             if item[1] & 1: # IMPLTYPEFLAG_FDEAULT
                 # The default interface should be the first item on the list
-                where.insert(0, self.type_name(item[0]))
+                where.insert(0, self._to_type_name(item[0]))
             else:
-                where.append(self.type_name(item[0]))
+                where.append(self._to_type_name(item[0]))
 
         if implemented:
             self.last_item_class = False
@@ -742,7 +742,7 @@ class CodeGenerator(object):
             return
         self.generate(base.get_head())
         self.more.add(base)
-        basename = self.type_name(head.itf.base)
+        basename = self._to_type_name(head.itf.base)
 
         self.imports.add("comtypes", "GUID")
 
@@ -862,7 +862,7 @@ class CodeGenerator(object):
 
     def DispInterfaceHead(self, head):
         self.generate(head.itf.base)
-        basename = self.type_name(head.itf.base)
+        basename = self._to_type_name(head.itf.base)
 
         self.imports.add("comtypes", "GUID")
         if not self.last_item_class:
@@ -927,7 +927,7 @@ class CodeGenerator(object):
 
         self.last_item_class = False
         if not m.arguments:
-            code = "    COMMETHOD(%r, %s, '%s')," % (idlflags, self.type_name(m.returns), m.name)
+            code = "    COMMETHOD(%r, %s, '%s')," % (idlflags, self._to_type_name(m.returns), m.name)
             if len(code) > 80:
                 code = (
                     "    COMMETHOD(\n"
@@ -935,7 +935,7 @@ class CodeGenerator(object):
                     "        %s,\n"
                     "        '%s',\n"
                     "    ),"
-                ) % (idlflags, self.type_name(m.returns), m.name)
+                ) % (idlflags, self._to_type_name(m.returns), m.name)
 
             print(code, file=self.stream)
         else:
@@ -944,11 +944,11 @@ class CodeGenerator(object):
                 "        %r,\n"
                 "        %s,\n"
                 "        '%s',"
-            ) % (idlflags, self.type_name(m.returns), m.name)
+            ) % (idlflags, self._to_type_name(m.returns), m.name)
             print(code, file=self.stream)
             arglist = []
             for typ, name, idlflags, default in m.arguments:
-                type_name = self.type_name(typ)
+                type_name = self._to_type_name(typ)
                 ###########################################################
                 # IDL files that contain 'open arrays' or 'conformant
                 # varying arrays' method parameters are strange.
@@ -1039,7 +1039,7 @@ class CodeGenerator(object):
 
         # typ, name, idlflags, default
         if not m.arguments:
-            code = "    DISPMETHOD(%r, %s, '%s')," % (idlflags, self.type_name(m.returns), m.name)
+            code = "    DISPMETHOD(%r, %s, '%s')," % (idlflags, self._to_type_name(m.returns), m.name)
             if len(code) > 80:
                 code = (
                     "    DISPMETHOD(\n"
@@ -1047,7 +1047,7 @@ class CodeGenerator(object):
                     "        %s,\n"
                     "        '%s'\n"
                     "    ),"
-                ) % (idlflags, self.type_name(m.returns), m.name)
+                ) % (idlflags, self._to_type_name(m.returns), m.name)
 
             print(code, file=self.stream)
         else:
@@ -1056,7 +1056,7 @@ class CodeGenerator(object):
                 "        %r,\n"
                 "        %s,\n"
                 "        '%s',"
-                ) % (idlflags, self.type_name(m.returns), m.name)
+                ) % (idlflags, self._to_type_name(m.returns), m.name)
 
             print(code, file=self.stream)
 
@@ -1064,7 +1064,7 @@ class CodeGenerator(object):
             for typ, name, idlflags, default in m.arguments:
                 self.need_VARIANT_imports(default)
                 if default is not None:
-                    code = "        (%r, %s, '%s', %r)" % (idlflags, self.type_name(typ), name, default)
+                    code = "        (%r, %s, '%s', %r)" % (idlflags, self._to_type_name(typ), name, default)
                     if len(code) > 80:
                         code = (
                             "        (\n"
@@ -1073,11 +1073,11 @@ class CodeGenerator(object):
                             "            '%s',\n"
                             "            %r\n"
                             "        )"
-                        ) % (idlflags, self.type_name(typ), name, default)
+                        ) % (idlflags, self._to_type_name(typ), name, default)
 
 
                 else:
-                    code = "        (%r, %s, '%s')" % (idlflags, self.type_name(typ), name)
+                    code = "        (%r, %s, '%s')" % (idlflags, self._to_type_name(typ), name)
 
                     if len(code) > 80:
                         code = (
@@ -1086,7 +1086,7 @@ class CodeGenerator(object):
                             "            %s,\n"
                             "            '%s'\n"
                             "        )"
-                        ) % (idlflags, self.type_name(typ), name)
+                        ) % (idlflags, self._to_type_name(typ), name)
 
                 arglist.append(code)
 
@@ -1102,7 +1102,7 @@ class CodeGenerator(object):
             idlflags.insert(1, helpstring(prop.doc))
 
         self.last_item_class = False
-        code = "    DISPPROPERTY(%r, %s, '%s')," % (idlflags, self.type_name(prop.typ), prop.name)
+        code = "    DISPPROPERTY(%r, %s, '%s')," % (idlflags, self._to_type_name(prop.typ), prop.name)
         if len(code) > 80:
             code = (
                 "    DISPPROPERTY(\n"
@@ -1110,7 +1110,7 @@ class CodeGenerator(object):
                 "        %s,\n"
                 "        '%s'\n"
                 "    ),"
-            ) % (idlflags, self.type_name(prop.typ), prop.name)
+            ) % (idlflags, self._to_type_name(prop.typ), prop.name)
 
         print(code, file=self.stream)
 
