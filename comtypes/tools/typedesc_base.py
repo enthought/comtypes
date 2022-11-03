@@ -1,5 +1,12 @@
 # typedesc.py - classes representing C type descriptions
 
+import comtypes
+from comtypes import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any, List, Optional, Tuple, Union as _UnionT, SupportsInt
+
+
 class Argument(object):
     "a Parameter in the argument list of a callable (Function, Method, ...)"
     def __init__(self, atype, name):
@@ -111,6 +118,7 @@ class Typedef(object):
 class ArrayType(object):
     location = None
     def __init__(self, typ, min, max):
+        # type: (Any, int, int) -> None
         self.typ = typ
         self.min = min
         self.max = max
@@ -118,27 +126,41 @@ class ArrayType(object):
 class StructureHead(object):
     location = None
     def __init__(self, struct):
+        # type: (_Struct_Union_Base) -> None
         self.struct = struct
 
 class StructureBody(object):
     location = None
     def __init__(self, struct):
+        # type: (_Struct_Union_Base) -> None
         self.struct = struct
 
 class _Struct_Union_Base(object):
+    if TYPE_CHECKING:
+        name = comtypes.hints.AnnoField()  # type: str
+        align = comtypes.hints.AnnoField()  # type: int
+        members = comtypes.hints.AnnoField()  # type: List[_UnionT[Field, Method, Constructor]]
+        bases = comtypes.hints.AnnoField()  # type: List[_Struct_Union_Base]
+        artificial = comtypes.hints.AnnoField()  # type: Optional[Any]
+        size = comtypes.hints.AnnoField()  # type: Optional[int]
+        _recordinfo_ = comtypes.hints.AnnoField()  # type: Tuple[str, int, int, int, str]
+
     location = None
     def __init__(self):
         self.struct_body = StructureBody(self)
         self.struct_head = StructureHead(self)
 
     def get_body(self):
+        # type: () -> StructureBody
         return self.struct_body
 
     def get_head(self):
+        # type: () -> StructureHead
         return self.struct_head
 
 class Structure(_Struct_Union_Base):
     def __init__(self, name, align, members, bases, size, artificial=None):
+        # type: (str, SupportsInt, List[Field], List[Any], Optional[SupportsInt], Optional[Any]) -> None
         self.name = name
         self.align = int(align)
         self.members = members
@@ -152,6 +174,7 @@ class Structure(_Struct_Union_Base):
 
 class Union(_Struct_Union_Base):
     def __init__(self, name, align, members, bases, size, artificial=None):
+        # type: (str, SupportsInt, List[Field], List[Any], Optional[SupportsInt], Optional[Any]) -> None
         self.name = name
         self.align = int(align)
         self.members = members
@@ -165,6 +188,7 @@ class Union(_Struct_Union_Base):
 
 class Field(object):
     def __init__(self, name, typ, bits, offset):
+        # type: (str, Any, Optional[Any], SupportsInt) -> None
         self.name = name
         self.typ = typ
         self.bits = bits
@@ -179,16 +203,19 @@ class CvQualifiedType(object):
 class Enumeration(object):
     location = None
     def __init__(self, name, size, align):
+        # type: (str, SupportsInt, SupportsInt) -> None
         self.name = name
         self.size = int(size)
         self.align = int(align)
-        self.values = []
+        self.values = []  # type: List[EnumValue]
 
     def add_value(self, v):
+        # type: (EnumValue) -> None
         self.values.append(v)
 
 class EnumValue(object):
     def __init__(self, name, value, enumeration):
+        # type: (str, int, Enumeration) -> None
         self.name = name
         self.value = value
         self.enumeration = enumeration
