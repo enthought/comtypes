@@ -647,86 +647,6 @@ class _cominterface_meta(type):
                 raise TypeError("baseinterface '%s' has no _methods_" % itf.__name__)
             raise
 
-    def _fix_inout_args(self, func, argtypes, paramflags):
-        # This function provides a workaround for a bug in ctypes.
-        # [in, out] parameters must be converted with the argtype's
-        # .from_param() method BEFORE they are passed to the _ctypes
-        # build_callargs() function in Modules/_ctypes/_ctypes.c.
-        #
-        # For details see below.
-        #
-        # TODO: The workaround should be disabled when a ctypes
-        # version is used where the bug is fixed.
-        SIMPLETYPE = type(c_int)
-        BYREFTYPE = type(byref(c_int()))
-        def call_with_inout(self_, *args, **kw):
-            args = list(args)
-            # Indexed by order in the output
-            outargs = {}
-            outnum = 0
-            for i, info in enumerate(paramflags):
-                direction = info[0]
-                if direction & 3 == 3:
-                    # This is an [in, out] parameter.
-                    #
-                    # Determine name and required type of the parameter.
-                    name = info[1]
-                    # [in, out] parameters are passed as pointers,
-                    # this is the pointed-to type:
-                    atyp = argtypes[i]._type_
-
-                    # Get the actual parameter, either as positional or
-                    # keyword arg.
-                    try:
-                        try:
-                            v = args[i]
-                        except IndexError:
-                            v = kw[name]
-                    except KeyError:
-                        # no parameter was passed, make an empty one
-                        # of the required type
-                        v = atyp()
-                    else:
-                        # parameter was passed, call .from_param() to
-                        # convert it to a ctypes type.
-                        if getattr(v, "_type_", None) is atyp:
-                            # Array of or pointer to type 'atyp' was
-                            # passed, pointer to 'atyp' expected.
-                            pass
-                        elif type(atyp) is SIMPLETYPE:
-                            # The from_param method of simple types
-                            # (c_int, c_double, ...) returns a byref()
-                            # object which we cannot use since later
-                            # it will be wrapped in a pointer.  Simply
-                            # call the constructor with the argument
-                            # in that case.
-                            v = atyp(v)
-                        else:
-                            v = atyp.from_param(v)
-                            assert not isinstance(v, BYREFTYPE)
-                    outargs[outnum] = v
-                    outnum += 1
-                    if len(args) > i:
-                        args[i] = v
-                    else:
-                        kw[name] = v
-                elif direction & 2 == 2:
-                    outnum += 1
-
-            rescode = func(self_, *args, **kw)
-            # If there is only a single output value, then do not expect it to
-            # be iterable.
-            if outnum == 1:  # rescode is not iterable
-                if len(outargs) == 1:
-                    rescode = rescode.__ctypes_from_outparam__()
-                return rescode
-
-            rescode = list(rescode)
-            for outnum, o in outargs.items():
-                rescode[outnum] = o.__ctypes_from_outparam__()
-            return rescode
-        return call_with_inout
-
     def _make_methods(self, methods):
         if self._case_insensitive_:
             self._make_case_insensitive()
@@ -781,7 +701,7 @@ class _cominterface_meta(type):
                 if 3 in dirflags:
 ##                    fullname = "%s::%s" % (self.__name__, name)
 ##                    print "FIX %s" % fullname
-                    func = self._fix_inout_args(func, argtypes, paramflags)
+                    func = _fix_inout_args(func, argtypes, paramflags)
 
             # 'func' is a high level function calling the COM method
             func.__doc__ = doc
@@ -886,6 +806,88 @@ class _cominterface_meta(type):
             # COM is case insensitive
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
+
+
+def _fix_inout_args(func, argtypes, paramflags):
+    """This function provides a workaround for a bug in `ctypes`.
+
+    [in, out] parameters must be converted with the argtype's
+    `from_param` method BEFORE they are passed to the `_ctypes`
+    `build_callargs` function in `Modules/_ctypes/_ctypes.c`.
+    """
+    # For details see below.
+    #
+    # TODO: The workaround should be disabled when a ctypes
+    # version is used where the bug is fixed.
+    SIMPLETYPE = type(c_int)
+    BYREFTYPE = type(byref(c_int()))
+    def call_with_inout(self, *args, **kw):
+        args = list(args)
+        # Indexed by order in the output
+        outargs = {}
+        outnum = 0
+        for i, info in enumerate(paramflags):
+            direction = info[0]
+            if direction & 3 == 3:
+                # This is an [in, out] parameter.
+                #
+                # Determine name and required type of the parameter.
+                name = info[1]
+                # [in, out] parameters are passed as pointers,
+                # this is the pointed-to type:
+                atyp = argtypes[i]._type_
+
+                # Get the actual parameter, either as positional or
+                # keyword arg.
+                try:
+                    try:
+                        v = args[i]
+                    except IndexError:
+                        v = kw[name]
+                except KeyError:
+                    # no parameter was passed, make an empty one
+                    # of the required type
+                    v = atyp()
+                else:
+                    # parameter was passed, call .from_param() to
+                    # convert it to a ctypes type.
+                    if getattr(v, "_type_", None) is atyp:
+                        # Array of or pointer to type 'atyp' was
+                        # passed, pointer to 'atyp' expected.
+                        pass
+                    elif type(atyp) is SIMPLETYPE:
+                        # The from_param method of simple types
+                        # (c_int, c_double, ...) returns a byref()
+                        # object which we cannot use since later
+                        # it will be wrapped in a pointer.  Simply
+                        # call the constructor with the argument
+                        # in that case.
+                        v = atyp(v)
+                    else:
+                        v = atyp.from_param(v)
+                        assert not isinstance(v, BYREFTYPE)
+                outargs[outnum] = v
+                outnum += 1
+                if len(args) > i:
+                    args[i] = v
+                else:
+                    kw[name] = v
+            elif direction & 2 == 2:
+                outnum += 1
+
+        rescode = func(self, *args, **kw)
+        # If there is only a single output value, then do not expect it to
+        # be iterable.
+        if outnum == 1:  # rescode is not iterable
+            if len(outargs) == 1:
+                rescode = rescode.__ctypes_from_outparam__()
+            return rescode
+
+        rescode = list(rescode)
+        for outnum, o in outargs.items():
+            rescode[outnum] = o.__ctypes_from_outparam__()
+        return rescode
+    return call_with_inout
 
 
 ################################################################
