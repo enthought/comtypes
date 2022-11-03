@@ -1078,6 +1078,15 @@ class BSTR(_SimpleCData):
 ################################################################
 # IDL stuff
 
+if TYPE_CHECKING:
+    PositionalParamFlagType = Tuple[int, Optional[str]]
+    OptionalParamFlagType = Tuple[int, Optional[str], Any]
+    ParamFlagType = _UnionT[PositionalParamFlagType, OptionalParamFlagType]
+    PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
+    OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
+    ArgSpecElmType = _UnionT[PositionalArgSpecElmType, OptionalArgSpecElmType]
+
+
 class helpstring(text_type):
     "Specifies the helpstring for a COM method or property."
 
@@ -1089,38 +1098,73 @@ class defaultvalue(object):
 class dispid(int):
     "Specifies the DISPID of a method or property."
 
+
+class _MemberSpec(object):
+    """Specifier of a slot of method or property."""
+    __slots__ = ("name", "idlflags", "restype")
+    def __init__(self, name, idlflags, restype):
+        self.name = name  # type: str
+        self.idlflags = idlflags  # type: Tuple[_UnionT[str, int], ...]
+        self.restype = restype  # type: Optional[Type[_CData]]
+
+
+class _ComMemberSpec(_MemberSpec):
+    """Specifier for a slot of COM method or property."""
+    __slots__ = ("argtypes", "paramflags", "doc")
+
+    def __init__(self, restype, name, argtypes, paramflags, idlflags, doc):
+        self.argtypes = argtypes  # type: Tuple[Type[_CData], ...]
+        self.paramflags = paramflags  # type: Optional[Tuple[ParamFlagType, ...]]
+        self.doc = doc  # type: Optional[str]
+        super(_ComMemberSpec, self).__init__(name, idlflags, restype)
+
+    def __iter__(self):
+        # for backward compatibility:
+        # A function that returns this object used to return a `tuple`.
+        # So it is implemented as unpackable as well.
+        for item in (self.restype, self.name, self.argtypes, self.paramflags, self.idlflags, self.doc):
+            yield item
+
+
+class _DispMemberSpec(_MemberSpec):
+    """Specifier for a slot of dispinterface method or property."""
+    __slots__ = ("what", "argspec")
+
+    def __init__(self, what, name, idlflags, restype, argspec):
+        self.what = what  # type: str
+        self.argspec = argspec  # type: Tuple[ArgSpecElmType, ...]
+        super(_DispMemberSpec, self).__init__(name, idlflags, restype)
+
+    def __iter__(self):
+        # for backward compatibility:
+        # A function that returns this object used to return a `tuple`.
+        # So it is implemented as unpackable as well.
+        for item in (self.what, self.name, self.idlflags, self.restype, self.argspec):
+            yield item
+
+
 # XXX STDMETHOD, COMMETHOD, DISPMETHOD, and DISPPROPERTY should return
-# instances with methods, or at least accessors instead of tuple.
+# instances with more methods or properties, and should not behave as an unpackable.
 
 def STDMETHOD(restype, name, argtypes=()):
     "Specifies a COM method slot without idlflags"
-    # restype, name, argtypes, paramflags, idlflags, docstring
-    return restype, name, argtypes, None, (), None
+    return _ComMemberSpec(restype, name, argtypes, None, (), None)
 
 def DISPMETHOD(idlflags, restype, name, *argspec):
     "Specifies a method of a dispinterface"
-    return "DISPMETHOD", name, idlflags, restype, argspec
+    return _DispMemberSpec("DISPMETHOD", name, tuple(idlflags), restype, argspec)
 
 def DISPPROPERTY(idlflags, proptype, name):
     "Specifies a property of a dispinterface"
-    return "DISPPROPERTY", name, idlflags, proptype, ()#, argspec
+    return _DispMemberSpec("DISPPROPERTY", name, tuple(idlflags), proptype, ())
 
-# COMMETHOD returns:
-# restype, methodname, tuple(argtypes), tuple(paramflags), tuple(idlflags), helptext
-#
-# paramflags is a sequence of (flags (integer), paramname (string)
 # tuple(idlflags) is for the method itself: (dispid, 'readonly')
-#
-# Example: (HRESULT, 'Width', (c_long,), (2, 'rhs'), (4, 'readonly'), None)
 
-## sample generated code:
-##    DISPPROPERTY([5, 'readonly'], OLE_YSIZE_HIMETRIC, 'Height'),
-##    DISPMETHOD([6], None, 'Render',
-##               ( [], c_int, 'hdc' ),
-##               ( [], c_int, 'x' ),
-##               ( [], c_int, 'y' ))
-
-################################################################
+# sample generated code:
+#     DISPPROPERTY([5, 'readonly'], OLE_YSIZE_HIMETRIC, 'Height'),
+#     DISPMETHOD(
+#         [6], None, 'Render', ([], c_int, 'hdc'), ([], c_int, 'x'), ([], c_int, 'y')
+#     )
 
 _PARAMFLAGS = {
     "in": 1,
@@ -1136,6 +1180,7 @@ def _encode_idl(names):
 
 _NOTHING = object()
 def _unpack_argspec(idl, typ, name=None, defval=_NOTHING):
+    # type: (List[str], Type[_CData], Optional[str], Any) -> Tuple[List[str], Type[_CData], Optional[str], Any]
     return idl, typ, name, defval
 
 def COMMETHOD(idlflags, restype, methodname, *argspec):
@@ -1143,18 +1188,36 @@ def COMMETHOD(idlflags, restype, methodname, *argspec):
 
     XXX should explain the sematics of the arguments.
     """
-    paramflags = []
-    argtypes = []
-
     # collect all helpstring instances
     # We should suppress docstrings when Python is started with -OO
-    helptext = [t for t in idlflags if isinstance(t, helpstring)]
     # join them together(does this make sense?) and replace by None if empty.
-    helptext = "".join(helptext) or None
+    helptext = "".join(t for t in idlflags if isinstance(t, helpstring)) or None
+    paramflags, argtypes = _resolve_argspec(argspec)
+    if "propget" in idlflags:
+        name = "_get_%s" % methodname
+    elif "propput" in idlflags:
+        name = "_set_%s" % methodname
+    elif "propputref" in idlflags:
+        name = "_setref_%s" % methodname
+    else:
+        name = methodname
+    return _ComMemberSpec(
+        restype, name, argtypes, paramflags, tuple(idlflags), helptext
+    )
 
+
+def _resolve_argspec(items):
+    # type: (Tuple[ArgSpecElmType, ...]) -> Tuple[Tuple[ParamFlagType, ...], Tuple[Type[_CData], ...]]
+    """Unpacks and converts from argspec to paramflags and argtypes.
+
+    - paramflags is a sequence of `(pflags: int, argname: str, | None[, defval: Any])`.
+    - argtypes is a sequence of `type[_CData]`.
+    """
     from comtypes.automation import VARIANT
 
-    for item in argspec:
+    paramflags = []
+    argtypes = []
+    for item in items:
         idl, typ, argname, defval = _unpack_argspec(*item)
         pflags = _encode_idl(idl)
         if "optional" in idl:
@@ -1164,22 +1227,15 @@ def COMMETHOD(idlflags, restype, methodname, *argspec):
                 elif typ is POINTER(VARIANT):
                     defval = pointer(VARIANT.missing)
                 else:
-##                    msg = ("'optional' only allowed for VARIANT and VARIANT*, not for %s"
-##                           % typ.__name__)
-##                    warnings.warn(msg, IDLWarning, stacklevel=2)
+                    # msg = ("'optional' only allowed for VARIANT and VARIANT*, not for %s" % typ.__name__)
+                    # warnings.warn(msg, IDLWarning, stacklevel=2)
                     defval = typ()
         if defval is _NOTHING:
             paramflags.append((pflags, argname))
         else:
             paramflags.append((pflags, argname, defval))
         argtypes.append(typ)
-    if "propget" in idlflags:
-        methodname = "_get_%s" % methodname
-    elif "propput" in idlflags:
-        methodname = "_set_%s" % methodname
-    elif "propputref" in idlflags:
-        methodname = "_setref_%s" % methodname
-    return restype, methodname, tuple(argtypes), tuple(paramflags), tuple(idlflags), helptext
+    return tuple(paramflags), tuple(argtypes)
 
 ################################################################
 # IUnknown, the root of all evil...
@@ -1223,7 +1279,7 @@ class IUnknown(_IUnknown_Base):
                   [POINTER(GUID), POINTER(c_void_p)]),
         STDMETHOD(c_ulong, "AddRef"),
         STDMETHOD(c_ulong, "Release")
-    ]  # XXX too complex tuples! we should define classes for `_methods_` and `_disp_methods_`
+    ]  # type: ClassVar[List[_ComMemberSpec]]
 
     # NOTE: Why not `QueryInterface(T) -> _Pointer[T]`?
     # Any static type checkers is not able to provide members of `T` from `_Pointer[T]`,
