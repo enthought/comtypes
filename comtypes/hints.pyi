@@ -3,6 +3,9 @@ from typing import (
     Type, TypeVar, Union as _UnionT,
 )
 
+# symbols those what might occur recursive imports in runtime.
+from comtypes.server import IClassFactory as IClassFactory
+
 
 def AnnoField() -> Any:
     """**THIS IS `TYPE_CHECKING` ONLY SYMBOL.
