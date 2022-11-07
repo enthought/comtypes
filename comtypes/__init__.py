@@ -287,6 +287,11 @@ class _cominterface_meta(type):
     """Metaclass for COM interfaces.  Automatically creates high level
     methods from COMMETHOD lists.
     """
+    if TYPE_CHECKING:
+        _case_insensitive_ = hints.AnnoField()  # type: bool
+        _iid_ = hints.AnnoField()  # type: GUID
+        _methods_ = hints.AnnoField()  # type: List[_ComMemberSpec]
+        _disp_methods_ = hints.AnnoField()  # type: List[_DispMemberSpec]
 
     # This flag is set to True by the atexit handler which calls
     # CoUninitialize.
@@ -510,41 +515,20 @@ class _cominterface_meta(type):
             self._make_case_insensitive()
 
         # create dispinterface methods and properties on the interface 'self'
-        properties = PropertyMapping()
+        properties = DispPropertyGenerator(self.__name__)
         for m in methods:
-            # is it a property set or property get?
-            is_prop = False
-
-            # argspec is a sequence of tuples, each tuple is:
-            # ([paramflags], type, name)
-            try:
-                memid = [x for x in m.idlflags if isinstance(x, int)][0]
-            except IndexError:
-                raise TypeError("no dispid found in idlflags")
-            if m.what == "DISPPROPERTY": # DISPPROPERTY
+            if m.what == "DISPPROPERTY":  # DISPPROPERTY
                 assert not m.argspec # XXX does not yet work for properties with parameters
-                accessor = self._disp_property(memid, m.idlflags)
                 is_prop = True
-                setattr(self, m.name, accessor)
-            elif m.what == "DISPMETHOD": # DISPMETHOD
-                # argspec is a tuple of (idlflags, type, name[,
-                # defval]) items.
-                method = self._disp_method(memid, m.name, m.idlflags, m.restype, m.argspec)
-                method.__name__ = m.name
-                if 'propget' in m.idlflags:
-                    nargs = len(m.argspec)
-                    properties.add_propget(m.name, None, nargs, method)
-                    is_prop = True
-                elif 'propput' in m.idlflags:
-                    nargs = len(m.argspec)-1
-                    properties.add_propput(m.name, None, nargs, method)
-                    is_prop = True
-                elif 'propputref' in m.idlflags:
-                    nargs = len(m.argspec)-1
-                    properties.add_propputref(m.name, None, nargs, method)
-                    is_prop = True
+                setattr(self, m.name, self._disp_property(m.memid, m.idlflags))
+            else:  # DISPMETHOD
+                func = self._disp_method(m.memid, m.name, m.idlflags, m.restype, m.argspec)
+                func.__name__ = m.name
+                is_prop = m.is_prop()
+                if is_prop:
+                    properties.add(m, func)
                 else:
-                    setattr(self, m.name, method)
+                    setattr(self, m.name, func)
             # COM is case insensitive.
             #
             # For a method, this is the real name.  For a property,
@@ -554,12 +538,8 @@ class _cominterface_meta(type):
                 if is_prop:
                     self.__map_case__[m.name[5:].lower()] = m.name[5:]
 
-        for name, _, nargs, fget, fset in properties:
-            if nargs:
-                setattr(self, name, named_property("%s.%s" % (self.__name__, name), fget, fset))
-            else:
-                setattr(self, name, property(fget, fset))
-
+        for name, accessor in properties:
+            setattr(self, name, accessor)
             # COM is case insensitive
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
@@ -647,7 +627,7 @@ class _cominterface_meta(type):
             del iid
         vtbl_offset = self.__get_baseinterface_methodcount()
 
-        properties = PropertyMapping()
+        properties = ComPropertyGenerator(self.__name__)
 
         # create private low level, and public high level methods
         for i, m in enumerate(methods):
@@ -661,7 +641,6 @@ class _cominterface_meta(type):
             # If the method returns a HRESULT, we pass the interface iid,
             # so that we can request error info for the interface.
             if m.restype == HRESULT:
-##                print "%s.%s" % (self.__name__, name)
                 raw_func = prototype(i + vtbl_offset, m.name, None, self._iid_)
                 func = prototype(i + vtbl_offset, m.name, m.paramflags, self._iid_)
             else:
@@ -675,8 +654,6 @@ class _cominterface_meta(type):
                 # see comment in the _fix_inout_args method
                 dirflags = [(p[0]&3) for p in m.paramflags]
                 if 3 in dirflags:
-##                    fullname = "%s::%s" % (self.__name__, name)
-##                    print "FIX %s" % fullname
                     func = _fix_inout_args(func, m.argtypes, m.paramflags)
 
             # 'func' is a high level function calling the COM method
@@ -686,43 +663,13 @@ class _cominterface_meta(type):
             mth = instancemethod(func, None, self)
 
             # is it a property set or property get?
-            is_prop = False
-
-            # XXX Hm.  What, when paramflags is None?
-            # Or does have '0' values?
-            # Seems we loose then, at least for properties...
-
-            # The following code assumes that the docstrings for
-            # propget and propput are identical.
-            if "propget" in m.idlflags:
-                assert m.name.startswith("_get_")
-                nargs = len([flags for flags in m.paramflags
-                             if flags[0] & 7 in (0, 1)])
-                # XXX or should we do this?
-                # nargs = len([flags for flags in paramflags
-                #             if (flags[0] & 1) or (flags[0] == 0)])
-                propname = m.name[len("_get_"):]
-                properties.add_propget(propname, m.doc, nargs, func)
-                is_prop = True
-            elif "propput" in m.idlflags:
-                assert m.name.startswith("_set_")
-                nargs = len([flags for flags in m.paramflags
-                              if flags[0] & 7 in (0, 1)]) - 1
-                propname = m.name[len("_set_"):]
-                properties.add_propput(propname, m.doc, nargs, func)
-                is_prop = True
-            elif "propputref" in m.idlflags:
-                assert m.name.startswith("_setref_")
-                nargs = len([flags for flags in m.paramflags
-                              if flags[0] & 7 in (0, 1)]) - 1
-                propname = m.name[len("_setref_"):]
-                properties.add_propputref(propname, m.doc, nargs, func)
-                is_prop = True
-
-            # We install the method in the class, except when it's a
-            # property accessor.  And we make sure we don't overwrite
-            # a property that's already present in the class.
-            if not is_prop:
+            is_prop = m.is_prop()
+            if is_prop:
+                properties.add(m, mth)
+            else:
+                # We install the method in the class, except when it's a
+                # property accessor.  And we make sure we don't overwrite
+                # a property that's already present in the class.
                 if hasattr(self, m.name):
                     setattr(self, "_" + m.name, mth)
                 else:
@@ -738,21 +685,13 @@ class _cominterface_meta(type):
                     self.__map_case__[m.name[5:].lower()] = m.name[5:]
 
         # create public properties / attribute accessors
-        for name, doc, nargs, fget, fset in properties:
-            if nargs == 0:
-                prop = property(fget, fset, None, doc)
-            else:
-                # Hm, must be a descriptor where the __get__ method
-                # returns a bound object having __getitem__ and
-                # __setitem__ methods.
-                prop = named_property("%s.%s" % (self.__name__, name), fget, fset, doc)
+        for name, accessor in properties:
             # Again, we should not overwrite class attributes that are
             # already present.
             if hasattr(self, name):
-                setattr(self, "_" + name, prop)
+                setattr(self, "_" + name, accessor)
             else:
-                setattr(self, name, prop)
-
+                setattr(self, name, accessor)
             # COM is case insensitive
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
@@ -874,6 +813,96 @@ class PropertyMapping(object):
             else:
                 fset = propput
             yield (name, doc, nargs, fget, fset)
+
+
+class PropertyGenerator(object):
+    def __init__(self, cls_name):
+        # type: (str) -> None
+        self._mapping = PropertyMapping()
+        self._cls_name = cls_name
+
+    def add(self, m, func):
+        # type: (_MemberSpec, Callable[..., Any]) -> None
+        """Adds member spec and func to mapping."""
+        if "propget" in m.idlflags:
+            name, doc, nargs = self.to_propget_keys(m)
+            self._mapping.add_propget(name, doc, nargs, func)
+        elif "propput" in m.idlflags:
+            name, doc, nargs = self.to_propput_keys(m)
+            self._mapping.add_propput(name, doc, nargs, func)
+        elif "propputref" in m.idlflags:
+            name, doc, nargs = self.to_propputref_keys(m)
+            self._mapping.add_propputref(name, doc, nargs, func)
+        else:
+            raise TypeError("no propflag found in idlflags")
+
+    # The following code assumes that the docstrings for
+    # propget and propput are identical.
+    def __iter__(self):
+        # type: () -> Iterator[Tuple[str, _UnionT[property, named_property]]]
+        for name, doc, nargs, fget, fset in self._mapping:
+            if nargs == 0:
+                prop = property(fget, fset, None, doc)
+            else:
+                # Hm, must be a descriptor where the __get__ method
+                # returns a bound object having __getitem__ and
+                # __setitem__ methods.
+                prop = named_property("%s.%s" % (self._cls_name, name), fget, fset, doc)
+            yield (name, prop)
+
+    def to_propget_keys(self, m):
+        # type: (_MemberSpec) -> Tuple[str, Optional[str], int]
+        raise NotImplementedError
+
+    def to_propput_keys(self, m):
+        # type: (_MemberSpec) -> Tuple[str, Optional[str], int]
+        raise NotImplementedError
+
+    def to_propputref_keys(self, m):
+        # type: (_MemberSpec) -> Tuple[str, Optional[str], int]
+        raise NotImplementedError
+
+
+class ComPropertyGenerator(PropertyGenerator):
+    # XXX Hm.  What, when paramflags is None?
+    # Or does have '0' values?
+    # Seems we loose then, at least for properties...
+    def to_propget_keys(self, m):
+        # type: (_ComMemberSpec) -> Tuple[str, Optional[str], int]
+        assert m.name.startswith("_get_")
+        assert m.paramflags is not None
+        nargs = len([f for f in m.paramflags if f[0] & 7 in (0, 1)])
+        # XXX or should we do this?
+        # nargs = len([f for f in paramflags if (f[0] & 1) or (f[0] == 0)])
+        return m.name[len("_get_"):], m.doc, nargs
+
+    def to_propput_keys(self, m):
+        # type: (_ComMemberSpec) -> Tuple[str, Optional[str], int]
+        assert m.name.startswith("_set_")
+        assert m.paramflags is not None
+        nargs = len([f for f in m.paramflags if f[0] & 7 in (0, 1)]) - 1
+        return m.name[len("_set_"):], m.doc, nargs
+
+    def to_propputref_keys(self, m):
+        # type: (_ComMemberSpec) -> Tuple[str, Optional[str], int]
+        assert m.name.startswith("_setref_")
+        assert m.paramflags is not None
+        nargs = len([f for f in m.paramflags if f[0] & 7 in (0, 1)]) - 1
+        return m.name[len("_setref_"):], m.doc, nargs
+
+
+class DispPropertyGenerator(PropertyGenerator):
+    def to_propget_keys(self, m):
+        # type: (_DispMemberSpec) -> Tuple[str, Optional[str], int]
+        return m.name, None, len(m.argspec)
+
+    def to_propput_keys(self, m):
+        # type: (_DispMemberSpec) -> Tuple[str, Optional[str], int]
+        return m.name, None, len(m.argspec) - 1
+
+    def to_propputref_keys(self, m):
+        # type: (_DispMemberSpec) -> Tuple[str, Optional[str], int]
+        return m.name, None, len(m.argspec) - 1
 
 
 ################################################################
@@ -1095,6 +1124,11 @@ class _MemberSpec(object):
         self.idlflags = idlflags  # type: Tuple[_UnionT[str, int], ...]
         self.restype = restype  # type: Optional[Type[_CData]]
 
+    def is_prop(self):
+        # type: () -> bool
+        propflags = ("propget", "propput", "propputref")
+        return any(f in propflags for f in self.idlflags)
+
 
 class _ComMemberSpec(_MemberSpec):
     """Specifier for a slot of COM method or property."""
@@ -1122,6 +1156,14 @@ class _DispMemberSpec(_MemberSpec):
         self.what = what  # type: str
         self.argspec = argspec  # type: Tuple[ArgSpecElmType, ...]
         super(_DispMemberSpec, self).__init__(name, idlflags, restype)
+
+    @property
+    def memid(self):
+        # type: () -> int
+        try:
+            return [x for x in self.idlflags if isinstance(x, int)][0]
+        except IndexError:
+            raise TypeError("no dispid found in idlflags")
 
     def __iter__(self):
         # for backward compatibility:
