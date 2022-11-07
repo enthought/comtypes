@@ -509,86 +509,29 @@ class _cominterface_meta(type):
             d.update(getattr(self, "__map_case__", {}))
             self.__map_case__ = d
 
+    # Should the funcs/mths we create have restype and/or argtypes attributes?
     def _make_dispmethods(self, methods):
         # type: (List[_DispMemberSpec]) -> None
         if self._case_insensitive_:
             self._make_case_insensitive()
-
         # create dispinterface methods and properties on the interface 'self'
-        properties = DispPropertyGenerator(self.__name__)
+        member_gen = DispMemberGenerator(self.__name__)
         for m in methods:
-            if m.what == "DISPPROPERTY":  # DISPPROPERTY
-                assert not m.argspec # XXX does not yet work for properties with parameters
-                is_prop = True
-                setattr(self, m.name, self._disp_property(m.memid, m.idlflags))
-            else:  # DISPMETHOD
-                func = self._disp_method(m.memid, m.name, m.idlflags, m.restype, m.argspec)
-                func.__name__ = m.name
-                is_prop = m.is_prop()
-                if is_prop:
-                    properties.add(m, func)
-                else:
-                    setattr(self, m.name, func)
+            member_gen.add(m)
+        for name, func_or_prop, is_prop in member_gen.items():
+            setattr(self, name, func_or_prop)
             # COM is case insensitive.
-            #
             # For a method, this is the real name.  For a property,
             # this is the name WITHOUT the _set_ or _get_ prefix.
             if self._case_insensitive_:
-                self.__map_case__[m.name.lower()] = m.name
+                self.__map_case__[name.lower()] = name
                 if is_prop:
-                    self.__map_case__[m.name[5:].lower()] = m.name[5:]
-
-        for name, accessor in properties:
+                    self.__map_case__[name[5:].lower()] = name[5:]
+        for name, accessor in member_gen.properties():
             setattr(self, name, accessor)
             # COM is case insensitive
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
-
-    # Some ideas, (not only) related to disp_methods:
-    #
-    # Should the functions/methods we create have restype and/or
-    # argtypes attributes?
-
-    def _disp_method(self, memid, name, idlflags, restype, argspec):
-        if 'propget' in idlflags:
-            def getfunc(obj, *args, **kw):
-                return self.Invoke(obj, memid, _invkind=2, *args, **kw) # DISPATCH_PROPERTYGET
-            return getfunc
-        elif 'propput' in idlflags:
-            def putfunc(obj, *args, **kw):
-                return self.Invoke(obj, memid, _invkind=4, *args, **kw) # DISPATCH_PROPERTYPUT
-            return putfunc
-        elif 'propputref' in idlflags:
-            def putfunc(obj, *args, **kw):
-                return self.Invoke(obj, memid, _invkind=8, *args, **kw) # DISPATCH_PROPERTYPUTREF
-            return putfunc
-        # a first attempt to make use of the restype.  Still, support
-        # for named arguments and default argument values should be
-        # added.
-        if hasattr(restype, "__com_interface__"):
-            interface = restype.__com_interface__
-            def func(s, *args, **kw):
-                result = self.Invoke(s, memid, _invkind=1, *args, **kw)
-                if result is None:
-                    return
-                return result.QueryInterface(interface)
-        else:
-            def func(obj, *args, **kw):
-                return self.Invoke(obj, memid, _invkind=1, *args, **kw) # DISPATCH_METHOD
-        return func
-
-    def _disp_property(self, memid, idlflags):
-        # XXX doc string missing in property
-        def _get(obj):
-            return obj.Invoke(memid, _invkind=2) # DISPATCH_PROPERTYGET
-        if "readonly" in idlflags:
-            return property(_get)
-        def _set(obj, value):
-            # Detect whether to use DISPATCH_PROPERTYPUT or
-            # DISPATCH_PROPERTYPUTREF
-            invkind = 8 if _is_object(value) else 4
-            return obj.Invoke(memid, value, _invkind=invkind)
-        return property(_get, _set)
 
     def __get_baseinterface_methodcount(self):
         "Return the number of com methods in the base interfaces"
@@ -607,91 +550,39 @@ class _cominterface_meta(type):
         # type: (List[_ComMemberSpec]) -> None
         if self._case_insensitive_:
             self._make_case_insensitive()
-
-        # we insist on an _iid_ in THIS class!
+        # register com interface. we insist on an _iid_ in THIS class!
         try:
             iid = self.__dict__["_iid_"]
         except KeyError:
             raise AttributeError("this class must define an _iid_")
         else:
-            iid = text_type(iid)
-##            if iid in com_interface_registry:
-##                # Warn when multiple interfaces are defined with identical iids.
-##                # This would also trigger if we reload() a module that contains
-##                # interface types, so suppress the warning in this case.
-##                other = com_interface_registry[iid]
-##                if self.__name__ != other.__name__ or self.__module__ != other.__module__:
-##                    text = "Multiple interface defn: %s, %s" % (self, other)
-##                    warnings.warn(text, UserWarning)
-            com_interface_registry[iid] = self
-            del iid
+            com_interface_registry[text_type(iid)] = self
+        # create members
         vtbl_offset = self.__get_baseinterface_methodcount()
-
-        properties = ComPropertyGenerator(self.__name__)
-
+        member_gen = ComMemberGenerator(self.__name__, vtbl_offset, self._iid_)
         # create private low level, and public high level methods
-        for i, m in enumerate(methods):
-            # the function prototype
-            prototype = WINFUNCTYPE(m.restype, *m.argtypes)
-
-            # a low level unbound method calling the com method.
-            # attach it with a private name (__com_AddRef, for example),
-            # so that custom method implementations can call it.
-
-            # If the method returns a HRESULT, we pass the interface iid,
-            # so that we can request error info for the interface.
-            if m.restype == HRESULT:
-                raw_func = prototype(i + vtbl_offset, m.name, None, self._iid_)
-                func = prototype(i + vtbl_offset, m.name, m.paramflags, self._iid_)
-            else:
-                raw_func = prototype(i + vtbl_offset, m.name, None, None)
-                func = prototype(i + vtbl_offset, m.name, m.paramflags, None)
-            setattr(self,
-                    "_%s__com_%s" % (self.__name__, m.name),
-                    instancemethod(raw_func, None, self))
-
-            if m.paramflags:
-                # see comment in the _fix_inout_args method
-                dirflags = [(p[0]&3) for p in m.paramflags]
-                if 3 in dirflags:
-                    func = _fix_inout_args(func, m.argtypes, m.paramflags)
-
-            # 'func' is a high level function calling the COM method
-            func.__doc__ = m.doc
-            func.__name__ = m.name # for pyhelp
-            # make it an unbound method.  Remember, 'self' is a type here.
+        for m in methods:
+            member_gen.add(m)
+        for name, func, raw_func, is_prop in member_gen.methods():
+            raw_mth = instancemethod(raw_func, None, self)
+            setattr(self, "_%s__com_%s" % (self.__name__, name), raw_mth)
             mth = instancemethod(func, None, self)
-
-            # is it a property set or property get?
-            is_prop = m.is_prop()
-            if is_prop:
-                properties.add(m, mth)
-            else:
-                # We install the method in the class, except when it's a
-                # property accessor.  And we make sure we don't overwrite
-                # a property that's already present in the class.
-                if hasattr(self, m.name):
-                    setattr(self, "_" + m.name, mth)
-                else:
-                    setattr(self, m.name, mth)
-
-            # COM is case insensitive.
-            #
-            # For a method, this is the real name.  For a property,
-            # this is the name WITHOUT the _set_ or _get_ prefix.
+            if not is_prop:
+                # We install the method in the class, except when it's a property.
+                # And we make sure we don't overwrite a property that's already present.
+                mthname = name if not hasattr(self, name) else ("_%s" % name)
+                setattr(self, mthname, mth)
+            # For a method, this is the real name.
+            # For a property, this is the name WITHOUT the _set_ or _get_ prefix.
             if self._case_insensitive_:
-                self.__map_case__[m.name.lower()] = m.name
+                self.__map_case__[name.lower()] = name
                 if is_prop:
-                    self.__map_case__[m.name[5:].lower()] = m.name[5:]
-
+                    self.__map_case__[name[5:].lower()] = name[5:]
         # create public properties / attribute accessors
-        for name, accessor in properties:
-            # Again, we should not overwrite class attributes that are
-            # already present.
-            if hasattr(self, name):
-                setattr(self, "_" + name, accessor)
-            else:
-                setattr(self, name, accessor)
+        for name, accessor in member_gen.properties():
+            # Again, we should not overwrite class attributes that are already present.
+            propname = name if not hasattr(self, name) else ("_%s" % name)
+            setattr(self, propname, accessor)
             # COM is case insensitive
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
@@ -904,6 +795,126 @@ class DispPropertyGenerator(PropertyGenerator):
         # type: (_DispMemberSpec) -> Tuple[str, Optional[str], int]
         return m.name, None, len(m.argspec) - 1
 
+
+class ComMemberGenerator(object):
+    def __init__(self, cls_name, vtbl_offset, iid):
+        # type: (str, int, GUID) -> None
+        self._vtbl_offset = vtbl_offset
+        self._iid = iid
+        self._props = ComPropertyGenerator(cls_name)
+        # sequence of (name: str, func: Callable, raw_func: Callable, is_prop: bool)
+        self._mths = []  # type: List[Tuple[str, Callable[..., Any], Callable[..., Any], bool]]
+        self._member_index = 0
+
+    def add(self, m):
+        # type: (_ComMemberSpec) -> None
+        proto = WINFUNCTYPE(m.restype, *m.argtypes)
+        # a low level unbound method calling the com method.
+        # attach it with a private name (__com_AddRef, for example),
+        # so that custom method implementations can call it.
+        vidx = self._member_index + self._vtbl_offset
+        # If the method returns a HRESULT, we pass the interface iid,
+        # so that we can request error info for the interface.
+        iid = self._iid if m.restype == HRESULT else None
+        raw_func = proto(vidx, m.name, None, iid)  # low level
+        func = self._fix_args(m, proto(vidx, m.name, m.paramflags, iid))  # high level
+        func.__doc__ = m.doc
+        func.__name__ = m.name  # for pyhelp
+        is_prop = m.is_prop()
+        if is_prop:
+            self._props.add(m, func)
+        self._mths.append((m.name, func, raw_func, is_prop))
+        self._member_index += 1
+
+    def _fix_args(self, m, func):
+        # type: (_ComMemberSpec, Callable[..., Any]) -> Callable[..., Any]
+        """This is a workaround. See `_fix_inout_args` docstring and comments."""
+        if m.paramflags:
+            dirflags = [(p[0]&3) for p in m.paramflags]
+            if 3 in dirflags:
+                return _fix_inout_args(func, m.argtypes, m.paramflags)
+        return func
+
+    def methods(self):
+        return iter(self._mths)
+
+    def properties(self):
+        return iter(self._props)
+
+
+class DispMemberGenerator(object):
+    def __init__(self, cls_name):
+        # type: (str) -> None
+        self._props = DispPropertyGenerator(cls_name)
+        # sequence of (name: str, func_or_prop: Callable | property, is_prop: bool)
+        self._items = []  # type: List[Tuple[str, _UnionT[Callable[..., Any], property], bool]]
+
+    def add(self, m):
+        # type: (_DispMemberSpec) -> None
+        if m.what == "DISPPROPERTY":  # DISPPROPERTY
+            assert not m.argspec # XXX does not yet work for properties with parameters
+            is_prop = True
+            accessor = self._make_disp_property(m)
+            self._items.append((m.name, accessor, is_prop))
+        else:  # DISPMETHOD
+            func = self._make_disp_method(m)
+            func.__name__ = m.name
+            is_prop = m.is_prop()
+            if is_prop:
+                self._props.add(m, func)
+            else:
+                self._items.append((m.name, func, is_prop))
+
+    def _make_disp_property(self, m):
+        # type: (_DispMemberSpec) -> property
+        # XXX doc string missing in property
+        memid = m.memid
+        def fget(obj):
+            return obj.Invoke(memid, _invkind=2) # DISPATCH_PROPERTYGET
+        if "readonly" in m.idlflags:
+            return property(fget)
+        def fset(obj, value):
+            # Detect whether to use DISPATCH_PROPERTYPUT or
+            # DISPATCH_PROPERTYPUTREF
+            invkind = 8 if _is_object(value) else 4
+            return obj.Invoke(memid, value, _invkind=invkind)
+        return property(fget, fset)
+
+    def _make_disp_method(self, m):
+        # type: (_DispMemberSpec) -> Callable[..., Any]
+        memid = m.memid
+        if "propget" in m.idlflags:
+            def getfunc(obj, *args, **kw):
+                return obj.Invoke(memid, _invkind=2, *args, **kw) # DISPATCH_PROPERTYGET
+            return getfunc
+        elif "propput" in m.idlflags:
+            def putfunc(obj, *args, **kw):
+                return obj.Invoke(memid, _invkind=4, *args, **kw) # DISPATCH_PROPERTYPUT
+            return putfunc
+        elif "propputref" in m.idlflags:
+            def putreffunc(obj, *args, **kw):
+                return obj.Invoke(memid, _invkind=8, *args, **kw) # DISPATCH_PROPERTYPUTREF
+            return putreffunc
+        # a first attempt to make use of the restype.  Still, support
+        # for named arguments and default argument values should be
+        # added.
+        if hasattr(m.restype, "__com_interface__"):
+            interface = m.restype.__com_interface__  # type: ignore
+            def comitffunc(obj, *args, **kw):
+                result = obj.Invoke(memid, _invkind=1, *args, **kw)
+                if result is None:
+                    return
+                return result.QueryInterface(interface)
+            return comitffunc
+        def func(obj, *args, **kw):
+            return obj.Invoke(memid, _invkind=1, *args, **kw) # DISPATCH_METHOD
+        return func
+
+    def items(self):
+        return iter(self._items)
+
+    def properties(self):
+        return iter(self._props)
 
 ################################################################
 # helper classes for COM propget / propput
