@@ -23,6 +23,8 @@ environment:
      - py: Python39-x64
      - py: Python310
      - py: Python310-x64
+     - py: Python311
+     - py: Python311-x64
 
 test_script:
    - C:\%py%\python.exe setup.py install
