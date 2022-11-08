@@ -1,23 +1,28 @@
 # Code generator to generate code for everything contained in COM type
 # libraries.
 from __future__ import print_function
+import ctypes
+import keyword
+import logging
 import os
 import sys
+import textwrap
 if sys.version_info >= (3, 0):
     import io
 else:
     import cStringIO as io
-import keyword
-import ctypes
-import textwrap
 
-from comtypes.tools import tlbparser, typedesc
 import comtypes
+from comtypes import TYPE_CHECKING
+from comtypes.tools import tlbparser, typedesc
 import comtypes.typeinfo
+
+if TYPE_CHECKING:
+    from typing import List, Union as _UnionT
+
 
 version = comtypes.__version__
 
-import logging
 logger = logging.getLogger(__name__)
 
 __warn_on_munge__ = __debug__
@@ -343,14 +348,13 @@ class CodeGenerator(object):
         repled = orig.replace("\\", r"\\").replace("\"", r"'")
         return '%s"""%s"""' % (indent, repled)
 
-    _arraytypes = 0
     def ArrayType(self, tp):
-        self._arraytypes += 1
+        # type: (typedesc.ArrayType) -> None
         self.generate(get_real_type(tp.typ))
         self.generate(tp.typ)
 
-    _enumvalues = 0
     def EnumValue(self, tp):
+        # type: (typedesc.EnumValue) -> None
         self.last_item_class = False
         value = int(tp.value)
         if keyword.iskeyword(tp.name):
@@ -360,11 +364,9 @@ class CodeGenerator(object):
         tp_name = self._to_type_name(tp)
         print("%s = %d" % (tp_name, value), file=self.stream)
         self.names.add(tp_name)
-        self._enumvalues += 1
 
-    _enumtypes = 0
     def Enumeration(self, tp):
-        self._enumtypes += 1
+        # type: (typedesc.Enumeration) -> None
         self.last_item_class = False
         if tp.name:
             print("# values for enumeration '%s'" % tp.name, file=self.stream)
@@ -380,10 +382,9 @@ class CodeGenerator(object):
             print("%s = c_int  # enum" % tp.name, file=self.stream)
             self.names.add(tp.name)
 
-    _typedefs = 0
     def Typedef(self, tp):
-        self._typedefs += 1
-        if type(tp.typ) in (typedesc.Structure, typedesc.Union):
+        # type: (typedesc.Typedef) -> None
+        if isinstance(tp.typ, (typedesc.Structure, typedesc.Union)):
             self.generate(tp.typ.get_head())
             self.more.add(tp.typ)
         else:
@@ -398,9 +399,11 @@ class CodeGenerator(object):
         self.names.add(tp.name)
 
     def FundamentalType(self, item):
+        # type: (typedesc.FundamentalType) -> None
         pass # we should check if this is known somewhere
 
     def StructureHead(self, head):
+        # type: (typedesc.StructureHead) -> None
         for struct in head.struct.bases:
             self.generate(struct.get_head())
             self.more.add(struct)
@@ -479,17 +482,20 @@ class CodeGenerator(object):
                 print(file=self.stream)
         self.names.add(head.struct.name)
 
-    _structures = 0
     def Structure(self, struct):
-        self._structures += 1
+        # type: (typedesc.Structure) -> None
         self.generate(struct.get_head())
         self.generate(struct.get_body())
 
-    Union = Structure
+    def Union(self, union):
+        # type: (typedesc.Union) -> None
+        self.generate(union.get_head())
+        self.generate(union.get_body())
 
     def StructureBody(self, body):
-        fields = []
-        methods = []
+        # type: (typedesc.StructureBody) -> None
+        fields = []  # type: List[typedesc.Field]
+        methods = []  # type: List[typedesc.Method]
         for m in body.struct.members:
             if type(m) is typedesc.Field:
                 fields.append(m)
@@ -596,8 +602,7 @@ class CodeGenerator(object):
     # top-level typedesc generators
     #
     def TypeLib(self, lib):
-        # lib.name, lib.gui, lib.major, lib.minor, lib.doc
-
+        # type: (typedesc.TypeLib) -> None
         # Hm, in user code we have to write:
         # class MyServer(COMObject, ...):
         #     _com_interfaces_ = [MyTypeLib.IInterface]
@@ -624,12 +629,14 @@ class CodeGenerator(object):
         print(file=self.stream)
 
     def External(self, ext):
+        # type: (typedesc.External) -> None
         modname = name_wrapper_module(ext.tlib)
         if modname not in self.imports:
             self.externals.append(ext.tlib)
             self.imports.add(modname)
 
     def Constant(self, tp):
+        # type: (typedesc.Constant) -> None
         self.last_item_class = False
         print("%s = %r  # Constant %s" % (tp.name,
                                          tp.value,
@@ -637,12 +644,12 @@ class CodeGenerator(object):
         self.names.add(tp.name)
 
     def SAFEARRAYType(self, sa):
+        # type: (typedesc.SAFEARRAYType) -> None
         self.generate(sa.typ)
         self.imports.add("comtypes.automation", "_midlSAFEARRAY")
 
-    _pointertypes = 0
     def PointerType(self, tp):
-        self._pointertypes += 1
+        # type: (typedesc.PointerType) -> None
         if type(tp.typ) is typedesc.ComInterface:
             # this defines the class
             self.generate(tp.typ.get_head())
@@ -667,6 +674,7 @@ class CodeGenerator(object):
                 self.declarations.add("WSTRING", "c_wchar_p")
 
     def CoClass(self, coclass):
+        # type: (typedesc.CoClass) -> None
         self.imports.add("comtypes", "GUID")
         self.imports.add("comtypes", "CoClass")
         if not self.last_item_class:
@@ -719,11 +727,13 @@ class CodeGenerator(object):
         self.names.add(coclass.name)
 
     def ComInterface(self, itf):
+        # type: (typedesc.ComInterface) -> None
         self.generate(itf.get_head())
         self.generate(itf.get_body())
         self.names.add(itf.name)
 
     def _is_enuminterface(self, itf):
+        # type: (typedesc.ComInterface) -> bool
         # Check if this is an IEnumXXX interface
         if not itf.name.startswith("IEnum"):
             return False
@@ -734,6 +744,7 @@ class CodeGenerator(object):
         return True
 
     def ComInterfaceHead(self, head):
+        # type: (typedesc.ComInterfaceHead) -> None
         if head.itf.name in self.known_symbols:
             return
         base = head.itf.base
@@ -786,6 +797,7 @@ class CodeGenerator(object):
         print(file=self.stream)
 
     def ComInterfaceBody(self, body):
+        # type: (typedesc.ComInterfaceBody) -> None
         # The base class must be fully generated, including the
         # _methods_ list.
         self.generate(body.itf.base)
@@ -856,11 +868,13 @@ class CodeGenerator(object):
             print("#", file=self.stream)
 
     def DispInterface(self, itf):
+        # type: (typedesc.DispInterface) -> None
         self.generate(itf.get_head())
         self.generate(itf.get_body())
         self.names.add(itf.name)
 
     def DispInterfaceHead(self, head):
+        # type: (typedesc.DispInterfaceHead) -> None
         self.generate(head.itf.base)
         basename = self._to_type_name(head.itf.base)
 
@@ -883,6 +897,7 @@ class CodeGenerator(object):
         print(file=self.stream)
 
     def DispInterfaceBody(self, body):
+        # type: (typedesc.DispInterfaceBody) -> None
         # make sure we can generate the body
         for m in body.itf.members:
             if isinstance(m, typedesc.DispMethod):
@@ -913,6 +928,7 @@ class CodeGenerator(object):
     # non-toplevel method generators
     #
     def make_ComMethod(self, m, isdual):
+        # type: (typedesc.ComMethod, bool) -> None
         self.imports.add("comtypes", "COMMETHOD")
         # typ, name, idlflags, default
         if isdual:
@@ -1028,6 +1044,7 @@ class CodeGenerator(object):
             print("    ),", file=self.stream)
 
     def make_DispMethod(self, m):
+        # type: (typedesc.DispMethod) -> None
         self.imports.add("comtypes", "DISPMETHOD")
         self.imports.add("comtypes", "dispid")
         idlflags = [dispid(m.dispid)] + m.idlflags
@@ -1094,6 +1111,7 @@ class CodeGenerator(object):
             print("    ),", file=self.stream)
 
     def make_DispProperty(self, prop):
+        # type: (typedesc.DispProperty) -> None
         self.imports.add("comtypes", "DISPPROPERTY")
         self.imports.add("comtypes", "dispid")
         idlflags = [dispid(prop.dispid)] + prop.idlflags
