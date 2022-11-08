@@ -1298,6 +1298,8 @@ class IUnknown(_IUnknown_Base):
         """Decrease the internal refcount by one and return it."""
         return self.__com_Release()
 
+
+################################################################
 # IPersist is a trivial interface, which allows to ask an object about
 # its clsid.
 class IPersist(IUnknown):
@@ -1307,16 +1309,23 @@ class IPersist(IUnknown):
         COMMETHOD([], HRESULT, 'GetClassID',
                   ( ['out'], POINTER(GUID), 'pClassID' )),
         ]
+    if TYPE_CHECKING:
+        # Returns the CLSID that uniquely represents an object class that
+        # defines the code that can manipulate the object's data.
+        GetClassID = hints.AnnoField()  # type: Callable[[], GUID]
+
 
 class IServiceProvider(IUnknown):
     _iid_ = GUID('{6D5140C1-7436-11CE-8034-00AA006009FA}')
-
+    if TYPE_CHECKING:
+        _QueryService = hints.AnnoField()  # type: Callable[[Any, Any, Any], int]
     # Overridden QueryService to make it nicer to use (passing it an
     # interface and it returns a pointer to that interface)
     def QueryService(self, serviceIID, interface):
+        # type: (GUID, Type[_T_IUnknown]) -> _T_IUnknown
         p = POINTER(interface)()
         self._QueryService(byref(serviceIID), byref(interface._iid_), byref(p))
-        return p
+        return p  # type: ignore
 
     _methods_ = [
         COMMETHOD([], HRESULT, 'QueryService',
@@ -1326,7 +1335,19 @@ class IServiceProvider(IUnknown):
         ]
 
 ################################################################
+
+if TYPE_CHECKING:
+    @overload
+    def CoGetObject(displayname, interface):  # `interface` can't be missing
+        # type: (str, None) -> IUnknown
+        pass
+    @overload
+    def CoGetObject(displayname, interface):  # it should be called this way
+        # type: (str, Type[_T_IUnknown]) -> _T_IUnknown
+        pass
+
 def CoGetObject(displayname, interface):
+    # type: (str, Optional[Type[IUnknown]]) -> IUnknown
     """Convert a displayname to a moniker, then bind and return the object
     identified by the moniker."""
     if interface is None:
@@ -1337,9 +1358,23 @@ def CoGetObject(displayname, interface):
                        None,
                        byref(interface._iid_),
                        byref(punk))
-    return punk
+    return punk  # type: ignore
+
+
+if TYPE_CHECKING:
+    pUnkOuter = Type[_Pointer[IUnknown]]
+
+    @overload
+    def CoCreateInstance(clsid, interface=None, clsctx=None, punkouter=None):
+        # type: (GUID, None, Optional[int], Optional[pUnkOuter]) -> IUnknown
+        pass
+    @overload
+    def CoCreateInstance(clsid, interface, clsctx=None, punkouter=None):
+        # type: (GUID, Type[_T_IUnknown], Optional[int], Optional[pUnkOuter]) -> IUnknown
+        pass
 
 def CoCreateInstance(clsid, interface=None, clsctx=None, punkouter=None):
+    # type: (GUID, Optional[Type[IUnknown]], Optional[int], Optional[pUnkOuter]) -> IUnknown
     """The basic windows api to create a COM class object and return a
     pointer to an interface.
     """
@@ -1350,9 +1385,21 @@ def CoCreateInstance(clsid, interface=None, clsctx=None, punkouter=None):
     p = POINTER(interface)()
     iid = interface._iid_
     _ole32.CoCreateInstance(byref(clsid), punkouter, clsctx, byref(iid), byref(p))
-    return p
+    return p  # type: ignore
+
+
+if TYPE_CHECKING:
+    @overload
+    def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
+        # type: (GUID, Optional[int], Optional[COSERVERINFO], None) -> hints.IClassFactory
+        pass
+    @overload
+    def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
+        # type: (GUID, Optional[int], Optional[COSERVERINFO], Type[_T_IUnknown]) -> _T_IUnknown
+        pass
 
 def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
+    # type: (GUID, Optional[int], Optional[COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
     if clsctx is None:
         clsctx = CLSCTX_SERVER
     if interface is None:
@@ -1364,20 +1411,37 @@ def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
                       pServerInfo,
                       interface._iid_,
                       byref(p))
-    return p
+    return p  # type: ignore
+
+
+if TYPE_CHECKING:
+    @overload
+    def GetActiveObject(clsid, interface=None):
+        # type: (GUID, None) -> IUnknown
+        pass
+    @overload
+    def GetActiveObject(clsid, interface):
+        # type: (GUID, Type[_T_IUnknown]) -> _T_IUnknown
+        pass
 
 def GetActiveObject(clsid, interface=None):
+    # type: (GUID, Optional[Type[IUnknown]]) -> IUnknown
     """Retrieves a pointer to a running object"""
     p = POINTER(IUnknown)()
     oledll.oleaut32.GetActiveObject(byref(clsid), None, byref(p))
     if interface is not None:
-        p = p.QueryInterface(interface)
-    return p
+        p = p.QueryInterface(interface)  # type: ignore
+    return p  # type: ignore
+
 
 class MULTI_QI(Structure):
     _fields_ = [("pIID", POINTER(GUID)),
                 ("pItf", POINTER(c_void_p)),
                 ("hr", HRESULT)]
+    if TYPE_CHECKING:
+        pIID = hints.AnnoField()  # type: GUID
+        pItf = hints.AnnoField()  # type: _Pointer[c_void_p]
+        hr = hints.AnnoField()  # type: HRESULT
 
 class _COAUTHIDENTITY(Structure):
     _fields_ = [
@@ -1410,6 +1474,11 @@ class _COSERVERINFO(Structure):
         ('pAuthInfo', POINTER(_COAUTHINFO)),
         ('dwReserved2', c_ulong),
     ]
+    if TYPE_CHECKING:
+        dwReserved1 = hints.AnnoField()  # type: int
+        pwszName = hints.AnnoField()  # type: Optional[str]
+        pAuthInfo = hints.AnnoField()  # type: _COAUTHINFO
+        dwReserved2 = hints.AnnoField()  # type: int
 COSERVERINFO = _COSERVERINFO
 _CoGetClassObject = _ole32.CoGetClassObject
 _CoGetClassObject.argtypes = [POINTER(GUID), DWORD, POINTER(COSERVERINFO),
@@ -1468,10 +1537,24 @@ class _SOLE_AUTHENTICATION_LIST(Structure):
     ]
 SOLE_AUTHENTICATION_LIST = _SOLE_AUTHENTICATION_LIST
 
+
+if TYPE_CHECKING:
+    @overload
+    def CoCreateInstanceEx(
+        clsid, interface=None, clsctx=None, machine=None, pServerInfo=None):
+        # type: (GUID, None, Optional[int], Optional[str], Optional[COSERVERINFO]) -> IUnknown
+        pass
+    @overload
+    def CoCreateInstanceEx(
+        clsid, interface=None, clsctx=None, machine=None, pServerInfo=None):
+        # type: (GUID, Type[_T_IUnknown], Optional[int], Optional[str], Optional[COSERVERINFO]) -> _T_IUnknown
+        pass
+
 def CoCreateInstanceEx(clsid, interface=None,
                        clsctx=None,
                        machine=None,
                        pServerInfo=None):
+    # type: (GUID, Optional[Type[IUnknown]], Optional[int], Optional[str], Optional[COSERVERINFO]) -> IUnknown
     """The basic windows api to create a COM class object and return a
     pointer to an interface, possibly on another machine.
 
@@ -1488,19 +1571,19 @@ def CoCreateInstanceEx(clsid, interface=None,
     elif machine is not None:
         serverinfo = COSERVERINFO()
         serverinfo.pwszName = machine
-        pServerInfo = byref(serverinfo)
+        pServerInfo = byref(serverinfo)  # type: ignore
 
     if interface is None:
         interface = IUnknown
     multiqi = MULTI_QI()
-    multiqi.pIID = pointer(interface._iid_)
+    multiqi.pIID = pointer(interface._iid_)  # type: ignore
     _ole32.CoCreateInstanceEx(byref(clsid),
                              None,
                              clsctx,
                              pServerInfo,
                              1,
                              byref(multiqi))
-    return cast(multiqi.pItf, POINTER(interface))
+    return cast(multiqi.pItf, POINTER(interface))  # type: ignore
 
 
 ################################################################
