@@ -89,6 +89,10 @@ if TYPE_CHECKING:
 from comtypes.GUID import GUID
 from comtypes import patcher
 from comtypes._npsupport import interop as npsupport
+from comtypes._memberspec import (
+    ComMemberGenerator, _ComMemberSpec, DispMemberGenerator, _DispMemberSpec,
+    _encode_idl, _resolve_argspec,
+)
 
 ################################################################
 if sys.version_info >= (3, 0):
@@ -287,6 +291,11 @@ class _cominterface_meta(type):
     """Metaclass for COM interfaces.  Automatically creates high level
     methods from COMMETHOD lists.
     """
+    if TYPE_CHECKING:
+        _case_insensitive_ = hints.AnnoField()  # type: bool
+        _iid_ = hints.AnnoField()  # type: GUID
+        _methods_ = hints.AnnoField()  # type: List[_ComMemberSpec]
+        _disp_methods_ = hints.AnnoField()  # type: List[_DispMemberSpec]
 
     # This flag is set to True by the atexit handler which calls
     # CoUninitialize.
@@ -508,107 +517,24 @@ class _cominterface_meta(type):
         # type: (List[_DispMemberSpec]) -> None
         if self._case_insensitive_:
             self._make_case_insensitive()
-
         # create dispinterface methods and properties on the interface 'self'
-        properties = PropertyMapping()
+        member_gen = DispMemberGenerator(self.__name__)
         for m in methods:
-            # is it a property set or property get?
-            is_prop = False
-
-            # argspec is a sequence of tuples, each tuple is:
-            # ([paramflags], type, name)
-            try:
-                memid = [x for x in m.idlflags if isinstance(x, int)][0]
-            except IndexError:
-                raise TypeError("no dispid found in idlflags")
-            if m.what == "DISPPROPERTY": # DISPPROPERTY
-                assert not m.argspec # XXX does not yet work for properties with parameters
-                accessor = self._disp_property(memid, m.idlflags)
-                is_prop = True
-                setattr(self, m.name, accessor)
-            elif m.what == "DISPMETHOD": # DISPMETHOD
-                # argspec is a tuple of (idlflags, type, name[,
-                # defval]) items.
-                method = self._disp_method(memid, m.name, m.idlflags, m.restype, m.argspec)
-                method.__name__ = m.name
-                if 'propget' in m.idlflags:
-                    nargs = len(m.argspec)
-                    properties.add_propget(m.name, None, nargs, method)
-                    is_prop = True
-                elif 'propput' in m.idlflags:
-                    nargs = len(m.argspec)-1
-                    properties.add_propput(m.name, None, nargs, method)
-                    is_prop = True
-                elif 'propputref' in m.idlflags:
-                    nargs = len(m.argspec)-1
-                    properties.add_propputref(m.name, None, nargs, method)
-                    is_prop = True
-                else:
-                    setattr(self, m.name, method)
+            member_gen.add(m)
+        for name, func_or_prop, is_prop in member_gen.items():
+            setattr(self, name, func_or_prop)
             # COM is case insensitive.
-            #
             # For a method, this is the real name.  For a property,
             # this is the name WITHOUT the _set_ or _get_ prefix.
             if self._case_insensitive_:
-                self.__map_case__[m.name.lower()] = m.name
+                self.__map_case__[name.lower()] = name
                 if is_prop:
-                    self.__map_case__[m.name[5:].lower()] = m.name[5:]
-
-        for name, _, nargs, fget, fset in properties:
-            if nargs:
-                setattr(self, name, named_property("%s.%s" % (self.__name__, name), fget, fset))
-            else:
-                setattr(self, name, property(fget, fset))
-
+                    self.__map_case__[name[5:].lower()] = name[5:]
+        for name, accessor in member_gen.properties():
+            setattr(self, name, accessor)
             # COM is case insensitive
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
-
-    # Some ideas, (not only) related to disp_methods:
-    #
-    # Should the functions/methods we create have restype and/or
-    # argtypes attributes?
-
-    def _disp_method(self, memid, name, idlflags, restype, argspec):
-        if 'propget' in idlflags:
-            def getfunc(obj, *args, **kw):
-                return self.Invoke(obj, memid, _invkind=2, *args, **kw) # DISPATCH_PROPERTYGET
-            return getfunc
-        elif 'propput' in idlflags:
-            def putfunc(obj, *args, **kw):
-                return self.Invoke(obj, memid, _invkind=4, *args, **kw) # DISPATCH_PROPERTYPUT
-            return putfunc
-        elif 'propputref' in idlflags:
-            def putfunc(obj, *args, **kw):
-                return self.Invoke(obj, memid, _invkind=8, *args, **kw) # DISPATCH_PROPERTYPUTREF
-            return putfunc
-        # a first attempt to make use of the restype.  Still, support
-        # for named arguments and default argument values should be
-        # added.
-        if hasattr(restype, "__com_interface__"):
-            interface = restype.__com_interface__
-            def func(s, *args, **kw):
-                result = self.Invoke(s, memid, _invkind=1, *args, **kw)
-                if result is None:
-                    return
-                return result.QueryInterface(interface)
-        else:
-            def func(obj, *args, **kw):
-                return self.Invoke(obj, memid, _invkind=1, *args, **kw) # DISPATCH_METHOD
-        return func
-
-    def _disp_property(self, memid, idlflags):
-        # XXX doc string missing in property
-        def _get(obj):
-            return obj.Invoke(memid, _invkind=2) # DISPATCH_PROPERTYGET
-        if "readonly" in idlflags:
-            return property(_get)
-        def _set(obj, value):
-            # Detect whether to use DISPATCH_PROPERTYPUT or
-            # DISPATCH_PROPERTYPUTREF
-            invkind = 8 if _is_object(value) else 4
-            return obj.Invoke(memid, value, _invkind=invkind)
-        return property(_get, _set)
 
     def __get_baseinterface_methodcount(self):
         "Return the number of com methods in the base interfaces"
@@ -627,318 +553,42 @@ class _cominterface_meta(type):
         # type: (List[_ComMemberSpec]) -> None
         if self._case_insensitive_:
             self._make_case_insensitive()
-
-        # we insist on an _iid_ in THIS class!
+        # register com interface. we insist on an _iid_ in THIS class!
         try:
             iid = self.__dict__["_iid_"]
         except KeyError:
             raise AttributeError("this class must define an _iid_")
         else:
-            iid = text_type(iid)
-##            if iid in com_interface_registry:
-##                # Warn when multiple interfaces are defined with identical iids.
-##                # This would also trigger if we reload() a module that contains
-##                # interface types, so suppress the warning in this case.
-##                other = com_interface_registry[iid]
-##                if self.__name__ != other.__name__ or self.__module__ != other.__module__:
-##                    text = "Multiple interface defn: %s, %s" % (self, other)
-##                    warnings.warn(text, UserWarning)
-            com_interface_registry[iid] = self
-            del iid
+            com_interface_registry[text_type(iid)] = self
+        # create members
         vtbl_offset = self.__get_baseinterface_methodcount()
-
-        properties = PropertyMapping()
-
+        member_gen = ComMemberGenerator(self.__name__, vtbl_offset, self._iid_)
         # create private low level, and public high level methods
-        for i, m in enumerate(methods):
-            # the function prototype
-            prototype = WINFUNCTYPE(m.restype, *m.argtypes)
-
-            # a low level unbound method calling the com method.
-            # attach it with a private name (__com_AddRef, for example),
-            # so that custom method implementations can call it.
-
-            # If the method returns a HRESULT, we pass the interface iid,
-            # so that we can request error info for the interface.
-            if m.restype == HRESULT:
-##                print "%s.%s" % (self.__name__, name)
-                raw_func = prototype(i + vtbl_offset, m.name, None, self._iid_)
-                func = prototype(i + vtbl_offset, m.name, m.paramflags, self._iid_)
-            else:
-                raw_func = prototype(i + vtbl_offset, m.name, None, None)
-                func = prototype(i + vtbl_offset, m.name, m.paramflags, None)
-            setattr(self,
-                    "_%s__com_%s" % (self.__name__, m.name),
-                    instancemethod(raw_func, None, self))
-
-            if m.paramflags:
-                # see comment in the _fix_inout_args method
-                dirflags = [(p[0]&3) for p in m.paramflags]
-                if 3 in dirflags:
-##                    fullname = "%s::%s" % (self.__name__, name)
-##                    print "FIX %s" % fullname
-                    func = _fix_inout_args(func, m.argtypes, m.paramflags)
-
-            # 'func' is a high level function calling the COM method
-            func.__doc__ = m.doc
-            func.__name__ = m.name # for pyhelp
-            # make it an unbound method.  Remember, 'self' is a type here.
+        for m in methods:
+            member_gen.add(m)
+        for name, func, raw_func, is_prop in member_gen.methods():
+            raw_mth = instancemethod(raw_func, None, self)
+            setattr(self, "_%s__com_%s" % (self.__name__, name), raw_mth)
             mth = instancemethod(func, None, self)
-
-            # is it a property set or property get?
-            is_prop = False
-
-            # XXX Hm.  What, when paramflags is None?
-            # Or does have '0' values?
-            # Seems we loose then, at least for properties...
-
-            # The following code assumes that the docstrings for
-            # propget and propput are identical.
-            if "propget" in m.idlflags:
-                assert m.name.startswith("_get_")
-                nargs = len([flags for flags in m.paramflags
-                             if flags[0] & 7 in (0, 1)])
-                # XXX or should we do this?
-                # nargs = len([flags for flags in paramflags
-                #             if (flags[0] & 1) or (flags[0] == 0)])
-                propname = m.name[len("_get_"):]
-                properties.add_propget(propname, m.doc, nargs, func)
-                is_prop = True
-            elif "propput" in m.idlflags:
-                assert m.name.startswith("_set_")
-                nargs = len([flags for flags in m.paramflags
-                              if flags[0] & 7 in (0, 1)]) - 1
-                propname = m.name[len("_set_"):]
-                properties.add_propput(propname, m.doc, nargs, func)
-                is_prop = True
-            elif "propputref" in m.idlflags:
-                assert m.name.startswith("_setref_")
-                nargs = len([flags for flags in m.paramflags
-                              if flags[0] & 7 in (0, 1)]) - 1
-                propname = m.name[len("_setref_"):]
-                properties.add_propputref(propname, m.doc, nargs, func)
-                is_prop = True
-
-            # We install the method in the class, except when it's a
-            # property accessor.  And we make sure we don't overwrite
-            # a property that's already present in the class.
             if not is_prop:
-                if hasattr(self, m.name):
-                    setattr(self, "_" + m.name, mth)
-                else:
-                    setattr(self, m.name, mth)
-
-            # COM is case insensitive.
-            #
-            # For a method, this is the real name.  For a property,
-            # this is the name WITHOUT the _set_ or _get_ prefix.
+                # We install the method in the class, except when it's a property.
+                # And we make sure we don't overwrite a property that's already present.
+                mthname = name if not hasattr(self, name) else ("_%s" % name)
+                setattr(self, mthname, mth)
+            # For a method, this is the real name.
+            # For a property, this is the name WITHOUT the _set_ or _get_ prefix.
             if self._case_insensitive_:
-                self.__map_case__[m.name.lower()] = m.name
+                self.__map_case__[name.lower()] = name
                 if is_prop:
-                    self.__map_case__[m.name[5:].lower()] = m.name[5:]
-
+                    self.__map_case__[name[5:].lower()] = name[5:]
         # create public properties / attribute accessors
-        for name, doc, nargs, fget, fset in properties:
-            if nargs == 0:
-                prop = property(fget, fset, None, doc)
-            else:
-                # Hm, must be a descriptor where the __get__ method
-                # returns a bound object having __getitem__ and
-                # __setitem__ methods.
-                prop = named_property("%s.%s" % (self.__name__, name), fget, fset, doc)
-            # Again, we should not overwrite class attributes that are
-            # already present.
-            if hasattr(self, name):
-                setattr(self, "_" + name, prop)
-            else:
-                setattr(self, name, prop)
-
+        for name, accessor in member_gen.properties():
+            # Again, we should not overwrite class attributes that are already present.
+            propname = name if not hasattr(self, name) else ("_%s" % name)
+            setattr(self, propname, accessor)
             # COM is case insensitive
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
-
-
-def _fix_inout_args(func, argtypes, paramflags):
-    """This function provides a workaround for a bug in `ctypes`.
-
-    [in, out] parameters must be converted with the argtype's
-    `from_param` method BEFORE they are passed to the `_ctypes`
-    `build_callargs` function in `Modules/_ctypes/_ctypes.c`.
-    """
-    # For details see below.
-    #
-    # TODO: The workaround should be disabled when a ctypes
-    # version is used where the bug is fixed.
-    SIMPLETYPE = type(c_int)
-    BYREFTYPE = type(byref(c_int()))
-    def call_with_inout(self, *args, **kw):
-        args = list(args)
-        # Indexed by order in the output
-        outargs = {}
-        outnum = 0
-        for i, info in enumerate(paramflags):
-            direction = info[0]
-            if direction & 3 == 3:
-                # This is an [in, out] parameter.
-                #
-                # Determine name and required type of the parameter.
-                name = info[1]
-                # [in, out] parameters are passed as pointers,
-                # this is the pointed-to type:
-                atyp = argtypes[i]._type_
-
-                # Get the actual parameter, either as positional or
-                # keyword arg.
-                try:
-                    try:
-                        v = args[i]
-                    except IndexError:
-                        v = kw[name]
-                except KeyError:
-                    # no parameter was passed, make an empty one
-                    # of the required type
-                    v = atyp()
-                else:
-                    # parameter was passed, call .from_param() to
-                    # convert it to a ctypes type.
-                    if getattr(v, "_type_", None) is atyp:
-                        # Array of or pointer to type 'atyp' was
-                        # passed, pointer to 'atyp' expected.
-                        pass
-                    elif type(atyp) is SIMPLETYPE:
-                        # The from_param method of simple types
-                        # (c_int, c_double, ...) returns a byref()
-                        # object which we cannot use since later
-                        # it will be wrapped in a pointer.  Simply
-                        # call the constructor with the argument
-                        # in that case.
-                        v = atyp(v)
-                    else:
-                        v = atyp.from_param(v)
-                        assert not isinstance(v, BYREFTYPE)
-                outargs[outnum] = v
-                outnum += 1
-                if len(args) > i:
-                    args[i] = v
-                else:
-                    kw[name] = v
-            elif direction & 2 == 2:
-                outnum += 1
-
-        rescode = func(self, *args, **kw)
-        # If there is only a single output value, then do not expect it to
-        # be iterable.
-        if outnum == 1:  # rescode is not iterable
-            if len(outargs) == 1:
-                rescode = rescode.__ctypes_from_outparam__()
-            return rescode
-
-        rescode = list(rescode)
-        for outnum, o in outargs.items():
-            rescode[outnum] = o.__ctypes_from_outparam__()
-        return rescode
-    return call_with_inout
-
-
-class PropertyMapping(object):
-    def __init__(self):
-        self._data = {}  # type: Dict[Tuple[str, Optional[str], int], List[Optional[Callable[..., Any]]]]
-
-    def add_propget(self, name, doc, nargs, func):
-        # type: (str, Optional[str], int, Callable[..., Any]) -> None
-        self._data.setdefault((name, doc, nargs), [None, None, None])[0] = func
-
-    def add_propput(self, name, doc, nargs, func):
-        # type: (str, Optional[str], int, Callable[..., Any]) -> None
-        self._data.setdefault((name, doc, nargs), [None, None, None])[1] = func
-
-    def add_propputref(self, name, doc, nargs, func):
-        # type: (str, Optional[str], int, Callable[..., Any]) -> None
-        self._data.setdefault((name, doc, nargs), [None, None, None])[2] = func
-
-    def __iter__(self):
-        # type: () -> Iterator[Tuple[str, Optional[str], int, Optional[Callable[..., Any]], Optional[Callable[..., Any]]]]
-        for (name, doc, nargs), (fget, propput, propputref) in self._data.items():
-            if propput is not None and propputref is not None:
-                # Create a setter method that examines the argument type
-                # and calls 'propputref' if it is an Object (in the VB
-                # sense), or call 'propput' otherwise.
-                put, putref = propput, propputref
-                def put_or_putref(self, *args):
-                    if _is_object(args[-1]):
-                        return putref(self, *args)
-                    return put(self, *args)
-                fset = put_or_putref
-            elif propputref is not None:
-                fset = propputref
-            else:
-                fset = propput
-            yield (name, doc, nargs, fget, fset)
-
-
-################################################################
-# helper classes for COM propget / propput
-# Should they be implemented in C for speed?
-
-class bound_named_property(object):
-    def __init__(self, name, fget, fset, instance):
-        self.name = name
-        self.instance = instance
-        self.fget = fget
-        self.fset = fset
-
-    def __getitem__(self, index):
-        if self.fget is None:
-            raise TypeError("unsubscriptable object")
-        if isinstance(index, tuple):
-            return self.fget(self.instance, *index)
-        elif index == _all_slice:
-            return self.fget(self.instance)
-        else:
-            return self.fget(self.instance, index)
-
-    def __call__(self, *args):
-        if self.fget is None:
-            raise TypeError("object is not callable")
-        return self.fget(self.instance, *args)
-
-    def __setitem__(self, index, value):
-        if self.fset is None:
-            raise TypeError("object does not support item assignment")
-        if isinstance(index, tuple):
-            self.fset(self.instance, *(index + (value,)))
-        elif index == _all_slice:
-            self.fset(self.instance, value)
-        else:
-            self.fset(self.instance, index, value)
-
-    def __repr__(self):
-        return "<bound_named_property %r at %x>" % (self.name, id(self))
-
-    def __iter__(self):
-        """ Explicitly disallow iteration. """
-        msg = "%r is not iterable" % self.name
-        raise TypeError(msg)
-
-
-class named_property(object):
-    def __init__(self, name, fget=None, fset=None, doc=None):
-        self.name = name
-        self.fget = fget
-        self.fset = fset
-        self.__doc__ = doc
-
-    def __get__(self, instance, owner=None):
-        if instance is None:
-            return self
-        return bound_named_property(self.name, self.fget, self.fset, instance)
-
-    # Make this a data descriptor
-    def __set__(self, instance):
-        raise AttributeError("Unsettable attribute")
-
-    def __repr__(self):
-        return "<named_property %r at %x>" % (self.name, id(self))
 
 ################################################################
 
@@ -1066,15 +716,6 @@ class BSTR(_SimpleCData):
 ################################################################
 # IDL stuff
 
-if TYPE_CHECKING:
-    PositionalParamFlagType = Tuple[int, Optional[str]]
-    OptionalParamFlagType = Tuple[int, Optional[str], Any]
-    ParamFlagType = _UnionT[PositionalParamFlagType, OptionalParamFlagType]
-    PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
-    OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
-    ArgSpecElmType = _UnionT[PositionalArgSpecElmType, OptionalArgSpecElmType]
-
-
 class helpstring(text_type):
     "Specifies the helpstring for a COM method or property."
 
@@ -1085,51 +726,6 @@ class defaultvalue(object):
 
 class dispid(int):
     "Specifies the DISPID of a method or property."
-
-
-class _MemberSpec(object):
-    """Specifier of a slot of method or property."""
-    __slots__ = ("name", "idlflags", "restype")
-    def __init__(self, name, idlflags, restype):
-        self.name = name  # type: str
-        self.idlflags = idlflags  # type: Tuple[_UnionT[str, int], ...]
-        self.restype = restype  # type: Optional[Type[_CData]]
-
-
-class _ComMemberSpec(_MemberSpec):
-    """Specifier for a slot of COM method or property."""
-    __slots__ = ("argtypes", "paramflags", "doc")
-
-    def __init__(self, restype, name, argtypes, paramflags, idlflags, doc):
-        self.argtypes = argtypes  # type: Tuple[Type[_CData], ...]
-        self.paramflags = paramflags  # type: Optional[Tuple[ParamFlagType, ...]]
-        self.doc = doc  # type: Optional[str]
-        super(_ComMemberSpec, self).__init__(name, idlflags, restype)
-
-    def __iter__(self):
-        # for backward compatibility:
-        # A function that returns this object used to return a `tuple`.
-        # So it is implemented as unpackable as well.
-        for item in (self.restype, self.name, self.argtypes, self.paramflags, self.idlflags, self.doc):
-            yield item
-
-
-class _DispMemberSpec(_MemberSpec):
-    """Specifier for a slot of dispinterface method or property."""
-    __slots__ = ("what", "argspec")
-
-    def __init__(self, what, name, idlflags, restype, argspec):
-        self.what = what  # type: str
-        self.argspec = argspec  # type: Tuple[ArgSpecElmType, ...]
-        super(_DispMemberSpec, self).__init__(name, idlflags, restype)
-
-    def __iter__(self):
-        # for backward compatibility:
-        # A function that returns this object used to return a `tuple`.
-        # So it is implemented as unpackable as well.
-        for item in (self.what, self.name, self.idlflags, self.restype, self.argspec):
-            yield item
-
 
 # XXX STDMETHOD, COMMETHOD, DISPMETHOD, and DISPPROPERTY should return
 # instances with more methods or properties, and should not behave as an unpackable.
@@ -1154,23 +750,6 @@ def DISPPROPERTY(idlflags, proptype, name):
 #         [6], None, 'Render', ([], c_int, 'hdc'), ([], c_int, 'x'), ([], c_int, 'y')
 #     )
 
-_PARAMFLAGS = {
-    "in": 1,
-    "out": 2,
-    "lcid": 4,
-    "retval": 8,
-    "optional": 16,
-    }
-
-def _encode_idl(names):
-    # sum up all values found in _PARAMFLAGS, ignoring all others.
-    return sum([_PARAMFLAGS.get(n, 0) for n in names])
-
-_NOTHING = object()
-def _unpack_argspec(idl, typ, name=None, defval=_NOTHING):
-    # type: (List[str], Type[_CData], Optional[str], Any) -> Tuple[List[str], Type[_CData], Optional[str], Any]
-    return idl, typ, name, defval
-
 def COMMETHOD(idlflags, restype, methodname, *argspec):
     """Specifies a COM method slot with idlflags.
 
@@ -1193,37 +772,6 @@ def COMMETHOD(idlflags, restype, methodname, *argspec):
         restype, name, argtypes, paramflags, tuple(idlflags), helptext
     )
 
-
-def _resolve_argspec(items):
-    # type: (Tuple[ArgSpecElmType, ...]) -> Tuple[Tuple[ParamFlagType, ...], Tuple[Type[_CData], ...]]
-    """Unpacks and converts from argspec to paramflags and argtypes.
-
-    - paramflags is a sequence of `(pflags: int, argname: str, | None[, defval: Any])`.
-    - argtypes is a sequence of `type[_CData]`.
-    """
-    from comtypes.automation import VARIANT
-
-    paramflags = []
-    argtypes = []
-    for item in items:
-        idl, typ, argname, defval = _unpack_argspec(*item)
-        pflags = _encode_idl(idl)
-        if "optional" in idl:
-            if defval is _NOTHING:
-                if typ is VARIANT:
-                    defval = VARIANT.missing
-                elif typ is POINTER(VARIANT):
-                    defval = pointer(VARIANT.missing)
-                else:
-                    # msg = ("'optional' only allowed for VARIANT and VARIANT*, not for %s" % typ.__name__)
-                    # warnings.warn(msg, IDLWarning, stacklevel=2)
-                    defval = typ()
-        if defval is _NOTHING:
-            paramflags.append((pflags, argname))
-        else:
-            paramflags.append((pflags, argname, defval))
-        argtypes.append(typ)
-    return tuple(paramflags), tuple(argtypes)
 
 ################################################################
 # IUnknown, the root of all evil...
