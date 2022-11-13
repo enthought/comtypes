@@ -13,7 +13,7 @@ else:
     import _winreg as winreg
 
 from comtypes import GUID, TYPE_CHECKING, typeinfo
-import comtypes.client as client  # backward compatible for `from comtypes import client`
+import comtypes.client
 from comtypes.tools import codegenerator, tlbparser
 
 if TYPE_CHECKING:
@@ -29,8 +29,8 @@ def _my_import(fullname):
     # type: (str) -> types.ModuleType
     """helper function to import dotted modules"""
     import comtypes.gen as g
-    if client.gen_dir and client.gen_dir not in g.__path__:
-        g.__path__.append(client.gen_dir)  # type: ignore
+    if comtypes.client.gen_dir and comtypes.client.gen_dir not in g.__path__:
+        g.__path__.append(comtypes.client.gen_dir)  # type: ignore
     return importlib.import_module(fullname)
 
 
@@ -178,7 +178,7 @@ def _create_module_in_file(modulename, code):
     """create module in file system, and import it"""
     # `modulename` is 'comtypes.gen.xxx'
     filename = "%s.py" % modulename.split(".")[-1]
-    with open(os.path.join(client.gen_dir, filename), "w") as ofi:
+    with open(os.path.join(comtypes.client.gen_dir, filename), "w") as ofi:
         print(code, file=ofi)
     # clear the import cache to make sure Python sees newly created modules
     if hasattr(importlib, "invalidate_caches"):
@@ -216,7 +216,7 @@ def _create_friendly_module(tlib, modulename):
     code = "from comtypes.gen import %s\n" % modname
     code += "globals().update(%s.__dict__)\n" % modname
     code += "__name__ = '%s'" % modulename
-    if client.gen_dir is None:
+    if comtypes.client.gen_dir is None:
         return _create_module_in_memory(modulename, code)
     return _create_module_in_file(modulename, code)
 
@@ -241,7 +241,7 @@ def _create_wrapper_module(tlib, pathname):
     code = codegen.generate_code(items, filename=pathname)
     for ext_tlib in codegen.externals:  # generates dependency COM-lib modules
         GetModule(ext_tlib)
-    if client.gen_dir is None:
+    if comtypes.client.gen_dir is None:
         return _create_module_in_memory(modulename, code)
     return _create_module_in_file(modulename, code)
 
