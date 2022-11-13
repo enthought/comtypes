@@ -220,6 +220,12 @@ class tagVARIANT(Structure):
     def __repr__(self):
         if self.vt & VT_BYREF:
             return "VARIANT(vt=0x%x, byref(%r))" % (self.vt, self[0])
+        elif self is type(self).null:
+            return "VARIANT.null"
+        elif self is type(self).empty:
+            return "VARIANT.empty"
+        elif self is type(self).missing:
+            return "VARIANT.missing"
         return "VARIANT(vt=0x%x, %r)" % (self.vt, self.value)
 
     @classmethod

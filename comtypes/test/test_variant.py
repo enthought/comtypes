@@ -216,6 +216,13 @@ class VariantTestCase(unittest.TestCase):
         variable.value = 96
         self.assertEqual(v[0], 96)
 
+    def test_repr(self):
+        self.assertEqual(repr(VARIANT(c_int(42))), "VARIANT(vt=0x3, 42)")
+        self.assertEqual(repr(VARIANT(byref(c_int(42)))), "VARIANT(vt=0x4003, byref(42))")
+        self.assertEqual(repr(VARIANT.empty), "VARIANT.empty")
+        self.assertEqual(repr(VARIANT.null), "VARIANT.null")
+        self.assertEqual(repr(VARIANT.missing), "VARIANT.missing")
+
 
 class ArrayTest(unittest.TestCase):
     def test_double(self):
