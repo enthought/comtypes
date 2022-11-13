@@ -12,7 +12,8 @@ else:
     base_text_type = basestring
     import _winreg as winreg
 
-from comtypes import client, GUID, TYPE_CHECKING, typeinfo
+from comtypes import GUID, TYPE_CHECKING, typeinfo
+import comtypes.client as client  # backward compatible for `from comtypes import client`
 from comtypes.tools import codegenerator, tlbparser
 
 if TYPE_CHECKING:
