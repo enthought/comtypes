@@ -7,7 +7,9 @@ import sys
 from ctypes import *
 from ctypes import _Pointer
 from _ctypes import CopyComPointer
-from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
+from comtypes import (
+    BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD, TYPE_CHECKING,
+)
 from comtypes.hresult import *
 import comtypes.patcher
 import comtypes
@@ -18,6 +20,12 @@ except (ImportError, AttributeError):
         tagSAFEARRAY = None
 
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
+
+if TYPE_CHECKING:
+    from typing import (
+        Any, Callable, ClassVar, List, Optional, Tuple, Union as _UnionT,
+    )
+    from comtypes import hints
 
 
 if sys.version_info >= (3, 0):
@@ -149,6 +157,13 @@ DECIMAL = tagDEC
 # The VARIANT structure is a good candidate for implementation in a C
 # helper extension.  At least the get/set methods.
 class tagVARIANT(Structure):
+    if TYPE_CHECKING:
+        vt = hints.AnnoField()  # type: int
+        _ = hints.AnnoField()  # type: U_VARIANT1.__tagVARIANT.U_VARIANT2
+        null = hints.AnnoField()  # type: ClassVar[VARIANT]
+        empty = hints.AnnoField()  # type: ClassVar[VARIANT]
+        missing = hints.AnnoField()  # type: ClassVar[VARIANT]
+
     class U_VARIANT1(Union):
         class __tagVARIANT(Structure):
             # The C Header file defn of VARIANT is much more complicated, but
@@ -650,6 +665,17 @@ IEnumVARIANT._methods_ = [
 
 
 class tagEXCEPINFO(Structure):
+    if TYPE_CHECKING:
+        wCode = hints.AnnoField()  # type: int
+        wReserved = hints.AnnoField()  # type: int
+        bstrSource = hints.AnnoField()  # type: str
+        bstrDescription = hints.AnnoField()  # type: str
+        bstrHelpFile = hints.AnnoField()  # type: str
+        dwHelpContext = hints.AnnoField()  # type: int
+        pvReserved = hints.AnnoField()  # type: Optional[int]
+        pfnDeferredFillIn = hints.AnnoField()  # type: Optional[int]
+        scode = hints.AnnoField()  # type: int
+
     def __repr__(self):
         return "<EXCEPINFO %s>" % \
                ((self.wCode, self.bstrSource, self.bstrDescription, self.bstrHelpFile, self.dwHelpContext,
@@ -669,6 +695,11 @@ tagEXCEPINFO._fields_ = [
 EXCEPINFO = tagEXCEPINFO
 
 class tagDISPPARAMS(Structure):
+    if TYPE_CHECKING:
+        rgvarg = hints.AnnoField()  # type: Array[VARIANT]
+        rgdispidNamedArgs = hints.AnnoField()  # type: _Pointer[DISPID]
+        cArgs = hints.AnnoField()  # type: int
+        cNamedArgs = hints.AnnoField()  # type: int
     _fields_ = [
         # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 696
         ('rgvarg', POINTER(VARIANTARG)),
@@ -691,7 +722,29 @@ DISPID_CONSTRUCTOR = -6
 DISPID_DESTRUCTOR = -7
 DISPID_COLLECT = -8
 
+
+if TYPE_CHECKING:
+    RawGetIDsOfNamesFunc = Callable[
+        [_byref_type, Array[c_wchar_p], int, int, Array[DISPID]], int,
+    ]
+    RawInvokeFunc = Callable[
+        [
+            int, _byref_type, int, int,  # dispIdMember, riid, lcid, wFlags
+            _UnionT[_byref_type, DISPPARAMS],  # *pDispParams
+            _UnionT[_byref_type, VARIANT],  # pVarResult
+            _UnionT[_byref_type, EXCEPINFO, None],  # pExcepInfo
+            _UnionT[_byref_type, c_uint],  # puArgErr
+        ],
+        int
+    ]
+
 class IDispatch(IUnknown):
+    if TYPE_CHECKING:
+        _disp_methods_ = hints.AnnoField()  # type: ClassVar[List[comtypes._DispMemberSpec]]
+        _GetTypeInfo = hints.AnnoField()  # type: Callable[[int, int], IUnknown]
+        __com_GetIDsOfNames = hints.AnnoField()  # type: RawGetIDsOfNamesFunc
+        __com_Invoke = hints.AnnoField()  # type: RawInvokeFunc
+
     _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
     _methods_ = [
         COMMETHOD([], HRESULT, 'GetTypeInfoCount',
@@ -699,9 +752,9 @@ class IDispatch(IUnknown):
         COMMETHOD([], HRESULT, 'GetTypeInfo',
                   (['in'], UINT, 'index'),
                   (['in'], LCID, 'lcid', 0),
-## Normally, we would declare this parameter in this way:
-##                  (['out'], POINTER(POINTER(ITypeInfo)) ) ),
-## but we cannot import comtypes.typeinfo at the top level (recursive imports!).
+                # Normally, we would declare this parameter in this way:
+                # (['out'], POINTER(POINTER(ITypeInfo)) ) ),
+                # but we cannot import comtypes.typeinfo at the top level (recursive imports!).
                   (['out'], POINTER(POINTER(IUnknown)) ) ),
         STDMETHOD(HRESULT, 'GetIDsOfNames', [POINTER(IID), POINTER(c_wchar_p),
                                              UINT, LCID, POINTER(DISPID)]),
@@ -711,12 +764,14 @@ class IDispatch(IUnknown):
     ]
 
     def GetTypeInfo(self, index, lcid=0):
+        # type: (int, int) -> hints.ITypeInfo
         """Return type information.  Index 0 specifies typeinfo for IDispatch"""
         import comtypes.typeinfo
         result = self._GetTypeInfo(index, lcid)
         return result.QueryInterface(comtypes.typeinfo.ITypeInfo)
 
     def GetIDsOfNames(self, *names, **kw):
+        # type: (str, Any) -> List[int]
         """Map string names to integer ids."""
         lcid = kw.pop("lcid", 0)
         assert not kw
@@ -726,6 +781,7 @@ class IDispatch(IUnknown):
         return ids[:]
 
     def _invoke(self, memid, invkind, lcid, *args):
+        # type: (int, int, int, Any) -> Any
         var = VARIANT()
         argerr = c_uint()
         dp = DISPPARAMS()
@@ -747,6 +803,7 @@ class IDispatch(IUnknown):
         return var._get_value(dynamic=True)
 
     def Invoke(self, dispid, *args, **kw):
+        # type: (int, Any, Any) -> Any
         """Invoke a method or property."""
 
         # Memory management in Dispatch::Invoke calls:
