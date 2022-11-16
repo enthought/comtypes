@@ -13,9 +13,8 @@ else:
     import cStringIO as io
 
 import comtypes
-from comtypes import TYPE_CHECKING
+from comtypes import TYPE_CHECKING, typeinfo
 from comtypes.tools import tlbparser, typedesc
-import comtypes.typeinfo
 
 if TYPE_CHECKING:
     from typing import (
@@ -217,12 +216,12 @@ def _to_arg_definition(type_name, arg_name, idlflags, default):
 
 
 class ComMethodGenerator(object):
-    def __init__(self, m, isdual, type_namer):
-        # type: (typedesc.ComMethod, bool, TypeNamer) -> None
+    def __init__(self, m, isdual):
+        # type: (typedesc.ComMethod, bool) -> None
         self._m = m
         self._isdual = isdual
         self._stream = io.StringIO()
-        self._to_type_name = type_namer
+        self._to_type_name = TypeNamer()
 
     def generate(self):
         # () -> str
@@ -330,11 +329,11 @@ class ComMethodGenerator(object):
 
 
 class DispMethodGenerator(object):
-    def __init__(self, m, type_namer):
-        # type: (typedesc.DispMethod, TypeNamer) -> None
+    def __init__(self, m):
+        # type: (typedesc.DispMethod) -> None
         self._m = m
         self._stream = io.StringIO()
-        self._to_type_name = type_namer
+        self._to_type_name = TypeNamer()
 
     def generate(self):
         # () -> str
@@ -389,10 +388,10 @@ class DispMethodGenerator(object):
 
 
 class DispPropertyGenerator(object):
-    def __init__(self, m, type_namer):
-        # type: (typedesc.DispProperty, TypeNamer) -> None
+    def __init__(self, m):
+        # type: (typedesc.DispProperty) -> None
         self._m = m
-        self._to_type_name = type_namer
+        self._to_type_name = TypeNamer()
 
     def generate(self):
         # () -> str
@@ -510,7 +509,7 @@ class CodeGenerator(object):
 
         if filename is not None:
             # get full path to DLL first (os.stat can't work with relative DLL paths properly)
-            loaded_typelib = comtypes.typeinfo.LoadTypeLib(filename)
+            loaded_typelib = typeinfo.LoadTypeLib(filename)
             full_filename = tlbparser.get_tlib_filename(
                 loaded_typelib)
 
@@ -1168,7 +1167,7 @@ class CodeGenerator(object):
             self.imports.add("comtypes", "dispid")
         if __debug__ and m.doc:
             self.imports.add("comtypes", "helpstring")
-        gen = ComMethodGenerator(m, isdual, self._to_type_name)
+        gen = ComMethodGenerator(m, isdual)
         print(gen.generate(), file=self.stream, end="")
         self.last_item_class = False
         for typ, _, _, default in m.arguments:
@@ -1184,7 +1183,7 @@ class CodeGenerator(object):
         self.imports.add("comtypes", "dispid")
         if __debug__ and m.doc:
             self.imports.add("comtypes", "helpstring")
-        gen = DispMethodGenerator(m, self._to_type_name)
+        gen = DispMethodGenerator(m)
         print(gen.generate(), file=self.stream, end="")
         self.last_item_class = False
         for _, _, _, default in m.arguments:
@@ -1197,7 +1196,7 @@ class CodeGenerator(object):
         self.imports.add("comtypes", "dispid")
         if __debug__ and prop.doc:
             self.imports.add("comtypes", "helpstring")
-        gen = DispPropertyGenerator(prop, self._to_type_name)
+        gen = DispPropertyGenerator(prop)
         print(gen.generate(), file=self.stream, end="")
         self.last_item_class = False
 
