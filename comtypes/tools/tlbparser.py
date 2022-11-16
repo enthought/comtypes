@@ -1,16 +1,19 @@
 from __future__ import print_function
 import os
 import sys
-from ctypes import windll
-from ctypes import c_void_p
-from ctypes import sizeof
-from ctypes import alignment
+from ctypes import alignment, c_void_p, sizeof, windll
 
-from comtypes import automation
-from comtypes import typeinfo
-from comtypes import COMError
+from comtypes import automation, COMError, TYPE_CHECKING, typeinfo
 from comtypes.tools import typedesc
 from comtypes.client._code_cache import _get_module_filename
+
+if TYPE_CHECKING:
+    from typing import (
+        Any, Callable, Dict, List, Optional, Type, TypeVar, Tuple,
+        Union as _UnionT,
+    )
+    from ctypes import _CData, _Pointer
+    from comtypes import hints
 
 
 # Is the process 64-bit?
@@ -105,25 +108,26 @@ COMTYPES = {
 ################################################################
 
 class Parser(object):
+    if TYPE_CHECKING:
+        tlib = hints.AnnoField()  # type: typeinfo.ITypeLib
+        items = hints.AnnoField()  # type: Dict[str, Any]
 
     def make_type(self, tdesc, tinfo):
-        try:
+        # type: (typeinfo.TYPEDESC, typeinfo.ITypeInfo) -> Any
+        if tdesc.vt in COMTYPES:
             return COMTYPES[tdesc.vt]
-        except KeyError:
-            pass
-
         if tdesc.vt == automation.VT_CARRAY:
-            typ = self.make_type(tdesc._.lpadesc[0].tdescElem, tinfo)
-            for i in range(tdesc._.lpadesc[0].cDims):
-                typ = typedesc.ArrayType(typ,
-                                         tdesc._.lpadesc[0].rgbounds[i].lLbound,
-                                         tdesc._.lpadesc[0].rgbounds[i].cElements-1)
+            arraydesc = tdesc._.lpadesc[0]  # type: typeinfo.tagARRAYDESC
+            typ = self.make_type(arraydesc.tdescElem, tinfo)
+            for i in range(arraydesc.cDims):
+                typ = typedesc.ArrayType(
+                    typ, arraydesc.rgbounds[i].lLbound, arraydesc.rgbounds[i].cElements-1
+                )
             return typ
-
         elif tdesc.vt == automation.VT_PTR:
-            typ = self.make_type(tdesc._.lptdesc[0], tinfo)
+            ptrdesc = tdesc._.lptdesc[0]  # type: typeinfo.TYPEDESC
+            typ = self.make_type(ptrdesc, tinfo)
             return PTR(typ)
-
         elif tdesc.vt == automation.VT_USERDEFINED:
             try:
                 ti = tinfo.GetRefTypeInfo(tdesc._.hreftype)
@@ -136,26 +140,24 @@ class Parser(object):
                           (tlib_name, details, type_name)
                 import warnings
                 warnings.warn(message, UserWarning);
-                result = typedesc.Structure(type_name,
-                                            align=8,
-                                            members=[], bases=[],
-                                            size=0)
+                result = typedesc.Structure(
+                    type_name, align=8, members=[], bases=[], size=0
+                )
                 return result
             result = self.parse_typeinfo(ti)
             assert result is not None, ti.GetDocumentation(-1)[0]
             return result
-
         elif tdesc.vt == automation.VT_SAFEARRAY:
             # SAFEARRAY(<type>), see Don Box pp.331f
-            itemtype = self.make_type(tdesc._.lptdesc[0], tinfo)
-            return midlSAFEARRAY(itemtype)
-
+            safearraydesc = tdesc._.lptdesc[0]  # type: typeinfo.TYPEDESC
+            return midlSAFEARRAY(self.make_type(safearraydesc, tinfo))
         raise NotImplementedError(tdesc.vt)
 
     ################################################################
 
     # TKIND_ENUM = 0
     def ParseEnum(self, tinfo, ta):
+        # type: (typeinfo.ITypeInfo, typeinfo.TYPEATTR) -> typedesc.Enumeration
         ta = tinfo.GetTypeAttr()
         enum_name = tinfo.GetDocumentation(-1)[0]
         enum = typedesc.Enumeration(enum_name, 32, 32)
@@ -165,13 +167,14 @@ class Parser(object):
             vd = tinfo.GetVarDesc(i)
             name = tinfo.GetDocumentation(vd.memid)[0]
             assert vd.varkind == typeinfo.VAR_CONST
-            num_val = vd._.lpvarValue[0].value
+            num_val = vd._.lpvarValue[0].value  # type: int
             v = typedesc.EnumValue(name, num_val, enum)
             enum.add_value(v)
         return enum
 
     # TKIND_RECORD = 1
     def ParseRecord(self, tinfo, ta):
+        # type: (typeinfo.ITypeInfo, typeinfo.TYPEATTR) -> typedesc.Structure
         members = [] # will be filled later
         struct_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
         struct = typedesc.Structure(struct_name,
@@ -211,6 +214,7 @@ class Parser(object):
 
     # TKIND_MODULE = 2
     def ParseModule(self, tinfo, ta):
+        # type: (typeinfo.ITypeInfo, typeinfo.TYPEATTR) -> None
         assert 0 == ta.cImplTypes
         # functions
         for i in range(ta.cFuncs):
@@ -253,6 +257,7 @@ class Parser(object):
 
     # TKIND_INTERFACE = 3
     def ParseInterface(self, tinfo, ta):
+        # type: (typeinfo.ITypeInfo, typeinfo.TYPEATTR) -> Optional[typedesc.ComInterface]
         itf_name, itf_doc = tinfo.GetDocumentation(-1)[0:2]
         assert ta.cImplTypes <= 1
         if ta.cImplTypes == 0 and itf_name != "IUnknown":
@@ -284,7 +289,6 @@ class Parser(object):
         members = []
         for i in range(ta.cFuncs):
             fd = tinfo.GetFuncDesc(i)
-##            func_name = tinfo.GetDocumentation(fd.memid)[0]
             func_name, func_doc = tinfo.GetDocumentation(fd.memid)[:2]
             assert fd.funckind == typeinfo.FUNC_PUREVIRTUAL
             returns = self.make_type(fd.elemdescFunc.tdesc, tinfo)
@@ -295,7 +299,6 @@ class Parser(object):
             flags = self.func_flags(fd.wFuncFlags)
             flags += self.inv_kind(fd.invkind)
             mth = typedesc.ComMethod(fd.invkind, fd.memid, func_name, returns, flags, func_doc)
-            mth.oVft = fd.oVft
             for p in range(fd.cParams):
                 typ = self.make_type(fd.lprgelemdescParam[p].tdesc, tinfo)
                 name = names[p+1]
@@ -303,7 +306,7 @@ class Parser(object):
                 if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
                     var = fd.lprgelemdescParam[p]._.paramdesc.pparamdescex[0].varDefaultValue
-                    default = var.value
+                    default = var.value  # type: Any
                 else:
                     default = None
                 mth.add_argument(typ, name, self.param_flags(flags), default)
@@ -317,6 +320,7 @@ class Parser(object):
 
     # TKIND_DISPATCH = 4
     def ParseDispatch(self, tinfo, ta):
+        # type: (typeinfo.ITypeInfo, typeinfo.TYPEATTR) -> typedesc.DispInterface
         itf_name, doc = tinfo.GetDocumentation(-1)[0:2]
         assert ta.cImplTypes == 1
 
@@ -372,20 +376,21 @@ class Parser(object):
             flags += self.inv_kind(fd.invkind)
             mth = typedesc.DispMethod(fd.memid, fd.invkind, func_name, returns, flags, func_doc)
             for p in range(fd.cParams):
-                typ = self.make_type(fd.lprgelemdescParam[p].tdesc, tinfo)
+                descparam = fd.lprgelemdescParam[p]
+                typ = self.make_type(descparam.tdesc, tinfo)
                 name = names[p+1]
-                flags = fd.lprgelemdescParam[p]._.paramdesc.wParamFlags
+                flags = descparam._.paramdesc.wParamFlags
                 if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
-                    var = fd.lprgelemdescParam[p]._.paramdesc.pparamdescex[0].varDefaultValue
-                    default = var.value
+                    var = descparam._.paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
+                    default = var.value  # type: Any
                 else:
                     default = None
                 mth.add_argument(typ, name, self.param_flags(flags), default)
             itf.members.append(mth)
-
         return itf
 
     def inv_kind(self, invkind):
+        # type: (int) -> List[str]
         NAMES = {automation.DISPATCH_METHOD: [],
                  automation.DISPATCH_PROPERTYPUT: ["propput"],
                  automation.DISPATCH_PROPERTYPUTREF: ["propputref"],
@@ -393,6 +398,7 @@ class Parser(object):
         return NAMES[invkind]
 
     def func_flags(self, flags):
+        # type: (int) -> List[str]
         # map FUNCFLAGS values to idl attributes
         NAMES = {typeinfo.FUNCFLAG_FRESTRICTED: "restricted",
                  typeinfo.FUNCFLAG_FSOURCE: "source",
@@ -410,6 +416,7 @@ class Parser(object):
         return [NAMES[bit] for bit in NAMES if bit & flags]
 
     def param_flags(self, flags):
+        # type: (int) -> List[str]
         # map PARAMFLAGS values to idl attributes
         NAMES = {typeinfo.PARAMFLAG_FIN: "in",
                  typeinfo.PARAMFLAG_FOUT: "out",
@@ -422,6 +429,7 @@ class Parser(object):
         return [NAMES[bit] for bit in NAMES if bit & flags]
 
     def coclass_type_flags(self, flags):
+        # type: (int) -> List[str]
         # map TYPEFLAGS values to idl attributes
         NAMES = {typeinfo.TYPEFLAG_FAPPOBJECT: "appobject",
                  # typeinfo.TYPEFLAG_FCANCREATE:
@@ -444,6 +452,7 @@ class Parser(object):
                [NEGATIVE_NAMES[bit] for bit in NEGATIVE_NAMES if not (bit & flags)]
 
     def interface_type_flags(self, flags):
+        # type: (int) -> List[str]
         # map TYPEFLAGS values to idl attributes
         NAMES = {typeinfo.TYPEFLAG_FAPPOBJECT: "appobject",
                  # typeinfo.TYPEFLAG_FCANCREATE:
@@ -466,6 +475,7 @@ class Parser(object):
                [NEGATIVE_NAMES[bit] for bit in NEGATIVE_NAMES if not (bit & flags)]
 
     def var_flags(self, flags):
+        # type: (int) -> List[str]
         NAMES = {typeinfo.VARFLAG_FREADONLY: "readonly",
                  typeinfo.VARFLAG_FSOURCE: "source",
                  typeinfo.VARFLAG_FBINDABLE: "bindable",
@@ -482,9 +492,9 @@ class Parser(object):
                  }
         return [NAMES[bit] for bit in NAMES if bit & flags]
 
-
     # TKIND_COCLASS = 5
     def ParseCoClass(self, tinfo, ta):
+        # type: (typeinfo.ITypeInfo, typeinfo.TYPEATTR) -> typedesc.CoClass
         # possible ta.wTypeFlags: helpstring, helpcontext, licensed,
         #        version, control, hidden, and appobject
         coclass_name, doc = tinfo.GetDocumentation(-1)[0:2]
@@ -507,6 +517,7 @@ class Parser(object):
 
     # TKIND_ALIAS = 6
     def ParseAlias(self, tinfo, ta):
+        # type: (typeinfo.ITypeInfo, typeinfo.TYPEATTR) -> typedesc.Typedef
         name = tinfo.GetDocumentation(-1)[0]
         typ = self.make_type(ta.tdescAlias, tinfo)
         alias = typedesc.Typedef(name, typ)
@@ -515,6 +526,7 @@ class Parser(object):
 
     # TKIND_UNION = 7
     def ParseUnion(self, tinfo, ta):
+        # type: (typeinfo.ITypeInfo, typeinfo.TYPEATTR) -> typedesc.Union
         union_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
         members = []
         union = typedesc.Union(union_name,
@@ -549,6 +561,7 @@ class Parser(object):
     ################################################################
 
     def _typelib_module(self, tlib=None):
+        # type: (Optional[typeinfo.ITypeLib]) -> str
         if tlib is None:
             tlib = self.tlib
         # return a string that uniquely identifies a typelib.
@@ -556,6 +569,7 @@ class Parser(object):
         return str(tlib.GetLibAttr())
 
     def _register(self, name, value, tlib=None):
+        # type: (Optional[str], Any, Optional[typeinfo.ITypeLib]) -> None
         modname = self._typelib_module(tlib)
         fullname = "%s.%s" % (modname, name)
         if fullname in self.items:
@@ -567,6 +581,7 @@ class Parser(object):
         self.items[fullname] = value
 
     def parse_typeinfo(self, tinfo):
+        # type: (typeinfo.ITypeInfo) -> Any
         name = tinfo.GetDocumentation(-1)[0]
         modname = self._typelib_module()
         try:
@@ -579,11 +594,9 @@ class Parser(object):
             ta = tinfo.GetTypeAttr()
             size = ta.cbSizeInstance * 8
             align = ta.cbAlignment * 8
-            typ = typedesc.External(tlib,
-                                    name,
-                                    size,
-                                    align,
-                                    tlib.GetDocumentation(-1)[:2])
+            typ = typedesc.External(
+                tlib, name, size, align, tlib.GetDocumentation(-1)[:2]
+            )
             self._register(name, typ, tlib)
             return typ
 

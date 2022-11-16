@@ -55,7 +55,7 @@ class SAFEARRAYType(object):
 class ComMethod(object):
     # custom COM method, parsed from typelib
     def __init__(self, invkind, memid, name, returns, idlflags, doc):
-        # type: (int, int, str, Typedef, List[str], Optional[str]) -> None
+        # type: (int, int, str, Any, List[str], Optional[str]) -> None
         self.invkind = invkind
         self.name = name
         self.returns = returns
@@ -71,7 +71,7 @@ class ComMethod(object):
 class DispMethod(object):
     # dispatchable COM method, parsed from typelib
     def __init__(self, dispid, invkind, name, returns, idlflags, doc):
-        # type: (int, int, str, Typedef, List[str], Optional[str]) -> None
+        # type: (int, int, str, Any, List[str], Optional[str]) -> None
         self.dispid = dispid
         self.invkind = invkind
         self.name = name
