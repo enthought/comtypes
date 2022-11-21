@@ -69,6 +69,11 @@ class Test_GetModule(ut.TestCase):
         mod = comtypes.client.GetModule(clsid)
         self.assertEqual(mod.MediaPlayer._reg_clsid_, clsid)
 
+    def test_ptr_itypelib(self):
+        from comtypes import typeinfo
+        mod = comtypes.client.GetModule(typeinfo.LoadTypeLibEx("scrrun.dll"))
+        self.assertIs(mod, Scripting)
+
     def test_imports_IEnumVARIANT_from_other_generated_modules(self):
         # NOTE: `codegenerator` generates code that contains unused imports,
         # but removing them are attracting wierd bugs in library-wrappers
@@ -83,6 +88,10 @@ class Test_GetModule(ut.TestCase):
         # `comtypes.patcher.Patch`, and generating module will fail.
         # NOTE: `WindowsInstaller`, which has `Patch` definition in dll.
         comtypes.client.GetModule("msi.dll")
+
+    def test_raises_typerror_if_takes_unsupported(self):
+        with self.assertRaises(TypeError):
+            comtypes.client.GetModule(object())
 
 
 class Test_KnownSymbols(ut.TestCase):
