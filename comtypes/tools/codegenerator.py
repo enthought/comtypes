@@ -13,12 +13,13 @@ else:
     import cStringIO as io
 
 import comtypes
-from comtypes import TYPE_CHECKING
+from comtypes import TYPE_CHECKING, typeinfo
 from comtypes.tools import tlbparser, typedesc
-import comtypes.typeinfo
 
 if TYPE_CHECKING:
-    from typing import List, Union as _UnionT
+    from typing import (
+        Any, Dict, Iterator, List, Optional, Tuple, Union as _UnionT,
+    )
 
 
 version = comtypes.__version__
@@ -185,6 +186,238 @@ def name_friendly_module(tlib):
 
 ################################################################
 
+
+def _to_arg_definition(type_name, arg_name, idlflags, default):
+    # type: (str, str, List[str], _UnionT[lcid, Any, None]) -> str
+    if default is not None:
+        elms = (idlflags, type_name, arg_name, default)
+        code = "        (%r, %s, '%s', %r)" % elms
+        if len(code) > 80:
+            code = (
+                "        (\n"
+                "            %r,\n"
+                "            %s,\n"
+                "            '%s',\n"
+                "            %r\n"
+                "        )"
+            ) % elms
+    else:
+        elms = (idlflags, type_name, arg_name)
+        code = "        (%r, %s, '%s')" % elms
+        if len(code) > 80:
+            code = (
+                "        (\n"
+                "            %r,\n"
+                "            %s,\n"
+                "            '%s',\n"
+                "        )"
+            ) % elms
+    return code
+
+
+class ComMethodGenerator(object):
+    def __init__(self, m, isdual):
+        # type: (typedesc.ComMethod, bool) -> None
+        self._m = m
+        self._isdual = isdual
+        self._stream = io.StringIO()
+        self._to_type_name = TypeNamer()
+
+    def generate(self):
+        # () -> str
+        if not self._m.arguments:
+            self._make_noargs()
+        else:
+            self._make_withargs()
+        return self._stream.getvalue()
+
+    def _get_common_elms(self):
+        # type: () -> Tuple[List[_UnionT[str, dispid, helpstring]], str, str]
+        idlflags = []  # type: List[_UnionT[str, dispid, helpstring]]
+        if self._isdual:
+            idlflags.append(dispid(self._m.memid))
+            idlflags.extend(self._m.idlflags)
+        else:  # We don't include the dispid for non-dispatch COM interfaces
+            idlflags.extend(self._m.idlflags)
+        if __debug__ and self._m.doc:
+            idlflags.insert(1, helpstring(self._m.doc))
+        type_name = self._to_type_name(self._m.returns)
+        return (idlflags, type_name, self._m.name)
+
+    def _make_noargs(self):
+        # type: () -> None
+        elms = self._get_common_elms()
+        code = "    COMMETHOD(%r, %s, '%s')," % elms
+        if len(code) > 80:
+            code = (
+                "    COMMETHOD(\n"
+                "        %r,\n"
+                "        %s,\n"
+                "        '%s',\n"
+                "    ),"
+            ) % elms
+        print(code, file=self._stream)
+    
+    def _make_withargs(self):
+        # type: () -> None
+        code = (
+            "    COMMETHOD(\n"
+            "        %r,\n"
+            "        %s,\n"
+            "        '%s',"
+        ) % self._get_common_elms()
+        print(code, file=self._stream)
+        arglist = [_to_arg_definition(*i) for i in self._iter_args()]
+        print(",\n".join(arglist), file=self._stream)
+        print("    ),", file=self._stream)
+
+    def _iter_args(self):
+        # type: () -> Iterator[Tuple[str, str, List[str], _UnionT[lcid, Any, None]]]
+        for typ, arg_name, _f, _defval in self._m.arguments:
+            ###########################################################
+            # IDL files that contain 'open arrays' or 'conformant
+            # varying arrays' method parameters are strange.
+            # These arrays have both a 'size_is()' and
+            # 'length_is()' attribute, like this example from
+            # dia2.idl (in the DIA SDK):
+            #
+            # interface IDiaSymbol: IUnknown {
+            # ...
+            #     HRESULT get_dataBytes(
+            #         [in] DWORD cbData,
+            #         [out] DWORD *pcbData,
+            #         [out, size_is(cbData),
+            #          length_is(*pcbData)] BYTE data[]
+            #     );
+            #
+            # The really strange thing is that the decompiled type
+            # library then contains this declaration, which declares
+            # the interface itself as [out] method parameter:
+            #
+            # interface IDiaSymbol: IUnknown {
+            # ...
+            #     HRESULT _stdcall get_dataBytes(
+            #         [in] unsigned long cbData,
+            #         [out] unsigned long* pcbData,
+            #         [out] IDiaSymbol data);
+            #
+            # Of course, comtypes does not accept a COM interface
+            # as method parameter; so replace the parameter type
+            # with the comtypes spelling of 'unsigned char *', and
+            # mark the parameter as [in, out], so the IDL
+            # equivalent would be like this:
+            #
+            # interface IDiaSymbol: IUnknown {
+            # ...
+            #     HRESULT _stdcall get_dataBytes(
+            #         [in] unsigned long cbData,
+            #         [out] unsigned long* pcbData,
+            #         [in, out] BYTE data[]);
+            ###########################################################
+            idlflags = list(_f)  # shallow copy to avoid side effects
+            if isinstance(typ, typedesc.ComInterface):
+                type_name = "OPENARRAY"
+                if 'in' not in idlflags:
+                    idlflags.append('in')
+            else:
+                type_name = self._to_type_name(typ)
+            if 'lcid' in idlflags:# and 'in' in idlflags:
+                default = lcid
+            else:
+                default = _defval
+            yield (type_name, arg_name, idlflags, default)
+
+
+class DispMethodGenerator(object):
+    def __init__(self, m):
+        # type: (typedesc.DispMethod) -> None
+        self._m = m
+        self._stream = io.StringIO()
+        self._to_type_name = TypeNamer()
+
+    def generate(self):
+        # () -> str
+        if not self._m.arguments:
+            self._make_noargs()
+        else:
+            self._make_withargs()
+        return self._stream.getvalue()
+
+    def _get_common_elms(self):
+        # type: () -> Tuple[List[_UnionT[str, dispid, helpstring]], str, str]
+        idlflags = []  # type: List[_UnionT[str, dispid, helpstring]]
+        idlflags.append(dispid(self._m.dispid))
+        idlflags.extend(self._m.idlflags)
+        if __debug__ and self._m.doc:
+            idlflags.insert(1, helpstring(self._m.doc))
+        type_name = self._to_type_name(self._m.returns)
+        return (idlflags, type_name, self._m.name)
+
+    def _make_noargs(self):
+        # type: () -> None
+        elms = self._get_common_elms()
+        code = "    DISPMETHOD(%r, %s, '%s')," % elms
+        if len(code) > 80:
+            code = (
+                "    DISPMETHOD(\n"
+                "        %r,\n"
+                "        %s,\n"
+                "        '%s',\n"
+                "    ),"
+            ) % elms
+        print(code, file=self._stream)
+    
+    def _make_withargs(self):
+        # type: () -> None
+        code = (
+            "    DISPMETHOD(\n"
+            "        %r,\n"
+            "        %s,\n"
+            "        '%s',"
+        ) % self._get_common_elms()
+        print(code, file=self._stream)
+        arglist = [_to_arg_definition(*i) for i in self._iter_args()]
+        print(",\n".join(arglist), file=self._stream)
+        print("    ),", file=self._stream)
+
+    def _iter_args(self):
+        # type: () -> Iterator[Tuple[str, str, List[str], _UnionT[lcid, Any, None]]]
+        for typ, arg_name, idlflags, default in self._m.arguments:
+            type_name = self._to_type_name(typ)
+            yield (type_name, arg_name, idlflags, default)
+
+
+class DispPropertyGenerator(object):
+    def __init__(self, m):
+        # type: (typedesc.DispProperty) -> None
+        self._m = m
+        self._to_type_name = TypeNamer()
+
+    def generate(self):
+        # () -> str
+        elms = self._get_common_elms()
+        code = "    DISPPROPERTY(%r, %s, '%s')," % elms
+        if len(code) > 80:
+            code = (
+                "    DISPPROPERTY(\n"
+                "        %r,\n"
+                "        %s,\n"
+                "        '%s'\n"
+                "    ),"
+            ) % elms
+        return code + "\n"
+
+    def _get_common_elms(self):
+        # type: () -> Tuple[List[_UnionT[str, dispid, helpstring]], str, str]
+        idlflags = []  # type: List[_UnionT[str, dispid, helpstring]]
+        idlflags.append(dispid(self._m.dispid))
+        idlflags.extend(self._m.idlflags)
+        if __debug__ and self._m.doc:
+            idlflags.insert(1, helpstring(self._m.doc))
+        type_name = self._to_type_name(self._m.typ)
+        return (idlflags, type_name, self._m.name)
+
+
 class CodeGenerator(object):
 
     def __init__(self, known_symbols=None):
@@ -276,7 +509,7 @@ class CodeGenerator(object):
 
         if filename is not None:
             # get full path to DLL first (os.stat can't work with relative DLL paths properly)
-            loaded_typelib = comtypes.typeinfo.LoadTypeLib(filename)
+            loaded_typelib = typeinfo.LoadTypeLib(filename)
             full_filename = tlbparser.get_tlib_filename(
                 loaded_typelib)
 
@@ -930,212 +1163,47 @@ class CodeGenerator(object):
     def make_ComMethod(self, m, isdual):
         # type: (typedesc.ComMethod, bool) -> None
         self.imports.add("comtypes", "COMMETHOD")
-        # typ, name, idlflags, default
         if isdual:
             self.imports.add("comtypes", "dispid")
-            idlflags = [dispid(m.memid)] + m.idlflags
-        else:
-            # We don't include the dispid for non-dispatch COM interfaces
-            idlflags = m.idlflags
         if __debug__ and m.doc:
             self.imports.add("comtypes", "helpstring")
-            idlflags.insert(1, helpstring(m.doc))
-
+        gen = ComMethodGenerator(m, isdual)
+        print(gen.generate(), file=self.stream, end="")
         self.last_item_class = False
-        if not m.arguments:
-            code = "    COMMETHOD(%r, %s, '%s')," % (idlflags, self._to_type_name(m.returns), m.name)
-            if len(code) > 80:
-                code = (
-                    "    COMMETHOD(\n"
-                    "        %r,\n"
-                    "        %s,\n"
-                    "        '%s',\n"
-                    "    ),"
-                ) % (idlflags, self._to_type_name(m.returns), m.name)
-
-            print(code, file=self.stream)
-        else:
-            code = (
-                "    COMMETHOD(\n"
-                "        %r,\n"
-                "        %s,\n"
-                "        '%s',"
-            ) % (idlflags, self._to_type_name(m.returns), m.name)
-            print(code, file=self.stream)
-            arglist = []
-            for typ, name, idlflags, default in m.arguments:
-                type_name = self._to_type_name(typ)
-                ###########################################################
-                # IDL files that contain 'open arrays' or 'conformant
-                # varying arrays' method parameters are strange.
-                # These arrays have both a 'size_is()' and
-                # 'length_is()' attribute, like this example from
-                # dia2.idl (in the DIA SDK):
-                #
-                # interface IDiaSymbol: IUnknown {
-                # ...
-                #     HRESULT get_dataBytes(
-                #         [in] DWORD cbData,
-                #         [out] DWORD *pcbData,
-                #         [out, size_is(cbData),
-                #          length_is(*pcbData)] BYTE data[]
-                #     );
-                #
-                # The really strange thing is that the decompiled type
-                # library then contains this declaration, which declares
-                # the interface itself as [out] method parameter:
-                #
-                # interface IDiaSymbol: IUnknown {
-                # ...
-                #     HRESULT _stdcall get_dataBytes(
-                #         [in] unsigned long cbData,
-                #         [out] unsigned long* pcbData,
-                #         [out] IDiaSymbol data);
-                #
-                # Of course, comtypes does not accept a COM interface
-                # as method parameter; so replace the parameter type
-                # with the comtypes spelling of 'unsigned char *', and
-                # mark the parameter as [in, out], so the IDL
-                # equivalent would be like this:
-                #
-                # interface IDiaSymbol: IUnknown {
-                # ...
-                #     HRESULT _stdcall get_dataBytes(
-                #         [in] unsigned long cbData,
-                #         [out] unsigned long* pcbData,
-                #         [in, out] BYTE data[]);
-                ###########################################################
-                if isinstance(typ, typedesc.ComInterface):
-                    self.declarations.add("OPENARRAY", "POINTER(c_ubyte)",
-                        "hack, see comtypes/tools/codegenerator.py")
-                    type_name = "OPENARRAY"
-                    if 'in' not in idlflags:
-                        idlflags.append('in')
-                if 'lcid' in idlflags:# and 'in' in idlflags:
-                    default = lcid
-                if default is not None:
-                    self.need_VARIANT_imports(default)
-
-                    code = "        (%r, %s, '%s', %r)" % (idlflags, type_name, name, default)
-
-                    if len(code) > 80:
-                        code = (
-                            "        (\n"
-                            "            %r,\n"
-                            "            %s,\n"
-                            "            '%s',\n"
-                            "            %r\n"
-                            "        )"
-                        ) % (idlflags, type_name, name, default)
-                else:
-                    code = "        (%r, %s, '%s')" % (idlflags, type_name, name)
-                    if len(code) > 80:
-                        code = (
-                            "        (\n"
-                            "            %r,\n"
-                            "            %s,\n"
-                            "            '%s',\n"
-                            "        )"
-                        ) % (idlflags, type_name, name)
-
-                arglist.append(code)
-
-            print(",\n".join(arglist), file=self.stream)
-            print("    ),", file=self.stream)
+        for typ, _, _, default in m.arguments:
+            if isinstance(typ, typedesc.ComInterface):
+                self.declarations.add("OPENARRAY", "POINTER(c_ubyte)",
+                    "hack, see comtypes/tools/codegenerator.py")
+            if default is not None:
+                self.need_VARIANT_imports(default)
 
     def make_DispMethod(self, m):
         # type: (typedesc.DispMethod) -> None
         self.imports.add("comtypes", "DISPMETHOD")
         self.imports.add("comtypes", "dispid")
-        idlflags = [dispid(m.dispid)] + m.idlflags
         if __debug__ and m.doc:
             self.imports.add("comtypes", "helpstring")
-            idlflags.insert(1, helpstring(m.doc))
-
+        gen = DispMethodGenerator(m)
+        print(gen.generate(), file=self.stream, end="")
         self.last_item_class = False
-
-        # typ, name, idlflags, default
-        if not m.arguments:
-            code = "    DISPMETHOD(%r, %s, '%s')," % (idlflags, self._to_type_name(m.returns), m.name)
-            if len(code) > 80:
-                code = (
-                    "    DISPMETHOD(\n"
-                    "        %r,\n"
-                    "        %s,\n"
-                    "        '%s'\n"
-                    "    ),"
-                ) % (idlflags, self._to_type_name(m.returns), m.name)
-
-            print(code, file=self.stream)
-        else:
-            code = (
-                "    DISPMETHOD(\n"
-                "        %r,\n"
-                "        %s,\n"
-                "        '%s',"
-                ) % (idlflags, self._to_type_name(m.returns), m.name)
-
-            print(code, file=self.stream)
-
-            arglist = []
-            for typ, name, idlflags, default in m.arguments:
+        for _, _, _, default in m.arguments:
+            if default is not None:
                 self.need_VARIANT_imports(default)
-                if default is not None:
-                    code = "        (%r, %s, '%s', %r)" % (idlflags, self._to_type_name(typ), name, default)
-                    if len(code) > 80:
-                        code = (
-                            "        (\n"
-                            "            %r,\n"
-                            "            %s,\n"
-                            "            '%s',\n"
-                            "            %r\n"
-                            "        )"
-                        ) % (idlflags, self._to_type_name(typ), name, default)
-
-
-                else:
-                    code = "        (%r, %s, '%s')" % (idlflags, self._to_type_name(typ), name)
-
-                    if len(code) > 80:
-                        code = (
-                            "        (\n"
-                            "            %r,\n"
-                            "            %s,\n"
-                            "            '%s'\n"
-                            "        )"
-                        ) % (idlflags, self._to_type_name(typ), name)
-
-                arglist.append(code)
-
-            print(",\n".join(arglist), file=self.stream)
-            print("    ),", file=self.stream)
 
     def make_DispProperty(self, prop):
         # type: (typedesc.DispProperty) -> None
         self.imports.add("comtypes", "DISPPROPERTY")
         self.imports.add("comtypes", "dispid")
-        idlflags = [dispid(prop.dispid)] + prop.idlflags
         if __debug__ and prop.doc:
             self.imports.add("comtypes", "helpstring")
-            idlflags.insert(1, helpstring(prop.doc))
-
+        gen = DispPropertyGenerator(prop)
+        print(gen.generate(), file=self.stream, end="")
         self.last_item_class = False
-        code = "    DISPPROPERTY(%r, %s, '%s')," % (idlflags, self._to_type_name(prop.typ), prop.name)
-        if len(code) > 80:
-            code = (
-                "    DISPPROPERTY(\n"
-                "        %r,\n"
-                "        %s,\n"
-                "        '%s'\n"
-                "    ),"
-            ) % (idlflags, self._to_type_name(prop.typ), prop.name)
-
-        print(code, file=self.stream)
 
 
 class TypeNamer(object):
     def __call__(self, t):
-        # type: (...) -> str
+        # type: (Any) -> str
         # Return a string, containing an expression which can be used
         # to refer to the type. Assumes the 'from ctypes import *'
         # namespace is available.
@@ -1179,6 +1247,7 @@ class TypeNamer(object):
         return t.name
 
     def _inspect_PointerType(self, t, count=0):
+        # type: (typedesc.PointerType, int) -> Tuple[Any, int]
         if ASSUME_STRINGS:
             x = get_real_type(t.typ)
             if isinstance(x, typedesc.FundamentalType):
