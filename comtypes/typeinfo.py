@@ -8,29 +8,24 @@ import sys
 import weakref
 
 from ctypes import *
-from ctypes.wintypes import ULONG
-from comtypes import STDMETHOD
-from comtypes import COMMETHOD
-from comtypes import _GUID, GUID
-# XXX should import more stuff from ctypes.wintypes...
-from comtypes.automation import BSTR
-from comtypes.automation import DISPID
-from comtypes.automation import DISPPARAMS
-from comtypes.automation import DWORD
-from comtypes.automation import EXCEPINFO
-from comtypes.automation import HRESULT
-from comtypes.automation import IID
-from comtypes.automation import IUnknown
-from comtypes.automation import LCID
-from comtypes.automation import LONG
-from comtypes.automation import SCODE
-from comtypes.automation import UINT
-from comtypes.automation import VARIANT
-from comtypes.automation import VARIANTARG
-from comtypes.automation import VARTYPE
-from comtypes.automation import WCHAR
-from comtypes.automation import WORD
-from comtypes.automation import tagVARIANT
+from ctypes.wintypes import DWORD, LONG, UINT, ULONG, WCHAR, WORD
+from comtypes import (
+    BSTR, COMMETHOD, _GUID, GUID, IID, IUnknown, STDMETHOD, TYPE_CHECKING,
+)
+from comtypes.automation import (
+    DISPID, DISPPARAMS, EXCEPINFO, LCID, SCODE, VARIANT, VARIANTARG, VARTYPE,
+    tagVARIANT,
+)
+
+if TYPE_CHECKING:
+    from ctypes import _CData, _Pointer
+    from typing import (
+        Any, Callable, List, Optional, overload, Sequence, Type, TypeVar,
+        Tuple, Union as _UnionT,
+    )
+    from comtypes import hints
+    _CT = TypeVar("_CT", bound=_CData)
+    _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
 is_64_bit = sys.maxsize > 2**32
 
@@ -185,7 +180,9 @@ PARAMFLAG_FHASCUSTDATA = 64
 
 ################################################################
 # a helper
+
 def _deref_with_release(ptr, release):
+    # type: (_Pointer[_CT], Callable[..., Any]) -> _CT
     # Given a POINTER instance, return the pointed to value.
     # Call the 'release' function with 'ptr' to release resources
     # when the value is no longer needed.
@@ -198,32 +195,46 @@ def _deref_with_release(ptr, release):
 class ITypeLib(IUnknown):
     _iid_ = GUID("{00020402-0000-0000-C000-000000000046}")
 
-    # Commented out methods use the default implementation that comtypes
+    # type-checking only methods use the default implementation that comtypes
     # automatically creates for COM methods.
-
-##    def GetTypeInfoCount(self):
-##        "Return the number of type informations"
-
-##    def GetTypeInfo(self, index):
-##        "Load type info by index"
-
-##    def GetTypeInfoType(self, index):
-##        "Return the TYPEKIND of type information"
-
-##    def GetTypeInfoOfGuid(self, guid):
-##        "Return type information for a guid"
+    if TYPE_CHECKING:
+        def GetTypeInfoCount(self):
+            # type: () -> int
+            """Return the number of type informations"""
+            raise
+        def GetTypeInfo(self, index):
+            # type: (int) -> ITypeInfo
+            """Load type info by index"""
+            raise
+        def GetTypeInfoType(self, index):
+            # type: (int) -> int
+            """Return the TYPEKIND of type information"""
+            raise
+        def GetTypeInfoOfGuid(self, guid):
+            # type: (GUID) -> ITypeInfo
+            """Return type information for a guid"""
+            raise
+        def GetTypeComp(self):
+            # type: () -> ITypeComp
+            """Return an ITypeComp pointer."""
+            raise
+        def GetDocumentation(self, index):
+            # type: (int) -> Tuple[str, str, int, Optional[str]]
+            """Return documentation for a type description."""
+            raise
+        def ReleaseTLibAttr(self, ptla):
+            # type: (_Pointer[TLIBATTR]) -> int
+            """Release TLIBATTR"""
+            raise
+        _GetLibAttr = hints.AnnoField()  # type: Callable[[], _Pointer[TLIBATTR]]
 
     def GetLibAttr(self):
-        "Return type library attributes"
+        # type: () -> TLIBATTR
+        """Return type library attributes"""
         return _deref_with_release(self._GetLibAttr(), self.ReleaseTLibAttr)
 
-##    def GetTypeComp(self):
-##        "Return an ITypeComp pointer."
-
-##    def GetDocumentation(self, index):
-##        "Return documentation for a type description."
-
     def IsName(self, name, lHashVal=0):
+        # type: (str, int) -> Optional[str]
         """Check if there is type information for this name.
 
         Returns the name with capitalization found in the type
@@ -232,27 +243,33 @@ class ITypeLib(IUnknown):
         from ctypes import create_unicode_buffer
         namebuf = create_unicode_buffer(name)
         found = BOOL()
-        self.__com_IsName(namebuf, lHashVal, byref(found))
+        self.__com_IsName(namebuf, lHashVal, byref(found))  # type: ignore
         if found.value:
-            return namebuf[:].split("\0", 1)[0]
+            return namebuf[:].split("\0", 1)[0]  # type: ignore
         return None
 
     def FindName(self, name, lHashVal=0):
+        # type: (str, int) -> Optional[Tuple[int, ITypeInfo]]
         # Hm...
         # Could search for more than one name - should we support this?
         found = c_ushort(1)
         tinfo = POINTER(ITypeInfo)()
         memid = MEMBERID()
-        self.__com_FindName(name, lHashVal, byref(tinfo), byref(memid), byref(found))
+        self.__com_FindName(name, lHashVal, byref(tinfo), byref(memid), byref(found))  # type: ignore
         if found.value:
-            return memid.value, tinfo
+            return memid.value, tinfo  # type: ignore
         return None
 
-##    def ReleaseTLibAttr(self, ptla):
-##        "Release TLIBATTR"
-
 ################
-
+if TYPE_CHECKING:
+    @overload
+    def fix_name(name):
+        # type: (None) -> None
+        pass
+    @overload
+    def fix_name(name):
+        # type: (str) -> str
+        pass
 def fix_name(name):
     # Some typelibs contain BSTR with embedded NUL characters,
     # probably the len of the BSTR is wrong.
@@ -263,12 +280,48 @@ def fix_name(name):
 class ITypeInfo(IUnknown):
     _iid_ = GUID("{00020401-0000-0000-C000-000000000046}")
 
-    def GetTypeAttr(self):
-        "Return the TYPEATTR for this type"
-        return _deref_with_release(self._GetTypeAttr(), self.ReleaseTypeAttr)
+    if TYPE_CHECKING:
+        def GetTypeComp(self):
+            # type: () -> ITypeComp
+            """Return ITypeComp pointer for this type"""
+            raise
+        def GetRefTypeOfImplType(self, index):
+            # type: (int) -> int
+            """Get the reftype of an implemented type"""
+            raise
+        def GetImplTypeFlags(self, index):
+            # type: (int) -> int
+            """Get IMPLTYPEFLAGS"""
+            raise
+        # not yet wrapped
+        # STDMETHOD(HRESULT, 'Invoke', [PVOID, MEMBERID, WORD, POINTER(DISPPARAMS), POINTER(VARIANT), POINTER(EXCEPINFO), POINTER(UINT)]),
+        def GetDllEntry(self, memid, invkind):
+            # type: (int, int) -> Tuple[Optional[str], Optional[str], int]
+            """Return the dll name, function name, and ordinal for a function and invkind."""
+            raise
+        def GetRefTypeInfo(self, href):
+            # type: (int) -> ITypeInfo
+            """Get type info for reftype"""
+            raise
+        def GetMops(self, index):
+            # type: (int) -> Optional[str]
+            """Get marshalling opcodes (whatever that is...)"""
+            raise
+        def GetContainingTypeLib(self):
+            # type: () -> Tuple[ITypeLib, int]
+            """Return index into and the containing type lib itself"""
+            raise
+        ReleaseTypeAttr = hints.AnnoField()  # type: Callable[[_Pointer[TYPEATTR]], int]
+        ReleaseFuncDesc = hints.AnnoField()  # type: Callable[[_Pointer[FUNCDESC]], int]
+        ReleaseVarDesc = hints.AnnoField()  # type: Callable[[_Pointer[VARDESC]], int]
+        _GetTypeAttr = hints.AnnoField()  # type: Callable[[], _Pointer[TYPEATTR]]
+        _GetFuncDesc = hints.AnnoField()  # type: Callable[[int], _Pointer[FUNCDESC]]
+        _GetVarDesc = hints.AnnoField()  # type: Callable[[int], _Pointer[VARDESC]]
+        _GetDocumentation = hints.AnnoField()  # type: Callable[[int], Tuple[str, str, int, Optional[str]]]
 
-##    def GetTypeComp(self):
-##        "Return ITypeComp pointer for this type"
+    def GetTypeAttr(self):
+        """Return the TYPEATTR for this type"""
+        return _deref_with_release(self._GetTypeAttr(), self.ReleaseTypeAttr)
 
     def GetDocumentation(self, memid):
         """Return name, docstring, helpcontext, and helpfile for 'memid'."""
@@ -276,45 +329,31 @@ class ITypeInfo(IUnknown):
         return fix_name(name), fix_name(doc), helpcontext, fix_name(helpfile)
 
     def GetFuncDesc(self, index):
-        "Return FUNCDESC for index"
+        """Return FUNCDESC for index"""
         return _deref_with_release(self._GetFuncDesc(index), self.ReleaseFuncDesc)
 
     def GetVarDesc(self, index):
-        "Return VARDESC for index"
+        """Return VARDESC for index"""
         return _deref_with_release(self._GetVarDesc(index), self.ReleaseVarDesc)
 
     def GetNames(self, memid, count=1):
-        "Return names for memid"
+        # type: (int, int) -> List[str]
+        """Return names for memid"""
         names = (BSTR * count)()
         cnames = c_uint()
-        self.__com_GetNames(memid, names, count, byref(cnames))
+        self.__com_GetNames(memid, names, count, byref(cnames))  # type: ignore
         return names[:cnames.value]
 
-##    def GetRefTypeOfImplType(self, index):
-##        "Get the reftype of an implemented type"
-
-##    def GetImplTypeFlags(self, index):
-##        "Get IMPLTYPEFLAGS"
-
     def GetIDsOfNames(self, *names):
-        "Maps function and argument names to identifiers"
+        # type: (str) -> List[int]
+        """Maps function and argument names to identifiers"""
         rgsznames = (c_wchar_p * len(names))(*names)
         ids = (MEMBERID * len(names))()
-        self.__com_GetIDsOfNames(rgsznames, len(names), ids)
+        self.__com_GetIDsOfNames(rgsznames, len(names), ids)  # type: ignore
         return ids[:]
 
-
-    # not yet wrapped
-##    STDMETHOD(HRESULT, 'Invoke', [PVOID, MEMBERID, WORD, POINTER(DISPPARAMS), POINTER(VARIANT), POINTER(EXCEPINFO), POINTER(UINT)]),
-
-##    def GetDllEntry(self, memid, invkind):
-##        "Return the dll name, function name, and ordinal for a function and invkind."
-
-##    def GetRefTypeInfo(self, href):
-##        "Get type info for reftype"
-
     def AddressOfMember(self, memid, invkind):
-        "Get the address of a function in a dll"
+        """Get the address of a function in a dll"""
         raise RuntimeError("Check Me")
         p = c_void_p()
         self.__com_AddressOfMember(memid, invkind, byref(p))
@@ -322,21 +361,10 @@ class ITypeInfo(IUnknown):
         return p.value
 
     def CreateInstance(self, punkouter=None, interface=IUnknown, iid=None):
+        # type: (Optional[Type[_Pointer[IUnknown]]], Type[_T_IUnknown], Optional[GUID]) -> _T_IUnknown
         if iid is None:
             iid = interface._iid_
-        return self._CreateInstance(punkouter, byref(interface._iid_))
-
-##    def GetMops(self, index):
-##        "Get marshalling opcodes (whatever that is...)"
-
-##    def GetContainingTypeLib(self):
-##        "Return index into and the containing type lib itself"
-
-##    def ReleaseTypeAttr(self, pta):
-
-##    def ReleaseFuncDesc(self, pfd):
-
-##    def ReleaseVarDesc(self, pvd):
+        return self._CreateInstance(punkouter, byref(interface._iid_))  # type: ignore
 
 ################
 
@@ -344,11 +372,12 @@ class ITypeComp(IUnknown):
     _iid_ = GUID("{00020403-0000-0000-C000-000000000046}")
 
     def Bind(self, name, flags=0, lHashVal=0):
-        "Bind to a name"
+        # type: (str, int, int) -> Optional[Tuple[str, _UnionT[FUNCDESC, VARDESC, ITypeComp]]]
+        """Bind to a name"""
         bindptr = BINDPTR()
         desckind = DESCKIND()
-        ti = POINTER(ITypeInfo)()
-        self.__com_Bind(name, lHashVal, flags, byref(ti), byref(desckind), byref(bindptr))
+        ti = POINTER(ITypeInfo)()  # type: ITypeInfo
+        self.__com_Bind(name, lHashVal, flags, byref(ti), byref(desckind), byref(bindptr))  # type: ignore
         kind = desckind.value
         if kind == DESCKIND_FUNCDESC:
             fd = bindptr.lpfuncdesc[0]
@@ -366,11 +395,12 @@ class ITypeComp(IUnknown):
             raise NameError("Name %s not found" % name)
 
     def BindType(self, name, lHashVal=0):
-        "Bind a type, and return both the typeinfo and typecomp for it."
+        # type: (str, int) -> Tuple[ITypeInfo, ITypeComp]
+        """Bind a type, and return both the typeinfo and typecomp for it."""
         ti = POINTER(ITypeInfo)()
         tc = POINTER(ITypeComp)()
-        self.__com_BindType(name, lHashVal, byref(ti), byref(tc))
-        return ti, tc
+        self.__com_BindType(name, lHashVal, byref(ti), byref(tc))  # type: ignore
+        return ti, tc  # type: ignore
 
 
 ################
@@ -385,8 +415,11 @@ class ICreateTypeLib2(ICreateTypeLib):
 class ICreateTypeInfo(IUnknown):
     _iid_ = GUID("{00020405-0000-0000-C000-000000000046}")
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 915
+    if TYPE_CHECKING:
+        _SetFuncAndParamNames = hints.AnnoField()  # Callable[[int, Array[c_wchar_p], int], int]
 
     def SetFuncAndParamNames(self, index, *names):
+        # type: (int, str) -> int
         rgszNames = (c_wchar_p * len(names))()
         for i, n in enumerate(names):
             rgszNames[i] = n
@@ -397,10 +430,11 @@ class IRecordInfo(IUnknown):
     _iid_ = GUID("{0000002F-0000-0000-C000-000000000046}")
 
     def GetFieldNames(self, *args):
+        # type: (Any) -> List[Optional[str]]
         count = c_ulong()
-        self.__com_GetFieldNames(count, None)
+        self.__com_GetFieldNames(count, None)  # type: ignore
         array = (BSTR * count.value)()
-        self.__com_GetFieldNames(count, array)
+        self.__com_GetFieldNames(count, array)  # type: ignore
         result = array[:]
         # XXX Should SysFreeString the array contents. How to?
         return result
@@ -459,59 +493,69 @@ IRecordInfo. _methods_ = [
 _oleaut32 = oledll.oleaut32
 
 def GetRecordInfoFromTypeInfo(tinfo):
+    # type: (ITypeInfo) -> IRecordInfo
     "Return an IRecordInfo pointer to the UDT described in tinfo"
     ri = POINTER(IRecordInfo)()
     _oleaut32.GetRecordInfoFromTypeInfo(tinfo, byref(ri))
-    return ri
+    return ri  # type: ignore
 
 def GetRecordInfoFromGuids(rGuidTypeLib, verMajor, verMinor, lcid, rGuidTypeInfo):
+    # type: (str, int, int, int, str) -> IRecordInfo
     ri = POINTER(IRecordInfo)()
     _oleaut32.GetRecordInfoFromGuids(byref(GUID(rGuidTypeLib)),
                                      verMajor, verMinor, lcid,
                                      byref(GUID(rGuidTypeInfo)),
                                      byref(ri))
-    return ri
+    return ri  # type: ignore
 
 def LoadRegTypeLib(guid, wMajorVerNum, wMinorVerNum, lcid=0):
+    # type: (str, int, int, int) -> ITypeLib
     "Load a registered type library"
     tlib = POINTER(ITypeLib)()
     _oleaut32.LoadRegTypeLib(byref(GUID(guid)), wMajorVerNum, wMinorVerNum, lcid, byref(tlib))
-    return tlib
+    return tlib  # type: ignore
 
 if hasattr(_oleaut32, "LoadTypeLibEx"):
     def LoadTypeLibEx(szFile, regkind=REGKIND_NONE):
+        # type: (str, int) -> ITypeLib
         "Load, and optionally register a type library file"
         ptl = POINTER(ITypeLib)()
         _oleaut32.LoadTypeLibEx(c_wchar_p(szFile), regkind, byref(ptl))
-        return ptl
+        return ptl  # type: ignore
 else:
     def LoadTypeLibEx(szFile, regkind=REGKIND_NONE):
+        # type: (str, int) -> ITypeLib
         "Load, and optionally register a type library file"
         ptl = POINTER(ITypeLib)()
         _oleaut32.LoadTypeLib(c_wchar_p(szFile), byref(ptl))
-        return ptl
+        return ptl  # type: ignore
 
 def LoadTypeLib(szFile):
+    # type: (str) -> ITypeLib
     "Load and register a type library file"
     tlib = POINTER(ITypeLib)()
     _oleaut32.LoadTypeLib(c_wchar_p(szFile), byref(tlib))
-    return tlib
+    return tlib  # type: ignore
 
 def UnRegisterTypeLib(libID, wVerMajor, wVerMinor, lcid=0, syskind=SYS_WIN32):
+    # type: (str, int, int, int, int) -> int
     "Unregister a registered type library"
     return _oleaut32.UnRegisterTypeLib(byref(GUID(libID)), wVerMajor, wVerMinor, lcid, syskind)
 
 def RegisterTypeLib(tlib, fullpath, helpdir=None):
+    # type: (ITypeLib, str, Optional[str]) -> int
     "Register a type library in the registry"
     return _oleaut32.RegisterTypeLib(tlib, c_wchar_p(fullpath), c_wchar_p(helpdir))
 
 def CreateTypeLib(filename, syskind=SYS_WIN32):
+    # type: (str, int) -> ICreateTypeLib2
     "Return a ICreateTypeLib2 pointer"
     ctlib = POINTER(ICreateTypeLib2)()
     _oleaut32.CreateTypeLib2(syskind, c_wchar_p(filename), byref(ctlib))
-    return ctlib
+    return ctlib  # type: ignore
 
 def QueryPathOfRegTypeLib(libid, wVerMajor, wVerMinor, lcid=0):
+    # type: (str, int, int, int) -> str
     "Return the path of a registered type library"
     pathname = BSTR()
     _oleaut32.QueryPathOfRegTypeLib(byref(GUID(libid)), wVerMajor, wVerMinor, lcid, byref(pathname))
@@ -522,6 +566,14 @@ def QueryPathOfRegTypeLib(libid, wVerMajor, wVerMinor, lcid=0):
 
 class tagTLIBATTR(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 4437
+    if TYPE_CHECKING:
+        guid = hints.AnnoField()  # type: GUID
+        lcid = hints.AnnoField()  # type: int
+        syskind = hints.AnnoField()  # type: int
+        wMajorVerNum = hints.AnnoField()  # type: int
+        wMinorVerNum = hints.AnnoField()  # type: int
+        wLibFlags = hints.AnnoField()  # type: int
+
     def __repr__(self):
         return "TLIBATTR(GUID=%s, Version=%s.%s, LCID=%s, FLags=0x%x)" % \
                (self.guid, self.wMajorVerNum, self.wMinorVerNum, self.lcid, self.wLibFlags)
@@ -529,6 +581,26 @@ TLIBATTR = tagTLIBATTR
 
 class tagTYPEATTR(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 672
+    if TYPE_CHECKING:
+        guid = hints.AnnoField()  # type: GUID
+        lcid = hints.AnnoField()  # type: int
+        dwReserved = hints.AnnoField()  # type: int
+        memidConstructor = hints.AnnoField()  # type: int
+        memidDestructor = hints.AnnoField()  # type: int
+        lpstrSchema = hints.AnnoField()  # type: str
+        cbSizeInstance = hints.AnnoField()  # type: int
+        typekind = hints.AnnoField()  # type: int
+        cFuncs = hints.AnnoField()  # type: int
+        cVars = hints.AnnoField()  # type: int
+        cImplTypes = hints.AnnoField()  # type: int 
+        cbSizeVft = hints.AnnoField()  # type: int
+        cbAlignment = hints.AnnoField()  # type: int
+        wTypeFlags = hints.AnnoField()  # type: int
+        wMajorVerNum = hints.AnnoField()  # type: int
+        wMinorVerNum = hints.AnnoField()  # type: int
+        tdescAlias = hints.AnnoField()  # type: TYPEDESC
+        idldescType = hints.AnnoField()  # type: IDLDESC
+
     def __repr__(self):
         return "TYPEATTR(GUID=%s, typekind=%s, funcs=%s, vars=%s, impltypes=%s)" % \
                (self.guid, self.typekind, self.cFuncs, self.cVars, self.cImplTypes)
@@ -536,33 +608,62 @@ TYPEATTR = tagTYPEATTR
 
 class tagFUNCDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 769
+    if TYPE_CHECKING:
+        memid = hints.AnnoField()  # type: int
+        lprgscode = hints.AnnoField()  # type: int
+        lprgelemdescParam = hints.AnnoField()  # type: Sequence[ELEMDESC]
+        funckind = hints.AnnoField()  # type: int
+        invkind = hints.AnnoField()  # type: int
+        callconv = hints.AnnoField()  # type: int
+        cParams = hints.AnnoField()  # type: int
+        cParamsOpt = hints.AnnoField()  # type: int
+        oVft = hints.AnnoField()  # type: int
+        cScodes = hints.AnnoField()  # type: int
+        elemdescFunc = hints.AnnoField()  # type: ELEMDESC
+        wFuncFlags = hints.AnnoField()  # type: int
+
     def __repr__(self):
         return "FUNCDESC(memid=%s, cParams=%s, cParamsOpt=%s, callconv=%s, invkind=%s, funckind=%s)" % \
                (self.memid, self.cParams, self.cParamsOpt, self.callconv, self.invkind, self.funckind)
-
-
 FUNCDESC = tagFUNCDESC
+
 class tagVARDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 803
-    pass
+    if TYPE_CHECKING:
+        memid = hints.AnnoField()  # type: int
+        lpstrSchema = hints.AnnoField()  # type: str
+        _ = hints.AnnoField()  # type: N10tagVARDESC5DOLLAR_205E
+        elemdescVar = hints.AnnoField()  # type: ELEMDESC
+        wVarFlags = hints.AnnoField()  # type: int
+        varkind = hints.AnnoField()  # type: int
 VARDESC = tagVARDESC
 
 class tagBINDPTR(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 3075
-    pass
+    if TYPE_CHECKING:
+        lpfuncdesc = hints.AnnoField()  # type: _Pointer[FUNCDESC]
+        lpvardesc = hints.AnnoField()  # type: _Pointer[VARDESC]
+        lptcomp = hints.AnnoField()  # type: ITypeComp
 BINDPTR = tagBINDPTR
 class tagTYPEDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 582
-    pass
+    if TYPE_CHECKING:
+        _ = hints.AnnoField()  # type: N11tagTYPEDESC5DOLLAR_203E
+        vt = hints.AnnoField()  # type: int
 TYPEDESC = tagTYPEDESC
 class tagIDLDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 633
-    pass
+    if TYPE_CHECKING:
+        dwReserved = hints.AnnoField()  # type: int
+        wIDLFlags = hints.AnnoField()  # type: int
 IDLDESC = tagIDLDESC
 
 class tagARRAYDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 594
-    pass
+    if TYPE_CHECKING:
+        tdescElem = hints.AnnoField()  # type: TYPEDESC
+        cDims = hints.AnnoField()  # type: int
+        rgbounds = hints.AnnoField()  # type: Sequence[SAFEARRAYBOUND]
 
 ################################################################
 # interface vtbl definitions
@@ -729,6 +830,8 @@ ICreateTypeInfo._methods_ = [
 
 class IProvideClassInfo(IUnknown):
     _iid_ = GUID("{B196B283-BAB4-101A-B69C-00AA00341D07}")
+    if TYPE_CHECKING:
+        GetClassInfo = hints.AnnoField()  # type: Callable[[], ITypeInfo]
     _methods_ = [
         # Returns the ITypeInfo interface for the object's coclass type information.
         COMMETHOD([], HRESULT, "GetClassInfo",
@@ -737,6 +840,8 @@ class IProvideClassInfo(IUnknown):
 
 class IProvideClassInfo2(IProvideClassInfo):
     _iid_ = GUID("{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}")
+    if TYPE_CHECKING:
+        GetGUID = hints.AnnoField()  # type: Callable[[int], GUID]
     _methods_ = [
         # Returns the GUID for the object's outgoing IID for its default event set.
         COMMETHOD([], HRESULT, "GetGUID",
@@ -759,7 +864,10 @@ tagTLIBATTR._fields_ = [
 ]
 class N11tagTYPEDESC5DOLLAR_203E(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 584
-    pass
+    if TYPE_CHECKING:
+        lptdesc = hints.AnnoField()  # type: TYPEDESC
+        lpadesc = hints.AnnoField()  # type: tagARRAYDESC
+        hreftype = hints.AnnoField()  # type: int
 N11tagTYPEDESC5DOLLAR_203E._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 584
     ('lptdesc', POINTER(tagTYPEDESC)),
@@ -801,7 +909,9 @@ tagTYPEATTR._fields_ = [
 ]
 class N10tagVARDESC5DOLLAR_205E(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 807
-    pass
+    if TYPE_CHECKING:
+        oInst = hints.AnnoField()  # type: int
+        lpvarValue = hints.AnnoField()  # type: VARIANT
 N10tagVARDESC5DOLLAR_205E._fields_ = [
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 807
     ('oInst', DWORD),
@@ -809,18 +919,26 @@ N10tagVARDESC5DOLLAR_205E._fields_ = [
 ]
 class tagELEMDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 661
-    pass
+    if TYPE_CHECKING:
+        tdesc = hints.AnnoField()  # type: TYPEDESC
+        _ = hints.AnnoField()  # type: N11tagELEMDESC5DOLLAR_204E
 class N11tagELEMDESC5DOLLAR_204E(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 663
-    pass
+    if TYPE_CHECKING:
+        idldesc = hints.AnnoField()  # type: IDLDESC
+        paramdesc = hints.AnnoField()  # type: PARAMDESC
 
 class tagPARAMDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 609
-    pass
+    if TYPE_CHECKING:
+        pparamdescex = hints.AnnoField()  # type: tagPARAMDESCEX
+        wParamFlags = hints.AnnoField()  # type: int
 
 class tagPARAMDESCEX(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 601
-    pass
+    if TYPE_CHECKING:
+        cBytes = hints.AnnoField()  # type: int
+        varDefaultValue = hints.AnnoField()  # type: VARIANTARG
 LPPARAMDESCEX = POINTER(tagPARAMDESCEX)
 
 tagPARAMDESC._fields_ = [
@@ -884,6 +1002,9 @@ tagPARAMDESCEX._fields_ = [
 
 class tagSAFEARRAYBOUND(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 226
+    if TYPE_CHECKING:
+        cElements = hints.AnnoField()  # type: int
+        lLbound = hints.AnnoField()  # type: int
     _fields_ = [
         ('cElements', DWORD),
         ('lLbound', LONG),
