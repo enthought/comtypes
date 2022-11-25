@@ -439,7 +439,7 @@ class IRecordInfo(IUnknown):
         # XXX Should SysFreeString the array contents. How to?
         return result
 
-IRecordInfo. _methods_ = [
+IRecordInfo._methods_ = [
         COMMETHOD([], HRESULT, 'RecordInit',
                   (['in'], c_void_p, 'pvNew')),
         COMMETHOD([], HRESULT, 'RecordClear',
