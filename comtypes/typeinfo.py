@@ -509,8 +509,8 @@ def GetRecordInfoFromGuids(rGuidTypeLib, verMajor, verMinor, lcid, rGuidTypeInfo
     return ri  # type: ignore
 
 def LoadRegTypeLib(guid, wMajorVerNum, wMinorVerNum, lcid=0):
-    # type: (str, int, int, int) -> ITypeLib
-    "Load a registered type library"
+    # type: (_UnionT[str, GUID], int, int, int) -> ITypeLib
+    """Load a registered type library"""
     tlib = POINTER(ITypeLib)()
     _oleaut32.LoadRegTypeLib(byref(GUID(guid)), wMajorVerNum, wMinorVerNum, lcid, byref(tlib))
     return tlib  # type: ignore
