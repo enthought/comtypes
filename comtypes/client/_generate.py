@@ -17,7 +17,7 @@ import comtypes.client
 from comtypes.tools import codegenerator, tlbparser
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, List, Optional, Union as _UnionT
+    from typing import Any, Tuple, List, Optional, Dict, Union as _UnionT
 
 
 logger = logging.getLogger(__name__)
@@ -113,17 +113,19 @@ def GetModule(tlib):
         # the directory of the calling module (if not from command line)
         frame = sys._getframe(1)
         _file_ = frame.f_globals.get("__file__", None)  # type: str
-        pathname, is_abs = _resolve_filename(tlib_string, _file_ and os.path.dirname(_file_))
+        pathname, is_abs = _resolve_filename(
+            tlib_string, _file_ and os.path.dirname(_file_))
         logger.debug("GetModule(%s), resolved: %s", pathname, is_abs)
         tlib = _load_tlib(pathname)  # don't register
         if not is_abs:
             # try to get path after loading, but this only works if already registered
             pathname = tlbparser.get_tlib_filename(tlib)
             if pathname is None:
-                logger.info("GetModule(%s): could not resolve to a filename", tlib)
+                logger.info(
+                    "GetModule(%s): could not resolve to a filename", tlib)
                 pathname = tlib_string
         # if above path torture resulted in an absolute path, then the file exists (at this point)!
-        assert not(os.path.isabs(pathname)) or os.path.exists(pathname)
+        assert not (os.path.isabs(pathname)) or os.path.exists(pathname)
     else:
         pathname = None
         tlib = _load_tlib(tlib)
@@ -162,7 +164,8 @@ def _load_tlib(obj):
         libid, ver = obj[0], obj[1:]
         if not ver:  # case of version numbers are not containing
             with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"TypeLib\%s" % libid) as key:
-                ver = [int(v, base=16) for v in winreg.EnumKey(key, 0).split(".")]
+                ver = [int(v, base=16)
+                       for v in winreg.EnumKey(key, 0).split(".")]
         return typeinfo.LoadRegTypeLib(GUID(libid), *ver)
     # obj is a COMObject implementation
     elif hasattr(obj, "_reg_libid_"):
@@ -246,9 +249,9 @@ def _create_wrapper_module(tlib, pathname):
     return _create_module_in_file(modulename, code)
 
 
-def _get_known_symbols():
-    # type: () -> dict[str, str]
-    known_symbols = {}  # type: dict[str, str]
+def _get_known_symbols() -> Dict[str, str]:
+
+    known_symbols: Dict[str, str] = {}
     for mod_name in (
         "comtypes.persist",
         "comtypes.typeinfo",
@@ -259,7 +262,7 @@ def _get_known_symbols():
     ):
         mod = importlib.import_module(mod_name)
         if hasattr(mod, "__known_symbols__"):
-            names = mod.__known_symbols__  # type: list[str]
+            names: List[str] = mod.__known_symbols__
         else:
             names = list(mod.__dict__)
         for name in names:
@@ -267,6 +270,7 @@ def _get_known_symbols():
     return known_symbols
 
 ################################################################
+
 
 if __name__ == "__main__":
     # When started as script, generate typelib wrapper from .tlb file.
