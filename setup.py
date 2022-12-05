@@ -66,6 +66,24 @@ class test(Command):
             self.failure = self.failure or package_failure
 
 
+try:
+    from wheel.bdist_wheel import bdist_wheel
+    class bdist_wheel_win(bdist_wheel, object):  # @TODO - Python 2 compatible (also super() below) still needed?
+        def get_tag(self):
+            win_plats = (  # Copied the list from DistUtils
+                "win-amd64",
+                "win32",
+                "win-arm64",
+                "win-arm32",
+                "win-ia64",  # Py2 only
+            )
+            tag = super(self.__class__, self).get_tag()
+            return tuple(tag[:-1]) + (".".join(wp.replace("-", "_") for wp in win_plats),)
+
+except ImportError:
+    bdist_wheel_win = None
+
+
 classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
@@ -151,6 +169,7 @@ setup_params = dict(
     cmdclass={
         'test': test,
         'build_py': build_py,
+        'bdist_wheel': bdist_wheel_win,
         'install': post_install,
     },
 
