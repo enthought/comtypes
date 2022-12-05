@@ -181,6 +181,8 @@ setup_params = dict(
         "comtypes.tools",
         "comtypes.test",
     ],
+
+    platforms=["Windows"],
 )
 
 if __name__ == '__main__':
