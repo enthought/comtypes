@@ -1,18 +1,40 @@
 from ctypes import (
-    FormatError, POINTER, Structure, WINFUNCTYPE, byref, c_long, c_void_p,
-    oledll, pointer, windll
+    FormatError,
+    POINTER,
+    Structure,
+    WINFUNCTYPE,
+    byref,
+    c_long,
+    c_void_p,
+    oledll,
+    pointer,
+    windll
 )
 from _ctypes import CopyComPointer
 import logging
-import os
 import sys
 
-from comtypes import COMError, ReturnHRESULT, instancemethod, _encode_idl
-from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
+from comtypes import (
+    COMError,
+    ReturnHRESULT,
+    instancemethod,
+    _encode_idl
+)
+from comtypes.errorinfo import (
+    ISupportErrorInfo,
+    ReportException,
+    ReportError
+)
 from comtypes import IPersist
 from comtypes.hresult import (
-    DISP_E_BADINDEX, DISP_E_MEMBERNOTFOUND, E_FAIL, E_NOINTERFACE,
-    E_INVALIDARG, E_NOTIMPL, RPC_E_CHANGED_MODE, S_FALSE, S_OK
+    DISP_E_BADINDEX,
+    DISP_E_MEMBERNOTFOUND,
+    E_FAIL, E_NOINTERFACE,
+    E_INVALIDARG,
+    E_NOTIMPL,
+    RPC_E_CHANGED_MODE,
+    S_FALSE,
+    S_OK
 )
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 
@@ -25,7 +47,7 @@ _error = logger.error
 if sys.version_info >= (3, 0):
     int_types = (int, )
 else:
-    int_types = (int, long)
+    int_types = (int, long)  # NOQA
 
 ################################################################
 # COM object implementation
@@ -42,7 +64,7 @@ class E_NotImplemented(Exception):
 
 
 def HRESULT_FROM_WIN32(errcode):
-    "Convert a Windows error code into a HRESULT value."
+    """Convert a Windows error code into a HRESULT value."""
     if errcode is None:
         return 0x80000000
     if errcode & 0x80000000:
@@ -51,10 +73,11 @@ def HRESULT_FROM_WIN32(errcode):
 
 
 def winerror(exc):
-    """Return the windows error code from a WindowsError or COMError
-    instance."""
+    """
+    Return the windows error code from a WindowsError or COMError instance.
+    """
     if isinstance(exc, COMError):
-        return exc.hresult
+        return exc.hresult  # NOQA
     elif isinstance(exc, WindowsError):
         code = exc.winerror
         if isinstance(code, int_types):
@@ -63,14 +86,21 @@ def winerror(exc):
         # violation raised by ctypes has only text, for example.  In this
         # cases we return a generic error code.
         return E_FAIL
-    raise TypeError("Expected comtypes.COMERROR or WindowsError instance, got %s" % type(exc).__name__)
+    raise TypeError(
+        "Expected comtypes.COMERROR or WindowsError instance, got %s" %
+        type(exc).__name__
+    )
 
 
 def _do_implement(interface_name, method_name):
-    def _not_implemented(*args):
+    def _not_implemented(*_):
         """Return E_NOTIMPL because the method is not implemented."""
-        _debug("unimplemented method %s_%s called", interface_name,
-               method_name)
+        _debug(
+            "unimplemented method %s_%s called",
+            interface_name,
+            method_name
+        )
+
         return E_NOTIMPL
     return _not_implemented
 
@@ -83,29 +113,46 @@ def catch_errors(obj, mth, paramflags, interface, mthname):
             result = mth(*args, **kw)
         except ReturnHRESULT as err:
             (hresult, text) = err.args
-            return ReportError(text, iid=interface._iid_, clsid=clsid,
-                               hresult=hresult)
+            return ReportError(
+                text,
+                iid=interface._iid_,  # NOQA
+                clsid=clsid,
+                hresult=hresult
+            )
         except (COMError, WindowsError) as details:
-            _error("Exception in %s.%s implementation:", interface.__name__,
-                   mthname, exc_info=True)
+            _error(
+                "Exception in %s.%s implementation:",
+                interface.__name__,
+                mthname,
+                exc_info=True
+            )
             return HRESULT_FROM_WIN32(winerror(details))
         except E_NotImplemented:
-            _warning("Unimplemented method %s.%s called", interface.__name__,
-                     mthname)
+            _warning(
+                "Unimplemented method %s.%s called",
+                interface.__name__,
+                mthname
+            )
             return E_NOTIMPL
-        except:
-            _error("Exception in %s.%s implementation:", interface.__name__,
-                   mthname, exc_info=True)
-            return ReportException(E_FAIL, interface._iid_, clsid=clsid)
+        except:  # NOQA
+            _error(
+                "Exception in %s.%s implementation:",
+                interface.__name__,
+                mthname,
+                exc_info=True
+            )
+            return ReportException(E_FAIL, interface._iid_, clsid=clsid)  # NOQA
         if result is None:
             return S_OK
         return result
+
     if paramflags is None:
         has_outargs = False
     else:
         has_outargs = bool([x[0] for x in paramflags
                             if x[0] & 2])
     call_with_this.has_outargs = has_outargs
+
     return call_with_this
 
 
@@ -114,9 +161,11 @@ def catch_errors(obj, mth, paramflags, interface, mthname):
 def hack(inst, mth, paramflags, interface, mthname):
     if paramflags is None:
         return catch_errors(inst, mth, paramflags, interface, mthname)
+
     code = mth.__code__
     if code.co_varnames[1:2] == ("this",):
         return catch_errors(inst, mth, paramflags, interface, mthname)
+
     dirflags = [f[0] for f in paramflags]
     # An argument is an input arg either if flags are NOT set in the
     # idl file, or if the flags contain 'in'. In other words, the
@@ -126,30 +175,31 @@ def hack(inst, mth, paramflags, interface, mthname):
     args_out_idx = []
     args_in_idx = []
     for i, a in enumerate(dirflags):
-        if a&2:
+        if a & 2:
             args_out_idx.append(i)
-        if a&1 or a==0:
+        if a & 1 or a == 0:
             args_in_idx.append(i)
+
     args_out = len(args_out_idx)
 
-    ## XXX Remove this:
-##    if args_in != code.co_argcount - 1:
-##        return catch_errors(inst, mth, interface, mthname)
+    # XXX Remove this:
+    # if args_in != code.co_argcount - 1:
+    #     return catch_errors(inst, mth, interface, mthname)
 
     clsid = getattr(inst, "_reg_clsid_", None)
 
-    def call_without_this(this, *args):
+    def call_without_this(_, *args):
         # Method implementations could check for and return E_POINTER
         # themselves.  Or an error will be raised when
         # 'outargs[i][0] = value' is executed.
-##        for a in outargs:
-##            if not a:
-##                return E_POINTER
+        # for a in outargs:
+        #     if not a:
+        #        return E_POINTER
 
-        #make argument list for handler by index array built above
+        # make argument list for handler by index array built above
         inargs = []
-        for a in args_in_idx:
-            inargs.append(args[a])
+        for arg in args_in_idx:
+            inargs.append(args[arg])
         try:
             result = mth(*inargs)
             if args_out == 1:
@@ -158,16 +208,25 @@ def hack(inst, mth, paramflags, interface, mthname):
                 if len(result) != args_out:
                     msg = "Method should have returned a %s-tuple" % args_out
                     raise ValueError(msg)
-                for i, value in enumerate(result):
-                    args[args_out_idx[i]][0] = value
+                for index, value in enumerate(result):
+                    args[args_out_idx[index]][0] = value
+
         except ReturnHRESULT as err:
             (hresult, text) = err.args
-            return ReportError(text, iid=interface._iid_, clsid=clsid,
-                               hresult=hresult)
+            return ReportError(
+                text,
+                iid=interface._iid_,  # NOQA
+                clsid=clsid,
+                hresult=hresult
+            )
         except COMError as err:
             (hr, text, details) = err.args
-            _error("Exception in %s.%s implementation:", interface.__name__,
-                   mthname, exc_info=True)
+            _error(
+                "Exception in %s.%s implementation:",
+                interface.__name__,
+                mthname,
+                exc_info=True
+            )
             try:
                 descr, source, helpfile, helpcontext, progid = details
             except (ValueError, TypeError):
@@ -175,24 +234,49 @@ def hack(inst, mth, paramflags, interface, mthname):
             else:
                 msg = "%s: %s" % (source, descr)
             hr = HRESULT_FROM_WIN32(hr)
-            return ReportError(msg, iid=interface._iid_, clsid=clsid,
-                               hresult=hr)
+            return ReportError(
+                msg,
+                iid=interface._iid_,  # NOQA
+                clsid=clsid,
+                hresult=hr
+            )
         except WindowsError as details:
-            _error("Exception in %s.%s implementation:", interface.__name__,
-                   mthname, exc_info=True)
+            _error(
+                "Exception in %s.%s implementation:",
+                interface.__name__,
+                mthname,
+                exc_info=True
+            )
             hr = HRESULT_FROM_WIN32(winerror(details))
-            return ReportException(hr, interface._iid_, clsid=clsid)
+            return ReportException(
+                hr,
+                interface._iid_,  # NOQA
+                clsid=clsid
+            )
         except E_NotImplemented:
-            _warning("Unimplemented method %s.%s called", interface.__name__,
-                     mthname)
+            _warning(
+                "Unimplemented method %s.%s called",
+                interface.__name__,
+                mthname
+            )
             return E_NOTIMPL
-        except:
-            _error("Exception in %s.%s implementation:", interface.__name__,
-                   mthname, exc_info=True)
-            return ReportException(E_FAIL, interface._iid_, clsid=clsid)
+        except:  # NOQA
+            _error(
+                "Exception in %s.%s implementation:",
+                interface.__name__,
+                mthname,
+                exc_info=True
+            )
+            return ReportException(
+                E_FAIL,
+                interface._iid_,  # NOQA
+                clsid=clsid
+            )
         return S_OK
+
     if args_out:
         call_without_this.has_outargs = True
+
     return call_without_this
 
 
@@ -220,7 +304,7 @@ class _MethodFinder(object):
 
     def find_impl(self, interface, mthname, paramflags, idlflags):
         fq_name = "%s_%s" % (interface.__name__, mthname)
-        if interface._case_insensitive_:
+        if interface._case_insensitive_:  # NOQA
             # simple name, like 'QueryInterface'
             mthname = self.names.get(mthname.lower(), mthname)
             # qualified name, like 'IUnknown_QueryInterface'
@@ -231,7 +315,7 @@ class _MethodFinder(object):
         except AttributeError:
             pass
         propname = mthname[5:]  # strip the '_get_' or '_set' prefix
-        if interface._case_insensitive_:
+        if interface._case_insensitive_:  # NOQA
             propname = self.names.get(propname.lower(), propname)
         # propput and propget is done with 'normal' attribute access,
         # but only for COM properties that do not take additional
@@ -241,28 +325,34 @@ class _MethodFinder(object):
             return self.getter(propname)
         if "propput" in idlflags and len(paramflags) == 1:
             return self.setter(propname)
-        _debug("%r: %s.%s not implemented", self.inst, interface.__name__,
-               mthname)
+        _debug(
+            "%r: %s.%s not implemented",
+            self.inst,
+            interface.__name__,
+            mthname
+        )
         return None
 
     def setter(self, propname):
         #
-        def set(self, value):
+        def _set(self, value):  # NOQA
             try:
                 # XXX this may not be correct is the object implements
                 # _get_PropName but not _set_PropName
                 setattr(self, propname, value)
             except AttributeError:
                 raise E_NotImplemented()
-        return instancemethod(set, self.inst, type(self.inst))
+
+        return instancemethod(_set, self.inst, type(self.inst))
 
     def getter(self, propname):
-        def get(self):
+        def _get(self):  # NOQA
             try:
                 return getattr(self, propname)
             except AttributeError:
                 raise E_NotImplemented()
-        return instancemethod(get, self.inst, type(self.inst))
+
+        return instancemethod(_get, self.inst, type(self.inst))
 
 
 def _create_vtbl_type(fields, itf):
@@ -271,9 +361,12 @@ def _create_vtbl_type(fields, itf):
     except KeyError:
         class Vtbl(Structure):
             _fields_ = fields
+
         Vtbl.__name__ = "Vtbl_%s" % itf.__name__
         _vtbl_types[fields] = Vtbl
+
         return Vtbl
+
 
 # Ugh. Another type cache to avoid leaking types.
 _vtbl_types = {}
@@ -332,9 +425,9 @@ class LocalServer(object):
             self.run_sta()
 
         for obj in classobjects:
-            obj._revoke_class()
+            obj._revoke_class()  # NOQA
 
-    def run_sta(self):
+    def run_sta(self):  # NOQA
         from comtypes import messageloop
         messageloop.run()
 
@@ -342,11 +435,11 @@ class LocalServer(object):
         if sys.version_info >= (3, 0):
             import queue
         else:
-            import Queue as queue
+            import Queue as queue  # NOQA
         self._queue = queue.Queue()
         self._queue.get()
 
-    def Lock(self):
+    def Lock(self):  # NOQA
         oledll.ole32.CoAddRefServerProcess()
 
     def Unlock(self):
@@ -372,7 +465,7 @@ class InprocServer(object):
     def DllCanUnloadNow(self):
         if self.locks.value:
             return S_FALSE
-        if COMObject._instances_:
+        if COMObject._instances_:  # NOQA
             return S_FALSE
         return S_OK
 
@@ -410,21 +503,26 @@ class COMObject(object):
         #   attribute)
         #
         # Add these if they are not listed in _com_interfaces_.
-        interfaces = tuple(self._com_interfaces_)
+        interfaces = tuple(self._com_interfaces_)  # NOQA
         if ISupportErrorInfo not in interfaces:
             interfaces += (ISupportErrorInfo,)
         if hasattr(self, "_reg_typelib_"):
             from comtypes.typeinfo import LoadRegTypeLib
             self._COMObject__typelib = LoadRegTypeLib(*self._reg_typelib_)
+
             if hasattr(self, "_reg_clsid_"):
                 if IProvideClassInfo not in interfaces:
                     interfaces += (IProvideClassInfo,)
-                if hasattr(self, "_outgoing_interfaces_") and \
-                   IProvideClassInfo2 not in interfaces:
+                if (
+                    hasattr(self, "_outgoing_interfaces_") and
+                    IProvideClassInfo2 not in interfaces
+                ):
                     interfaces += (IProvideClassInfo2,)
+
         if hasattr(self, "_reg_clsid_"):
             if IPersist not in interfaces:
                 interfaces += (IPersist,)
+
         for itf in interfaces[::-1]:
             self.__make_interface_pointer(itf)
 
@@ -435,21 +533,24 @@ class COMObject(object):
         # iterate over interface inheritance in reverse order to build the
         # virtual function table, and leave out the 'object' base class.
         finder = self._get_method_finder_(itf)
+        interface = None
+
         for interface in itf.__mro__[-2::-1]:
-            iids.append(interface._iid_)
-            for m in interface._methods_:
+            iids.append(interface._iid_)  # NOQA
+            for m in interface._methods_:  # NOQA
                 restype, mthname, argtypes, paramflags, idlflags, helptext = m
                 proto = WINFUNCTYPE(restype, c_void_p, *argtypes)
                 fields.append((mthname, proto))
                 mth = finder.get_impl(interface, mthname, paramflags, idlflags)
                 methods.append(proto(mth))
+
         Vtbl = _create_vtbl_type(tuple(fields), itf)
         vtbl = Vtbl(*methods)
         for iid in iids:
             self._com_pointers_[iid] = pointer(pointer(vtbl))
         if hasattr(itf, "_disp_methods_"):
             self._dispimpl_ = {}
-            for m in itf._disp_methods_:
+            for m in itf._disp_methods_:  # NOQA
                 what, mthname, idlflags, restype, argspec = m
                 #################
                 # What we have:
@@ -488,32 +589,52 @@ class COMObject(object):
                         invkind = 1  # DISPATCH_METHOD
                         if restype:
                             argspec = argspec + ((['out'], restype, ""),)
-                    self.__make_dispentry(finder, interface, mthname,
-                                          idlflags, argspec, invkind)
+                    self.__make_dispentry(
+                        finder,
+                        interface,
+                        mthname,
+                        idlflags,
+                        argspec,
+                        invkind
+                    )
                 elif what == "DISPPROPERTY":
                     # DISPPROPERTY have implicit "out"
                     if restype:
                         argspec += ((['out'], restype, ""),)
-                    self.__make_dispentry(finder, interface,
-                                          "_get_" + mthname,
-                                          idlflags, argspec,
-                                          2  # DISPATCH_PROPERTYGET
-                                          )
-                    if not 'readonly' in idlflags:
-                        self.__make_dispentry(finder, interface,
-                                              "_set_" + mthname,
-                                              idlflags, argspec,
-                                              4)  # DISPATCH_PROPERTYPUT
+                    self.__make_dispentry(
+                        finder,
+                        interface,
+                        "_get_" + mthname,
+                        idlflags,
+                        argspec,
+                        2  # DISPATCH_PROPERTYGET
+                    )
+                    if 'readonly' not in idlflags:
+                        self.__make_dispentry(
+                            finder,
+                            interface,
+                            "_set_" + mthname,
+                            idlflags, argspec,
+                            4
+                        )  # DISPATCH_PROPERTYPUT
                         # Add DISPATCH_PROPERTYPUTREF also?
 
-    def __make_dispentry(self,
-                         finder, interface, mthname,
-                         idlflags, argspec, invkind):
+    def __make_dispentry(
+        self,
+        finder,
+        interface,
+        mthname,
+        idlflags,
+        argspec,
+        invkind
+    ):
         # We build a _dispmap_ entry now that maps invkind and
         # dispid to implementations that the finder finds;
         # IDispatch_Invoke will later call it.
-        paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:]))
-                      for x in argspec]
+        paramflags = [
+            ((_encode_idl(x[0]), x[1]) + tuple(x[3:]))
+            for x in argspec
+        ]
         # XXX can the dispid be at a different index?  Check codegenerator.
         dispid = idlflags[0]
         impl = finder.get_impl(interface, mthname, paramflags, idlflags)
@@ -553,8 +674,11 @@ class COMObject(object):
     @staticmethod
     def __keep__(obj):
         COMObject._instances_[obj] = None
-        _debug("%d active COM objects: Added   %r", len(COMObject._instances_),
-               obj)
+        _debug(
+            "%d active COM objects: Added   %r",
+            len(COMObject._instances_),
+            obj
+        )
         if COMObject.__server__:
             COMObject.__server__.Lock()
 
@@ -565,47 +689,61 @@ class COMObject(object):
         except AttributeError:
             _debug("? active COM objects: Removed %r", obj)
         else:
-            _debug("%d active COM objects: Removed %r",
-                   len(COMObject._instances_), obj)
+            _debug(
+                "%d active COM objects: Removed %r",
+                len(COMObject._instances_),
+                obj
+            )
         _debug("Remaining: %s", list(COMObject._instances_.keys()))
         if COMObject.__server__:
             COMObject.__server__.Unlock()
-    #
+
     ################################################################
 
     #########################################################
     # IUnknown methods implementations
-    def IUnknown_AddRef(self, this,
-                        __InterlockedIncrement=_InterlockedIncrement,
-                        _debug=_debug):
+    def IUnknown_AddRef(
+        self,
+        this,
+        __InterlockedIncrement=_InterlockedIncrement,
+        _debug=_debug
+    ):
         result = __InterlockedIncrement(self._refcnt)
         if result == 1:
             self.__keep__(self)
         _debug("%r.AddRef() -> %s", self, result)
+
         return result
 
     def _final_release_(self):
-        """This method may be overridden in subclasses
-        to free allocated resources or so."""
+        """
+        This method may be overridden in subclasses
+        to free allocated resources or so.
+        """
         pass
 
-    def IUnknown_Release(self, this,
-                         __InterlockedDecrement=_InterlockedDecrement,
-                         _debug=_debug):
+    def IUnknown_Release(
+        self,
+        this,
+        __InterlockedDecrement=_InterlockedDecrement,
+        _debug=_debug
+    ):
         # If this is called at COM shutdown, _InterlockedDecrement()
         # must still be available, although module level variables may
         # have been deleted already - so we supply it as default
         # argument.
         result = __InterlockedDecrement(self._refcnt)
         _debug("%r.Release() -> %s", self, result)
+
         if result == 0:
             self._final_release_()
             self.__unkeep__(self)
             # Hm, why isn't this cleaned up by the cycle gc?
-            self._com_pointers_ = {}
+            self._com_pointers_ = {}  # NOQA
+
         return result
 
-    def IUnknown_QueryInterface(self, this, riid, ppvObj, _debug=_debug):
+    def IUnknown_QueryInterface(self, _, riid, ppvObj, _debug=_debug):
         # XXX This is probably too slow.
         # riid[0].hashcode() alone takes 33 us!
         iid = riid[0]
@@ -618,15 +756,18 @@ class COMObject(object):
         return E_NOINTERFACE
 
     def QueryInterface(self, interface):
-        "Query the object for an interface pointer"
+        """Query the object for an interface pointer"""
         # This method is NOT the implementation of
         # IUnknown::QueryInterface, instead it is supposed to be
         # called on an COMObject by user code.  It allows to get COM
         # interface pointers from COMObject instances.
-        ptr = self._com_pointers_.get(interface._iid_, None)
+        ptr = self._com_pointers_.get(interface._iid_, None)  # NOQA
         if ptr is None:
-            raise COMError(E_NOINTERFACE, FormatError(E_NOINTERFACE),
-                           (None, None, 0, None, None))
+            raise COMError(
+                E_NOINTERFACE,
+                FormatError(E_NOINTERFACE),
+                (None, None, 0, None, None)
+            )
         # CopyComPointer(src, dst) calls AddRef!
         result = POINTER(interface)()
         CopyComPointer(ptr, byref(result))
@@ -634,7 +775,7 @@ class COMObject(object):
 
     ################################################################
     # ISupportErrorInfo::InterfaceSupportsErrorInfo implementation
-    def ISupportErrorInfo_InterfaceSupportsErrorInfo(self, this, riid):
+    def ISupportErrorInfo_InterfaceSupportsErrorInfo(self, _, riid):
         if riid[0] in self._com_pointers_:
             return S_OK
         return S_FALSE
@@ -643,10 +784,10 @@ class COMObject(object):
     # IProvideClassInfo::GetClassInfo implementation
     def IProvideClassInfo_GetClassInfo(self):
         try:
-            self.__typelib
+            self.__typelib  # NOQA
         except AttributeError:
             raise WindowsError(E_NOTIMPL)
-        return self.__typelib.GetTypeInfoOfGuid(self._reg_clsid_)
+        return self.__typelib.GetTypeInfoOfGuid(self._reg_clsid_)  # NOQA
 
     ################################################################
     # IProvideClassInfo2::GetGUID implementation
@@ -655,7 +796,7 @@ class COMObject(object):
         # GUIDKIND_DEFAULT_SOURCE_DISP_IID = 1
         if dwGuidKind != 1:
             raise WindowsError(E_INVALIDARG)
-        return self._outgoing_interfaces_[0]._iid_
+        return self._outgoing_interfaces_[0]._iid_  # NOQA
 
     ################################################################
     # IDispatch methods
@@ -663,18 +804,18 @@ class COMObject(object):
     def __typeinfo(self):
         # XXX Looks like this better be a static property, set by the
         # code that sets __typelib also...
-        iid = self._com_interfaces_[0]._iid_
-        return self.__typelib.GetTypeInfoOfGuid(iid)
+        iid = self._com_interfaces_[0]._iid_  # NOQA
+        return self.__typelib.GetTypeInfoOfGuid(iid)  # NOQA
 
     def IDispatch_GetTypeInfoCount(self):
         try:
-            self.__typelib
+            self.__typelib  # NOQA
         except AttributeError:
             return 0
         else:
             return 1
 
-    def IDispatch_GetTypeInfo(self, this, itinfo, lcid, ptinfo):
+    def IDispatch_GetTypeInfo(self, _, itinfo, __, ptinfo):
         if itinfo != 0:
             return DISP_E_BADINDEX
         try:
@@ -683,8 +824,15 @@ class COMObject(object):
         except AttributeError:
             return E_NOTIMPL
 
-    def IDispatch_GetIDsOfNames(self, this, riid, rgszNames, cNames, lcid,
-                                rgDispId):
+    def IDispatch_GetIDsOfNames(
+            self,
+            _,
+            __,
+            rgszNames,
+            cNames,
+            ___,
+            rgDispId
+    ):
         # This call uses windll instead of oledll so that a failed
         # call to DispGetIDsOfNames will return a HRESULT instead of
         # raising an error.
@@ -692,11 +840,25 @@ class COMObject(object):
             tinfo = self.__typeinfo
         except AttributeError:
             return E_NOTIMPL
-        return windll.oleaut32.DispGetIDsOfNames(tinfo,
-                                                 rgszNames, cNames, rgDispId)
+        return windll.oleaut32.DispGetIDsOfNames(
+            tinfo,
+            rgszNames,
+            cNames,
+            rgDispId
+        )
 
-    def IDispatch_Invoke(self, this, dispIdMember, riid, lcid, wFlags,
-                         pDispParams, pVarResult, pExcepInfo, puArgErr):
+    def IDispatch_Invoke(
+        self,
+        this,
+        dispIdMember,
+        _,
+        __,
+        wFlags,
+        pDispParams,
+        pVarResult,
+        pExcepInfo,
+        puArgErr
+    ):
         try:
             self._dispimpl_
         except AttributeError:
@@ -712,11 +874,17 @@ class COMObject(object):
             # This call uses windll instead of oledll so that a failed
             # call to DispInvoke will return a HRESULT instead of raising
             # an error.
-            interface = self._com_interfaces_[0]
-            ptr = self._com_pointers_[interface._iid_]
+            interface = self._com_interfaces_[0]  # NOQA
+            ptr = self._com_pointers_[interface._iid_]  # NOQA
             return windll.oleaut32.DispInvoke(
-                ptr, tinfo, dispIdMember, wFlags, pDispParams, pVarResult,
-                pExcepInfo, puArgErr
+                ptr,
+                tinfo,
+                dispIdMember,
+                wFlags,
+                pDispParams,
+                pVarResult,
+                pExcepInfo,
+                puArgErr
             )
 
         try:
@@ -758,8 +926,10 @@ class COMObject(object):
             # 2to3 has problems to translate 'range(...)[::-1]'
             # correctly, so use 'list(range)[::-1]' instead (will be
             # fixed in Python 3.1, probably):
-            named_indexes = [params.rgdispidNamedArgs[i]
-                             for i in range(params.cNamedArgs)]
+            named_indexes = [
+                params.rgdispidNamedArgs[i]
+                for i in range(params.cNamedArgs)
+            ]
             # the positions of unnamed arguments
             num_unnamed = params.cArgs - params.cNamedArgs
             unnamed_indexes = list(reversed(list(range(num_unnamed))))
@@ -775,6 +945,7 @@ class COMObject(object):
     ################################################################
     # IPersist interface
     def IPersist_GetClassID(self):
-        return self._reg_clsid_
+        return self._reg_clsid_  # NOQA
+
 
 __all__ = ["COMObject"]
