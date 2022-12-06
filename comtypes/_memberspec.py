@@ -4,9 +4,17 @@ import comtypes
 from comtypes import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from comtypes import _CData
+    from comtypes import _CData  # NOQA
     from typing import (
-        Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union as _UnionT
+        Any,
+        Callable,
+        Dict,
+        Iterator,
+        List,
+        Optional,
+        Tuple,
+        Type,
+        Union as _UnionT
     )
     PositionalParamFlagType = Tuple[int, Optional[str]]
     OptionalParamFlagType = Tuple[int, Optional[str], Any]
@@ -40,9 +48,11 @@ def _unpack_argspec(idl, typ, name=None, defval=_NOTHING):
 
 def _resolve_argspec(items):
     # type: (Tuple[ArgSpecElmType, ...]) -> Tuple[Tuple[ParamFlagType, ...], Tuple[Type[_CData], ...]]
-    """Unpacks and converts from argspec to paramflags and argtypes.
+    """
+    Unpacks and converts from argspec to paramflags and argtypes.
 
-    - paramflags is a sequence of `(pflags: int, argname: str, | None[, defval: Any])`.
+    - paramflags is a sequence of
+      `(pflags: int, argname: str, | None[, defval: Any])`.
     - argtypes is a sequence of `type[_CData]`.
     """
     from comtypes.automation import VARIANT
@@ -59,7 +69,8 @@ def _resolve_argspec(items):
                 elif typ is ctypes.POINTER(VARIANT):
                     defval = ctypes.pointer(VARIANT.missing)
                 else:
-                    # msg = ("'optional' only allowed for VARIANT and VARIANT*, not for %s" % typ.__name__)
+                    # msg = ("'optional' only allowed for VARIANT and
+                    # VARIANT*, not for %s" % typ.__name__)
                     # warnings.warn(msg, IDLWarning, stacklevel=2)
                     defval = typ()
         if defval is _NOTHING:
@@ -73,6 +84,7 @@ def _resolve_argspec(items):
 class _MemberSpec(object):
     """Specifier of a slot of method or property."""
     __slots__ = ("name", "idlflags", "restype")
+
     def __init__(self, name, idlflags, restype):
         self.name = name  # type: str
         self.idlflags = idlflags  # type: Tuple[_UnionT[str, int], ...]
@@ -98,7 +110,14 @@ class _ComMemberSpec(_MemberSpec):
         # for backward compatibility:
         # A function that returns this object used to return a `tuple`.
         # So it is implemented as unpackable as well.
-        for item in (self.restype, self.name, self.argtypes, self.paramflags, self.idlflags, self.doc):
+        for item in (
+            self.restype,
+            self.name,
+            self.argtypes,
+            self.paramflags,
+            self.idlflags,
+            self.doc
+        ):
             yield item
 
 
@@ -123,7 +142,13 @@ class _DispMemberSpec(_MemberSpec):
         # for backward compatibility:
         # A function that returns this object used to return a `tuple`.
         # So it is implemented as unpackable as well.
-        for item in (self.what, self.name, self.idlflags, self.restype, self.argspec):
+        for item in (
+            self.what,
+            self.name,
+            self.idlflags,
+            self.restype,
+            self.argspec
+        ):
             yield item
 
 
@@ -141,6 +166,7 @@ def _fix_inout_args(func, argtypes, paramflags):
     # version is used where the bug is fixed.
     SIMPLETYPE = type(ctypes.c_int)
     BYREFTYPE = type(ctypes.byref(ctypes.c_int()))
+
     def call_with_inout(self, *args, **kw):
         args = list(args)
         # Indexed by order in the output
@@ -155,13 +181,13 @@ def _fix_inout_args(func, argtypes, paramflags):
                 name = info[1]
                 # [in, out] parameters are passed as pointers,
                 # this is the pointed-to type:
-                atyp = argtypes[i]._type_
+                atyp = argtypes[i]._type_  # NOQA
 
                 # Get the actual parameter, either as positional or
                 # keyword arg.
                 try:
                     try:
-                        v = args[i]
+                        v = args[i]  # NOQA
                     except IndexError:
                         v = kw[name]
                 except KeyError:
@@ -186,6 +212,7 @@ def _fix_inout_args(func, argtypes, paramflags):
                     else:
                         v = atyp.from_param(v)
                         assert not isinstance(v, BYREFTYPE)
+
                 outargs[outnum] = v
                 outnum += 1
                 if len(args) > i:
@@ -201,10 +228,12 @@ def _fix_inout_args(func, argtypes, paramflags):
             if len(outargs) == 1:
                 rescode = rescode.__ctypes_from_outparam__()
             return rescode
+
         rescode = list(rescode)
         for outnum, o in outargs.items():
             rescode[outnum] = o.__ctypes_from_outparam__()
         return rescode
+
     return call_with_inout
 
 
@@ -226,22 +255,29 @@ class PropertyMapping(object):
 
     def __iter__(self):
         # type: () -> Iterator[Tuple[str, Optional[str], int, Optional[Callable[..., Any]], Optional[Callable[..., Any]]]]
-        for (name, doc, nargs), (fget, propput, propputref) in self._data.items():
+        for (
+            (name, doc, nargs), (fget, propput, propputref)
+        ) in self._data.items():
             if propput is not None and propputref is not None:
                 # Create a setter method that examines the argument type
                 # and calls 'propputref' if it is an Object (in the VB
                 # sense), or call 'propput' otherwise.
                 put, putref = propput, propputref
-                def put_or_putref(self, *args):
-                    if comtypes._is_object(args[-1]):
+
+                def put_or_putref(self, *args):  # NOQA
+                    if comtypes._is_object(args[-1]):  # NOQA
                         return putref(self, *args)
+
                     return put(self, *args)
+
                 fset = put_or_putref
+
             elif propputref is not None:
                 fset = propputref
             else:
                 fset = propput
-            yield (name, doc, nargs, fget, fset)
+
+            yield (name, doc, nargs, fget, fset)  # NOQA
 
 
 class PropertyGenerator(object):
@@ -276,8 +312,13 @@ class PropertyGenerator(object):
                 # Hm, must be a descriptor where the __get__ method
                 # returns a bound object having __getitem__ and
                 # __setitem__ methods.
-                prop = named_property("%s.%s" % (self._cls_name, name), fget, fset, doc)
-            yield (name, prop)
+                prop = named_property(
+                    "%s.%s" % (self._cls_name, name),
+                    fget,
+                    fset,
+                    doc
+                )
+            yield (name, prop)  # NOQA
 
     def to_propget_keys(self, m):
         # type: (_MemberSpec) -> Tuple[str, Optional[str], int]
@@ -340,7 +381,8 @@ class ComMemberGenerator(object):
         self._vtbl_offset = vtbl_offset
         self._iid = iid
         self._props = ComPropertyGenerator(cls_name)
-        # sequence of (name: str, func: Callable, raw_func: Callable, is_prop: bool)
+        # sequence of
+        # (name: str, func: Callable, raw_func: Callable, is_prop: bool)
         self._mths = []  # type: List[Tuple[str, Callable[..., Any], Callable[..., Any], bool]]
         self._member_index = 0
 
@@ -354,23 +396,32 @@ class ComMemberGenerator(object):
         # If the method returns a HRESULT, we pass the interface iid,
         # so that we can request error info for the interface.
         iid = self._iid if m.restype == ctypes.HRESULT else None
-        raw_func = proto(vidx, m.name, None, iid)  # low level
-        func = self._fix_args(m, proto(vidx, m.name, m.paramflags, iid))  # high level
+
+        # low level
+        raw_func = proto(vidx, m.name, None, iid)
+        # high level
+        func = self._fix_args(m, proto(vidx, m.name, m.paramflags, iid))
+
         func.__doc__ = m.doc
         func.__name__ = m.name  # for pyhelp
+
         is_prop = m.is_prop()
         if is_prop:
             self._props.add(m, func)
+
         self._mths.append((m.name, func, raw_func, is_prop))
         self._member_index += 1
 
-    def _fix_args(self, m, func):
+    def _fix_args(self, m, func):  # NOQA
         # type: (_ComMemberSpec, Callable[..., Any]) -> Callable[..., Any]
-        """This is a workaround. See `_fix_inout_args` docstring and comments."""
+        """
+        This is a workaround. See `_fix_inout_args` docstring and comments.
+        """
         if m.paramflags:
-            dirflags = [(p[0]&3) for p in m.paramflags]
+            dirflags = [(p[0] & 3) for p in m.paramflags]
             if 3 in dirflags:
                 return _fix_inout_args(func, m.argtypes, m.paramflags)
+
         return func
 
     def methods(self):
@@ -384,68 +435,91 @@ class DispMemberGenerator(object):
     def __init__(self, cls_name):
         # type: (str) -> None
         self._props = DispPropertyGenerator(cls_name)
-        # sequence of (name: str, func_or_prop: Callable | property, is_prop: bool)
+        # sequence of
+        # (name: str, func_or_prop: Callable | property, is_prop: bool)
         self._items = []  # type: List[Tuple[str, _UnionT[Callable[..., Any], property], bool]]
 
     def add(self, m):
         # type: (_DispMemberSpec) -> None
         if m.what == "DISPPROPERTY":  # DISPPROPERTY
-            assert not m.argspec # XXX does not yet work for properties with parameters
+            # XXX does not yet work for properties with parameters
+            assert not m.argspec
             is_prop = True
             accessor = self._make_disp_property(m)
             self._items.append((m.name, accessor, is_prop))
         else:  # DISPMETHOD
             func = self._make_disp_method(m)
             func.__name__ = m.name
+
             is_prop = m.is_prop()
             if is_prop:
                 self._props.add(m, func)
             else:
                 self._items.append((m.name, func, is_prop))
 
-    def _make_disp_property(self, m):
+    def _make_disp_property(self, m):  # NOQA
         # type: (_DispMemberSpec) -> property
         # XXX doc string missing in property
         memid = m.memid
+
         def fget(obj):
-            return obj.Invoke(memid, _invkind=2) # DISPATCH_PROPERTYGET
+            return obj.Invoke(memid, _invkind=2)  # DISPATCH_PROPERTYGET
+
         if "readonly" in m.idlflags:
             return property(fget)
+
         def fset(obj, value):
             # Detect whether to use DISPATCH_PROPERTYPUT or
             # DISPATCH_PROPERTYPUTREF
-            invkind = 8 if comtypes._is_object(value) else 4
+            invkind = 8 if comtypes._is_object(value) else 4  # NOQA
+
             return obj.Invoke(memid, value, _invkind=invkind)
+
         return property(fget, fset)
 
     # Should the funcs/mths we create have restype and/or argtypes attributes?
-    def _make_disp_method(self, m):
+    def _make_disp_method(self, m):  # NOQA
         # type: (_DispMemberSpec) -> Callable[..., Any]
         memid = m.memid
         if "propget" in m.idlflags:
             def getfunc(obj, *args, **kw):
-                return obj.Invoke(memid, _invkind=2, *args, **kw) # DISPATCH_PROPERTYGET
+                # DISPATCH_PROPERTYGET
+                return obj.Invoke(memid, _invkind=2, *args, **kw)
+
             return getfunc
+
         elif "propput" in m.idlflags:
             def putfunc(obj, *args, **kw):
-                return obj.Invoke(memid, _invkind=4, *args, **kw) # DISPATCH_PROPERTYPUT
+                # DISPATCH_PROPERTYPUT
+                return obj.Invoke(memid, _invkind=4, *args, **kw)
+
             return putfunc
+
         elif "propputref" in m.idlflags:
             def putreffunc(obj, *args, **kw):
-                return obj.Invoke(memid, _invkind=8, *args, **kw) # DISPATCH_PROPERTYPUTREF
+                # DISPATCH_PROPERTYPUTREF
+                return obj.Invoke(memid, _invkind=8, *args, **kw)
+
             return putreffunc
+
         # a first attempt to make use of the restype.  Still, support for
         # named arguments and default argument values should be added.
         if hasattr(m.restype, "__com_interface__"):
             interface = m.restype.__com_interface__  # type: ignore
+
             def comitffunc(obj, *args, **kw):
                 result = obj.Invoke(memid, _invkind=1, *args, **kw)
                 if result is None:
                     return
+
                 return result.QueryInterface(interface)
+
             return comitffunc
+
         def func(obj, *args, **kw):
-            return obj.Invoke(memid, _invkind=1, *args, **kw) # DISPATCH_METHOD
+            # DISPATCH_METHOD
+            return obj.Invoke(memid, _invkind=1, *args, **kw)
+
         return func
 
     def items(self):
@@ -469,24 +543,29 @@ class bound_named_property(object):
     def __getitem__(self, index):
         if self.fget is None:
             raise TypeError("unsubscriptable object")
+
         if isinstance(index, tuple):
             return self.fget(self.instance, *index)
-        elif index == comtypes._all_slice:
+
+        elif index == comtypes._all_slice:  # NOQA
             return self.fget(self.instance)
+
         else:
             return self.fget(self.instance, index)
 
     def __call__(self, *args):
         if self.fget is None:
             raise TypeError("object is not callable")
+
         return self.fget(self.instance, *args)
 
     def __setitem__(self, index, value):
         if self.fset is None:
             raise TypeError("object does not support item assignment")
+
         if isinstance(index, tuple):
             self.fset(self.instance, *(index + (value,)))
-        elif index == comtypes._all_slice:
+        elif index == comtypes._all_slice:  # NOQA
             self.fset(self.instance, value)
         else:
             self.fset(self.instance, index, value)
@@ -510,6 +589,7 @@ class named_property(object):
     def __get__(self, instance, owner=None):
         if instance is None:
             return self
+
         return bound_named_property(self.name, self.fget, self.fset, instance)
 
     # Make this a data descriptor
