@@ -6,14 +6,14 @@ if sys.version_info >= (2, 6):
         return bytes(obj)
 else:
     def binary(obj):
-        return buffer(obj)
+        return buffer(obj)  # NOQA
 
 if sys.version_info >= (3, 0):
     text_type = str
     base_text_type = str
 else:
-    text_type = unicode
-    base_text_type = basestring
+    text_type = unicode  # NOQA
+    base_text_type = basestring  # NOQA
 
 BYTE = c_byte
 WORD = c_ushort
@@ -28,16 +28,19 @@ _CLSIDFromString = _ole32.CLSIDFromString
 _CLSIDFromProgID = _ole32.CLSIDFromProgID
 _CoCreateGuid = _ole32.CoCreateGuid
 
+
 # Note: Comparing GUID instances by comparing their buffers
 # is slightly faster than using ole32.IsEqualGUID.
 
 class GUID(Structure):
-    _fields_ = [("Data1", DWORD),
-                ("Data2", WORD),
-                ("Data3", WORD),
-                ("Data4", BYTE * 8)]
+    _fields_ = [
+        ("Data1", DWORD),
+        ("Data2", WORD),
+        ("Data3", WORD),
+        ("Data4", BYTE * 8)
+    ]
 
-    def __init__(self, name=None):
+    def __init__(self, name=None):  # NOQA
         if name is not None:
             _CLSIDFromString(text_type(name), byref(self))
 
@@ -50,19 +53,23 @@ class GUID(Structure):
         result = p.value
         _CoTaskMemFree(p)
         return result
+
     __str__ = __unicode__
 
     def __cmp__(self, other):
         if isinstance(other, GUID):
-            return cmp(binary(self), binary(other))
+            return cmp(binary(self), binary(other))  # NOQA
+
         return -1
 
     def __bool__(self):
         return self != GUID_null
 
     def __eq__(self, other):
-        return isinstance(other, GUID) and \
-               binary(self) == binary(other)
+        return (
+            isinstance(other, GUID) and
+            binary(self) == binary(other)
+        )
 
     def __hash__(self):
         # We make GUID instances hashable, although they are mutable.
@@ -73,10 +80,9 @@ class GUID(Structure):
 
     @classmethod
     def from_progid(cls, progid):
-        """Get guid from progid, ...
-        """
+        """Get guid from progid, ..."""
         if hasattr(progid, "_reg_clsid_"):
-            progid = progid._reg_clsid_
+            progid = progid._reg_clsid_  # NOQA
         if isinstance(progid, cls):
             return progid
         elif isinstance(progid, base_text_type):
@@ -89,7 +95,7 @@ class GUID(Structure):
             raise TypeError("Cannot construct guid from %r" % progid)
 
     def as_progid(self):
-        "Convert a GUID into a progid"
+        """Convert a GUID into a progid"""
         progid = c_wchar_p()
         _ProgIDFromCLSID(byref(self), byref(progid))
         result = progid.value
@@ -98,7 +104,7 @@ class GUID(Structure):
 
     @classmethod
     def create_new(cls):
-        "Create a brand new guid"
+        """Create a brand new guid"""
         guid = cls()
         _CoCreateGuid(byref(guid))
         return guid
