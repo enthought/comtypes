@@ -1,37 +1,47 @@
 # logutil.py
-import logging, ctypes
+import logging
+import ctypes
+
 
 class NTDebugHandler(logging.Handler):
-    def emit(self, record,
-             writeA=ctypes.windll.kernel32.OutputDebugStringA,
-             writeW=ctypes.windll.kernel32.OutputDebugStringW):
+    def emit(
+        self,
+        record,
+        writeA=ctypes.windll.kernel32.OutputDebugStringA,
+        writeW=ctypes.windll.kernel32.OutputDebugStringW
+    ):
         text = self.format(record)
         if isinstance(text, str):
             writeA(text + "\n")
         else:
             writeW(text + u"\n")
+
+
 logging.NTDebugHandler = NTDebugHandler
+
 
 def setup_logging(*pathnames):
     import configparser
 
     parser = configparser.ConfigParser()
-    parser.optionxform = str # use case sensitive option names!
+    parser.optionxform = str  # use case sensitive option names!
 
     parser.read(pathnames)
 
-    DEFAULTS = {"handler": "StreamHandler()",
-                "format": "%(levelname)s:%(name)s:%(message)s",
-                "level": "WARNING"}
+    DEFAULTS = {
+        "handler": "StreamHandler()",
+        "format": "%(levelname)s:%(name)s:%(message)s",
+        "level": "WARNING"
+    }
 
     def get(section, option):
         try:
-            return parser.get(section, option, True)
+            return parser.get(section, option, True)  # NOQA
         except (configparser.NoOptionError, configparser.NoSectionError):
             return DEFAULTS[option]
 
     levelname = get("logging", "level")
-    format = get("logging", "format")
+    format = get("logging", "format")  # NOQA
     handlerclass = get("logging", "handler")
 
     # convert level name to level value
