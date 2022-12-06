@@ -5,14 +5,14 @@ from ctypes.wintypes import *
 from comtypes import HRESULT, GUID
 
 ################################################################
-##if __debug__:
-##    from ctypeslib.dynamic_module import include
-##    include("""\
-##    #define UNICODE
-##    #define NO_STRICT
-##    #include <windows.h>
-##    """,
-##            persist=True)
+# if __debug__:
+#     from ctypeslib.dynamic_module import include
+#     include("""\
+#     #define UNICODE
+#     #define NO_STRICT
+#     #include <windows.h>
+#     """,
+#             persist=True)
 
 ################################################################
 
@@ -22,12 +22,16 @@ USHORT = c_ushort
 
 _oleaut32 = WinDLL("oleaut32")
 
+
 class tagSAFEARRAYBOUND(Structure):
     _fields_ = [
         ('cElements', DWORD),
         ('lLbound', LONG),
-]
+    ]
+
+
 SAFEARRAYBOUND = tagSAFEARRAYBOUND
+
 
 class tagSAFEARRAY(Structure):
     _fields_ = [
@@ -37,7 +41,9 @@ class tagSAFEARRAY(Structure):
         ('cLocks', DWORD),
         ('pvData', PVOID),
         ('rgsabound', SAFEARRAYBOUND * 1),
-        ]
+    ]
+
+
 SAFEARRAY = tagSAFEARRAY
 
 SafeArrayAccessData = _oleaut32.SafeArrayAccessData
@@ -64,10 +70,13 @@ SafeArrayUnaccessData.argtypes = [POINTER(SAFEARRAY)]
 _SafeArrayGetVartype = _oleaut32.SafeArrayGetVartype
 _SafeArrayGetVartype.restype = HRESULT
 _SafeArrayGetVartype.argtypes = [POINTER(SAFEARRAY), POINTER(VARTYPE)]
+
+
 def SafeArrayGetVartype(pa):
     result = VARTYPE()
     _SafeArrayGetVartype(pa, result)
     return result.value
+
 
 SafeArrayGetElement = _oleaut32.SafeArrayGetElement
 SafeArrayGetElement.restype = HRESULT
@@ -92,14 +101,19 @@ SafeArrayGetDim.argtypes = [POINTER(SAFEARRAY)]
 _SafeArrayGetLBound = _oleaut32.SafeArrayGetLBound
 _SafeArrayGetLBound.restype = HRESULT
 _SafeArrayGetLBound.argtypes = [POINTER(SAFEARRAY), UINT, POINTER(LONG)]
+
+
 def SafeArrayGetLBound(pa, dim):
     result = LONG()
     _SafeArrayGetLBound(pa, dim, result)
     return result.value
 
+
 _SafeArrayGetUBound = _oleaut32.SafeArrayGetUBound
 _SafeArrayGetUBound.restype = HRESULT
 _SafeArrayGetUBound.argtypes = [POINTER(SAFEARRAY), UINT, POINTER(LONG)]
+
+
 def SafeArrayGetUBound(pa, dim):
     result = LONG()
     _SafeArrayGetUBound(pa, dim, result)
@@ -119,10 +133,14 @@ SafeArrayUnlock.argtypes = [POINTER(SAFEARRAY)]
 _SafeArrayGetIID = _oleaut32.SafeArrayGetIID
 _SafeArrayGetIID.restype = HRESULT
 _SafeArrayGetIID.argtypes = [POINTER(SAFEARRAY), POINTER(GUID)]
+
+
 def SafeArrayGetIID(pa):
     result = GUID()
     _SafeArrayGetIID(pa, result)
     return result
+
+
 SafeArrayDestroyDescriptor = _oleaut32.SafeArrayDestroyDescriptor
 SafeArrayDestroyDescriptor.restype = HRESULT
 SafeArrayDestroyDescriptor.argtypes = [POINTER(SAFEARRAY)]
