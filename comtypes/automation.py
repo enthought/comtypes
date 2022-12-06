@@ -5,25 +5,38 @@ import decimal
 import sys
 
 from ctypes import *
-from ctypes import _Pointer
+from ctypes import _Pointer  # NOQA
 from _ctypes import CopyComPointer
 from comtypes import (
-    BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD, TYPE_CHECKING,
+    BSTR,
+    COMError,
+    COMMETHOD,
+    GUID,
+    IID,
+    IUnknown,
+    STDMETHOD,
+    TYPE_CHECKING,
 )
 from comtypes.hresult import *
 import comtypes.patcher
 import comtypes
+
 try:
     from comtypes import _safearray
 except (ImportError, AttributeError):
     class _safearray(object):
         tagSAFEARRAY = None
 
-from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
+from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WORD
 
 if TYPE_CHECKING:
     from typing import (
-        Any, Callable, ClassVar, List, Optional, Tuple, Union as _UnionT,
+        Any,
+        Callable,
+        ClassVar,
+        List,
+        Optional,
+        Union as _UnionT,
     )
     from comtypes import hints
 
@@ -33,9 +46,9 @@ if sys.version_info >= (3, 0):
     str_types = (str, )
     base_text_type = str
 else:
-    int_types = (int, long)
-    str_types = (unicode, str)
-    base_text_type = basestring
+    int_types = (int, long)  # NOQA
+    str_types = (unicode, str)  # NOQA
+    base_text_type = basestring  # NOQA
 
 LCID = DWORD
 DISPID = LONG
@@ -67,7 +80,7 @@ _com_null_date = datetime.datetime(1899, 12, 30, 0, 0, 0)
 
 ################################################################
 # VARIANT, in all it's glory.
-VARENUM = c_int # enum
+VARENUM = c_int  # enum
 VT_EMPTY = 0
 VT_NULL = 1
 VT_I2 = 2
@@ -123,24 +136,30 @@ VT_TYPEMASK = 4095
 
 
 class tagCY(Structure):
-    _fields_ = [("int64", c_longlong)]
+    _fields_ = [
+        ("int64", c_longlong)
+    ]
+
+
 CY = tagCY
 CURRENCY = CY
 
 
 class tagDEC(Structure):
-    _fields_ = [("wReserved", c_ushort),
-                ("scale", c_ubyte),
-                ("sign", c_ubyte),
-                ("Hi32", c_ulong),
-                ("Lo64", c_ulonglong)]
+    _fields_ = [
+        ("wReserved", c_ushort),
+        ("scale", c_ubyte),
+        ("sign", c_ubyte),
+        ("Hi32", c_ulong),
+        ("Lo64", c_ulonglong)
+    ]
 
     def as_decimal(self):
-        """ Convert a tagDEC struct to Decimal.
+        """
+        Convert a tagDEC struct to Decimal.
 
         See http://msdn.microsoft.com/en-us/library/cc234586.aspx for the tagDEC
         specification.
-
         """
         digits = (self.Hi32 << 64) + self.Lo64
         decimal_str = "{0}{1}e-{2}".format(
@@ -170,8 +189,11 @@ class tagVARIANT(Structure):
             # this is the ctypes version - functional as well.
             class U_VARIANT2(Union):
                 class _tagBRECORD(Structure):
-                    _fields_ = [("pvRecord", c_void_p),
-                                ("pRecInfo", POINTER(IUnknown))]
+                    _fields_ = [
+                        ("pvRecord", c_void_p),
+                        ("pRecInfo", POINTER(IUnknown))
+                    ]
+
                 _fields_ = [
                     ("VT_BOOL", VARIANT_BOOL),
                     ("VT_I1", c_byte),
@@ -190,24 +212,32 @@ class tagVARIANT(Structure):
                     ("c_wchar_p", c_wchar_p),
                     ("c_void_p", c_void_p),
                     ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
-
                     ("bstrVal", BSTR),
                     ("_tagBRECORD", _tagBRECORD),
-                    ]
+                ]
                 _anonymous_ = ["_tagBRECORD"]
-            _fields_ = [("vt", VARTYPE),
-                        ("wReserved1", c_ushort),
-                        ("wReserved2", c_ushort),
-                        ("wReserved3", c_ushort),
-                        ("_", U_VARIANT2)
+
+            _fields_ = [
+                ("vt", VARTYPE),
+                ("wReserved1", c_ushort),
+                ("wReserved2", c_ushort),
+                ("wReserved3", c_ushort),
+                ("_", U_VARIANT2)
             ]
-        _fields_ = [("__VARIANT_NAME_2", __tagVARIANT),
-                    ("decVal", DECIMAL)]
+        _fields_ = [
+            ("__VARIANT_NAME_2", __tagVARIANT),
+            ("decVal", DECIMAL)
+        ]
+
         _anonymous_ = ["__VARIANT_NAME_2"]
-    _fields_ = [("__VARIANT_NAME_1", U_VARIANT1)]
+
+    _fields_ = [
+        ("__VARIANT_NAME_1", U_VARIANT1)
+    ]
+
     _anonymous_ = ["__VARIANT_NAME_1"]
 
-    def __init__(self, *args):
+    def __init__(self, *args):  # NOQA
         if args:
             self.value = args[0]
 
@@ -249,8 +279,11 @@ class tagVARIANT(Structure):
         _VariantClear(self)
         if value is None:
             self.vt = VT_NULL
-        elif (hasattr(value, '__len__') and len(value) == 0
-                and not isinstance(value, base_text_type)):
+        elif (
+            hasattr(value, '__len__') and
+            len(value) == 0 and
+            not isinstance(value, base_text_type)
+        ):
             self.vt = VT_NULL
         # since bool is a subclass of int, this check must come before
         # the check for int
@@ -268,6 +301,7 @@ class tagVARIANT(Structure):
                 # it did work.
                 self.vt = VT_I4
                 return
+
             # try VT_UI4 next.
             if value >= 0:
                 u.VT_UI4 = value
@@ -275,6 +309,7 @@ class tagVARIANT(Structure):
                     # did work.
                     self.vt = VT_UI4
                     return
+
             # try VT_I8 next.
             if value >= 0:
                 u.VT_I8 = value
@@ -282,6 +317,7 @@ class tagVARIANT(Structure):
                     # did work.
                     self.vt = VT_I8
                     return
+
             # try VT_UI8 next.
             if value >= 0:
                 u.VT_UI8 = value
@@ -289,9 +325,11 @@ class tagVARIANT(Structure):
                     # did work.
                     self.vt = VT_UI8
                     return
+
             # VT_R8 is last resort.
             self.vt = VT_R8
             u.VT_R8 = float(value)
+
         elif isinstance(value, (float, c_double)):
             self.vt = VT_R8
             self._.VT_R8 = value
@@ -302,7 +340,11 @@ class tagVARIANT(Structure):
         elif isinstance(value, datetime.datetime):
             delta = value - _com_null_date
             # a day has 24 * 60 * 60 = 86400 seconds
-            com_days = delta.days + (delta.seconds + delta.microseconds * 1e-6) / 86400.
+            com_days = delta.days + (
+                    delta.seconds +
+                    delta.microseconds *
+                    1e-6
+            ) / 86400.
             self.vt = VT_DATE
             self._.VT_R8 = com_days
         elif comtypes.npsupport.isdatetime64(value):
@@ -322,13 +364,13 @@ class tagVARIANT(Structure):
         elif isinstance(value, (list, tuple)):
             obj = _midlSAFEARRAY(VARIANT).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
-            self.vt = VT_ARRAY | obj._vartype_
+            self.vt = VT_ARRAY | obj._vartype_  # NOQA
         elif isinstance(value, array.array):
             vartype = _arraycode_to_vartype[value.typecode]
             typ = _vartype_to_ctype[vartype]
             obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
-            self.vt = VT_ARRAY | obj._vartype_
+            self.vt = VT_ARRAY | obj._vartype_  # NOQA
         elif comtypes.npsupport.isndarray(value):
             # Try to convert a simple array of basic types.
             descr = value.dtype.descr[0][1]
@@ -338,10 +380,11 @@ class tagVARIANT(Structure):
                 obj = _midlSAFEARRAY(VARIANT).create(value)
             else:
                 obj = _midlSAFEARRAY(typ).create(value)
+
             memmove(byref(self._), byref(obj), sizeof(obj))
-            self.vt = VT_ARRAY | obj._vartype_
+            self.vt = VT_ARRAY | obj._vartype_  # NOQA
         elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
-            guids = value._recordinfo_
+            guids = value._recordinfo_  # NOQA
             from comtypes.typeinfo import GetRecordInfoFromGuids
             ri = GetRecordInfoFromGuids(*guids)
             self.vt = VT_RECORD
@@ -351,7 +394,7 @@ class tagVARIANT(Structure):
             self._.pRecInfo = ri
             self._.pvRecord = ri.RecordCreateCopy(byref(value))
         elif isinstance(getattr(value, "_comobj", None), POINTER(IDispatch)):
-            CopyComPointer(value._comobj, byref(self._))
+            CopyComPointer(value._comobj, byref(self._))  # NOQA
             self.vt = VT_DISPATCH
         elif isinstance(value, VARIANT):
             _VariantCopy(self, value)
@@ -383,7 +426,7 @@ class tagVARIANT(Structure):
             self.vt = VT_UI8
             self._.VT_UI8 = value
         elif isinstance(value, _byref_type):
-            ref = value._obj
+            ref = value._obj  # NOQA
             self._.c_void_p = addressof(ref)
             self.__keepref = value
             self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
@@ -440,7 +483,7 @@ class tagVARIANT(Structure):
                 # We should/could return a NULL COM pointer.
                 # But the code generation must be able to construct one
                 # from the __repr__ of it.
-                return None # XXX?
+                return None  # XXX?
             ptr = cast(val, POINTER(IUnknown))
             # cast doesn't call AddRef (it should, imo!)
             ptr.AddRef()
@@ -451,7 +494,7 @@ class tagVARIANT(Structure):
             val = self._.c_void_p
             if not val:
                 # See above.
-                return None # XXX?
+                return None  # XXX?
             ptr = cast(val, POINTER(IDispatch))
             # cast doesn't call AddRef (it should, imo!)
             ptr.AddRef()
@@ -493,56 +536,53 @@ class tagVARIANT(Structure):
     def __getitem__(self, index):
         if index != 0:
             raise IndexError(index)
-        if self.vt == VT_BYREF|VT_VARIANT:
-            v = VARIANT()
+        if self.vt == VT_BYREF | VT_VARIANT:
             # apparently VariantCopyInd doesn't work always with
             # VT_BYREF|VT_VARIANT, so do it manually.
-            v = cast(self._.c_void_p, POINTER(VARIANT))[0]
-            return v.value
+            var = cast(self._.c_void_p, POINTER(VARIANT))[0]
+            return var.value
         else:
-            v = VARIANT()
-            _VariantCopyInd(v, self)
-            return v.value
+            var = VARIANT()
+            _VariantCopyInd(var, self)
+            return var.value
 
 
 # these are missing:
-##    getter[VT_ERROR]
-##    getter[VT_ARRAY]
-##    getter[VT_BYREF|VT_UI1]
-##    getter[VT_BYREF|VT_I2]
-##    getter[VT_BYREF|VT_I4]
-##    getter[VT_BYREF|VT_R4]
-##    getter[VT_BYREF|VT_R8]
-##    getter[VT_BYREF|VT_BOOL]
-##    getter[VT_BYREF|VT_ERROR]
-##    getter[VT_BYREF|VT_CY]
-##    getter[VT_BYREF|VT_DATE]
-##    getter[VT_BYREF|VT_BSTR]
-##    getter[VT_BYREF|VT_UNKNOWN]
-##    getter[VT_BYREF|VT_DISPATCH]
-##    getter[VT_BYREF|VT_ARRAY]
-##    getter[VT_BYREF|VT_VARIANT]
-##    getter[VT_BYREF]
-##    getter[VT_BYREF|VT_DECIMAL]
-##    getter[VT_BYREF|VT_I1]
-##    getter[VT_BYREF|VT_UI2]
-##    getter[VT_BYREF|VT_UI4]
-##    getter[VT_BYREF|VT_INT]
-##    getter[VT_BYREF|VT_UINT]
+#    getter[VT_ERROR]
+#    getter[VT_ARRAY]
+#    getter[VT_BYREF|VT_UI1]
+#    getter[VT_BYREF|VT_I2]
+#    getter[VT_BYREF|VT_I4]
+#    getter[VT_BYREF|VT_R4]
+#    getter[VT_BYREF|VT_R8]
+#    getter[VT_BYREF|VT_BOOL]
+#    getter[VT_BYREF|VT_ERROR]
+#    getter[VT_BYREF|VT_CY]
+#    getter[VT_BYREF|VT_DATE]
+#    getter[VT_BYREF|VT_BSTR]
+#    getter[VT_BYREF|VT_UNKNOWN]
+#    getter[VT_BYREF|VT_DISPATCH]
+#    getter[VT_BYREF|VT_ARRAY]
+#    getter[VT_BYREF|VT_VARIANT]
+#    getter[VT_BYREF]
+#    getter[VT_BYREF|VT_DECIMAL]
+#    getter[VT_BYREF|VT_I1]
+#    getter[VT_BYREF|VT_UI2]
+#    getter[VT_BYREF|VT_UI4]
+#    getter[VT_BYREF|VT_INT]
+#    getter[VT_BYREF|VT_UINT]
 
     value = property(_get_value, _set_value)
 
     def __ctypes_from_outparam__(self):
         # XXX Manual resource management, because of the VARIANT bug:
-        result = self.value
+        result = self.value  # NOQA
         self.value = None
         return result
 
     def ChangeType(self, typecode):
-        _VariantChangeType(self,
-                           self,
-                           0,
-                           typecode)
+        _VariantChangeType(self, self, 0, typecode)
+
 
 VARIANT = tagVARIANT
 VARIANTARG = VARIANT
@@ -550,7 +590,12 @@ VARIANTARG = VARIANT
 _oleaut32 = OleDLL("oleaut32")
 
 _VariantChangeType = _oleaut32.VariantChangeType
-_VariantChangeType.argtypes = (POINTER(VARIANT), POINTER(VARIANT), c_ushort, VARTYPE)
+_VariantChangeType.argtypes = (
+    POINTER(VARIANT),
+    POINTER(VARIANT),
+    c_ushort,
+    VARTYPE
+)
 
 _VariantClear = _oleaut32.VariantClear
 _VariantClear.argtypes = (POINTER(VARIANT),)
@@ -570,11 +615,12 @@ VARIANT.null = VARIANT(None)
 VARIANT.empty = VARIANT()
 VARIANT.missing = v = VARIANT()
 v.vt = VT_ERROR
-v._.VT_I4 = 0x80020004
+v._.VT_I4 = 0x80020004  # NOQA
 del v
 
 _carg_obj = type(byref(c_int()))
-from ctypes import Array as _CArrayType
+from ctypes import Array as _CArrayType  # NOQA
+
 
 @comtypes.patcher.Patch(POINTER(VARIANT))
 class _(object):
@@ -589,12 +635,12 @@ class _(object):
         if isinstance(arg, POINTER(VARIANT)):
             return arg
         # accept byref(VARIANT) instance
-        if isinstance(arg, _carg_obj) and isinstance(arg._obj, VARIANT):
+        if isinstance(arg, _carg_obj) and isinstance(arg._obj, VARIANT):  # NOQA
             return arg
         # accept VARIANT instance
         if isinstance(arg, VARIANT):
             return byref(arg)
-        if isinstance(arg, _CArrayType) and arg._type_ is VARIANT:
+        if isinstance(arg, _CArrayType) and arg._type_ is VARIANT:  # NOQA
             # accept array of VARIANTs
             return arg
         # anything else which can be converted to a VARIANT.
@@ -605,12 +651,14 @@ class _(object):
         # variant[0] = value
         self[index].value = value
 
+
 ################################################################
 # interfaces, structures, ...
 class IEnumVARIANT(IUnknown):
     _iid_ = GUID('{00020404-0000-0000-C000-000000000046}')
     _idlflags_ = ['hidden']
     _dynamic = False
+
     def __iter__(self):
         return self
 
@@ -630,44 +678,59 @@ class IEnumVARIANT(IUnknown):
     def __getitem__(self, index):
         self.Reset()
         # Does not yet work.
-##        if isinstance(index, slice):
-##            self.Skip(index.start or 0)
-##            return self.Next(index.stop or sys.maxint)
+        # if isinstance(index, slice):
+        #     self.Skip(index.start or 0)
+        #     return self.Next(index.stop or sys.maxint)
         self.Skip(index)
         item, fetched = self.Next(1)
         if fetched:
             return item
+
         raise IndexError
 
     def Next(self, celt):
         fetched = c_ulong()
         if celt == 1:
-            v = VARIANT()
-            self.__com_Next(celt, v, fetched)
-            return v._get_value(dynamic=self._dynamic), fetched.value
-        array = (VARIANT * celt)()
-        self.__com_Next(celt, array, fetched)
-        result = [v._get_value(dynamic=self._dynamic) for v in array[:fetched.value]]
-        for v in array:
-            v.value = None
+            var = VARIANT()
+            self.__com_Next(celt, var, fetched)
+            return var._get_value(dynamic=self._dynamic), fetched.value  # NOQA
+
+        arry = (VARIANT * celt)()
+        self.__com_Next(celt, arry, fetched)
+        result = [
+            item._get_value(dynamic=self._dynamic)  # NOQA
+            for item in arry[:fetched.value]
+        ]
+
+        for item in arry:
+            item.value = None
+
         return result
 
+
 IEnumVARIANT._methods_ = [
-    COMMETHOD([], HRESULT, 'Next',
-              ( ['in'], c_ulong, 'celt' ),
-              ( ['out'], POINTER(VARIANT), 'rgvar' ),
-              ( ['out'], POINTER(c_ulong), 'pceltFetched' )),
-    COMMETHOD([], HRESULT, 'Skip',
-              ( ['in'], c_ulong, 'celt' )),
+    COMMETHOD(
+        [], HRESULT, 'Next',
+        (['in'], c_ulong, 'celt'),
+        (['out'], POINTER(VARIANT), 'rgvar'),
+        (['out'], POINTER(c_ulong), 'pceltFetched')
+    ),
+    COMMETHOD(
+        [], HRESULT, 'Skip',
+        (['in'], c_ulong, 'celt')
+    ),
     COMMETHOD([], HRESULT, 'Reset'),
-    COMMETHOD([], HRESULT, 'Clone',
-              ( ['out'], POINTER(POINTER(IEnumVARIANT)), 'ppenum' )),
+    COMMETHOD(
+        [], HRESULT, 'Clone',
+        (['out'], POINTER(POINTER(IEnumVARIANT)), 'ppenum')
+    ),
 ]
 
 
-##from _ctypes import VARIANT_set
-##import new
-##VARIANT.value = property(VARIANT._get_value, new.instancemethod(VARIANT_set, None, VARIANT))
+# from _ctypes import VARIANT_set
+# import new
+# VARIANT.value = property(VARIANT._get_value,
+# new.instancemethod(VARIANT_set, None, VARIANT))
 
 
 class tagEXCEPINFO(Structure):
@@ -683,9 +746,17 @@ class tagEXCEPINFO(Structure):
         scode = hints.AnnoField()  # type: int
 
     def __repr__(self):
-        return "<EXCEPINFO %s>" % \
-               ((self.wCode, self.bstrSource, self.bstrDescription, self.bstrHelpFile, self.dwHelpContext,
-                self.pfnDeferredFillIn, self.scode),)
+        return "<EXCEPINFO %s>" % ((
+            self.wCode,
+            self.bstrSource,
+            self.bstrDescription,
+            self.bstrHelpFile,
+            self.dwHelpContext,
+            self.pfnDeferredFillIn,
+            self.scode
+        ),)
+
+
 tagEXCEPINFO._fields_ = [
     ('wCode', WORD),
     ('wReserved', WORD),
@@ -694,11 +765,13 @@ tagEXCEPINFO._fields_ = [
     ('bstrHelpFile', BSTR),
     ('dwHelpContext', DWORD),
     ('pvReserved', c_void_p),
-##    ('pfnDeferredFillIn', WINFUNCTYPE(HRESULT, POINTER(tagEXCEPINFO))),
+    # ('pfnDeferredFillIn', WINFUNCTYPE(HRESULT, POINTER(tagEXCEPINFO))),
     ('pfnDeferredFillIn', c_void_p),
     ('scode', SCODE),
 ]
+
 EXCEPINFO = tagEXCEPINFO
+
 
 class tagDISPPARAMS(Structure):
     if TYPE_CHECKING:
@@ -706,6 +779,7 @@ class tagDISPPARAMS(Structure):
         rgdispidNamedArgs = hints.AnnoField()  # type: _Pointer[DISPID]
         cArgs = hints.AnnoField()  # type: int
         cNamedArgs = hints.AnnoField()  # type: int
+
     _fields_ = [
         # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 696
         ('rgvarg', POINTER(VARIANTARG)),
@@ -713,10 +787,13 @@ class tagDISPPARAMS(Structure):
         ('cArgs', UINT),
         ('cNamedArgs', UINT),
     ]
+
     def __del__(self):
         if self._b_needsfree_:
             for i in range(self.cArgs):
                 self.rgvarg[i].value = None
+
+
 DISPPARAMS = tagDISPPARAMS
 
 DISPID_VALUE = 0
@@ -744,29 +821,49 @@ if TYPE_CHECKING:
         int
     ]
 
+
 class IDispatch(IUnknown):
     if TYPE_CHECKING:
-        _disp_methods_ = hints.AnnoField()  # type: ClassVar[List[comtypes._DispMemberSpec]]
+        _disp_methods_ = hints.AnnoField()  # type: ClassVar[List[comtypes._DispMemberSpec]]  # NOQA
         _GetTypeInfo = hints.AnnoField()  # type: Callable[[int, int], IUnknown]
         __com_GetIDsOfNames = hints.AnnoField()  # type: RawGetIDsOfNamesFunc
         __com_Invoke = hints.AnnoField()  # type: RawInvokeFunc
 
     _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
     _methods_ = [
-        COMMETHOD([], HRESULT, 'GetTypeInfoCount',
-                  (['out'], POINTER(UINT) ) ),
-        COMMETHOD([], HRESULT, 'GetTypeInfo',
-                  (['in'], UINT, 'index'),
-                  (['in'], LCID, 'lcid', 0),
-                # Normally, we would declare this parameter in this way:
-                # (['out'], POINTER(POINTER(ITypeInfo)) ) ),
-                # but we cannot import comtypes.typeinfo at the top level (recursive imports!).
-                  (['out'], POINTER(POINTER(IUnknown)) ) ),
-        STDMETHOD(HRESULT, 'GetIDsOfNames', [POINTER(IID), POINTER(c_wchar_p),
-                                             UINT, LCID, POINTER(DISPID)]),
-        STDMETHOD(HRESULT, 'Invoke', [DISPID, POINTER(IID), LCID, WORD,
-                                      POINTER(DISPPARAMS), POINTER(VARIANT),
-                                      POINTER(EXCEPINFO), POINTER(UINT)]),
+        COMMETHOD(
+            [], HRESULT, 'GetTypeInfoCount',
+            (['out'], POINTER(UINT))
+        ),
+        COMMETHOD(
+            [], HRESULT, 'GetTypeInfo',
+            (['in'], UINT, 'index'),
+            (['in'], LCID, 'lcid', 0),
+            # Normally, we would declare this parameter in this way:
+            # (['out'], POINTER(POINTER(ITypeInfo)) ) ),
+            # but we cannot import comtypes.typeinfo at the top
+            # level (recursive imports!).
+            (['out'], POINTER(POINTER(IUnknown)))
+        ),
+        STDMETHOD(
+            HRESULT,
+            'GetIDsOfNames',
+            [POINTER(IID), POINTER(c_wchar_p), UINT, LCID, POINTER(DISPID)]
+        ),
+        STDMETHOD(
+            HRESULT,
+            'Invoke',
+            [
+                DISPID,
+                POINTER(IID),
+                LCID,
+                WORD,
+                POINTER(DISPPARAMS),
+                POINTER(VARIANT),
+                POINTER(EXCEPINFO),
+                POINTER(UINT)
+            ]
+        ),
     ]
 
     def GetTypeInfo(self, index, lcid=0):
@@ -793,20 +890,30 @@ class IDispatch(IUnknown):
         dp = DISPPARAMS()
 
         if args:
-            array = (VARIANT * len(args))()
+            arry = (VARIANT * len(args))()
 
             for i, a in enumerate(args[::-1]):
-                array[i].value = a
+                arry[i].value = a
 
             dp.cArgs = len(args)
             if invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):
                 dp.cNamedArgs = 1
                 dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
-            dp.rgvarg = array
 
-        self.__com_Invoke(memid, riid_null, lcid, invkind,
-                          dp, var, None, argerr)
-        return var._get_value(dynamic=True)
+            dp.rgvarg = arry
+
+        self.__com_Invoke(
+            memid,
+            riid_null,
+            lcid,
+            invkind,
+            dp,
+            var,
+            None,
+            argerr
+        )
+
+        return var._get_value(dynamic=True)  # NOQA
 
     def Invoke(self, dispid, *args, **kw):
         # type: (int, Any, Any) -> Any
@@ -818,8 +925,9 @@ class IDispatch(IUnknown):
         #     The *CALLING* code is responsible for releasing all strings and
         #     objects referred to by rgvarg[ ] or placed in *pVarResult.
         #
-        # For comtypes this is handled in DISPPARAMS.__del__ and VARIANT.__del__.
-        _invkind = kw.pop("_invkind", 1) # DISPATCH_METHOD
+        # For comtypes this is handled in DISPPARAMS.__del__ and
+        # VARIANT.__del__.
+        _invkind = kw.pop("_invkind", 1)  # DISPATCH_METHOD
         _lcid = kw.pop("_lcid", 0)
         if kw:
             raise ValueError("named parameters not yet implemented")
@@ -827,39 +935,52 @@ class IDispatch(IUnknown):
         result = VARIANT()
         excepinfo = EXCEPINFO()
         argerr = c_uint()
-
-        if _invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF): # propput
-            array = (VARIANT * len(args))()
+        # propput
+        if _invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):
+            arry = (VARIANT * len(args))()
 
             for i, a in enumerate(args[::-1]):
-                array[i].value = a
+                arry[i].value = a
 
             dp = DISPPARAMS()
             dp.cArgs = len(args)
             dp.cNamedArgs = 1
-            dp.rgvarg = array
+            dp.rgvarg = arry
             dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
         else:
-            array = (VARIANT * len(args))()
+            arry = (VARIANT * len(args))()
 
             for i, a in enumerate(args[::-1]):
-                array[i].value = a
+                arry[i].value = a
 
             dp = DISPPARAMS()
             dp.cArgs = len(args)
             dp.cNamedArgs = 0
-            dp.rgvarg = array
+            dp.rgvarg = arry
 
         try:
-            self.__com_Invoke(dispid, riid_null, _lcid, _invkind, byref(dp),
-                              byref(result), byref(excepinfo), byref(argerr))
+            self.__com_Invoke(
+                dispid,
+                riid_null,
+                _lcid,
+                _invkind,
+                byref(dp),
+                byref(result),
+                byref(excepinfo),
+                byref(argerr)
+            )
         except COMError as err:
             (hresult, text, details) = err.args
             if hresult == DISP_E_EXCEPTION:
-                details = (excepinfo.bstrDescription, excepinfo.bstrSource,
-                           excepinfo.bstrHelpFile, excepinfo.dwHelpContext,
-                           excepinfo.scode)
+                details = (
+                    excepinfo.bstrDescription,
+                    excepinfo.bstrSource,
+                    excepinfo.bstrHelpFile,
+                    excepinfo.dwHelpContext,
+                    excepinfo.scode
+                )
                 raise COMError(hresult, text, details)
+
             elif hresult == DISP_E_PARAMNOTFOUND:
                 # MSDN says: You get the error DISP_E_PARAMNOTFOUND
                 # when you try to set a property and you have not
@@ -873,13 +994,17 @@ class IDispatch(IUnknown):
                 # coerced.
                 #
                 # Hm, should we raise TypeError, or COMError?
-                raise COMError(hresult, text,
-                               ("TypeError: Parameter %s" % (argerr.value + 1),
-                                args))
+                raise COMError(
+                    hresult,
+                    text,
+                    ("TypeError: Parameter %s" % (argerr.value + 1), args)
+                )
             raise
-        return result._get_value(dynamic=True)
 
-    # XXX Would separate methods for _METHOD, _PROPERTYGET and _PROPERTYPUT be better?
+        return result._get_value(dynamic=True)  # NOQA
+
+    # XXX Would separate methods for _METHOD, _PROPERTYGET
+    # and _PROPERTYPUT be better?
 
 
 ################################################################
@@ -936,23 +1061,24 @@ _ctype_to_vartype = {
     # We have this code here to make sure that comtypes can import
     # such a typelib, although calling ths method will fail because
     # such an array cannot be created.
-    POINTER(VARIANT): VT_BYREF|VT_VARIANT,
+    POINTER(VARIANT): VT_BYREF | VT_VARIANT,
 
     # This is needed to import Esri ArcObjects (esriSystem.olb).
-    POINTER(BSTR): VT_BYREF|VT_BSTR,
+    POINTER(BSTR): VT_BYREF | VT_BSTR,
 
     # These are not yet implemented:
-##    POINTER(IUnknown): VT_UNKNOWN,
-##    POINTER(IDispatch): VT_DISPATCH,
+    # POINTER(IUnknown): VT_UNKNOWN,
+    # POINTER(IDispatch): VT_DISPATCH,
     }
+
 
 _vartype_to_ctype = {}
 for c, v in _ctype_to_vartype.items():
     _vartype_to_ctype[v] = c
-_vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
+
+_vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]  # NOQA
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
 _ctype_to_vartype[c_char] = VT_UI1
-
 
 
 try:
@@ -970,7 +1096,7 @@ __known_symbols__ = [
     'EXCEPINFO', 'tagEXCEPINFO', 'IDispatch', 'IEnumVARIANT', 'IID_NULL',
     'INVOKE_FUNC', 'INVOKE_PROPERTYGET', 'INVOKE_PROPERTYPUT',
     'INVOKE_PROPERTYPUTREF', 'INVOKEKIND', 'tagINVOKEKIND', '_midlSAFEARRAY',
-    'SCODE', '_SysAllocStringLen', 'VARENUM', 'VARIANT','tagVARIANT', 
+    'SCODE', '_SysAllocStringLen', 'VARENUM', 'VARIANT', 'tagVARIANT',
     'VARIANTARG', '_VariantChangeType', '_VariantClear', '_VariantCopy',
     '_VariantCopyInd', 'VARTYPE', 'VT_ARRAY', 'VT_BLOB', 'VT_BLOB_OBJECT',
     'VT_BOOL', 'VT_BSTR', 'VT_BSTR_BLOB', 'VT_BYREF', 'VT_CARRAY', 'VT_CF',
