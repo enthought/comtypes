@@ -1,11 +1,12 @@
-""" Consolidation of numpy support utilities. """
+"""Consolidation of numpy support utilities. """
 import sys
 
 is_64bits = sys.maxsize > 2**32
 
 
 class Interop:
-    """ Class encapsulating all the functionality necessary to allow interop of
+    """
+    Class encapsulating all the functionality necessary to allow interop of
     comtypes with numpy. Needs to be enabled with the "enable()" method.
     """
     def __init__(self):
@@ -16,7 +17,8 @@ class Interop:
         self.com_null_date64 = None
 
     def _make_variant_dtype(self):
-        """ Create a dtype for VARIANT. This requires support for Unions, which
+        """
+        Create a dtype for VARIANT. This requires support for Unions, which
         is available in numpy version 1.7 or greater.
 
         This does not support the decimal type.
@@ -25,6 +27,7 @@ class Interop:
         """
         if not self.enabled:
             return None
+
         # pointer typecode
         ptr_typecode = '<u8' if is_64bits else '<u4'
 
@@ -62,12 +65,13 @@ class Interop:
     def _check_ctypeslib_typecodes(self):
         if not self.enabled:
             return {}
-        import numpy as np
-        from numpy import ctypeslib
+        import numpy as np  # NOQA
+        from numpy import ctypeslib  # NOQA
+
         try:
-            from numpy.ctypeslib import _typecodes
+            from numpy.ctypeslib import _typecodes  # NOQA
         except ImportError:
-            from numpy.ctypeslib import as_ctypes_type
+            from numpy.ctypeslib import as_ctypes_type  # NOQA
 
             dtypes_to_ctypes = {}
 
@@ -77,14 +81,16 @@ class Interop:
                     dtypes_to_ctypes[np.dtype(tp).str] = ctype_for
                 except NotImplementedError:
                     continue
+
             ctypeslib._typecodes = dtypes_to_ctypes
-        return ctypeslib._typecodes
+
+        return ctypeslib._typecodes  # NOQA
 
     def isndarray(self, value):
-        """ Check if a value is an ndarray.
+        """
+        Check if a value is an ndarray.
 
         This cannot succeed if numpy is not available.
-
         """
         if not self.enabled:
             if hasattr(value, "__array_interface__"):
@@ -101,10 +107,10 @@ class Interop:
         return isinstance(value, self.numpy.ndarray)
 
     def isdatetime64(self, value):
-        """ Check if a value is a datetime64.
+        """
+        Check if a value is a datetime64.
 
         This cannot succeed if datetime64 is not available.
-
         """
         if not self.enabled:
             return False
@@ -112,10 +118,9 @@ class Interop:
 
     @property
     def numpy(self):
-        """ The numpy package.
-        """
+        """The numpy package."""
         if self.enabled:
-            import numpy
+            import numpy  # NOQA
             return numpy
         raise ImportError(
             "In comtypes>=1.2.0 numpy interop must be explicitly enabled with "
@@ -124,18 +129,21 @@ class Interop:
         )
 
     def enable(self):
-        """ Enables numpy/comtypes interop.
-        """
+        """Enables numpy/comtypes interop."""
         # don't do this twice
         if self.enabled:
             return
+
         # first we have to be able to import numpy
-        import numpy
+        import numpy  # NOQA
         # if that succeeded we can be enabled
         self.enabled = True
         self.VARIANT_dtype = self._make_variant_dtype()
         self.typecodes = self._check_ctypeslib_typecodes()
-        self.com_null_date64 = self.numpy.datetime64("1899-12-30T00:00:00", "ns")
+        self.com_null_date64 = self.numpy.datetime64(
+            "1899-12-30T00:00:00",
+            "ns"
+        )
 
 
 interop = Interop()
