@@ -113,14 +113,16 @@ def GetModule(tlib):
         # the directory of the calling module (if not from command line)
         frame = sys._getframe(1)
         _file_ = frame.f_globals.get("__file__", None)  # type: str
-        pathname, is_abs = _resolve_filename(tlib_string, _file_ and os.path.dirname(_file_))
+        pathname, is_abs = _resolve_filename(
+            tlib_string, _file_ and os.path.dirname(_file_))
         logger.debug("GetModule(%s), resolved: %s", pathname, is_abs)
         tlib = _load_tlib(pathname)  # don't register
         if not is_abs:
             # try to get path after loading, but this only works if already registered
             pathname = tlbparser.get_tlib_filename(tlib)
             if pathname is None:
-                logger.info("GetModule(%s): could not resolve to a filename", tlib)
+                logger.info(
+                    "GetModule(%s): could not resolve to a filename", tlib)
                 pathname = tlib_string
         # if above path torture resulted in an absolute path, then the file exists (at this point)!
         assert not(os.path.isabs(pathname)) or os.path.exists(pathname)
@@ -162,7 +164,8 @@ def _load_tlib(obj):
         libid, ver = obj[0], obj[1:]
         if not ver:  # case of version numbers are not containing
             with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"TypeLib\%s" % libid) as key:
-                ver = [int(v, base=16) for v in winreg.EnumKey(key, 0).split(".")]
+                ver = [int(v, base=16)
+                       for v in winreg.EnumKey(key, 0).split(".")]
         return typeinfo.LoadRegTypeLib(GUID(libid), *ver)
     # obj is a COMObject implementation
     elif hasattr(obj, "_reg_libid_"):
@@ -247,7 +250,7 @@ def _create_wrapper_module(tlib, pathname):
 
 
 def _get_known_symbols():
-     # type: () -> Dict[str,str]
+    # type: () -> Dict[str,str]
     known_symbols = {}  # type: Dict[str, str]
     for mod_name in (
         "comtypes.persist",
