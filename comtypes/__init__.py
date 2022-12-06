@@ -3,36 +3,37 @@ __version__ = "1.1.14"
 
 import atexit
 from ctypes import *
-from ctypes import _SimpleCData
+from ctypes import _SimpleCData  # NOQA
 from _ctypes import COMError
 import logging
 import os
 import sys
 import types
 
-################################################################
 
+################################################################
 def add_metaclass(metaclass):
     """Class decorator from six.py for creating a class with a metaclass.
 
     Copyright (c) 2010-2020 Benjamin Peterson
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of
-    this software and associated documentation files (the "Software"), to deal in
-    the Software without restriction, including without limitation the rights to
-    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-    the Software, and to permit persons to whom the Software is furnished to do so,
-    subject to the following conditions:
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
 
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
     """
     def wrapper(cls):
         orig_vars = cls.__dict__.copy()
@@ -49,8 +50,8 @@ def add_metaclass(metaclass):
         return metaclass(cls.__name__, cls.__bases__, orig_vars)
     return wrapper
 
-################################################################
 
+################################################################
 # type hinting symbols
 #
 # `if TYPE_CHECKING:` code block must not be executed because `TYPE_CHECKING`
@@ -59,7 +60,7 @@ def add_metaclass(metaclass):
 #
 if sys.version_info >= (3, 5):
     from typing import TYPE_CHECKING
-else:  # typehints in this package don't support Py<3.5 due to importing symbols.
+else:  # typehints in this package don't support Py<3.5 due to importing symbols
     TYPE_CHECKING = False
 #
 # Annotations must be placed in a `# type:` comment in according to PEP484.
@@ -69,42 +70,53 @@ else:  # typehints in this package don't support Py<3.5 due to importing symbols
 #   `typing.get_type_hints` or `typing.get_origin`.
 #
 if TYPE_CHECKING:
-    from ctypes import _CData  # only in `typeshed`, private in runtime
+    from ctypes import _CData  # NOQA # only in `typeshed`, private in runtime
     # _CData = _SimpleCData.__mro__[:-1][-1]  # defining in runtime
-    from ctypes import _Pointer
-    from typing import Any, ClassVar, overload, TypeVar
+    from ctypes import _Pointer  # NOQA
     # XXX: symbols for backward compatibility.
     # instead of `builtins`. see PEP585.
-    from typing import Dict, List, Tuple, Type
     # instead of `collections.abc`. see PEP585.
-    from typing import Callable, Iterable, Iterator
     # instead of `A | B` and `None | A`. see PEP604.
-    from typing import Union as _UnionT  #  avoiding confusion with `ctypes.Union`
-    from typing import Optional
+    from typing import (
+        Any,
+        ClassVar,
+        overload,
+        TypeVar,
+        List, Type,
+        Callable,
+        Optional
+    )
+
     # utilities or workarounds for annotations.
     from comtypes import hints as hints
 
 ################################################################
 
-from comtypes.GUID import GUID
-from comtypes import patcher
-from comtypes._npsupport import interop as npsupport
-from comtypes._memberspec import (
-    ComMemberGenerator, _ComMemberSpec, DispMemberGenerator, _DispMemberSpec,
-    _encode_idl, _resolve_argspec,
+from comtypes.GUID import GUID  # NOQA
+from comtypes import patcher  # NOQA
+from comtypes._npsupport import interop as npsupport  # NOQA
+from comtypes._memberspec import (  # NOQA
+    ComMemberGenerator,
+    _ComMemberSpec,
+    DispMemberGenerator,
+    _DispMemberSpec,
+    _encode_idl,
+    _resolve_argspec,
 )
 
 ################################################################
 if sys.version_info >= (3, 0):
     text_type = str
 else:
-    text_type = unicode
+    text_type = unicode  # NOQA
 _all_slice = slice(None, None, None)
+
 
 class NullHandler(logging.Handler):
     """A Handler that does nothing."""
     def emit(self, record):
         pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -120,28 +132,33 @@ def _check_version(actual, tlib_cached_mtime=None):
     if actual != required:
         raise ImportError("Wrong version")
     if not hasattr(sys, "frozen"):
-        g = sys._getframe(1).f_globals
+        g = sys._getframe(1).f_globals  # NOQA
         tlb_path = g.get("typelib_path")
         try:
             tlib_curr_mtime = os.stat(tlb_path).st_mtime
         except (OSError, TypeError):
             return
-        if not tlib_cached_mtime or abs(tlib_curr_mtime - tlib_cached_mtime) >= 1:
+        if (
+            not tlib_cached_mtime or
+            abs(tlib_curr_mtime - tlib_cached_mtime) >= 1
+        ):
             raise ImportError("Typelib different than module")
+
 
 if sys.version_info >= (3, 0):
     pythonapi.PyInstanceMethod_New.argtypes = [py_object]
     pythonapi.PyInstanceMethod_New.restype = py_object
     PyInstanceMethod_Type = type(pythonapi.PyInstanceMethod_New(id))
 
-    def instancemethod(func, inst, cls):
+    def instancemethod(func, inst, _):
         mth = PyInstanceMethod_Type(func)
         if inst is None:
             return mth
         return mth.__get__(inst)
 else:
     def instancemethod(func, inst, cls):
-        return types.MethodType(func, inst, cls)
+        return types.MethodType(func, inst, cls)  # NOQA
+
 
 class ReturnHRESULT(Exception):
     """ReturnHRESULT(hresult, text)
@@ -150,9 +167,9 @@ class ReturnHRESULT(Exception):
     without logging an error.
     """
 
-##class IDLWarning(UserWarning):
-##    "Warn about questionable type information"
 
+# class IDLWarning(UserWarning):
+#    "Warn about questionable type information"
 _GUID = GUID
 IID = GUID
 DWORD = c_ulong
@@ -190,7 +207,7 @@ CLSCTX_DISABLE_AAA = 32768
 CLSCTX_ENABLE_AAA = 65536
 CLSCTX_FROM_DEFAULT_CONTEXT = 131072
 
-tagCLSCTX = c_int # enum
+tagCLSCTX = c_int  # enum
 CLSCTX = tagCLSCTX
 
 # Constants for security setups
@@ -202,25 +219,29 @@ RPC_C_IMP_LEVEL_IMPERSONATE = 3
 EOAC_NONE = 0
 
 
-
 ################################################################
 # Initialization and shutdown
 _ole32 = oledll.ole32
-_ole32_nohresult = windll.ole32 # use this for functions that don't return a HRESULT
 
-COINIT_MULTITHREADED     = 0x0
+# use this for functions that don't return a HRESULT
+_ole32_nohresult = windll.ole32
+
+COINIT_MULTITHREADED = 0x0
 COINIT_APARTMENTTHREADED = 0x2
-COINIT_DISABLE_OLE1DDE   = 0x4
+COINIT_DISABLE_OLE1DDE = 0x4
 COINIT_SPEED_OVER_MEMORY = 0x8
+
 
 def CoInitialize():
     return CoInitializeEx(COINIT_APARTMENTTHREADED)
+
 
 def CoInitializeEx(flags=None):
     if flags is None:
         flags = getattr(sys, "coinit_flags", COINIT_APARTMENTTHREADED)
     logger.debug("CoInitializeEx(None, %s)", flags)
     _ole32.CoInitializeEx(None, flags)
+
 
 # COM is initialized automatically for the thread that imports this
 # module for the first time.  sys.coinit_flags is passed as parameter
@@ -231,6 +252,7 @@ def CoInitializeEx(flags=None):
 # CoUninitialize is called when Python is shut down.
 CoInitializeEx()
 
+
 # We need to have CoUninitialize for multithreaded model where we have
 # to initialize and uninitialize COM for every new thread (except main)
 # in which we are using COM
@@ -239,9 +261,11 @@ def CoUninitialize():
     _ole32_nohresult.CoUninitialize()
 
 
-def _shutdown(func=_ole32_nohresult.CoUninitialize,
-             _debug=logger.debug,
-             _exc_clear=getattr(sys, "exc_clear", lambda: None)):
+def _shutdown(
+    func=_ole32_nohresult.CoUninitialize,
+    _debug=logger.debug,
+    _exc_clear=getattr(sys, "exc_clear", lambda: None)
+):
     # Make sure no COM pointers stay in exception frames.
     _exc_clear()
     # Sometimes, CoUninitialize, running at Python shutdown,
@@ -249,15 +273,18 @@ def _shutdown(func=_ole32_nohresult.CoUninitialize,
     # False.
     _debug("Calling CoUninitialize()")
     if __debug__:
-        func()
+        func()  # NOQA
     else:
-        try: func()
-        except WindowsError: pass
+        try:
+            func()
+        except WindowsError:
+            pass
     # Set the flag which means that calling obj.Release() is no longer
     # needed.
     if _cominterface_meta is not None:
         _cominterface_meta._com_shutting_down = True
     _debug("CoUninitialize() done.")
+
 
 atexit.register(_shutdown)
 
@@ -269,6 +296,7 @@ com_interface_registry = {}
 
 # allows to find coclasses by guid strings (clsid)
 com_coclass_registry = {}
+
 
 def _is_object(obj):
     """This function determines if the argument is a COM object.  It
@@ -284,9 +312,9 @@ def _is_object(obj):
     # It may be a dynamic dispatch object.
     return hasattr(obj, "_comobj")
 
+
 ################################################################
 # The metaclasses...
-
 class _cominterface_meta(type):
     """Metaclass for COM interfaces.  Automatically creates high level
     methods from COMMETHOD lists.
@@ -302,10 +330,10 @@ class _cominterface_meta(type):
     _com_shutting_down = False
 
     # Creates also a POINTER type for the newly created class.
-    def __new__(cls, name, bases, namespace):
+    def __new__(mcs, name, bases, namespace):
         methods = namespace.pop("_methods_", None)
         dispmethods = namespace.pop("_disp_methods_", None)
-        new_cls = type.__new__(cls, name, bases, namespace)
+        new_cls = type.__new__(mcs, name, bases, namespace)
 
         if methods is not None:
             new_cls._methods_ = methods
@@ -331,23 +359,25 @@ class _cominterface_meta(type):
                                    {"__com_interface__": new_cls,
                                     "_needs_com_addref_": None})
 
-        from ctypes import _pointer_type_cache
+        from ctypes import _pointer_type_cache  # NOQA
         _pointer_type_cache[new_cls] = p
 
         if new_cls._case_insensitive_:
 
             @patcher.Patch(p)
-            class CaseInsensitive(object):
+            class CaseInsensitive(object):  # NOQA
                 # case insensitive attributes for COM methods and properties
-                def __getattr__(self, name):
-                    """Implement case insensitive access to methods and properties"""
+                def __getattr__(self, nme):
+                    """
+                    Implement case insensitive access to methods and properties
+                    """
                     try:
-                        fixed_name = self.__map_case__[name.lower()]
+                        fixed_name = self.__map_case__[nme.lower()]
                     except KeyError:
-                        raise AttributeError(name)
-                    if fixed_name != name: # prevent unbounded recursion
+                        raise AttributeError(nme)
+                    if fixed_name != nme:  # prevent unbounded recursion
                         return getattr(self, fixed_name)
-                    raise AttributeError(name)
+                    raise AttributeError(nme)
 
                 # __setattr__ is pretty heavy-weight, because it is called for
                 # EVERY attribute assignment.  Settings a non-com attribute
@@ -355,14 +385,18 @@ class _cominterface_meta(type):
                 # function it takes 0.7 sec - 12 times slower.
                 #
                 # How much faster would this be if implemented in C?
-                def __setattr__(self, name, value):
-                    """Implement case insensitive access to methods and properties"""
-                    object.__setattr__(self,
-                                       self.__map_case__.get(name.lower(), name),
-                                       value)
+                def __setattr__(self, nme, value):
+                    """
+                    Implement case insensitive access to methods and properties
+                    """
+                    object.__setattr__(
+                        self,
+                        self.__map_case__.get(nme.lower(), nme),
+                        value
+                    )
 
         @patcher.Patch(POINTER(p))
-        class ReferenceFix(object):
+        class ReferenceFix(object):  # NOQA
             def __setitem__(self, index, value):
                 # We override the __setitem__ method of the
                 # POINTER(POINTER(interface)) type, so that the COM
@@ -383,7 +417,7 @@ class _cominterface_meta(type):
                     # CopyComPointer should do if index != 0.
                     if bool(value):
                         value.AddRef()
-                    super(POINTER(p), self).__setitem__(index, value)
+                    super(POINTER(p), self).__setitem__(index, value)  # NOQA
                     return
                 from _ctypes import CopyComPointer
                 CopyComPointer(value, self)
@@ -395,7 +429,7 @@ class _cominterface_meta(type):
             # XXX I'm no longer sure why the code generator generates
             # "_methods_ = []" in the interface definition, and later
             # overrides this by "Interface._methods_ = [...]
-##            assert self.__dict__.get("_methods_", None) is None
+            #  assert self.__dict__.get("_methods_", None) is None
             self._make_methods(value)
             self._make_specials()
         elif name == "_disp_methods_":
@@ -420,7 +454,7 @@ class _cominterface_meta(type):
             @patcher.Patch(self)
             class _(object):
                 def __len__(self):
-                    "Return the the 'self.Count' property."
+                    """Return the the 'self.Count' property."""
                     return self.Count
 
         if has_name("Item"):
@@ -430,14 +464,14 @@ class _cominterface_meta(type):
                 # calling the instance (Not sure this makes sense, but
                 # win32com does this also).
                 def __call__(self, *args, **kw):
-                    "Return 'self.Item(*args, **kw)'"
+                    """Return 'self.Item(*args, **kw)'"""
                     return self.Item(*args, **kw)
 
                 # does this make sense? It seems that all standard typelibs I've
                 # seen so far that support .Item also support ._NewEnum
                 @patcher.no_replace
                 def __getitem__(self, index):
-                    "Return 'self.Item(index)'"
+                    """Return 'self.Item(index)'"""
                     # Handle tuples and all-slice
                     if isinstance(index, tuple):
                         args = index
@@ -464,7 +498,7 @@ class _cominterface_meta(type):
 
                 @patcher.no_replace
                 def __setitem__(self, index, value):
-                    "Attempt 'self.Item[index] = value'"
+                    """Attempt 'self.Item[index] = value'"""
                     try:
                         self.Item[index] = value
                     except COMError as err:
@@ -481,10 +515,10 @@ class _cominterface_meta(type):
             @patcher.Patch(self)
             class _(object):
                 def __iter__(self):
-                    "Return an iterator over the _NewEnum collection."
-                    # This method returns a pointer to _some_ _NewEnum interface.
-                    # It relies on the fact that the code generator creates next()
-                    # methods for them automatically.
+                    """Return an iterator over the _NewEnum collection."""
+                    # This method returns a pointer to _some_ _NewEnum
+                    # interface. It relies on the fact that the code
+                    # generator creates next() methods for them automatically.
                     #
                     # Better would maybe to return an object that
                     # implements the Python iterator protocol, and
@@ -497,8 +531,8 @@ class _cominterface_meta(type):
                         enum = enum()
                     if hasattr(enum, "Next"):
                         return enum
-                    # _NewEnum returns an IUnknown pointer, QueryInterface() it to
-                    # IEnumVARIANT
+                    # _NewEnum returns an IUnknown pointer,
+                    # QueryInterface() it to IEnumVARIANT
                     from comtypes.automation import IEnumVARIANT
                     return enum.QueryInterface(IEnumVARIANT)
 
@@ -537,16 +571,21 @@ class _cominterface_meta(type):
                 self.__map_case__[name.lower()] = name
 
     def __get_baseinterface_methodcount(self):
-        "Return the number of com methods in the base interfaces"
+        """Return the number of com methods in the base interfaces"""
+        itf = None
         try:
+
             result = 0
             for itf in self.mro()[1:-1]:
                 result += len(itf.__dict__["_methods_"])
+
             return result
         except KeyError as err:
             (name,) = err.args
             if name == "_methods_":
-                raise TypeError("baseinterface '%s' has no _methods_" % itf.__name__)
+                raise TypeError(
+                    "baseinterface '%s' has no _methods_" % itf.__name__
+                )
             raise
 
     def _make_methods(self, methods):
@@ -571,36 +610,40 @@ class _cominterface_meta(type):
             setattr(self, "_%s__com_%s" % (self.__name__, name), raw_mth)
             mth = instancemethod(func, None, self)
             if not is_prop:
-                # We install the method in the class, except when it's a property.
-                # And we make sure we don't overwrite a property that's already present.
+                # We install the method in the class, except when it's a
+                # property. And we make sure we don't overwrite a property
+                # that's already present.
                 mthname = name if not hasattr(self, name) else ("_%s" % name)
                 setattr(self, mthname, mth)
             # For a method, this is the real name.
-            # For a property, this is the name WITHOUT the _set_ or _get_ prefix.
+            # For a property, this is the name WITHOUT the
+            # _set_ or _get_ prefix.
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
                 if is_prop:
                     self.__map_case__[name[5:].lower()] = name[5:]
         # create public properties / attribute accessors
         for name, accessor in member_gen.properties():
-            # Again, we should not overwrite class attributes that are already present.
+            # Again, we should not overwrite class attributes that
+            # are already present.
             propname = name if not hasattr(self, name) else ("_%s" % name)
             setattr(self, propname, accessor)
             # COM is case insensitive
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
 
-################################################################
 
+################################################################
 class _compointer_meta(type(c_void_p), _cominterface_meta):
-    "metaclass for COM interface pointer classes"
+    """metaclass for COM interface pointer classes"""
     # no functionality, but needed to avoid a metaclass conflict
+
 
 @add_metaclass(_compointer_meta)
 class _compointer_base(c_void_p):
-    "base class for COM interface pointer classes"
+    """base class for COM interface pointer classes"""
     def __del__(self, _debug=logger.debug):
-        "Release the COM refcount we own."
+        """Release the COM refcount we own."""
         if self:
             # comtypes calls CoUninitialize() when the atexit handlers
             # runs.  CoUninitialize() cleans up the COM objects that
@@ -609,7 +652,7 @@ class _compointer_base(c_void_p):
             # this may give a protection fault.  So we need the
             # _com_shutting_down flag.
             #
-            if not type(self)._com_shutting_down:
+            if not type(self)._com_shutting_down:  # NOQA
                 _debug("Release %s", self)
                 self.Release()
 
@@ -623,14 +666,22 @@ class _compointer_base(c_void_p):
         if not isinstance(other, _compointer_base):
             return 1
 
-        # get the value property of the c_void_p baseclass, this is the pointer value
-        return cmp(super(_compointer_base, self).value, super(_compointer_base, other).value)
+        # get the value property of the c_void_p baseclass,
+        # this is the pointer value
+        return cmp(
+            super(_compointer_base, self).value,
+            super(_compointer_base, other).value
+        )
 
     def __eq__(self, other):
         if not isinstance(other, _compointer_base):
             return False
-        # get the value property of the c_void_p baseclass, this is the pointer value
-        return super(_compointer_base, self).value == super(_compointer_base, other).value
+        # get the value property of the c_void_p baseclass,
+        # this is the pointer value
+        return (
+            super(_compointer_base, self).value ==
+            super(_compointer_base, other).value
+        )
 
     def __hash__(self):
         """Return the hash value of the pointer."""
@@ -644,20 +695,26 @@ class _compointer_base(c_void_p):
 
     def __repr__(self):
         ptr = super(_compointer_base, self).value
-        return "<%s ptr=0x%x at %x>" % (self.__class__.__name__, ptr or 0, id(self))
+        return "<%s ptr=0x%x at %x>" % (
+            self.__class__.__name__,
+            ptr or 0,
+            id(self)
+        )
 
     # This fixes the problem when there are multiple python interface types
-    # wrapping the same COM interface.  This could happen because some interfaces
-    # are contained in multiple typelibs.
+    # wrapping the same COM interface.  This could happen because some
+    # interfaces are contained in multiple typelibs.
     #
     # It also allows to pass a CoClass instance to an api
     # expecting a COM interface.
     @classmethod
     def from_param(cls, value):
-        """Convert 'value' into a COM pointer to the interface.
+        """
+        Convert 'value' into a COM pointer to the interface.
 
         This method accepts a COM pointer, or a CoClass instance
-        which is QueryInterface()d."""
+        which is QueryInterface()d.
+        """
         if value is None:
             return None
         # CLF: 2013-01-18
@@ -672,7 +729,7 @@ class _compointer_base(c_void_p):
             return value
         # Accept an CoClass instance which exposes the interface required.
         try:
-            table = value._com_pointers_
+            table = value._com_pointers_  # NOQA
         except AttributeError:
             pass
         else:
@@ -681,14 +738,15 @@ class _compointer_base(c_void_p):
                 return table[cls._iid_]
             except KeyError:
                 raise TypeError("Interface %s not supported" % cls._iid_)
-        return value.QueryInterface(cls.__com_interface__)
+        return value.QueryInterface(cls.__com_interface__)  # NOQA
+
 
 ################################################################
-
 class BSTR(_SimpleCData):
-    "The windows BSTR data type"
+    """The windows BSTR data type"""
     _type_ = "X"
     _needsfree = False
+
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.value)
 
@@ -713,45 +771,67 @@ class BSTR(_SimpleCData):
         # on destruction.
         return cls(value)
 
+
 ################################################################
 # IDL stuff
-
 class helpstring(text_type):
-    "Specifies the helpstring for a COM method or property."
+    """Specifies the helpstring for a COM method or property."""
+
 
 class defaultvalue(object):
-    "Specifies the default value for parameters marked optional."
+    """Specifies the default value for parameters marked optional."""
     def __init__(self, value):
         self.value = value
 
+
 class dispid(int):
-    "Specifies the DISPID of a method or property."
+    """Specifies the DISPID of a method or property."""
 
-# XXX STDMETHOD, COMMETHOD, DISPMETHOD, and DISPPROPERTY should return
-# instances with more methods or properties, and should not behave as an unpackable.
 
+# XXX STDMETHOD, COMMETHOD, DISPMETHOD, and DISPPROPERTY should return instances
+# with more methods or properties, and should not behave as an unpackable.
 def STDMETHOD(restype, name, argtypes=()):
-    "Specifies a COM method slot without idlflags"
+    """Specifies a COM method slot without idlflags"""
     return _ComMemberSpec(restype, name, argtypes, None, (), None)
 
+
 def DISPMETHOD(idlflags, restype, name, *argspec):
-    "Specifies a method of a dispinterface"
-    return _DispMemberSpec("DISPMETHOD", name, tuple(idlflags), restype, argspec)
+    """Specifies a method of a dispinterface"""
+    return _DispMemberSpec(
+        "DISPMETHOD",
+        name,
+        tuple(idlflags),
+        restype,
+        argspec
+    )
+
 
 def DISPPROPERTY(idlflags, proptype, name):
-    "Specifies a property of a dispinterface"
-    return _DispMemberSpec("DISPPROPERTY", name, tuple(idlflags), proptype, ())
+    """Specifies a property of a dispinterface"""
+    return _DispMemberSpec(
+        "DISPPROPERTY",
+        name,
+        tuple(idlflags),
+        proptype,
+        ()
+    )
+
 
 # tuple(idlflags) is for the method itself: (dispid, 'readonly')
 
 # sample generated code:
 #     DISPPROPERTY([5, 'readonly'], OLE_YSIZE_HIMETRIC, 'Height'),
 #     DISPMETHOD(
-#         [6], None, 'Render', ([], c_int, 'hdc'), ([], c_int, 'x'), ([], c_int, 'y')
+#         [6],
+#         None,
+#         'Render',
+#         ([], c_int, 'hdc'),
+#         ([], c_int, 'x'),
+#         ([], c_int, 'y')
 #     )
-
 def COMMETHOD(idlflags, restype, methodname, *argspec):
-    """Specifies a COM method slot with idlflags.
+    """
+    Specifies a COM method slot with idlflags.
 
     XXX should explain the sematics of the arguments.
     """
@@ -780,7 +860,8 @@ if TYPE_CHECKING:
     _T_IUnknown = TypeVar("_T_IUnknown", bound="IUnknown")
 
     class _IUnknown_Base(c_void_p):
-        """This is workaround to avoid false-positive of static type checking.
+        """
+        This is workaround to avoid false-positive of static type checking.
 
         `IUnknown` behaves as a ctypes type, and `POINTER` can take it.
         This behavior is defined by some metaclasses in runtime.
@@ -794,9 +875,11 @@ if TYPE_CHECKING:
 else:
     _IUnknown_Base = object
 
+
 @add_metaclass(_cominterface_meta)
 class IUnknown(_IUnknown_Base):
-    """The most basic COM interface.
+    """
+    The most basic COM interface.
 
     Each subclasses of IUnknown must define these class attributes:
 
@@ -818,10 +901,11 @@ class IUnknown(_IUnknown_Base):
     ]  # type: ClassVar[List[_ComMemberSpec]]
 
     # NOTE: Why not `QueryInterface(T) -> _Pointer[T]`?
-    # Any static type checkers is not able to provide members of `T` from `_Pointer[T]`,
-    # regardless of the pointer is able to access members of contents in runtime.
-    # And if `isinstance(p, POINTER(T))` is `True`, then `isinstance(p, T)` is also `True`.
-    # So returning `T` is not a lie, and good way to know what members the class has.
+    # Any static type checkers is not able to provide members of `T` from
+    # `_Pointer[T]`, regardless of the pointer is able to access members of
+    # contents in runtime. And if `isinstance(p, POINTER(T))` is `True`, then
+    # `isinstance(p, T)` is also `True`. So returning `T` is not a lie, and
+    # good way to know what members the class has.
     def QueryInterface(self, interface, iid=None):
         # type: (Type[_T_IUnknown], Optional[GUID]) -> _T_IUnknown
         """QueryInterface(interface) -> instance"""
@@ -854,9 +938,12 @@ class IPersist(IUnknown):
     _iid_ = GUID('{0000010C-0000-0000-C000-000000000046}')
     _idlflags_ = []
     _methods_ = [
-        COMMETHOD([], HRESULT, 'GetClassID',
-                  ( ['out'], POINTER(GUID), 'pClassID' )),
-        ]
+        COMMETHOD(
+            [], HRESULT, 'GetClassID',
+            (['out'], POINTER(GUID), 'pClassID')
+        ),
+    ]
+
     if TYPE_CHECKING:
         # Returns the CLSID that uniquely represents an object class that
         # defines the code that can manipulate the object's data.
@@ -867,6 +954,7 @@ class IServiceProvider(IUnknown):
     _iid_ = GUID('{6D5140C1-7436-11CE-8034-00AA006009FA}')
     if TYPE_CHECKING:
         _QueryService = hints.AnnoField()  # type: Callable[[Any, Any, Any], int]
+
     # Overridden QueryService to make it nicer to use (passing it an
     # interface and it returns a pointer to that interface)
     def QueryService(self, serviceIID, interface):
@@ -876,23 +964,27 @@ class IServiceProvider(IUnknown):
         return p  # type: ignore
 
     _methods_ = [
-        COMMETHOD([], HRESULT, 'QueryService',
-                  ( ['in'], POINTER(GUID), 'guidService' ),
-                  ( ['in'], POINTER(GUID), 'riid' ),
-                  ( ['in'], POINTER(c_void_p), 'ppvObject' ))
-        ]
+        COMMETHOD(
+            [], HRESULT, 'QueryService',
+            (['in'], POINTER(GUID), 'guidService'),
+            (['in'], POINTER(GUID), 'riid'),
+            (['in'], POINTER(c_void_p), 'ppvObject')
+        )
+    ]
+
 
 ################################################################
-
 if TYPE_CHECKING:
     @overload
     def CoGetObject(displayname, interface):  # `interface` can't be missing
         # type: (str, None) -> IUnknown
         pass
+
     @overload
     def CoGetObject(displayname, interface):  # it should be called this way
         # type: (str, Type[_T_IUnknown]) -> _T_IUnknown
         pass
+
 
 def CoGetObject(displayname, interface):
     # type: (str, Optional[Type[IUnknown]]) -> IUnknown
@@ -902,10 +994,12 @@ def CoGetObject(displayname, interface):
         interface = IUnknown
     punk = POINTER(interface)()
     # Do we need a way to specify the BIND_OPTS parameter?
-    _ole32.CoGetObject(text_type(displayname),
-                       None,
-                       byref(interface._iid_),
-                       byref(punk))
+    _ole32.CoGetObject(
+        text_type(displayname),
+        None,
+        byref(interface._iid_),  # NOQA
+        byref(punk)
+    )
     return punk  # type: ignore
 
 
@@ -916,14 +1010,17 @@ if TYPE_CHECKING:
     def CoCreateInstance(clsid, interface=None, clsctx=None, punkouter=None):
         # type: (GUID, None, Optional[int], Optional[pUnkOuter]) -> IUnknown
         pass
+
     @overload
     def CoCreateInstance(clsid, interface, clsctx=None, punkouter=None):
         # type: (GUID, Type[_T_IUnknown], Optional[int], Optional[pUnkOuter]) -> IUnknown
         pass
 
+
 def CoCreateInstance(clsid, interface=None, clsctx=None, punkouter=None):
     # type: (GUID, Optional[Type[IUnknown]], Optional[int], Optional[pUnkOuter]) -> IUnknown
-    """The basic windows api to create a COM class object and return a
+    """
+    The basic windows api to create a COM class object and return a
     pointer to an interface.
     """
     if clsctx is None:
@@ -931,8 +1028,14 @@ def CoCreateInstance(clsid, interface=None, clsctx=None, punkouter=None):
     if interface is None:
         interface = IUnknown
     p = POINTER(interface)()
-    iid = interface._iid_
-    _ole32.CoCreateInstance(byref(clsid), punkouter, clsctx, byref(iid), byref(p))
+    iid = interface._iid_  # NOQA
+    _ole32.CoCreateInstance(
+        byref(clsid),
+        punkouter,
+        clsctx,
+        byref(iid),
+        byref(p)
+    )
     return p  # type: ignore
 
 
@@ -941,10 +1044,12 @@ if TYPE_CHECKING:
     def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
         # type: (GUID, Optional[int], Optional[COSERVERINFO], None) -> hints.IClassFactory
         pass
+
     @overload
     def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
         # type: (GUID, Optional[int], Optional[COSERVERINFO], Type[_T_IUnknown]) -> _T_IUnknown
         pass
+
 
 def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
     # type: (GUID, Optional[int], Optional[COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
@@ -954,11 +1059,13 @@ def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
         import comtypes.server
         interface = comtypes.server.IClassFactory
     p = POINTER(interface)()
-    _CoGetClassObject(clsid,
-                      clsctx,
-                      pServerInfo,
-                      interface._iid_,
-                      byref(p))
+    _CoGetClassObject(
+        clsid,
+        clsctx,
+        pServerInfo,
+        interface._iid_,  # NOQA
+        byref(p)
+    )
     return p  # type: ignore
 
 
@@ -967,10 +1074,12 @@ if TYPE_CHECKING:
     def GetActiveObject(clsid, interface=None):
         # type: (GUID, None) -> IUnknown
         pass
+
     @overload
     def GetActiveObject(clsid, interface):
         # type: (GUID, Type[_T_IUnknown]) -> _T_IUnknown
         pass
+
 
 def GetActiveObject(clsid, interface=None):
     # type: (GUID, Optional[Type[IUnknown]]) -> IUnknown
@@ -983,13 +1092,17 @@ def GetActiveObject(clsid, interface=None):
 
 
 class MULTI_QI(Structure):
-    _fields_ = [("pIID", POINTER(GUID)),
-                ("pItf", POINTER(c_void_p)),
-                ("hr", HRESULT)]
+    _fields_ = [
+        ("pIID", POINTER(GUID)),
+        ("pItf", POINTER(c_void_p)),
+        ("hr", HRESULT)
+    ]
+
     if TYPE_CHECKING:
         pIID = hints.AnnoField()  # type: GUID
         pItf = hints.AnnoField()  # type: _Pointer[c_void_p]
         hr = hints.AnnoField()  # type: HRESULT
+
 
 class _COAUTHIDENTITY(Structure):
     _fields_ = [
@@ -1001,7 +1114,10 @@ class _COAUTHIDENTITY(Structure):
         ('PasswordLength', c_ulong),
         ('Flags', c_ulong),
     ]
+
+
 COAUTHIDENTITY = _COAUTHIDENTITY
+
 
 class _COAUTHINFO(Structure):
     _fields_ = [
@@ -1013,7 +1129,10 @@ class _COAUTHINFO(Structure):
         ('pAuthIdentityData', POINTER(_COAUTHIDENTITY)),
         ('dwCapabilities', c_ulong),
     ]
+
+
 COAUTHINFO = _COAUTHINFO
+
 
 class _COSERVERINFO(Structure):
     _fields_ = [
@@ -1022,15 +1141,25 @@ class _COSERVERINFO(Structure):
         ('pAuthInfo', POINTER(_COAUTHINFO)),
         ('dwReserved2', c_ulong),
     ]
+
     if TYPE_CHECKING:
         dwReserved1 = hints.AnnoField()  # type: int
         pwszName = hints.AnnoField()  # type: Optional[str]
         pAuthInfo = hints.AnnoField()  # type: _COAUTHINFO
         dwReserved2 = hints.AnnoField()  # type: int
+
+
 COSERVERINFO = _COSERVERINFO
+
 _CoGetClassObject = _ole32.CoGetClassObject
-_CoGetClassObject.argtypes = [POINTER(GUID), DWORD, POINTER(COSERVERINFO),
-                              POINTER(GUID), POINTER(c_void_p)]
+_CoGetClassObject.argtypes = [
+    POINTER(GUID),
+    DWORD,
+    POINTER(COSERVERINFO),
+    POINTER(GUID),
+    POINTER(c_void_p)
+]
+
 
 class tagBIND_OPTS(Structure):
     _fields_ = [
@@ -1039,8 +1168,11 @@ class tagBIND_OPTS(Structure):
         ('grfMode', c_ulong),
         ('dwTickCountDeadline', c_ulong)
     ]
+
+
 # XXX Add __init__ which sets cbStruct?
 BIND_OPTS = tagBIND_OPTS
+
 
 class tagBIND_OPTS2(Structure):
     _fields_ = [
@@ -1053,10 +1185,13 @@ class tagBIND_OPTS2(Structure):
         ('locale', c_ulong),
         ('pServerInfo', POINTER(_COSERVERINFO)),
     ]
+
+
 # XXX Add __init__ which sets cbStruct?
 BINDOPTS2 = tagBIND_OPTS2
 
-#Structures for security setups
+
+# Structures for security setups
 #########################################
 class _SEC_WINNT_AUTH_IDENTITY(Structure):
     _fields_ = [
@@ -1068,7 +1203,10 @@ class _SEC_WINNT_AUTH_IDENTITY(Structure):
         ('PasswordLength', c_ulong),
         ('Flags', c_ulong),
     ]
+
+
 SEC_WINNT_AUTH_IDENTITY = _SEC_WINNT_AUTH_IDENTITY
+
 
 class _SOLE_AUTHENTICATION_INFO(Structure):
     _fields_ = [
@@ -1076,41 +1214,62 @@ class _SOLE_AUTHENTICATION_INFO(Structure):
         ('dwAuthzSvc', c_ulong),
         ('pAuthInfo', POINTER(_SEC_WINNT_AUTH_IDENTITY)),
     ]
+
+
 SOLE_AUTHENTICATION_INFO = _SOLE_AUTHENTICATION_INFO
+
 
 class _SOLE_AUTHENTICATION_LIST(Structure):
     _fields_ = [
         ('cAuthInfo', c_ulong),
         ('pAuthInfo', POINTER(_SOLE_AUTHENTICATION_INFO)),
     ]
+
+
 SOLE_AUTHENTICATION_LIST = _SOLE_AUTHENTICATION_LIST
 
 
 if TYPE_CHECKING:
     @overload
     def CoCreateInstanceEx(
-        clsid, interface=None, clsctx=None, machine=None, pServerInfo=None):
+        clsid,
+        interface=None,
+        clsctx=None,
+        machine=None,
+        pServerInfo=None
+    ):
         # type: (GUID, None, Optional[int], Optional[str], Optional[COSERVERINFO]) -> IUnknown
         pass
+
     @overload
     def CoCreateInstanceEx(
-        clsid, interface=None, clsctx=None, machine=None, pServerInfo=None):
+        clsid,
+        interface=None,
+        clsctx=None,
+        machine=None,
+        pServerInfo=None
+    ):
         # type: (GUID, Type[_T_IUnknown], Optional[int], Optional[str], Optional[COSERVERINFO]) -> _T_IUnknown
         pass
 
-def CoCreateInstanceEx(clsid, interface=None,
-                       clsctx=None,
-                       machine=None,
-                       pServerInfo=None):
+
+def CoCreateInstanceEx(
+    clsid,
+    interface=None,
+    clsctx=None,
+    machine=None,
+    pServerInfo=None
+):
     # type: (GUID, Optional[Type[IUnknown]], Optional[int], Optional[str], Optional[COSERVERINFO]) -> IUnknown
-    """The basic windows api to create a COM class object and return a
+    """
+    The basic windows api to create a COM class object and return a
     pointer to an interface, possibly on another machine.
 
     Passing both "machine" and "pServerInfo" results in a ValueError.
 
     """
     if clsctx is None:
-        clsctx=CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER
+        clsctx = CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER
 
     if pServerInfo is not None:
         if machine is not None:
@@ -1124,24 +1283,27 @@ def CoCreateInstanceEx(clsid, interface=None,
     if interface is None:
         interface = IUnknown
     multiqi = MULTI_QI()
-    multiqi.pIID = pointer(interface._iid_)  # type: ignore
-    _ole32.CoCreateInstanceEx(byref(clsid),
-                             None,
-                             clsctx,
-                             pServerInfo,
-                             1,
-                             byref(multiqi))
+    multiqi.pIID = pointer(interface._iid_)  # NOQA # type: ignore
+    _ole32.CoCreateInstanceEx(
+        byref(clsid),
+        None,
+        clsctx,
+        pServerInfo,
+        1,
+        byref(multiqi)
+    )
     return cast(multiqi.pItf, POINTER(interface))  # type: ignore
 
 
 ################################################################
-from comtypes._comobject import COMObject
+from comtypes._comobject import COMObject  # NOQA
 
 # What's a coclass?
 # a POINTER to a coclass is allowed as parameter in a function declaration:
 # http://msdn.microsoft.com/library/en-us/midl/midl/oleautomation.asp
 
-from comtypes._meta import _coclass_meta
+from comtypes._meta import _coclass_meta  # NOQA
+
 
 @add_metaclass(_coclass_meta)
 class CoClass(COMObject):
