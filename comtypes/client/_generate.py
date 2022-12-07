@@ -247,7 +247,7 @@ def _create_wrapper_module(tlib, pathname):
 
 
 def _get_known_symbols():
-    # type: () -> Dict[str,str]
+    # type: () -> Dict[str, str]
     known_symbols = {}  # type: Dict[str, str]
     for mod_name in (
         "comtypes.persist",
