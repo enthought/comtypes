@@ -93,7 +93,7 @@ If there are some problems with the developing code base, partial or non-executa
 Importing them will cause some error.  
 If that happens, you should run `python -m clear_comtypes_cache` to clear those caches.  
 The command will delete the entire `.../comtypes/gen` directory.  
-Importing `comtypes.gen.client` will restore the directory and `__init__.py` file.
+Importing `comtypes.client` will restore the directory and `__init__.py` file.
 
 ### Pull requests
 When you have resolved your issue, open a pull request in the `comtypes` repository.  
