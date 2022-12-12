@@ -1,7 +1,6 @@
 """comtypes package install script"""
 import sys
 import os
-import ctypes
 import subprocess
 
 from distutils.core import Command
@@ -12,6 +11,7 @@ from distutils.command.build_py import build_py
 
 with open('README.md') as readme_stream:
     readme = readme_stream.read()
+
 
 class test(Command):
     # Original version of this class posted
@@ -24,7 +24,8 @@ class test(Command):
         ('use-resources=', 'u',
          "resources to use - resource names are defined by tests"),
         ('refcounts', 'r',
-         "repeat tests to search for refcount leaks (requires 'sys.gettotalrefcount')"),
+         "repeat tests to search for refcount leaks (requires "
+         "'sys.gettotalrefcount')"),
         ]
 
     boolean_options = ["refcounts"]
@@ -64,6 +65,7 @@ class test(Command):
                                                       self.refcounts)
             self.failure = self.failure or package_failure
 
+
 classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
@@ -74,6 +76,7 @@ classifiers = [
     'Programming Language :: Python :: 3',
     'Topic :: Software Development :: Libraries :: Python Modules',
     ]
+
 
 def read_version():
     # Determine the version number by reading it from the file
@@ -108,7 +111,8 @@ class post_install(install):
         install.run(self)
         # Custom script we run at the end of installing
         if not self.dry_run and not self.root:
-            filename = os.path.join(self.install_scripts, "clear_comtypes_cache.py")
+            filename = os.path.join(
+                self.install_scripts, "clear_comtypes_cache.py")
             if not os.path.isfile(filename):
                 raise RuntimeError("Can't find '%s'" % (filename,))
             print("Executing post install script...")
@@ -122,7 +126,7 @@ class post_install(install):
 setup_params = dict(
     name="comtypes",
     description="Pure Python COM package",
-    long_description = readme,
+    long_description=readme,
     author="Thomas Heller",
     author_email="theller@python.net",
     url="https://github.com/enthought/comtypes",

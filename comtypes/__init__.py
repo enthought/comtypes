@@ -1013,7 +1013,7 @@ if TYPE_CHECKING:
 
     @overload
     def CoCreateInstance(clsid, interface, clsctx=None, punkouter=None):
-        # type: (GUID, Type[_T_IUnknown], Optional[int], Optional[pUnkOuter]) -> IUnknown
+        # type: (GUID, Type[_T_IUnknown], Optional[int], Optional[pUnkOuter]) -> _T_IUnknown
         pass
 
 

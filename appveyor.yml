@@ -9,16 +9,10 @@ shallow_clone: true
 
 environment:
    matrix:
-     - py: Python27
-     - py: Python27-x64
-     - py: Python33
-     - py: Python33-x64
-     - py: Python34
-     - py: Python34-x64
-     - py: Python35
-     - py: Python35-x64
-     - py: Python36
-     - py: Python36-x64
+     - py: Python37
+     - py: Python37-x64
+     - py: Python38
+     - py: Python38-x64
      - py: Python39
      - py: Python39-x64
      - py: Python310

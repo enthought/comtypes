@@ -21,7 +21,7 @@ from comtypes.tools import codegenerator, tlbparser
 
 
 if TYPE_CHECKING:
-    from typing import Any, Tuple, Optional, Union as _UnionT
+    from typing import Any, Tuple, List, Optional, Dict, Union as _UnionT
 
 
 logger = logging.getLogger(__name__)
@@ -298,8 +298,8 @@ def _create_wrapper_module(tlib, pathname):
 
 
 def _get_known_symbols():
-    # type: () -> dict[str, str]
-    known_symbols = {}  # type: dict[str, str]
+    # type: () -> Dict[str, str]
+    known_symbols = {}  # type: Dict[str, str]
     for mod_name in (
         "comtypes.persist",
         "comtypes.typeinfo",
@@ -310,7 +310,7 @@ def _get_known_symbols():
     ):
         mod = importlib.import_module(mod_name)
         if hasattr(mod, "__known_symbols__"):
-            names = mod.__known_symbols__  # type: list[str]
+            names = mod.__known_symbols__  # type: List[str]
         else:
             names = list(mod.__dict__)
 
