@@ -10,10 +10,11 @@ import comtypes
 import comtypes.automation
 import comtypes.typeinfo
 
+
 if sys.version_info >= (3, 0):
     base_text_type = str
 else:
-    base_text_type = basestring
+    base_text_type = basestring  # NOQA
 
 
 class _frozen_attr_dict(dict):
@@ -54,7 +55,8 @@ class Constants(object):
     as attributes.
 
     Examples:
-        >>> c = Constants('scrrun.dll')  # load `Scripting` consts, enums, and alias
+        >>> # load `Scripting` consts, enums, and alias
+        >>> c = Constants('scrrun.dll')
         >>> c.IOMode.ForReading  # returns enumeration member value
         1
         >>> c.ForReading  # returns constant value
@@ -82,6 +84,7 @@ class Constants(object):
         else:
             obj = obj.QueryInterface(comtypes.automation.IDispatch)
             tlib, index = obj.GetTypeInfo(0).GetContainingTypeLib()
+
         consts, enums, alias = self._get_bound_namespaces(tlib)
         self.consts = _frozen_attr_dict(consts)
         self.enums = _frozen_attr_dict(enums)
@@ -93,26 +96,34 @@ class Constants(object):
         for i in range(tlib.GetTypeInfoCount()):
             tinfo = tlib.GetTypeInfo(i)
             ta = tinfo.GetTypeAttr()
+
             if ta.typekind == comtypes.typeinfo.TKIND_ALIAS:
                 alias.update(self._get_ref_names(tinfo, ta))
+
             members = self._get_members(tinfo, ta)
+
             if ta.typekind == comtypes.typeinfo.TKIND_ENUM:
                 enums[tinfo.GetDocumentation(-1)[0]] = members
+
             consts.update(members)
+
         return consts, enums, alias
 
-    def _get_ref_names(self, tinfo, ta):
+    def _get_ref_names(self, tinfo, ta):  # NOQA
         try:
-            refinfo = tinfo.GetRefTypeInfo(ta.tdescAlias._.hreftype)
+            refinfo = tinfo.GetRefTypeInfo(ta.tdescAlias._.hreftype)  # NOQA
         except comtypes.COMError:
             return {}
+
         if refinfo.GetTypeAttr().typekind != comtypes.typeinfo.TKIND_ENUM:
             return {}
+
         friendly_name = tinfo.GetDocumentation(-1)[0]
         real_name = refinfo.GetDocumentation(-1)[0]
+
         return {friendly_name: real_name}
 
-    def _get_members(self, tinfo, ta):
+    def _get_members(self, tinfo, ta):  # NOQA
         members = {}
         for i in range(ta.cVars):
             vdesc = tinfo.GetVarDesc(i)
@@ -124,7 +135,9 @@ class Constants(object):
                     # if comtypes.tools.__warn_on_munge__:
                     #     print("# Fixing keyword as VAR_CONST for %s" % name)
                     name += "_"
-                members[name] = vdesc._.lpvarValue[0].value
+
+                members[name] = vdesc._.lpvarValue[0].value  # NOQA
+
         return _frozen_attr_dict(members)
 
     def __getattr__(self, name):
