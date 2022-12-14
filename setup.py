@@ -76,7 +76,7 @@ try:
                 "win-arm64",
                 "win-arm32",
             )
-            tag = super(self.__class__, self).get_tag()
+            tag = super().get_tag()
             return tuple(tag[:-1]) + (".".join(wp.replace("-", "_") for wp in win_plats),)
 
 except ImportError:
