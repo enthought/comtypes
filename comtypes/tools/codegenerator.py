@@ -257,7 +257,7 @@ class ComMethodGenerator(object):
                 "    ),"
             ) % elms
         print(code, file=self._stream)
-    
+
     def _make_withargs(self):
         # type: () -> None
         code = (
@@ -366,7 +366,7 @@ class DispMethodGenerator(object):
                 "    ),"
             ) % elms
         print(code, file=self._stream)
-    
+
     def _make_withargs(self):
         # type: () -> None
         code = (

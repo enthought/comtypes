@@ -970,7 +970,7 @@ __known_symbols__ = [
     'EXCEPINFO', 'tagEXCEPINFO', 'IDispatch', 'IEnumVARIANT', 'IID_NULL',
     'INVOKE_FUNC', 'INVOKE_PROPERTYGET', 'INVOKE_PROPERTYPUT',
     'INVOKE_PROPERTYPUTREF', 'INVOKEKIND', 'tagINVOKEKIND', '_midlSAFEARRAY',
-    'SCODE', '_SysAllocStringLen', 'VARENUM', 'VARIANT','tagVARIANT', 
+    'SCODE', '_SysAllocStringLen', 'VARENUM', 'VARIANT', 'tagVARIANT',
     'VARIANTARG', '_VariantChangeType', '_VariantClear', '_VariantCopy',
     '_VariantCopyInd', 'VARTYPE', 'VT_ARRAY', 'VT_BLOB', 'VT_BLOB_OBJECT',
     'VT_BOOL', 'VT_BSTR', 'VT_BSTR_BLOB', 'VT_BYREF', 'VT_CARRAY', 'VT_CF',

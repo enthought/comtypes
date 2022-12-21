@@ -592,7 +592,7 @@ class tagTYPEATTR(Structure):
         typekind = hints.AnnoField()  # type: int
         cFuncs = hints.AnnoField()  # type: int
         cVars = hints.AnnoField()  # type: int
-        cImplTypes = hints.AnnoField()  # type: int 
+        cImplTypes = hints.AnnoField()  # type: int
         cbSizeVft = hints.AnnoField()  # type: int
         cbAlignment = hints.AnnoField()  # type: int
         wTypeFlags = hints.AnnoField()  # type: int
