@@ -150,8 +150,8 @@ class ReturnHRESULT(Exception):
     without logging an error.
     """
 
-##class IDLWarning(UserWarning):
-##    "Warn about questionable type information"
+# class IDLWarning(UserWarning):
+#    "Warn about questionable type information"
 
 _GUID = GUID
 IID = GUID
@@ -395,7 +395,7 @@ class _cominterface_meta(type):
             # XXX I'm no longer sure why the code generator generates
             # "_methods_ = []" in the interface definition, and later
             # overrides this by "Interface._methods_ = [...]
-##            assert self.__dict__.get("_methods_", None) is None
+            # assert self.__dict__.get("_methods_", None) is None
             self._make_methods(value)
             self._make_specials()
         elif name == "_disp_methods_":
