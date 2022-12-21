@@ -133,8 +133,8 @@ def hack(inst, mth, paramflags, interface, mthname):
     args_out = len(args_out_idx)
 
     ## XXX Remove this:
-##    if args_in != code.co_argcount - 1:
-##        return catch_errors(inst, mth, interface, mthname)
+    # if args_in != code.co_argcount - 1:
+    #     return catch_errors(inst, mth, interface, mthname)
 
     clsid = getattr(inst, "_reg_clsid_", None)
 
@@ -142,9 +142,9 @@ def hack(inst, mth, paramflags, interface, mthname):
         # Method implementations could check for and return E_POINTER
         # themselves.  Or an error will be raised when
         # 'outargs[i][0] = value' is executed.
-##        for a in outargs:
-##            if not a:
-##                return E_POINTER
+        # for a in outargs:
+        #     if not a:
+        #         return E_POINTER
 
         #make argument list for handler by index array built above
         inargs = []

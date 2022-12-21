@@ -750,7 +750,7 @@ ITypeInfo._methods_ = [
     COMMETHOD([], HRESULT, 'GetImplTypeFlags',
               (['in'], UINT, 'index'),
               (['out'], POINTER(INT))),
-##    STDMETHOD(HRESULT, 'GetIDsOfNames', [POINTER(LPOLESTR), UINT, POINTER(MEMBERID)]),
+    # STDMETHOD(HRESULT, 'GetIDsOfNames', [POINTER(LPOLESTR), UINT, POINTER(MEMBERID)]),
     # this one changed, to accept c_wchar_p array
     STDMETHOD(HRESULT, 'GetIDsOfNames', [POINTER(c_wchar_p), UINT, POINTER(MEMBERID)]),
     STDMETHOD(HRESULT, 'Invoke', [PVOID, MEMBERID, WORD, POINTER(DISPPARAMS), POINTER(VARIANT), POINTER(EXCEPINFO), POINTER(UINT)]),
