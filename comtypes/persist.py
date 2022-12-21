@@ -39,7 +39,7 @@ class IPropertyBag(IUnknown):
                   ( ['in'], WSTRING, 'pszPropName' ),
                   ( ['in', 'out'], POINTER(VARIANT), 'pVar' ),
                   ( ['in'], POINTER(IErrorLog), 'pErrorLog' )),
-##                  ( ['in', 'out'], POINTER(IErrorLog), 'pErrorLog' )),
+                # ( ['in', 'out'], POINTER(IErrorLog), 'pErrorLog' )),
         COMMETHOD([], HRESULT, 'Write',
                   ( ['in'], WSTRING, 'pszPropName' ),
                   ( ['in'], POINTER(VARIANT), 'pVar' )),

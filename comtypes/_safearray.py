@@ -5,14 +5,14 @@ from ctypes.wintypes import *
 from comtypes import HRESULT, GUID
 
 ################################################################
-##if __debug__:
-##    from ctypeslib.dynamic_module import include
-##    include("""\
-##    #define UNICODE
-##    #define NO_STRICT
-##    #include <windows.h>
-##    """,
-##            persist=True)
+# if __debug__:
+#     from ctypeslib.dynamic_module import include
+#     include("""\
+#     #define UNICODE
+#     #define NO_STRICT
+#     #include <windows.h>
+#     """,
+#             persist=True)
 
 ################################################################
 

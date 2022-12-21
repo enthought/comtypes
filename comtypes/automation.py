@@ -505,30 +505,30 @@ class tagVARIANT(Structure):
             return v.value
 
 
-# these are missing:
-##    getter[VT_ERROR]
-##    getter[VT_ARRAY]
-##    getter[VT_BYREF|VT_UI1]
-##    getter[VT_BYREF|VT_I2]
-##    getter[VT_BYREF|VT_I4]
-##    getter[VT_BYREF|VT_R4]
-##    getter[VT_BYREF|VT_R8]
-##    getter[VT_BYREF|VT_BOOL]
-##    getter[VT_BYREF|VT_ERROR]
-##    getter[VT_BYREF|VT_CY]
-##    getter[VT_BYREF|VT_DATE]
-##    getter[VT_BYREF|VT_BSTR]
-##    getter[VT_BYREF|VT_UNKNOWN]
-##    getter[VT_BYREF|VT_DISPATCH]
-##    getter[VT_BYREF|VT_ARRAY]
-##    getter[VT_BYREF|VT_VARIANT]
-##    getter[VT_BYREF]
-##    getter[VT_BYREF|VT_DECIMAL]
-##    getter[VT_BYREF|VT_I1]
-##    getter[VT_BYREF|VT_UI2]
-##    getter[VT_BYREF|VT_UI4]
-##    getter[VT_BYREF|VT_INT]
-##    getter[VT_BYREF|VT_UINT]
+    # these are missing:
+    # getter[VT_ERROR]
+    # getter[VT_ARRAY]
+    # getter[VT_BYREF|VT_UI1]
+    # getter[VT_BYREF|VT_I2]
+    # getter[VT_BYREF|VT_I4]
+    # getter[VT_BYREF|VT_R4]
+    # getter[VT_BYREF|VT_R8]
+    # getter[VT_BYREF|VT_BOOL]
+    # getter[VT_BYREF|VT_ERROR]
+    # getter[VT_BYREF|VT_CY]
+    # getter[VT_BYREF|VT_DATE]
+    # getter[VT_BYREF|VT_BSTR]
+    # getter[VT_BYREF|VT_UNKNOWN]
+    # getter[VT_BYREF|VT_DISPATCH]
+    # getter[VT_BYREF|VT_ARRAY]
+    # getter[VT_BYREF|VT_VARIANT]
+    # getter[VT_BYREF]
+    # getter[VT_BYREF|VT_DECIMAL]
+    # getter[VT_BYREF|VT_I1]
+    # getter[VT_BYREF|VT_UI2]
+    # getter[VT_BYREF|VT_UI4]
+    # getter[VT_BYREF|VT_INT]
+    # getter[VT_BYREF|VT_UINT]
 
     value = property(_get_value, _set_value)
 
@@ -630,9 +630,9 @@ class IEnumVARIANT(IUnknown):
     def __getitem__(self, index):
         self.Reset()
         # Does not yet work.
-##        if isinstance(index, slice):
-##            self.Skip(index.start or 0)
-##            return self.Next(index.stop or sys.maxint)
+        # if isinstance(index, slice):
+        #     self.Skip(index.start or 0)
+        #     return self.Next(index.stop or sys.maxint)
         self.Skip(index)
         item, fetched = self.Next(1)
         if fetched:
@@ -694,7 +694,7 @@ tagEXCEPINFO._fields_ = [
     ('bstrHelpFile', BSTR),
     ('dwHelpContext', DWORD),
     ('pvReserved', c_void_p),
-##    ('pfnDeferredFillIn', WINFUNCTYPE(HRESULT, POINTER(tagEXCEPINFO))),
+    # ('pfnDeferredFillIn', WINFUNCTYPE(HRESULT, POINTER(tagEXCEPINFO))),
     ('pfnDeferredFillIn', c_void_p),
     ('scode', SCODE),
 ]
@@ -942,8 +942,8 @@ _ctype_to_vartype = {
     POINTER(BSTR): VT_BYREF|VT_BSTR,
 
     # These are not yet implemented:
-##    POINTER(IUnknown): VT_UNKNOWN,
-##    POINTER(IDispatch): VT_DISPATCH,
+    # POINTER(IUnknown): VT_UNKNOWN,
+    # POINTER(IDispatch): VT_DISPATCH,
     }
 
 _vartype_to_ctype = {}
