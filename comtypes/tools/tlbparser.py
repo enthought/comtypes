@@ -631,7 +631,7 @@ class Parser(object):
             return self.ParseUnion(tinfo, ta)
         else:
             print("NYI", tkind)
-##            raise "NYI", tkind
+            # raise "NYI", tkind
 
     def parse_LibraryDescription(self):
         la = self.tlib.GetLibAttr()
@@ -666,46 +666,46 @@ class TypeLibParser(Parser):
 ################################################################
 # some interesting typelibs
 
-## these do NOT work:
-    # XXX infinite loop?
-##    path = r"mshtml.tlb" # has propputref
+# these do NOT work:
+# XXX infinite loop?
+# path = r"mshtml.tlb" # has propputref
 
-    # has SAFEARRAY
-    # HRESULT Run(BSTR, SAFEARRAY(VARIANT)*, VARIANT*)
-##    path = "msscript.ocx"
+# has SAFEARRAY
+# HRESULT Run(BSTR, SAFEARRAY(VARIANT)*, VARIANT*)
+# path = "msscript.ocx"
 
-    # has SAFEARRAY
-    # HRESULT AddAddress(SAFEARRAY(BSTR)*, SAFEARRAY(BSTR)*)
-##    path = r"c:\Programme\Microsoft Office\Office\MSWORD8.OLB" # has propputref
+# has SAFEARRAY
+# HRESULT AddAddress(SAFEARRAY(BSTR)*, SAFEARRAY(BSTR)*)
+# path = r"c:\Programme\Microsoft Office\Office\MSWORD8.OLB" # has propputref
 
-    # has SAFEARRAY:
-    # SAFEARRAY(unsigned char) FileSignatureInfo(BSTR, long, MsiSignatureInfo)
-##    path = r"msi.dll" # DispProperty
+# has SAFEARRAY:
+# SAFEARRAY(unsigned char) FileSignatureInfo(BSTR, long, MsiSignatureInfo)
+# path = r"msi.dll" # DispProperty
 
-    # fails packing IDLDESC
-##    path = r"C:\Dokumente und Einstellungen\thomas\Desktop\tlb\win.tlb"
-    # fails packing WIN32_FIND_DATA
-##    path = r"C:\Dokumente und Einstellungen\thomas\Desktop\tlb\win32.tlb"
-    # has a POINTER(IUnknown) as default parameter value
-##    path = r"c:\Programme\Gemeinsame Dateien\Microsoft Shared\Speech\sapi.dll"
+# fails packing IDLDESC
+# path = r"C:\Dokumente und Einstellungen\thomas\Desktop\tlb\win.tlb"
+# fails packing WIN32_FIND_DATA
+# path = r"C:\Dokumente und Einstellungen\thomas\Desktop\tlb\win32.tlb"
+# has a POINTER(IUnknown) as default parameter value
+# path = r"c:\Programme\Gemeinsame Dateien\Microsoft Shared\Speech\sapi.dll"
 
 
-##    path = r"hnetcfg.dll"
-##    path = r"simpdata.tlb"
-##    path = r"nscompat.tlb"
-##    path = r"stdole32.tlb"
+# path = r"hnetcfg.dll"
+# path = r"simpdata.tlb"
+# path = r"nscompat.tlb"
+# path = r"stdole32.tlb"
 
-##    path = r"shdocvw.dll"
+# path = r"shdocvw.dll"
 
-##    path = r"c:\Programme\Microsoft Office\Office\MSO97.DLL"
-##    path = r"PICCLP32.OCX" # DispProperty
-##    path = r"MSHFLXGD.OCX" # DispProperty, propputref
-##    path = r"scrrun.dll" # propput AND propputref on IDictionary::Item
-##    path = r"C:\Dokumente und Einstellungen\thomas\Desktop\tlb\threadapi.tlb"
+# path = r"c:\Programme\Microsoft Office\Office\MSO97.DLL"
+# path = r"PICCLP32.OCX" # DispProperty
+# path = r"MSHFLXGD.OCX" # DispProperty, propputref
+# path = r"scrrun.dll" # propput AND propputref on IDictionary::Item
+# path = r"C:\Dokumente und Einstellungen\thomas\Desktop\tlb\threadapi.tlb"
 
-##    path = r"..\samples\BITS\bits2_0.tlb"
+# path = r"..\samples\BITS\bits2_0.tlb"
 
-##    path = r"c:\vc98\include\activscp.tlb"
+# path = r"c:\vc98\include\activscp.tlb"
 
 def get_tlib_filename(tlib):
     # seems if the typelib is not registered, there's no way to
