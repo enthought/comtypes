@@ -104,8 +104,8 @@ class _Dispatch(object):
     def __getattr__(self, name):
         if name.startswith("__") and name.endswith("__"):
             raise AttributeError(name)
-##        tc = self._comobj.GetTypeInfo(0).QueryInterface(comtypes.typeinfo.ITypeComp)
-##        dispid = tc.Bind(name)[1].memid
+        # tc = self._comobj.GetTypeInfo(0).QueryInterface(comtypes.typeinfo.ITypeComp)
+        # dispid = tc.Bind(name)[1].memid
         dispid = self._ids.get(name)
         if not dispid:
             dispid = self._comobj.GetIDsOfNames(name)[0]
@@ -146,9 +146,9 @@ class _Dispatch(object):
     def __iter__(self):
         return _Collection(self.__enum())
 
-##    def __setitem__(self, index, value):
-##        self._comobj.Invoke(-3, index, value,
-##                            _invkind=comtypes.automation.DISPATCH_PROPERTYPUT|comtypes.automation.DISPATCH_PROPERTYPUTREF)
+    # def __setitem__(self, index, value):
+    #     self._comobj.Invoke(-3, index, value,
+    #                         _invkind=comtypes.automation.DISPATCH_PROPERTYPUT|comtypes.automation.DISPATCH_PROPERTYPUTREF)
 
 class _Collection(object):
     def __init__(self, enum):
