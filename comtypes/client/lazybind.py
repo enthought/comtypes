@@ -111,7 +111,7 @@ class Dispatch(object):
         self.__dict__["_tinfo"] = tinfo
         self.__dict__["_tcomp"] = tinfo.GetTypeComp()
         self.__dict__["_tdesc"] = {}
-##        self.__dict__["_iid"] = tinfo.GetTypeAttr().guid
+        # self.__dict__["_iid"] = tinfo.GetTypeAttr().guid
 
     def __bind(self, name, invkind):
         """Bind (name, invkind) and return a FuncDesc instance or

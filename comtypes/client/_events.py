@@ -73,9 +73,9 @@ def FindOutgoingInterface(source):
         logger.debug("%s using sinkinterface from clsid %s", source, interface)
         return interface
 
-##    interface = find_single_connection_interface(source)
-##    if interface:
-##        return interface
+    # interface = find_single_connection_interface(source)
+    # if interface:
+    #     return interface
 
     raise TypeError("cannot determine source interface")
 
@@ -260,7 +260,7 @@ def PumpEvents(timeout):
     handles = _handles_type(hevt)
     RPC_S_CALLPENDING = -2147417835
 
-##    @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)
+    # @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)
     def HandlerRoutine(dwCtrlType):
         if dwCtrlType == 0: # CTRL+C
             ctypes.windll.kernel32.SetEvent(hevt)
