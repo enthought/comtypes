@@ -34,10 +34,10 @@ class VARIANTEnumerator(COMObject):
                 pCeltFetched[0] += 1
         except StopIteration:
             pass
-##        except:
-##            # ReportException? return E_FAIL?
-##            import traceback
-##            traceback.print_exc()
+        # except:
+        #     # ReportException? return E_FAIL?
+        #     import traceback
+        #     traceback.print_exc()
 
         if pCeltFetched[0] == celt:
             return S_OK
