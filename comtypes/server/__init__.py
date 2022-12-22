@@ -31,11 +31,11 @@ class IClassFactory(comtypes.IUnknown):
         # An interface was specified and obj is already that interface.
         return obj
 
-##class IExternalConnection(IUnknown):
-##    _iid_ = GUID("{00000019-0000-0000-C000-000000000046}")
-##    _methods_ = [
-##        STDMETHOD(HRESULT, "AddConnection", [c_ulong, c_ulong]),
-##        STDMETHOD(HRESULT, "ReleaseConnection", [c_ulong, c_ulong, c_ulong])]
+# class IExternalConnection(IUnknown):
+#     _iid_ = GUID("{00000019-0000-0000-C000-000000000046}")
+#     _methods_ = [
+#         STDMETHOD(HRESULT, "AddConnection", [c_ulong, c_ulong]),
+#         STDMETHOD(HRESULT, "ReleaseConnection", [c_ulong, c_ulong, c_ulong])]
 
 # The following code is untested:
 
