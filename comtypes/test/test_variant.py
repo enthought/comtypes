@@ -245,7 +245,7 @@ class ArrayTest(unittest.TestCase):
 
 ################################################################
 def run_test(rep, msg, func=None, previous={}, results={}):
-##    items = [None] * rep
+    # items = [None] * rep
     if func is None:
         locals = sys._getframe(1).f_locals
         func = eval("lambda: %s" % msg, locals)
@@ -303,7 +303,7 @@ def check_perf(rep=20000):
     d += run_test(rep, "VARIANT([42,]).value", previous=previous, results=results)
 
     print("Average duration %.1f%%" % (d / 10))
-##    cPickle.dump(results, open("result.pickle", "wb"))
+    # cPickle.dump(results, open("result.pickle", "wb"))
 
 if __name__ == '__main__':
     try:

@@ -13,17 +13,17 @@ class TestCase(unittest.TestCase):
         # IWebBrowserApp(IWebBrowser)
         # IWebBrowser2(IWebBrowserApp)
 
-##        print iem.IWebBrowser2.mro()
+        # print iem.IWebBrowser2.mro()
 
         self.assertTrue(issubclass(iem.IWebBrowser2, iem.IWebBrowserApp))
         self.assertTrue(issubclass(iem.IWebBrowserApp, iem.IWebBrowser))
 
-##        print sorted(iem.IWebBrowser.__map_case__.keys())
-##        print "=" * 42
-##        print sorted(iem.IWebBrowserApp.__map_case__.keys())
-##        print "=" * 42
-##        print sorted(iem.IWebBrowser2.__map_case__.keys())
-##        print "=" * 42
+        # print sorted(iem.IWebBrowser.__map_case__.keys())
+        # print "=" * 42
+        # print sorted(iem.IWebBrowserApp.__map_case__.keys())
+        # print "=" * 42
+        # print sorted(iem.IWebBrowser2.__map_case__.keys())
+        # print "=" * 42
 
         # names in the base class __map_case__ must also appear in the
         # subclass.
