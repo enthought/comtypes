@@ -38,14 +38,14 @@ else:
             iviDrvr = agDrvr.QueryInterface(IviScopeLib.IIviScope)
 
             # Get driver Identity properties.  Driver initialization not required.
-##            print "Identifier:", iviDrvr.Identity.Identifier
-##            print "   Revision:",  agDrvr.Identity.Revision
-##            print "Description:", agDrvr.Identity.Description
+            # print "Identifier:", iviDrvr.Identity.Identifier
+            # print "   Revision:",  agDrvr.Identity.Revision
+            # print "Description:", agDrvr.Identity.Description
 
             # Get instrument Identity properties.
-##            print "InstrumentModel: ", agDrvr.Identity.InstrumentModel
-##            print "   FirmwareRevision: ", agDrvr.Identity.InstrumentFirmwareRevision
-##            print "   SerialNumber: ", agDrvr.System.SerialNumber
+            # print "InstrumentModel: ", agDrvr.Identity.InstrumentModel
+            # print "   FirmwareRevision: ", agDrvr.Identity.InstrumentFirmwareRevision
+            # print "   SerialNumber: ", agDrvr.System.SerialNumber
 
             # Setup for a measurement.  Reset in this case.
             agDrvr.Utility.Reset()
