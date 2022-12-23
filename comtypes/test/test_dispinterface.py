@@ -76,8 +76,8 @@ class Test(unittest.TestCase):
             self.assertEqual(d.Name, "foo bar")
 
             # fails.  Why?
-##            d.name = "blah"
-##            self.assertEqual(d.Name, "blah")
+            # d.name = "blah"
+            # self.assertEqual(d.Name, "blah")
 
     def test_comtypes(self):
         from comtypes.client import CreateObject

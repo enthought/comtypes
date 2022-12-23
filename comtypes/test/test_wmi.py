@@ -49,7 +49,7 @@ class Test(ut.TestCase):
                 self.assertTrue(isinstance(prop.Name, base_text_type))
                 prop.Value
                 result[prop.Name] = prop.Value
-##                print "\t", (prop.Name, prop.Value)
+                # print "\t", (prop.Name, prop.Value)
             self.assertEqual(len(item.Properties_), item.Properties_.Count)
             self.assertEqual(len(item.Properties_), len(result))
             self.assertTrue(isinstance(item.Properties_["Description"].Value, text_type))

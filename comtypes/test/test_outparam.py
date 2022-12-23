@@ -56,23 +56,23 @@ def comstring(text, typ=c_wchar_p):
 class Test(unittest.TestCase):
     @unittest.skip("This fails for reasons I don't understand yet")
     def test_c_char(self):
-##        ptr = c_wchar_p("abc")
-##        self.failUnlessEqual(ptr.__ctypes_from_outparam__(),
-##                             "abc")
+        # ptr = c_wchar_p("abc")
+        # self.failUnlessEqual(ptr.__ctypes_from_outparam__(),
+        #                         "abc")
 
-##        p = BSTR("foo bar spam")
+        # p = BSTR("foo bar spam")
 
         x = comstring("Hello, World")
         y = comstring("foo bar")
         z = comstring("spam, spam, and spam")
 
-##        (x.__ctypes_from_outparam__(), x.__ctypes_from_outparam__())
+        # (x.__ctypes_from_outparam__(), x.__ctypes_from_outparam__())
         print((x.__ctypes_from_outparam__(), None)) #x.__ctypes_from_outparam__())
 
-##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
-##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
-##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
-##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
+        # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
+        # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
+        # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
+        # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,28 +18,28 @@ class EventSink:
 
     # some DWebBrowserEvents
     def OnVisible(self, this, *args):
-##        print "OnVisible", args
+        # print "OnVisible", args
         self._events.append("OnVisible")
 
     def BeforeNavigate(self, this, *args):
-##        print "BeforeNavigate", args
+        # print "BeforeNavigate", args
         self._events.append("BeforeNavigate")
 
     def NavigateComplete(self, this, *args):
-##        print "NavigateComplete", args
+        # print "NavigateComplete", args
         self._events.append("NavigateComplete")
 
     # some DWebBrowserEvents2
     def BeforeNavigate2(self, this, *args):
-##        print "BeforeNavigate2", args
+        # print "BeforeNavigate2", args
         self._events.append("BeforeNavigate2")
 
     def NavigateComplete2(self, this, *args):
-##        print "NavigateComplete2", args
+        # print "NavigateComplete2", args
         self._events.append("NavigateComplete2")
 
     def DocumentComplete(self, this, *args):
-##        print "DocumentComplete", args
+        # print "DocumentComplete", args
         self._events.append("DocumentComplete")
 
 
