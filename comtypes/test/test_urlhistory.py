@@ -37,8 +37,8 @@ class Test(unittest.TestCase):
         hist = CreateObject(urlhistLib.UrlHistory)
         for x in hist.EnumURLS():
             x.pwcsUrl, x.pwcsTitle
-##            print (x.pwcsUrl, x.pwcsTitle)
-##            print x
+            # print (x.pwcsUrl, x.pwcsTitle)
+            # print x
         def doit():
             for x in hist.EnumURLs():
                 pass
