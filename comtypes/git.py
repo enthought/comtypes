@@ -46,7 +46,11 @@ RevokeInterfaceFromGlobal = git.RevokeInterfaceFromGlobal
 RegisterInterfaceInGlobal = git.RegisterInterfaceInGlobal
 GetInterfaceFromGlobal = git.GetInterfaceFromGlobal
 
-__all__ = ["RegisterInterfaceInGlobal", "RevokeInterfaceFromGlobal", "GetInterfaceFromGlobal"]
+__all__ = [
+    "RegisterInterfaceInGlobal", "RevokeInterfaceFromGlobal",
+    "GetInterfaceFromGlobal",
+]
+
 
 if __name__ == "__main__":
     from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib

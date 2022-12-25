@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["ConnectableObjectMixin"]
 
+
 class ConnectionPointImpl(COMObject):
     """This object implements a connectionpoint"""
     _com_interfaces_ = [IConnectionPoint]
