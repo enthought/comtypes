@@ -7,14 +7,13 @@ from ctypes import _SimpleCData
 try:
     from _ctypes import COMError
 except ImportError as e:
-    e.msg = "\n".join((
-        e.msg,
+    msg = "\n".join((
         "",
         "COM technology not available (maybe it's the wrong platform).",
         "Note that COM is only supported on Windows.",
         "For more details, please check: "
         "https://learn.microsoft.com/en-us/windows/win32/com."))
-    raise e
+    raise ImportError(msg) from e
 import logging
 import os
 import sys
