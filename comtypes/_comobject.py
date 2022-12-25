@@ -777,4 +777,5 @@ class COMObject(object):
     def IPersist_GetClassID(self):
         return self._reg_clsid_
 
+
 __all__ = ["COMObject"]

@@ -105,6 +105,8 @@ def ReportException(hresult, iid, clsid=None, helpfile=None, helpcontext=None,
                        clsid=clsid, helpfile=helpfile, helpcontext=helpcontext,
                        hresult=hresult)
 
-__all__ = ["ICreateErrorInfo", "IErrorInfo", "ISupportErrorInfo",
-           "ReportError", "ReportException",
-           "SetErrorInfo", "GetErrorInfo", "CreateErrorInfo"]
+
+__all__ = [
+    "ICreateErrorInfo", "IErrorInfo", "ISupportErrorInfo", "ReportError",
+    "ReportException", "SetErrorInfo", "GetErrorInfo", "CreateErrorInfo",
+]
