@@ -170,4 +170,5 @@ class _Collection(object):
     def __iter__(self):
         return self
 
+
 __all__ = ["Dispatch"]
