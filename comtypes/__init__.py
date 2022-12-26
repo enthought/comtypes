@@ -4,7 +4,15 @@ __version__ = "1.2.1"
 import atexit
 from ctypes import *
 from ctypes import _SimpleCData
-from _ctypes import COMError
+try:
+    from _ctypes import COMError
+except ImportError as e:
+    msg = "\n".join((
+        "COM technology not available (maybe it's the wrong platform).",
+        "Note that COM is only supported on Windows.",
+        "For more details, please check: "
+        "https://learn.microsoft.com/en-us/windows/win32/com"))
+    raise ImportError(msg) from e
 import logging
 import os
 import sys
