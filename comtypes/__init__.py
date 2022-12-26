@@ -8,7 +8,6 @@ try:
     from _ctypes import COMError
 except ImportError as e:
     msg = "\n".join((
-        "",
         "COM technology not available (maybe it's the wrong platform).",
         "Note that COM is only supported on Windows.",
         "For more details, please check: "
