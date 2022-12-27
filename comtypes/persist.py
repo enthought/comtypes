@@ -213,6 +213,7 @@ class DictPropertyBag(COMObject):
         return S_OK
 
 
+# fmt: off
 __known_symbols__ = [
     "CLIPFORMAT", "DictPropertyBag", "IErrorLog", "IPersistFile",
     "IPersistPropertyBag", "IPersistPropertyBag2", "IPropertyBag",
@@ -225,3 +226,4 @@ __known_symbols__ = [
     "STGM_SHARE_DENY_NONE", "STGM_SHARE_DENY_READ", "STGM_SHARE_DENY_WRITE",
     "STGM_SHARE_EXCLUSIVE", "STGM_SIMPLE", "STGM_TRANSACTED", "STGM_WRITE",
 ]
+# fmt: on

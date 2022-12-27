@@ -292,7 +292,9 @@ def CoGetObject(displayname, interface=None, dynamic=False):
                    interface=interface)
 
 
+# fmt: off
 __all__ = [
     "CreateObject", "GetActiveObject", "CoGetObject", "GetEvents",
     "ShowEvents", "PumpEvents", "GetModule", "GetClassObject",
 ]
+# fmt: on

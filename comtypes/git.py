@@ -46,10 +46,12 @@ RevokeInterfaceFromGlobal = git.RevokeInterfaceFromGlobal
 RegisterInterfaceInGlobal = git.RegisterInterfaceInGlobal
 GetInterfaceFromGlobal = git.GetInterfaceFromGlobal
 
+# fmt: off
 __all__ = [
     "RegisterInterfaceInGlobal", "RevokeInterfaceFromGlobal",
     "GetInterfaceFromGlobal",
 ]
+# fmt: on
 
 
 if __name__ == "__main__":

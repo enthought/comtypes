@@ -1157,6 +1157,7 @@ class CoClass(COMObject):
 ################################################################
 
 
+# fmt: off
 __known_symbols__ = [
     "BIND_OPTS", "tagBIND_OPTS", "BINDOPTS2", "tagBIND_OPTS2", "BSTR",
     "_check_version", "CLSCTX", "tagCLSCTX", "CLSCTX_ALL",
@@ -1183,3 +1184,4 @@ __known_symbols__ = [
     "SOLE_AUTHENTICATION_INFO", "_SOLE_AUTHENTICATION_LIST",
     "SOLE_AUTHENTICATION_LIST", "STDMETHOD", "wireHWND",
 ]
+# fmt: on
