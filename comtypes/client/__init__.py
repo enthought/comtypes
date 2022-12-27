@@ -1,5 +1,4 @@
-'''comtypes.client - High level client level COM support package.
-'''
+"""comtypes.client - High level client level COM support package."""
 
 ################################################################
 #
@@ -17,7 +16,7 @@ import sys
 import comtypes
 from comtypes.hresult import *
 from comtypes import (
-    automation, CoClass, GUID, IUnknown, TYPE_CHECKING, typeinfo,
+    automation, CoClass, GUID, IUnknown, TYPE_CHECKING, typeinfo
 )
 import comtypes.client.dynamic
 from comtypes.client._constants import Constants
@@ -27,6 +26,7 @@ from comtypes.client._code_cache import _find_gen_dir
 
 gen_dir = _find_gen_dir()
 import comtypes.gen
+
 ### for testing
 ##gen_dir = None
 
@@ -220,7 +220,8 @@ def CreateObject(progid,                  # which object to create
                  machine=None,            # where to create the object
                  interface=None,          # the interface we want
                  dynamic=False,           # use dynamic dispatch
-                 pServerInfo=None):       # server info struct for remoting
+                 pServerInfo=None,        # server info struct for remoting
+):
     # type: (_UnionT[str, CoClass, GUID], Optional[int], Optional[str], Optional[Type[IUnknown]], bool, Optional[comtypes.COSERVERINFO]) -> Any
     """Create a COM object from 'progid', and try to QueryInterface()
     it to the most useful interface, generating typelib support on
