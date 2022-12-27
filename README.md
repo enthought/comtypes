@@ -9,15 +9,15 @@
 
 `comtypes` allows to define, call, and implement custom and dispatch-based COM interfaces in pure `Python`.
 
-This package works on only Windows.
-- [`comtypes==1.1.7`](https://pypi.org/project/comtypes/1.1.7/) is the last version of supporting Windows CE.
+This package works on Windows only.
+- [`comtypes==1.1.7`](https://pypi.org/project/comtypes/1.1.7/) is the last version supporting Windows CE.
 
 ## Where to get it
 
 The source code is currently hosted on GitHub at:
 https://github.com/enthought/comtypes
 
-Binary installers for the latest released version are available at the [Python Package Index (PyPI)](https://pypi.org/project/comtypes).
+An installer for the latest released version is available at the [Python Package Index (PyPI)](https://pypi.org/project/comtypes).
 
 ```sh
 # PyPI
