@@ -9,7 +9,6 @@ from comtypes.gen.Scripting import IDictionary
 
 
 class Test(unittest.TestCase):
-
     def setUp(self):
         self.d = CreateObject("Scripting.Dictionary", dynamic=True)
 
@@ -72,7 +71,7 @@ class Test(unittest.TestCase):
         self.assertRaises(TypeError, list, self.d.Item)
 
     def assertAccessInterface(self, d):
-        """ Asserts access via indexing and named property """
+        """Asserts access via indexing and named property"""
         self.assertEqual(d.CompareMode, 42)
         self.assertEqual(d["foo"], 1)
         self.assertEqual(d.Item["foo"], d["foo"])

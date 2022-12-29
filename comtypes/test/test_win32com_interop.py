@@ -12,6 +12,7 @@ requires("pythoncom")
 try:
     import pythoncom
     import win32com.client
+
     skip = False
     # We use the PyCom_PyObjectFromIUnknown function in pythoncom25.dll to
     # convert a comtypes COM pointer into a pythoncom COM pointer.
@@ -34,8 +35,10 @@ except ImportError:
 
 def setUpModule():
     if skip:
-        raise unittest.SkipTest("This test requires the pythoncom library installed.  If this is "
-                                "important tests then we need to add dev dependencies to the project that include pythoncom.")
+        raise unittest.SkipTest(
+            "This test requires the pythoncom library installed.  If this is "
+            "important tests then we need to add dev dependencies to the project that include pythoncom."
+        )
 
 
 def comtypes2pywin(ptr, interface=None):
@@ -52,7 +55,9 @@ def comtypes2pywin(ptr, interface=None):
         interface = IUnknown
     return _PyCom_PyObjectFromIUnknown(ptr, byref(interface._iid_), True)
 
+
 ################################################################
+
 
 def comtypes_get_refcount(ptr):
     """Helper function for testing: return the COM reference count of
@@ -60,15 +65,20 @@ def comtypes_get_refcount(ptr):
     ptr.AddRef()
     return ptr.Release()
 
+
 from comtypes import COMObject
+
 
 class MyComObject(COMObject):
     """A completely trivial COM object implementing IDispatch. Calling
     any methods will return the error code E_NOTIMPL (except the
     IUnknown methods; they are implemented in the base class."""
+
     _com_interfaces_ = [IDispatch]
 
+
 ################################################################
+
 
 class Test(unittest.TestCase):
     def tearDown(self):
@@ -103,6 +113,7 @@ class Test(unittest.TestCase):
         # Cleanup and make sure that the COM refcounts are correct
         del p, disp
         self.assertEqual(comtypes_get_refcount(ie), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

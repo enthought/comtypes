@@ -27,15 +27,15 @@ else:
             # dispproperties varies, depending on the length of the list we pass
             # to Eval):
             #
-            #class JScriptTypeInfo(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
+            # class JScriptTypeInfo(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0.IDispatch):
             #    'JScript Type Info'
             #    _iid_ = GUID('{C59C6B12-F6C1-11CF-8835-00A0C911E8B2}')
             #    _idlflags_ = []
             #    _methods_ = []
-            #JScriptTypeInfo._disp_methods_ = [
+            # JScriptTypeInfo._disp_methods_ = [
             #    DISPPROPERTY([dispid(9522932)], VARIANT, '0'),
             #    DISPPROPERTY([dispid(9522976)], VARIANT, '1'),
-            #]
+            # ]
             #
             # Although the exact interface members vary, the guid stays
             # the same. Don't think that's allowed by COM standards - is
@@ -56,19 +56,18 @@ else:
             tinfo_2 = engine.Eval("[1, 2, 3, 4]")._comobj.GetTypeInfo(0)
             tinfo_3 = engine.Eval("[1, 2, 3, 4, 5]")._comobj.GetTypeInfo(0)
 
-
             self.assertEqual(tinfo_1.GetTypeAttr().cVars, 3)
             self.assertEqual(tinfo_2.GetTypeAttr().cVars, 4)
             self.assertEqual(tinfo_3.GetTypeAttr().cVars, 5)
 
             # These tests simply describe the current behaviour ;-)
-            self.assertEqual(tinfo_1.GetTypeAttr().guid,
-                                 tinfo_1.GetTypeAttr().guid)
+            self.assertEqual(tinfo_1.GetTypeAttr().guid, tinfo_1.GetTypeAttr().guid)
 
             ## print (res[0], res[1], res[2])
             ## print len(res)
 
             engine.Reset()
+
 
 if __name__ == "__main__":
     unittest.main()

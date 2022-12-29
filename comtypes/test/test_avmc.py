@@ -4,10 +4,13 @@ from comtypes.client import CreateObject
 from comtypes.test.find_memleak import find_memleak
 
 
-@unittest.skip("This test does not work.  Apparently it's supposed to work with the 'avmc' stuff "
-               "in comtypes/source, but it doesn't.  It's not clear to me why.")
+@unittest.skip(
+    "This test does not work.  Apparently it's supposed to work with the 'avmc' stuff "
+    "in comtypes/source, but it doesn't.  It's not clear to me why."
+)
 class Test(unittest.TestCase):
     """Test COM records"""
+
     def test(self):
         # The ATL COM dll
         avmc = CreateObject("AvmcIfc.Avmc.1")
@@ -35,6 +38,7 @@ class Test(unittest.TestCase):
     def check_leaks(self, func, limit=0):
         bytes = find_memleak(func)
         self.assertFalse(bytes > limit, "Leaks %d bytes" % bytes)
+
 
 if __name__ == "__main__":
     unittest.main()

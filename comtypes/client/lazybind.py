@@ -17,8 +17,10 @@ class FuncDesc(object):
     """Stores important FUNCDESC properties by copying them from a
     real FUNCDESC instance.
     """
+
     def __init__(self, **kw):
         self.__dict__.update(kw)
+
 
 # What is missing?
 #
@@ -38,26 +40,15 @@ class NamedProperty(object):
         if self.get is None:
             raise TypeError("unsubscriptable object")
         if isinstance(arg, tuple):
-            return self.disp._comobj._invoke(self.get.memid,
-                                             self.get.invkind,
-                                             0,
-                                             *arg)
+            return self.disp._comobj._invoke(self.get.memid, self.get.invkind, 0, *arg)
         elif arg == _all_slice:
-            return self.disp._comobj._invoke(self.get.memid,
-                                             self.get.invkind,
-                                             0)
-        return self.disp._comobj._invoke(self.get.memid,
-                                         self.get.invkind,
-                                         0,
-                                         *[arg])
+            return self.disp._comobj._invoke(self.get.memid, self.get.invkind, 0)
+        return self.disp._comobj._invoke(self.get.memid, self.get.invkind, 0, *[arg])
 
     def __call__(self, *args):
         if self.get is None:
             raise TypeError("object is not callable")
-        return self.disp._comobj._invoke(self.get.memid,
-                                            self.get.invkind,
-                                            0,
-                                            *args)
+        return self.disp._comobj._invoke(self.get.memid, self.get.invkind, 0, *args)
 
     def __setitem__(self, name, value):
         # See discussion in Dispatch.__setattr__ below.
@@ -68,24 +59,14 @@ class NamedProperty(object):
         else:
             descr = self.put or self.putref
         if isinstance(name, tuple):
-            self.disp._comobj._invoke(descr.memid,
-                                      descr.invkind,
-                                      0,
-                                      *(name + (value,)))
+            self.disp._comobj._invoke(descr.memid, descr.invkind, 0, *(name + (value,)))
         elif name == _all_slice:
-            self.disp._comobj._invoke(descr.memid,
-                                      descr.invkind,
-                                      0,
-                                      value)
+            self.disp._comobj._invoke(descr.memid, descr.invkind, 0, value)
         else:
-            self.disp._comobj._invoke(descr.memid,
-                                      descr.invkind,
-                                      0,
-                                      name,
-                                      value)
+            self.disp._comobj._invoke(descr.memid, descr.invkind, 0, name, value)
 
     def __iter__(self):
-        """ Explicitly disallow iteration. """
+        """Explicitly disallow iteration."""
         msg = "%r is not iterable" % self.disp
         raise TypeError(msg)
 
@@ -102,10 +83,12 @@ class NamedProperty(object):
 # 2. Custom objects method support named arguments, Dispatch
 #    objects do not (could be added, would probably be expensive)
 
+
 class Dispatch(object):
     """Dynamic dispatch for an object the exposes type information.
     Binding at runtime is done via ITypeComp::Bind calls.
     """
+
     def __init__(self, comobj, tinfo):
         self.__dict__["_comobj"] = comobj
         self.__dict__["_tinfo"] = tinfo
@@ -130,10 +113,12 @@ class Dispatch(object):
                 # Using a separate instance to store interesting
                 # attributes of descr avoids that the typecomp instance is
                 # kept alive...
-                info = FuncDesc(memid=descr.memid,
-                                invkind=descr.invkind,
-                                cParams=descr.cParams,
-                                funckind=descr.funckind)
+                info = FuncDesc(
+                    memid=descr.memid,
+                    invkind=descr.invkind,
+                    cParams=descr.cParams,
+                    funckind=descr.funckind,
+                )
             self._tdesc[(name, invkind)] = info
             return info
 
@@ -147,8 +132,7 @@ class Dispatch(object):
         return cmp(self._comobj, other._comobj)
 
     def __eq__(self, other):
-        return isinstance(other, Dispatch) and \
-               self._comobj == other._comobj
+        return isinstance(other, Dispatch) and self._comobj == other._comobj
 
     def __hash__(self):
         return hash(self._comobj)
@@ -180,6 +164,7 @@ class Dispatch(object):
             # DISPATCH_METHOD
             def caller(*args):
                 return self._comobj._invoke(descr.memid, descr.invkind, 0, *args)
+
             try:
                 caller.__name__ = name
             except TypeError:
@@ -220,10 +205,9 @@ class Dispatch(object):
         raise AttributeError(name)
 
     def __call__(self, *args):
-        return self._comobj._invoke(DISPID_VALUE,
-                                    DISPATCH_METHOD | DISPATCH_PROPERTYGET,
-                                    0,
-                                    *args)
+        return self._comobj._invoke(
+            DISPID_VALUE, DISPATCH_METHOD | DISPATCH_PROPERTYGET, 0, *args
+        )
 
     def __getitem__(self, arg):
         if isinstance(arg, tuple):
@@ -234,10 +218,9 @@ class Dispatch(object):
             args = (arg,)
 
         try:
-            return self._comobj._invoke(DISPID_VALUE,
-                                        DISPATCH_METHOD | DISPATCH_PROPERTYGET,
-                                        0,
-                                        *args)
+            return self._comobj._invoke(
+                DISPID_VALUE, DISPATCH_METHOD | DISPATCH_PROPERTYGET, 0, *args
+            )
         except comtypes.COMError:
             return iter(self)[arg]
 
@@ -253,15 +236,12 @@ class Dispatch(object):
             args = (value,)
         else:
             args = (name, value)
-        return self._comobj._invoke(DISPID_VALUE,
-                                    invkind,
-                                    0,
-                                    *args)
+        return self._comobj._invoke(DISPID_VALUE, invkind, 0, *args)
 
     def __iter__(self):
-        punk = self._comobj._invoke(DISPID_NEWENUM,
-                                    DISPATCH_METHOD | DISPATCH_PROPERTYGET,
-                                    0)
+        punk = self._comobj._invoke(
+            DISPID_NEWENUM, DISPATCH_METHOD | DISPATCH_PROPERTYGET, 0
+        )
         enum = punk.QueryInterface(IEnumVARIANT)
         enum._dynamic = True
         return enum

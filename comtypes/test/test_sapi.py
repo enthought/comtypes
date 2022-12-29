@@ -5,6 +5,7 @@
 import os, unittest, tempfile
 from comtypes.client import CreateObject
 
+
 class Test(unittest.TestCase):
     def test(self, dynamic=False):
         engine = CreateObject("SAPI.SpVoice", dynamic=dynamic)
@@ -27,6 +28,7 @@ class Test(unittest.TestCase):
 
     def test_dyndisp(self):
         return self.test(dynamic=True)
+
 
 if __name__ == "__main__":
     unittest.main()

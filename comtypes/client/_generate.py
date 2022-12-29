@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import types
+
 if sys.version_info >= (3, 0):
     base_text_type = str
     import winreg
@@ -29,6 +30,7 @@ def _my_import(fullname):
     # type: (str) -> types.ModuleType
     """helper function to import dotted modules"""
     import comtypes.gen as g
+
     if comtypes.client.gen_dir and comtypes.client.gen_dir not in g.__path__:
         g.__path__.append(comtypes.client.gen_dir)  # type: ignore
     return importlib.import_module(fullname)
@@ -113,7 +115,9 @@ def GetModule(tlib):
         # the directory of the calling module (if not from command line)
         frame = sys._getframe(1)
         _file_ = frame.f_globals.get("__file__", None)  # type: str
-        pathname, is_abs = _resolve_filename(tlib_string, _file_ and os.path.dirname(_file_))
+        pathname, is_abs = _resolve_filename(
+            tlib_string, _file_ and os.path.dirname(_file_)
+        )
         logger.debug("GetModule(%s), resolved: %s", pathname, is_abs)
         tlib = _load_tlib(pathname)  # don't register
         if not is_abs:
@@ -123,7 +127,7 @@ def GetModule(tlib):
                 logger.info("GetModule(%s): could not resolve to a filename", tlib)
                 pathname = tlib_string
         # if above path torture resulted in an absolute path, then the file exists (at this point)!
-        assert not(os.path.isabs(pathname)) or os.path.exists(pathname)
+        assert not (os.path.isabs(pathname)) or os.path.exists(pathname)
     else:
         pathname = None
         tlib = _load_tlib(tlib)
@@ -152,9 +156,13 @@ def _load_tlib(obj):
     elif isinstance(obj, GUID):
         clsid = str(obj)
         # lookup associated typelib in registry
-        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\TypeLib" % clsid) as key:
+        with winreg.OpenKey(
+            winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\TypeLib" % clsid
+        ) as key:
             libid = winreg.EnumValue(key, 0)[1]
-        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Version" % clsid) as key:
+        with winreg.OpenKey(
+            winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Version" % clsid
+        ) as key:
             ver = winreg.EnumValue(key, 0)[1].split(".")
         return typeinfo.LoadRegTypeLib(GUID(libid), int(ver[0]), int(ver[1]), 0)
     # obj is a sequence containing libid
@@ -191,6 +199,7 @@ def _create_module_in_memory(modulename, code):
     """create module in memory system, and import it"""
     # `modulename` is 'comtypes.gen.xxx'
     import comtypes.gen as g
+
     mod = types.ModuleType(modulename)
     abs_gen_path = os.path.abspath(g.__path__[0])  # type: ignore
     mod.__file__ = os.path.join(abs_gen_path, "<memory>")
@@ -255,7 +264,7 @@ def _get_known_symbols():
         "comtypes.automation",
         "comtypes",
         "ctypes.wintypes",
-        "ctypes"
+        "ctypes",
     ):
         mod = importlib.import_module(mod_name)
         if hasattr(mod, "__known_symbols__"):
@@ -265,6 +274,7 @@ def _get_known_symbols():
         for name in names:
             known_symbols[name] = mod.__name__
     return known_symbols
+
 
 ################################################################
 

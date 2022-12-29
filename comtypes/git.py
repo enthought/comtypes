@@ -4,20 +4,34 @@ The global interface table provides a way to marshal interface pointers
 between different threading appartments.
 """
 from ctypes import *
-from comtypes import IUnknown, STDMETHOD, COMMETHOD, \
-     GUID, HRESULT, CoCreateInstance, CLSCTX_INPROC_SERVER
+from comtypes import (
+    IUnknown,
+    STDMETHOD,
+    COMMETHOD,
+    GUID,
+    HRESULT,
+    CoCreateInstance,
+    CLSCTX_INPROC_SERVER,
+)
 
 DWORD = c_ulong
+
 
 class IGlobalInterfaceTable(IUnknown):
     _iid_ = GUID("{00000146-0000-0000-C000-000000000046}")
     _methods_ = [
-        STDMETHOD(HRESULT, "RegisterInterfaceInGlobal",
-                  [POINTER(IUnknown), POINTER(GUID), POINTER(DWORD)]),
+        STDMETHOD(
+            HRESULT,
+            "RegisterInterfaceInGlobal",
+            [POINTER(IUnknown), POINTER(GUID), POINTER(DWORD)],
+        ),
         STDMETHOD(HRESULT, "RevokeInterfaceFromGlobal", [DWORD]),
-        STDMETHOD(HRESULT, "GetInterfaceFromGlobal",
-                  [DWORD, POINTER(GUID), POINTER(POINTER(IUnknown))]),
-        ]
+        STDMETHOD(
+            HRESULT,
+            "GetInterfaceFromGlobal",
+            [DWORD, POINTER(GUID), POINTER(POINTER(IUnknown))],
+        ),
+    ]
 
     def RegisterInterfaceInGlobal(self, obj, interface=IUnknown):
         cookie = DWORD()
@@ -38,9 +52,11 @@ class IGlobalInterfaceTable(IUnknown):
 # with the debugger.  Apparently it is in uuid.lib.
 CLSID_StdGlobalInterfaceTable = GUID("{00000323-0000-0000-C000-000000000046}")
 
-git = CoCreateInstance(CLSID_StdGlobalInterfaceTable,
-                       interface=IGlobalInterfaceTable,
-                       clsctx=CLSCTX_INPROC_SERVER)
+git = CoCreateInstance(
+    CLSID_StdGlobalInterfaceTable,
+    interface=IGlobalInterfaceTable,
+    clsctx=CLSCTX_INPROC_SERVER,
+)
 
 RevokeInterfaceFromGlobal = git.RevokeInterfaceFromGlobal
 RegisterInterfaceInGlobal = git.RegisterInterfaceInGlobal
@@ -57,7 +73,7 @@ __all__ = [
 if __name__ == "__main__":
     from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
 
-    tlib = CreateTypeLib("foo.bar") # we don not save it later
+    tlib = CreateTypeLib("foo.bar")  # we don not save it later
     assert (tlib.AddRef(), tlib.Release()) == (2, 1)
 
     cookie = RegisterInterfaceInGlobal(tlib)

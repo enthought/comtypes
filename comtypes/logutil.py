@@ -1,28 +1,37 @@
 # logutil.py
 import logging, ctypes
 
+
 class NTDebugHandler(logging.Handler):
-    def emit(self, record,
-             writeA=ctypes.windll.kernel32.OutputDebugStringA,
-             writeW=ctypes.windll.kernel32.OutputDebugStringW):
+    def emit(
+        self,
+        record,
+        writeA=ctypes.windll.kernel32.OutputDebugStringA,
+        writeW=ctypes.windll.kernel32.OutputDebugStringW,
+    ):
         text = self.format(record)
         if isinstance(text, str):
             writeA(text + "\n")
         else:
-            writeW(text + u"\n")
+            writeW(text + "\n")
+
+
 logging.NTDebugHandler = NTDebugHandler
+
 
 def setup_logging(*pathnames):
     import configparser
 
     parser = configparser.ConfigParser()
-    parser.optionxform = str # use case sensitive option names!
+    parser.optionxform = str  # use case sensitive option names!
 
     parser.read(pathnames)
 
-    DEFAULTS = {"handler": "StreamHandler()",
-                "format": "%(levelname)s:%(name)s:%(message)s",
-                "level": "WARNING"}
+    DEFAULTS = {
+        "handler": "StreamHandler()",
+        "format": "%(levelname)s:%(name)s:%(message)s",
+        "level": "WARNING",
+    }
 
     def get(section, option):
         try:

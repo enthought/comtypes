@@ -1,5 +1,6 @@
 import sys, os
 import logging
+
 logging.basicConfig()
 ##logging.basicConfig(level=logging.DEBUG)
 ##logger = logging.getLogger(__name__)
@@ -38,18 +39,18 @@ from comtypes.gen import TestComServerLib
 # interfaces.  ISupportErrorInfo is implemented by the COMObject base
 # class.
 class TestComServer(
-    TestComServerLib.TestComServer, # the coclass from the typelib wrapper
+    TestComServerLib.TestComServer,  # the coclass from the typelib wrapper
     comtypes.server.connectionpoints.ConnectableObjectMixin,
-    ):
+):
 
     # The default interface from the typelib MUST be the first
     # interface, other interfaces can follow
 
-    _com_interfaces_ = TestComServerLib.TestComServer._com_interfaces_ + \
-                       [comtypes.typeinfo.IProvideClassInfo2,
-                        comtypes.errorinfo.ISupportErrorInfo,
-                        comtypes.connectionpoints.IConnectionPointContainer,
-                        ]
+    _com_interfaces_ = TestComServerLib.TestComServer._com_interfaces_ + [
+        comtypes.typeinfo.IProvideClassInfo2,
+        comtypes.errorinfo.ISupportErrorInfo,
+        comtypes.connectionpoints.IConnectionPointContainer,
+    ]
 
     # registry entries
     _reg_threading_ = "Both"
@@ -115,7 +116,7 @@ class TestComServer(
     def ITestComServer_Exec2(self, what):
         exec(what)
 
-    _name = u"spam, spam, spam"
+    _name = "spam, spam, spam"
 
     def _get_name(self):
         return self._name
@@ -137,15 +138,18 @@ class TestComServer(
     # [id(18), helpstring("a method with [in] and [out] args in mixed order")]
     # HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);
     def MixedInOut(self, a, c):
-        return a+1, c+1
+        return a + 1, c + 1
+
 
 if __name__ == "__main__":
     try:
         from comtypes.server.register import UseCommandLine
+
         # logging.basicConfig(level=logging.DEBUG)
         UseCommandLine(TestComServer)
     except Exception:
         import traceback
+
         traceback.print_exc()
         if sys.version_info >= (3, 0):
             input()

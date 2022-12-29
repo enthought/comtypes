@@ -1,6 +1,7 @@
 import ctypes
 from ctypes import WinDLL, byref, WinError
 from ctypes.wintypes import MSG
+
 _user32 = WinDLL("user32")
 
 GetMessage = _user32.GetMessageA
@@ -15,7 +16,6 @@ DispatchMessage = _user32.DispatchMessageA
 
 
 class _MessageLoop(object):
-
     def __init__(self):
         self._filters = []
 
@@ -33,13 +33,14 @@ class _MessageLoop(object):
             if ret == -1:
                 raise WinError()
             elif ret == 0:
-                return # got WM_QUIT
+                return  # got WM_QUIT
             if not self.filter_message(lpmsg):
                 TranslateMessage(lpmsg)
                 DispatchMessage(lpmsg)
 
     def filter_message(self, lpmsg):
         return any(list(filter(lpmsg)) for filter in self._filters)
+
 
 _messageloop = _MessageLoop()
 

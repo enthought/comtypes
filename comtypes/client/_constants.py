@@ -74,6 +74,7 @@ class Constants(object):
         >>> 'FileAttribute' in c.alias  # as is `key in dict`
         True
     """
+
     __slots__ = ("alias", "consts", "enums", "tcomp")
 
     def __init__(self, obj):

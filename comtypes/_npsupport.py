@@ -5,9 +5,10 @@ is_64bits = sys.maxsize > 2**32
 
 
 class Interop:
-    """ Class encapsulating all the functionality necessary to allow interop of
+    """Class encapsulating all the functionality necessary to allow interop of
     comtypes with numpy. Needs to be enabled with the "enable()" method.
     """
+
     def __init__(self):
         self.enabled = False
         self.VARIANT_dtype = None
@@ -16,7 +17,7 @@ class Interop:
         self.com_null_date64 = None
 
     def _make_variant_dtype(self):
-        """ Create a dtype for VARIANT. This requires support for Unions, which
+        """Create a dtype for VARIANT. This requires support for Unions, which
         is available in numpy version 1.7 or greater.
 
         This does not support the decimal type.
@@ -26,34 +27,65 @@ class Interop:
         if not self.enabled:
             return None
         # pointer typecode
-        ptr_typecode = '<u8' if is_64bits else '<u4'
+        ptr_typecode = "<u8" if is_64bits else "<u4"
 
         _tagBRECORD_format = [
-            ('pvRecord', ptr_typecode),
-            ('pRecInfo', ptr_typecode),
+            ("pvRecord", ptr_typecode),
+            ("pRecInfo", ptr_typecode),
         ]
 
         # overlapping typecodes only allowed in numpy version 1.7 or greater
         U_VARIANT_format = dict(
             names=[
-                'VT_BOOL', 'VT_I1', 'VT_I2', 'VT_I4', 'VT_I8', 'VT_INT',
-                'VT_UI1', 'VT_UI2', 'VT_UI4', 'VT_UI8', 'VT_UINT', 'VT_R4',
-                'VT_R8', 'VT_CY', 'c_wchar_p', 'c_void_p', 'pparray',
-                'bstrVal', '_tagBRECORD',
+                "VT_BOOL",
+                "VT_I1",
+                "VT_I2",
+                "VT_I4",
+                "VT_I8",
+                "VT_INT",
+                "VT_UI1",
+                "VT_UI2",
+                "VT_UI4",
+                "VT_UI8",
+                "VT_UINT",
+                "VT_R4",
+                "VT_R8",
+                "VT_CY",
+                "c_wchar_p",
+                "c_void_p",
+                "pparray",
+                "bstrVal",
+                "_tagBRECORD",
             ],
             formats=[
-                '<i2', '<i1', '<i2', '<i4', '<i8', '<i4', '<u1', '<u2', '<u4',
-                '<u8', '<u4', '<f4', '<f8', '<i8', ptr_typecode, ptr_typecode,
-                ptr_typecode, ptr_typecode, _tagBRECORD_format,
+                "<i2",
+                "<i1",
+                "<i2",
+                "<i4",
+                "<i8",
+                "<i4",
+                "<u1",
+                "<u2",
+                "<u4",
+                "<u8",
+                "<u4",
+                "<f4",
+                "<f8",
+                "<i8",
+                ptr_typecode,
+                ptr_typecode,
+                ptr_typecode,
+                ptr_typecode,
+                _tagBRECORD_format,
             ],
-            offsets=[0] * 19  # This is what makes it a union
+            offsets=[0] * 19,  # This is what makes it a union
         )
 
         tagVARIANT_format = [
-            ("vt", '<u2'),
-            ("wReserved1", '<u2'),
-            ("wReserved2", '<u2'),
-            ("wReserved3", '<u2'),
+            ("vt", "<u2"),
+            ("wReserved1", "<u2"),
+            ("wReserved2", "<u2"),
+            ("wReserved3", "<u2"),
             ("_", U_VARIANT_format),
         ]
 
@@ -64,6 +96,7 @@ class Interop:
             return {}
         import numpy as np
         from numpy import ctypeslib
+
         try:
             from numpy.ctypeslib import _typecodes
         except ImportError:
@@ -81,7 +114,7 @@ class Interop:
         return ctypeslib._typecodes
 
     def isndarray(self, value):
-        """ Check if a value is an ndarray.
+        """Check if a value is an ndarray.
 
         This cannot succeed if numpy is not available.
 
@@ -101,7 +134,7 @@ class Interop:
         return isinstance(value, self.numpy.ndarray)
 
     def isdatetime64(self, value):
-        """ Check if a value is a datetime64.
+        """Check if a value is a datetime64.
 
         This cannot succeed if datetime64 is not available.
 
@@ -112,10 +145,10 @@ class Interop:
 
     @property
     def numpy(self):
-        """ The numpy package.
-        """
+        """The numpy package."""
         if self.enabled:
             import numpy
+
             return numpy
         raise ImportError(
             "In comtypes>=1.2.0 numpy interop must be explicitly enabled with "
@@ -124,13 +157,13 @@ class Interop:
         )
 
     def enable(self):
-        """ Enables numpy/comtypes interop.
-        """
+        """Enables numpy/comtypes interop."""
         # don't do this twice
         if self.enabled:
             return
         # first we have to be able to import numpy
         import numpy
+
         # if that succeeded we can be enabled
         self.enabled = True
         self.VARIANT_dtype = self._make_variant_dtype()

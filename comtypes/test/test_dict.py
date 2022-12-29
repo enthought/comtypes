@@ -90,8 +90,7 @@ class Test(unittest.TestCase):
 
         # iter(d)
         keys = [x for x in d]
-        self.assertEqual(d.Keys(),
-                             tuple([x for x in d]))
+        self.assertEqual(d.Keys(), tuple([x for x in d]))
 
         # d[key] = value
         # d[key] -> value
@@ -99,6 +98,7 @@ class Test(unittest.TestCase):
         self.assertEqual(d["blah"], "blarg")
         # d(key) -> value
         self.assertEqual(d("blah"), "blarg")
+
 
 if __name__ == "__main__":
     unittest.main()
