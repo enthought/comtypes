@@ -1019,6 +1019,7 @@ tagARRAYDESC._fields_ = [
 ]
 
 
+# fmt: off
 __known_symbols__ = [
     "tagARRAYDESC", "BINDPTR", "tagBINDPTR", "CALLCONV", "tagCALLCONV",
     "CC_CDECL", "CC_FASTCALL", "CC_FPFASTCALL", "CC_MACPASCAL", "CC_MAX",
@@ -1066,3 +1067,4 @@ __known_symbols__ = [
     "VARFLAG_FRESTRICTED", "VARFLAG_FSOURCE", "VARFLAG_FUIDEFAULT",
     "VARFLAGS", "tagVARFLAGS", "VARKIND", "tagVARKIND",
 ]
+# fmt: on

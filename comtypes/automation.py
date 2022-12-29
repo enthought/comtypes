@@ -961,6 +961,7 @@ except (ImportError, AttributeError):
     pass
 
 
+# fmt: off
 __known_symbols__ = [
     "CURRENCY", "CY", "tagCY", "DECIMAL", "tagDEC", "DISPATCH_METHOD",
     "DISPATCH_PROPERTYGET", "DISPATCH_PROPERTYPUT", "DISPATCH_PROPERTYPUTREF",
@@ -984,3 +985,4 @@ __known_symbols__ = [
     "VT_UNKNOWN", "VT_USERDEFINED", "VT_VARIANT", "VT_VECTOR",
     "VT_VERSIONED_STREAM", "VT_VOID",
 ]
+# fmt: on

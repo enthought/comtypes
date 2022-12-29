@@ -106,7 +106,9 @@ def ReportException(hresult, iid, clsid=None, helpfile=None, helpcontext=None,
                        hresult=hresult)
 
 
+# fmt: off
 __all__ = [
     "ICreateErrorInfo", "IErrorInfo", "ISupportErrorInfo", "ReportError",
     "ReportException", "SetErrorInfo", "GetErrorInfo", "CreateErrorInfo",
 ]
+# fmt: on
