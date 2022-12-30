@@ -40,8 +40,10 @@ class Test_GetModule(ut.TestCase):
         self.assertIs(mod, Scripting)
 
     @ut.skipUnless(
-        os.path.splitdrive(Scripting.typelib_path)[0] == os.path.splitdrive(__file__)[0],
-        "This depends on typelib and test module are in same drive")
+        os.path.splitdrive(Scripting.typelib_path)[0]
+        == os.path.splitdrive(__file__)[0],
+        "This depends on typelib and test module are in same drive",
+    )
     def test_relpath(self):
         relpath = os.path.relpath(Scripting.typelib_path, __file__)
         mod = comtypes.client.GetModule(relpath)
@@ -71,6 +73,7 @@ class Test_GetModule(ut.TestCase):
 
     def test_ptr_itypelib(self):
         from comtypes import typeinfo
+
         mod = comtypes.client.GetModule(typeinfo.LoadTypeLibEx("scrrun.dll"))
         self.assertIs(mod, Scripting)
 
@@ -105,18 +108,22 @@ class Test_KnownSymbols(ut.TestCase):
 
     def test_symbols_in_comtypes(self):
         import comtypes
+
         self._doit(comtypes)
 
     def test_symbols_in_comtypes_automation(self):
         import comtypes.automation
+
         self._doit(comtypes.automation)
 
     def test_symbols_in_comtypes_typeinfo(self):
         import comtypes.typeinfo
+
         self._doit(comtypes.typeinfo)
 
     def test_symbols_in_comtypes_persist(self):
         import comtypes.persist
+
         self._doit(comtypes.persist)
 
 
@@ -137,39 +144,45 @@ class Test_CreateObject(ut.TestCase):
         comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
 
     @ut.skip(
-            "This test uses IE which is not available on all machines anymore. "
-            "Find another API to use."
+        "This test uses IE which is not available on all machines anymore. "
+        "Find another API to use."
     )
     def test_remote(self):
-        ie = comtypes.client.CreateObject("InternetExplorer.Application",
-                                          machine="localhost")
+        ie = comtypes.client.CreateObject(
+            "InternetExplorer.Application", machine="localhost"
+        )
         self.assertEqual(ie.Visible, False)
         ie.Visible = 1
         # on a remote machine, this may not work.  Probably depends on
         # how the server is run.
         self.assertEqual(ie.Visible, True)
-        self.assertEqual(0, ie.Quit()) # 0 == S_OK
+        self.assertEqual(0, ie.Quit())  # 0 == S_OK
 
     @ut.skip(
-            "This test uses IE which is not available on all machines anymore. "
-            "Find another API to use."
+        "This test uses IE which is not available on all machines anymore. "
+        "Find another API to use."
     )
     def test_server_info(self):
         serverinfo = COSERVERINFO()
-        serverinfo.pwszName = 'localhost'
+        serverinfo.pwszName = "localhost"
         pServerInfo = byref(serverinfo)
 
-        self.assertRaises(ValueError, comtypes.client.CreateObject,
-                "InternetExplorer.Application", machine='localhost',
-                pServerInfo=pServerInfo)
-        ie = comtypes.client.CreateObject("InternetExplorer.Application",
-                                          pServerInfo=pServerInfo)
+        self.assertRaises(
+            ValueError,
+            comtypes.client.CreateObject,
+            "InternetExplorer.Application",
+            machine="localhost",
+            pServerInfo=pServerInfo,
+        )
+        ie = comtypes.client.CreateObject(
+            "InternetExplorer.Application", pServerInfo=pServerInfo
+        )
         self.assertEqual(ie.Visible, False)
         ie.Visible = 1
         # on a remote machine, this may not work.  Probably depends on
         # how the server is run.
         self.assertEqual(ie.Visible, True)
-        self.assertEqual(0, ie.Quit()) # 0 == S_OK
+        self.assertEqual(0, ie.Quit())  # 0 == S_OK
 
 
 class Test_Constants(ut.TestCase):
@@ -225,14 +238,23 @@ class Test_Constants(ut.TestCase):
     def test_returns_other_than_enum_members(self):
         obj = comtypes.client.CreateObject("SAPI.SpVoice")
         from comtypes.gen import SpeechLib as sapi
+
         consts = comtypes.client.Constants(obj)
         # int (Constant c_int)
         self.assertEqual(consts.Speech_Max_Word_Length, sapi.Speech_Max_Word_Length)
         # str (Constant BSTR)
-        self.assertEqual(consts.SpeechVoiceSkipTypeSentence, sapi.SpeechVoiceSkipTypeSentence)
-        self.assertEqual(consts.SpeechAudioFormatGUIDWave, sapi.SpeechAudioFormatGUIDWave)
-        self.assertEqual(consts.SpeechRegistryLocalMachineRoot, sapi.SpeechRegistryLocalMachineRoot)
-        self.assertEqual(consts.SpeechGrammarTagDictation, sapi.SpeechGrammarTagDictation)
+        self.assertEqual(
+            consts.SpeechVoiceSkipTypeSentence, sapi.SpeechVoiceSkipTypeSentence
+        )
+        self.assertEqual(
+            consts.SpeechAudioFormatGUIDWave, sapi.SpeechAudioFormatGUIDWave
+        )
+        self.assertEqual(
+            consts.SpeechRegistryLocalMachineRoot, sapi.SpeechRegistryLocalMachineRoot
+        )
+        self.assertEqual(
+            consts.SpeechGrammarTagDictation, sapi.SpeechGrammarTagDictation
+        )
         # float (Constant c_float)
         self.assertEqual(consts.Speech_Default_Weight, sapi.Speech_Default_Weight)
 

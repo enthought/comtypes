@@ -12,7 +12,7 @@ use_resources = ["*"]
 
 
 def register_server(source_dir):
-    """ Register testing server appropriate for the python architecture.
+    """Register testing server appropriate for the python architecture.
 
     ``source_dir`` gives the absolute path to the comtype source in which the
     32- and 64-bit testing server, "AvmcIfc.dll" is defined.
@@ -29,6 +29,7 @@ def register_server(source_dir):
     dll.DllRegisterServer()
     return
 
+
 class ResourceDenied(Exception):
     """Test skipped because it requested a disallowed resource.
 
@@ -36,19 +37,24 @@ class ResourceDenied(Exception):
     has not be enabled.  Resources are defined by test modules.
     """
 
+
 def is_resource_enabled(resource):
     """Test whether a resource is enabled.
 
     If the caller's module is __main__ then automatically return True."""
     if sys._getframe().f_back.f_globals.get("__name__") == "__main__":
         return True
-    result = use_resources is not None and \
-           (resource in use_resources or "*" in use_resources)
+    result = use_resources is not None and (
+        resource in use_resources or "*" in use_resources
+    )
     if not result:
         _unavail[resource] = None
     return result
 
+
 _unavail = {}
+
+
 def requires(resource, msg=None):
     """Raise ResourceDenied if the specified resource is not available.
 
@@ -62,8 +68,10 @@ def requires(resource, msg=None):
             msg = "Use of the `%s' resource not enabled" % resource
         raise ResourceDenied(msg)
 
+
 def find_package_modules(package, mask):
     import fnmatch
+
     if hasattr(package, "__loader__"):
         path = package.__name__.replace(".", os.path.sep)
         mask = os.path.join(path, mask)
@@ -76,20 +84,23 @@ def find_package_modules(package, mask):
             if fnmatch.fnmatchcase(fnm, mask):
                 yield "%s.%s" % (package.__name__, os.path.splitext(fnm)[0])
 
+
 def get_tests(package, mask, verbosity):
     """Return a list of skipped test modules, and a list of test cases."""
     tests = []
     skipped = []
     for modname in find_package_modules(package, mask):
         try:
-            mod = __import__(modname, globals(), locals(), ['*'])
+            mod = __import__(modname, globals(), locals(), ["*"])
         except ResourceDenied as detail:
             skipped.append(modname)
             if verbosity > 1:
                 print("Skipped %s: %s" % (modname, detail), file=sys.stderr)
             continue
         except Exception as detail:
-            print("Warning: could not import %s: %s" % (modname, detail), file=sys.stderr)
+            print(
+                "Warning: could not import %s: %s" % (modname, detail), file=sys.stderr
+            )
             continue
         for name in dir(mod):
             if name.startswith("_"):
@@ -103,14 +114,17 @@ def get_tests(package, mask, verbosity):
                 tests.append(o)
     return skipped, tests
 
+
 def usage():
     print(__doc__)
     return 1
+
 
 def test_with_refcounts(runner, verbosity, testcase):
     """Run testcase several times, tracking reference counts."""
     import gc
     import ctypes
+
     ptc = ctypes._pointer_type_cache.copy()
     cfc = ctypes._c_functype_cache.copy()
     wfc = ctypes._win_functype_cache.copy()
@@ -140,6 +154,7 @@ def test_with_refcounts(runner, verbosity, testcase):
     elif verbosity:
         print("%s: ok." % testcase)
 
+
 class TestRunner(unittest.TextTestRunner):
     def run(self, test, skipped):
         "Run the given test case or test suite."
@@ -153,17 +168,24 @@ class TestRunner(unittest.TextTestRunner):
         result.printErrors()
         self.stream.writeln(result.separator2)
         run = result.testsRun
-        if _unavail: #skipped:
+        if _unavail:  # skipped:
             requested = list(_unavail.keys())
             requested.sort()
-            self.stream.writeln("Ran %d test%s in %.3fs (%s module%s skipped)" %
-                                (run, run != 1 and "s" or "", timeTaken,
-                                 len(skipped),
-                                 len(skipped) != 1 and "s" or ""))
+            self.stream.writeln(
+                "Ran %d test%s in %.3fs (%s module%s skipped)"
+                % (
+                    run,
+                    run != 1 and "s" or "",
+                    timeTaken,
+                    len(skipped),
+                    len(skipped) != 1 and "s" or "",
+                )
+            )
             self.stream.writeln("Unavailable resources: %s" % ", ".join(requested))
         else:
-            self.stream.writeln("Ran %d test%s in %.3fs" %
-                                (run, run != 1 and "s" or "", timeTaken))
+            self.stream.writeln(
+                "Ran %d test%s in %.3fs" % (run, run != 1 and "s" or "", timeTaken)
+            )
         self.stream.writeln()
         if not result.wasSuccessful():
             self.stream.write("FAILED (")
@@ -171,7 +193,8 @@ class TestRunner(unittest.TextTestRunner):
             if failed:
                 self.stream.write("failures=%d" % failed)
             if errored:
-                if failed: self.stream.write(", ")
+                if failed:
+                    self.stream.write(", ")
                 self.stream.write("errors=%d" % errored)
             self.stream.writeln(")")
         else:
@@ -180,7 +203,7 @@ class TestRunner(unittest.TextTestRunner):
 
 
 def run_tests(package, mask, verbosity, search_leaks):
-    """ Run tests for package and return True on failure, False otherwise  """
+    """Run tests for package and return True on failure, False otherwise"""
     skipped, testcases = get_tests(package, mask, verbosity)
     runner = TestRunner(verbosity=verbosity)
 
@@ -196,14 +219,16 @@ def run_tests(package, mask, verbosity, search_leaks):
 
     return bool(result.errors) or bool(result.failures)
 
+
 class BasicTestRunner:
     def run(self, test):
         result = unittest.TestResult()
         test(result)
         return result
 
-def run(args = []):
-    """ Run tests and return True on failure, False otherwise """
+
+def run(args=[]):
+    """Run tests and return True on failure, False otherwise"""
     try:
         opts, args = getopt.getopt(args, "rqvu:")
     except getopt.error:
@@ -231,4 +256,5 @@ def run(args = []):
         mask = args[0]
 
     import comtypes.test
+
     return run_tests(comtypes.test, mask, verbosity, search_leaks)

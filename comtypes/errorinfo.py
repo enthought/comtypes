@@ -11,50 +11,53 @@ if sys.version_info >= (3, 0):
 else:
     base_text_type = basestring
 
+
 class ICreateErrorInfo(IUnknown):
     _iid_ = GUID("{22F03340-547D-101B-8E65-08002B2BD119}")
     _methods_ = [
-        COMMETHOD([], HRESULT, 'SetGUID',
-                  (['in'], POINTER(GUID), "rguid")),
-        COMMETHOD([], HRESULT, 'SetSource',
-                  (['in'], LPCOLESTR, "szSource")),
-        COMMETHOD([], HRESULT, 'SetDescription',
-                  (['in'], LPCOLESTR, "szDescription")),
-        COMMETHOD([], HRESULT, 'SetHelpFile',
-                  (['in'], LPCOLESTR, "szHelpFile")),
-        COMMETHOD([], HRESULT, 'SetHelpContext',
-                  (['in'], DWORD, "dwHelpContext"))
-        ]
+        COMMETHOD([], HRESULT, "SetGUID", (["in"], POINTER(GUID), "rguid")),
+        COMMETHOD([], HRESULT, "SetSource", (["in"], LPCOLESTR, "szSource")),
+        COMMETHOD([], HRESULT, "SetDescription", (["in"], LPCOLESTR, "szDescription")),
+        COMMETHOD([], HRESULT, "SetHelpFile", (["in"], LPCOLESTR, "szHelpFile")),
+        COMMETHOD([], HRESULT, "SetHelpContext", (["in"], DWORD, "dwHelpContext")),
+    ]
+
 
 class IErrorInfo(IUnknown):
     _iid_ = GUID("{1CF2B120-547D-101B-8E65-08002B2BD119}")
     _methods_ = [
-        COMMETHOD([], HRESULT, 'GetGUID',
-                  (['out'], POINTER(GUID), "pGUID")),
-        COMMETHOD([], HRESULT, 'GetSource',
-                  (['out'], POINTER(BSTR), "pBstrSource")),
-        COMMETHOD([], HRESULT, 'GetDescription',
-                  (['out'], POINTER(BSTR), "pBstrDescription")),
-        COMMETHOD([], HRESULT, 'GetHelpFile',
-                  (['out'], POINTER(BSTR), "pBstrHelpFile")),
-        COMMETHOD([], HRESULT, 'GetHelpContext',
-                  (['out'], POINTER(DWORD), "pdwHelpContext")),
-        ]
+        COMMETHOD([], HRESULT, "GetGUID", (["out"], POINTER(GUID), "pGUID")),
+        COMMETHOD([], HRESULT, "GetSource", (["out"], POINTER(BSTR), "pBstrSource")),
+        COMMETHOD(
+            [], HRESULT, "GetDescription", (["out"], POINTER(BSTR), "pBstrDescription")
+        ),
+        COMMETHOD(
+            [], HRESULT, "GetHelpFile", (["out"], POINTER(BSTR), "pBstrHelpFile")
+        ),
+        COMMETHOD(
+            [], HRESULT, "GetHelpContext", (["out"], POINTER(DWORD), "pdwHelpContext")
+        ),
+    ]
+
 
 class ISupportErrorInfo(IUnknown):
     _iid_ = GUID("{DF0B3D60-548F-101B-8E65-08002B2BD119}")
     _methods_ = [
-        COMMETHOD([], HRESULT, 'InterfaceSupportsErrorInfo',
-                  (['in'], POINTER(GUID), 'riid'))
-        ]
+        COMMETHOD(
+            [], HRESULT, "InterfaceSupportsErrorInfo", (["in"], POINTER(GUID), "riid")
+        )
+    ]
+
 
 ################################################################
 _oleaut32 = oledll.oleaut32
+
 
 def CreateErrorInfo():
     cei = POINTER(ICreateErrorInfo)()
     _oleaut32.CreateErrorInfo(byref(cei))
     return cei
+
 
 def GetErrorInfo():
     """Get the error information for the current thread."""
@@ -63,12 +66,15 @@ def GetErrorInfo():
         return errinfo
     return None
 
+
 def SetErrorInfo(errinfo):
     """Set error information for the current thread."""
     return _oleaut32.SetErrorInfo(0, errinfo)
 
-def ReportError(text, iid,
-                clsid=None, helpfile=None, helpcontext=0, hresult=DISP_E_EXCEPTION):
+
+def ReportError(
+    text, iid, clsid=None, helpfile=None, helpcontext=0, hresult=DISP_E_EXCEPTION
+):
     """Report a COM error.  Returns the passed in hresult value."""
     ei = CreateErrorInfo()
     ei.SetDescription(text)
@@ -85,12 +91,16 @@ def ReportError(text, iid,
         except WindowsError:
             pass
         else:
-            ei.SetSource(progid) # progid for the class or application that created the error
+            ei.SetSource(
+                progid
+            )  # progid for the class or application that created the error
     _oleaut32.SetErrorInfo(0, ei)
     return hresult
 
-def ReportException(hresult, iid, clsid=None, helpfile=None, helpcontext=None,
-                    stacklevel=None):
+
+def ReportException(
+    hresult, iid, clsid=None, helpfile=None, helpcontext=None, stacklevel=None
+):
     """Report a COM exception.  Returns the passed in hresult value."""
     typ, value, tb = sys.exc_info()
     if stacklevel is not None:
@@ -101,12 +111,19 @@ def ReportException(hresult, iid, clsid=None, helpfile=None, helpcontext=None,
         text = "%s: %s (%s, line %d)" % (typ, value, name, line)
     else:
         text = "%s: %s" % (typ, value)
-    return ReportError(text, iid,
-                       clsid=clsid, helpfile=helpfile, helpcontext=helpcontext,
-                       hresult=hresult)
+    return ReportError(
+        text,
+        iid,
+        clsid=clsid,
+        helpfile=helpfile,
+        helpcontext=helpcontext,
+        hresult=hresult,
+    )
 
 
+# fmt: off
 __all__ = [
     "ICreateErrorInfo", "IErrorInfo", "ISupportErrorInfo", "ReportError",
     "ReportException", "SetErrorInfo", "GetErrorInfo", "CreateErrorInfo",
 ]
+# fmt: on

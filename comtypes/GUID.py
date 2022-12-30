@@ -2,11 +2,15 @@ from ctypes import *
 import sys
 
 if sys.version_info >= (2, 6):
+
     def binary(obj):
         return bytes(obj)
+
 else:
+
     def binary(obj):
         return buffer(obj)
+
 
 if sys.version_info >= (3, 0):
     text_type = str
@@ -31,11 +35,9 @@ _CoCreateGuid = _ole32.CoCreateGuid
 # Note: Comparing GUID instances by comparing their buffers
 # is slightly faster than using ole32.IsEqualGUID.
 
+
 class GUID(Structure):
-    _fields_ = [("Data1", DWORD),
-                ("Data2", WORD),
-                ("Data3", WORD),
-                ("Data4", BYTE * 8)]
+    _fields_ = [("Data1", DWORD), ("Data2", WORD), ("Data3", WORD), ("Data4", BYTE * 8)]
 
     def __init__(self, name=None):
         if name is not None:
@@ -50,6 +52,7 @@ class GUID(Structure):
         result = p.value
         _CoTaskMemFree(p)
         return result
+
     __str__ = __unicode__
 
     def __cmp__(self, other):
@@ -61,8 +64,7 @@ class GUID(Structure):
         return self != GUID_null
 
     def __eq__(self, other):
-        return isinstance(other, GUID) and \
-               binary(self) == binary(other)
+        return isinstance(other, GUID) and binary(self) == binary(other)
 
     def __hash__(self):
         # We make GUID instances hashable, although they are mutable.
@@ -73,8 +75,7 @@ class GUID(Structure):
 
     @classmethod
     def from_progid(cls, progid):
-        """Get guid from progid, ...
-        """
+        """Get guid from progid, ..."""
         if hasattr(progid, "_reg_clsid_"):
             progid = progid._reg_clsid_
         if isinstance(progid, cls):

@@ -15,10 +15,12 @@ else:
 
 imgbase = os.path.splitext(os.path.basename(sys.executable))[0]
 
+
 class Test(unittest.TestCase):
     """Test the comtypes.client._find_gen_dir() function in several
     simulated environments.
     """
+
     def setUp(self):
         # save the original comtypes.gen modules and create a
         # substitute with an empty __path__.
@@ -54,32 +56,39 @@ class Test(unittest.TestCase):
         ma, mi = sys.version_info[:2]
         # %TEMP%\comtypes_cache\<imagebasename>-25
         # the image is python25.dll
-        path = os.path.join(tempfile.gettempdir(),
-                            r"comtypes_cache\%s%d%d-%d%d" % (imgbase, ma, mi, ma, mi))
+        path = os.path.join(
+            tempfile.gettempdir(),
+            r"comtypes_cache\%s%d%d-%d%d" % (imgbase, ma, mi, ma, mi),
+        )
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
     def test_frozen_console_exe(self):
         sys.frozen = "console_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
-        path = os.path.join(tempfile.gettempdir(),
-                            r"comtypes_cache\%s-%d%d" % (
-            imgbase, sys.version_info[0], sys.version_info[1]))
+        path = os.path.join(
+            tempfile.gettempdir(),
+            r"comtypes_cache\%s-%d%d"
+            % (imgbase, sys.version_info[0], sys.version_info[1]),
+        )
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
     def test_frozen_windows_exe(self):
         sys.frozen = "windows_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
-        path = os.path.join(tempfile.gettempdir(),
-                            r"comtypes_cache\%s-%d%d" % (
-            imgbase, sys.version_info[0], sys.version_info[1]))
+        path = os.path.join(
+            tempfile.gettempdir(),
+            r"comtypes_cache\%s-%d%d"
+            % (imgbase, sys.version_info[0], sys.version_info[1]),
+        )
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
 
 def main():
     unittest.main()
+
 
 if __name__ == "__main__":
     main()

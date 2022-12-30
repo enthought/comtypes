@@ -8,8 +8,10 @@ comtypes.test.requires("ui")
 
 
 def setUpModule():
-    raise unittest.SkipTest("External test dependencies like this seem bad.  Find a different "
-                            "built-in win32 API to use.")
+    raise unittest.SkipTest(
+        "External test dependencies like this seem bad.  Find a different "
+        "built-in win32 API to use."
+    )
 
 
 class Test(unittest.TestCase):
@@ -17,7 +19,6 @@ class Test(unittest.TestCase):
         if hasattr(self, "w1"):
             self.w1.Quit()
             del self.w1
-
 
     def test(self):
         try:
@@ -34,13 +35,15 @@ class Test(unittest.TestCase):
         w2 = comtypes.client.GetActiveObject("Word.Application")
 
         # check if they are referring to the same object
-        self.assertEqual(w1.QueryInterface(comtypes.IUnknown),
-                             w2.QueryInterface(comtypes.IUnknown))
+        self.assertEqual(
+            w1.QueryInterface(comtypes.IUnknown), w2.QueryInterface(comtypes.IUnknown)
+        )
 
         w1.Quit()
         del self.w1
 
         import time
+
         time.sleep(1)
 
         try:
@@ -51,7 +54,9 @@ class Test(unittest.TestCase):
         else:
             raise AssertionError("COMError not raised")
 
-        self.assertRaises(WindowsError, comtypes.client.GetActiveObject, "Word.Application")
+        self.assertRaises(
+            WindowsError, comtypes.client.GetActiveObject, "Word.Application"
+        )
 
 
 if __name__ == "__main__":

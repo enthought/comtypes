@@ -9,18 +9,20 @@ from comtypes.test.find_memleak import find_memleak
 
 
 def setUpModule():
-    raise unittest.SkipTest("This test requires the tests to be run as admin since it tries to "
-                            "register the test COM server.  Is this a good idea?")
+    raise unittest.SkipTest(
+        "This test requires the tests to be run as admin since it tries to "
+        "register the test COM server.  Is this a good idea?"
+    )
 
     # If this test is ever NOT skipped, then this line needs to run.  Keeping it here for posterity.
     register(comtypes.test.TestComServer.TestComServer)
 
 
 class TestInproc(unittest.TestCase):
-
     def create_object(self):
-        return CreateObject("TestComServerLib.TestComServer",
-                            clsctx = comtypes.CLSCTX_INPROC_SERVER)
+        return CreateObject(
+            "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_INPROC_SERVER
+        )
 
     def _find_memleak(self, func):
         bytes = find_memleak(func)
@@ -54,6 +56,7 @@ class TestInproc(unittest.TestCase):
         self.assertEqual(pb[0], name)
 
     if is_resource_enabled("memleaks"):
+
         def test_get_id(self):
             obj = self.create_object()
             self._find_memleak(lambda: obj.id)
@@ -64,43 +67,55 @@ class TestInproc(unittest.TestCase):
 
         def test_set_name(self):
             obj = self.create_object()
+
             def func():
-                obj.name = u"abcde"
+                obj.name = "abcde"
+
             self._find_memleak(func)
 
         def test_SetName(self):
             obj = self.create_object()
-            def func():
-                obj.SetName(u"abcde")
-            self._find_memleak(func)
 
+            def func():
+                obj.SetName("abcde")
+
+            self._find_memleak(func)
 
         def test_eval(self):
             obj = self.create_object()
+
             def func():
                 return obj.eval("(1, 2, 3)")
+
             self.assertEqual(func(), (1, 2, 3))
             self._find_memleak(func)
 
         def test_get_typeinfo(self):
             obj = self.create_object()
+
             def func():
                 obj.GetTypeInfo(0)
                 obj.GetTypeInfoCount()
                 obj.QueryInterface(comtypes.IUnknown)
+
             self._find_memleak(func)
 
+
 if is_resource_enabled("ui"):
+
     class TestLocalServer(TestInproc):
         def create_object(self):
-            return CreateObject("TestComServerLib.TestComServer",
-                                clsctx = comtypes.CLSCTX_LOCAL_SERVER)
+            return CreateObject(
+                "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
+            )
+
 
 try:
     from win32com.client import Dispatch
 except ImportError:
     pass
 else:
+
     class TestInproc_win32com(TestInproc):
         def create_object(self):
             return Dispatch("TestComServerLib.TestComServer")
@@ -118,9 +133,14 @@ else:
             pass
 
     if is_resource_enabled("ui"):
+
         class TestLocalServer_win32com(TestInproc_win32com):
             def create_object(self):
-                return Dispatch("TestComServerLib.TestComServer", clsctx = comtypes.CLSCTX_LOCAL_SERVER)
+                return Dispatch(
+                    "TestComServerLib.TestComServer",
+                    clsctx=comtypes.CLSCTX_LOCAL_SERVER,
+                )
+
 
 import doctest
 import comtypes.test.test_comserver
@@ -133,8 +153,9 @@ class TestCase(unittest.TestCase):
     # The following functions are never called, they only contain doctests:
 
     if sys.version_info >= (3, 0):
+
         def ShowEvents(self):
-            '''
+            """
             >>> from comtypes.client import CreateObject, ShowEvents
             >>>
             >>> o = CreateObject("TestComServerLib.TestComServer")
@@ -147,10 +168,12 @@ class TestCase(unittest.TestCase):
             >>> result
             2.5
             >>>
-            '''
+            """
+
     else:
+
         def ShowEvents(self):
-            '''
+            """
             >>> from comtypes.client import CreateObject, ShowEvents
             >>>
             >>> o = CreateObject("TestComServerLib.TestComServer")
@@ -163,14 +186,15 @@ class TestCase(unittest.TestCase):
             >>> result
             2.5
             >>>
-            '''
+            """
 
         # The following test, if enabled, works but the testsuit
         # crashes elsewhere.  Is there s problem with SAFEARRAYs?
 
     if is_resource_enabled("CRASHES"):
+
         def Fails(self):
-            '''
+            """
             >>> from comtypes.client import CreateObject, ShowEvents
             >>>
             >>> o = CreateObject("TestComServerLib.TestComServer")
@@ -183,7 +207,7 @@ class TestCase(unittest.TestCase):
             >>> result
             (u'32', u'32')
             >>>
-            '''
+            """
 
     def GetEvents(self):
         """
@@ -209,6 +233,7 @@ class TestCase(unittest.TestCase):
         5
         >>>
         """
+
 
 if __name__ == "__main__":
     unittest.main()

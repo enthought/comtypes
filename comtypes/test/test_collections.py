@@ -6,10 +6,9 @@ from comtypes.test.find_memleak import find_memleak
 
 
 class Test(unittest.TestCase):
-
     def test_IEnumVARIANT(self):
         # The XP firewall manager.
-        fwmgr = CreateObject('HNetCfg.FwMgr')
+        fwmgr = CreateObject("HNetCfg.FwMgr")
         # apps has a _NewEnum property that implements IEnumVARIANT
         services = fwmgr.LocalPolicy.CurrentProfile.Services
 
@@ -51,8 +50,7 @@ class Test(unittest.TestCase):
         # We can now call Next(celt) with celt != 1, the call always returns a
         # list:
         cv.Reset()
-        self.assertEqual(names[:3],
-                            [p.Name for p in cv.Next(3)])
+        self.assertEqual(names[:3], [p.Name for p in cv.Next(3)])
 
         # calling Next(0) makes no sense, but should work anyway:
         self.assertEqual(cv.Next(0), [])
@@ -67,32 +65,34 @@ class Test(unittest.TestCase):
     @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_1(self):
         # The XP firewall manager.
-        fwmgr = CreateObject('HNetCfg.FwMgr')
+        fwmgr = CreateObject("HNetCfg.FwMgr")
         # apps has a _NewEnum property that implements IEnumVARIANT
         apps = fwmgr.LocalPolicy.CurrentProfile.AuthorizedApplications
 
         def doit():
             for item in iter(apps):
                 item.ProcessImageFileName
+
         bytes = find_memleak(doit, (20, 20))
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_2(self):
         # The XP firewall manager.
-        fwmgr = CreateObject('HNetCfg.FwMgr')
+        fwmgr = CreateObject("HNetCfg.FwMgr")
         # apps has a _NewEnum property that implements IEnumVARIANT
         apps = fwmgr.LocalPolicy.CurrentProfile.AuthorizedApplications
 
         def doit():
             iter(apps).Next(99)
+
         bytes = find_memleak(doit, (20, 20))
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_3(self):
         # The XP firewall manager.
-        fwmgr = CreateObject('HNetCfg.FwMgr')
+        fwmgr = CreateObject("HNetCfg.FwMgr")
         # apps has a _NewEnum property that implements IEnumVARIANT
         apps = fwmgr.LocalPolicy.CurrentProfile.AuthorizedApplications
 
@@ -100,12 +100,13 @@ class Test(unittest.TestCase):
             for i in range(2):
                 for what in iter(apps):
                     pass
+
         bytes = find_memleak(doit, (20, 20))
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
 
 class TestCollectionInterface(unittest.TestCase):
-    """ Test the early-bound collection interface. """
+    """Test the early-bound collection interface."""
 
     def setUp(self):
         self.d = CreateObject("Scripting.Dictionary", dynamic=False)
@@ -114,7 +115,7 @@ class TestCollectionInterface(unittest.TestCase):
         del self.d
 
     def assertAccessInterface(self, d):
-        """ Asserts access via indexing and named property """
+        """Asserts access via indexing and named property"""
         self.assertEqual(d.CompareMode, 42)
         self.assertEqual(d["foo"], 1)
         self.assertEqual(d.Item["foo"], d["foo"])

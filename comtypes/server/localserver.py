@@ -4,6 +4,7 @@ import comtypes
 from comtypes.hresult import *
 from comtypes.server import IClassFactory
 import logging
+
 if sys.version_info >= (3, 0):
     import queue
 else:
@@ -12,15 +13,17 @@ else:
 logger = logging.getLogger(__name__)
 _debug = logger.debug
 
-REGCLS_SINGLEUSE = 0       # class object only generates one instance
-REGCLS_MULTIPLEUSE = 1     # same class object genereates multiple inst.
+REGCLS_SINGLEUSE = 0  # class object only generates one instance
+REGCLS_MULTIPLEUSE = 1  # same class object genereates multiple inst.
 REGCLS_MULTI_SEPARATE = 2  # multiple use, but separate control over each
-REGCLS_SUSPENDED      = 4  # register it as suspended, will be activated
-REGCLS_SURROGATE      = 8  # must be used when a surrogate process
+REGCLS_SUSPENDED = 4  # register it as suspended, will be activated
+REGCLS_SURROGATE = 8  # must be used when a surrogate process
+
 
 def run(classes):
     classobjects = [ClassFactory(cls) for cls in classes]
     comtypes.COMObject.__run_localserver__(classobjects)
+
 
 class ClassFactory(comtypes.COMObject):
     _com_interfaces_ = [IClassFactory]
@@ -46,12 +49,14 @@ class ClassFactory(comtypes.COMObject):
         cookie = c_ulong()
         ptr = self._com_pointers_[comtypes.IUnknown._iid_]
         clsctx = self._cls._reg_clsctx_
-        clsctx &= ~comtypes.CLSCTX_INPROC # reset the inproc flags
-        oledll.ole32.CoRegisterClassObject(byref(comtypes.GUID(self._cls._reg_clsid_)),
-                                           ptr,
-                                           clsctx,
-                                           regcls,
-                                           byref(cookie))
+        clsctx &= ~comtypes.CLSCTX_INPROC  # reset the inproc flags
+        oledll.ole32.CoRegisterClassObject(
+            byref(comtypes.GUID(self._cls._reg_clsid_)),
+            ptr,
+            clsctx,
+            regcls,
+            byref(cookie),
+        )
         self.cookie = cookie
 
     def _revoke_class(self):

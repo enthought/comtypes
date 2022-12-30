@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 import textwrap
+
 if sys.version_info >= (3, 0):
     import io
 else:
@@ -18,7 +19,13 @@ from comtypes.tools import tlbparser, typedesc
 
 if TYPE_CHECKING:
     from typing import (
-        Any, Dict, Iterator, List, Optional, Tuple, Union as _UnionT,
+        Any,
+        Dict,
+        Iterator,
+        List,
+        Optional,
+        Tuple,
+        Union as _UnionT,
     )
 
 
@@ -32,7 +39,10 @@ __warn_on_munge__ = __debug__
 class lcid(object):
     def __repr__(self):
         return "_lcid"
+
+
 lcid = lcid()
+
 
 class dispid(object):
     def __init__(self, memid):
@@ -40,6 +50,7 @@ class dispid(object):
 
     def __repr__(self):
         return "dispid(%s)" % self.memid
+
 
 class helpstring(object):
     def __init__(self, text):
@@ -54,28 +65,22 @@ ctypes_names = {
     "unsigned char": "c_ubyte",
     "signed char": "c_byte",
     "char": "c_char",
-
     "wchar_t": "c_wchar",
-
     "short unsigned int": "c_ushort",
     "short int": "c_short",
-
     "long unsigned int": "c_ulong",
     "long int": "c_long",
     "long signed int": "c_long",
-
     "unsigned int": "c_uint",
     "int": "c_int",
-
     "long long unsigned int": "c_ulonglong",
     "long long int": "c_longlong",
-
     "double": "c_double",
     "float": "c_float",
-
     # Hm...
     "void": "None",
 }
+
 
 def get_real_type(tp):
     if type(tp) is typedesc.Typedef:
@@ -84,12 +89,14 @@ def get_real_type(tp):
         return get_real_type(tp.typ)
     return tp
 
+
 ASSUME_STRINGS = True
+
 
 def _calc_packing(struct, fields, pack, isStruct):
     # Try a certain packing, raise PackingError if field offsets,
     # total size ot total alignment is wrong.
-    if struct.size is None: # incomplete struct
+    if struct.size is None:  # incomplete struct
         return -1
     if struct.name in dont_assert_size:
         return None
@@ -98,11 +105,11 @@ def _calc_packing(struct, fields, pack, isStruct):
         total_align = struct.bases[0].align
     else:
         size = 0
-        total_align = 8 # in bits
+        total_align = 8  # in bits
     for i, f in enumerate(fields):
-        if f.bits: # this code cannot handle bit field sizes.
+        if f.bits:  # this code cannot handle bit field sizes.
             # print "##XXX FIXME"
-            return -2 # XXX FIXME
+            return -2  # XXX FIXME
         s, a = storage(f.typ)
         if pack is not None:
             a = min(pack, a)
@@ -125,10 +132,11 @@ def _calc_packing(struct, fields, pack, isStruct):
     if size != struct.size:
         raise PackingError("total size (%s/%s)" % (size, struct.size))
 
+
 def calc_packing(struct, fields):
     # try several packings, starting with unspecified packing
     isStruct = isinstance(struct, typedesc.Structure)
-    for pack in [None, 16*8, 8*8, 4*8, 2*8, 1*8]:
+    for pack in [None, 16 * 8, 8 * 8, 4 * 8, 2 * 8, 1 * 8]:
         try:
             _calc_packing(struct, fields, pack, isStruct)
         except PackingError as details:
@@ -141,16 +149,19 @@ def calc_packing(struct, fields):
 
     raise PackingError("PACKING FAILED: %s" % details)
 
+
 class PackingError(Exception):
     pass
+
 
 # XXX These should be filtered out in gccxmlparser.
 dont_assert_size = set(
     [
-    "__si_class_type_info_pseudo",
-    "__class_type_info_pseudo",
+        "__si_class_type_info_pseudo",
+        "__class_type_info_pseudo",
     ]
-    )
+)
+
 
 def storage(t):
     # return the size and alignment of a type
@@ -161,16 +172,19 @@ def storage(t):
         return s * (int(t.max) - int(t.min) + 1), a
     return int(t.size), int(t.align)
 
+
 ################################################################
+
 
 def name_wrapper_module(tlib):
     """Determine the name of a typelib wrapper module"""
     libattr = tlib.GetLibAttr()
-    modname = "_%s_%s_%s_%s" % \
-              (str(libattr.guid)[1:-1].replace("-", "_"),
-               libattr.lcid,
-               libattr.wMajorVerNum,
-               libattr.wMinorVerNum)
+    modname = "_%s_%s_%s_%s" % (
+        str(libattr.guid)[1:-1].replace("-", "_"),
+        libattr.lcid,
+        libattr.wMajorVerNum,
+        libattr.wMinorVerNum,
+    )
     return "comtypes.gen.%s" % modname
 
 
@@ -183,6 +197,7 @@ def name_friendly_module(tlib):
     except comtypes.COMError:
         return
     return "comtypes.gen.%s" % modulename
+
 
 ################################################################
 
@@ -261,10 +276,7 @@ class ComMethodGenerator(object):
     def _make_withargs(self):
         # type: () -> None
         code = (
-            "    COMMETHOD(\n"
-            "        %r,\n"
-            "        %s,\n"
-            "        '%s',"
+            "    COMMETHOD(\n" "        %r,\n" "        %s,\n" "        '%s',"
         ) % self._get_common_elms()
         print(code, file=self._stream)
         arglist = [_to_arg_definition(*i) for i in self._iter_args()]
@@ -317,11 +329,11 @@ class ComMethodGenerator(object):
             idlflags = list(_f)  # shallow copy to avoid side effects
             if isinstance(typ, typedesc.ComInterface):
                 type_name = "OPENARRAY"
-                if 'in' not in idlflags:
-                    idlflags.append('in')
+                if "in" not in idlflags:
+                    idlflags.append("in")
             else:
                 type_name = self._to_type_name(typ)
-            if 'lcid' in idlflags:# and 'in' in idlflags:
+            if "lcid" in idlflags:  # and 'in' in idlflags:
                 default = lcid
             else:
                 default = _defval
@@ -370,10 +382,7 @@ class DispMethodGenerator(object):
     def _make_withargs(self):
         # type: () -> None
         code = (
-            "    DISPMETHOD(\n"
-            "        %r,\n"
-            "        %s,\n"
-            "        '%s',"
+            "    DISPMETHOD(\n" "        %r,\n" "        %s,\n" "        '%s',"
         ) % self._get_common_elms()
         print(code, file=self._stream)
         arglist = [_to_arg_definition(*i) for i in self._iter_args()]
@@ -419,7 +428,6 @@ class DispPropertyGenerator(object):
 
 
 class CodeGenerator(object):
-
     def __init__(self, known_symbols=None):
         self.stream = io.StringIO()
         self.imports = ImportedNamespaces()
@@ -427,8 +435,8 @@ class CodeGenerator(object):
         self._to_type_name = TypeNamer()
         self.known_symbols = known_symbols or {}
 
-        self.done = set() # type descriptions that have been generated
-        self.names = set() # names that have been generated
+        self.done = set()  # type descriptions that have been generated
+        self.names = set()  # names that have been generated
         self.externals = []  # typelibs imported to generated module
         self.last_item_class = False
 
@@ -463,8 +471,9 @@ class CodeGenerator(object):
         """
         path1 = os.path.abspath(path1)
         path2 = os.path.abspath(path2)
-        common = os.path.commonprefix([os.path.normcase(path1),
-                                       os.path.normcase(path2)])
+        common = os.path.commonprefix(
+            [os.path.normcase(path1), os.path.normcase(path2)]
+        )
         if not os.path.isdir(common):
             return path1
         if not common.endswith("\\"):
@@ -472,8 +481,8 @@ class CodeGenerator(object):
         if not os.path.isdir(path2):
             path2 = os.path.dirname(path2)
         # strip the common prefix
-        path1 = path1[len(common):]
-        path2 = path2[len(common):]
+        path1 = path1[len(common) :]
+        path2 = path2[len(common) :]
 
         parts2 = path2.split("\\")
         return "..\\" * len(parts2) + path1
@@ -494,13 +503,16 @@ class CodeGenerator(object):
             else:
                 # relative path; make relative to comtypes.gen.
                 path = self._make_relative_path(filename, comtypes.gen.__path__[0])
-                self.imports.add('os')
-                definition = "os.path.normpath(\n" \
-                    "    os.path.abspath(os.path.join(os.path.dirname(__file__),\n" \
+                self.imports.add("os")
+                definition = (
+                    "os.path.normpath(\n"
+                    "    os.path.abspath(os.path.join(os.path.dirname(__file__),\n"
                     "                                 %r)))" % path
+                )
                 self.declarations.add("typelib_path", definition)
-                p = os.path.normpath(os.path.abspath(os.path.join(comtypes.gen.__path__[0],
-                                                                  path)))
+                p = os.path.normpath(
+                    os.path.abspath(os.path.join(comtypes.gen.__path__[0], path))
+                )
                 assert os.path.isfile(p)
 
     def generate_code(self, items, filename):
@@ -510,8 +522,7 @@ class CodeGenerator(object):
         if filename is not None:
             # get full path to DLL first (os.stat can't work with relative DLL paths properly)
             loaded_typelib = typeinfo.LoadTypeLib(filename)
-            full_filename = tlbparser.get_tlib_filename(
-                loaded_typelib)
+            full_filename = tlbparser.get_tlib_filename(loaded_typelib)
 
             while full_filename and not os.path.exists(full_filename):
                 full_filename = os.path.split(full_filename)[0]
@@ -540,8 +551,8 @@ class CodeGenerator(object):
 
         self.imports.add("ctypes", "*")  # HACK: wildcard import is so ugly.
         if tlib_mtime is not None:
-            logger.debug("filename: \"%s\": tlib_mtime: %s", filename, tlib_mtime)
-            self.imports.add('comtypes', '_check_version')
+            logger.debug('filename: "%s": tlib_mtime: %s', filename, tlib_mtime)
+            self.imports.add("comtypes", "_check_version")
         output = io.StringIO()
         if filename is not None:
             # Hm, what is the CORRECT encoding?
@@ -555,15 +566,14 @@ class CodeGenerator(object):
         names = ", ".join(repr(str(n)) for n in self.names)
         dunder_all = "__all__ = [%s]" % names
         if len(dunder_all) > 80:
-            wrapper = textwrap.TextWrapper(subsequent_indent="    ",
-                                           initial_indent="    ",
-                                           break_long_words=False)
+            wrapper = textwrap.TextWrapper(
+                subsequent_indent="    ", initial_indent="    ", break_long_words=False
+            )
             dunder_all = "__all__ = [\n%s\n]" % "\n".join(wrapper.wrap(names))
         print(dunder_all, file=output)
         print(file=output)
         if tlib_mtime is not None:
-            print("_check_version(%r, %f)" % (version, tlib_mtime),
-                    file=output)
+            print("_check_version(%r, %f)" % (version, tlib_mtime), file=output)
         return output.getvalue()
 
     def need_VARIANT_imports(self, value):
@@ -578,7 +588,7 @@ class CodeGenerator(object):
         # increasing `depth` by one increases indentation by one
         indent = "    " * depth
         # some chars are replaced to avoid causing a `SyntaxError`
-        repled = orig.replace("\\", r"\\").replace("\"", r"'")
+        repled = orig.replace("\\", r"\\").replace('"', r"'")
         return '%s"""%s"""' % (indent, repled)
 
     def ArrayType(self, tp):
@@ -633,7 +643,7 @@ class CodeGenerator(object):
 
     def FundamentalType(self, item):
         # type: (typedesc.FundamentalType) -> None
-        pass # we should check if this is known somewhere
+        pass  # we should check if this is known somewhere
 
     def StructureHead(self, head):
         # type: (typedesc.StructureHead) -> None
@@ -653,9 +663,17 @@ class CodeGenerator(object):
 
             self.last_item_class = True
 
-            method_names = [m.name for m in head.struct.members if type(m) is typedesc.Method]
-            print("class %s(%s):" % (head.struct.name, ", ".join(basenames)), file=self.stream)
-            print("    _iid_ = GUID('{}') # please look up iid and fill in!", file=self.stream)
+            method_names = [
+                m.name for m in head.struct.members if type(m) is typedesc.Method
+            ]
+            print(
+                "class %s(%s):" % (head.struct.name, ", ".join(basenames)),
+                file=self.stream,
+            )
+            print(
+                "    _iid_ = GUID('{}') # please look up iid and fill in!",
+                file=self.stream,
+            )
             if "Enum" in method_names:
                 print("    def __iter__(self):", file=self.stream)
                 print("        return self.Enum()", file=self.stream)
@@ -697,7 +715,10 @@ class CodeGenerator(object):
 
                 print("class %s(Structure):" % head.struct.name, file=self.stream)
                 if hasattr(head.struct, "_recordinfo_"):
-                    print("    _recordinfo_ = %r" % (head.struct._recordinfo_,), file=self.stream)
+                    print(
+                        "    _recordinfo_ = %r" % (head.struct._recordinfo_,),
+                        file=self.stream,
+                    )
                 else:
                     print("    pass", file=self.stream)
                 print(file=self.stream)
@@ -753,6 +774,7 @@ class CodeGenerator(object):
             except PackingError as details:
                 # if packing fails, write a warning comment to the output.
                 import warnings
+
                 message = "Structure %s: %s" % (body.struct.name, details)
                 warnings.warn(message, UserWarning)
                 print("# WARNING: %s" % details, file=self.stream)
@@ -780,28 +802,46 @@ class CodeGenerator(object):
                     else:
                         fieldname = "_"
                     unnamed_index += 1
-                    print("    # Unnamed field renamed to '%s'" % fieldname, file=self.stream)
+                    print(
+                        "    # Unnamed field renamed to '%s'" % fieldname,
+                        file=self.stream,
+                    )
                 else:
                     fieldname = f.name
                 if f.bits is None:
-                    print("    ('%s', %s)," % (fieldname, self._to_type_name(f.typ)), file=self.stream)
+                    print(
+                        "    ('%s', %s)," % (fieldname, self._to_type_name(f.typ)),
+                        file=self.stream,
+                    )
                 else:
-                    print("    ('%s', %s, %s)," % (fieldname, self._to_type_name(f.typ), f.bits), file=self.stream)
+                    print(
+                        "    ('%s', %s, %s),"
+                        % (fieldname, self._to_type_name(f.typ), f.bits),
+                        file=self.stream,
+                    )
             print("]", file=self.stream)
 
             if body.struct.size is None:
                 print(file=self.stream)
-                msg = ("# The size provided by the typelib is incorrect.\n"
-                       "# The size and alignment check for %s is skipped.")
+                msg = (
+                    "# The size provided by the typelib is incorrect.\n"
+                    "# The size and alignment check for %s is skipped."
+                )
                 print(msg % body.struct.name, file=self.stream)
             elif body.struct.name not in dont_assert_size:
                 print(file=self.stream)
                 size = body.struct.size // 8
-                print("assert sizeof(%s) == %s, sizeof(%s)" % \
-                      (body.struct.name, size, body.struct.name), file=self.stream)
+                print(
+                    "assert sizeof(%s) == %s, sizeof(%s)"
+                    % (body.struct.name, size, body.struct.name),
+                    file=self.stream,
+                )
                 align = body.struct.align // 8
-                print("assert alignment(%s) == %s, alignment(%s)" % \
-                      (body.struct.name, align, body.struct.name), file=self.stream)
+                print(
+                    "assert alignment(%s) == %s, alignment(%s)"
+                    % (body.struct.name, align, body.struct.name),
+                    file=self.stream,
+                )
 
         if methods:
             self.imports.add("comtypes", "COMMETHOD")
@@ -823,11 +863,14 @@ class CodeGenerator(object):
                         "        [], \n"
                         "        %s,\n"
                         "        '%s',\n"
-                    ) % (self._to_type_name(m.returns), m.name),
-                    file=self.stream
+                    )
+                    % (self._to_type_name(m.returns), m.name),
+                    file=self.stream,
                 )
                 for a in m.iterArgTypes():
-                    print("        ([], %s),\n" % self._to_type_name(a), file=self.stream)
+                    print(
+                        "        ([], %s),\n" % self._to_type_name(a), file=self.stream
+                    )
                     print("    ),", file=self.stream)
             print("]", file=self.stream)
 
@@ -857,7 +900,10 @@ class CodeGenerator(object):
         if lib.name:
             print("    name = %r" % lib.name, file=self.stream)
 
-        print("    _reg_typelib_ = (%r, %r, %r)" % (lib.guid, lib.major, lib.minor), file=self.stream)
+        print(
+            "    _reg_typelib_ = (%r, %r, %r)" % (lib.guid, lib.major, lib.minor),
+            file=self.stream,
+        )
         print(file=self.stream)
         print(file=self.stream)
 
@@ -871,9 +917,10 @@ class CodeGenerator(object):
     def Constant(self, tp):
         # type: (typedesc.Constant) -> None
         self.last_item_class = False
-        print("%s = %r  # Constant %s" % (tp.name,
-                                         tp.value,
-                                         self._to_type_name(tp.typ)), file=self.stream)
+        print(
+            "%s = %r  # Constant %s" % (tp.name, tp.value, self._to_type_name(tp.typ)),
+            file=self.stream,
+        )
         self.names.add(tp.name)
 
     def SAFEARRAYType(self, sa):
@@ -928,7 +975,10 @@ class CodeGenerator(object):
 
         libid = coclass.tlibattr.guid
         wMajor, wMinor = coclass.tlibattr.wMajorVerNum, coclass.tlibattr.wMinorVerNum
-        print("    _reg_typelib_ = (%r, %s, %s)" % (str(libid), wMajor, wMinor), file=self.stream)
+        print(
+            "    _reg_typelib_ = (%r, %s, %s)" % (str(libid), wMajor, wMinor),
+            file=self.stream,
+        )
         print(file=self.stream)
         print(file=self.stream)
 
@@ -938,13 +988,13 @@ class CodeGenerator(object):
         sources = []
         for item in coclass.interfaces:
             # item is (interface class, impltypeflags)
-            if item[1] & 2: # IMPLTYPEFLAG_FSOURCE
+            if item[1] & 2:  # IMPLTYPEFLAG_FSOURCE
                 # source interface
                 where = sources
             else:
                 # sink interface
                 where = implemented
-            if item[1] & 1: # IMPLTYPEFLAG_FDEAULT
+            if item[1] & 1:  # IMPLTYPEFLAG_FDEAULT
                 # The default interface should be the first item on the list
                 where.insert(0, self._to_type_name(item[0]))
             else:
@@ -952,10 +1002,16 @@ class CodeGenerator(object):
 
         if implemented:
             self.last_item_class = False
-            print("%s._com_interfaces_ = [%s]" % (coclass.name, ", ".join(implemented)), file=self.stream)
+            print(
+                "%s._com_interfaces_ = [%s]" % (coclass.name, ", ".join(implemented)),
+                file=self.stream,
+            )
         if sources:
             self.last_item_class = False
-            print("%s._outgoing_interfaces_ = [%s]" % (coclass.name, ", ".join(sources)), file=self.stream)
+            print(
+                "%s._outgoing_interfaces_ = [%s]" % (coclass.name, ", ".join(sources)),
+                file=self.stream,
+            )
 
         self.names.add(coclass.name)
 
@@ -1054,7 +1110,10 @@ class CodeGenerator(object):
 
         print("]", file=self.stream)
         print(file=self.stream)
-        print("################################################################", file=self.stream)
+        print(
+            "################################################################",
+            file=self.stream,
+        )
         print("# code template for %s implementation" % body.itf.name, file=self.stream)
         print("# class %s_Impl(object):" % body.itf.name, file=self.stream)
 
@@ -1064,38 +1123,59 @@ class CodeGenerator(object):
                 # m.arguments is a sequence of tuples:
                 # (argtype, argname, idlflags, docstring)
                 # Some typelibs have unnamed method parameters!
-                inargs = [a[1] or '<unnamed>' for a in m.arguments
-                        if not 'out' in a[2]]
-                outargs = [a[1] or '<unnamed>' for a in m.arguments
-                           if 'out' in a[2]]
-                if 'propget' in m.idlflags:
+                inargs = [a[1] or "<unnamed>" for a in m.arguments if not "out" in a[2]]
+                outargs = [a[1] or "<unnamed>" for a in m.arguments if "out" in a[2]]
+                if "propget" in m.idlflags:
                     methods.setdefault(m.name, [0, inargs, outargs, m.doc])[0] |= 1
-                elif 'propput' in m.idlflags:
-                    methods.setdefault(m.name, [0, inargs[:-1], inargs[-1:], m.doc])[0] |= 2
+                elif "propput" in m.idlflags:
+                    methods.setdefault(m.name, [0, inargs[:-1], inargs[-1:], m.doc])[
+                        0
+                    ] |= 2
                 else:
                     methods[m.name] = [0, inargs, outargs, m.doc]
 
         for name, (typ, inargs, outargs, doc) in methods.items():
-            if typ == 0: # method
-                print("#     def %s(%s):" % (name, ", ".join(["self"] + inargs)), file=self.stream)
+            if typ == 0:  # method
+                print(
+                    "#     def %s(%s):" % (name, ", ".join(["self"] + inargs)),
+                    file=self.stream,
+                )
                 print("#         %r" % (doc or "-no docstring-"), file=self.stream)
                 print("#         #return %s" % (", ".join(outargs)), file=self.stream)
-            elif typ == 1: # propget
+            elif typ == 1:  # propget
                 print("#     @property", file=self.stream)
-                print("#     def %s(%s):" % (name, ", ".join(["self"] + inargs)), file=self.stream)
+                print(
+                    "#     def %s(%s):" % (name, ", ".join(["self"] + inargs)),
+                    file=self.stream,
+                )
                 print("#         %r" % (doc or "-no docstring-"), file=self.stream)
                 print("#         #return %s" % (", ".join(outargs)), file=self.stream)
-            elif typ == 2: # propput
-                print("#     def _set(%s):" % ", ".join(["self"] + inargs + outargs), file=self.stream)
+            elif typ == 2:  # propput
+                print(
+                    "#     def _set(%s):" % ", ".join(["self"] + inargs + outargs),
+                    file=self.stream,
+                )
                 print("#         %r" % (doc or "-no docstring-"), file=self.stream)
-                print("#     %s = property(fset = _set, doc = _set.__doc__)" % name, file=self.stream)
-            elif typ == 3: # propget + propput
-                print("#     def _get(%s):" % ", ".join(["self"] + inargs), file=self.stream)
+                print(
+                    "#     %s = property(fset = _set, doc = _set.__doc__)" % name,
+                    file=self.stream,
+                )
+            elif typ == 3:  # propget + propput
+                print(
+                    "#     def _get(%s):" % ", ".join(["self"] + inargs),
+                    file=self.stream,
+                )
                 print("#         %r" % (doc or "-no docstring-"), file=self.stream)
                 print("#         #return %s" % (", ".join(outargs)), file=self.stream)
-                print("#     def _set(%s):" % ", ".join(["self"] + inargs + outargs), file=self.stream)
+                print(
+                    "#     def _set(%s):" % ", ".join(["self"] + inargs + outargs),
+                    file=self.stream,
+                )
                 print("#         %r" % (doc or "-no docstring-"), file=self.stream)
-                print("#     %s = property(_get, _set, doc = _set.__doc__)" % name, file=self.stream)
+                print(
+                    "#     %s = property(_get, _set, doc = _set.__doc__)" % name,
+                    file=self.stream,
+                )
             else:
                 raise RuntimeError("BUG")
             print("#", file=self.stream)
@@ -1172,8 +1252,11 @@ class CodeGenerator(object):
         self.last_item_class = False
         for typ, _, _, default in m.arguments:
             if isinstance(typ, typedesc.ComInterface):
-                self.declarations.add("OPENARRAY", "POINTER(c_ubyte)",
-                    "hack, see comtypes/tools/codegenerator.py")
+                self.declarations.add(
+                    "OPENARRAY",
+                    "POINTER(c_ubyte)",
+                    "hack, see comtypes/tools/codegenerator.py",
+                )
             if default is not None:
                 self.need_VARIANT_imports(default)
 
@@ -1215,9 +1298,9 @@ class TypeNamer(object):
             return t.name
         if isinstance(t, typedesc.PointerType):
             _t, pcnt = self._inspect_PointerType(t)
-            return "%s%s%s" % ("POINTER("*pcnt, self(_t), ")"*pcnt)
+            return "%s%s%s" % ("POINTER(" * pcnt, self(_t), ")" * pcnt)
         elif isinstance(t, typedesc.ArrayType):
-            return "%s * %s" % (self(t.typ), int(t.max)+1)
+            return "%s * %s" % (self(t.typ), int(t.max) + 1)
         elif isinstance(t, typedesc.FunctionType):
             args = [self(x) for x in [t.returns] + list(t.iterArgTypes())]
             if "__stdcall__" in t.attributes:
@@ -1234,7 +1317,7 @@ class TypeNamer(object):
         elif isinstance(t, typedesc.Enumeration):
             if t.name:
                 return t.name
-            return "c_int" # enums are integers
+            return "c_int"  # enums are integers
         elif isinstance(t, typedesc.EnumValue):
             if keyword.iskeyword(t.name):
                 return t.name + "_"
@@ -1271,6 +1354,7 @@ class ImportedNamespaces(object):
             self.data = {}
         else:
             from collections import OrderedDict
+
             self.data = OrderedDict()
 
     def add(self, name1, name2=None, symbols=None):
@@ -1358,9 +1442,9 @@ class ImportedNamespaces(object):
         if for_stub:
             import_ = "\n".join("    %s as %s," % (n, n) for n in imports)
         else:
-            wrapper = textwrap.TextWrapper(subsequent_indent="    ",
-                                           initial_indent="    ",
-                                           break_long_words=False)
+            wrapper = textwrap.TextWrapper(
+                subsequent_indent="    ", initial_indent="    ", break_long_words=False
+            )
             import_ = "\n".join(wrapper.wrap(import_))
         code = "from %s import (\n%s\n)" % (from_, import_)
         return code
@@ -1390,6 +1474,7 @@ class DeclaredNamespaces(object):
             self.data = {}
         else:
             from collections import OrderedDict
+
             self.data = OrderedDict()
 
     def add(self, alias, definition, comment=None):

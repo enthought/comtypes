@@ -5,8 +5,11 @@ from comtypes import COMError
 import comtypes.client
 
 try:
-    comtypes.client.GetModule(('{00020905-0000-0000-C000-000000000046}',))  # Word libUUID
+    comtypes.client.GetModule(
+        ("{00020905-0000-0000-C000-000000000046}",)
+    )  # Word libUUID
     from comtypes.gen import Word
+
     IMPORT_FAILED = False
 except (ImportError, OSError):
     IMPORT_FAILED = True
@@ -58,12 +61,12 @@ class Test(unittest.TestCase):
 
         for i, para in enumerate(doc.Paragraphs):
             f = para.Range.Font
-            f.ColorIndex = i+1
+            f.ColorIndex = i + 1
             f.Size = 12 + (2 * i)
 
         time.sleep(0.5)
 
-        doc.Close(SaveChanges = Word.wdDoNotSaveChanges)
+        doc.Close(SaveChanges=Word.wdDoNotSaveChanges)
 
         del word, w2
 
