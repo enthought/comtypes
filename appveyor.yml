@@ -9,15 +9,15 @@ shallow_clone: true
 
 environment:
    matrix:
-     - py: Python37
-     - py: Python37-x64
-     - py: Python38
-     - py: Python38-x64
-     - py: Python39
-     - py: Python39-x64
-     - py: Python310
-     - py: Python310-x64
-     - py: Python311
+    #  - py: Python37
+    #  - py: Python37-x64
+    #  - py: Python38
+    #  - py: Python38-x64
+    #  - py: Python39
+    #  - py: Python39-x64
+    #  - py: Python310
+    #  - py: Python310-x64
+    #  - py: Python311
      - py: Python311-x64
 
 test_script:

@@ -1,11 +1,12 @@
 on:
   pull_request:
-    branches: [drop_py2]  # TODO: add `master`
+    branches: [drop_py2, fix_gha_autofmt]  # TODO: add `master`
 
 jobs:
     formatter:
         name: auto-formatter
         runs-on: windows-latest
+        if: github.repository == github.event.pull_request.head.repo.full_name
         steps:
           - name: Checkout
             uses: actions/checkout@v3
