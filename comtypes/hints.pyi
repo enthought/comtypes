@@ -1,13 +1,20 @@
 from typing import (
-    Any, Callable, Generic, NoReturn, Optional, overload, SupportsIndex,
-    Type, TypeVar, Union as _UnionT,
+    Any,
+    Callable,
+    Generic,
+    NoReturn,
+    Optional,
+    overload,
+    SupportsIndex,
+    Type,
+    TypeVar,
+    Union as _UnionT,
 )
 
 # symbols those what might occur recursive imports in runtime.
 from comtypes.automation import IDispatch as IDispatch, VARIANT as VARIANT
 from comtypes.server import IClassFactory as IClassFactory
 from comtypes.typeinfo import ITypeInfo as ITypeInfo
-
 
 def AnnoField() -> Any:
     """**THIS IS `TYPE_CHECKING` ONLY SYMBOL.

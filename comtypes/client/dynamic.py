@@ -19,6 +19,7 @@ ERRORS_BAD_CONTEXT = [
     hres.E_INVALIDARG,
 ]
 
+
 def Dispatch(obj):
     # Wrap an object in a Dispatch instance, exposing methods and properties
     # via fully dynamic dispatch
@@ -32,6 +33,7 @@ def Dispatch(obj):
         return comtypes.client.lazybind.Dispatch(obj, tinfo)
     return obj
 
+
 class MethodCaller:
     # Wrong name: does not only call methods but also handle
     # property accesses.
@@ -43,26 +45,36 @@ class MethodCaller:
         return self._obj._comobj.Invoke(self._id, *args)
 
     def __getitem__(self, *args):
-        return self._obj._comobj.Invoke(self._id, *args,
-                                        **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYGET))
+        return self._obj._comobj.Invoke(
+            self._id, *args, **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYGET)
+        )
 
     def __setitem__(self, *args):
         if _is_object(args[-1]):
-            self._obj._comobj.Invoke(self._id, *args,
-                                        **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYPUTREF))
+            self._obj._comobj.Invoke(
+                self._id,
+                *args,
+                **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYPUTREF)
+            )
         else:
-            self._obj._comobj.Invoke(self._id, *args,
-                                        **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYPUT))
+            self._obj._comobj.Invoke(
+                self._id,
+                *args,
+                **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYPUT)
+            )
+
 
 class _Dispatch(object):
     # Expose methods and properties via fully dynamic dispatch
     def __init__(self, comobj):
         self.__dict__["_comobj"] = comobj
-        self.__dict__["_ids"] = {} # Tiny optimization: trying not to use GetIDsOfNames more than once
+        self.__dict__[
+            "_ids"
+        ] = {}  # Tiny optimization: trying not to use GetIDsOfNames more than once
         self.__dict__["_methods"] = set()
 
     def __enum(self):
-        e = self._comobj.Invoke(-4) # DISPID_NEWENUM
+        e = self._comobj.Invoke(-4)  # DISPID_NEWENUM
         return e.QueryInterface(comtypes.automation.IEnumVARIANT)
 
     def __cmp__(self, other):
@@ -150,17 +162,21 @@ class _Dispatch(object):
     #     self._comobj.Invoke(-3, index, value,
     #                         _invkind=comtypes.automation.DISPATCH_PROPERTYPUT|comtypes.automation.DISPATCH_PROPERTYPUTREF)
 
+
 class _Collection(object):
     def __init__(self, enum):
         self.enum = enum
 
     if sys.version_info >= (3, 0):
+
         def __next__(self):
             item, fetched = self.enum.Next(1)
             if fetched:
                 return item
             raise StopIteration
+
     else:
+
         def next(self):
             item, fetched = self.enum.Next(1)
             if fetched:

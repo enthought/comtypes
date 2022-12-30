@@ -17,7 +17,7 @@ from comtypes.automation import (
     _midlSAFEARRAY,
     VARIANT,
     VT_VARIANT,
-    VARIANT_BOOL
+    VARIANT_BOOL,
 )
 from comtypes.safearray import safearray_as_ndarray
 
@@ -42,6 +42,7 @@ def get_ndarray(sa):
 def com_refcnt(o):
     """Return the COM refcount of an interface pointer"""
     import gc
+
     gc.collect()
     gc.collect()
     o.AddRef()
@@ -60,12 +61,14 @@ def enabled_disabled(disabled_error):
         @functools.wraps(func)
         def call_enabled(self):
             from comtypes import npsupport
+
             npsupport.enable()
             func(self)
 
         @functools.wraps(func)
         def call_disabled(self):
             from comtypes import npsupport
+
             if npsupport.enabled:
                 raise EnvironmentError(
                     "Expected numpy interop not to be enabled but it is."
@@ -115,12 +118,14 @@ class NumpySupportTestCase(unittest.TestCase):
     )
     def test_datetime64_ndarray(self):
         comtypes.npsupport.enable()
-        dates = numpy.array([
-            numpy.datetime64("2000-01-01T05:30:00", "s"),
-            numpy.datetime64("1800-01-01T05:30:00", "ms"),
-            numpy.datetime64("2014-03-07T00:12:56", "us"),
-            numpy.datetime64("2000-01-01T12:34:56", "ns"),
-        ])
+        dates = numpy.array(
+            [
+                numpy.datetime64("2000-01-01T05:30:00", "s"),
+                numpy.datetime64("1800-01-01T05:30:00", "ms"),
+                numpy.datetime64("2014-03-07T00:12:56", "us"),
+                numpy.datetime64("2000-01-01T12:34:56", "ns"),
+            ]
+        )
 
         t = _midlSAFEARRAY(VARIANT)
         sa = t.from_param(dates)
@@ -148,7 +153,7 @@ class NumpySupportTestCase(unittest.TestCase):
         if arr.dtype is numpy.dtype(object):
             data = [(x.red, x.green, x.blue) for x in arr]
         else:
-            float_dtype = numpy.dtype('float64')
+            float_dtype = numpy.dtype("float64")
             self.assertIs(arr.dtype[0], float_dtype)
             self.assertIs(arr.dtype[1], float_dtype)
             self.assertIs(arr.dtype[2], float_dtype)
@@ -226,6 +231,7 @@ class NumpySupportTestCase(unittest.TestCase):
         self.assertTrue(a is t)
 
         from comtypes.typeinfo import CreateTypeLib
+
         # will never be saved to disk
         punk = CreateTypeLib("spam").QueryInterface(IUnknown)
 
@@ -242,7 +248,7 @@ class NumpySupportTestCase(unittest.TestCase):
         arr = get_ndarray(sa)
         self.assertTrue(isinstance(arr, numpy.ndarray))
         self.assertEqual(numpy.dtype(object), arr.dtype)
-        self.assertTrue((arr == (punk,)*4).all())
+        self.assertTrue((arr == (punk,) * 4).all())
         self.assertEqual(initial + 8, com_refcnt(punk))
 
         del arr
@@ -294,7 +300,7 @@ class NumpyVariantTest(unittest.TestCase):
 
     @enabled_disabled(disabled_error=ValueError)
     def test_double(self):
-        for dtype in ('float32', 'float64'):
+        for dtype in ("float32", "float64"):
             # because of FLOAT rounding errors, whi will only work for
             # certain values!
             a = numpy.array([1.0, 2.0, 3.0, 4.5], dtype=dtype)
@@ -304,8 +310,16 @@ class NumpyVariantTest(unittest.TestCase):
 
     @enabled_disabled(disabled_error=ValueError)
     def test_int(self):
-        for dtype in ('int8', 'int16', 'int32', 'int64', 'uint8',
-                'uint16', 'uint32', 'uint64'):
+        for dtype in (
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "uint8",
+            "uint16",
+            "uint32",
+            "uint64",
+        ):
             a = numpy.array((1, 1, 1, 1), dtype=dtype)
             v = VARIANT()
             v.value = a
@@ -316,7 +330,7 @@ class NumpyVariantTest(unittest.TestCase):
         dates = [
             numpy.datetime64("2000-01-01T05:30:00", "s"),
             numpy.datetime64("1800-01-01T05:30:00", "ms"),
-            numpy.datetime64("2000-01-01T12:34:56", "us")
+            numpy.datetime64("2000-01-01T12:34:56", "us"),
         ]
 
         for date in dates:
@@ -332,8 +346,7 @@ class NumpyVariantTest(unittest.TestCase):
     def test_mixed(self):
         comtypes.npsupport.enable()
         now = datetime.datetime.now()
-        a = numpy.array(
-            [11, "22", None, True, now, Decimal("3.14")]).reshape(2, 3)
+        a = numpy.array([11, "22", None, True, now, Decimal("3.14")]).reshape(2, 3)
         v = VARIANT()
         v.value = a
         self.assertTrue((v.value == a).all())

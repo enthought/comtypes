@@ -6,8 +6,17 @@ from comtypes import TYPE_CHECKING
 if TYPE_CHECKING:
     from comtypes import _CData
     from typing import (
-        Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union as _UnionT
+        Any,
+        Callable,
+        Dict,
+        Iterator,
+        List,
+        Optional,
+        Tuple,
+        Type,
+        Union as _UnionT,
     )
+
     PositionalParamFlagType = Tuple[int, Optional[str]]
     OptionalParamFlagType = Tuple[int, Optional[str], Any]
     ParamFlagType = _UnionT[PositionalParamFlagType, OptionalParamFlagType]
@@ -22,7 +31,7 @@ _PARAMFLAGS = {
     "lcid": 4,
     "retval": 8,
     "optional": 16,
-    }
+}
 
 
 def _encode_idl(names):
@@ -72,7 +81,9 @@ def _resolve_argspec(items):
 
 class _MemberSpec(object):
     """Specifier of a slot of method or property."""
+
     __slots__ = ("name", "idlflags", "restype")
+
     def __init__(self, name, idlflags, restype):
         self.name = name  # type: str
         self.idlflags = idlflags  # type: Tuple[_UnionT[str, int], ...]
@@ -86,6 +97,7 @@ class _MemberSpec(object):
 
 class _ComMemberSpec(_MemberSpec):
     """Specifier for a slot of COM method or property."""
+
     __slots__ = ("argtypes", "paramflags", "doc")
 
     def __init__(self, restype, name, argtypes, paramflags, idlflags, doc):
@@ -98,12 +110,20 @@ class _ComMemberSpec(_MemberSpec):
         # for backward compatibility:
         # A function that returns this object used to return a `tuple`.
         # So it is implemented as unpackable as well.
-        for item in (self.restype, self.name, self.argtypes, self.paramflags, self.idlflags, self.doc):
+        for item in (
+            self.restype,
+            self.name,
+            self.argtypes,
+            self.paramflags,
+            self.idlflags,
+            self.doc,
+        ):
             yield item
 
 
 class _DispMemberSpec(_MemberSpec):
     """Specifier for a slot of dispinterface method or property."""
+
     __slots__ = ("what", "argspec")
 
     def __init__(self, what, name, idlflags, restype, argspec):
@@ -141,6 +161,7 @@ def _fix_inout_args(func, argtypes, paramflags):
     # version is used where the bug is fixed.
     SIMPLETYPE = type(ctypes.c_int)
     BYREFTYPE = type(ctypes.byref(ctypes.c_int()))
+
     def call_with_inout(self, *args, **kw):
         args = list(args)
         # Indexed by order in the output
@@ -205,12 +226,15 @@ def _fix_inout_args(func, argtypes, paramflags):
         for outnum, o in outargs.items():
             rescode[outnum] = o.__ctypes_from_outparam__()
         return rescode
+
     return call_with_inout
 
 
 class PropertyMapping(object):
     def __init__(self):
-        self._data = {}  # type: Dict[Tuple[str, Optional[str], int], List[Optional[Callable[..., Any]]]]
+        self._data = (
+            {}
+        )  # type: Dict[Tuple[str, Optional[str], int], List[Optional[Callable[..., Any]]]]
 
     def add_propget(self, name, doc, nargs, func):
         # type: (str, Optional[str], int, Callable[..., Any]) -> None
@@ -232,10 +256,12 @@ class PropertyMapping(object):
                 # and calls 'propputref' if it is an Object (in the VB
                 # sense), or call 'propput' otherwise.
                 put, putref = propput, propputref
+
                 def put_or_putref(self, *args):
                     if comtypes._is_object(args[-1]):
                         return putref(self, *args)
                     return put(self, *args)
+
                 fset = put_or_putref
             elif propputref is not None:
                 fset = propputref
@@ -303,21 +329,21 @@ class ComPropertyGenerator(PropertyGenerator):
         nargs = len([f for f in m.paramflags if f[0] & 7 in (0, 1)])
         # XXX or should we do this?
         # nargs = len([f for f in paramflags if (f[0] & 1) or (f[0] == 0)])
-        return m.name[len("_get_"):], m.doc, nargs
+        return m.name[len("_get_") :], m.doc, nargs
 
     def to_propput_keys(self, m):
         # type: (_ComMemberSpec) -> Tuple[str, Optional[str], int]
         assert m.name.startswith("_set_")
         assert m.paramflags is not None
         nargs = len([f for f in m.paramflags if f[0] & 7 in (0, 1)]) - 1
-        return m.name[len("_set_"):], m.doc, nargs
+        return m.name[len("_set_") :], m.doc, nargs
 
     def to_propputref_keys(self, m):
         # type: (_ComMemberSpec) -> Tuple[str, Optional[str], int]
         assert m.name.startswith("_setref_")
         assert m.paramflags is not None
         nargs = len([f for f in m.paramflags if f[0] & 7 in (0, 1)]) - 1
-        return m.name[len("_setref_"):], m.doc, nargs
+        return m.name[len("_setref_") :], m.doc, nargs
 
 
 class DispPropertyGenerator(PropertyGenerator):
@@ -341,7 +367,9 @@ class ComMemberGenerator(object):
         self._iid = iid
         self._props = ComPropertyGenerator(cls_name)
         # sequence of (name: str, func: Callable, raw_func: Callable, is_prop: bool)
-        self._mths = []  # type: List[Tuple[str, Callable[..., Any], Callable[..., Any], bool]]
+        self._mths = (
+            []
+        )  # type: List[Tuple[str, Callable[..., Any], Callable[..., Any], bool]]
         self._member_index = 0
 
     def add(self, m):
@@ -368,7 +396,7 @@ class ComMemberGenerator(object):
         # type: (_ComMemberSpec, Callable[..., Any]) -> Callable[..., Any]
         """This is a workaround. See `_fix_inout_args` docstring and comments."""
         if m.paramflags:
-            dirflags = [(p[0]&3) for p in m.paramflags]
+            dirflags = [(p[0] & 3) for p in m.paramflags]
             if 3 in dirflags:
                 return _fix_inout_args(func, m.argtypes, m.paramflags)
         return func
@@ -385,12 +413,14 @@ class DispMemberGenerator(object):
         # type: (str) -> None
         self._props = DispPropertyGenerator(cls_name)
         # sequence of (name: str, func_or_prop: Callable | property, is_prop: bool)
-        self._items = []  # type: List[Tuple[str, _UnionT[Callable[..., Any], property], bool]]
+        self._items = (
+            []
+        )  # type: List[Tuple[str, _UnionT[Callable[..., Any], property], bool]]
 
     def add(self, m):
         # type: (_DispMemberSpec) -> None
         if m.what == "DISPPROPERTY":  # DISPPROPERTY
-            assert not m.argspec # XXX does not yet work for properties with parameters
+            assert not m.argspec  # XXX does not yet work for properties with parameters
             is_prop = True
             accessor = self._make_disp_property(m)
             self._items.append((m.name, accessor, is_prop))
@@ -407,15 +437,19 @@ class DispMemberGenerator(object):
         # type: (_DispMemberSpec) -> property
         # XXX doc string missing in property
         memid = m.memid
+
         def fget(obj):
-            return obj.Invoke(memid, _invkind=2) # DISPATCH_PROPERTYGET
+            return obj.Invoke(memid, _invkind=2)  # DISPATCH_PROPERTYGET
+
         if "readonly" in m.idlflags:
             return property(fget)
+
         def fset(obj, value):
             # Detect whether to use DISPATCH_PROPERTYPUT or
             # DISPATCH_PROPERTYPUTREF
             invkind = 8 if comtypes._is_object(value) else 4
             return obj.Invoke(memid, value, _invkind=invkind)
+
         return property(fget, fset)
 
     # Should the funcs/mths we create have restype and/or argtypes attributes?
@@ -423,29 +457,45 @@ class DispMemberGenerator(object):
         # type: (_DispMemberSpec) -> Callable[..., Any]
         memid = m.memid
         if "propget" in m.idlflags:
+
             def getfunc(obj, *args, **kw):
-                return obj.Invoke(memid, _invkind=2, *args, **kw) # DISPATCH_PROPERTYGET
+                return obj.Invoke(
+                    memid, _invkind=2, *args, **kw
+                )  # DISPATCH_PROPERTYGET
+
             return getfunc
         elif "propput" in m.idlflags:
+
             def putfunc(obj, *args, **kw):
-                return obj.Invoke(memid, _invkind=4, *args, **kw) # DISPATCH_PROPERTYPUT
+                return obj.Invoke(
+                    memid, _invkind=4, *args, **kw
+                )  # DISPATCH_PROPERTYPUT
+
             return putfunc
         elif "propputref" in m.idlflags:
+
             def putreffunc(obj, *args, **kw):
-                return obj.Invoke(memid, _invkind=8, *args, **kw) # DISPATCH_PROPERTYPUTREF
+                return obj.Invoke(
+                    memid, _invkind=8, *args, **kw
+                )  # DISPATCH_PROPERTYPUTREF
+
             return putreffunc
         # a first attempt to make use of the restype.  Still, support for
         # named arguments and default argument values should be added.
         if hasattr(m.restype, "__com_interface__"):
             interface = m.restype.__com_interface__  # type: ignore
+
             def comitffunc(obj, *args, **kw):
                 result = obj.Invoke(memid, _invkind=1, *args, **kw)
                 if result is None:
                     return
                 return result.QueryInterface(interface)
+
             return comitffunc
+
         def func(obj, *args, **kw):
-            return obj.Invoke(memid, _invkind=1, *args, **kw) # DISPATCH_METHOD
+            return obj.Invoke(memid, _invkind=1, *args, **kw)  # DISPATCH_METHOD
+
         return func
 
     def items(self):
@@ -458,6 +508,7 @@ class DispMemberGenerator(object):
 ################################################################
 # helper classes for COM propget / propput
 # Should they be implemented in C for speed?
+
 
 class bound_named_property(object):
     def __init__(self, name, fget, fset, instance):
@@ -495,7 +546,7 @@ class bound_named_property(object):
         return "<bound_named_property %r at %x>" % (self.name, id(self))
 
     def __iter__(self):
-        """ Explicitly disallow iteration. """
+        """Explicitly disallow iteration."""
         msg = "%r is not iterable" % self.name
         raise TypeError(msg)
 

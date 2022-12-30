@@ -31,6 +31,7 @@ class Test(ut.TestCase):
         # So, the one that's referenced onm WbemScripting will be used, whether the actual
         # typelib is available or not.  XXX
         from comtypes.gen import WbemScripting
+
         WbemScripting.wbemPrivilegeCreateToken
 
         for item in disks:
@@ -52,9 +53,12 @@ class Test(ut.TestCase):
                 # print "\t", (prop.Name, prop.Value)
             self.assertEqual(len(item.Properties_), item.Properties_.Count)
             self.assertEqual(len(item.Properties_), len(result))
-            self.assertTrue(isinstance(item.Properties_["Description"].Value, text_type))
+            self.assertTrue(
+                isinstance(item.Properties_["Description"].Value, text_type)
+            )
         # len(obj) is forwared to obj.Count
         self.assertEqual(len(disks), disks.Count)
+
 
 if __name__ == "__main__":
     ut.main()

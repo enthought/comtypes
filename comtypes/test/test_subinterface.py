@@ -2,9 +2,12 @@ import unittest, sys
 from comtypes import IUnknown, GUID
 from ctypes import *
 
+
 def test_main():
     from test import test_support
+
     test_support.run_unittest(Test)
+
 
 class Test(unittest.TestCase):
     def test_subinterface(self):

@@ -1,11 +1,14 @@
 import unittest
 
 from comtypes.client import GetModule
+
 iem = GetModule("shdocvw.dll")
+
 
 class TestCase(unittest.TestCase):
     def test(self):
         from comtypes.client import GetModule
+
         iem = GetModule("shdocvw.dll")
 
         # IDispatch(IUnknown)
@@ -28,11 +31,14 @@ class TestCase(unittest.TestCase):
         # names in the base class __map_case__ must also appear in the
         # subclass.
         for name in iem.IWebBrowser.__map_case__:
-            self.assertTrue(name in iem.IWebBrowserApp.__map_case__, "%s missing" % name)
+            self.assertTrue(
+                name in iem.IWebBrowserApp.__map_case__, "%s missing" % name
+            )
             self.assertTrue(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
 
         for name in iem.IWebBrowserApp.__map_case__:
             self.assertTrue(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
+
 
 if __name__ == "__main__":
     unittest.main()

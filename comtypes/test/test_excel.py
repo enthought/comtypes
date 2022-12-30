@@ -19,6 +19,7 @@ from comtypes.client import CreateObject, GetModule
 try:
     GetModule(("{00020813-0000-0000-C000-000000000046}",))  # Excel libUUID
     from comtypes.gen.Excel import xlRangeValueDefault
+
     IMPORT_FAILED = False
 except (ImportError, OSError):
     IMPORT_FAILED = True
@@ -47,55 +48,52 @@ class BaseBindTest(object):
         wb = xl.Workbooks.Add()
 
         # Test with empty-tuple argument
-        xl.Range["A1", "C1"].Value[()] = (10,"20",31.4)  # XXX: in Python >= 3.8.x, cannot set values to A1:C1
-        xl.Range["A2:C2"].Value[()] = ('x','y','z')
+        xl.Range["A1", "C1"].Value[()] = (
+            10,
+            "20",
+            31.4,
+        )  # XXX: in Python >= 3.8.x, cannot set values to A1:C1
+        xl.Range["A2:C2"].Value[()] = ("x", "y", "z")
         # Test with empty slice argument
-        xl.Range["A3:C3"].Value[:] = ('3','2','1')
+        xl.Range["A3:C3"].Value[:] = ("3", "2", "1")
         # not implemented:
         #     xl.Range["A4:C4"].Value = ("3", "2" ,"1")
 
         # call property to retrieve value
-        expected_values = ((10.0, 20.0, 31.4),
-                           ("x", "y", "z"),
-                           (3.0, 2.0, 1.0))
+        expected_values = ((10.0, 20.0, 31.4), ("x", "y", "z"), (3.0, 2.0, 1.0))
         # XXX: in Python >= 3.8.x, fails below
-        self.assertEqual(xl.Range["A1:C3"].Value(),
-                         expected_values)
+        self.assertEqual(xl.Range["A1:C3"].Value(), expected_values)
         # index with empty tuple
-        self.assertEqual(xl.Range["A1:C3"].Value[()],
-                         expected_values)
+        self.assertEqual(xl.Range["A1:C3"].Value[()], expected_values)
         # index with empty slice
-        self.assertEqual(xl.Range["A1:C3"].Value[:],
-                         expected_values)
-        self.assertEqual(xl.Range["A1:C3"].Value[xlRangeValueDefault],
-                         expected_values)
-        self.assertEqual(xl.Range["A1", "C3"].Value[()],
-                         expected_values)
+        self.assertEqual(xl.Range["A1:C3"].Value[:], expected_values)
+        self.assertEqual(xl.Range["A1:C3"].Value[xlRangeValueDefault], expected_values)
+        self.assertEqual(xl.Range["A1", "C3"].Value[()], expected_values)
 
         # Test for iteration support in "Range" interface
         iter(xl.Range["A1:C3"])
-        self.assertEqual([c.Value() for c in xl.Range["A1:C3"]],
-                             [10.0, 20.0, 31.4,
-                              "x", "y", "z",
-                              3.0, 2.0, 1.0])
+        self.assertEqual(
+            [c.Value() for c in xl.Range["A1:C3"]],
+            [10.0, 20.0, 31.4, "x", "y", "z", 3.0, 2.0, 1.0],
+        )
 
         # With pywin32, one could write xl.Cells(a, b)
         # With comtypes, one must write xl.Cells.Item(1, b)
 
         for i in range(20):
             val = "Hi %d" % i
-            xl.Cells.Item[i+1,i+1].Value[()] = val
-            self.assertEqual(xl.Cells.Item[i+1, i+1].Value[()], val)
+            xl.Cells.Item[i + 1, i + 1].Value[()] = val
+            self.assertEqual(xl.Cells.Item[i + 1, i + 1].Value[()], val)
 
         for i in range(20):
             val = "Hi %d" % i
-            xl.Cells(i+1,i+1).Value[()] = val
-            self.assertEqual(xl.Cells(i+1, i+1).Value[()], val)
+            xl.Cells(i + 1, i + 1).Value[()] = val
+            self.assertEqual(xl.Cells(i + 1, i + 1).Value[()], val)
 
         # test dates out with Excel
         xl.Range["A5"].Value[()] = "Excel time"
         xl.Range["B5"].Formula = "=Now()"
-        self.assertEqual(xl.Cells.Item[5,2].Formula, "=NOW()")
+        self.assertEqual(xl.Cells.Item[5, 2].Formula, "=NOW()")
 
         xl.Range["A6"].Calculate()
         excel_time = xl.Range["B5"].Value[()]
@@ -108,15 +106,17 @@ class BaseBindTest(object):
         # some random code, grabbed from c.l.p
         sh = wb.Worksheets[1]
 
-        sh.Cells.Item[1,1].Value[()] = "Hello World!"
-        sh.Cells.Item[3,3].Value[()] = "Hello World!"
-        sh.Range[sh.Cells.Item[1,1],sh.Cells.Item[3,3]].Copy(sh.Cells.Item[4,1])
-        sh.Range[sh.Cells.Item[4,1],sh.Cells.Item[6,3]].Select()
+        sh.Cells.Item[1, 1].Value[()] = "Hello World!"
+        sh.Cells.Item[3, 3].Value[()] = "Hello World!"
+        sh.Range[sh.Cells.Item[1, 1], sh.Cells.Item[3, 3]].Copy(sh.Cells.Item[4, 1])
+        sh.Range[sh.Cells.Item[4, 1], sh.Cells.Item[6, 3]].Select()
 
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
-@unittest.skip("There is difference of `Range.Value` behavior "
-    "between Python >= 3.8.x and Python <= 3.7.x.")
+@unittest.skip(
+    "There is difference of `Range.Value` behavior "
+    "between Python >= 3.8.x and Python <= 3.7.x."
+)
 class Test_EarlyBind(BaseBindTest, unittest.TestCase):
     dynamic = False
 

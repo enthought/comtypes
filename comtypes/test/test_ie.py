@@ -8,8 +8,10 @@ comtypes.test.requires("ui")
 
 
 def setUpModule():
-    raise ut.SkipTest("External test dependencies like this seem bad.  Find a different built-in "
-                      "win32 API to use.")
+    raise ut.SkipTest(
+        "External test dependencies like this seem bad.  Find a different built-in "
+        "win32 API to use."
+    )
 
 
 class EventSink:
@@ -44,19 +46,23 @@ class EventSink:
 
 
 class POINT(Structure):
-    _fields_ = [("x", c_long),
-                ("y", c_long)]
+    _fields_ = [("x", c_long), ("y", c_long)]
+
 
 class MSG(Structure):
-    _fields_ = [("hWnd", c_ulong),
-                ("message", c_uint),
-                ("wParam", c_ulong),
-                ("lParam", c_ulong),
-                ("time", c_ulong),
-                ("pt", POINT)]
+    _fields_ = [
+        ("hWnd", c_ulong),
+        ("message", c_uint),
+        ("wParam", c_ulong),
+        ("lParam", c_ulong),
+        ("time", c_ulong),
+        ("pt", POINT),
+    ]
+
 
 def PumpWaitingMessages():
     from ctypes import windll, byref
+
     user32 = windll.user32
     msg = MSG()
     PM_REMOVE = 0x0001
@@ -64,12 +70,14 @@ def PumpWaitingMessages():
         user32.TranslateMessage(byref(msg))
         user32.DispatchMessageA(byref(msg))
 
-class Test(ut.TestCase):
 
+class Test(ut.TestCase):
     def tearDown(self):
         import gc
+
         gc.collect()
         import time
+
         time.sleep(2)
 
     def test_default_eventinterface(self):
@@ -79,15 +87,23 @@ class Test(ut.TestCase):
         ie.Visible = True
         ie.Navigate2(URL="http://docs.python.org/", Flags=0)
         import time
+
         for i in range(50):
             PumpWaitingMessages()
             time.sleep(0.1)
         ie.Visible = False
         ie.Quit()
 
-        self.assertEqual(sink._events, ['OnVisible', 'BeforeNavigate2',
-                                            'NavigateComplete2', 'DocumentComplete',
-                                            'OnVisible'])
+        self.assertEqual(
+            sink._events,
+            [
+                "OnVisible",
+                "BeforeNavigate2",
+                "NavigateComplete2",
+                "DocumentComplete",
+                "OnVisible",
+            ],
+        )
 
         del ie
         del conn
@@ -96,19 +112,22 @@ class Test(ut.TestCase):
         sink = EventSink()
         ie = CreateObject("InternetExplorer.Application")
         import comtypes.gen.SHDocVw as mod
+
         conn = GetEvents(ie, sink, interface=mod.DWebBrowserEvents)
 
         ie.Visible = True
         ie.Navigate2(Flags=0, URL="http://docs.python.org/")
         import time
+
         for i in range(50):
             PumpWaitingMessages()
             time.sleep(0.1)
         ie.Visible = False
         ie.Quit()
 
-        self.assertEqual(sink._events, ['BeforeNavigate', 'NavigateComplete'])
+        self.assertEqual(sink._events, ["BeforeNavigate", "NavigateComplete"])
         del ie
+
 
 if __name__ == "__main__":
     ut.main()
