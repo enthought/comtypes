@@ -6,6 +6,9 @@ jobs:
     formatter:
         name: auto-formatter
         runs-on: windows-latest
+        # Because auto-commit to the branch from a forked repository will fail,
+        # so this GHA will be triggered by PRs from the source repository only.
+        if: github.repository == github.event.pull_request.head.repo.full_name
         steps:
           - name: Checkout
             uses: actions/checkout@v3
