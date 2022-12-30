@@ -46,21 +46,17 @@ class MethodCaller:
 
     def __getitem__(self, *args):
         return self._obj._comobj.Invoke(
-            self._id, *args, **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYGET)
+            self._id, *args, _invkind=comtypes.automation.DISPATCH_PROPERTYGET
         )
 
     def __setitem__(self, *args):
         if _is_object(args[-1]):
             self._obj._comobj.Invoke(
-                self._id,
-                *args,
-                **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYPUTREF)
+                self._id, *args, _invkind=comtypes.automation.DISPATCH_PROPERTYPUTREF
             )
         else:
             self._obj._comobj.Invoke(
-                self._id,
-                *args,
-                **dict(_invkind=comtypes.automation.DISPATCH_PROPERTYPUT)
+                self._id, *args, _invkind=comtypes.automation.DISPATCH_PROPERTYPUT,
             )
 
 
