@@ -1,6 +1,6 @@
 on:
   pull_request:
-    branches: [drop_py2]  # TODO: add `master`
+    branches: [drop_py2, fix_gha_autofmt]  # TODO: add `master`
 
 jobs:
     formatter:
@@ -9,6 +9,9 @@ jobs:
         steps:
           - name: Checkout
             uses: actions/checkout@v3
+            with:
+              repository: ${{ github.event.pull_request.head.repo.full_name }}
+              ref: ${{ github.head_ref }}
           - name: Set up Python
             uses: actions/setup-python@v4
             with:
