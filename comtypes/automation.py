@@ -178,11 +178,11 @@ DECIMAL = tagDEC
 # helper extension.  At least the get/set methods.
 class tagVARIANT(Structure):
     if TYPE_CHECKING:
-        vt = hints.AnnoField()  # type: int
-        _ = hints.AnnoField()  # type: U_VARIANT1.__tagVARIANT.U_VARIANT2
-        null = hints.AnnoField()  # type: ClassVar[VARIANT]
-        empty = hints.AnnoField()  # type: ClassVar[VARIANT]
-        missing = hints.AnnoField()  # type: ClassVar[VARIANT]
+        vt: int
+        _: "U_VARIANT1.__tagVARIANT.U_VARIANT2"
+        null: ClassVar["VARIANT"]
+        empty: ClassVar["VARIANT"]
+        missing: ClassVar["VARIANT"]
 
     class U_VARIANT1(Union):
         class __tagVARIANT(Structure):
@@ -709,15 +709,15 @@ IEnumVARIANT._methods_ = [
 
 class tagEXCEPINFO(Structure):
     if TYPE_CHECKING:
-        wCode = hints.AnnoField()  # type: int
-        wReserved = hints.AnnoField()  # type: int
-        bstrSource = hints.AnnoField()  # type: str
-        bstrDescription = hints.AnnoField()  # type: str
-        bstrHelpFile = hints.AnnoField()  # type: str
-        dwHelpContext = hints.AnnoField()  # type: int
-        pvReserved = hints.AnnoField()  # type: Optional[int]
-        pfnDeferredFillIn = hints.AnnoField()  # type: Optional[int]
-        scode = hints.AnnoField()  # type: int
+        wCode: int
+        wReserved: int
+        bstrSource: str
+        bstrDescription: str
+        bstrHelpFile: str
+        dwHelpContext: int
+        pvReserved: Optional[int]
+        pfnDeferredFillIn: Optional[int]
+        scode: int
 
     def __repr__(self):
         return "<EXCEPINFO %s>" % (
@@ -750,10 +750,10 @@ EXCEPINFO = tagEXCEPINFO
 
 class tagDISPPARAMS(Structure):
     if TYPE_CHECKING:
-        rgvarg = hints.AnnoField()  # type: Array[VARIANT]
-        rgdispidNamedArgs = hints.AnnoField()  # type: _Pointer[DISPID]
-        cArgs = hints.AnnoField()  # type: int
-        cNamedArgs = hints.AnnoField()  # type: int
+        rgvarg: Array[VARIANT]
+        rgdispidNamedArgs: _Pointer[DISPID]
+        cArgs: int
+        cNamedArgs: int
     _fields_ = [
         # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 696
         ("rgvarg", POINTER(VARIANTARG)),
@@ -802,12 +802,10 @@ if TYPE_CHECKING:
 
 class IDispatch(IUnknown):
     if TYPE_CHECKING:
-        _disp_methods_ = (
-            hints.AnnoField()
-        )  # type: ClassVar[List[comtypes._DispMemberSpec]]
-        _GetTypeInfo = hints.AnnoField()  # type: Callable[[int, int], IUnknown]
-        __com_GetIDsOfNames = hints.AnnoField()  # type: RawGetIDsOfNamesFunc
-        __com_Invoke = hints.AnnoField()  # type: RawInvokeFunc
+        _disp_methods_: ClassVar[List[comtypes._DispMemberSpec]]
+        _GetTypeInfo: Callable[[int, int], IUnknown]
+        __com_GetIDsOfNames: RawGetIDsOfNamesFunc
+        __com_Invoke: RawInvokeFunc
 
     _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
     _methods_ = [
