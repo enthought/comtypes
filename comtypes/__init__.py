@@ -336,10 +336,10 @@ class _cominterface_meta(type):
     """
 
     if TYPE_CHECKING:
-        _case_insensitive_ = hints.AnnoField()  # type: bool
-        _iid_ = hints.AnnoField()  # type: GUID
-        _methods_ = hints.AnnoField()  # type: List[_ComMemberSpec]
-        _disp_methods_ = hints.AnnoField()  # type: List[_DispMemberSpec]
+        _case_insensitive_: bool
+        _iid_: GUID
+        _methods_: List[_ComMemberSpec]
+        _disp_methods_: List[_DispMemberSpec]
 
     # This flag is set to True by the atexit handler which calls
     # CoUninitialize.
@@ -862,9 +862,9 @@ if TYPE_CHECKING:
         `builtins.object`.
         """
 
-        __com_QueryInterface = hints.AnnoField()  # type: Callable[[Any, Any], int]
-        __com_AddRef = hints.AnnoField()  # type: Callable[[], int]
-        __com_Release = hints.AnnoField()  # type: Callable[[], int]
+        __com_QueryInterface: Callable[[Any, Any], int]
+        __com_AddRef: Callable[[], int]
+        __com_Release: Callable[[], int]
 
 else:
     _IUnknown_Base = object
@@ -935,13 +935,13 @@ class IPersist(IUnknown):
     if TYPE_CHECKING:
         # Returns the CLSID that uniquely represents an object class that
         # defines the code that can manipulate the object's data.
-        GetClassID = hints.AnnoField()  # type: Callable[[], GUID]
+        GetClassID: Callable[[], GUID]
 
 
 class IServiceProvider(IUnknown):
     _iid_ = GUID("{6D5140C1-7436-11CE-8034-00AA006009FA}")
     if TYPE_CHECKING:
-        _QueryService = hints.AnnoField()  # type: Callable[[Any, Any, Any], int]
+        _QueryService: Callable[[Any, Any, Any], int]
     # Overridden QueryService to make it nicer to use (passing it an
     # interface and it returns a pointer to that interface)
     def QueryService(self, serviceIID, interface):
@@ -1072,9 +1072,9 @@ def GetActiveObject(clsid, interface=None):
 class MULTI_QI(Structure):
     _fields_ = [("pIID", POINTER(GUID)), ("pItf", POINTER(c_void_p)), ("hr", HRESULT)]
     if TYPE_CHECKING:
-        pIID = hints.AnnoField()  # type: GUID
-        pItf = hints.AnnoField()  # type: _Pointer[c_void_p]
-        hr = hints.AnnoField()  # type: HRESULT
+        pIID: GUID
+        pItf: _Pointer[c_void_p]
+        hr: HRESULT
 
 
 class _COAUTHIDENTITY(Structure):
@@ -1115,10 +1115,10 @@ class _COSERVERINFO(Structure):
         ("dwReserved2", c_ulong),
     ]
     if TYPE_CHECKING:
-        dwReserved1 = hints.AnnoField()  # type: int
-        pwszName = hints.AnnoField()  # type: Optional[str]
-        pAuthInfo = hints.AnnoField()  # type: _COAUTHINFO
-        dwReserved2 = hints.AnnoField()  # type: int
+        dwReserved1: int
+        pwszName: Optional[str]
+        pAuthInfo: _COAUTHINFO
+        dwReserved2: int
 
 
 COSERVERINFO = _COSERVERINFO

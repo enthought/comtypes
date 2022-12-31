@@ -164,17 +164,13 @@ class StructureBody(object):
 
 class _Struct_Union_Base(object):
     if TYPE_CHECKING:
-        name = comtypes.hints.AnnoField()  # type: str
-        align = comtypes.hints.AnnoField()  # type: int
-        members = (
-            comtypes.hints.AnnoField()
-        )  # type: List[_UnionT[Field, Method, Constructor]]
-        bases = comtypes.hints.AnnoField()  # type: List[_Struct_Union_Base]
-        artificial = comtypes.hints.AnnoField()  # type: Optional[Any]
-        size = comtypes.hints.AnnoField()  # type: Optional[int]
-        _recordinfo_ = (
-            comtypes.hints.AnnoField()
-        )  # type: Tuple[str, int, int, int, str]
+        name: str
+        align: int
+        members: List[_UnionT["Field", Method, Constructor]]
+        bases: List["_Struct_Union_Base"]
+        artificial: Optional[Any]
+        size: Optional[int]
+        _recordinfo_: Tuple[str, int, int, int, str]
 
     location = None
 

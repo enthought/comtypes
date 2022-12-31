@@ -45,7 +45,6 @@ if TYPE_CHECKING:
         Tuple,
         Union as _UnionT,
     )
-    from comtypes import hints
 
     _CT = TypeVar("_CT", bound=_CData)
     _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
@@ -260,7 +259,7 @@ class ITypeLib(IUnknown):
             """Release TLIBATTR"""
             raise
 
-        _GetLibAttr = hints.AnnoField()  # type: Callable[[], _Pointer[TLIBATTR]]
+        _GetLibAttr: Callable[[], _Pointer["TLIBATTR"]]
 
     def GetLibAttr(self):
         # type: () -> TLIBATTR
@@ -360,15 +359,13 @@ class ITypeInfo(IUnknown):
             """Return index into and the containing type lib itself"""
             raise
 
-        ReleaseTypeAttr = hints.AnnoField()  # type: Callable[[_Pointer[TYPEATTR]], int]
-        ReleaseFuncDesc = hints.AnnoField()  # type: Callable[[_Pointer[FUNCDESC]], int]
-        ReleaseVarDesc = hints.AnnoField()  # type: Callable[[_Pointer[VARDESC]], int]
-        _GetTypeAttr = hints.AnnoField()  # type: Callable[[], _Pointer[TYPEATTR]]
-        _GetFuncDesc = hints.AnnoField()  # type: Callable[[int], _Pointer[FUNCDESC]]
-        _GetVarDesc = hints.AnnoField()  # type: Callable[[int], _Pointer[VARDESC]]
-        _GetDocumentation = (
-            hints.AnnoField()
-        )  # type: Callable[[int], Tuple[str, str, int, Optional[str]]]
+        ReleaseTypeAttr: Callable[[_Pointer["TYPEATTR"]], int]
+        ReleaseFuncDesc: Callable[[_Pointer["FUNCDESC"]], int]
+        ReleaseVarDesc: Callable[[_Pointer["VARDESC"]], int]
+        _GetTypeAttr: Callable[[], _Pointer["TYPEATTR"]]
+        _GetFuncDesc: Callable[[int], _Pointer["FUNCDESC"]]
+        _GetVarDesc: Callable[[int], _Pointer["VARDESC"]]
+        _GetDocumentation: Callable[[int], Tuple[str, str, int, Optional[str]]]
 
     def GetTypeAttr(self):
         """Return the TYPEATTR for this type"""
@@ -476,9 +473,7 @@ class ICreateTypeInfo(IUnknown):
     _iid_ = GUID("{00020405-0000-0000-C000-000000000046}")
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 915
     if TYPE_CHECKING:
-        _SetFuncAndParamNames = (
-            hints.AnnoField()
-        )  # Callable[[int, Array[c_wchar_p], int], int]
+        _SetFuncAndParamNames: Callable[[int, Array[c_wchar_p], int], int]
 
     def SetFuncAndParamNames(self, index, *names):
         # type: (int, str) -> int
@@ -677,12 +672,12 @@ def QueryPathOfRegTypeLib(libid, wVerMajor, wVerMinor, lcid=0):
 class tagTLIBATTR(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 4437
     if TYPE_CHECKING:
-        guid = hints.AnnoField()  # type: GUID
-        lcid = hints.AnnoField()  # type: int
-        syskind = hints.AnnoField()  # type: int
-        wMajorVerNum = hints.AnnoField()  # type: int
-        wMinorVerNum = hints.AnnoField()  # type: int
-        wLibFlags = hints.AnnoField()  # type: int
+        guid: GUID
+        lcid: int
+        syskind: int
+        wMajorVerNum: int
+        wMinorVerNum: int
+        wLibFlags: int
 
     def __repr__(self):
         return "TLIBATTR(GUID=%s, Version=%s.%s, LCID=%s, FLags=0x%x)" % (
@@ -700,24 +695,24 @@ TLIBATTR = tagTLIBATTR
 class tagTYPEATTR(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 672
     if TYPE_CHECKING:
-        guid = hints.AnnoField()  # type: GUID
-        lcid = hints.AnnoField()  # type: int
-        dwReserved = hints.AnnoField()  # type: int
-        memidConstructor = hints.AnnoField()  # type: int
-        memidDestructor = hints.AnnoField()  # type: int
-        lpstrSchema = hints.AnnoField()  # type: str
-        cbSizeInstance = hints.AnnoField()  # type: int
-        typekind = hints.AnnoField()  # type: int
-        cFuncs = hints.AnnoField()  # type: int
-        cVars = hints.AnnoField()  # type: int
-        cImplTypes = hints.AnnoField()  # type: int
-        cbSizeVft = hints.AnnoField()  # type: int
-        cbAlignment = hints.AnnoField()  # type: int
-        wTypeFlags = hints.AnnoField()  # type: int
-        wMajorVerNum = hints.AnnoField()  # type: int
-        wMinorVerNum = hints.AnnoField()  # type: int
-        tdescAlias = hints.AnnoField()  # type: TYPEDESC
-        idldescType = hints.AnnoField()  # type: IDLDESC
+        guid: GUID
+        lcid: int
+        dwReserved: int
+        memidConstructor: int
+        memidDestructor: int
+        lpstrSchema: str
+        cbSizeInstance: int
+        typekind: int
+        cFuncs: int
+        cVars: int
+        cImplTypes: int
+        cbSizeVft: int
+        cbAlignment: int
+        wTypeFlags: int
+        wMajorVerNum: int
+        wMinorVerNum: int
+        tdescAlias: "TYPEDESC"
+        idldescType: "IDLDESC"
 
     def __repr__(self):
         return "TYPEATTR(GUID=%s, typekind=%s, funcs=%s, vars=%s, impltypes=%s)" % (
@@ -735,18 +730,18 @@ TYPEATTR = tagTYPEATTR
 class tagFUNCDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 769
     if TYPE_CHECKING:
-        memid = hints.AnnoField()  # type: int
-        lprgscode = hints.AnnoField()  # type: int
-        lprgelemdescParam = hints.AnnoField()  # type: Sequence[ELEMDESC]
-        funckind = hints.AnnoField()  # type: int
-        invkind = hints.AnnoField()  # type: int
-        callconv = hints.AnnoField()  # type: int
-        cParams = hints.AnnoField()  # type: int
-        cParamsOpt = hints.AnnoField()  # type: int
-        oVft = hints.AnnoField()  # type: int
-        cScodes = hints.AnnoField()  # type: int
-        elemdescFunc = hints.AnnoField()  # type: ELEMDESC
-        wFuncFlags = hints.AnnoField()  # type: int
+        memid: int
+        lprgscode: int
+        lprgelemdescParam: Sequence["ELEMDESC"]
+        funckind: int
+        invkind: int
+        callconv: int
+        cParams: int
+        cParamsOpt: int
+        oVft: int
+        cScodes: int
+        elemdescFunc: "ELEMDESC"
+        wFuncFlags: int
 
     def __repr__(self):
         return (
@@ -768,12 +763,12 @@ FUNCDESC = tagFUNCDESC
 class tagVARDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 803
     if TYPE_CHECKING:
-        memid = hints.AnnoField()  # type: int
-        lpstrSchema = hints.AnnoField()  # type: str
-        _ = hints.AnnoField()  # type: N10tagVARDESC5DOLLAR_205E
-        elemdescVar = hints.AnnoField()  # type: ELEMDESC
-        wVarFlags = hints.AnnoField()  # type: int
-        varkind = hints.AnnoField()  # type: int
+        memid: int
+        lpstrSchema: str
+        _: "N10tagVARDESC5DOLLAR_205E"
+        elemdescVar: "ELEMDESC"
+        wVarFlags: int
+        varkind: int
 
 
 VARDESC = tagVARDESC
@@ -782,9 +777,9 @@ VARDESC = tagVARDESC
 class tagBINDPTR(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 3075
     if TYPE_CHECKING:
-        lpfuncdesc = hints.AnnoField()  # type: _Pointer[FUNCDESC]
-        lpvardesc = hints.AnnoField()  # type: _Pointer[VARDESC]
-        lptcomp = hints.AnnoField()  # type: ITypeComp
+        lpfuncdesc: _Pointer["FUNCDESC"]
+        lpvardesc: _Pointer["VARDESC"]
+        lptcomp: ITypeComp
 
 
 BINDPTR = tagBINDPTR
@@ -793,8 +788,8 @@ BINDPTR = tagBINDPTR
 class tagTYPEDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 582
     if TYPE_CHECKING:
-        _ = hints.AnnoField()  # type: N11tagTYPEDESC5DOLLAR_203E
-        vt = hints.AnnoField()  # type: int
+        _: "N11tagTYPEDESC5DOLLAR_203E"
+        vt: int
 
 
 TYPEDESC = tagTYPEDESC
@@ -803,8 +798,8 @@ TYPEDESC = tagTYPEDESC
 class tagIDLDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 633
     if TYPE_CHECKING:
-        dwReserved = hints.AnnoField()  # type: int
-        wIDLFlags = hints.AnnoField()  # type: int
+        dwReserved: int
+        wIDLFlags: int
 
 
 IDLDESC = tagIDLDESC
@@ -813,9 +808,9 @@ IDLDESC = tagIDLDESC
 class tagARRAYDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 594
     if TYPE_CHECKING:
-        tdescElem = hints.AnnoField()  # type: TYPEDESC
-        cDims = hints.AnnoField()  # type: int
-        rgbounds = hints.AnnoField()  # type: Sequence[SAFEARRAYBOUND]
+        tdescElem: TYPEDESC
+        cDims: int
+        rgbounds: Sequence["SAFEARRAYBOUND"]
 
 
 ################################################################
@@ -1075,7 +1070,7 @@ ICreateTypeInfo._methods_ = [
 class IProvideClassInfo(IUnknown):
     _iid_ = GUID("{B196B283-BAB4-101A-B69C-00AA00341D07}")
     if TYPE_CHECKING:
-        GetClassInfo = hints.AnnoField()  # type: Callable[[], ITypeInfo]
+        GetClassInfo: Callable[[], ITypeInfo]
     _methods_ = [
         # Returns the ITypeInfo interface for the object's coclass type information.
         COMMETHOD(
@@ -1087,7 +1082,7 @@ class IProvideClassInfo(IUnknown):
 class IProvideClassInfo2(IProvideClassInfo):
     _iid_ = GUID("{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}")
     if TYPE_CHECKING:
-        GetGUID = hints.AnnoField()  # type: Callable[[int], GUID]
+        GetGUID: Callable[[int], GUID]
     _methods_ = [
         # Returns the GUID for the object's outgoing IID for its default event set.
         COMMETHOD(
@@ -1117,9 +1112,9 @@ tagTLIBATTR._fields_ = [
 class N11tagTYPEDESC5DOLLAR_203E(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 584
     if TYPE_CHECKING:
-        lptdesc = hints.AnnoField()  # type: TYPEDESC
-        lpadesc = hints.AnnoField()  # type: tagARRAYDESC
-        hreftype = hints.AnnoField()  # type: int
+        lptdesc: TYPEDESC
+        lpadesc: tagARRAYDESC
+        hreftype: int
 
 
 N11tagTYPEDESC5DOLLAR_203E._fields_ = [
@@ -1166,8 +1161,8 @@ tagTYPEATTR._fields_ = [
 class N10tagVARDESC5DOLLAR_205E(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 807
     if TYPE_CHECKING:
-        oInst = hints.AnnoField()  # type: int
-        lpvarValue = hints.AnnoField()  # type: VARIANT
+        oInst: int
+        lpvarValue: VARIANT
 
 
 N10tagVARDESC5DOLLAR_205E._fields_ = [
@@ -1180,29 +1175,29 @@ N10tagVARDESC5DOLLAR_205E._fields_ = [
 class tagELEMDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 661
     if TYPE_CHECKING:
-        tdesc = hints.AnnoField()  # type: TYPEDESC
-        _ = hints.AnnoField()  # type: N11tagELEMDESC5DOLLAR_204E
+        tdesc: TYPEDESC
+        _: "N11tagELEMDESC5DOLLAR_204E"
 
 
 class N11tagELEMDESC5DOLLAR_204E(Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 663
     if TYPE_CHECKING:
-        idldesc = hints.AnnoField()  # type: IDLDESC
-        paramdesc = hints.AnnoField()  # type: PARAMDESC
+        idldesc: IDLDESC
+        paramdesc: "PARAMDESC"
 
 
 class tagPARAMDESC(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 609
     if TYPE_CHECKING:
-        pparamdescex = hints.AnnoField()  # type: tagPARAMDESCEX
-        wParamFlags = hints.AnnoField()  # type: int
+        pparamdescex: "tagPARAMDESCEX"
+        wParamFlags: int
 
 
 class tagPARAMDESCEX(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 601
     if TYPE_CHECKING:
-        cBytes = hints.AnnoField()  # type: int
-        varDefaultValue = hints.AnnoField()  # type: VARIANTARG
+        cBytes: int
+        varDefaultValue: VARIANTARG
 
 
 LPPARAMDESCEX = POINTER(tagPARAMDESCEX)
@@ -1270,8 +1265,8 @@ tagPARAMDESCEX._fields_ = [
 class tagSAFEARRAYBOUND(Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 226
     if TYPE_CHECKING:
-        cElements = hints.AnnoField()  # type: int
-        lLbound = hints.AnnoField()  # type: int
+        cElements: int
+        lLbound: int
     _fields_ = [
         ("cElements", DWORD),
         ("lLbound", LONG),
