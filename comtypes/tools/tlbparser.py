@@ -20,7 +20,6 @@ if TYPE_CHECKING:
         Union as _UnionT,
     )
     from ctypes import _CData, _Pointer
-    from comtypes import hints
 
 
 # Is the process 64-bit?
@@ -124,8 +123,8 @@ COMTYPES = {
 
 class Parser(object):
     if TYPE_CHECKING:
-        tlib = hints.AnnoField()  # type: typeinfo.ITypeLib
-        items = hints.AnnoField()  # type: Dict[str, Any]
+        tlib: typeinfo.ITypeLib
+        items: Dict[str, Any]
 
     def make_type(self, tdesc, tinfo):
         # type: (typeinfo.TYPEDESC, typeinfo.ITypeInfo) -> Any
