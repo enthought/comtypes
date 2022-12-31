@@ -1,11 +1,8 @@
 import ctypes
-import comtypes.automation
-import comtypes.typeinfo
-import comtypes.client
-import comtypes.client.lazybind
 
-from comtypes import COMError, IUnknown, _is_object
-import comtypes.hresult as hres
+from comtypes import automation
+from comtypes.client import lazybind
+from comtypes import COMError, hresult as hres, _is_object
 
 # These errors generally mean the property or method exists,
 # but can't be used in this context - eg, property instead of a method, etc.
@@ -24,12 +21,12 @@ def Dispatch(obj):
     # via fully dynamic dispatch
     if isinstance(obj, _Dispatch):
         return obj
-    if isinstance(obj, ctypes.POINTER(comtypes.automation.IDispatch)):
+    if isinstance(obj, ctypes.POINTER(automation.IDispatch)):
         try:
             tinfo = obj.GetTypeInfo(0)
-        except (comtypes.COMError, WindowsError):
+        except (COMError, WindowsError):
             return _Dispatch(obj)
-        return comtypes.client.lazybind.Dispatch(obj, tinfo)
+        return lazybind.Dispatch(obj, tinfo)
     return obj
 
 
@@ -45,17 +42,17 @@ class MethodCaller:
 
     def __getitem__(self, *args):
         return self._obj._comobj.Invoke(
-            self._id, *args, _invkind=comtypes.automation.DISPATCH_PROPERTYGET
+            self._id, *args, _invkind=automation.DISPATCH_PROPERTYGET
         )
 
     def __setitem__(self, *args):
         if _is_object(args[-1]):
             self._obj._comobj.Invoke(
-                self._id, *args, _invkind=comtypes.automation.DISPATCH_PROPERTYPUTREF
+                self._id, *args, _invkind=automation.DISPATCH_PROPERTYPUTREF
             )
         else:
             self._obj._comobj.Invoke(
-                self._id, *args, _invkind=comtypes.automation.DISPATCH_PROPERTYPUT
+                self._id, *args, _invkind=automation.DISPATCH_PROPERTYPUT
             )
 
 
@@ -70,7 +67,7 @@ class _Dispatch(object):
 
     def __enum(self):
         e = self._comobj.Invoke(-4)  # DISPID_NEWENUM
-        return e.QueryInterface(comtypes.automation.IEnumVARIANT)
+        return e.QueryInterface(automation.IEnumVARIANT)
 
     def __hash__(self):
         return hash(self._comobj)
@@ -118,7 +115,7 @@ class _Dispatch(object):
             self.__dict__[name] = result
             return result
 
-        flags = comtypes.automation.DISPATCH_PROPERTYGET
+        flags = automation.DISPATCH_PROPERTYGET
         try:
             result = self._comobj.Invoke(dispid, _invkind=flags)
         except COMError as err:
@@ -149,8 +146,13 @@ class _Dispatch(object):
         return _Collection(self.__enum())
 
     # def __setitem__(self, index, value):
-    #     self._comobj.Invoke(-3, index, value,
-    #                         _invkind=comtypes.automation.DISPATCH_PROPERTYPUT|comtypes.automation.DISPATCH_PROPERTYPUTREF)
+    #     self._comobj.Invoke(
+    #         -3,
+    #         index,
+    #         value,
+    #         _invkind=automation.DISPATCH_PROPERTYPUT
+    #         | automation.DISPATCH_PROPERTYPUTREF,
+    #     )
 
 
 class _Collection(object):
