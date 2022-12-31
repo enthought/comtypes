@@ -1,4 +1,3 @@
-import sys
 import ctypes
 import comtypes.automation
 import comtypes.typeinfo
@@ -158,21 +157,11 @@ class _Collection(object):
     def __init__(self, enum):
         self.enum = enum
 
-    if sys.version_info >= (3, 0):
-
-        def __next__(self):
-            item, fetched = self.enum.Next(1)
-            if fetched:
-                return item
-            raise StopIteration
-
-    else:
-
-        def next(self):
-            item, fetched = self.enum.Next(1)
-            if fetched:
-                return item
-            raise StopIteration
+    def __next__(self):
+        item, fetched = self.enum.Next(1)
+        if fetched:
+            return item
+        raise StopIteration
 
     def __iter__(self):
         return self
