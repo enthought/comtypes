@@ -73,11 +73,6 @@ class _Dispatch(object):
         e = self._comobj.Invoke(-4)  # DISPID_NEWENUM
         return e.QueryInterface(comtypes.automation.IEnumVARIANT)
 
-    def __cmp__(self, other):
-        if not isinstance(other, _Dispatch):
-            return 1
-        return cmp(self._comobj, other._comobj)
-
     def __hash__(self):
         return hash(self._comobj)
 
