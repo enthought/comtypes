@@ -82,9 +82,9 @@ class _Dispatch(object):
             raise IndexError("index out of range")
         return item
 
-    def QueryInterface(self, *args):
-        "QueryInterface is forwarded to the real com object."
-        return self._comobj.QueryInterface(*args)
+    def QueryInterface(self, interface, iid=None):
+        """QueryInterface is forwarded to the real com object."""
+        return self._comobj.QueryInterface(interface, iid)
 
     def _FlagAsMethod(self, *names):
         """Flag these attribute names as being methods.
