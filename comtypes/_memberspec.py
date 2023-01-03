@@ -1,28 +1,26 @@
 import ctypes
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union as _UnionT,
+)
 
+from comtypes import _CData
 import comtypes
-from comtypes import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from comtypes import _CData
-    from typing import (
-        Any,
-        Callable,
-        Dict,
-        Iterator,
-        List,
-        Optional,
-        Tuple,
-        Type,
-        Union as _UnionT,
-    )
 
-    PositionalParamFlagType = Tuple[int, Optional[str]]
-    OptionalParamFlagType = Tuple[int, Optional[str], Any]
-    ParamFlagType = _UnionT[PositionalParamFlagType, OptionalParamFlagType]
-    PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
-    OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
-    ArgSpecElmType = _UnionT[PositionalArgSpecElmType, OptionalArgSpecElmType]
+PositionalParamFlagType = Tuple[int, Optional[str]]
+OptionalParamFlagType = Tuple[int, Optional[str], Any]
+ParamFlagType = _UnionT[PositionalParamFlagType, OptionalParamFlagType]
+PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
+OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
+ArgSpecElmType = _UnionT[PositionalArgSpecElmType, OptionalArgSpecElmType]
 
 
 _PARAMFLAGS = {

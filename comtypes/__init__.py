@@ -3,7 +3,7 @@ __version__ = "1.2.1"
 
 import atexit
 from ctypes import *
-from ctypes import _SimpleCData
+from ctypes import _Pointer, _SimpleCData
 
 try:
     from _ctypes import COMError
@@ -21,6 +21,36 @@ import logging
 import os
 import sys
 import types
+
+# fmt: off
+from typing import (
+    Any, ClassVar, overload, TYPE_CHECKING, TypeVar,
+    # instead of `builtins`. see PEP585
+    Dict, List, Tuple, Type,
+    # instead of `collections.abc`. see PEP585
+    Callable, Iterable, Iterator,
+    # instead of `A | B` and `None | A`. see PEP604
+    Optional, Union as _UnionT,  # avoiding confusion with `ctypes.Union`
+)
+# fmt: on
+if TYPE_CHECKING:
+    from ctypes import _CData  # only in `typeshed`, private in runtime
+    from comtypes import hints as hints  # type: ignore
+else:
+    _CData = _SimpleCData.__mro__[:-1][-1]
+
+from comtypes.GUID import GUID
+from comtypes import patcher
+from comtypes._npsupport import interop as npsupport
+from comtypes._memberspec import (
+    ComMemberGenerator,
+    _ComMemberSpec,
+    DispMemberGenerator,
+    _DispMemberSpec,
+    _encode_idl,
+    _resolve_argspec,
+)
+
 
 ################################################################
 
@@ -63,59 +93,6 @@ def add_metaclass(metaclass):
     return wrapper
 # fmt: on
 
-################################################################
-
-# type hinting symbols
-#
-# `if TYPE_CHECKING:` code block must not be executed because `TYPE_CHECKING`
-# is always `False` in runtime.
-# see https://peps.python.org/pep-0484/#runtime-or-type-checking
-#
-if sys.version_info >= (3, 5):
-    from typing import TYPE_CHECKING
-else:  # typehints in this package don't support Py<3.5 due to importing symbols.
-    TYPE_CHECKING = False
-#
-# Annotations must be placed in a `# type:` comment in according to PEP484.
-# see https://peps.python.org/pep-0484/#suggested-syntax-for-python-2-7-and-straddling-code
-# - `NameError` never raises by using those symbols.
-# - It is not able to use any runtime introspections, such as
-#   `typing.get_type_hints` or `typing.get_origin`.
-#
-if TYPE_CHECKING:
-    from ctypes import _CData  # only in `typeshed`, private in runtime
-
-    # _CData = _SimpleCData.__mro__[:-1][-1]  # defining in runtime
-    from ctypes import _Pointer
-    from typing import Any, ClassVar, overload, TypeVar
-
-    # XXX: symbols for backward compatibility.
-    # instead of `builtins`. see PEP585.
-    from typing import Dict, List, Tuple, Type
-
-    # instead of `collections.abc`. see PEP585.
-    from typing import Callable, Iterable, Iterator
-
-    # instead of `A | B` and `None | A`. see PEP604.
-    from typing import Union as _UnionT  #  avoiding confusion with `ctypes.Union`
-    from typing import Optional
-
-    # utilities or workarounds for annotations.
-    from comtypes import hints as hints
-
-################################################################
-
-from comtypes.GUID import GUID
-from comtypes import patcher
-from comtypes._npsupport import interop as npsupport
-from comtypes._memberspec import (
-    ComMemberGenerator,
-    _ComMemberSpec,
-    DispMemberGenerator,
-    _DispMemberSpec,
-    _encode_idl,
-    _resolve_argspec,
-)
 
 ################################################################
 if sys.version_info >= (3, 0):
@@ -849,8 +826,9 @@ def COMMETHOD(idlflags, restype, methodname, *argspec):
 ################################################################
 # IUnknown, the root of all evil...
 
+_T_IUnknown = TypeVar("_T_IUnknown", bound="IUnknown")
+
 if TYPE_CHECKING:
-    _T_IUnknown = TypeVar("_T_IUnknown", bound="IUnknown")
 
     class _IUnknown_Base(c_void_p):
         """This is workaround to avoid false-positive of static type checking.
