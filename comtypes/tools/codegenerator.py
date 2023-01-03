@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 import textwrap
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union as _UnionT
 
 if sys.version_info >= (3, 0):
     import io
@@ -14,19 +15,8 @@ else:
     import cStringIO as io
 
 import comtypes
-from comtypes import TYPE_CHECKING, typeinfo
+from comtypes import typeinfo
 from comtypes.tools import tlbparser, typedesc
-
-if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Dict,
-        Iterator,
-        List,
-        Optional,
-        Tuple,
-        Union as _UnionT,
-    )
 
 
 version = comtypes.__version__

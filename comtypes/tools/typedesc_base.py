@@ -1,10 +1,15 @@
 # typedesc.py - classes representing C type descriptions
+from typing import (
+    Any,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Tuple,
+    Union as _UnionT,
+    SupportsInt,
+)
 
 import comtypes
-from comtypes import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Any, List, Optional, Tuple, Union as _UnionT, SupportsInt
 
 
 class Argument(object):

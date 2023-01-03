@@ -12,15 +12,27 @@ import ctypes
 import logging
 import os
 import sys
+from typing import (
+    Any,
+    Optional,
+    overload,
+    Type,
+    TYPE_CHECKING,
+    TypeVar,
+    Union as _UnionT,
+)
 
 import comtypes
 from comtypes.hresult import *
-from comtypes import automation, CoClass, GUID, IUnknown, TYPE_CHECKING, typeinfo
+from comtypes import automation, CoClass, GUID, IUnknown, typeinfo
 import comtypes.client.dynamic
 from comtypes.client._constants import Constants
 from comtypes.client._events import GetEvents, ShowEvents, PumpEvents
 from comtypes.client._generate import GetModule
 from comtypes.client._code_cache import _find_gen_dir
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
 
 gen_dir = _find_gen_dir()
 import comtypes.gen
@@ -28,12 +40,7 @@ import comtypes.gen
 ### for testing
 ##gen_dir = None
 
-if TYPE_CHECKING:
-    from typing import Any, Optional, overload, Type, TypeVar, Union as _UnionT
-    from comtypes import hints
-
-    _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
-
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 logger = logging.getLogger(__name__)
 
 

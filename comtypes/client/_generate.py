@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import types
+from typing import Any, Tuple, List, Optional, Dict, Union as _UnionT
 
 if sys.version_info >= (3, 0):
     base_text_type = str
@@ -13,12 +14,9 @@ else:
     base_text_type = basestring
     import _winreg as winreg
 
-from comtypes import GUID, TYPE_CHECKING, typeinfo
+from comtypes import GUID, typeinfo
 import comtypes.client
 from comtypes.tools import codegenerator, tlbparser
-
-if TYPE_CHECKING:
-    from typing import Any, Tuple, List, Optional, Dict, Union as _UnionT
 
 
 logger = logging.getLogger(__name__)
