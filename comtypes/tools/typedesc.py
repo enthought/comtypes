@@ -2,12 +2,10 @@
 # in typedesc_base
 
 import ctypes
-from comtypes import TYPE_CHECKING
+from typing import Any, List, Optional, Tuple, Union as _UnionT
+
 from comtypes.typeinfo import ITypeLib, TLIBATTR
 from comtypes.tools.typedesc_base import *
-
-if TYPE_CHECKING:
-    from typing import Any, List, Optional, Tuple, Union as _UnionT
 
 
 class TypeLib(object):

@@ -1,25 +1,23 @@
 from __future__ import print_function
 import os
 import sys
-from ctypes import alignment, c_void_p, sizeof, windll
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Type,
+    TYPE_CHECKING,
+    TypeVar,
+    Tuple,
+    Union as _UnionT,
+)
+from ctypes import alignment, c_void_p, _Pointer, sizeof, windll
 
-from comtypes import automation, COMError, TYPE_CHECKING, typeinfo
+from comtypes import automation, _CData, COMError, typeinfo
 from comtypes.tools import typedesc
 from comtypes.client._code_cache import _get_module_filename
-
-if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Callable,
-        Dict,
-        List,
-        Optional,
-        Type,
-        TypeVar,
-        Tuple,
-        Union as _UnionT,
-    )
-    from ctypes import _CData, _Pointer
 
 
 # Is the process 64-bit?

@@ -3,23 +3,28 @@ import array
 import datetime
 import decimal
 import sys
-
 from ctypes import *
 from ctypes import _Pointer
 from _ctypes import CopyComPointer
-from comtypes import (
-    BSTR,
-    COMError,
-    COMMETHOD,
-    GUID,
-    IID,
-    IUnknown,
-    STDMETHOD,
+from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    List,
+    Optional,
     TYPE_CHECKING,
+    Tuple,
+    Union as _UnionT,
 )
+
+from comtypes import BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.hresult import *
 import comtypes.patcher
 import comtypes
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
 
 try:
     from comtypes import _safearray
@@ -27,21 +32,6 @@ except (ImportError, AttributeError):
 
     class _safearray(object):
         tagSAFEARRAY = None
-
-
-from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
-
-if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Callable,
-        ClassVar,
-        List,
-        Optional,
-        Tuple,
-        Union as _UnionT,
-    )
-    from comtypes import hints
 
 
 if sys.version_info >= (3, 0):
