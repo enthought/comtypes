@@ -34,21 +34,11 @@ class IEnumConnections(IUnknown):
     def __iter__(self):
         return self
 
-    if sys.version_info >= (3, 0):
-
-        def __next__(self):
-            cp, fetched = self.Next(1)
-            if fetched == 0:
-                raise StopIteration
-            return cp
-
-    else:
-
-        def next(self):
-            cp, fetched = self.Next(1)
-            if fetched == 0:
-                raise StopIteration
-            return cp
+    def __next__(self):
+        cp, fetched = self.Next(1)
+        if fetched == 0:
+            raise StopIteration
+        return cp
 
 
 class IEnumConnectionPoints(IUnknown):
@@ -58,21 +48,11 @@ class IEnumConnectionPoints(IUnknown):
     def __iter__(self):
         return self
 
-    if sys.version_info >= (3, 0):
-
-        def __next__(self):
-            cp, fetched = self.Next(1)
-            if fetched == 0:
-                raise StopIteration
-            return cp
-
-    else:
-
-        def next(self):
-            cp, fetched = self.Next(1)
-            if fetched == 0:
-                raise StopIteration
-            return cp
+    def __next__(self):
+        cp, fetched = self.Next(1)
+        if fetched == 0:
+            raise StopIteration
+        return cp
 
 
 ################################################################

@@ -8,11 +8,7 @@ import os
 import sys
 import textwrap
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union as _UnionT
-
-if sys.version_info >= (3, 0):
-    import io
-else:
-    import cStringIO as io
+import io
 
 import comtypes
 from comtypes import typeinfo
@@ -1340,12 +1336,7 @@ class TypeNamer(object):
 
 class ImportedNamespaces(object):
     def __init__(self):
-        if sys.version_info >= (3, 7):
-            self.data = {}
-        else:
-            from collections import OrderedDict
-
-            self.data = OrderedDict()
+        self.data = {}
 
     def add(self, name1, name2=None, symbols=None):
         """Adds a namespace will be imported.
@@ -1460,12 +1451,7 @@ class ImportedNamespaces(object):
 
 class DeclaredNamespaces(object):
     def __init__(self):
-        if sys.version_info >= (3, 7):
-            self.data = {}
-        else:
-            from collections import OrderedDict
-
-            self.data = OrderedDict()
+        self.data = {}
 
     def add(self, alias, definition, comment=None):
         """Adds a namespace will be declared.
