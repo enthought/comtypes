@@ -6,13 +6,7 @@ import os
 import sys
 import types
 from typing import Any, Tuple, List, Optional, Dict, Union as _UnionT
-
-if sys.version_info >= (3, 0):
-    base_text_type = str
-    import winreg
-else:
-    base_text_type = basestring
-    import _winreg as winreg
+import winreg
 
 from comtypes import GUID, typeinfo
 import comtypes.client
@@ -46,7 +40,7 @@ def _resolve_filename(tlib_string, dirpath):
         (abspath, True) or (relpath, False):
             where relpath is an unresolved path.
     """
-    assert isinstance(tlib_string, base_text_type)
+    assert isinstance(tlib_string, str)
     # pathname of type library
     if os.path.isabs(tlib_string):
         # a specific location
@@ -107,7 +101,7 @@ def GetModule(tlib):
     UIAutomation.  The former module contains all the code, the
     latter is a short stub loading the former.
     """
-    if isinstance(tlib, base_text_type):
+    if isinstance(tlib, str):
         tlib_string = tlib
         # if a relative pathname is used, we try to interpret it relative to
         # the directory of the calling module (if not from command line)
@@ -136,8 +130,6 @@ def GetModule(tlib):
     modulename = codegenerator.name_friendly_module(tlib)
     if modulename is None:
         return mod
-    if sys.version_info < (3, 0):
-        modulename = modulename.encode("mbcs")
     # create and import the friendly-named module
     return _create_friendly_module(tlib, modulename)
 
@@ -146,7 +138,7 @@ def _load_tlib(obj):
     # type: (Any) -> typeinfo.ITypeLib
     """Load a pointer of ITypeLib on demand."""
     # obj is a filepath or a ProgID
-    if isinstance(obj, base_text_type):
+    if isinstance(obj, str):
         # in any case, attempt to load and if tlib_string is not valid, then raise
         # as "OSError: [WinError -2147312566] Error loading type library/DLL"
         return typeinfo.LoadTypeLibEx(obj)

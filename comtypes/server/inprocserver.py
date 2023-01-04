@@ -5,11 +5,8 @@ from comtypes.hresult import *
 
 import sys
 import logging
+import winreg
 
-if sys.version_info >= (3, 0):
-    import winreg
-else:
-    import _winreg as winreg
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug

@@ -52,53 +52,6 @@ from comtypes._memberspec import (
 )
 
 
-################################################################
-
-# fmt: off
-def add_metaclass(metaclass):
-    """Class decorator from six.py for creating a class with a metaclass.
-
-    Copyright (c) 2010-2020 Benjamin Peterson
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy of
-    this software and associated documentation files (the "Software"), to deal in
-    the Software without restriction, including without limitation the rights to
-    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-    the Software, and to permit persons to whom the Software is furnished to do so,
-    subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-    """
-    def wrapper(cls):
-        orig_vars = cls.__dict__.copy()
-        slots = orig_vars.get('__slots__')
-        if slots is not None:
-            if isinstance(slots, text_type):
-                slots = [slots]
-            for slots_var in slots:
-                orig_vars.pop(slots_var)
-        orig_vars.pop('__dict__', None)
-        orig_vars.pop('__weakref__', None)
-        if hasattr(cls, '__qualname__'):
-            orig_vars['__qualname__'] = cls.__qualname__
-        return metaclass(cls.__name__, cls.__bases__, orig_vars)
-    return wrapper
-# fmt: on
-
-
-################################################################
-if sys.version_info >= (3, 0):
-    text_type = str
-else:
-    text_type = unicode
 _all_slice = slice(None, None, None)
 
 
@@ -134,21 +87,16 @@ def _check_version(actual, tlib_cached_mtime=None):
             raise ImportError("Typelib different than module")
 
 
-if sys.version_info >= (3, 0):
-    pythonapi.PyInstanceMethod_New.argtypes = [py_object]
-    pythonapi.PyInstanceMethod_New.restype = py_object
-    PyInstanceMethod_Type = type(pythonapi.PyInstanceMethod_New(id))
+pythonapi.PyInstanceMethod_New.argtypes = [py_object]
+pythonapi.PyInstanceMethod_New.restype = py_object
+PyInstanceMethod_Type = type(pythonapi.PyInstanceMethod_New(id))
 
-    def instancemethod(func, inst, cls):
-        mth = PyInstanceMethod_Type(func)
-        if inst is None:
-            return mth
-        return mth.__get__(inst)
 
-else:
-
-    def instancemethod(func, inst, cls):
-        return types.MethodType(func, inst, cls)
+def instancemethod(func, inst, cls):
+    mth = PyInstanceMethod_Type(func)
+    if inst is None:
+        return mth
+    return mth.__get__(inst)
 
 
 class ReturnHRESULT(Exception):
@@ -587,7 +535,7 @@ class _cominterface_meta(type):
         except KeyError:
             raise AttributeError("this class must define an _iid_")
         else:
-            com_interface_registry[text_type(iid)] = self
+            com_interface_registry[str(iid)] = self
         # create members
         vtbl_offset = self.__get_baseinterface_methodcount()
         member_gen = ComMemberGenerator(self.__name__, vtbl_offset, self._iid_)
@@ -627,8 +575,7 @@ class _compointer_meta(type(c_void_p), _cominterface_meta):
     # no functionality, but needed to avoid a metaclass conflict
 
 
-@add_metaclass(_compointer_meta)
-class _compointer_base(c_void_p):
+class _compointer_base(c_void_p, metaclass=_compointer_meta):
     "base class for COM interface pointer classes"
 
     def __del__(self, _debug=logger.debug):
@@ -757,7 +704,7 @@ class BSTR(_SimpleCData):
 # IDL stuff
 
 
-class helpstring(text_type):
+class helpstring(str):
     "Specifies the helpstring for a COM method or property."
 
 
@@ -830,7 +777,7 @@ _T_IUnknown = TypeVar("_T_IUnknown", bound="IUnknown")
 
 if TYPE_CHECKING:
 
-    class _IUnknown_Base(c_void_p):
+    class _IUnknown_Base(c_void_p, metaclass=_cominterface_meta):
         """This is workaround to avoid false-positive of static type checking.
 
         `IUnknown` behaves as a ctypes type, and `POINTER` can take it.
@@ -848,8 +795,7 @@ else:
     _IUnknown_Base = object
 
 
-@add_metaclass(_cominterface_meta)
-class IUnknown(_IUnknown_Base):
+class IUnknown(_IUnknown_Base, metaclass=_cominterface_meta):
     """The most basic COM interface.
 
     Each subclasses of IUnknown must define these class attributes:
@@ -963,9 +909,7 @@ def CoGetObject(displayname, interface):
         interface = IUnknown
     punk = POINTER(interface)()
     # Do we need a way to specify the BIND_OPTS parameter?
-    _ole32.CoGetObject(
-        text_type(displayname), None, byref(interface._iid_), byref(punk)
-    )
+    _ole32.CoGetObject(str(displayname), None, byref(interface._iid_), byref(punk))
     return punk  # type: ignore
 
 
@@ -1236,8 +1180,7 @@ from comtypes._comobject import COMObject
 from comtypes._meta import _coclass_meta
 
 
-@add_metaclass(_coclass_meta)
-class CoClass(COMObject):
+class CoClass(COMObject, metaclass=_coclass_meta):
     pass
 
 
