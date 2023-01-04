@@ -857,9 +857,12 @@ class IPersist(IUnknown):
         COMMETHOD([], HRESULT, "GetClassID", (["out"], POINTER(GUID), "pClassID")),
     ]
     if TYPE_CHECKING:
-        # Returns the CLSID that uniquely represents an object class that
-        # defines the code that can manipulate the object's data.
-        GetClassID: Callable[[], GUID]
+
+        def GetClassID(self) -> GUID:
+            """Returns the CLSID that uniquely represents an object class that
+            defines the code that can manipulate the object's data.
+            """
+            ...
 
 
 class IServiceProvider(IUnknown):
