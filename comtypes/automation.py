@@ -34,15 +34,6 @@ except (ImportError, AttributeError):
         tagSAFEARRAY = None
 
 
-if sys.version_info >= (3, 0):
-    int_types = (int,)
-    str_types = (str,)
-    base_text_type = str
-else:
-    int_types = (int, long)
-    str_types = (unicode, str)
-    base_text_type = basestring
-
 LCID = DWORD
 DISPID = LONG
 SCODE = LONG
@@ -262,9 +253,7 @@ class tagVARIANT(Structure):
         if value is None:
             self.vt = VT_NULL
         elif (
-            hasattr(value, "__len__")
-            and len(value) == 0
-            and not isinstance(value, base_text_type)
+            hasattr(value, "__len__") and len(value) == 0 and not isinstance(value, str)
         ):
             self.vt = VT_NULL
         # since bool is a subclass of int, this check must come before
@@ -275,7 +264,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, (int, c_int)):
             self.vt = VT_I4
             self._.VT_I4 = value
-        elif isinstance(value, int_types):
+        elif isinstance(value, int):
             u = self._
             # try VT_I4 first.
             u.VT_I4 = value
@@ -310,7 +299,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, (float, c_double)):
             self.vt = VT_R8
             self._.VT_R8 = value
-        elif isinstance(value, str_types):
+        elif isinstance(value, str):
             self.vt = VT_BSTR
             # do the c_wchar_p auto unicode conversion
             self._.c_void_p = _SysAllocStringLen(value, len(value))
@@ -633,21 +622,11 @@ class IEnumVARIANT(IUnknown):
     def __iter__(self):
         return self
 
-    if sys.version_info >= (3, 0):
-
-        def __next__(self):
-            item, fetched = self.Next(1)
-            if fetched:
-                return item
-            raise StopIteration
-
-    else:
-
-        def next(self):
-            item, fetched = self.Next(1)
-            if fetched:
-                return item
-            raise StopIteration
+    def __next__(self):
+        item, fetched = self.Next(1)
+        if fetched:
+            return item
+        raise StopIteration
 
     def __getitem__(self, index):
         self.Reset()
