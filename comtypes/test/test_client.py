@@ -5,7 +5,7 @@ import sys
 import unittest as ut
 
 import comtypes.client
-from comtypes import COSERVERINFO
+from comtypes import COSERVERINFO, CLSCTX_INPROC_SERVER
 
 # create the typelib wrapper and import it
 comtypes.client.GetModule("scrrun.dll")
@@ -143,46 +143,55 @@ class Test_CreateObject(ut.TestCase):
         comtypes.client.CreateObject(text_type(Scripting.Dictionary._reg_clsid_))
         comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
 
-    @ut.skip(
-        "This test uses IE which is not available on all machines anymore. "
-        "Find another API to use."
-    )
     def test_remote(self):
-        ie = comtypes.client.CreateObject(
-            "InternetExplorer.Application", machine="localhost"
+        comtypes.client.GetModule("UIAutomationCore.dll")
+        from comtypes.gen.UIAutomationClient import (
+            CUIAutomation,
+            IUIAutomation,
+            IUIAutomationElement,
         )
-        self.assertEqual(ie.Visible, False)
-        ie.Visible = 1
-        # on a remote machine, this may not work.  Probably depends on
-        # how the server is run.
-        self.assertEqual(ie.Visible, True)
-        self.assertEqual(0, ie.Quit())  # 0 == S_OK
 
-    @ut.skip(
-        "This test uses IE which is not available on all machines anymore. "
-        "Find another API to use."
-    )
+        iuia = comtypes.client.CreateObject(
+            CUIAutomation().IPersist_GetClassID(),
+            interface=IUIAutomation,
+            clsctx=CLSCTX_INPROC_SERVER,
+            machine="localhost",
+        )
+        self.assertIsInstance(iuia, POINTER(IUIAutomation))
+        self.assertIsInstance(iuia, IUIAutomation)
+        self.assertIsInstance(iuia.GetRootElement(), POINTER(IUIAutomationElement))
+        self.assertIsInstance(iuia.GetRootElement(), IUIAutomationElement)
+
     def test_server_info(self):
+        comtypes.client.GetModule("UIAutomationCore.dll")
+        from comtypes.gen.UIAutomationClient import (
+            CUIAutomation,
+            IUIAutomation,
+            IUIAutomationElement,
+        )
+
         serverinfo = COSERVERINFO()
         serverinfo.pwszName = "localhost"
         pServerInfo = byref(serverinfo)
-
-        self.assertRaises(
-            ValueError,
-            comtypes.client.CreateObject,
-            "InternetExplorer.Application",
-            machine="localhost",
+        with self.assertRaises(ValueError):
+            # cannot set both the machine name and server info
+            comtypes.client.CreateObject(
+                CUIAutomation().IPersist_GetClassID(),
+                interface=IUIAutomation,
+                clsctx=CLSCTX_INPROC_SERVER,
+                machine="localhost",
+                pServerInfo=pServerInfo,
+            )
+        iuia = comtypes.client.CreateObject(
+            CUIAutomation().IPersist_GetClassID(),
+            interface=IUIAutomation,
+            clsctx=CLSCTX_INPROC_SERVER,
             pServerInfo=pServerInfo,
         )
-        ie = comtypes.client.CreateObject(
-            "InternetExplorer.Application", pServerInfo=pServerInfo
-        )
-        self.assertEqual(ie.Visible, False)
-        ie.Visible = 1
-        # on a remote machine, this may not work.  Probably depends on
-        # how the server is run.
-        self.assertEqual(ie.Visible, True)
-        self.assertEqual(0, ie.Quit())  # 0 == S_OK
+        self.assertIsInstance(iuia, POINTER(IUIAutomation))
+        self.assertIsInstance(iuia, IUIAutomation)
+        self.assertIsInstance(iuia.GetRootElement(), POINTER(IUIAutomationElement))
+        self.assertIsInstance(iuia.GetRootElement(), IUIAutomationElement)
 
 
 class Test_Constants(ut.TestCase):
