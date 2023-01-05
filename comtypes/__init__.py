@@ -891,21 +891,18 @@ class IServiceProvider(IUnknown):
 
 ################################################################
 
-if TYPE_CHECKING:
 
-    @overload
-    def CoGetObject(displayname, interface):  # `interface` can't be missing
-        # type: (str, None) -> IUnknown
-        pass
-
-    @overload
-    def CoGetObject(displayname, interface):  # it should be called this way
-        # type: (str, Type[_T_IUnknown]) -> _T_IUnknown
-        pass
+@overload
+def CoGetObject(displayname: str, interface: None) -> IUnknown:
+    ...
 
 
-def CoGetObject(displayname, interface):
-    # type: (str, Optional[Type[IUnknown]]) -> IUnknown
+@overload
+def CoGetObject(displayname: str, interface: Type[_T_IUnknown]) -> _T_IUnknown:
+    ...
+
+
+def CoGetObject(displayname: str, interface: Optional[Type[IUnknown]]) -> IUnknown:
     """Convert a displayname to a moniker, then bind and return the object
     identified by the moniker."""
     if interface is None:
@@ -916,22 +913,35 @@ def CoGetObject(displayname, interface):
     return punk  # type: ignore
 
 
-if TYPE_CHECKING:
-    pUnkOuter = Type[_Pointer[IUnknown]]
-
-    @overload
-    def CoCreateInstance(clsid, interface=None, clsctx=None, punkouter=None):
-        # type: (GUID, None, Optional[int], Optional[pUnkOuter]) -> IUnknown
-        pass
-
-    @overload
-    def CoCreateInstance(clsid, interface, clsctx=None, punkouter=None):
-        # type: (GUID, Type[_T_IUnknown], Optional[int], Optional[pUnkOuter]) -> _T_IUnknown
-        pass
+_pUnkOuter = Type["_Pointer[IUnknown]"]
 
 
-def CoCreateInstance(clsid, interface=None, clsctx=None, punkouter=None):
-    # type: (GUID, Optional[Type[IUnknown]], Optional[int], Optional[pUnkOuter]) -> IUnknown
+@overload
+def CoCreateInstance(
+    clsid: GUID,
+    interface: None = None,
+    clsctx: Optional[int] = None,
+    punkouter: Optional[_pUnkOuter] = None,
+) -> IUnknown:
+    ...
+
+
+@overload
+def CoCreateInstance(
+    clsid: GUID,
+    interface: Type[_T_IUnknown],
+    clsctx: Optional[int] = None,
+    punkouter: Optional[_pUnkOuter] = None,
+) -> _T_IUnknown:
+    ...
+
+
+def CoCreateInstance(
+    clsid: GUID,
+    interface: Optional[Type[IUnknown]] = None,
+    clsctx: Optional[int] = None,
+    punkouter: Optional[_pUnkOuter] = None,
+) -> IUnknown:
     """The basic windows api to create a COM class object and return a
     pointer to an interface.
     """
@@ -971,21 +981,19 @@ def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
     return p  # type: ignore
 
 
-if TYPE_CHECKING:
-
-    @overload
-    def GetActiveObject(clsid, interface=None):
-        # type: (GUID, None) -> IUnknown
-        pass
-
-    @overload
-    def GetActiveObject(clsid, interface):
-        # type: (GUID, Type[_T_IUnknown]) -> _T_IUnknown
-        pass
+@overload
+def GetActiveObject(clsid: GUID, interface: None = None) -> IUnknown:
+    ...
 
 
-def GetActiveObject(clsid, interface=None):
-    # type: (GUID, Optional[Type[IUnknown]]) -> IUnknown
+@overload
+def GetActiveObject(clsid: GUID, interface: Type[_T_IUnknown]) -> _T_IUnknown:
+    ...
+
+
+def GetActiveObject(
+    clsid: GUID, interface: Optional[Type[IUnknown]] = None
+) -> IUnknown:
     """Retrieves a pointer to a running object"""
     p = POINTER(IUnknown)()
     oledll.oleaut32.GetActiveObject(byref(clsid), None, byref(p))
@@ -1124,27 +1132,35 @@ class _SOLE_AUTHENTICATION_LIST(Structure):
 SOLE_AUTHENTICATION_LIST = _SOLE_AUTHENTICATION_LIST
 
 
-if TYPE_CHECKING:
+@overload
+def CoCreateInstanceEx(
+    clsid: GUID,
+    interface: None = None,
+    clsctx: Optional[int] = None,
+    machine: Optional[str] = None,
+    pServerInfo: Optional[COSERVERINFO] = None,
+) -> IUnknown:
+    ...
 
-    @overload
-    def CoCreateInstanceEx(
-        clsid, interface=None, clsctx=None, machine=None, pServerInfo=None
-    ):
-        # type: (GUID, None, Optional[int], Optional[str], Optional[COSERVERINFO]) -> IUnknown
-        pass
 
-    @overload
-    def CoCreateInstanceEx(
-        clsid, interface=None, clsctx=None, machine=None, pServerInfo=None
-    ):
-        # type: (GUID, Type[_T_IUnknown], Optional[int], Optional[str], Optional[COSERVERINFO]) -> _T_IUnknown
-        pass
+@overload
+def CoCreateInstanceEx(
+    clsid: GUID,
+    interface: Type[_T_IUnknown],
+    clsctx: Optional[int] = None,
+    machine: Optional[str] = None,
+    pServerInfo: Optional[COSERVERINFO] = None,
+) -> _T_IUnknown:
+    ...
 
 
 def CoCreateInstanceEx(
-    clsid, interface=None, clsctx=None, machine=None, pServerInfo=None
-):
-    # type: (GUID, Optional[Type[IUnknown]], Optional[int], Optional[str], Optional[COSERVERINFO]) -> IUnknown
+    clsid: GUID,
+    interface: Optional[Type[IUnknown]] = None,
+    clsctx: Optional[int] = None,
+    machine: Optional[str] = None,
+    pServerInfo: Optional[COSERVERINFO] = None,
+) -> IUnknown:
     """The basic windows api to create a COM class object and return a
     pointer to an interface, possibly on another machine.
 
