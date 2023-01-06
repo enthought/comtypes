@@ -749,32 +749,28 @@ DISPID_DESTRUCTOR = -7
 DISPID_COLLECT = -8
 
 
-if TYPE_CHECKING:
-    RawGetIDsOfNamesFunc = Callable[
-        [_byref_type, Array[c_wchar_p], int, int, Array[DISPID]],
-        int,
-    ]
-    RawInvokeFunc = Callable[
-        [
-            int,
-            _byref_type,
-            int,
-            int,  # dispIdMember, riid, lcid, wFlags
-            _UnionT[_byref_type, DISPPARAMS],  # *pDispParams
-            _UnionT[_byref_type, VARIANT],  # pVarResult
-            _UnionT[_byref_type, EXCEPINFO, None],  # pExcepInfo
-            _UnionT[_byref_type, c_uint],  # puArgErr
-        ],
-        int,
-    ]
+RawGetIDsOfNamesFunc = Callable[
+    [_byref_type, Array[c_wchar_p], int, int, Array[DISPID]], int
+]
+# fmt: off
+RawInvokeFunc = Callable[
+    [
+        int, _byref_type, int, int,  # dispIdMember, riid, lcid, wFlags
+        _UnionT[_byref_type, DISPPARAMS],  # *pDispParams
+        _UnionT[_byref_type, VARIANT],  # pVarResult
+        _UnionT[_byref_type, EXCEPINFO, None],  # pExcepInfo
+        _UnionT[_byref_type, c_uint],  # puArgErr
+    ],
+    int,
+]
+# fmt: on
 
 
 class IDispatch(IUnknown):
-    if TYPE_CHECKING:
-        _disp_methods_: ClassVar[List[comtypes._DispMemberSpec]]
-        _GetTypeInfo: Callable[[int, int], IUnknown]
-        __com_GetIDsOfNames: RawGetIDsOfNamesFunc
-        __com_Invoke: RawInvokeFunc
+    _disp_methods_: ClassVar[List[comtypes._DispMemberSpec]]
+    _GetTypeInfo: Callable[[int, int], IUnknown]
+    __com_GetIDsOfNames: RawGetIDsOfNamesFunc
+    __com_Invoke: RawInvokeFunc
 
     _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
     _methods_ = [
@@ -811,16 +807,14 @@ class IDispatch(IUnknown):
         ),
     ]
 
-    def GetTypeInfo(self, index, lcid=0):
-        # type: (int, int) -> hints.ITypeInfo
+    def GetTypeInfo(self, index: int, lcid: int = 0) -> "hints.ITypeInfo":
         """Return type information.  Index 0 specifies typeinfo for IDispatch"""
         import comtypes.typeinfo
 
         result = self._GetTypeInfo(index, lcid)
         return result.QueryInterface(comtypes.typeinfo.ITypeInfo)
 
-    def GetIDsOfNames(self, *names, **kw):
-        # type: (str, Any) -> List[int]
+    def GetIDsOfNames(self, *names: str, **kw: Any) -> List[int]:
         """Map string names to integer ids."""
         lcid = kw.pop("lcid", 0)
         assert not kw
@@ -829,8 +823,7 @@ class IDispatch(IUnknown):
         self.__com_GetIDsOfNames(riid_null, arr, len(names), lcid, ids)
         return ids[:]
 
-    def _invoke(self, memid, invkind, lcid, *args):
-        # type: (int, int, int, Any) -> Any
+    def _invoke(self, memid: int, invkind: int, lcid: int, *args: Any) -> Any:
         var = VARIANT()
         argerr = c_uint()
         dp = DISPPARAMS()
@@ -850,8 +843,7 @@ class IDispatch(IUnknown):
         self.__com_Invoke(memid, riid_null, lcid, invkind, dp, var, None, argerr)
         return var._get_value(dynamic=True)
 
-    def Invoke(self, dispid, *args, **kw):
-        # type: (int, Any, Any) -> Any
+    def Invoke(self, dispid: int, *args: Any, **kw: Any) -> Any:
         """Invoke a method or property."""
 
         # Memory management in Dispatch::Invoke calls:
