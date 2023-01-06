@@ -260,11 +260,10 @@ class _cominterface_meta(type):
     methods from COMMETHOD lists.
     """
 
-    if TYPE_CHECKING:
-        _case_insensitive_: bool
-        _iid_: GUID
-        _methods_: List[_ComMemberSpec]
-        _disp_methods_: List[_DispMemberSpec]
+    _case_insensitive_: bool
+    _iid_: GUID
+    _methods_: List[_ComMemberSpec]
+    _disp_methods_: List[_DispMemberSpec]
 
     # This flag is set to True by the atexit handler which calls
     # CoUninitialize.
@@ -489,8 +488,7 @@ class _cominterface_meta(type):
             d.update(getattr(self, "__map_case__", {}))
             self.__map_case__ = d
 
-    def _make_dispmethods(self, methods):
-        # type: (List[_DispMemberSpec]) -> None
+    def _make_dispmethods(self, methods: List[_DispMemberSpec]) -> None:
         if self._case_insensitive_:
             self._make_case_insensitive()
         # create dispinterface methods and properties on the interface 'self'
@@ -525,8 +523,7 @@ class _cominterface_meta(type):
                 raise TypeError("baseinterface '%s' has no _methods_" % itf.__name__)
             raise
 
-    def _make_methods(self, methods):
-        # type: (List[_ComMemberSpec]) -> None
+    def _make_methods(self, methods: List[_ComMemberSpec]) -> None:
         if self._case_insensitive_:
             self._make_case_insensitive()
         # register com interface. we insist on an _iid_ in THIS class!
@@ -808,22 +805,22 @@ class IUnknown(_IUnknown_Base, metaclass=_cominterface_meta):
     with STDMETHOD or COMMETHOD calls.
     """
 
-    _case_insensitive_ = False  # type: ClassVar[bool]
-    _iid_ = GUID("{00000000-0000-0000-C000-000000000046}")  # type: ClassVar[GUID]
-
-    _methods_ = [
+    _case_insensitive_: ClassVar[bool] = False
+    _iid_: ClassVar[GUID] = GUID("{00000000-0000-0000-C000-000000000046}")
+    _methods_: ClassVar[List[_ComMemberSpec]] = [
         STDMETHOD(HRESULT, "QueryInterface", [POINTER(GUID), POINTER(c_void_p)]),
         STDMETHOD(c_ulong, "AddRef"),
         STDMETHOD(c_ulong, "Release"),
-    ]  # type: ClassVar[List[_ComMemberSpec]]
+    ]
 
     # NOTE: Why not `QueryInterface(T) -> _Pointer[T]`?
     # Any static type checkers is not able to provide members of `T` from `_Pointer[T]`,
     # regardless of the pointer is able to access members of contents in runtime.
     # And if `isinstance(p, POINTER(T))` is `True`, then `isinstance(p, T)` is also `True`.
     # So returning `T` is not a lie, and good way to know what members the class has.
-    def QueryInterface(self, interface, iid=None):
-        # type: (Type[_T_IUnknown], Optional[GUID]) -> _T_IUnknown
+    def QueryInterface(
+        self, interface: Type[_T_IUnknown], iid: Optional[GUID] = None
+    ) -> _T_IUnknown:
         """QueryInterface(interface) -> instance"""
         p = POINTER(interface)()
         if iid is None:
@@ -836,13 +833,11 @@ class IUnknown(_IUnknown_Base, metaclass=_cominterface_meta):
 
     # these are only so that they get a docstring.
     # XXX There should be other ways to install a docstring.
-    def AddRef(self):
-        # type: () -> int
+    def AddRef(self) -> int:
         """Increase the internal refcount by one and return it."""
         return self.__com_AddRef()
 
-    def Release(self):
-        # type: () -> int
+    def Release(self) -> int:
         """Decrease the internal refcount by one and return it."""
         return self.__com_Release()
 
@@ -867,12 +862,12 @@ class IPersist(IUnknown):
 
 class IServiceProvider(IUnknown):
     _iid_ = GUID("{6D5140C1-7436-11CE-8034-00AA006009FA}")
-    if TYPE_CHECKING:
-        _QueryService: Callable[[Any, Any, Any], int]
+    _QueryService: Callable[[Any, Any, Any], int]
     # Overridden QueryService to make it nicer to use (passing it an
     # interface and it returns a pointer to that interface)
-    def QueryService(self, serviceIID, interface):
-        # type: (GUID, Type[_T_IUnknown]) -> _T_IUnknown
+    def QueryService(
+        self, serviceIID: GUID, interface: Type[_T_IUnknown]
+    ) -> _T_IUnknown:
         p = POINTER(interface)()
         self._QueryService(byref(serviceIID), byref(interface._iid_), byref(p))
         return p  # type: ignore
