@@ -203,8 +203,7 @@ PARAMFLAG_FHASCUSTDATA = 64
 # a helper
 
 
-def _deref_with_release(ptr, release):
-    # type: (_Pointer[_CT], Callable[..., Any]) -> _CT
+def _deref_with_release(ptr: "_Pointer[_CT]", release: Callable[..., Any]) -> _CT:
     # Given a POINTER instance, return the pointed to value.
     # Call the 'release' function with 'ptr' to release resources
     # when the value is no longer needed.
@@ -223,50 +222,41 @@ class ITypeLib(IUnknown):
     # automatically creates for COM methods.
     if TYPE_CHECKING:
 
-        def GetTypeInfoCount(self):
-            # type: () -> int
+        def GetTypeInfoCount(self) -> int:
             """Return the number of type informations"""
-            raise
+            ...
 
-        def GetTypeInfo(self, index):
-            # type: (int) -> ITypeInfo
+        def GetTypeInfo(self, index: int) -> "ITypeInfo":
             """Load type info by index"""
-            raise
+            ...
 
-        def GetTypeInfoType(self, index):
-            # type: (int) -> int
+        def GetTypeInfoType(self, index: int) -> int:
             """Return the TYPEKIND of type information"""
-            raise
+            ...
 
-        def GetTypeInfoOfGuid(self, guid):
-            # type: (GUID) -> ITypeInfo
+        def GetTypeInfoOfGuid(self, guid: GUID) -> "ITypeInfo":
             """Return type information for a guid"""
-            raise
+            ...
 
-        def GetTypeComp(self):
-            # type: () -> ITypeComp
+        def GetTypeComp(self) -> "ITypeComp":
             """Return an ITypeComp pointer."""
-            raise
+            ...
 
-        def GetDocumentation(self, index):
-            # type: (int) -> Tuple[str, str, int, Optional[str]]
+        def GetDocumentation(self, index: int) -> Tuple[str, str, int, Optional[str]]:
             """Return documentation for a type description."""
-            raise
+            ...
 
-        def ReleaseTLibAttr(self, ptla):
-            # type: (_Pointer[TLIBATTR]) -> int
+        def ReleaseTLibAttr(self, ptla: "_Pointer[TLIBATTR]") -> int:
             """Release TLIBATTR"""
-            raise
+            ...
 
-        _GetLibAttr: Callable[[], _Pointer["TLIBATTR"]]
+    _GetLibAttr: Callable[[], "_Pointer[TLIBATTR]"]
 
-    def GetLibAttr(self):
-        # type: () -> TLIBATTR
+    def GetLibAttr(self) -> "TLIBATTR":
         """Return type library attributes"""
         return _deref_with_release(self._GetLibAttr(), self.ReleaseTLibAttr)
 
-    def IsName(self, name, lHashVal=0):
-        # type: (str, int) -> Optional[str]
+    def IsName(self, name: str, lHashVal: int = 0) -> Optional[str]:
         """Check if there is type information for this name.
 
         Returns the name with capitalization found in the type
@@ -281,8 +271,9 @@ class ITypeLib(IUnknown):
             return namebuf[:].split("\0", 1)[0]  # type: ignore
         return None
 
-    def FindName(self, name, lHashVal=0):
-        # type: (str, int) -> Optional[Tuple[int, ITypeInfo]]
+    def FindName(
+        self, name: str, lHashVal: int = 0
+    ) -> Optional[Tuple[int, "ITypeInfo"]]:
         # Hm...
         # Could search for more than one name - should we support this?
         found = c_ushort(1)
@@ -295,17 +286,16 @@ class ITypeLib(IUnknown):
 
 
 ################
-if TYPE_CHECKING:
 
-    @overload
-    def fix_name(name):
-        # type: (None) -> None
-        pass
 
-    @overload
-    def fix_name(name):
-        # type: (str) -> str
-        pass
+@overload
+def fix_name(name: None) -> None:
+    pass
+
+
+@overload
+def fix_name(name: str) -> str:
+    pass
 
 
 def fix_name(name):
@@ -321,50 +311,54 @@ class ITypeInfo(IUnknown):
 
     if TYPE_CHECKING:
 
-        def GetTypeComp(self):
-            # type: () -> ITypeComp
+        def GetTypeComp(self) -> "ITypeComp":
             """Return ITypeComp pointer for this type"""
-            raise
+            ...
 
-        def GetRefTypeOfImplType(self, index):
-            # type: (int) -> int
+        def GetRefTypeOfImplType(self, index: int) -> int:
             """Get the reftype of an implemented type"""
-            raise
+            ...
 
-        def GetImplTypeFlags(self, index):
-            # type: (int) -> int
+        def GetImplTypeFlags(self, index: int) -> int:
             """Get IMPLTYPEFLAGS"""
-            raise
+            ...
 
         # not yet wrapped
         # STDMETHOD(HRESULT, 'Invoke', [PVOID, MEMBERID, WORD, POINTER(DISPPARAMS), POINTER(VARIANT), POINTER(EXCEPINFO), POINTER(UINT)]),
-        def GetDllEntry(self, memid, invkind):
-            # type: (int, int) -> Tuple[Optional[str], Optional[str], int]
+        def GetDllEntry(
+            self, memid: int, invkind: int
+        ) -> Tuple[Optional[str], Optional[str], int]:
             """Return the dll name, function name, and ordinal for a function and invkind."""
-            raise
+            ...
 
-        def GetRefTypeInfo(self, href):
-            # type: (int) -> ITypeInfo
+        def GetRefTypeInfo(self, href: int) -> "ITypeInfo":
             """Get type info for reftype"""
-            raise
+            ...
 
-        def GetMops(self, index):
-            # type: (int) -> Optional[str]
+        def GetMops(self, index: int) -> Optional[str]:
             """Get marshalling opcodes (whatever that is...)"""
-            raise
+            ...
 
-        def GetContainingTypeLib(self):
-            # type: () -> Tuple[ITypeLib, int]
+        def GetContainingTypeLib(self) -> Tuple[ITypeLib, int]:
             """Return index into and the containing type lib itself"""
-            raise
+            ...
 
-        ReleaseTypeAttr: Callable[[_Pointer["TYPEATTR"]], int]
-        ReleaseFuncDesc: Callable[[_Pointer["FUNCDESC"]], int]
-        ReleaseVarDesc: Callable[[_Pointer["VARDESC"]], int]
-        _GetTypeAttr: Callable[[], _Pointer["TYPEATTR"]]
-        _GetFuncDesc: Callable[[int], _Pointer["FUNCDESC"]]
-        _GetVarDesc: Callable[[int], _Pointer["VARDESC"]]
-        _GetDocumentation: Callable[[int], Tuple[str, str, int, Optional[str]]]
+        def ReleaseTypeAttr(self, pTypeAttr: "_Pointer[TYPEATTR]") -> int:
+            """Releases a TYPEATTR previously returned by GetTypeAttr"""
+            ...
+
+        def ReleaseFuncDesc(self, pFuncDesc: "_Pointer[FUNCDESC]") -> int:
+            """Releases a FUNCDESC previously returned by GetFuncDesc"""
+            ...
+
+        def ReleaseVarDesc(self, pVarDesc: "_Pointer[VARDESC]") -> int:
+            """Releases a VARDESC previously returned by VarDesc"""
+            ...
+
+    _GetTypeAttr: Callable[[], "_Pointer[TYPEATTR]"]
+    _GetFuncDesc: Callable[[int], "_Pointer[FUNCDESC]"]
+    _GetVarDesc: Callable[[int], "_Pointer[VARDESC]"]
+    _GetDocumentation: Callable[[int], Tuple[str, str, int, Optional[str]]]
 
     def GetTypeAttr(self):
         """Return the TYPEATTR for this type"""
@@ -383,16 +377,14 @@ class ITypeInfo(IUnknown):
         """Return VARDESC for index"""
         return _deref_with_release(self._GetVarDesc(index), self.ReleaseVarDesc)
 
-    def GetNames(self, memid, count=1):
-        # type: (int, int) -> List[str]
+    def GetNames(self, memid: int, count: int = 1) -> List[str]:
         """Return names for memid"""
         names = (BSTR * count)()
         cnames = c_uint()
         self.__com_GetNames(memid, names, count, byref(cnames))  # type: ignore
         return names[: cnames.value]
 
-    def GetIDsOfNames(self, *names):
-        # type: (str) -> List[int]
+    def GetIDsOfNames(self, *names: str) -> List[int]:
         """Maps function and argument names to identifiers"""
         rgsznames = (c_wchar_p * len(names))(*names)
         ids = (MEMBERID * len(names))()
@@ -407,8 +399,12 @@ class ITypeInfo(IUnknown):
         # XXX Would the default impl return the value of p?
         return p.value
 
-    def CreateInstance(self, punkouter=None, interface=IUnknown, iid=None):
-        # type: (Optional[Type[_Pointer[IUnknown]]], Type[_T_IUnknown], Optional[GUID]) -> _T_IUnknown
+    def CreateInstance(
+        self,
+        punkouter: Optional[Type["_Pointer[IUnknown]"]] = None,
+        interface: Type[_T_IUnknown] = IUnknown,
+        iid: Optional[GUID] = None,
+    ) -> _T_IUnknown:
         if iid is None:
             iid = interface._iid_
         return self._CreateInstance(punkouter, byref(interface._iid_))  # type: ignore
@@ -420,12 +416,13 @@ class ITypeInfo(IUnknown):
 class ITypeComp(IUnknown):
     _iid_ = GUID("{00020403-0000-0000-C000-000000000046}")
 
-    def Bind(self, name, flags=0, lHashVal=0):
-        # type: (str, int, int) -> Optional[Tuple[str, _UnionT[FUNCDESC, VARDESC, ITypeComp]]]
+    def Bind(
+        self, name: str, flags: int = 0, lHashVal: int = 0
+    ) -> Optional[Tuple[str, _UnionT["FUNCDESC", "VARDESC", "ITypeComp"]]]:
         """Bind to a name"""
         bindptr = BINDPTR()
         desckind = DESCKIND()
-        ti = POINTER(ITypeInfo)()  # type: ITypeInfo
+        ti: ITypeInfo = POINTER(ITypeInfo)()  # type: ignore
         self.__com_Bind(name, lHashVal, flags, byref(ti), byref(desckind), byref(bindptr))  # type: ignore
         kind = desckind.value
         if kind == DESCKIND_FUNCDESC:
@@ -447,8 +444,7 @@ class ITypeComp(IUnknown):
         elif kind == DESCKIND_NONE:
             raise NameError("Name %s not found" % name)
 
-    def BindType(self, name, lHashVal=0):
-        # type: (str, int) -> Tuple[ITypeInfo, ITypeComp]
+    def BindType(self, name: str, lHashVal: int = 0) -> Tuple[ITypeInfo, "ITypeComp"]:
         """Bind a type, and return both the typeinfo and typecomp for it."""
         ti = POINTER(ITypeInfo)()
         tc = POINTER(ITypeComp)()
@@ -471,11 +467,9 @@ class ICreateTypeLib2(ICreateTypeLib):
 class ICreateTypeInfo(IUnknown):
     _iid_ = GUID("{00020405-0000-0000-C000-000000000046}")
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 915
-    if TYPE_CHECKING:
-        _SetFuncAndParamNames: Callable[[int, Array[c_wchar_p], int], int]
+    _SetFuncAndParamNames: Callable[[int, Array[c_wchar_p], int], int]
 
-    def SetFuncAndParamNames(self, index, *names):
-        # type: (int, str) -> int
+    def SetFuncAndParamNames(self, index: int, *names: str) -> int:
         rgszNames = (c_wchar_p * len(names))()
         for i, n in enumerate(names):
             rgszNames[i] = n
@@ -486,8 +480,7 @@ class IRecordInfo(IUnknown):
     # C:/vc98/include/OAIDL.H 5974
     _iid_ = GUID("{0000002F-0000-0000-C000-000000000046}")
 
-    def GetFieldNames(self, *args):
-        # type: (Any) -> List[Optional[str]]
+    def GetFieldNames(self, *args: Any) -> List[Optional[str]]:
         count = c_ulong()
         self.__com_GetFieldNames(count, None)  # type: ignore
         array = (BSTR * count.value)()
@@ -573,16 +566,16 @@ IRecordInfo._methods_ = [
 _oleaut32 = oledll.oleaut32
 
 
-def GetRecordInfoFromTypeInfo(tinfo):
-    # type: (ITypeInfo) -> IRecordInfo
-    "Return an IRecordInfo pointer to the UDT described in tinfo"
+def GetRecordInfoFromTypeInfo(tinfo: ITypeInfo) -> IRecordInfo:
+    """Return an IRecordInfo pointer to the UDT described in tinfo"""
     ri = POINTER(IRecordInfo)()
     _oleaut32.GetRecordInfoFromTypeInfo(tinfo, byref(ri))
     return ri  # type: ignore
 
 
-def GetRecordInfoFromGuids(rGuidTypeLib, verMajor, verMinor, lcid, rGuidTypeInfo):
-    # type: (str, int, int, int, str) -> IRecordInfo
+def GetRecordInfoFromGuids(
+    rGuidTypeLib: str, verMajor: int, verMinor: int, lcid: int, rGuidTypeInfo: str
+) -> IRecordInfo:
     ri = POINTER(IRecordInfo)()
     _oleaut32.GetRecordInfoFromGuids(
         byref(GUID(rGuidTypeLib)),
@@ -595,8 +588,9 @@ def GetRecordInfoFromGuids(rGuidTypeLib, verMajor, verMinor, lcid, rGuidTypeInfo
     return ri  # type: ignore
 
 
-def LoadRegTypeLib(guid, wMajorVerNum, wMinorVerNum, lcid=0):
-    # type: (_UnionT[str, GUID], int, int, int) -> ITypeLib
+def LoadRegTypeLib(
+    guid: _UnionT[str, GUID], wMajorVerNum: int, wMinorVerNum: int, lcid: int = 0
+) -> ITypeLib:
     """Load a registered type library"""
     tlib = POINTER(ITypeLib)()
     _oleaut32.LoadRegTypeLib(
@@ -607,56 +601,55 @@ def LoadRegTypeLib(guid, wMajorVerNum, wMinorVerNum, lcid=0):
 
 if hasattr(_oleaut32, "LoadTypeLibEx"):
 
-    def LoadTypeLibEx(szFile, regkind=REGKIND_NONE):
-        # type: (str, int) -> ITypeLib
-        "Load, and optionally register a type library file"
+    def LoadTypeLibEx(szFile: str, regkind: int = REGKIND_NONE) -> ITypeLib:
+        """Load, and optionally register a type library file"""
         ptl = POINTER(ITypeLib)()
         _oleaut32.LoadTypeLibEx(c_wchar_p(szFile), regkind, byref(ptl))
         return ptl  # type: ignore
 
 else:
 
-    def LoadTypeLibEx(szFile, regkind=REGKIND_NONE):
-        # type: (str, int) -> ITypeLib
-        "Load, and optionally register a type library file"
+    def LoadTypeLibEx(szFile: str, regkind: int = REGKIND_NONE) -> ITypeLib:
+        """Load, and optionally register a type library file"""
         ptl = POINTER(ITypeLib)()
         _oleaut32.LoadTypeLib(c_wchar_p(szFile), byref(ptl))
         return ptl  # type: ignore
 
 
-def LoadTypeLib(szFile):
-    # type: (str) -> ITypeLib
-    "Load and register a type library file"
+def LoadTypeLib(szFile: str) -> ITypeLib:
+    """Load and register a type library file"""
     tlib = POINTER(ITypeLib)()
     _oleaut32.LoadTypeLib(c_wchar_p(szFile), byref(tlib))
     return tlib  # type: ignore
 
 
-def UnRegisterTypeLib(libID, wVerMajor, wVerMinor, lcid=0, syskind=SYS_WIN32):
-    # type: (str, int, int, int, int) -> int
-    "Unregister a registered type library"
+def UnRegisterTypeLib(
+    libID: str, wVerMajor: int, wVerMinor: int, lcid: int = 0, syskind: int = SYS_WIN32
+) -> int:
+    """Unregister a registered type library"""
     return _oleaut32.UnRegisterTypeLib(
         byref(GUID(libID)), wVerMajor, wVerMinor, lcid, syskind
     )
 
 
-def RegisterTypeLib(tlib, fullpath, helpdir=None):
-    # type: (ITypeLib, str, Optional[str]) -> int
-    "Register a type library in the registry"
+def RegisterTypeLib(
+    tlib: ITypeLib, fullpath: str, helpdir: Optional[str] = None
+) -> int:
+    """Register a type library in the registry"""
     return _oleaut32.RegisterTypeLib(tlib, c_wchar_p(fullpath), c_wchar_p(helpdir))
 
 
-def CreateTypeLib(filename, syskind=SYS_WIN32):
-    # type: (str, int) -> ICreateTypeLib2
-    "Return a ICreateTypeLib2 pointer"
+def CreateTypeLib(filename: str, syskind: int = SYS_WIN32) -> ICreateTypeLib2:
+    """Return a ICreateTypeLib2 pointer"""
     ctlib = POINTER(ICreateTypeLib2)()
     _oleaut32.CreateTypeLib2(syskind, c_wchar_p(filename), byref(ctlib))
     return ctlib  # type: ignore
 
 
-def QueryPathOfRegTypeLib(libid, wVerMajor, wVerMinor, lcid=0):
-    # type: (str, int, int, int) -> str
-    "Return the path of a registered type library"
+def QueryPathOfRegTypeLib(
+    libid: str, wVerMajor: int, wVerMinor: int, lcid: int = 0
+) -> str:
+    """Return the path of a registered type library"""
     pathname = BSTR()
     _oleaut32.QueryPathOfRegTypeLib(
         byref(GUID(libid)), wVerMajor, wVerMinor, lcid, byref(pathname)
@@ -1069,9 +1062,12 @@ ICreateTypeInfo._methods_ = [
 class IProvideClassInfo(IUnknown):
     _iid_ = GUID("{B196B283-BAB4-101A-B69C-00AA00341D07}")
     if TYPE_CHECKING:
-        GetClassInfo: Callable[[], ITypeInfo]
+
+        def GetClassInfo(self) -> ITypeInfo:
+            """Returns the ITypeInfo interface for the object's coclass type information."""
+            ...
+
     _methods_ = [
-        # Returns the ITypeInfo interface for the object's coclass type information.
         COMMETHOD(
             [], HRESULT, "GetClassInfo", (["out"], POINTER(POINTER(ITypeInfo)), "ppTI")
         )
@@ -1081,9 +1077,12 @@ class IProvideClassInfo(IUnknown):
 class IProvideClassInfo2(IProvideClassInfo):
     _iid_ = GUID("{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}")
     if TYPE_CHECKING:
-        GetGUID: Callable[[int], GUID]
+
+        def GetGUID(self, dwGuidKind: int) -> GUID:
+            """Returns the GUID for the object's outgoing IID for its default event set"""
+            ...
+
     _methods_ = [
-        # Returns the GUID for the object's outgoing IID for its default event set.
         COMMETHOD(
             [],
             HRESULT,
