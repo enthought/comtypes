@@ -750,7 +750,7 @@ DISPID_COLLECT = -8
 
 
 RawGetIDsOfNamesFunc = Callable[
-    [_byref_type, Array[c_wchar_p], int, int, Array[DISPID]], int
+    [_byref_type, "Array[c_wchar_p]", int, int, "Array[DISPID]"], int
 ]
 # fmt: off
 RawInvokeFunc = Callable[

@@ -467,7 +467,7 @@ class ICreateTypeLib2(ICreateTypeLib):
 class ICreateTypeInfo(IUnknown):
     _iid_ = GUID("{00020405-0000-0000-C000-000000000046}")
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 915
-    _SetFuncAndParamNames: Callable[[int, Array[c_wchar_p], int], int]
+    _SetFuncAndParamNames: Callable[[int, "Array[c_wchar_p]", int], int]
 
     def SetFuncAndParamNames(self, index: int, *names: str) -> int:
         rgszNames = (c_wchar_p * len(names))()
