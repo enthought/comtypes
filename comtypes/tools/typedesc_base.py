@@ -3,7 +3,6 @@ from typing import (
     Any,
     List,
     Optional,
-    TYPE_CHECKING,
     Tuple,
     Union as _UnionT,
     SupportsInt,
@@ -144,8 +143,7 @@ class Typedef(object):
 class ArrayType(object):
     location = None
 
-    def __init__(self, typ, min, max):
-        # type: (Any, int, int) -> None
+    def __init__(self, typ: Any, min: int, max: int) -> None:
         self.typ = typ
         self.min = min
         self.max = max
@@ -154,28 +152,25 @@ class ArrayType(object):
 class StructureHead(object):
     location = None
 
-    def __init__(self, struct):
-        # type: (_Struct_Union_Base) -> None
+    def __init__(self, struct: "_Struct_Union_Base") -> None:
         self.struct = struct
 
 
 class StructureBody(object):
     location = None
 
-    def __init__(self, struct):
-        # type: (_Struct_Union_Base) -> None
+    def __init__(self, struct: "_Struct_Union_Base") -> None:
         self.struct = struct
 
 
 class _Struct_Union_Base(object):
-    if TYPE_CHECKING:
-        name: str
-        align: int
-        members: List[_UnionT["Field", Method, Constructor]]
-        bases: List["_Struct_Union_Base"]
-        artificial: Optional[Any]
-        size: Optional[int]
-        _recordinfo_: Tuple[str, int, int, int, str]
+    name: str
+    align: int
+    members: List[_UnionT["Field", Method, Constructor]]
+    bases: List["_Struct_Union_Base"]
+    artificial: Optional[Any]
+    size: Optional[int]
+    _recordinfo_: Tuple[str, int, int, int, str]
 
     location = None
 
@@ -183,18 +178,23 @@ class _Struct_Union_Base(object):
         self.struct_body = StructureBody(self)
         self.struct_head = StructureHead(self)
 
-    def get_body(self):
-        # type: () -> StructureBody
+    def get_body(self) -> StructureBody:
         return self.struct_body
 
-    def get_head(self):
-        # type: () -> StructureHead
+    def get_head(self) -> StructureHead:
         return self.struct_head
 
 
 class Structure(_Struct_Union_Base):
-    def __init__(self, name, align, members, bases, size, artificial=None):
-        # type: (str, SupportsInt, List[Field], List[Any], Optional[SupportsInt], Optional[Any]) -> None
+    def __init__(
+        self,
+        name: str,
+        align: SupportsInt,
+        members: List["Field"],
+        bases: List[Any],
+        size: Optional[SupportsInt],
+        artificial: Optional[Any] = None,
+    ) -> None:
         self.name = name
         self.align = int(align)
         self.members = members
@@ -208,8 +208,15 @@ class Structure(_Struct_Union_Base):
 
 
 class Union(_Struct_Union_Base):
-    def __init__(self, name, align, members, bases, size, artificial=None):
-        # type: (str, SupportsInt, List[Field], List[Any], Optional[SupportsInt], Optional[Any]) -> None
+    def __init__(
+        self,
+        name: str,
+        align: SupportsInt,
+        members: List["Field"],
+        bases: List[Any],
+        size: Optional[SupportsInt],
+        artificial: Optional[Any] = None,
+    ) -> None:
         self.name = name
         self.align = int(align)
         self.members = members
@@ -223,8 +230,9 @@ class Union(_Struct_Union_Base):
 
 
 class Field(object):
-    def __init__(self, name, typ, bits, offset):
-        # type: (str, Any, Optional[Any], SupportsInt) -> None
+    def __init__(
+        self, name: str, typ: Any, bits: Optional[Any], offset: SupportsInt
+    ) -> None:
         self.name = name
         self.typ = typ
         self.bits = bits
@@ -241,21 +249,18 @@ class CvQualifiedType(object):
 class Enumeration(object):
     location = None
 
-    def __init__(self, name, size, align):
-        # type: (str, SupportsInt, SupportsInt) -> None
+    def __init__(self, name: str, size: SupportsInt, align: SupportsInt) -> None:
         self.name = name
         self.size = int(size)
         self.align = int(align)
-        self.values = []  # type: List[EnumValue]
+        self.values: List[EnumValue] = []
 
-    def add_value(self, v):
-        # type: (EnumValue) -> None
+    def add_value(self, v: "EnumValue") -> None:
         self.values.append(v)
 
 
 class EnumValue(object):
-    def __init__(self, name, value, enumeration):
-        # type: (str, int, Enumeration) -> None
+    def __init__(self, name: str, value: int, enumeration: Enumeration) -> None:
         self.name = name
         self.value = value
         self.enumeration = enumeration
