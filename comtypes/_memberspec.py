@@ -15,12 +15,12 @@ from comtypes import _CData
 import comtypes
 
 
-PositionalParamFlagType = Tuple[int, Optional[str]]
-OptionalParamFlagType = Tuple[int, Optional[str], Any]
-ParamFlagType = _UnionT[PositionalParamFlagType, OptionalParamFlagType]
-PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
-OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
-ArgSpecElmType = _UnionT[PositionalArgSpecElmType, OptionalArgSpecElmType]
+_PositionalParamFlagType = Tuple[int, Optional[str]]
+_OptionalParamFlagType = Tuple[int, Optional[str], Any]
+_ParamFlagType = _UnionT[_PositionalParamFlagType, _OptionalParamFlagType]
+_PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
+_OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
+_ArgSpecElmType = _UnionT[_PositionalArgSpecElmType, _OptionalArgSpecElmType]
 
 
 _PARAMFLAGS = {
@@ -40,13 +40,18 @@ def _encode_idl(names):
 _NOTHING = object()
 
 
-def _unpack_argspec(idl, typ, name=None, defval=_NOTHING):
-    # type: (List[str], Type[_CData], Optional[str], Any) -> Tuple[List[str], Type[_CData], Optional[str], Any]
+def _unpack_argspec(
+    idl: List[str],
+    typ: Type[_CData],
+    name: Optional[str] = None,
+    defval: Any = _NOTHING,
+) -> Tuple[List[str], Type[_CData], Optional[str], Any]:
     return idl, typ, name, defval
 
 
-def _resolve_argspec(items):
-    # type: (Tuple[ArgSpecElmType, ...]) -> Tuple[Tuple[ParamFlagType, ...], Tuple[Type[_CData], ...]]
+def _resolve_argspec(
+    items: Tuple[_ArgSpecElmType, ...]
+) -> Tuple[Tuple[_ParamFlagType, ...], Tuple[Type[_CData], ...]]:
     """Unpacks and converts from argspec to paramflags and argtypes.
 
     - paramflags is a sequence of `(pflags: int, argname: str, | None[, defval: Any])`.
@@ -83,12 +88,11 @@ class _MemberSpec(object):
     __slots__ = ("name", "idlflags", "restype")
 
     def __init__(self, name, idlflags, restype):
-        self.name = name  # type: str
-        self.idlflags = idlflags  # type: Tuple[_UnionT[str, int], ...]
-        self.restype = restype  # type: Optional[Type[_CData]]
+        self.name: str = name
+        self.idlflags: Tuple[_UnionT[str, int], ...] = idlflags
+        self.restype: Optional[Type[_CData]] = restype
 
-    def is_prop(self):
-        # type: () -> bool
+    def is_prop(self) -> bool:
         propflags = ("propget", "propput", "propputref")
         return any(f in propflags for f in self.idlflags)
 
@@ -99,9 +103,9 @@ class _ComMemberSpec(_MemberSpec):
     __slots__ = ("argtypes", "paramflags", "doc")
 
     def __init__(self, restype, name, argtypes, paramflags, idlflags, doc):
-        self.argtypes = argtypes  # type: Tuple[Type[_CData], ...]
-        self.paramflags = paramflags  # type: Optional[Tuple[ParamFlagType, ...]]
-        self.doc = doc  # type: Optional[str]
+        self.argtypes: Tuple[Type[_CData], ...] = argtypes
+        self.paramflags: Optional[Tuple[_ParamFlagType, ...]] = paramflags
+        self.doc: Optional[str] = doc
         super(_ComMemberSpec, self).__init__(name, idlflags, restype)
 
     def __iter__(self):
@@ -125,13 +129,12 @@ class _DispMemberSpec(_MemberSpec):
     __slots__ = ("what", "argspec")
 
     def __init__(self, what, name, idlflags, restype, argspec):
-        self.what = what  # type: str
-        self.argspec = argspec  # type: Tuple[ArgSpecElmType, ...]
+        self.what: str = what
+        self.argspec: Tuple[_ArgSpecElmType, ...] = argspec
         super(_DispMemberSpec, self).__init__(name, idlflags, restype)
 
     @property
-    def memid(self):
-        # type: () -> int
+    def memid(self) -> int:
         try:
             return [x for x in self.idlflags if isinstance(x, int)][0]
         except IndexError:
@@ -145,8 +148,15 @@ class _DispMemberSpec(_MemberSpec):
             yield item
 
 
-def _fix_inout_args(func, argtypes, paramflags):
-    # type: (Callable[..., Any], Tuple[Type[_CData], ...], Tuple[ParamFlagType, ...]) -> Callable[..., Any]
+_PropFunc = Optional[Callable[..., Any]]
+_DocType = Optional[str]
+
+
+def _fix_inout_args(
+    func: Callable[..., Any],
+    argtypes: Tuple[Type[_CData], ...],
+    paramflags: Tuple[_ParamFlagType, ...],
+) -> Callable[..., Any]:
     """This function provides a workaround for a bug in `ctypes`.
 
     [in, out] parameters must be converted with the argtype's `from_param`
@@ -230,24 +240,24 @@ def _fix_inout_args(func, argtypes, paramflags):
 
 class PropertyMapping(object):
     def __init__(self):
-        self._data = (
-            {}
-        )  # type: Dict[Tuple[str, Optional[str], int], List[Optional[Callable[..., Any]]]]
+        self._data: Dict[Tuple[str, _DocType, int], List[_PropFunc]] = {}
 
-    def add_propget(self, name, doc, nargs, func):
-        # type: (str, Optional[str], int, Callable[..., Any]) -> None
+    def add_propget(
+        self, name: str, doc: _DocType, nargs: int, func: Callable[..., Any]
+    ) -> None:
         self._data.setdefault((name, doc, nargs), [None, None, None])[0] = func
 
-    def add_propput(self, name, doc, nargs, func):
-        # type: (str, Optional[str], int, Callable[..., Any]) -> None
+    def add_propput(
+        self, name: str, doc: _DocType, nargs: int, func: Callable[..., Any]
+    ) -> None:
         self._data.setdefault((name, doc, nargs), [None, None, None])[1] = func
 
-    def add_propputref(self, name, doc, nargs, func):
-        # type: (str, Optional[str], int, Callable[..., Any]) -> None
+    def add_propputref(
+        self, name: str, doc: _DocType, nargs: int, func: Callable[..., Any]
+    ) -> None:
         self._data.setdefault((name, doc, nargs), [None, None, None])[2] = func
 
-    def __iter__(self):
-        # type: () -> Iterator[Tuple[str, Optional[str], int, Optional[Callable[..., Any]], Optional[Callable[..., Any]]]]
+    def __iter__(self) -> Iterator[Tuple[str, _DocType, int, _PropFunc, _PropFunc]]:
         for (name, doc, nargs), (fget, propput, propputref) in self._data.items():
             if propput is not None and propputref is not None:
                 # Create a setter method that examines the argument type
@@ -269,13 +279,11 @@ class PropertyMapping(object):
 
 
 class PropertyGenerator(object):
-    def __init__(self, cls_name):
-        # type: (str) -> None
+    def __init__(self, cls_name: str) -> None:
         self._mapping = PropertyMapping()
         self._cls_name = cls_name
 
-    def add(self, m, func):
-        # type: (_MemberSpec, Callable[..., Any]) -> None
+    def add(self, m: _MemberSpec, func: Callable[..., Any]) -> None:
         """Adds member spec and func to mapping."""
         if "propget" in m.idlflags:
             name, doc, nargs = self.to_propget_keys(m)
@@ -291,8 +299,7 @@ class PropertyGenerator(object):
 
     # The following code assumes that the docstrings for
     # propget and propput are identical.
-    def __iter__(self):
-        # type: () -> Iterator[Tuple[str, _UnionT[property, named_property]]]
+    def __iter__(self) -> Iterator[Tuple[str, _UnionT[property, "named_property"]]]:
         for name, doc, nargs, fget, fset in self._mapping:
             if nargs == 0:
                 prop = property(fget, fset, None, doc)
@@ -303,16 +310,13 @@ class PropertyGenerator(object):
                 prop = named_property("%s.%s" % (self._cls_name, name), fget, fset, doc)
             yield (name, prop)
 
-    def to_propget_keys(self, m):
-        # type: (_MemberSpec) -> Tuple[str, Optional[str], int]
+    def to_propget_keys(self, m: _MemberSpec) -> Tuple[str, _DocType, int]:
         raise NotImplementedError
 
-    def to_propput_keys(self, m):
-        # type: (_MemberSpec) -> Tuple[str, Optional[str], int]
+    def to_propput_keys(self, m: _MemberSpec) -> Tuple[str, _DocType, int]:
         raise NotImplementedError
 
-    def to_propputref_keys(self, m):
-        # type: (_MemberSpec) -> Tuple[str, Optional[str], int]
+    def to_propputref_keys(self, m: _MemberSpec) -> Tuple[str, _DocType, int]:
         raise NotImplementedError
 
 
@@ -320,8 +324,7 @@ class ComPropertyGenerator(PropertyGenerator):
     # XXX Hm.  What, when paramflags is None?
     # Or does have '0' values?
     # Seems we loose then, at least for properties...
-    def to_propget_keys(self, m):
-        # type: (_ComMemberSpec) -> Tuple[str, Optional[str], int]
+    def to_propget_keys(self, m: _ComMemberSpec) -> Tuple[str, _DocType, int]:
         assert m.name.startswith("_get_")
         assert m.paramflags is not None
         nargs = len([f for f in m.paramflags if f[0] & 7 in (0, 1)])
@@ -329,15 +332,13 @@ class ComPropertyGenerator(PropertyGenerator):
         # nargs = len([f for f in paramflags if (f[0] & 1) or (f[0] == 0)])
         return m.name[len("_get_") :], m.doc, nargs
 
-    def to_propput_keys(self, m):
-        # type: (_ComMemberSpec) -> Tuple[str, Optional[str], int]
+    def to_propput_keys(self, m: _ComMemberSpec) -> Tuple[str, _DocType, int]:
         assert m.name.startswith("_set_")
         assert m.paramflags is not None
         nargs = len([f for f in m.paramflags if f[0] & 7 in (0, 1)]) - 1
         return m.name[len("_set_") :], m.doc, nargs
 
-    def to_propputref_keys(self, m):
-        # type: (_ComMemberSpec) -> Tuple[str, Optional[str], int]
+    def to_propputref_keys(self, m: _ComMemberSpec) -> Tuple[str, _DocType, int]:
         assert m.name.startswith("_setref_")
         assert m.paramflags is not None
         nargs = len([f for f in m.paramflags if f[0] & 7 in (0, 1)]) - 1
@@ -345,33 +346,26 @@ class ComPropertyGenerator(PropertyGenerator):
 
 
 class DispPropertyGenerator(PropertyGenerator):
-    def to_propget_keys(self, m):
-        # type: (_DispMemberSpec) -> Tuple[str, Optional[str], int]
+    def to_propget_keys(self, m: _DispMemberSpec) -> Tuple[str, _DocType, int]:
         return m.name, None, len(m.argspec)
 
-    def to_propput_keys(self, m):
-        # type: (_DispMemberSpec) -> Tuple[str, Optional[str], int]
+    def to_propput_keys(self, m: _DispMemberSpec) -> Tuple[str, _DocType, int]:
         return m.name, None, len(m.argspec) - 1
 
-    def to_propputref_keys(self, m):
-        # type: (_DispMemberSpec) -> Tuple[str, Optional[str], int]
+    def to_propputref_keys(self, m: _DispMemberSpec) -> Tuple[str, _DocType, int]:
         return m.name, None, len(m.argspec) - 1
 
 
 class ComMemberGenerator(object):
-    def __init__(self, cls_name, vtbl_offset, iid):
-        # type: (str, int, comtypes.GUID) -> None
+    def __init__(self, cls_name: str, vtbl_offset: int, iid: comtypes.GUID) -> None:
         self._vtbl_offset = vtbl_offset
         self._iid = iid
         self._props = ComPropertyGenerator(cls_name)
         # sequence of (name: str, func: Callable, raw_func: Callable, is_prop: bool)
-        self._mths = (
-            []
-        )  # type: List[Tuple[str, Callable[..., Any], Callable[..., Any], bool]]
+        self._mths: List[Tuple[str, Callable[..., Any], Callable[..., Any], bool]] = []
         self._member_index = 0
 
-    def add(self, m):
-        # type: (_ComMemberSpec) -> None
+    def add(self, m: _ComMemberSpec) -> None:
         proto = ctypes.WINFUNCTYPE(m.restype, *m.argtypes)
         # a low level unbound method calling the com method.
         # attach it with a private name (__com_AddRef, for example),
@@ -390,8 +384,9 @@ class ComMemberGenerator(object):
         self._mths.append((m.name, func, raw_func, is_prop))
         self._member_index += 1
 
-    def _fix_args(self, m, func):
-        # type: (_ComMemberSpec, Callable[..., Any]) -> Callable[..., Any]
+    def _fix_args(
+        self, m: _ComMemberSpec, func: Callable[..., Any]
+    ) -> Callable[..., Any]:
         """This is a workaround. See `_fix_inout_args` docstring and comments."""
         if m.paramflags:
             dirflags = [(p[0] & 3) for p in m.paramflags]
@@ -407,16 +402,12 @@ class ComMemberGenerator(object):
 
 
 class DispMemberGenerator(object):
-    def __init__(self, cls_name):
-        # type: (str) -> None
+    def __init__(self, cls_name: str) -> None:
         self._props = DispPropertyGenerator(cls_name)
         # sequence of (name: str, func_or_prop: Callable | property, is_prop: bool)
-        self._items = (
-            []
-        )  # type: List[Tuple[str, _UnionT[Callable[..., Any], property], bool]]
+        self._items: List[Tuple[str, _UnionT[Callable[..., Any], property], bool]] = []
 
-    def add(self, m):
-        # type: (_DispMemberSpec) -> None
+    def add(self, m: _DispMemberSpec) -> None:
         if m.what == "DISPPROPERTY":  # DISPPROPERTY
             assert not m.argspec  # XXX does not yet work for properties with parameters
             is_prop = True
@@ -431,8 +422,7 @@ class DispMemberGenerator(object):
             else:
                 self._items.append((m.name, func, is_prop))
 
-    def _make_disp_property(self, m):
-        # type: (_DispMemberSpec) -> property
+    def _make_disp_property(self, m: _DispMemberSpec) -> property:
         # XXX doc string missing in property
         memid = m.memid
 
@@ -451,8 +441,7 @@ class DispMemberGenerator(object):
         return property(fget, fset)
 
     # Should the funcs/mths we create have restype and/or argtypes attributes?
-    def _make_disp_method(self, m):
-        # type: (_DispMemberSpec) -> Callable[..., Any]
+    def _make_disp_method(self, m: _DispMemberSpec) -> Callable[..., Any]:
         memid = m.memid
         if "propget" in m.idlflags:
 
