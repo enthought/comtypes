@@ -187,7 +187,7 @@ def name_friendly_module(tlib):
 
 ################################################################
 
-_DefValType = _UnionT[lcid, Any, None]
+_DefValType = _UnionT["lcid", Any, None]
 _IdlFlagType = _UnionT[str, dispid, helpstring]
 
 
