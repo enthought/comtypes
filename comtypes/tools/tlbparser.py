@@ -8,7 +8,6 @@ from typing import (
     List,
     Optional,
     Type,
-    TYPE_CHECKING,
     TypeVar,
     Tuple,
     Union as _UnionT,
