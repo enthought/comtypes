@@ -18,8 +18,7 @@ logger = logging.getLogger(__name__)
 PATH = os.environ["PATH"].split(os.pathsep)
 
 
-def _my_import(fullname):
-    # type: (str) -> types.ModuleType
+def _my_import(fullname: str) -> types.ModuleType:
     """helper function to import dotted modules"""
     import comtypes.gen as g
 
@@ -28,8 +27,7 @@ def _my_import(fullname):
     return importlib.import_module(fullname)
 
 
-def _resolve_filename(tlib_string, dirpath):
-    # type: (str, str) -> Tuple[str, bool]
+def _resolve_filename(tlib_string: str, dirpath: str) -> Tuple[str, bool]:
     """Tries to make sense of a type library specified as a string.
 
     Args:
@@ -58,8 +56,7 @@ def _resolve_filename(tlib_string, dirpath):
     return tlib_string, False
 
 
-def GetModule(tlib):
-    # type: (_UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType
+def GetModule(tlib: _UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType:
     """Create a module wrapping a COM typelibrary on demand.
 
     'tlib' must be ...
@@ -106,7 +103,7 @@ def GetModule(tlib):
         # if a relative pathname is used, we try to interpret it relative to
         # the directory of the calling module (if not from command line)
         frame = sys._getframe(1)
-        _file_ = frame.f_globals.get("__file__", None)  # type: str
+        _file_: str = frame.f_globals.get("__file__", None)
         pathname, is_abs = _resolve_filename(
             tlib_string, _file_ and os.path.dirname(_file_)
         )
@@ -134,8 +131,7 @@ def GetModule(tlib):
     return _create_friendly_module(tlib, modulename)
 
 
-def _load_tlib(obj):
-    # type: (Any) -> typeinfo.ITypeLib
+def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
     """Load a pointer of ITypeLib on demand."""
     # obj is a filepath or a ProgID
     if isinstance(obj, str):
@@ -171,8 +167,7 @@ def _load_tlib(obj):
     raise TypeError("'%r' is not supported type for loading typelib" % obj)
 
 
-def _create_module_in_file(modulename, code):
-    # type: (str, str) -> types.ModuleType
+def _create_module_in_file(modulename: str, code: str) -> types.ModuleType:
     """create module in file system, and import it"""
     # `modulename` is 'comtypes.gen.xxx'
     filename = "%s.py" % modulename.split(".")[-1]
@@ -184,8 +179,7 @@ def _create_module_in_file(modulename, code):
     return _my_import(modulename)
 
 
-def _create_module_in_memory(modulename, code):
-    # type: (str, str) -> types.ModuleType
+def _create_module_in_memory(modulename: str, code: str) -> types.ModuleType:
     """create module in memory system, and import it"""
     # `modulename` is 'comtypes.gen.xxx'
     import comtypes.gen as g
@@ -199,8 +193,9 @@ def _create_module_in_memory(modulename, code):
     return mod
 
 
-def _create_friendly_module(tlib, modulename):
-    # type: (typeinfo.ITypeLib, str) -> types.ModuleType
+def _create_friendly_module(
+    tlib: typeinfo.ITypeLib, modulename: str
+) -> types.ModuleType:
     """helper which creates and imports the friendly-named module."""
     try:
         mod = _my_import(modulename)
@@ -220,8 +215,9 @@ def _create_friendly_module(tlib, modulename):
     return _create_module_in_file(modulename, code)
 
 
-def _create_wrapper_module(tlib, pathname):
-    # type: (typeinfo.ITypeLib, Optional[str]) -> types.ModuleType
+def _create_wrapper_module(
+    tlib: typeinfo.ITypeLib, pathname: Optional[str]
+) -> types.ModuleType:
     """helper which creates and imports the real typelib wrapper module."""
     modulename = codegenerator.name_wrapper_module(tlib)
     if modulename in sys.modules:
@@ -245,9 +241,8 @@ def _create_wrapper_module(tlib, pathname):
     return _create_module_in_file(modulename, code)
 
 
-def _get_known_symbols():
-    # type: () -> Dict[str, str]
-    known_symbols = {}  # type: Dict[str, str]
+def _get_known_symbols() -> Dict[str, str]:
+    known_symbols: Dict[str, str] = {}
     for mod_name in (
         "comtypes.persist",
         "comtypes.typeinfo",
@@ -258,7 +253,7 @@ def _get_known_symbols():
     ):
         mod = importlib.import_module(mod_name)
         if hasattr(mod, "__known_symbols__"):
-            names = mod.__known_symbols__  # type: List[str]
+            names: List[str] = mod.__known_symbols__
         else:
             names = list(mod.__dict__)
         for name in names:
