@@ -103,9 +103,9 @@ def GetModule(tlib: _UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType:
         # if a relative pathname is used, we try to interpret it relative to
         # the directory of the calling module (if not from command line)
         frame = sys._getframe(1)
-        _file_: str = frame.f_globals.get("__file__", None)
+        _file_: Optional[str] = frame.f_globals.get("__file__", None)
         pathname, is_abs = _resolve_filename(
-            tlib_string, _file_ and os.path.dirname(_file_)
+            tlib_string, _file_ and os.path.dirname(_file_)  # type: ignore
         )
         logger.debug("GetModule(%s), resolved: %s", pathname, is_abs)
         tlib = _load_tlib(pathname)  # don't register
