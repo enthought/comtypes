@@ -12,6 +12,9 @@
 This package works on Windows only.
 - [`comtypes==1.1.7`](https://pypi.org/project/comtypes/1.1.7/) is the last version supporting Windows CE.
 
+Available on `Python` 2.7 and 3.3-3.11.
+- [Supporting `Python` 2.7 will be dropped](#ongoing-plans).
+
 ## Where to get it
 
 The source code is currently hosted on GitHub at:
@@ -38,6 +41,17 @@ But these third-parties are not required as a prerequisite for runtime.
 
 Tracking issues, reporting bugs and contributing to the codebase and documentation are on GitHub at:
 https://github.com/enthought/comtypes
+
+<a id="ongoing-plans"></a>
+### Ongoing plans
+For the time being, the development target branch of this package will be the [`drop_py2` branch](https://github.com/enthought/comtypes/tree/drop_py2) and the [`master` branch](https://github.com/enthought/comtypes/tree/master) will be in maintenance-only-mode.
+
+As the name suggests, `drop_py2` is a mid-term-planning branch to drop supporting `Python` 2.x from this package, and start supporting `Python` 3.x only.
+
+The `drop_py2` branch will be merged into the `master` branch in the future, and the `master` branch will back to the development target branch.
+Until then, no changes will be made to the `master` branch except in the case of corresponding to regressions.
+
+Please see [the GitHub issue](https://github.com/enthought/comtypes/issues/392) for policy and progress.
 
 ## Documentation:
 
