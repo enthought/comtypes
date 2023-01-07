@@ -15,12 +15,12 @@ from comtypes import _CData
 import comtypes
 
 
-PositionalParamFlagType = Tuple[int, Optional[str]]
-OptionalParamFlagType = Tuple[int, Optional[str], Any]
-ParamFlagType = _UnionT[PositionalParamFlagType, OptionalParamFlagType]
-PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
-OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
-ArgSpecElmType = _UnionT[PositionalArgSpecElmType, OptionalArgSpecElmType]
+_PositionalParamFlagType = Tuple[int, Optional[str]]
+_OptionalParamFlagType = Tuple[int, Optional[str], Any]
+_ParamFlagType = _UnionT[_PositionalParamFlagType, _OptionalParamFlagType]
+_PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
+_OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
+_ArgSpecElmType = _UnionT[_PositionalArgSpecElmType, _OptionalArgSpecElmType]
 
 
 _PARAMFLAGS = {
@@ -50,8 +50,8 @@ def _unpack_argspec(
 
 
 def _resolve_argspec(
-    items: Tuple[ArgSpecElmType, ...]
-) -> Tuple[Tuple[ParamFlagType, ...], Tuple[Type[_CData], ...]]:
+    items: Tuple[_ArgSpecElmType, ...]
+) -> Tuple[Tuple[_ParamFlagType, ...], Tuple[Type[_CData], ...]]:
     """Unpacks and converts from argspec to paramflags and argtypes.
 
     - paramflags is a sequence of `(pflags: int, argname: str, | None[, defval: Any])`.
@@ -104,7 +104,7 @@ class _ComMemberSpec(_MemberSpec):
 
     def __init__(self, restype, name, argtypes, paramflags, idlflags, doc):
         self.argtypes: Tuple[Type[_CData], ...] = argtypes
-        self.paramflags: Optional[Tuple[ParamFlagType, ...]] = paramflags
+        self.paramflags: Optional[Tuple[_ParamFlagType, ...]] = paramflags
         self.doc: Optional[str] = doc
         super(_ComMemberSpec, self).__init__(name, idlflags, restype)
 
@@ -130,7 +130,7 @@ class _DispMemberSpec(_MemberSpec):
 
     def __init__(self, what, name, idlflags, restype, argspec):
         self.what: str = what
-        self.argspec: Tuple[ArgSpecElmType, ...] = argspec
+        self.argspec: Tuple[_ArgSpecElmType, ...] = argspec
         super(_DispMemberSpec, self).__init__(name, idlflags, restype)
 
     @property
@@ -155,7 +155,7 @@ _DocType = Optional[str]
 def _fix_inout_args(
     func: Callable[..., Any],
     argtypes: Tuple[Type[_CData], ...],
-    paramflags: Tuple[ParamFlagType, ...],
+    paramflags: Tuple[_ParamFlagType, ...],
 ) -> Callable[..., Any]:
     """This function provides a workaround for a bug in `ctypes`.
 
