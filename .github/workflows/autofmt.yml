@@ -6,9 +6,6 @@ jobs:
     formatter:
         name: auto-formatter
         runs-on: windows-latest
-        # Because auto-commit to the branch from a forked repository will fail,
-        # so this GHA will be triggered by PRs from the source repository only.
-        if: github.repository == github.event.pull_request.head.repo.full_name
         steps:
           - name: Checkout
             uses: actions/checkout@v3
@@ -18,9 +15,19 @@ jobs:
               python-version: 3.7
           - name: Install black
             run: pip install black==22.12.0
-          - name: Format
+          # PRs from the forked repo will trigger format-checking only.
+          # Auto-commit to the branch from a forked repo will fail without
+          # any access tokens or permissions.
+          # So formatting and auto-commit will be triggered by PRs from the
+          # base repo only.
+          - if: github.repository != github.event.pull_request.head.repo.full_name
+            name: Check style
+            run: python -m black comtypes/. --check --diff --color
+          - if: github.repository == github.event.pull_request.head.repo.full_name
+            name: Format
             run: python -m black comtypes/.
-          - name: Auto-commit
+          - if: github.repository == github.event.pull_request.head.repo.full_name
+            name: Auto-commit
             uses: stefanzweifel/git-auto-commit-action@v4
             with:
               branch: ${{ github.head_ref }}
