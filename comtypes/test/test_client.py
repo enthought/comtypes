@@ -12,10 +12,6 @@ comtypes.client.GetModule("scrrun.dll")
 from comtypes.gen import Scripting
 
 
-
-
-
-
 class Test_GetModule(ut.TestCase):
     def test_tlib_string(self):
         mod = comtypes.client.GetModule("scrrun.dll")
