@@ -18,16 +18,6 @@ else:
     text_type = unicode
 
 
-# HACK: Prefer to use `contextlib.redirect_stdout`, but it's New in version 3.4
-@contextlib.contextmanager
-def silence_stdout():
-    old_target = sys.stdout
-    try:
-        with open(os.devnull, "w") as new_target:
-            sys.stdout = new_target
-            yield new_target
-    finally:
-        sys.stdout = old_target
 
 
 class Test_GetModule(ut.TestCase):
@@ -267,9 +257,8 @@ class Test_Constants(ut.TestCase):
         # float (Constant c_float)
         self.assertEqual(consts.Speech_Default_Weight, sapi.Speech_Default_Weight)
 
-    @ut.skipUnless(sys.version_info >= (3, 0), "Some words are not in Python2 keywords")
     def test_munged_definitions(self):
-        with silence_stdout():  # supress warnings
+        with contextlib.redirect_stdout(None):  # supress warnings
             MSVidCtlLib = comtypes.client.GetModule("msvidctl.dll")
             consts = comtypes.client.Constants("msvidctl.dll")
         # `None` is a Python3 keyword.
