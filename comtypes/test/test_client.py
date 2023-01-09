@@ -12,24 +12,6 @@ comtypes.client.GetModule("scrrun.dll")
 from comtypes.gen import Scripting
 
 
-if sys.version_info >= (3, 0):
-    text_type = str
-else:
-    text_type = unicode
-
-
-# HACK: Prefer to use `contextlib.redirect_stdout`, but it's New in version 3.4
-@contextlib.contextmanager
-def silence_stdout():
-    old_target = sys.stdout
-    try:
-        with open(os.devnull, "w") as new_target:
-            sys.stdout = new_target
-            yield new_target
-    finally:
-        sys.stdout = old_target
-
-
 class Test_GetModule(ut.TestCase):
     def test_tlib_string(self):
         mod = comtypes.client.GetModule("scrrun.dll")
@@ -140,7 +122,6 @@ class Test_CreateObject(ut.TestCase):
 
     def test_clsid_string(self):
         # create from string clsid
-        comtypes.client.CreateObject(text_type(Scripting.Dictionary._reg_clsid_))
         comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
 
     def test_remote(self):
@@ -267,9 +248,8 @@ class Test_Constants(ut.TestCase):
         # float (Constant c_float)
         self.assertEqual(consts.Speech_Default_Weight, sapi.Speech_Default_Weight)
 
-    @ut.skipUnless(sys.version_info >= (3, 0), "Some words are not in Python2 keywords")
     def test_munged_definitions(self):
-        with silence_stdout():  # supress warnings
+        with contextlib.redirect_stdout(None):  # supress warnings
             MSVidCtlLib = comtypes.client.GetModule("msvidctl.dll")
             consts = comtypes.client.Constants("msvidctl.dll")
         # `None` is a Python3 keyword.
