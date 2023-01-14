@@ -1029,7 +1029,7 @@ class CodeGenerator(object):
             print("        return self", file=self.stream)
             print(file=self.stream)
 
-            print("    def next(self):", file=self.stream)
+            print("    def __next__(self):", file=self.stream)
             print("        item, fetched = self.Next(1)", file=self.stream)
             print("        if fetched:", file=self.stream)
             print("            return item", file=self.stream)
