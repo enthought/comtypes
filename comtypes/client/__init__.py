@@ -223,13 +223,13 @@ def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
 
 
 @overload
-def CreateObject(progid: _UnionT[str, CoClass, GUID]) -> Any:
+def CreateObject(progid: _UnionT[str, Type[CoClass], GUID]) -> Any:
     ...
 
 
 @overload
 def CreateObject(
-    progid: _UnionT[str, CoClass, GUID],
+    progid: _UnionT[str, Type[CoClass], GUID],
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
     interface: Optional[Type[_T_IUnknown]] = None,
@@ -240,7 +240,7 @@ def CreateObject(
 
 
 def CreateObject(
-    progid: _UnionT[str, CoClass, GUID],  # which object to create
+    progid: _UnionT[str, Type[CoClass], GUID],  # which object to create
     clsctx: Optional[int] = None,  # how to create the object
     machine: Optional[str] = None,  # where to create the object
     interface: Optional[Type[IUnknown]] = None,  # the interface we want
@@ -289,7 +289,7 @@ def CreateObject(
             pServerInfo,
         )
         if machine is not None and pServerInfo is not None:
-            msg = "You can notset both the machine name and server info."
+            msg = "You cannot set both the machine name and server info."
             raise ValueError(msg)
         obj = comtypes.CoCreateInstanceEx(
             clsid,
