@@ -876,6 +876,7 @@ class CodeGenerator(object):
         )
         print(file=self.stream)
         print(file=self.stream)
+        self.names.add("Library")
 
     def External(self, ext: typedesc.External) -> None:
         modname = name_wrapper_module(ext.tlib)
