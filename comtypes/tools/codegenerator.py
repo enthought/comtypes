@@ -495,6 +495,7 @@ class CodeGenerator(object):
                     os.path.abspath(os.path.join(comtypes.gen.__path__[0], path))
                 )
                 assert os.path.isfile(p)
+            self.names.add("typelib_path")
 
     def generate_code(self, items, filename):
 
