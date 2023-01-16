@@ -1,18 +1,21 @@
 import contextlib
 import unittest as ut
 
-from comtypes import POINTER
+from ctypes import POINTER
+from comtypes import GUID
 import comtypes.client
 
 
-class Test_Enum(ut.TestCase):
-    def test_enum(self):
+class Test_IEnum(ut.TestCase):
+    def test_ienum(self):
         with contextlib.redirect_stdout(None):  # supress warnings, see test_client.py
             comtypes.client.GetModule("msvidctl.dll")
         from comtypes.gen import MSVidCtlLib as vidlib
 
+        CLSID_AviSplitter = GUID("{1b544c20-fd0b-11ce-8c63-00aa0044b51e}")
+
         avisplitter = comtypes.client.CreateObject(
-            "{1b544c20-fd0b-11ce-8c63-00aa0044b51e}",  # CLSID_AviSplitter
+            CLSID_AviSplitter,
             interface=vidlib.IBaseFilter,
         )
         pinEnum = avisplitter.EnumPins()
