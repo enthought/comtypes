@@ -604,10 +604,10 @@ class CodeGenerator(object):
         print(file=output)
         print(file=output)
         quoted_names = ", ".join(repr(str(n)) for n in self.names)
-        dunder_all = "__all__ = [%s]" % quoted_names
+        dunder_all = f"__all__ = [{quoted_names}]"
         if len(dunder_all) > 80:
             wrapped_quoted_names = "\n".join(txtwrapper.wrap(quoted_names))
-            dunder_all = "__all__ = [\n%s\n]" % wrapped_quoted_names
+            dunder_all = f"__all__ = [\n{wrapped_quoted_names}\n]"
         print(dunder_all, file=output)
         return output.getvalue()
 
