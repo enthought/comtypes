@@ -14,6 +14,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
     Tuple,
     Union as _UnionT,
 )
@@ -1380,6 +1381,10 @@ class ImportedNamespaces(object):
                 IUnknown
             )
             import ctypes.wintypes
+            >>> assert imports.get_symbols() == {
+            ...     'Decimal', 'GUID', 'COMMETHOD', 'DISPMETHOD', 'IUnknown',
+            ...     'dispid', 'CoClass', 'BSTR', 'DISPPROPERTY'
+            ... }
             >>> print(imports.getvalue(for_stub=True))
             from ctypes import *
             import datetime
@@ -1432,6 +1437,14 @@ class ImportedNamespaces(object):
             return self.data[import_] == from_
         return False
 
+    def get_symbols(self) -> Set[str]:
+        names = set()
+        for key, val in self.data.items():
+            if val is None or key == "*":
+                continue
+            names.add(key)
+        return names
+
     def _make_line(self, from_, imports, for_stub):
         if for_stub:
             import_ = ", ".join("%s as %s" % (n, n) for n in imports)
@@ -1483,8 +1496,17 @@ class DeclaredNamespaces(object):
             >>> print(declarations.getvalue())
             STRING = c_char_p
             _lcid = 0  # change this if required
+            >>> assert declarations.get_symbols() == {
+            ...     'STRING', '_lcid'
+            ... }
         """
         self.data[(alias, definition)] = comment
+
+    def get_symbols(self) -> Set[str]:
+        names = set()
+        for alias, _ in self.data.keys():
+            names.add(alias)
+        return names
 
     def getvalue(self):
         lines = []
