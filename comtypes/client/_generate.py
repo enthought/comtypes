@@ -187,7 +187,7 @@ def _create_module_in_memory(modulename: str, code: str) -> types.ModuleType:
 
 
 class ModuleGenerator(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.codegen = codegenerator.CodeGenerator(_get_known_symbols())
 
     def generate(
