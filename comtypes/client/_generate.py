@@ -121,14 +121,7 @@ def GetModule(tlib: _UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType:
         pathname = None
         tlib = _load_tlib(tlib)
     logger.debug("GetModule(%s)", tlib.GetLibAttr())
-    # create and import the real typelib wrapper module
-    mod = _create_wrapper_module(tlib, pathname)
-    # try to get the friendly-name, if not, returns the real typelib wrapper module
-    modulename = codegenerator.name_friendly_module(tlib)
-    if modulename is None:
-        return mod
-    # create and import the friendly-named module
-    return _create_friendly_module(tlib, modulename)
+    return ModuleGenerator().generate(tlib, pathname)
 
 
 def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
@@ -193,52 +186,66 @@ def _create_module_in_memory(modulename: str, code: str) -> types.ModuleType:
     return mod
 
 
-def _create_friendly_module(
-    tlib: typeinfo.ITypeLib, modulename: str
-) -> types.ModuleType:
-    """helper which creates and imports the friendly-named module."""
-    try:
-        mod = _my_import(modulename)
-    except Exception as details:
-        logger.info("Could not import %s: %s", modulename, details)
-    else:
-        return mod
-    # the module is always regenerated if the import fails
-    logger.info("# Generating %s", modulename)
-    # determine the Python module name
-    modname = codegenerator.name_wrapper_module(tlib).split(".")[-1]
-    code = "from comtypes.gen import %s\n" % modname
-    code += "globals().update(%s.__dict__)\n" % modname
-    code += "__name__ = '%s'" % modulename
-    if comtypes.client.gen_dir is None:
-        return _create_module_in_memory(modulename, code)
-    return _create_module_in_file(modulename, code)
+class ModuleGenerator(object):
+    def __init__(self):
+        self.codegen = codegenerator.CodeGenerator(_get_known_symbols())
 
+    def generate(
+        self, tlib: typeinfo.ITypeLib, pathname: Optional[str]
+    ) -> types.ModuleType:
+        # create and import the real typelib wrapper module
+        mod = self._create_wrapper_module(tlib, pathname)
+        # try to get the friendly-name, if not, returns the real typelib wrapper module
+        modulename = codegenerator.name_friendly_module(tlib)
+        if modulename is None:
+            return mod
+        # create and import the friendly-named module
+        return self._create_friendly_module(tlib, modulename)
 
-def _create_wrapper_module(
-    tlib: typeinfo.ITypeLib, pathname: Optional[str]
-) -> types.ModuleType:
-    """helper which creates and imports the real typelib wrapper module."""
-    modulename = codegenerator.name_wrapper_module(tlib)
-    if modulename in sys.modules:
-        return sys.modules[modulename]
-    try:
-        return _my_import(modulename)
-    except Exception as details:
-        logger.info("Could not import %s: %s", modulename, details)
-    # generate the module since it doesn't exist or is out of date
-    logger.info("# Generating %s", modulename)
-    p = tlbparser.TypeLibParser(tlib)
-    if pathname is None:
-        pathname = tlbparser.get_tlib_filename(tlib)
-    items = list(p.parse().values())
-    codegen = codegenerator.CodeGenerator(_get_known_symbols())
-    code = codegen.generate_code(items, filename=pathname)
-    for ext_tlib in codegen.externals:  # generates dependency COM-lib modules
-        GetModule(ext_tlib)
-    if comtypes.client.gen_dir is None:
-        return _create_module_in_memory(modulename, code)
-    return _create_module_in_file(modulename, code)
+    def _create_friendly_module(
+        self, tlib: typeinfo.ITypeLib, modulename: str
+    ) -> types.ModuleType:
+        """helper which creates and imports the friendly-named module."""
+        try:
+            mod = _my_import(modulename)
+        except Exception as details:
+            logger.info("Could not import %s: %s", modulename, details)
+        else:
+            return mod
+        # the module is always regenerated if the import fails
+        logger.info("# Generating %s", modulename)
+        # determine the Python module name
+        modname = codegenerator.name_wrapper_module(tlib).split(".")[-1]
+        code = "from comtypes.gen import %s\n" % modname
+        code += "globals().update(%s.__dict__)\n" % modname
+        code += "__name__ = '%s'" % modulename
+        if comtypes.client.gen_dir is None:
+            return _create_module_in_memory(modulename, code)
+        return _create_module_in_file(modulename, code)
+
+    def _create_wrapper_module(
+        self, tlib: typeinfo.ITypeLib, pathname: Optional[str]
+    ) -> types.ModuleType:
+        """helper which creates and imports the real typelib wrapper module."""
+        modulename = codegenerator.name_wrapper_module(tlib)
+        if modulename in sys.modules:
+            return sys.modules[modulename]
+        try:
+            return _my_import(modulename)
+        except Exception as details:
+            logger.info("Could not import %s: %s", modulename, details)
+        # generate the module since it doesn't exist or is out of date
+        logger.info("# Generating %s", modulename)
+        p = tlbparser.TypeLibParser(tlib)
+        if pathname is None:
+            pathname = tlbparser.get_tlib_filename(tlib)
+        items = list(p.parse().values())
+        code = self.codegen.generate_code(items, filename=pathname)
+        for ext_tlib in self.codegen.externals:  # generates dependency COM-lib modules
+            GetModule(ext_tlib)
+        if comtypes.client.gen_dir is None:
+            return _create_module_in_memory(modulename, code)
+        return _create_module_in_file(modulename, code)
 
 
 def _get_known_symbols() -> Dict[str, str]:
