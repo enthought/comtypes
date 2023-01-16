@@ -497,7 +497,7 @@ class CodeGenerator(object):
                 assert os.path.isfile(p)
             self.names.add("typelib_path")
 
-    def generate_code(self, items, filename):
+    def generate_wrapper_code(self, items, filename):
 
         tlib_mtime = None
 

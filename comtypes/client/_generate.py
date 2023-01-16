@@ -240,7 +240,7 @@ class ModuleGenerator(object):
         if pathname is None:
             pathname = tlbparser.get_tlib_filename(tlib)
         items = list(p.parse().values())
-        code = self.codegen.generate_code(items, filename=pathname)
+        code = self.codegen.generate_wrapper_code(items, filename=pathname)
         for ext_tlib in self.codegen.externals:  # generates dependency COM-lib modules
             GetModule(ext_tlib)
         if comtypes.client.gen_dir is None:
