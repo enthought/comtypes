@@ -215,10 +215,8 @@ class ModuleGenerator(object):
         # the module is always regenerated if the import fails
         logger.info("# Generating %s", modulename)
         # determine the Python module name
-        modname = codegenerator.name_wrapper_module(tlib).split(".")[-1]
-        code = "from comtypes.gen import %s\n" % modname
-        code += "globals().update(%s.__dict__)\n" % modname
-        code += "__name__ = '%s'" % modulename
+        modname = codegenerator.name_wrapper_module(tlib)
+        code = self.codegen.generate_friendly_code(modname)
         if comtypes.client.gen_dir is None:
             return _create_module_in_memory(modulename, code)
         return _create_module_in_file(modulename, code)

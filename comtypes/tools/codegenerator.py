@@ -558,6 +558,28 @@ class CodeGenerator(object):
             print("_check_version(%r, %f)" % (version, tlib_mtime), file=output)
         return output.getvalue()
 
+    def generate_friendly_code(self, modname: str) -> str:
+        # `modname` is wrapper module name like `comtypes.gen._xxxx..._x_x_x`
+        output = io.StringIO()
+        txtwrapper = textwrap.TextWrapper(
+            subsequent_indent="    ", initial_indent="    ", break_long_words=False
+        )
+        joined_names = ", ".join(str(n) for n in self.names)
+        symbols = f"from {modname} import {joined_names}"
+        if len(symbols) > 80:
+            wrapped_names = "\n".join(txtwrapper.wrap(joined_names))
+            symbols = f"from {modname} import (\n{wrapped_names}\n)"
+        print(symbols, file=output)
+        print(file=output)
+        print(file=output)
+        quoted_names = ", ".join(repr(str(n)) for n in self.names)
+        dunder_all = "__all__ = [%s]" % quoted_names
+        if len(dunder_all) > 80:
+            wrapped_quoted_names = "\n".join(txtwrapper.wrap(quoted_names))
+            dunder_all = "__all__ = [\n%s\n]" % wrapped_quoted_names
+        print(dunder_all, file=output)
+        return output.getvalue()
+
     def need_VARIANT_imports(self, value):
         text = repr(value)
         if "Decimal(" in text:
