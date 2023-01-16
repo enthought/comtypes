@@ -1,7 +1,7 @@
 import contextlib
 import unittest as ut
 
-import comtypes
+from comtypes import POINTER
 import comtypes.client
 
 
@@ -15,7 +15,10 @@ class Test_Enum(ut.TestCase):
             "{1b544c20-fd0b-11ce-8c63-00aa0044b51e}",  # CLSID_AviSplitter
             interface=vidlib.IBaseFilter,
         )
-        pins = list(avisplitter.EnumPins())
+        pinEnum = avisplitter.EnumPins()
+        self.assertIsInstance(pinEnum, POINTER(vidlib.IEnumPins))
+        # make sure pinEnum is iterable and non-empty
+        pins = list(pinEnum)
         self.assertGreater(len(pins), 0)
 
 
