@@ -592,7 +592,10 @@ class CodeGenerator(object):
         txtwrapper = textwrap.TextWrapper(
             subsequent_indent="    ", initial_indent="    ", break_long_words=False
         )
-        joined_names = ", ".join(str(n) for n in self.names)
+        importing_symbols = set(self.names)
+        importing_symbols.update(self.imports.get_symbols())
+        importing_symbols.update(self.declarations.get_symbols())
+        joined_names = ", ".join(str(n) for n in importing_symbols)
         symbols = f"from {modname} import {joined_names}"
         if len(symbols) > 80:
             wrapped_names = "\n".join(txtwrapper.wrap(joined_names))
