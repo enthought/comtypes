@@ -7,7 +7,16 @@ import logging
 import os
 import sys
 import textwrap
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union as _UnionT
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union as _UnionT,
+)
 import io
 
 import comtypes
@@ -497,7 +506,9 @@ class CodeGenerator(object):
                 assert os.path.isfile(p)
             self.names.add("typelib_path")
 
-    def generate_wrapper_code(self, items, filename):
+    def generate_wrapper_code(
+        self, tdescs: Sequence[Any], filename: Optional[str]
+    ) -> str:
 
         tlib_mtime = None
 
@@ -521,7 +532,7 @@ class CodeGenerator(object):
         self.declarations.add("_lcid", "0", "change this if required")
         self._generate_typelib_path(filename)
 
-        items = set(items)
+        items = set(tdescs)
         loops = 0
         while items:
             loops += 1
