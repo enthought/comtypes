@@ -509,7 +509,15 @@ class CodeGenerator(object):
     def generate_wrapper_code(
         self, tdescs: Sequence[Any], filename: Optional[str]
     ) -> str:
+        """Returns the code for the COM type library wrapper module.
 
+        The returned `Python` code string is containing definitions of interfaces,
+        coclasses, constants, and structures.
+
+        The module will have long name that is derived from the type library guid, lcid
+        and version numbers.
+        Such as `comtypes.gen._xxxxxxxx_xxxx_xxxx_xxxx_xxxxxxxxxxxx_l_M_m`.
+        """
         tlib_mtime = None
 
         if filename is not None:
@@ -570,7 +578,15 @@ class CodeGenerator(object):
         return output.getvalue()
 
     def generate_friendly_code(self, modname: str) -> str:
-        # `modname` is wrapper module name like `comtypes.gen._xxxx..._x_x_x`
+        """Returns the code for the COM type library friendly module.
+
+        The returned `Python` code string is containing `from {modname} import
+        DefinedInWrapper, ...` and `__all__ = ['DefinedInWrapper', ...]`
+        The `modname` is the wrapper module name like `comtypes.gen._xxxx..._x_x_x`.
+
+        The module will have shorter name that is derived from the type library name.
+        Such as "comtypes.gen.stdole" and "comtypes.gen.Excel".
+        """
         output = io.StringIO()
         txtwrapper = textwrap.TextWrapper(
             subsequent_indent="    ", initial_indent="    ", break_long_words=False
