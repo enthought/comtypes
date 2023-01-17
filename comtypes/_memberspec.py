@@ -175,9 +175,14 @@ def _fix_inout_args(
         # Indexed by order in the output
         outargs = {}
         outnum = 0
+        param_index = 0
+        # Go through all expected arguments and match them to the provided arguments.
+        # param_index first counts through the positional and then through the keyword arguments.
         for i, info in enumerate(paramflags):
             direction = info[0]
-            if direction & 3 == 3:
+            dir_in = direction & 1 == 1
+            dir_out = direction & 2 == 2
+            if dir_in and dir_out:
                 # This is an [in, out] parameter.
                 #
                 # Determine name and required type of the parameter.
@@ -190,7 +195,7 @@ def _fix_inout_args(
                 # keyword arg.
                 try:
                     try:
-                        v = args[i]
+                        v = args[param_index]
                     except IndexError:
                         v = kw[name]
                 except KeyError:
@@ -216,13 +221,15 @@ def _fix_inout_args(
                         v = atyp.from_param(v)
                         assert not isinstance(v, BYREFTYPE)
                 outargs[outnum] = v
-                outnum += 1
-                if len(args) > i:
-                    args[i] = v
+                if param_index < len(args): # the current parameter is positional, not keyword
+                    args[param_index] = v
                 else:
                     kw[name] = v
-            elif direction & 2 == 2:
+            if dir_out:
                 outnum += 1
+            if dir_in:
+                param_index += 1
+
         rescode = func(self, *args, **kw)
         # If there is only a single output value, then do not expect it to
         # be iterable.
