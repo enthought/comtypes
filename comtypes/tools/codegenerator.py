@@ -7,7 +7,17 @@ import logging
 import os
 import sys
 import textwrap
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union as _UnionT
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union as _UnionT,
+)
 import io
 
 import comtypes
@@ -495,9 +505,20 @@ class CodeGenerator(object):
                     os.path.abspath(os.path.join(comtypes.gen.__path__[0], path))
                 )
                 assert os.path.isfile(p)
+            self.names.add("typelib_path")
 
-    def generate_code(self, items, filename):
+    def generate_wrapper_code(
+        self, tdescs: Sequence[Any], filename: Optional[str]
+    ) -> str:
+        """Returns the code for the COM type library wrapper module.
 
+        The returned `Python` code string is containing definitions of interfaces,
+        coclasses, constants, and structures.
+
+        The module will have long name that is derived from the type library guid, lcid
+        and version numbers.
+        Such as `comtypes.gen._xxxxxxxx_xxxx_xxxx_xxxx_xxxxxxxxxxxx_l_M_m`.
+        """
         tlib_mtime = None
 
         if filename is not None:
@@ -520,7 +541,7 @@ class CodeGenerator(object):
         self.declarations.add("_lcid", "0", "change this if required")
         self._generate_typelib_path(filename)
 
-        items = set(items)
+        items = set(tdescs)
         loops = 0
         while items:
             loops += 1
@@ -555,6 +576,39 @@ class CodeGenerator(object):
         print(file=output)
         if tlib_mtime is not None:
             print("_check_version(%r, %f)" % (version, tlib_mtime), file=output)
+        return output.getvalue()
+
+    def generate_friendly_code(self, modname: str) -> str:
+        """Returns the code for the COM type library friendly module.
+
+        The returned `Python` code string is containing `from {modname} import
+        DefinedInWrapper, ...` and `__all__ = ['DefinedInWrapper', ...]`
+        The `modname` is the wrapper module name like `comtypes.gen._xxxx..._x_x_x`.
+
+        The module will have shorter name that is derived from the type library name.
+        Such as "comtypes.gen.stdole" and "comtypes.gen.Excel".
+        """
+        output = io.StringIO()
+        txtwrapper = textwrap.TextWrapper(
+            subsequent_indent="    ", initial_indent="    ", break_long_words=False
+        )
+        importing_symbols = set(self.names)
+        importing_symbols.update(self.imports.get_symbols())
+        importing_symbols.update(self.declarations.get_symbols())
+        joined_names = ", ".join(str(n) for n in importing_symbols)
+        symbols = f"from {modname} import {joined_names}"
+        if len(symbols) > 80:
+            wrapped_names = "\n".join(txtwrapper.wrap(joined_names))
+            symbols = f"from {modname} import (\n{wrapped_names}\n)"
+        print(symbols, file=output)
+        print(file=output)
+        print(file=output)
+        quoted_names = ", ".join(repr(str(n)) for n in self.names)
+        dunder_all = f"__all__ = [{quoted_names}]"
+        if len(dunder_all) > 80:
+            wrapped_quoted_names = "\n".join(txtwrapper.wrap(quoted_names))
+            dunder_all = f"__all__ = [\n{wrapped_quoted_names}\n]"
+        print(dunder_all, file=output)
         return output.getvalue()
 
     def need_VARIANT_imports(self, value):
@@ -876,6 +930,7 @@ class CodeGenerator(object):
         )
         print(file=self.stream)
         print(file=self.stream)
+        self.names.add("Library")
 
     def External(self, ext: typedesc.External) -> None:
         modname = name_wrapper_module(ext.tlib)
@@ -1329,6 +1384,10 @@ class ImportedNamespaces(object):
                 IUnknown
             )
             import ctypes.wintypes
+            >>> assert imports.get_symbols() == {
+            ...     'Decimal', 'GUID', 'COMMETHOD', 'DISPMETHOD', 'IUnknown',
+            ...     'dispid', 'CoClass', 'BSTR', 'DISPPROPERTY'
+            ... }
             >>> print(imports.getvalue(for_stub=True))
             from ctypes import *
             import datetime
@@ -1381,6 +1440,14 @@ class ImportedNamespaces(object):
             return self.data[import_] == from_
         return False
 
+    def get_symbols(self) -> Set[str]:
+        names = set()
+        for key, val in self.data.items():
+            if val is None or key == "*":
+                continue
+            names.add(key)
+        return names
+
     def _make_line(self, from_, imports, for_stub):
         if for_stub:
             import_ = ", ".join("%s as %s" % (n, n) for n in imports)
@@ -1432,8 +1499,17 @@ class DeclaredNamespaces(object):
             >>> print(declarations.getvalue())
             STRING = c_char_p
             _lcid = 0  # change this if required
+            >>> assert declarations.get_symbols() == {
+            ...     'STRING', '_lcid'
+            ... }
         """
         self.data[(alias, definition)] = comment
+
+    def get_symbols(self) -> Set[str]:
+        names = set()
+        for alias, _ in self.data.keys():
+            names.add(alias)
+        return names
 
     def getvalue(self):
         lines = []
