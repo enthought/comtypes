@@ -182,6 +182,7 @@ def _fix_inout_args(
             direction = info[0]
             dir_in = direction & 1 == 1
             dir_out = direction & 2 == 2
+            is_positional = param_index < len(args)
             if dir_in and dir_out:
                 # This is an [in, out] parameter.
                 #
@@ -194,10 +195,7 @@ def _fix_inout_args(
                 # Get the actual parameter, either as positional or
                 # keyword arg.
                 try:
-                    try:
-                        v = args[param_index]
-                    except IndexError:
-                        v = kw[name]
+                    v = args[param_index] if is_positional else kw[name]
                 except KeyError:
                     # no parameter was passed, make an empty one
                     # of the required type
@@ -221,7 +219,7 @@ def _fix_inout_args(
                         v = atyp.from_param(v)
                         assert not isinstance(v, BYREFTYPE)
                 outargs[outnum] = v
-                if param_index < len(args): # the current parameter is positional, not keyword
+                if is_positional:
                     args[param_index] = v
                 else:
                     kw[name] = v
