@@ -227,6 +227,10 @@ def _fix_inout_args(
                 outnum += 1
             if dir_in:
                 param_index += 1
+            if not dir_out and not dir_in:
+                # TODO raise an exception? Log a warning?
+                # The existing code implicitly assumes this to be an `in` parameter
+                param_index += 1
 
         rescode = func(self, *args, **kw)
         # If there is only a single output value, then do not expect it to
