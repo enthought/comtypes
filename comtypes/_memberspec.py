@@ -190,11 +190,11 @@ def _fix_inout_args(
                 name = info[1]
                 # [in, out] parameters are passed as pointers,
                 # this is the pointed-to type:
-                atyp: type[_CData] = getattr(argtypes[i], '_type_')
+                atyp: type[_CData] = getattr(argtypes[i], "_type_")
 
                 # Get the actual parameter, either as positional or
                 # keyword arg.
-                
+
                 def prepare_parameter(v):
                     # parameter was passed, call .from_param() to convert it to a ctypes type.
                     if getattr(v, "_type_", None) is atyp:
@@ -230,7 +230,9 @@ def _fix_inout_args(
             if dir_in:
                 param_index += 1
             if not dir_out and not dir_in:
-                raise Exception(f"A parameter for {func.__name__} has neither 'out' nor 'in' specified")
+                raise Exception(
+                    f"A parameter for {func.__name__} has neither 'out' nor 'in' specified"
+                )
 
         rescode = func(self, *args, **kw)
         # If there is only a single output value, then do not expect it to
