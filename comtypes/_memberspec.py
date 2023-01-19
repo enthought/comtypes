@@ -190,47 +190,47 @@ def _fix_inout_args(
                 name = info[1]
                 # [in, out] parameters are passed as pointers,
                 # this is the pointed-to type:
-                atyp = argtypes[i]._type_
+                atyp: type[_CData] = getattr(argtypes[i], '_type_')
 
                 # Get the actual parameter, either as positional or
                 # keyword arg.
-                try:
-                    v = args[param_index] if is_positional else kw[name]
-                except KeyError:
-                    # no parameter was passed, make an empty one
-                    # of the required type
-                    v = atyp()
-                else:
-                    # parameter was passed, call .from_param() to
-                    # convert it to a ctypes type.
+                
+                def prepare_parameter(v):
+                    # parameter was passed, call .from_param() to convert it to a ctypes type.
                     if getattr(v, "_type_", None) is atyp:
-                        # Array of or pointer to type 'atyp' was
-                        # passed, pointer to 'atyp' expected.
+                        # Array of or pointer to type 'atyp' was passed, pointer to 'atyp' expected.
                         pass
                     elif type(atyp) is SIMPLETYPE:
-                        # The from_param method of simple types
-                        # (c_int, c_double, ...) returns a byref()
-                        # object which we cannot use since later
-                        # it will be wrapped in a pointer.  Simply
-                        # call the constructor with the argument
-                        # in that case.
+                        # The from_param method of simple types (c_int, c_double, ...) returns a byref()
+                        # object which we cannot use since later it will be wrapped in a pointer.  Simply
+                        # call the constructor with the argument in that case.
                         v = atyp(v)
                     else:
                         v = atyp.from_param(v)
                         assert not isinstance(v, BYREFTYPE)
-                outargs[outnum] = v
+                    return v
+
                 if is_positional:
+                    v = prepare_parameter(args[param_index])
                     args[param_index] = v
-                else:
+                elif name in kw:
+                    v = prepare_parameter(kw[name])
                     kw[name] = v
+                else:
+                    # no parameter was passed, make an empty one of the required type
+                    # and pass it as a keyword argument
+                    v = atyp()
+                    if name is not None:
+                        kw[name] = v
+                    else:
+                        raise Exception("Unnamed inout parameters cannot be omitted")
+                outargs[outnum] = v
             if dir_out:
                 outnum += 1
             if dir_in:
                 param_index += 1
             if not dir_out and not dir_in:
-                # TODO raise an exception? Log a warning?
-                # The existing code implicitly assumes this to be an `in` parameter
-                param_index += 1
+                raise Exception(f"A parameter for {func.__name__} has neither 'out' nor 'in' specified")
 
         rescode = func(self, *args, **kw)
         # If there is only a single output value, then do not expect it to
