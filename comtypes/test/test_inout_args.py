@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import List, NamedTuple
 from ctypes import POINTER, c_bool, c_ulong, c_wchar_p
 from itertools import permutations
 import unittest as ut
@@ -9,8 +9,8 @@ from comtypes._memberspec import _fix_inout_args, _ParamFlagType
 
 
 class TestEntry(NamedTuple):
-    argtypes: list[type]
-    paramflags: list[_ParamFlagType]
+    argtypes: List[type]
+    paramflags: List[_ParamFlagType]
 
     def zipped(self):
         yield from zip(self.argtypes, self.paramflags)
