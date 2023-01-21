@@ -48,7 +48,7 @@ For the time being, the development target branch of this package will be the [`
 
 As the name suggests, `drop_py2` is a mid-term-planning branch to drop supporting `Python` 2.x from this package, and start supporting `Python` 3.x only.
 
-The `drop_py2` branch will be merged into the `master` branch in the future, and the `master` branch will back to the development target branch.
+The `drop_py2` branch will be merged into the `master` branch in the future, and the `master` branch will back to the development target branch and be renamed to `main`.  
 Until then, no changes will be made to the `master` branch except in the case of corresponding to regressions.
 
 Please see [the GitHub issue](https://github.com/enthought/comtypes/issues/392) for policy and progress.
