@@ -190,7 +190,7 @@ def _fix_inout_args(
                 name = info[1]
                 # [in, out] parameters are passed as pointers,
                 # this is the pointed-to type:
-                atyp: type[_CData] = getattr(argtypes[i], "_type_")
+                atyp: Type[_CData] = getattr(argtypes[i], "_type_")
 
                 # Get the actual parameter, either as positional or
                 # keyword arg.
