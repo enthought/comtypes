@@ -23,53 +23,7 @@ class TestEntry:
 
     def run_test_with_args(self, *args, **kwargs) -> Tuple[Any, MagicMock]:
         """Runs the test with the provided arguments."""
-        inner_mock = MagicMock()
-
-        def mock_function(_, *args, **kwargs):
-            # Call the mock
-            inner_mock(*args, **kwargs)
-            # _fix_inout_args crashes if we don't return the correct types of values.
-            # Here we return the inout values unmodified, and a generated value for every purely-out parameter.
-            results = []
-            arg_stack = list(reversed(args))
-
-            def next_arg(name: Optional[str]):
-                """Get the next positional argument if any are left, else try to get the matching keyword argument"""
-                nonlocal arg_stack, kwargs
-                if arg_stack:
-                    return arg_stack.pop()
-                elif name is not None:
-                    return kwargs.pop(name)
-                else:
-                    raise TypeError(
-                        "Mock: Missing positional argument for nameless parameter"
-                    )
-
-            try:
-                for argtype, param in self.param_spec:
-                    if param[0] & 3 == 3:  # inout
-                        results.append(next_arg(param[1]))
-                    elif param[0] & 2 == 2:  # out
-                        results.append(argtype())
-                    elif param[0] & 1 == 1:  # in
-                        next_arg(param[1])
-                    else:
-                        raise ValueError(
-                            "Mock: Parameter has neither 'out' nor 'in' specified"
-                        )
-            except (IndexError, KeyError) as e:
-                raise ValueError(f"Mock: Not enough arguments supplied: {e}")
-
-            # Verify that all provided arguments have been used
-            if len(arg_stack) > 0 or len(kwargs) > 0:
-                raise ValueError("Mock: Too many arguments supplied")
-
-            if len(results) == 0:
-                return None
-            elif len(results) == 1:
-                return results[0]
-            else:
-                return tuple(results)
+        m = MagicMock()
 
         argtypes = tuple(x.argtype for x in self.param_spec)
         paramflags = tuple(x.paramflags for x in self.param_spec)
@@ -86,13 +40,13 @@ class TestEntry:
             out_params = MagicMock(spec=c_ulong, name="HRESULT")
         elif len(out_params) == 1:
             out_params = out_params[0]
-        inner_mock.return_value = out_params
+        m.return_value = out_params
 
-        fixed_fn = _fix_inout_args(inner_mock, argtypes, paramflags)
+        fixed_fn = _fix_inout_args(m, argtypes, paramflags)
         # must pass self here because _fix_inout_args expects an instance method
         result = fixed_fn(self, *args, **kwargs)
 
-        return (result, inner_mock)
+        return (result, m)
 
     def run_test(self):
         """Runs the test with automatically generated positional arguments"""
