@@ -231,15 +231,37 @@ def _fix_inout_args(
                 param_index += 1
             if not dir_out and not dir_in:
                 raise Exception(
-                    f"A parameter for {func.__name__} has neither 'out' nor 'in' specified"
+                    f"A parameter for {getattr(func, '__name__', str(func))} has neither 'out' nor 'in' specified"
                 )
 
         rescode = func(self, *args, **kw)
         # If there is only a single output value, then do not expect it to
         # be iterable.
+
+        # My interpretation of this code:
+        # - 'outnum' counts the total number of 'out' and 'inout' arguments.
+        # - Confusingly, 'outargs' is a dict consisting of the supplied _inout_ arguments.
+        # - The call to func() returns the 'out' and 'inout' arguments.
+        #   Furthermore, it changes the variables in 'outargs' as a "side effect"
+        # - In a perfect world, it should be fine to just return 'rescode', but I assume there is a reason
+        #   why the original authors did not do that. Instead, they replace the inout variables in 'rescode'
+        #   by those in 'outargs', and call __ctypes_from_outparam__() on them.
+        #
+        # - What I don't understand is: Why is the behaviour different for outnum==1?
+        #   From the above interpretation I would have expected
+        #
+        #   rescode = outargs[0].__ctypes_from_outparam__()
+        #
+        #   instead of
+        #
+        #   rescode = rescode.__ctypes_from_outparam__()
+        #
+        #
+
         if outnum == 1:  # rescode is not iterable
             if len(outargs) == 1:
                 rescode = rescode.__ctypes_from_outparam__()
+                # rescode = outargs[0].__ctypes_from_outparam__()
             return rescode
         rescode = list(rescode)
         for outnum, o in outargs.items():

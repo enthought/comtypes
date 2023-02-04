@@ -1,6 +1,7 @@
 import sys
 import unittest
 from ctypes import *
+from unittest.mock import patch
 
 import comtypes.test
 
