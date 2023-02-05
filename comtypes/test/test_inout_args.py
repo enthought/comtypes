@@ -309,5 +309,38 @@ class Test_IPortableDeviceContent_CreateObjectWithPropertiesAndData(ut.TestCase)
         self.assertEqual(orig_kw["ppszCookie"].value, cookie)
 
 
+class Test_Error(ut.TestCase):
+    def test_missing_direction(self):
+        spec = comtypes.COMMETHOD(
+            [],
+            HRESULT,
+            "Foo",
+            ([], POINTER(c_ulong)),
+        )
+        orig = MagicMock(__name__="orig")
+        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
+        with self.assertRaises(Exception) as cm:
+            fixed(4)
+        self.assertEqual(
+            str(cm.exception),
+            "A parameter for orig has neither 'out' nor 'in' specified",
+        )
+
+    def test_missing_name_omitted(self):
+        spec = comtypes.COMMETHOD(
+            [],
+            HRESULT,
+            "Foo",
+            (["in", "out"], POINTER(c_ulong)),
+        )
+        orig = MagicMock()
+        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
+        with self.assertRaises(Exception) as cm:
+            fixed(5)
+        self.assertEqual(
+            str(cm.exception), "Unnamed inout parameters cannot be omitted"
+        )
+
+
 if __name__ == "__main__":
     ut.main()
