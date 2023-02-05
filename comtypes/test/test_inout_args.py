@@ -214,8 +214,8 @@ class Test_InOut_args(ut.TestCase):
             (["in", "out"], POINTER(c_ulong), "pdwOptimalWriteBufferSize"),
             (["in", "out"], POINTER(WSTRING), "ppszCookie"),
         )
-        m = MagicMock()
-        fixed = _fix_inout_args(m, spec.argtypes, spec.paramflags)
+        orig = MagicMock()
+        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
         p_val = MagicMock(
             spec=POINTER(IUnknown), name="POINTER(IPortableDeviceValues)"
         )()
@@ -223,16 +223,17 @@ class Test_InOut_args(ut.TestCase):
         pp_data = POINTER(POINTER(IUnknown))()
         buf_size = 5
         cookie = "abc"
-        m.return_value = (pp_data, ..., ...)
+        orig.return_value = (pp_data, ..., ...)
         ret_val = fixed(self, p_val, buf_size, cookie)
         self.assertEqual(ret_val, [pp_data, buf_size, cookie])
-        m.assert_called_once()
-        (_, m_1st, m_2nd, m_3rd), m_kw = m.call_args
-        self.assertEqual(m_1st, p_val)
-        self.assertIsInstance(m_2nd, c_ulong)
-        self.assertEqual(m_2nd.value, buf_size)
-        self.assertIsInstance(m_3rd, WSTRING)
-        self.assertEqual(m_3rd.value, cookie)
+        orig.assert_called_once()
+        (_, orig_1st, orig_2nd, orig_3rd), orig_kw = orig.call_args
+        self.assertEqual(orig_1st, p_val)
+        self.assertIsInstance(orig_2nd, c_ulong)
+        self.assertEqual(orig_2nd.value, buf_size)
+        self.assertIsInstance(orig_3rd, WSTRING)
+        self.assertEqual(orig_3rd.value, cookie)
+        self.assertEqual(orig_kw, {})
 
     # TODO The following lines are not covered by this unit test:
     #
