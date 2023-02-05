@@ -204,9 +204,19 @@ class Test_InOut_args(ut.TestCase):
         self.assertEqual(internal_str.value, test_str)
         self.assertEqual(internal_p_IUnknown, test_p_IUnknown)
 
-    def _get_CreateObjectWithPropertiesAndData_spec(self):
+    # TODO The following lines are not covered by this unit test:
+    #
+    # else:
+    #   v = atyp.from_param(v)
+    #   assert not isinstance(v, BYREFTYPE)
+    #
+    # If you have a natural use case for these lines, please consider adding a test.
+
+
+class Test_IPortableDeviceContent_CreateObjectWithPropertiesAndData(ut.TestCase):
+    def setUp(self):
         # a memberspec of `PortableDeviceApiLib.IPortableDeviceContent`
-        return comtypes.COMMETHOD(
+        spec = comtypes.COMMETHOD(
             [],
             HRESULT,
             "CreateObjectWithPropertiesAndData",
@@ -215,22 +225,21 @@ class Test_InOut_args(ut.TestCase):
             (["in", "out"], POINTER(c_ulong), "pdwOptimalWriteBufferSize"),
             (["in", "out"], POINTER(WSTRING), "ppszCookie"),
         )
+        self.orig = MagicMock()
+        self.fixed = _fix_inout_args(self.orig, spec.argtypes, spec.paramflags)
+        self.pp_data = POINTER(POINTER(IUnknown))()
+        self.orig.return_value = (self.pp_data, ..., ...)
 
-    def test_CreateObjectWithPropertiesAndData_PositionalsOnly(self):
-        spec = self._get_CreateObjectWithPropertiesAndData_spec()
-        orig = MagicMock()
-        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
-        p_val = MagicMock(spec=POINTER(IUnknown))()
+    def test_positionals_only(self):
         self_ = MagicMock(name="Self")
-        pp_data = POINTER(POINTER(IUnknown))()
+        p_val = MagicMock(spec=POINTER(IUnknown))()
         buf_size = 5
         cookie = "abc"
-        orig.return_value = (pp_data, ..., ...)
-        ret_val = fixed(self_, p_val, buf_size, cookie)
+        ret_val = self.fixed(self_, p_val, buf_size, cookie)
 
-        self.assertEqual(ret_val, [pp_data, buf_size, cookie])
-        orig.assert_called_once()
-        (orig_0th, orig_1st, orig_2nd, orig_3rd), orig_kw = orig.call_args
+        self.assertEqual(ret_val, [self.pp_data, buf_size, cookie])
+        self.orig.assert_called_once()
+        (orig_0th, orig_1st, orig_2nd, orig_3rd), orig_kw = self.orig.call_args
         self.assertIs(orig_0th, self_)
         self.assertEqual(orig_1st, p_val)
         self.assertIsInstance(orig_2nd, c_ulong)
@@ -239,23 +248,18 @@ class Test_InOut_args(ut.TestCase):
         self.assertEqual(orig_3rd.value, cookie)
         self.assertEqual(orig_kw, {})
 
-    def test_CreateObjectWithPropertiesAndData_KeywordsOnly(self):
-        spec = self._get_CreateObjectWithPropertiesAndData_spec()
-        orig = MagicMock()
-        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
-        p_val = MagicMock(spec=POINTER(IUnknown))()
+    def test_keywords_only(self):
         self_ = MagicMock(name="Self")
-        pp_data = POINTER(POINTER(IUnknown))()
-        buf_size = 5
-        cookie = "abc"
-        orig.return_value = (pp_data, ..., ...)
-        ret_val = fixed(
+        p_val = MagicMock(spec=POINTER(IUnknown))()
+        buf_size = 4
+        cookie = "efg"
+        ret_val = self.fixed(
             self_, pValues=p_val, pdwOptimalWriteBufferSize=buf_size, ppszCookie=cookie
         )
 
-        self.assertEqual(ret_val, [pp_data, buf_size, cookie])
-        orig.assert_called_once()
-        (orig_0th,), orig_kw = orig.call_args
+        self.assertEqual(ret_val, [self.pp_data, buf_size, cookie])
+        self.orig.assert_called_once()
+        (orig_0th,), orig_kw = self.orig.call_args
         self.assertIs(orig_0th, self_)
         self.assertEqual(
             set(orig_kw), {"pValues", "pdwOptimalWriteBufferSize", "ppszCookie"}
@@ -266,23 +270,18 @@ class Test_InOut_args(ut.TestCase):
         self.assertIsInstance(orig_kw["ppszCookie"], WSTRING)
         self.assertEqual(orig_kw["ppszCookie"].value, cookie)
 
-    def test_CreateObjectWithPropertiesAndData_MixedArgs_1(self):
-        spec = self._get_CreateObjectWithPropertiesAndData_spec()
-        orig = MagicMock()
-        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
-        p_val = MagicMock(spec=POINTER(IUnknown))()
+    def test_mixed_args_1(self):
         self_ = MagicMock(name="Self")
-        pp_data = POINTER(POINTER(IUnknown))()
-        buf_size = 5
-        cookie = "abc"
-        orig.return_value = (pp_data, ..., ...)
-        ret_val = fixed(
+        p_val = MagicMock(spec=POINTER(IUnknown))()
+        buf_size = 3
+        cookie = "h"
+        ret_val = self.fixed(
             self_, p_val, ppszCookie=cookie, pdwOptimalWriteBufferSize=buf_size
         )
 
-        self.assertEqual(ret_val, [pp_data, buf_size, cookie])
-        orig.assert_called_once()
-        (orig_0th, orig_1st), orig_kw = orig.call_args
+        self.assertEqual(ret_val, [self.pp_data, buf_size, cookie])
+        self.orig.assert_called_once()
+        (orig_0th, orig_1st), orig_kw = self.orig.call_args
         self.assertIs(orig_0th, self_)
         self.assertEqual(orig_1st, p_val)
         self.assertEqual(set(orig_kw), {"pdwOptimalWriteBufferSize", "ppszCookie"})
@@ -291,21 +290,16 @@ class Test_InOut_args(ut.TestCase):
         self.assertIsInstance(orig_kw["ppszCookie"], WSTRING)
         self.assertEqual(orig_kw["ppszCookie"].value, cookie)
 
-    def test_CreateObjectWithPropertiesAndData_MixedArgs_2(self):
-        spec = self._get_CreateObjectWithPropertiesAndData_spec()
-        orig = MagicMock()
-        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
-        p_val = MagicMock(spec=POINTER(IUnknown))()
+    def test_mixed_args_2(self):
         self_ = MagicMock(name="Self")
-        pp_data = POINTER(POINTER(IUnknown))()
-        buf_size = 5
-        cookie = "abc"
-        orig.return_value = (pp_data, ..., ...)
-        ret_val = fixed(self_, p_val, buf_size, ppszCookie=cookie)
+        p_val = MagicMock(spec=POINTER(IUnknown))()
+        buf_size = 2
+        cookie = "ij"
+        ret_val = self.fixed(self_, p_val, buf_size, ppszCookie=cookie)
 
-        self.assertEqual(ret_val, [pp_data, buf_size, cookie])
-        orig.assert_called_once()
-        (orig_0th, orig_1st, orig_2nd), orig_kw = orig.call_args
+        self.assertEqual(ret_val, [self.pp_data, buf_size, cookie])
+        self.orig.assert_called_once()
+        (orig_0th, orig_1st, orig_2nd), orig_kw = self.orig.call_args
         self.assertIs(orig_0th, self_)
         self.assertEqual(orig_1st, p_val)
         self.assertEqual(set(orig_kw), {"ppszCookie"})
@@ -313,14 +307,6 @@ class Test_InOut_args(ut.TestCase):
         self.assertEqual(orig_2nd.value, buf_size)
         self.assertIsInstance(orig_kw["ppszCookie"], WSTRING)
         self.assertEqual(orig_kw["ppszCookie"].value, cookie)
-
-    # TODO The following lines are not covered by this unit test:
-    #
-    # else:
-    #   v = atyp.from_param(v)
-    #   assert not isinstance(v, BYREFTYPE)
-    #
-    # If you have a natural use case for these lines, please consider adding a test.
 
 
 if __name__ == "__main__":
