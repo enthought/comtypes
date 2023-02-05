@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple, Type
+from typing import Any, NamedTuple, Sequence, Tuple, Type
 from ctypes import HRESULT, POINTER, c_bool, c_ulong, c_wchar_p
 from itertools import permutations
 import unittest as ut
@@ -111,98 +111,51 @@ class Test_InOut_args(ut.TestCase):
 
     def test_permutations(self):
         """Test any order of an 'in', an 'out', and two 'inout' arguments of different types"""
-        params: List[Param] = [
-            Param(c_ulong, (1, "inpar")),
-            Param(POINTER(c_wchar_p), (3, "inoutpar1")),
-            Param(POINTER(comtypes.IUnknown), (3, "inoutpar2")),
-            Param(POINTER(c_bool), (2, "outpar")),
-        ]
-        for i, permuted_params in enumerate(permutations(params)):
-            with self.subTest(f"Permutation {i:#02d}"):
-                TestEntry(self, permuted_params).run_test()
-
-    def test_missing_direction(self):
-        """Every parameter must have 'in' or 'out' specified"""
-        with self.assertRaises(Exception) as cm:
-            TestEntry(self, [Param(c_ulong, (0, "missing_inout"))]).run_test()
-        self.assertRegex(
-            cm.exception.args[0],
-            r"^A parameter for .+ has neither 'out' nor 'in' specified$",
-        )
-
-    def test_inout_param_name_omitted(self):
-        """_fix_inout_args generates a default value for every omitted 'inout' argument."""
-        result, mock = TestEntry(
-            self,
-            [
-                Param(
-                    POINTER(c_ulong),
-                    (3, "param_name"),
-                )
-            ],
-        ).run_test_with_args()
-        mock.assert_called_once()
-        self.assertEqual(len(mock.call_args[0]), 1)
-        self.assertIsInstance(mock.call_args[0][0], TestEntry)
-        self.assertEqual(tuple(mock.call_args[1]), ("param_name",))
-        generated_arg = mock.call_args[1]["param_name"]
-        self.assertIsInstance(generated_arg, c_ulong)
-        self.assertEqual(generated_arg.value, c_ulong().value)
-        # TODO Not sure what to test 'result' against - right now it is a MagicMock,
-        # but I'm not sure it is supposed to be - see my comment in _memberspec.py
-        #
-        # self.assertIsInstance(result, MagicMock) # works, but seems wrong
-
-    def test_missing_name_omitted(self):
-        """The former only works if the argument has a name, so the value can be passed as a keyword argument."""
-        with self.assertRaises(Exception) as cm:
-            TestEntry(
-                self,
-                [
-                    Param(
-                        POINTER(c_ulong),
-                        (3, None),
-                    )
-                ],
-            ).run_test_with_args()
-        self.assertEqual(
-            cm.exception.args[0], "Unnamed inout parameters cannot be omitted"
-        )
-
-    def test_inout_params_as_keywords(self):
-        """Passing inout parameters as keywords"""
-        test_ulong = 5
-        test_str = "abc"
-        test_p_IUnknown = POINTER(IUnknown)()
         params = [
-            Param(POINTER(c_ulong), (3, "long_param")),
-            Param(POINTER(c_wchar_p), (3, "str_param")),
-            Param(POINTER(IUnknown), (3, "IUnknown_param")),
+            (["in"], c_ulong, "inpar"),
+            (["in", "out"], POINTER(c_wchar_p), "inoutpar1"),
+            (["in", "out"], POINTER(comtypes.IUnknown), "inoutpar2"),
+            (["out"], POINTER(c_bool), "outpar"),
         ]
-        results, mock = TestEntry(self, params).run_test_with_args(
-            long_param=test_ulong, str_param=test_str, IUnknown_param=test_p_IUnknown
-        )
+        orig = MagicMock()
+        for i, permuted_params in enumerate(permutations(params)):
+            spec = comtypes.COMMETHOD(
+                [], HRESULT, "CreateObjectWithPropertiesAndData", *permuted_params
+            )
+            with self.subTest(f"Permutation {i:#02d}"):
+                fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
+                self_ = MagicMock(name="Self")
+                generated_in_params = tuple(
+                    param[1]() for param in permuted_params if "in" in param[0]
+                )
+                mock_outpar = MagicMock(name="outpar")
+                mock_return_values = []
+                for param in permuted_params:
+                    if "out" in param[0]:
+                        mock_return_values.append(
+                            ... if "in" in param[0] else mock_outpar
+                        )
+                orig.return_value = tuple(mock_return_values)
+                ret_vals = fixed(self_, *generated_in_params)
 
-        self.assertEqual(len(results), 3)
-        self.assertEqual(results[0], test_ulong)
-        self.assertEqual(results[1], test_str)
-        self.assertEqual(results[2], test_p_IUnknown)
-        mock.assert_called_once()
-
-        internal_kwargs: Dict[str, Any] = mock.call_args[1]
-        self.assertEqual(
-            set(internal_kwargs), {"long_param", "str_param", "IUnknown_param"}
-        )
-        internal_long = internal_kwargs["long_param"]
-        internal_str = internal_kwargs["str_param"]
-        internal_p_IUnknown = internal_kwargs["IUnknown_param"]
-        # Simple types are not passed as pointers
-        self.assertIsInstance(internal_long, c_ulong)
-        self.assertIsInstance(internal_str, c_wchar_p)
-        self.assertIsInstance(internal_p_IUnknown, POINTER(IUnknown))
-        self.assertEqual(internal_long.value, test_ulong)
-        self.assertEqual(internal_str.value, test_str)
-        self.assertEqual(internal_p_IUnknown, test_p_IUnknown)
+                # These need to be matched
+                call_arguments_iter = iter(orig.call_args[0][1:])
+                gen_in_vals_iter = iter(generated_in_params)
+                ret_vals_iter = iter(ret_vals)
+                for param in permuted_params:
+                    if param[0] == ["in", "out"]:
+                        # check the input into 'fixed' against the input into 'orig' and the output of 'fixed'
+                        in_arg = next(call_arguments_iter)
+                        self.assertEqual(in_arg, next(ret_vals_iter))
+                        self.assertEqual(in_arg, next(gen_in_vals_iter))
+                    elif param[0] == ["out"]:
+                        # check the output of 'fixed' against the pre-defined mock
+                        self.assertIs(next(ret_vals_iter), mock_outpar)
+                    else:  # ["in"]
+                        # check the input into 'fixed' against the input into 'orig'
+                        self.assertEqual(
+                            next(call_arguments_iter), next(gen_in_vals_iter)
+                        )
 
     # TODO The following lines are not covered by this unit test:
     #
@@ -227,7 +180,8 @@ class Test_IPortableDeviceContent_CreateObjectWithPropertiesAndData(ut.TestCase)
         )
         self.orig = MagicMock()
         self.fixed = _fix_inout_args(self.orig, spec.argtypes, spec.paramflags)
-        self.pp_data = POINTER(POINTER(IUnknown))()
+        # out and inout argument are dereferenced once before being returned
+        self.pp_data = POINTER(IUnknown)()
         self.orig.return_value = (self.pp_data, ..., ...)
 
     def test_positionals_only(self):
@@ -308,9 +262,36 @@ class Test_IPortableDeviceContent_CreateObjectWithPropertiesAndData(ut.TestCase)
         self.assertIsInstance(orig_kw["ppszCookie"], WSTRING)
         self.assertEqual(orig_kw["ppszCookie"].value, cookie)
 
+    def test_omitted_arguments_autogen(self):
+        self_ = MagicMock(name="Self")
+        p_val = MagicMock(spec=POINTER(IUnknown))()
+        ret_val = self.fixed(self_, pValues=p_val)
+
+        self.orig.assert_called_once()
+        (orig_0th,), orig_kw = self.orig.call_args
+        self.assertEqual(
+            set(orig_kw), {"pValues", "pdwOptimalWriteBufferSize", "ppszCookie"}
+        )
+        self.assertIs(orig_0th, self_)
+        self.assertIs(orig_kw["pValues"], p_val)
+        self.assertIsInstance(orig_kw["pdwOptimalWriteBufferSize"], c_ulong)
+        self.assertEqual(orig_kw["pdwOptimalWriteBufferSize"].value, c_ulong().value)
+        self.assertIsInstance(orig_kw["ppszCookie"], WSTRING)
+        self.assertEqual(orig_kw["ppszCookie"].value, WSTRING().value)
+
+        self.assertEqual(
+            ret_val,
+            [
+                self.pp_data,
+                orig_kw["pdwOptimalWriteBufferSize"].value,
+                orig_kw["ppszCookie"].value,
+            ],
+        )
+
 
 class Test_Error(ut.TestCase):
     def test_missing_direction(self):
+        self_ = MagicMock(name="Self")
         spec = comtypes.COMMETHOD(
             [],
             HRESULT,
@@ -320,13 +301,14 @@ class Test_Error(ut.TestCase):
         orig = MagicMock(__name__="orig")
         fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
         with self.assertRaises(Exception) as cm:
-            fixed(4)
+            fixed(self_, 4)
         self.assertEqual(
             str(cm.exception),
             "A parameter for orig has neither 'out' nor 'in' specified",
         )
 
     def test_missing_name_omitted(self):
+        self_ = MagicMock(name="Self")
         spec = comtypes.COMMETHOD(
             [],
             HRESULT,
@@ -336,7 +318,7 @@ class Test_Error(ut.TestCase):
         orig = MagicMock()
         fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
         with self.assertRaises(Exception) as cm:
-            fixed(5)
+            fixed(self_)
         self.assertEqual(
             str(cm.exception), "Unnamed inout parameters cannot be omitted"
         )
