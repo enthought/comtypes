@@ -205,6 +205,7 @@ class Test_InOut_args(ut.TestCase):
         self.assertEqual(internal_p_IUnknown, test_p_IUnknown)
 
     def test_CreateObjectWithPropertiesAndData(self):
+        # a memberspec of `PortableDeviceApiLib.IPortableDeviceContent`
         spec = comtypes.COMMETHOD(
             [],
             HRESULT,
@@ -220,14 +221,16 @@ class Test_InOut_args(ut.TestCase):
             spec=POINTER(IUnknown), name="POINTER(IPortableDeviceValues)"
         )()
 
+        self_ = MagicMock(name="Self")
         pp_data = POINTER(POINTER(IUnknown))()
         buf_size = 5
         cookie = "abc"
         orig.return_value = (pp_data, ..., ...)
-        ret_val = fixed(self, p_val, buf_size, cookie)
+        ret_val = fixed(self_, p_val, buf_size, cookie)
         self.assertEqual(ret_val, [pp_data, buf_size, cookie])
         orig.assert_called_once()
-        (_, orig_1st, orig_2nd, orig_3rd), orig_kw = orig.call_args
+        (orig_0th, orig_1st, orig_2nd, orig_3rd), orig_kw = orig.call_args
+        self.assertIs(orig_0th, self_)
         self.assertEqual(orig_1st, p_val)
         self.assertIsInstance(orig_2nd, c_ulong)
         self.assertEqual(orig_2nd.value, buf_size)
