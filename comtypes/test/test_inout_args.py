@@ -217,7 +217,6 @@ class Test_InOut_args(ut.TestCase):
         )
 
     def test_CreateObjectWithPropertiesAndData_PositionalsOnly(self):
-        # a memberspec of `PortableDeviceApiLib.IPortableDeviceContent`
         spec = self._get_CreateObjectWithPropertiesAndData_spec()
         orig = MagicMock()
         fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
@@ -243,7 +242,6 @@ class Test_InOut_args(ut.TestCase):
         self.assertEqual(orig_kw, {})
 
     def test_CreateObjectWithPropertiesAndData_KeywordsOnly(self):
-        # a memberspec of `PortableDeviceApiLib.IPortableDeviceContent`
         spec = self._get_CreateObjectWithPropertiesAndData_spec()
         orig = MagicMock()
         fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
