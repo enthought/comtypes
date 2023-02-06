@@ -166,7 +166,7 @@ class Test_InOut_args(ut.TestCase):
     # If you have a natural use case for these lines, please consider adding a test.
 
 
-class Test_IPortableDeviceContent_CreateObjectWithPropertiesAndData(ut.TestCase):
+class Test_ArgsKwargsCombinations(ut.TestCase):
     def setUp(self):
         # a memberspec of `PortableDeviceApiLib.IPortableDeviceContent`
         spec = comtypes.COMMETHOD(
