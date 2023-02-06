@@ -1,4 +1,4 @@
-from typing import Any, NamedTuple, Sequence, Tuple, Type
+from typing import Any, Callable, List, NamedTuple, Sequence, Tuple, Type
 from ctypes import HRESULT, POINTER, c_bool, c_ulong, c_wchar_p
 from itertools import permutations
 import unittest as ut
@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import comtypes
 from comtypes.client import IUnknown
-from comtypes._memberspec import _fix_inout_args, _ParamFlagType
+from comtypes._memberspec import _fix_inout_args, _ParamFlagType, _ArgSpecElmType
 
 WSTRING = c_wchar_p
 
@@ -287,6 +287,219 @@ class Test_IPortableDeviceContent_CreateObjectWithPropertiesAndData(ut.TestCase)
                 orig_kw["ppszCookie"].value,
             ],
         )
+
+
+class PermutedArgspecTestingParams(NamedTuple):
+    argspec: Tuple[_ArgSpecElmType, _ArgSpecElmType, _ArgSpecElmType, _ArgSpecElmType]
+    args: Tuple[Any, Any, Any]
+    orig_ret_val: Tuple[Any, Any, Any]
+    fixed_ret_val: List[Any]
+    call_args_validators: List[Tuple[Type[Any], Callable[[Any], Any], Any]]
+
+
+class Test_ArgspecPermutations(ut.TestCase):
+    def test_permutations(self):
+        for testing_params in self._get_params():
+            with self.subTest(testing_params):
+                self_ = MagicMock(name="Self")
+                orig = MagicMock(return_value=testing_params.orig_ret_val)
+                spec = comtypes.COMMETHOD([], HRESULT, "foo", *testing_params.argspec)
+                fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
+                ret_val = fixed(self_, *testing_params.args)
+
+                self.assertEqual(ret_val, testing_params.fixed_ret_val)
+                orig.assert_called_once()
+                (orig_0th, *orig_call_args), orig_kw = orig.call_args
+                self.assertEqual(orig_kw, {})
+                self.assertIs(orig_0th, self_)
+                for ((typ, f, val), orig) in zip(
+                    testing_params.call_args_validators, orig_call_args
+                ):
+                    self.assertIsInstance(orig, typ)
+                    self.assertEqual(f(orig), val)
+
+    def _get_params(self) -> List[PermutedArgspecTestingParams]:
+        in_ = MagicMock(spec=POINTER(IUnknown))()
+        out = POINTER(IUnknown)()
+        inout1 = 5
+        inout2 = "abc"
+        IN_ARGSPEC = (["in"], POINTER(comtypes.IUnknown), "in")
+        OUT_ARGSPEC = (["out"], POINTER(POINTER(comtypes.IUnknown)), "out")
+        INOUT1_ARGSPEC = (["in", "out"], POINTER(c_ulong), "inout1")
+        INOUT2_ARGSPEC = (["in", "out"], POINTER(WSTRING), "inout2")
+        IN_VALIDATOR = (MagicMock, lambda x: x, in_)
+        INOUT1_VALIDATOR = (c_ulong, lambda x: x.value, inout1)
+        INOUT2_VALIDATOR = (WSTRING, lambda x: x.value, inout2)
+        return [
+            PermutedArgspecTestingParams(
+                (IN_ARGSPEC, OUT_ARGSPEC, INOUT1_ARGSPEC, INOUT2_ARGSPEC),
+                (in_, inout1, inout2),
+                (out, ..., ...),
+                [out, inout1, inout2],
+                [IN_VALIDATOR, INOUT1_VALIDATOR, INOUT2_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (IN_ARGSPEC, OUT_ARGSPEC, INOUT2_ARGSPEC, INOUT1_ARGSPEC),
+                (in_, inout2, inout1),
+                (out, ..., ...),
+                [out, inout2, inout1],
+                [IN_VALIDATOR, INOUT2_VALIDATOR, INOUT1_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (IN_ARGSPEC, INOUT1_ARGSPEC, OUT_ARGSPEC, INOUT2_ARGSPEC),
+                (in_, inout1, inout2),
+                (..., out, ...),
+                [inout1, out, inout2],
+                [IN_VALIDATOR, INOUT1_VALIDATOR, INOUT2_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (IN_ARGSPEC, INOUT1_ARGSPEC, INOUT2_ARGSPEC, OUT_ARGSPEC),
+                (in_, inout1, inout2),
+                (..., ..., out),
+                [inout1, inout2, out],
+                [IN_VALIDATOR, INOUT1_VALIDATOR, INOUT2_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (IN_ARGSPEC, INOUT2_ARGSPEC, OUT_ARGSPEC, INOUT1_ARGSPEC),
+                (in_, inout2, inout1),
+                (..., out, ...),
+                [inout2, out, inout1],
+                [IN_VALIDATOR, INOUT2_VALIDATOR, INOUT1_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (IN_ARGSPEC, INOUT2_ARGSPEC, INOUT1_ARGSPEC, OUT_ARGSPEC),
+                (in_, inout2, inout1),
+                (..., ..., out),
+                [inout2, inout1, out],
+                [IN_VALIDATOR, INOUT2_VALIDATOR, INOUT1_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (OUT_ARGSPEC, IN_ARGSPEC, INOUT1_ARGSPEC, INOUT2_ARGSPEC),
+                (in_, inout1, inout2),
+                (out, ..., ...),
+                [out, inout1, inout2],
+                [IN_VALIDATOR, INOUT1_VALIDATOR, INOUT2_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (OUT_ARGSPEC, IN_ARGSPEC, INOUT2_ARGSPEC, INOUT1_ARGSPEC),
+                (in_, inout2, inout1),
+                (out, ..., ...),
+                [out, inout2, inout1],
+                [IN_VALIDATOR, INOUT2_VALIDATOR, INOUT1_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (OUT_ARGSPEC, INOUT1_ARGSPEC, IN_ARGSPEC, INOUT2_ARGSPEC),
+                (inout1, in_, inout2),
+                (out, ..., ...),
+                [out, inout1, inout2],
+                [INOUT1_VALIDATOR, IN_VALIDATOR, INOUT2_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (OUT_ARGSPEC, INOUT1_ARGSPEC, INOUT2_ARGSPEC, IN_ARGSPEC),
+                (inout1, inout2, in_),
+                (out, ..., ...),
+                [out, inout1, inout2],
+                [INOUT1_VALIDATOR, INOUT2_VALIDATOR, IN_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (OUT_ARGSPEC, INOUT2_ARGSPEC, IN_ARGSPEC, INOUT1_ARGSPEC),
+                (inout2, in_, inout1),
+                (out, ..., ...),
+                [out, inout2, inout1],
+                [INOUT2_VALIDATOR, IN_VALIDATOR, INOUT1_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (OUT_ARGSPEC, INOUT2_ARGSPEC, INOUT1_ARGSPEC, IN_ARGSPEC),
+                (inout2, inout1, in_),
+                (out, ..., ...),
+                [out, inout2, inout1],
+                [INOUT2_VALIDATOR, INOUT1_VALIDATOR, IN_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT1_ARGSPEC, IN_ARGSPEC, OUT_ARGSPEC, INOUT2_ARGSPEC),
+                (inout1, in_, inout2),
+                (..., out, ...),
+                [inout1, out, inout2],
+                [INOUT1_VALIDATOR, IN_VALIDATOR, INOUT2_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT1_ARGSPEC, IN_ARGSPEC, INOUT2_ARGSPEC, OUT_ARGSPEC),
+                (inout1, in_, inout2),
+                (..., ..., out),
+                [inout1, inout2, out],
+                [INOUT1_VALIDATOR, IN_VALIDATOR, INOUT2_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT1_ARGSPEC, OUT_ARGSPEC, IN_ARGSPEC, INOUT2_ARGSPEC),
+                (inout1, in_, inout2),
+                (..., out, ...),
+                [inout1, out, inout2],
+                [INOUT1_VALIDATOR, IN_VALIDATOR, INOUT2_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT1_ARGSPEC, OUT_ARGSPEC, INOUT2_ARGSPEC, IN_ARGSPEC),
+                (inout1, inout2, in_),
+                (..., out, ...),
+                [inout1, out, inout2],
+                [INOUT1_VALIDATOR, INOUT2_VALIDATOR, IN_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT1_ARGSPEC, INOUT2_ARGSPEC, IN_ARGSPEC, OUT_ARGSPEC),
+                (inout1, inout2, in_),
+                (..., ..., out),
+                [inout1, inout2, out],
+                [INOUT1_VALIDATOR, INOUT2_VALIDATOR, IN_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT1_ARGSPEC, INOUT2_ARGSPEC, OUT_ARGSPEC, IN_ARGSPEC),
+                (inout1, inout2, in_),
+                (..., ..., out),
+                [inout1, inout2, out],
+                [INOUT1_VALIDATOR, INOUT2_VALIDATOR, IN_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT2_ARGSPEC, IN_ARGSPEC, OUT_ARGSPEC, INOUT1_ARGSPEC),
+                (inout2, in_, inout1),
+                (..., out, ...),
+                [inout2, out, inout1],
+                [INOUT2_VALIDATOR, IN_VALIDATOR, INOUT1_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT2_ARGSPEC, IN_ARGSPEC, INOUT1_ARGSPEC, OUT_ARGSPEC),
+                (inout2, in_, inout1),
+                (..., ..., out),
+                [inout2, inout1, out],
+                [INOUT2_VALIDATOR, IN_VALIDATOR, INOUT1_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT2_ARGSPEC, OUT_ARGSPEC, IN_ARGSPEC, INOUT1_ARGSPEC),
+                (inout2, in_, inout1),
+                (..., out, ...),
+                [inout2, out, inout1],
+                [INOUT2_VALIDATOR, IN_VALIDATOR, INOUT1_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT2_ARGSPEC, OUT_ARGSPEC, INOUT1_ARGSPEC, IN_ARGSPEC),
+                (inout2, inout1, in_),
+                (..., out, ...),
+                [inout2, out, inout1],
+                [INOUT2_VALIDATOR, INOUT1_VALIDATOR, IN_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT2_ARGSPEC, INOUT1_ARGSPEC, IN_ARGSPEC, OUT_ARGSPEC),
+                (inout2, inout1, in_),
+                (..., ..., out),
+                [inout2, inout1, out],
+                [INOUT2_VALIDATOR, INOUT1_VALIDATOR, IN_VALIDATOR],
+            ),
+            PermutedArgspecTestingParams(
+                (INOUT2_ARGSPEC, INOUT1_ARGSPEC, OUT_ARGSPEC, IN_ARGSPEC),
+                (inout2, inout1, in_),
+                (..., ..., out),
+                [inout2, inout1, out],
+                [INOUT2_VALIDATOR, INOUT1_VALIDATOR, IN_VALIDATOR],
+            ),
+        ]
 
 
 class Test_Error(ut.TestCase):
