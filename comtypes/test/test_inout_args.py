@@ -1,169 +1,114 @@
-from typing import Any, Callable, List, NamedTuple, Sequence, Tuple, Type
-from ctypes import HRESULT, POINTER, c_bool, c_ulong, c_wchar_p
-from itertools import permutations
+from typing import Any, Callable, List, NamedTuple, Tuple, Type
+from ctypes import HRESULT, POINTER, Structure, c_ulong, c_wchar_p, pointer
 import unittest as ut
 from unittest.mock import MagicMock
 
 import comtypes
 from comtypes.client import IUnknown
-from comtypes._memberspec import _fix_inout_args, _ParamFlagType, _ArgSpecElmType
+from comtypes._memberspec import _fix_inout_args, _ArgSpecElmType
 
 WSTRING = c_wchar_p
 
 
-class Param(NamedTuple):
-    argtype: Type
-    paramflags: _ParamFlagType
 
+class Test_RealWorldExamples(ut.TestCase):
+    def test_IUrlHistoryStg(self):
+        class Mock_STATURL(Structure):
+            _fields_ = []
 
-class TestEntry:
-    def __init__(self, test_case: ut.TestCase, param_spec: Sequence[Param]):
-        self.test_case = test_case
-        self.param_spec = param_spec
-
-    def run_test_with_args(self, *args, **kwargs) -> Tuple[Any, MagicMock]:
-        """Runs the test with the provided arguments."""
-        m = MagicMock()
-
-        argtypes = tuple(x.argtype for x in self.param_spec)
-        paramflags = tuple(x.paramflags for x in self.param_spec)
-        # fixed_fn = comtypes.instancemethod(
-        #     _fix_inout_args(mock_function, argtypes, paramflags), self, None
-        # )
-
-        out_params = tuple(
-            MagicMock(spec=x.argtype, name=str(x.argtype))
-            for x in self.param_spec
-            if x.paramflags[0] & 2 == 2
+        spec = comtypes.COMMETHOD(
+            [],
+            HRESULT,
+            "QueryUrl",
+            (["in"], WSTRING, "pocsUrl"),
+            (["in"], c_ulong, "dwFlags"),
+            (["in", "out"], POINTER(Mock_STATURL), "lpSTATURL"),
         )
-        if len(out_params) == 0:
-            out_params = MagicMock(spec=c_ulong, name="HRESULT")
-        elif len(out_params) == 1:
-            out_params = out_params[0]
-        m.return_value = out_params
-
-        fixed_fn = _fix_inout_args(m, argtypes, paramflags)
-        # must pass self here because _fix_inout_args expects an instance method
-        result = fixed_fn(self, *args, **kwargs)
-
-        return (result, m)
-
-    def run_test(self):
-        """Runs the test with automatically generated positional arguments"""
-        args = [x.argtype() for x in self.param_spec if x.paramflags[0] & 1 == 1]
-        results, mock = self.run_test_with_args(*args)
-        mock.assert_called_once_with(self, *args)
-        out_params = [x for x in self.param_spec if x.paramflags[0] & 2 == 2]
-        if len(out_params) == 0:
-            self.test_case.assertIsNone(results)
-            return
-        if len(out_params) == 1:
-            results = [results]
-        self.test_case.assertEqual(len(results), len(out_params))
-        for result, param in zip(results, out_params):
-            if param.paramflags[0] & 3 == 3:
-                # inout parameters should be passed back unmodified
-                self.test_case.assertIsInstance(result, param.argtype)
-            else:
-                # out parameters should be generated as MagicMock's
-                self.test_case.assertIsInstance(result, MagicMock)
-
-
-class Test_InOut_args(ut.TestCase):
-    # Right now this test fails due to the issue discussed in _memberspec.py
-    @ut.expectedFailure
-    def test_real_world_examples(self):
-        """Test the signatures of several real COM functions"""
-        testCases = [
-            # IRecordInfo::GetFieldNames
-            TestEntry(
-                self,
-                [
-                    Param(POINTER(c_ulong), (3, "pcNames")),
-                    Param(POINTER(comtypes.BSTR), (1, "rgBstrNames")),
-                ],
-            ),
-            # ITypeLib::IsName
-            TestEntry(
-                self,
-                [
-                    Param(POINTER(c_wchar_p), (3, "name")),
-                    Param(c_ulong, (17, "lHashVal", 0)),
-                    # the last (out) argument has no name in the header
-                    Param(POINTER(c_ulong), (2, None)),
-                ],
-            ),
-            # based on IPortableDeviceContent::CreateObjectWithPropertiesAndData
-            # which had a bug in the past
-            TestEntry(
-                self,
-                [
-                    Param(POINTER(IUnknown), (1, "pValues")),
-                    Param(POINTER(IUnknown), (2, "ppData")),
-                    Param(POINTER(c_ulong), (3, "pdwOptimalWriteBufferSize")),
-                    Param(POINTER(c_wchar_p), (3, "ppszCookie")),
-                ],
-            ),
-        ]
-        for i, entry in enumerate(testCases):
-            with self.subTest(f"Example {i}"):
-                entry.run_test()
-
-    def test_permutations(self):
-        """Test any order of an 'in', an 'out', and two 'inout' arguments of different types"""
-        params = [
-            (["in"], c_ulong, "inpar"),
-            (["in", "out"], POINTER(c_wchar_p), "inoutpar1"),
-            (["in", "out"], POINTER(comtypes.IUnknown), "inoutpar2"),
-            (["out"], POINTER(c_bool), "outpar"),
-        ]
         orig = MagicMock()
-        for i, permuted_params in enumerate(permutations(params)):
-            spec = comtypes.COMMETHOD(
-                [], HRESULT, "CreateObjectWithPropertiesAndData", *permuted_params
-            )
-            with self.subTest(f"Permutation {i:#02d}"):
-                fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
-                self_ = MagicMock(name="Self")
-                generated_in_params = tuple(
-                    param[1]() for param in permuted_params if "in" in param[0]
-                )
-                mock_outpar = MagicMock(name="outpar")
-                mock_return_values = []
-                for param in permuted_params:
-                    if "out" in param[0]:
-                        mock_return_values.append(
-                            ... if "in" in param[0] else mock_outpar
-                        )
-                orig.return_value = tuple(mock_return_values)
-                ret_vals = fixed(self_, *generated_in_params)
+        orig.return_value = MagicMock(spec=Mock_STATURL, name="lpSTATURL")
+        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
 
-                # These need to be matched
-                call_arguments_iter = iter(orig.call_args[0][1:])
-                gen_in_vals_iter = iter(generated_in_params)
-                ret_vals_iter = iter(ret_vals)
-                for param in permuted_params:
-                    if param[0] == ["in", "out"]:
-                        # check the input into 'fixed' against the input into 'orig' and the output of 'fixed'
-                        in_arg = next(call_arguments_iter)
-                        self.assertEqual(in_arg, next(ret_vals_iter))
-                        self.assertEqual(in_arg, next(gen_in_vals_iter))
-                    elif param[0] == ["out"]:
-                        # check the output of 'fixed' against the pre-defined mock
-                        self.assertIs(next(ret_vals_iter), mock_outpar)
-                    else:  # ["in"]
-                        # check the input into 'fixed' against the input into 'orig'
-                        self.assertEqual(
-                            next(call_arguments_iter), next(gen_in_vals_iter)
-                        )
+        self_ = MagicMock(name="Self")
+        pocs_url = "ghi"
+        dw_flags = 8
+        lp_staturl = Mock_STATURL()
+        ret_val = fixed(self_, pocs_url, dw_flags, lp_staturl)
 
-    # TODO The following lines are not covered by this unit test:
-    #
-    # else:
-    #   v = atyp.from_param(v)
-    #   assert not isinstance(v, BYREFTYPE)
-    #
-    # If you have a natural use case for these lines, please consider adding a test.
+        # Here we encounter a quirk of _fix_inout_args:
+        #
+        # When the function has only one return value,
+        #   _fix_inout_args will call __ctypes_from_outparam__ on the return value of the function.
+        # When there is more than one return value,
+        #   _fix_inout_args will call __ctypes_from_outparam__ on the input inout parameters.
+        #
+        # This may be a bug, but due to backwards compatibility we won't change it
+        # unless someone can demonstrate that it causes problems.
+
+        orig.assert_called_once_with(self_, pocs_url, dw_flags, lp_staturl)
+
+        # Not too happy about using underscore attributes, but I didn't find a cleaner way
+        self.assertEqual(ret_val._mock_new_name, "()")
+        ret_val_parent = ret_val._mock_new_parent
+        self.assertEqual(ret_val_parent._mock_new_name, "__ctypes_from_outparam__")
+        self.assertIs(ret_val_parent._mock_new_parent, orig.return_value)
+
+        # TODO Alternative:
+        self.assertEqual(
+            ret_val._extract_mock_name(), "lpSTATURL.__ctypes_from_outparam__()"
+        )
+
+    def test_IMoniker(self):
+        # memberspec of IMoniker.Reduce
+        spec = comtypes.COMMETHOD(
+            [],
+            HRESULT,
+            "Reduce",
+            (["in"], POINTER(IUnknown), "pbc"),
+            (["in"], c_ulong, "dwReduceHowFar"),
+            (["in", "out"], POINTER(POINTER(IUnknown)), "ppmkToLeft"),
+            (["out"], POINTER(POINTER(IUnknown)), "ppmkReduced"),
+        )
+        orig = MagicMock()
+        ppmk_reduced = MagicMock(spec=POINTER(IUnknown), name="ppmkReduced")
+        orig.return_value = (..., ppmk_reduced)
+        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
+
+        self_ = MagicMock(name="Self")
+        pbc = POINTER(IUnknown)()
+        dw_reduce_how_far = 15
+        ppmk_to_left = POINTER(IUnknown)()
+        ret_val = fixed(self_, pbc, dw_reduce_how_far, ppmk_to_left)
+
+        orig.assert_called_once()
+        # (orig_0th, orig_1st, orig_2nd, orig_3rd, orig_4th), orig_kw = orig.call_args
+
+        self.assertEqual(orig.call_args[1], {})
+        self.assertTupleEqual(
+            orig.call_args[0], (self_, pbc, dw_reduce_how_far, ppmk_to_left)
+        )
+        self.assertListEqual(ret_val, [ppmk_to_left, ppmk_reduced])
+
+    def test_IPin(self):
+        spec = comtypes.COMMETHOD(
+            [],
+            HRESULT,
+            "QueryInternalConnections",
+            (["out"], POINTER(POINTER(IUnknown)), "apPin"),  # IPin
+            (["in", "out"], POINTER(c_ulong), "nPin"),
+        )
+        orig = MagicMock()
+        apPin = MagicMock(spec=POINTER(IUnknown), name="apPin")
+        orig.return_value = (apPin, ...)
+        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
+
+        self_ = MagicMock(name="Self")
+        # test passing in a pointer of the right type
+        n_pin = pointer(c_ulong(26))
+        ret_val = fixed(self_, n_pin)
+
+        orig.assert_called_once_with(self_, n_pin)
+        self.assertEqual(orig.call_args[1], {})
+        self.assertListEqual(ret_val, [apPin, n_pin])
 
 
 class Test_ArgsKwargsCombinations(ut.TestCase):
@@ -300,7 +245,7 @@ class PermutedArgspecTestingParams(NamedTuple):
 class Test_ArgspecPermutations(ut.TestCase):
     def test_permutations(self):
         for testing_params in self._get_params():
-            with self.subTest(testing_params):
+            with self.subTest(testing_params.argspec):
                 self_ = MagicMock(name="Self")
                 orig = MagicMock(return_value=testing_params.orig_ret_val)
                 spec = comtypes.COMMETHOD([], HRESULT, "foo", *testing_params.argspec)
