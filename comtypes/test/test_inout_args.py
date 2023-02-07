@@ -10,7 +10,6 @@ from comtypes._memberspec import _fix_inout_args, _ArgSpecElmType
 WSTRING = c_wchar_p
 
 
-
 class Test_RealWorldExamples(ut.TestCase):
     def test_IUrlHistoryStg(self):
         class Mock_STATURL(Structure):
