@@ -183,6 +183,12 @@ def _fix_inout_args(
             dir_in = direction & 1 == 1
             dir_out = direction & 2 == 2
             is_positional = param_index < len(args)
+            if not (dir_in or dir_out):
+                # The original code here did not check for this special case and effectively treated
+                # (dir_in, dir_out) == (false, false) and (dir_in, dir_out) == (true, false) the same.
+                # In order not to break legacy code we do the same.
+                # One example of a function that has neither dir_in nor dir_out set is IMFAttributes.GetString().
+                dir_in = True
             if dir_in and dir_out:
                 # This is an [in, out] parameter.
                 #
@@ -229,10 +235,6 @@ def _fix_inout_args(
                 outnum += 1
             if dir_in:
                 param_index += 1
-            if not dir_out and not dir_in:
-                raise Exception(
-                    f"A parameter for {getattr(func, '__name__', str(func))} has neither 'out' nor 'in' specified"
-                )
 
         rescode = func(self, *args, **kw)
         # If there is only a single output value, then do not expect it to

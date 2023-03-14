@@ -1,5 +1,5 @@
 from typing import Any, Callable, List, NamedTuple, Tuple, Type
-from ctypes import HRESULT, POINTER, Structure, c_ulong, c_wchar_p, pointer
+from ctypes import POINTER, pointer, Structure, HRESULT, c_ulong, c_wchar_p, c_int
 import unittest as ut
 from unittest.mock import MagicMock
 
@@ -108,6 +108,28 @@ class Test_RealWorldExamples(ut.TestCase):
         orig.assert_called_once_with(self_, n_pin)
         self.assertEqual(orig.call_args[1], {})
         self.assertListEqual(ret_val, [apPin, n_pin])
+
+    def test_IMFAttributes(self):
+        self_ = MagicMock(name="Self")
+        # a memberspec of `MSVidCtlLib.IMFAttributes`
+        # Notably, for the first parameters, neither 'in' nor 'out' is specified.
+        # For compatibility with legacy code this should be treated as 'in'.
+        spec = comtypes.COMMETHOD(
+            [],
+            HRESULT,
+            "GetItemType",
+            ([], POINTER(comtypes.GUID), "guidKey"),
+            (["out"], POINTER(c_int), "pType"),
+        )
+        orig = MagicMock(__name__="orig")
+        guidKey = comtypes.GUID("{00000000-0000-0000-0000-000000000000}")
+        pType = 4
+        orig.return_value = pType
+        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
+        ret_val = fixed(self_, guidKey)
+
+        orig.assert_called_once_with(self_, guidKey)
+        self.assertEqual(ret_val, pType)
 
 
 class Test_ArgsKwargsCombinations(ut.TestCase):
@@ -447,23 +469,6 @@ class Test_ArgspecPermutations(ut.TestCase):
 
 
 class Test_Error(ut.TestCase):
-    def test_missing_direction(self):
-        self_ = MagicMock(name="Self")
-        spec = comtypes.COMMETHOD(
-            [],
-            HRESULT,
-            "Foo",
-            ([], POINTER(c_ulong)),
-        )
-        orig = MagicMock(__name__="orig")
-        fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
-        with self.assertRaises(Exception) as cm:
-            fixed(self_, 4)
-        self.assertEqual(
-            str(cm.exception),
-            "A parameter for orig has neither 'out' nor 'in' specified",
-        )
-
     def test_missing_name_omitted(self):
         self_ = MagicMock(name="Self")
         spec = comtypes.COMMETHOD(
