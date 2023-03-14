@@ -173,7 +173,7 @@ def _fix_inout_args(
     def call_with_inout(self, *args, **kw):
         args = list(args)
         # Indexed by order in the output
-        outargs = {}
+        outargs: Dict[int, _UnionT[_CData, "ctypes._CArgObject"]] = {}
         outnum = 0
         param_index = 0
         # Go through all expected arguments and match them to the provided arguments.
