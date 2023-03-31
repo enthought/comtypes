@@ -1,3 +1,4 @@
+import contextlib
 import unittest as ut
 
 from ctypes import POINTER, pointer, windll
@@ -7,7 +8,8 @@ import comtypes.client
 
 class Test_IMFAttributes(ut.TestCase):
     def test_imfattributes(self):
-        comtypes.client.GetModule("msvidctl.dll")
+        with contextlib.redirect_stdout(None):  # supress warnings, see test_client.py
+            comtypes.client.GetModule("msvidctl.dll")
         from comtypes.gen import MSVidCtlLib
 
         imf_attrs = POINTER(MSVidCtlLib.IMFAttributes)()
