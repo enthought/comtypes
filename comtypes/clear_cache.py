@@ -1,7 +1,7 @@
 import argparse
 import os
-from shutil import rmtree as _rmtree  # TESTS RELY ON THIS IMPORT NOT CHANGING
 import sys
+from shutil import rmtree  # TESTS ASSUME USE OF RMTREE
 
 
 def main():
@@ -35,7 +35,7 @@ def main():
     # we make it un-writable, so calling it again gives us the APPDATA location
     for _ in range(2):
         dir_path = comtypes.client._find_gen_dir()
-        _rmtree(dir_path)
+        rmtree(dir_path)
         print(f"Removed directory \"{dir_path}\"")
 
 
