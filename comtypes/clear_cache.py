@@ -36,7 +36,7 @@ def main():
     for _ in range(2):
         dir_path = comtypes.client._find_gen_dir()
         rmtree(dir_path)
-        print(f"Removed directory \"{dir_path}\"")
+        print(f'Removed directory "{dir_path}"')
 
 
 if __name__ == "__main__":
