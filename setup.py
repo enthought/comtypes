@@ -111,14 +111,10 @@ class post_install(install):
         install.run(self)
         # Custom script we run at the end of installing
         if not self.dry_run and not self.root:
-            filename = os.path.join(
-                self.install_scripts, "clear_comtypes_cache.py")
-            if not os.path.isfile(filename):
-                raise RuntimeError("Can't find '%s'" % (filename,))
             print("Executing post install script...")
-            print('"' + sys.executable + '" "' + filename + '" -y')
+            print('"' + sys.executable + '" -m comtypes.clear_cache -y')
             try:
-                subprocess.check_call([sys.executable, filename, '-y'])
+                subprocess.check_call([sys.executable, "-m", "comtypes.clear_cache", '-y'])
             except subprocess.CalledProcessError:
                 print("Failed to run post install script!")
 
@@ -146,7 +142,9 @@ setup_params = dict(
         ]},
     classifiers=classifiers,
 
-    scripts=["clear_comtypes_cache.py"],
+    entry_points={
+        "console_scripts": ["clear_comtypes_cache=comtypes.clear_cache:main"]
+    },
 
     cmdclass={
         'test': test,
