@@ -1,6 +1,35 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.2.0
+--------------
+ * Remove all automatic imports of ``numpy``, and make ``numpy`` interop opt-in. By @bennyrowland.
+ * Move and redefine generating module functions for fixing cross imports. By @junkmd.
+ * Refactor creating ``__all__`` part in ``codegenerator.Generator.generate_code``. By @junkmd.
+ * Quit calling ``GetModule`` from ``tools.codegenerator``. By @junkmd.
+ * Commonize module-creating functions. By @junkmd.
+ * Shorten the lifetime of ``io.StringIO`` used for code generation. By @junkmd.
+ * Fix import source of ``Array`` from ``_ctypes`` to ``ctypes``. By @junkmd.
+ * Add ``for_stub`` mode to ``ImportedNamespaces.getvalue``. By @junkmd.
+ * Remove ``monkeypatch_COMError``. By @junkmd.
+ * Remove ``CodeGenerator.need_GUID``. By @junkmd.
+ * Carve out ``CodeGenerator.type_name`` method to ``TypeNamer`` class. By @junkmd.
+ * Add ``__known_symbols__`` attributes. By @junkmd.
+ * Remove ``CodeGenerator.type_name`` calls no longer needed and rename to ``_to_type_name``. By @junkmd.
+ * Change ``_fix_inout_args`` to module-level top level function. By @junkmd.
+ * Fix docstring from ``DispInterfaceHead``. By @junkmd.
+ * ``...METHOD`` and ``...PROPERTY`` return ``_MemberSpec``s instead of ``tuple``s. By @junkmd.
+ * Make generating ``...property`` DRY. By @junkmd.
+ * Refactor ``_MemberSpec`` stuffs and separate modules. By @junkmd.
+ * Carve out ``make_...Method`` and ``make_...Property`` of ``codegenerator``. By @junkmd.
+ * Removed extra space in ``typeinfo.IRecordInfo._methods_``. By @j0ker70.
+ * Add type annotations to many modules. By @junkmd.
+ * Fix type annotations in many modules. By @j0ker70, @muddi900, and @junkmd.
+ * Delint ``setup.py``. By @jaraco.
+ * Add ``CONTRIBUTING.md``. By @junkmd.
+ * Modernize ``README.md`` style. By @junkmd.
+ * Add announcements of plan for renaming ``master`` branch to ``main`` and dropping Python2 to ``README.md``. By @junkmd.
+
 Release 1.1.14
 --------------
  * Fix ``SyntaxError`` in generated docstring. Thanks @junkmd.
