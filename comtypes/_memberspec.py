@@ -3,11 +3,14 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Generic,
     Iterator,
     List,
+    NamedTuple,
     Optional,
     Tuple,
     Type,
+    TypeVar,
     Union as _UnionT,
 )
 
@@ -82,56 +85,31 @@ def _resolve_argspec(
     return tuple(paramflags), tuple(argtypes)
 
 
-class _MemberSpec(object):
-    """Specifier of a slot of method or property."""
-
-    __slots__ = ("name", "idlflags", "restype")
-
-    def __init__(self, name, idlflags, restype):
-        self.name: str = name
-        self.idlflags: Tuple[_UnionT[str, int], ...] = idlflags
-        self.restype: Optional[Type[_CData]] = restype
-
-    def is_prop(self) -> bool:
-        propflags = ("propget", "propput", "propputref")
-        return any(f in propflags for f in self.idlflags)
+_PFs = TypeVar("_PFs", bound=Optional[Tuple[_ParamFlagType, ...]])
 
 
-class _ComMemberSpec(_MemberSpec):
+class _ComMemberSpec(NamedTuple, Generic[_PFs]):
     """Specifier for a slot of COM method or property."""
 
-    __slots__ = ("argtypes", "paramflags", "doc")
+    restype: Optional[Type[_CData]]
+    name: str
+    argtypes: Tuple[Type[_CData], ...]
+    paramflags: _PFs
+    idlflags: Tuple[_UnionT[str, int], ...]
+    doc: Optional[str]
 
-    def __init__(self, restype, name, argtypes, paramflags, idlflags, doc):
-        self.argtypes: Tuple[Type[_CData], ...] = argtypes
-        self.paramflags: Optional[Tuple[_ParamFlagType, ...]] = paramflags
-        self.doc: Optional[str] = doc
-        super(_ComMemberSpec, self).__init__(name, idlflags, restype)
-
-    def __iter__(self):
-        # for backward compatibility:
-        # A function that returns this object used to return a `tuple`.
-        # So it is implemented as unpackable as well.
-        for item in (
-            self.restype,
-            self.name,
-            self.argtypes,
-            self.paramflags,
-            self.idlflags,
-            self.doc,
-        ):
-            yield item
+    def is_prop(self) -> bool:
+        return _is_spec_prop(self)
 
 
-class _DispMemberSpec(_MemberSpec):
+class _DispMemberSpec(NamedTuple):
     """Specifier for a slot of dispinterface method or property."""
 
-    __slots__ = ("what", "argspec")
-
-    def __init__(self, what, name, idlflags, restype, argspec):
-        self.what: str = what
-        self.argspec: Tuple[_ArgSpecElmType, ...] = argspec
-        super(_DispMemberSpec, self).__init__(name, idlflags, restype)
+    what: str
+    name: str
+    idlflags: Tuple[_UnionT[str, int], ...]
+    restype: Optional[Type[_CData]]
+    argspec: Tuple[_ArgSpecElmType, ...]
 
     @property
     def memid(self) -> int:
@@ -140,12 +118,17 @@ class _DispMemberSpec(_MemberSpec):
         except IndexError:
             raise TypeError("no dispid found in idlflags")
 
-    def __iter__(self):
-        # for backward compatibility:
-        # A function that returns this object used to return a `tuple`.
-        # So it is implemented as unpackable as well.
-        for item in (self.what, self.name, self.idlflags, self.restype, self.argspec):
-            yield item
+    def is_prop(self) -> bool:
+        return _is_spec_prop(self)
+
+
+# Specifier of a slot of method or property.
+# This should be `typing.Protocol` if supporting Py3.8+ only.
+_MemberSpec = _UnionT[_ComMemberSpec, _DispMemberSpec]
+
+
+def _is_spec_prop(m: _MemberSpec):
+    return any(f in ("propget", "propput", "propputref") for f in m.idlflags)
 
 
 _PropFunc = Optional[Callable[..., Any]]
