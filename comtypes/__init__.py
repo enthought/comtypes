@@ -47,7 +47,6 @@ from comtypes._memberspec import (
     _ComMemberSpec,
     DispMemberGenerator,
     _DispMemberSpec,
-    _ParamFlagType,
     _encode_idl,
     _resolve_argspec,
 )
@@ -721,7 +720,7 @@ class dispid(int):
 # instances with more methods or properties, and should not behave as an unpackable.
 
 
-def STDMETHOD(restype, name, argtypes=()) -> _ComMemberSpec[None]:
+def STDMETHOD(restype, name, argtypes=()) -> _ComMemberSpec:
     "Specifies a COM method slot without idlflags"
     return _ComMemberSpec(restype, name, argtypes, None, (), None)
 
@@ -747,7 +746,7 @@ def DISPPROPERTY(idlflags, proptype, name) -> _DispMemberSpec:
 
 def COMMETHOD(
     idlflags, restype, methodname, *argspec
-) -> _ComMemberSpec[tuple[_ParamFlagType, ...]]:
+) -> _ComMemberSpec:
     """Specifies a COM method slot with idlflags.
 
     XXX should explain the sematics of the arguments.

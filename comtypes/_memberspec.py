@@ -3,14 +3,12 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Generic,
     Iterator,
     List,
     NamedTuple,
     Optional,
     Tuple,
     Type,
-    TypeVar,
     Union as _UnionT,
 )
 
@@ -85,16 +83,13 @@ def _resolve_argspec(
     return tuple(paramflags), tuple(argtypes)
 
 
-_PFs = TypeVar("_PFs", bound=Optional[Tuple[_ParamFlagType, ...]])
-
-
-class _ComMemberSpec(NamedTuple, Generic[_PFs]):
+class _ComMemberSpec(NamedTuple):
     """Specifier for a slot of COM method or property."""
 
     restype: Optional[Type[_CData]]
     name: str
     argtypes: Tuple[Type[_CData], ...]
-    paramflags: _PFs
+    paramflags: Optional[Tuple[_ParamFlagType, ...]]
     idlflags: Tuple[_UnionT[str, int], ...]
     doc: Optional[str]
 
