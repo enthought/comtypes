@@ -744,9 +744,7 @@ def DISPPROPERTY(idlflags, proptype, name) -> _DispMemberSpec:
 #     )
 
 
-def COMMETHOD(
-    idlflags, restype, methodname, *argspec
-) -> _ComMemberSpec:
+def COMMETHOD(idlflags, restype, methodname, *argspec) -> _ComMemberSpec:
     """Specifies a COM method slot with idlflags.
 
     XXX should explain the sematics of the arguments.
