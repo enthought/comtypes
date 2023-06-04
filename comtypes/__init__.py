@@ -720,17 +720,17 @@ class dispid(int):
 # instances with more methods or properties, and should not behave as an unpackable.
 
 
-def STDMETHOD(restype, name, argtypes=()):
+def STDMETHOD(restype, name, argtypes=()) -> _ComMemberSpec:
     "Specifies a COM method slot without idlflags"
     return _ComMemberSpec(restype, name, argtypes, None, (), None)
 
 
-def DISPMETHOD(idlflags, restype, name, *argspec):
+def DISPMETHOD(idlflags, restype, name, *argspec) -> _DispMemberSpec:
     "Specifies a method of a dispinterface"
     return _DispMemberSpec("DISPMETHOD", name, tuple(idlflags), restype, argspec)
 
 
-def DISPPROPERTY(idlflags, proptype, name):
+def DISPPROPERTY(idlflags, proptype, name) -> _DispMemberSpec:
     "Specifies a property of a dispinterface"
     return _DispMemberSpec("DISPPROPERTY", name, tuple(idlflags), proptype, ())
 
@@ -744,7 +744,7 @@ def DISPPROPERTY(idlflags, proptype, name):
 #     )
 
 
-def COMMETHOD(idlflags, restype, methodname, *argspec):
+def COMMETHOD(idlflags, restype, methodname, *argspec) -> _ComMemberSpec:
     """Specifies a COM method slot with idlflags.
 
     XXX should explain the sematics of the arguments.
