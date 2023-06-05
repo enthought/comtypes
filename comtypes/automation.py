@@ -857,32 +857,21 @@ class IDispatch(IUnknown):
         _lcid = kw.pop("_lcid", 0)
         if kw:
             raise ValueError("named parameters not yet implemented")
-
+        array = (VARIANT * len(args))()
+        for i, a in enumerate(args[::-1]):
+            array[i].value = a
+        dp = DISPPARAMS()
+        dp.cArgs = len(args)
+        dp.rgvarg = array
         result = VARIANT()
         excepinfo = EXCEPINFO()
         argerr = c_uint()
 
         if _invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):  # propput
-            array = (VARIANT * len(args))()
-
-            for i, a in enumerate(args[::-1]):
-                array[i].value = a
-
-            dp = DISPPARAMS()
-            dp.cArgs = len(args)
             dp.cNamedArgs = 1
-            dp.rgvarg = array
             dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
         else:
-            array = (VARIANT * len(args))()
-
-            for i, a in enumerate(args[::-1]):
-                array[i].value = a
-
-            dp = DISPPARAMS()
-            dp.cArgs = len(args)
             dp.cNamedArgs = 0
-            dp.rgvarg = array
 
         try:
             self.__com_Invoke(
