@@ -20,4 +20,6 @@ class ClearCacheTestCase(TestCase):
 
         # because we don't actually delete anything, _find_gen_dir() will
         # give the same answer every time we call it
-        assert mock_rmtree.call_args_list == [call(_find_gen_dir()) for i in range(2)]
+        self.assertEqual(
+            mock_rmtree.call_args_list, [call(_find_gen_dir()) for _ in range(2)]
+        )

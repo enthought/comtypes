@@ -112,7 +112,7 @@ class post_install(install):
         # Custom script we run at the end of installing
         if not self.dry_run and not self.root:
             print("Executing post install script...")
-            print('"' + sys.executable + '" -m comtypes.clear_cache -y')
+            print(f'"{sys.executable}" -m comtypes.clear_cache -y')
             try:
                 subprocess.check_call([sys.executable, "-m", "comtypes.clear_cache", '-y'])
             except subprocess.CalledProcessError:

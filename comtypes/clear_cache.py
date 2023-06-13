@@ -1,7 +1,19 @@
 import argparse
+import contextlib
 import os
 import sys
 from shutil import rmtree  # TESTS ASSUME USE OF RMTREE
+
+
+# if supporting Py>=3.11 only, this might be `contextlib.chdir`.
+# https://docs.python.org/3/library/contextlib.html#contextlib.chdir
+@contextlib.contextmanager
+def chdir(path):
+    """Context manager to change the current working directory."""
+    work_dir = os.getcwd()
+    os.chdir(path)
+    yield
+    os.chdir(work_dir)
 
 
 def main():
@@ -20,14 +32,12 @@ def main():
             return
 
     # change cwd to avoid import from local folder during installation process
-    work_dir = os.getcwd()
-    try:
-        os.chdir(os.path.dirname(sys.executable))
-        import comtypes.client
-    except ImportError:
-        print("Could not import comtypes", file=sys.stderr)
-        sys.exit(1)
-    os.chdir(work_dir)
+    with chdir(os.path.dirname(sys.executable)):
+        try:
+            import comtypes.client
+        except ImportError:
+            print("Could not import comtypes", file=sys.stderr)
+            sys.exit(1)
 
     # there are two possible locations for the cache folder (in the comtypes
     # folder in site-packages if that is writable, otherwise in APPDATA)
