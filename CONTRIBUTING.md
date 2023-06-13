@@ -91,7 +91,7 @@ Those `.py` files act like ”caches”.
 
 If there are some problems with the developing code base, partial or non-executable modules might be created in `.../comtypes/gen/...`.  
 Importing them will cause some error.  
-If that happens, you should run `python -m clear_comtypes_cache` to clear those caches.  
+If that happens, you should run `python -m comtypes.clear_cache` to clear those caches.  
 The command will delete the entire `.../comtypes/gen` directory.  
 Importing `comtypes.gen.client` will restore the directory and `__init__.py` file.
 
