@@ -279,7 +279,9 @@ class ITypeLib(IUnknown):
         found = c_ushort(1)
         tinfo = POINTER(ITypeInfo)()
         memid = MEMBERID()
-        self.__com_FindName(name, lHashVal, byref(tinfo), byref(memid), byref(found))  # type: ignore
+        self.__com_FindName(  # type: ignore
+            name, lHashVal, byref(tinfo), byref(memid), byref(found)
+        )
         if found.value:
             return memid.value, tinfo  # type: ignore
         return None
@@ -324,11 +326,18 @@ class ITypeInfo(IUnknown):
             ...
 
         # not yet wrapped
-        # STDMETHOD(HRESULT, 'Invoke', [PVOID, MEMBERID, WORD, POINTER(DISPPARAMS), POINTER(VARIANT), POINTER(EXCEPINFO), POINTER(UINT)]),
+        # STDMETHOD(
+        #     HRESULT, 'Invoke', [
+        #         PVOID, MEMBERID, WORD, POINTER(DISPPARAMS),
+        #         POINTER(VARIANT), POINTER(EXCEPINFO), POINTER(UINT)
+        #     ]
+        # ),
         def GetDllEntry(
             self, memid: int, invkind: int
         ) -> Tuple[Optional[str], Optional[str], int]:
-            """Return the dll name, function name, and ordinal for a function and invkind."""
+            """Return the dll name, function name, and ordinal for a function
+            and invkind.
+            """
             ...
 
         def GetRefTypeInfo(self, href: int) -> "ITypeInfo":
@@ -423,7 +432,9 @@ class ITypeComp(IUnknown):
         bindptr = BINDPTR()
         desckind = DESCKIND()
         ti: ITypeInfo = POINTER(ITypeInfo)()  # type: ignore
-        self.__com_Bind(name, lHashVal, flags, byref(ti), byref(desckind), byref(bindptr))  # type: ignore
+        self.__com_Bind(  # type: ignore
+            name, lHashVal, flags, byref(ti), byref(desckind), byref(bindptr)
+        )
         kind = desckind.value
         if kind == DESCKIND_FUNCDESC:
             fd = bindptr.lpfuncdesc[0]
@@ -737,15 +748,14 @@ class tagFUNCDESC(Structure):
 
     def __repr__(self):
         return (
-            "FUNCDESC(memid=%s, cParams=%s, cParamsOpt=%s, callconv=%s, invkind=%s, funckind=%s)"
-            % (
-                self.memid,
-                self.cParams,
-                self.cParamsOpt,
-                self.callconv,
-                self.invkind,
-                self.funckind,
-            )
+            "FUNCDESC("
+            f"memid={self.memid}, "
+            f"cParams={self.cParams}, "
+            f"cParamsOpt={self.cParamsOpt}, "
+            f"callconv={self.callconv}, "
+            f"invkind={self.invkind,}, "
+            f"funckind={self.funckind}"
+            ")"
         )
 
 
@@ -1064,7 +1074,9 @@ class IProvideClassInfo(IUnknown):
     if TYPE_CHECKING:
 
         def GetClassInfo(self) -> ITypeInfo:
-            """Returns the ITypeInfo interface for the object's coclass type information."""
+            """Returns the ITypeInfo interface for the object's coclass type
+            information.
+            """
             ...
 
     _methods_ = [
@@ -1079,7 +1091,9 @@ class IProvideClassInfo2(IProvideClassInfo):
     if TYPE_CHECKING:
 
         def GetGUID(self, dwGuidKind: int) -> GUID:
-            """Returns the GUID for the object's outgoing IID for its default event set"""
+            """Returns the GUID for the object's outgoing IID for its default
+            event set
+            """
             ...
 
     _methods_ = [
