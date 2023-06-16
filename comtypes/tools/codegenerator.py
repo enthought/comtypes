@@ -1388,21 +1388,6 @@ class ImportedNamespaces(object):
             ...     'Decimal', 'GUID', 'COMMETHOD', 'DISPMETHOD', 'IUnknown',
             ...     'dispid', 'CoClass', 'BSTR', 'DISPPROPERTY'
             ... }
-            >>> print(imports.getvalue(for_stub=True))
-            from ctypes import *
-            import datetime
-            from decimal import Decimal as Decimal
-            from comtypes import (
-                BSTR as BSTR,
-                CoClass as CoClass,
-                COMMETHOD as COMMETHOD,
-                dispid as dispid,
-                DISPMETHOD as DISPMETHOD,
-                DISPPROPERTY as DISPPROPERTY,
-                GUID as GUID,
-                IUnknown as IUnknown,
-            )
-            import ctypes.wintypes
         """
         if name2 is None:
             import_ = name1
@@ -1448,25 +1433,19 @@ class ImportedNamespaces(object):
             names.add(key)
         return names
 
-    def _make_line(self, from_, imports, for_stub):
-        if for_stub:
-            import_ = ", ".join("%s as %s" % (n, n) for n in imports)
-        else:
-            import_ = ", ".join(imports)
+    def _make_line(self, from_, imports):
+        import_ = ", ".join(imports)
         code = "from %s import %s" % (from_, import_)
         if len(code) <= 80:
             return code
-        if for_stub:
-            import_ = "\n".join("    %s as %s," % (n, n) for n in imports)
-        else:
-            wrapper = textwrap.TextWrapper(
-                subsequent_indent="    ", initial_indent="    ", break_long_words=False
-            )
-            import_ = "\n".join(wrapper.wrap(import_))
+        wrapper = textwrap.TextWrapper(
+            subsequent_indent="    ", initial_indent="    ", break_long_words=False
+        )
+        import_ = "\n".join(wrapper.wrap(import_))
         code = "from %s import (\n%s\n)" % (from_, import_)
         return code
 
-    def getvalue(self, for_stub=False):
+    def getvalue(self):
         ns = {}
         lines = []
         for key, val in self.data.items():
@@ -1481,7 +1460,7 @@ class ImportedNamespaces(object):
                 lines.append("import %s" % key)
             else:
                 names = sorted(val, key=lambda s: s.lower())
-                lines.append(self._make_line(key, names, for_stub=for_stub))
+                lines.append(self._make_line(key, names))
         return "\n".join(lines)
 
 
