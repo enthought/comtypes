@@ -74,6 +74,10 @@ class Test_GetModule(ut.TestCase):
         # NOTE: `WindowsInstaller`, which has `Patch` definition in dll.
         comtypes.client.GetModule("msi.dll")
 
+    def test_abstracted_wrapper_module_in_friendly_module(self):
+        mod = comtypes.client.GetModule("scrrun.dll")
+        self.assertTrue(hasattr(mod, "__wrapper_module__"))
+
     def test_raises_typerror_if_takes_unsupported(self):
         with self.assertRaises(TypeError):
             comtypes.client.GetModule(object())
