@@ -589,6 +589,7 @@ class CodeGenerator(object):
         Such as "comtypes.gen.stdole" and "comtypes.gen.Excel".
         """
         output = io.StringIO()
+        print(f"import {modname} as __wrapper_module__", file=output)
         txtwrapper = textwrap.TextWrapper(
             subsequent_indent="    ", initial_indent="    ", break_long_words=False
         )
