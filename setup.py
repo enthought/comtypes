@@ -3,11 +3,10 @@ import sys
 import os
 import subprocess
 
-from distutils.core import Command
-from distutils.command.install import install
-from setuptools import setup
+from setuptools import Command, setup
+from setuptools.command.install import install
+from setuptools.command.build_py import build_py
 
-from distutils.command.build_py import build_py
 
 with open('README.md') as readme_stream:
     readme = readme_stream.read()

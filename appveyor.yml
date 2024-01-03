@@ -25,8 +25,11 @@ environment:
      - py: Python310-x64
      - py: Python311
      - py: Python311-x64
+     - py: Python312
+     - py: Python312-x64
 
 test_script:
+   - C:\%py%\Scripts\pip.exe install --upgrade setuptools
    - C:\%py%\python.exe setup.py install
    - C:\%py%\Scripts\pip.exe uninstall comtypes -y
    - C:\%py%\python.exe test_pip_install.py
