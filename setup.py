@@ -143,6 +143,9 @@ setup_params = dict(
             "mylib.tlb"
             "urlhist.tlb",
             "test_jscript.js",
+        ],
+        "comtypes": [
+            "hints.pyi"
         ]},
     classifiers=classifiers,
 
