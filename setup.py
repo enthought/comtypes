@@ -126,6 +126,7 @@ setup_params = dict(
     name="comtypes",
     description="Pure Python COM package",
     long_description=readme,
+    long_description_content_type="text/markdown",
     author="Thomas Heller",
     author_email="theller@python.net",
     url="https://github.com/enthought/comtypes",
