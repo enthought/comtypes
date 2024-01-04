@@ -7,6 +7,7 @@ Release 1.2.1
  * Add Python 3.12 testing into CI pipeline. By @junkmd.
  * Set long description type to "markdown" to fix PyPI description rendering. By @junkmd.
  * Add ``hints.pyi`` to ``package_data`` in ``setup.py`` which copies ``hints.pyi`` to correct install location. By @junkmd.
+ * Remove Python >=3.3, <=3.6 from CI pipeline. By @vasily-v-ryabov.
 
 Release 1.2.0
 --------------
