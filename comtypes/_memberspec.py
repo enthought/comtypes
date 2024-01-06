@@ -229,7 +229,7 @@ def _fix_inout_args(
                     if name is not None:
                         kw[name] = v
                     else:
-                        raise Exception("Unnamed inout parameters cannot be omitted")
+                        raise TypeError("Unnamed inout parameters cannot be omitted")
                 outargs[outnum] = v
             if dir_out:
                 outnum += 1
@@ -240,7 +240,7 @@ def _fix_inout_args(
         # If there is only a single output value, then do not expect it to
         # be iterable.
 
-        # My interpretation of this code:
+        # Our interpretation of this code (jonschz, junkmd, see https://github.com/enthought/comtypes/pull/473):
         # - 'outnum' counts the total number of 'out' and 'inout' arguments.
         # - Confusingly, 'outargs' is a dict consisting of the supplied _inout_ arguments.
         # - The call to func() returns the 'out' and 'inout' arguments.
@@ -250,7 +250,7 @@ def _fix_inout_args(
         #   by those in 'outargs', and call __ctypes_from_outparam__() on them.
         #
         # - What I don't understand is: Why is the behaviour different for outnum==1?
-        #   From the above interpretation I would have expected
+        #   From the above interpretation I would have expected line 264 to be
         #
         #   rescode = outargs[0].__ctypes_from_outparam__()
         #
@@ -258,12 +258,10 @@ def _fix_inout_args(
         #
         #   rescode = rescode.__ctypes_from_outparam__()
         #
-        #
 
         if outnum == 1:  # rescode is not iterable
             if len(outargs) == 1:
                 rescode = rescode.__ctypes_from_outparam__()
-                # rescode = outargs[0].__ctypes_from_outparam__()
             return rescode
         rescode = list(rescode)
         for outnum, o in outargs.items():
