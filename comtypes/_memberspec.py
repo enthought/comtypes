@@ -187,7 +187,7 @@ def _fix_inout_args(
                 # The original code here did not check for this special case and effectively treated
                 # (dir_in, dir_out) == (false, false) and (dir_in, dir_out) == (true, false) the same.
                 # In order not to break legacy code we do the same.
-                # One example of a function that has neither dir_in nor dir_out set is IMFAttributes.GetString().
+                # One example of a function that has neither dir_in nor dir_out set is `IMFAttributes.GetString`.
                 dir_in = True
             if dir_in and dir_out:
                 # This is an [in, out] parameter.
@@ -202,14 +202,14 @@ def _fix_inout_args(
                 # keyword arg.
 
                 def prepare_parameter(v):
-                    # parameter was passed, call .from_param() to convert it to a ctypes type.
+                    # parameter was passed, call `from_param()` to convert it to a `ctypes` type.
                     if getattr(v, "_type_", None) is atyp:
-                        # Array of or pointer to type 'atyp' was passed, pointer to 'atyp' expected.
+                        # Array of or pointer to type `atyp` was passed, pointer to `atyp` expected.
                         pass
                     elif type(atyp) is SIMPLETYPE:
-                        # The from_param method of simple types (c_int, c_double, ...) returns a byref()
-                        # object which we cannot use since later it will be wrapped in a pointer.  Simply
-                        # call the constructor with the argument in that case.
+                        # The `from_param` method of simple types (`c_int`, `c_double`, ...) returns
+                        # a `byref` object which we cannot use since later it will be wrapped in a pointer.
+                        # Simply call the constructor with the argument in that case.
                         v = atyp(v)
                     else:
                         v = atyp.from_param(v)
@@ -240,26 +240,20 @@ def _fix_inout_args(
         # If there is only a single output value, then do not expect it to
         # be iterable.
 
-        # Our interpretation of this code (jonschz, junkmd, see https://github.com/enthought/comtypes/pull/473):
-        # - 'outnum' counts the total number of 'out' and 'inout' arguments.
-        # - Confusingly, 'outargs' is a dict consisting of the supplied _inout_ arguments.
-        # - The call to func() returns the 'out' and 'inout' arguments.
+        # Our interpretation of this code
+        # (jonschz, junkmd, see https://github.com/enthought/comtypes/pull/473):
+        # - `outnum` counts the total number of 'out' and 'inout' arguments.
+        # - Confusingly, `outargs` is a dict consisting of the supplied 'inout' arguments.
+        # - The call to `func()` returns the 'out' and 'inout' arguments.
         #   Furthermore, it changes the variables in 'outargs' as a "side effect"
-        # - In a perfect world, it should be fine to just return 'rescode', but I assume there is a reason
-        #   why the original authors did not do that. Instead, they replace the inout variables in 'rescode'
-        #   by those in 'outargs', and call __ctypes_from_outparam__() on them.
-        #
-        # - What I don't understand is: Why is the behaviour different for outnum==1?
-        #   From the above interpretation I would have expected line 264 to be
-        #
-        #   rescode = outargs[0].__ctypes_from_outparam__()
-        #
-        #   instead of
-        #
-        #   rescode = rescode.__ctypes_from_outparam__()
-        #
+        # - In a perfect world, it should be fine to just return `rescode`.
+        #   But we assume there is a reason why the original authors did not do that.
+        #   Instead, they replace the 'inout' variables in `rescode` by those in 'outargs',
+        #   and call `__ctypes_from_outparam__()` on them.
 
         if outnum == 1:  # rescode is not iterable
+            # In this case, it is little faster than creating list with `rescode = [rescode]`
+            # and getting item with index from the list.
             if len(outargs) == 1:
                 rescode = rescode.__ctypes_from_outparam__()
             return rescode
