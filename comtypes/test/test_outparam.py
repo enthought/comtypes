@@ -1,6 +1,7 @@
 import sys
 import unittest
 from ctypes import *
+from unittest.mock import patch
 
 import comtypes.test
 
@@ -41,9 +42,6 @@ def from_outparm(self):
     return result
 
 
-c_wchar_p.__ctypes_from_outparam__ = from_outparm
-
-
 def comstring(text, typ=c_wchar_p):
     text = text_type(text)
     size = (len(text) + 1) * sizeof(c_wchar)
@@ -56,6 +54,8 @@ def comstring(text, typ=c_wchar_p):
 
 class Test(unittest.TestCase):
     @unittest.skip("This fails for reasons I don't understand yet")
+    # TODO untested changes; this was modified because it had global effects on other tests
+    @patch.object(c_wchar_p, "__ctypes_from_outparam__", from_outparm)
     def test_c_char(self):
         # ptr = c_wchar_p("abc")
         # self.failUnlessEqual(ptr.__ctypes_from_outparam__(),
