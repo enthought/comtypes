@@ -479,7 +479,7 @@ class Test_Error(ut.TestCase):
         )
         orig = MagicMock()
         fixed = _fix_inout_args(orig, spec.argtypes, spec.paramflags)
-        with self.assertRaises(Exception) as cm:
+        with self.assertRaises(TypeError) as cm:
             fixed(self_)
         self.assertEqual(
             str(cm.exception), "Unnamed inout parameters cannot be omitted"
