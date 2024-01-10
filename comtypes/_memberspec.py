@@ -151,60 +151,93 @@ def _fix_inout_args(
     def call_with_inout(self, *args, **kw):
         args = list(args)
         # Indexed by order in the output
-        outargs = {}
+        outargs: Dict[int, _UnionT[_CData, "ctypes._CArgObject"]] = {}
         outnum = 0
+        param_index = 0
+        # Go through all expected arguments and match them to the provided arguments.
+        # `param_index` first counts through the positional and then
+        # through the keyword arguments.
         for i, info in enumerate(paramflags):
             direction = info[0]
-            if direction & 3 == 3:
+            dir_in = direction & 1 == 1
+            dir_out = direction & 2 == 2
+            is_positional = param_index < len(args)
+            if not (dir_in or dir_out):
+                # The original code here did not check for this special case and
+                # effectively treated `(dir_in, dir_out) == (False, False)` and
+                # `(dir_in, dir_out) == (True, False)` the same.
+                # In order not to break legacy code we do the same.
+                # One example of a function that has neither `dir_in` nor `dir_out`
+                # set is `IMFAttributes.GetString`.
+                dir_in = True
+            if dir_in and dir_out:
                 # This is an [in, out] parameter.
                 #
                 # Determine name and required type of the parameter.
                 name = info[1]
                 # [in, out] parameters are passed as pointers,
                 # this is the pointed-to type:
-                atyp = argtypes[i]._type_
+                atyp: Type[_CData] = getattr(argtypes[i], "_type_")
 
                 # Get the actual parameter, either as positional or
                 # keyword arg.
-                try:
-                    try:
-                        v = args[i]
-                    except IndexError:
-                        v = kw[name]
-                except KeyError:
-                    # no parameter was passed, make an empty one
-                    # of the required type
-                    v = atyp()
-                else:
-                    # parameter was passed, call .from_param() to
-                    # convert it to a ctypes type.
+
+                def prepare_parameter(v):
+                    # parameter was passed, call `from_param()` to
+                    # convert it to a `ctypes` type.
                     if getattr(v, "_type_", None) is atyp:
-                        # Array of or pointer to type 'atyp' was
-                        # passed, pointer to 'atyp' expected.
+                        # Array of or pointer to type `atyp` was passed,
+                        # pointer to `atyp` expected.
                         pass
                     elif type(atyp) is SIMPLETYPE:
-                        # The from_param method of simple types
-                        # (c_int, c_double, ...) returns a byref()
-                        # object which we cannot use since later
-                        # it will be wrapped in a pointer.  Simply
-                        # call the constructor with the argument
-                        # in that case.
+                        # The `from_param` method of simple types
+                        # (`c_int`, `c_double`, ...) returns a `byref` object which
+                        # we cannot use since later it will be wrapped in a pointer.
+                        # Simply call the constructor with the argument in that case.
                         v = atyp(v)
                     else:
                         v = atyp.from_param(v)
                         assert not isinstance(v, BYREFTYPE)
-                outargs[outnum] = v
-                outnum += 1
-                if len(args) > i:
-                    args[i] = v
-                else:
+                    return v
+
+                if is_positional:
+                    v = prepare_parameter(args[param_index])
+                    args[param_index] = v
+                elif name in kw:
+                    v = prepare_parameter(kw[name])
                     kw[name] = v
-            elif direction & 2 == 2:
+                else:
+                    # no parameter was passed, make an empty one of the required type
+                    # and pass it as a keyword argument
+                    v = atyp()
+                    if name is not None:
+                        kw[name] = v
+                    else:
+                        raise TypeError("Unnamed inout parameters cannot be omitted")
+                outargs[outnum] = v
+            if dir_out:
                 outnum += 1
+            if dir_in:
+                param_index += 1
+
         rescode = func(self, *args, **kw)
         # If there is only a single output value, then do not expect it to
         # be iterable.
+
+        # Our interpretation of this code
+        # (jonschz, junkmd, see https://github.com/enthought/comtypes/pull/473):
+        # - `outnum` counts the total number of 'out' and 'inout' arguments.
+        # - `outargs` is a dict consisting of the supplied 'inout' arguments.
+        # - The call to `func()` returns the 'out' and 'inout' arguments.
+        #   Furthermore, it changes the variables in 'outargs' as a "side effect"
+        # - In a perfect world, it should be fine to just return `rescode`.
+        #   But we assume there is a reason why the original authors did not do that.
+        #   Instead, they replace the 'inout' variables in `rescode` by those in
+        #   'outargs', and call `__ctypes_from_outparam__()` on them.
+
         if outnum == 1:  # rescode is not iterable
+            # In this case, it is little faster than creating list with
+            # `rescode = [rescode]` and getting item with index from the list.
             if len(outargs) == 1:
                 rescode = rescode.__ctypes_from_outparam__()
             return rescode
