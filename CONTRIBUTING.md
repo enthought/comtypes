@@ -9,7 +9,6 @@ We appreciate all contributions, from reporting bugs to implementing new feature
 ## Table of contents
 - [To keep the community healthy and sustainable :busts_in_silhouette:](#to-keep-the-community-healthy-and-sustainable-busts_in_silhouette)
 - [Reporting bugs :bug:](#reporting-bugs-bug)
-- [Breaking troubles down :flashlight:](#breaking-troubles-down-flashlight)
 - [Suggesting enhancements :sparkles:](#suggesting-enhancements-sparkles)
 - [Contributing to the codebase :open_file_folder:](#contributing-to-the-codebase-open_file_folder)
 - [Contributing to documentation :books:](#contributing-to-documentation-books)
