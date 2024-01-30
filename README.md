@@ -56,7 +56,7 @@ Until then, no changes will be made to the `main` branch except in the case of c
 Please refer to [the GitHub issue](https://github.com/enthought/comtypes/issues/392) for details.
 
 #### `GetModule` will also generate static typing for methods and properties
-`comtypes.client.GetModule` generates Python wrapper modules from a COM type library, containing interface classes, coclasses, constants, and structures. The `.py` files are generated in the `comtypes.gen` package.
+`comtypes.client.GetModule` generates `Python` wrapper modules from a COM type library, containing interface classes, coclasses, constants, and structures. The `.py` files are generated in the `comtypes.gen` package.
 
 In the current `comtypes` specification, type checkers could not infer static type information from generated modules codebase, since methods and properties were mostly defined and implemented by metaclasses.  
 In future release, in generated modules, static typing will be added to part of methods and properties.
@@ -66,7 +66,7 @@ Static type information is added only under [`if TYPE_CHECKING:`](https://docs.p
 Please refer to [the GitHub issue](https://github.com/enthought/comtypes/issues/400) for details.
 
 #### In friendly modules, the names that were used as aliases for `ctypes.c_int` will be used for enumeration types implemented with `enum`
-`comtypes.client.GetModule` generates two Python modules in the `comtypes.gen` package with a single call.
+`comtypes.client.GetModule` generates two `Python` modules in the `comtypes.gen` package with a single call.
 
 A first wrapper module is created with a long name that is derived from the type library guid, version number and lcid. It contains interface classes, coclasses, constants, and structures.  
 A second friendly module is created with a shorter name derived from the type library name itself. It imports items from the wrapper module, and will be the module returned from `GetModule`.
