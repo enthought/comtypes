@@ -319,8 +319,13 @@ def _make_safearray_type(itemtype):
                         return ptr[:num_elements]
 
                     def keep_safearray(v):
-                        v.__keepref = self
-                        return v
+                        # Simply keeping a reference to self does not keep the
+                        # internal addresses of BSTR safe and strings will be
+                        # overwritten. A copy of the bytes solves the problem
+                        v1 = v.__class__()
+                        memmove(byref(v1), byref(v), sizeof(v))
+                        return v1
+
                     return [keep_safearray(x) for x in ptr[:num_elements]]
             finally:
                 _safearray.SafeArrayUnaccessData(self)
