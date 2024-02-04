@@ -15,7 +15,10 @@ class SixDocChecker(doctest.OutputChecker):
 
 def load_tests(loader, tests, ignore):
     import comtypes.test.test_showevents
-    tests.addTests(doctest.DocTestSuite(comtypes.test.test_showevents, checker=SixDocChecker()))
+
+    tests.addTests(
+        doctest.DocTestSuite(comtypes.test.test_showevents, checker=SixDocChecker())
+    )
     return tests
 
 

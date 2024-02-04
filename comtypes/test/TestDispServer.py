@@ -1,5 +1,6 @@
 import sys, os
 import logging
+
 logging.basicConfig()
 ##logging.basicConfig(level=logging.DEBUG)
 ##logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ import comtypes.server.connectionpoints
 # in the IDL file
 if not hasattr(sys, "frozen"):
     import comtypes.client
+
     # pathname of the type library file
     tlbfile = os.path.join(os.path.dirname(__file__), "TestDispServer.tlb")
     # if running as frozen app (dll or exe), the wrapper should be in
@@ -37,15 +39,16 @@ from comtypes.gen import TestDispServerLib
 #
 # The ConnectableObjectMixin class provides connectionpoints (events).
 class TestDispServer(
-    TestDispServerLib.TestDispServer, # the coclass from the typelib wrapper
+    TestDispServerLib.TestDispServer,  # the coclass from the typelib wrapper
     comtypes.server.connectionpoints.ConnectableObjectMixin,
-    ):
+):
 
     # The default interface from the typelib MUST be the first
     # interface, other interfaces can follow
 
-    _com_interfaces_ = TestDispServerLib.TestDispServer._com_interfaces_ + \
-                       [comtypes.connectionpoints.IConnectionPointContainer]
+    _com_interfaces_ = TestDispServerLib.TestDispServer._com_interfaces_ + [
+        comtypes.connectionpoints.IConnectionPointContainer
+    ]
 
     # registry entries
     _reg_threading_ = "Both"
@@ -82,7 +85,7 @@ class TestDispServer(
     def DTestDispServer_Exec2(self, what):
         exec(what)
 
-    _name = u"spam, spam, spam"
+    _name = "spam, spam, spam"
 
     # Implementation of the DTestDispServer::Name propget
     def DTestDispServer__get_name(self, this, pname):
@@ -98,6 +101,8 @@ class TestDispServer(
     def DTestDispServer_sEtNaMe(self, name):
         self._name = name
 
+
 if __name__ == "__main__":
     from comtypes.server.register import UseCommandLine
+
     UseCommandLine(TestDispServer)

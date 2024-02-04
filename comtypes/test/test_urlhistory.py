@@ -17,6 +17,7 @@ from comtypes.gen import urlhistLib
 class _(object):
     def __ctypes_from_outparam__(self):
         from comtypes.util import cast_field
+
         result = type(self)()
         for n, _ in self._fields_:
             setattr(result, n, getattr(self, n))
@@ -25,25 +26,32 @@ class _(object):
         windll.ole32.CoTaskMemFree(cast_field(self, "pwcsTitle", c_void_p))
         return result
 
+
 from comtypes.test.find_memleak import find_memleak
+
 
 class Test(unittest.TestCase):
     def check_leaks(self, func):
         bytes = find_memleak(func, (5, 10))
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
-    @unittest.skip("This fails with: `TypeError: iter() returned non-iterator of type 'POINTER(IEnumSTATURL)'`")
+    @unittest.skip(
+        "This fails with: `TypeError: iter() returned non-iterator of type 'POINTER(IEnumSTATURL)'`"
+    )
     def test_creation(self):
         hist = CreateObject(urlhistLib.UrlHistory)
         for x in hist.EnumURLS():
             x.pwcsUrl, x.pwcsTitle
-##            print (x.pwcsUrl, x.pwcsTitle)
-##            print x
+            # print (x.pwcsUrl, x.pwcsTitle)
+            # print x
+
         def doit():
             for x in hist.EnumURLs():
                 pass
+
         doit()
         self.check_leaks(doit)
+
 
 if __name__ == "__main__":
     unittest.main()

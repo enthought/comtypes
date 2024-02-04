@@ -3,8 +3,14 @@ import unittest
 from ctypes import POINTER, byref
 from comtypes import GUID, COMError
 from comtypes.automation import DISPATCH_METHOD
-from comtypes.typeinfo import LoadTypeLibEx, LoadRegTypeLib, \
-     QueryPathOfRegTypeLib, TKIND_INTERFACE, TKIND_DISPATCH, TKIND_ENUM
+from comtypes.typeinfo import (
+    LoadTypeLibEx,
+    LoadRegTypeLib,
+    QueryPathOfRegTypeLib,
+    TKIND_INTERFACE,
+    TKIND_DISPATCH,
+    TKIND_ENUM,
+)
 
 
 class Test(unittest.TestCase):
@@ -27,7 +33,7 @@ class Test(unittest.TestCase):
         info = attr.guid, attr.wMajorVerNum, attr.wMinorVerNum
         other_tlib = LoadRegTypeLib(*info)
         self.assert_tlibattr_equal(tlib, other_tlib)
-    
+
     def assert_tlibattr_equal(self, tlib, other_tlib):
         attr, other_attr = tlib.GetLibAttr(), other_tlib.GetLibAttr()
         # `assert tlib == other_tlib` will fail in some environments.

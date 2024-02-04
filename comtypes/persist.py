@@ -18,46 +18,69 @@ from comtypes.automation import VARIANT, tagEXCEPINFO
 # XXX Replace by canonical solution!!!
 WSTRING = c_wchar_p
 
+
 class IErrorLog(IUnknown):
-    _iid_ = GUID('{3127CA40-446E-11CE-8135-00AA004BB851}')
+    _iid_ = GUID("{3127CA40-446E-11CE-8135-00AA004BB851}")
     _idlflags_ = []
     _methods_ = [
-        COMMETHOD([], HRESULT, 'AddError',
-                  ( ['in'], WSTRING, 'pszPropName' ),
-                  ( ['in'], POINTER(tagEXCEPINFO), 'pExcepInfo' )),
-        ]
+        COMMETHOD(
+            [],
+            HRESULT,
+            "AddError",
+            (["in"], WSTRING, "pszPropName"),
+            (["in"], POINTER(tagEXCEPINFO), "pExcepInfo"),
+        ),
+    ]
+
 
 class IPropertyBag(IUnknown):
-    _iid_ = GUID('{55272A00-42CB-11CE-8135-00AA004BB851}')
+    _iid_ = GUID("{55272A00-42CB-11CE-8135-00AA004BB851}")
     _idlflags_ = []
     _methods_ = [
         # XXX Note: According to MSDN, pVar and pErrorLog are ['in', 'out'] parameters.
         #
         # XXX ctypes does NOT yet accept POINTER(IErrorLog) as 'out' parameter:
         # TypeError: 'out' parameter 3 must be a pointer type, not POINTER(IErrorLog)
-        COMMETHOD([], HRESULT, 'Read',
-                  ( ['in'], WSTRING, 'pszPropName' ),
-                  ( ['in', 'out'], POINTER(VARIANT), 'pVar' ),
-                  ( ['in'], POINTER(IErrorLog), 'pErrorLog' )),
-##                  ( ['in', 'out'], POINTER(IErrorLog), 'pErrorLog' )),
-        COMMETHOD([], HRESULT, 'Write',
-                  ( ['in'], WSTRING, 'pszPropName' ),
-                  ( ['in'], POINTER(VARIANT), 'pVar' )),
-        ]
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Read",
+            (["in"], WSTRING, "pszPropName"),
+            (["in", "out"], POINTER(VARIANT), "pVar"),
+            (["in"], POINTER(IErrorLog), "pErrorLog"),
+            # ( ['in', 'out'], POINTER(IErrorLog), 'pErrorLog' ),
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Write",
+            (["in"], WSTRING, "pszPropName"),
+            (["in"], POINTER(VARIANT), "pVar"),
+        ),
+    ]
+
 
 class IPersistPropertyBag(IPersist):
-    _iid_ = GUID('{37D84F60-42CB-11CE-8135-00AA004BB851}')
+    _iid_ = GUID("{37D84F60-42CB-11CE-8135-00AA004BB851}")
     _idlflags_ = []
     _methods_ = [
-        COMMETHOD([], HRESULT, 'InitNew'),
-        COMMETHOD([], HRESULT, 'Load',
-                  ( ['in'], POINTER(IPropertyBag), 'pPropBag' ),
-                  ( ['in'], POINTER(IErrorLog), 'pErrorLog' )),
-        COMMETHOD([], HRESULT, 'Save',
-                  ( ['in'], POINTER(IPropertyBag), 'pPropBag' ),
-                  ( ['in'], c_int, 'fClearDirty' ),
-                  ( ['in'], c_int, 'fSaveAllProperties' )),
-        ]
+        COMMETHOD([], HRESULT, "InitNew"),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Load",
+            (["in"], POINTER(IPropertyBag), "pPropBag"),
+            (["in"], POINTER(IErrorLog), "pErrorLog"),
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Save",
+            (["in"], POINTER(IPropertyBag), "pPropBag"),
+            (["in"], c_int, "fClearDirty"),
+            (["in"], c_int, "fSaveAllProperties"),
+        ),
+    ]
 
 
 CLIPFORMAT = WORD
@@ -70,58 +93,86 @@ PROPBAG2_TYPE_STREAM = 4
 PROPBAG2_TYPE_STORAGE = 5
 PROPBAG2_TYPE_MONIKER = 6
 
+
 class tagPROPBAG2(Structure):
     _fields_ = [
-        ('dwType', c_ulong),
-        ('vt', c_ushort),
-        ('cfType', CLIPFORMAT),
-        ('dwHint', c_ulong),
-        ('pstrName', WSTRING),
-        ('clsid', GUID),
-        ]
+        ("dwType", c_ulong),
+        ("vt", c_ushort),
+        ("cfType", CLIPFORMAT),
+        ("dwHint", c_ulong),
+        ("pstrName", WSTRING),
+        ("clsid", GUID),
+    ]
+
 
 class IPropertyBag2(IUnknown):
-    _iid_ = GUID('{22F55882-280B-11D0-A8A9-00A0C90C2004}')
+    _iid_ = GUID("{22F55882-280B-11D0-A8A9-00A0C90C2004}")
     _idlflags_ = []
     _methods_ = [
-        COMMETHOD([], HRESULT, 'Read',
-                  ( ['in'], c_ulong, 'cProperties' ),
-                  ( ['in'], POINTER(tagPROPBAG2), 'pPropBag' ),
-                  ( ['in'], POINTER(IErrorLog), 'pErrLog' ),
-                  ( ['out'], POINTER(VARIANT), 'pvarValue' ),
-                  ( ['out'], POINTER(HRESULT), 'phrError' )),
-        COMMETHOD([], HRESULT, 'Write',
-                  ( ['in'], c_ulong, 'cProperties' ),
-                  ( ['in'], POINTER(tagPROPBAG2), 'pPropBag' ),
-                  ( ['in'], POINTER(VARIANT), 'pvarValue' )),
-        COMMETHOD([], HRESULT, 'CountProperties',
-                  ( ['out'], POINTER(c_ulong), 'pcProperties' )),
-        COMMETHOD([], HRESULT, 'GetPropertyInfo',
-                  ( ['in'], c_ulong, 'iProperty' ),
-                  ( ['in'], c_ulong, 'cProperties' ),
-                  ( ['out'], POINTER(tagPROPBAG2), 'pPropBag' ),
-                  ( ['out'], POINTER(c_ulong), 'pcProperties' )),
-        COMMETHOD([], HRESULT, 'LoadObject',
-                  ( ['in'], WSTRING, 'pstrName' ),
-                  ( ['in'], c_ulong, 'dwHint' ),
-                  ( ['in'], POINTER(IUnknown), 'punkObject' ),
-                  ( ['in'], POINTER(IErrorLog), 'pErrLog' )),
-        ]
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Read",
+            (["in"], c_ulong, "cProperties"),
+            (["in"], POINTER(tagPROPBAG2), "pPropBag"),
+            (["in"], POINTER(IErrorLog), "pErrLog"),
+            (["out"], POINTER(VARIANT), "pvarValue"),
+            (["out"], POINTER(HRESULT), "phrError"),
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Write",
+            (["in"], c_ulong, "cProperties"),
+            (["in"], POINTER(tagPROPBAG2), "pPropBag"),
+            (["in"], POINTER(VARIANT), "pvarValue"),
+        ),
+        COMMETHOD(
+            [], HRESULT, "CountProperties", (["out"], POINTER(c_ulong), "pcProperties")
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "GetPropertyInfo",
+            (["in"], c_ulong, "iProperty"),
+            (["in"], c_ulong, "cProperties"),
+            (["out"], POINTER(tagPROPBAG2), "pPropBag"),
+            (["out"], POINTER(c_ulong), "pcProperties"),
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "LoadObject",
+            (["in"], WSTRING, "pstrName"),
+            (["in"], c_ulong, "dwHint"),
+            (["in"], POINTER(IUnknown), "punkObject"),
+            (["in"], POINTER(IErrorLog), "pErrLog"),
+        ),
+    ]
+
 
 class IPersistPropertyBag2(IPersist):
-    _iid_ = GUID('{22F55881-280B-11D0-A8A9-00A0C90C2004}')
+    _iid_ = GUID("{22F55881-280B-11D0-A8A9-00A0C90C2004}")
     _idlflags_ = []
     _methods_ = [
-        COMMETHOD([], HRESULT, 'InitNew'),
-        COMMETHOD([], HRESULT, 'Load',
-                  ( ['in'], POINTER(IPropertyBag2), 'pPropBag' ),
-                  ( ['in'], POINTER(IErrorLog), 'pErrLog' )),
-        COMMETHOD([], HRESULT, 'Save',
-                  ( ['in'], POINTER(IPropertyBag2), 'pPropBag' ),
-                  ( ['in'], c_int, 'fClearDirty' ),
-                  ( ['in'], c_int, 'fSaveAllProperties' )),
-        COMMETHOD([], HRESULT, 'IsDirty'),
-        ]
+        COMMETHOD([], HRESULT, "InitNew"),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Load",
+            (["in"], POINTER(IPropertyBag2), "pPropBag"),
+            (["in"], POINTER(IErrorLog), "pErrLog"),
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Save",
+            (["in"], POINTER(IPropertyBag2), "pPropBag"),
+            (["in"], c_int, "fClearDirty"),
+            (["in"], c_int, "fSaveAllProperties"),
+        ),
+        COMMETHOD([], HRESULT, "IsDirty"),
+    ]
 
 
 # STGM constants
@@ -159,26 +210,37 @@ STGM_DELETEONRELEASE = 0x04000000
 
 LPOLESTR = LPCOLESTR = c_wchar_p
 
+
 class IPersistFile(IPersist):
-    _iid_ = GUID('{0000010B-0000-0000-C000-000000000046}')
+    _iid_ = GUID("{0000010B-0000-0000-C000-000000000046}")
     _idlflags_ = []
     _methods_ = [
-        COMMETHOD([], HRESULT, 'IsDirty'),
-        COMMETHOD([], HRESULT, 'Load',
-                  ( ['in'], LPCOLESTR, 'pszFileName' ),
-                  ( ['in'], DWORD, 'dwMode' )),
-        COMMETHOD([], HRESULT, 'Save',
-                  ( ['in'], LPCOLESTR, 'pszFileName' ),
-                  ( ['in'], BOOL, 'fRemember' )),
-        COMMETHOD([], HRESULT, 'SaveCompleted',
-                  ( ['in'], LPCOLESTR, 'pszFileName' )),
-        COMMETHOD([], HRESULT, 'GetCurFile',
-                  ( ['out'], POINTER(LPOLESTR), 'ppszFileName' ))
-        ]
+        COMMETHOD([], HRESULT, "IsDirty"),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Load",
+            (["in"], LPCOLESTR, "pszFileName"),
+            (["in"], DWORD, "dwMode"),
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "Save",
+            (["in"], LPCOLESTR, "pszFileName"),
+            (["in"], BOOL, "fRemember"),
+        ),
+        COMMETHOD([], HRESULT, "SaveCompleted", (["in"], LPCOLESTR, "pszFileName")),
+        COMMETHOD(
+            [], HRESULT, "GetCurFile", (["out"], POINTER(LPOLESTR), "ppszFileName")
+        ),
+    ]
 
 
 from comtypes import COMObject
 from comtypes.hresult import *
+
+
 class DictPropertyBag(COMObject):
     """An object implementing the IProperty interface on a dictionary.
 
@@ -186,6 +248,7 @@ class DictPropertyBag(COMObject):
     retrieve from the .values instance variable after the client has
     called Load().
     """
+
     _com_interfaces_ = [IPropertyBag]
 
     def __init__(self, **kw):
@@ -212,15 +275,17 @@ class DictPropertyBag(COMObject):
         return S_OK
 
 
+# fmt: off
 __known_symbols__ = [
-    'CLIPFORMAT', 'DictPropertyBag', 'IErrorLog', 'IPersistFile',
-    'IPersistPropertyBag', 'IPersistPropertyBag2', 'IPropertyBag',
-    'IPropertyBag2', 'tagPROPBAG2', 'PROPBAG2_TYPE_DATA',
-    'PROPBAG2_TYPE_MONIKER', 'PROPBAG2_TYPE_OBJECT', 'PROPBAG2_TYPE_STORAGE',
-    'PROPBAG2_TYPE_STREAM', 'PROPBAG2_TYPE_UNDEFINED', 'PROPBAG2_TYPE_URL',
-    'STGM_CONVERT', 'STGM_CREATE', 'STGM_DELETEONRELEASE', 'STGM_DIRECT',
-    'STGM_DIRECT_SWMR', 'STGM_FAILIFTHERE', 'STGM_NOSCRATCH',
-    'STGM_NOSNAPSHOT', 'STGM_PRIORITY', 'STGM_READ', 'STGM_READWRITE',
-    'STGM_SHARE_DENY_NONE', 'STGM_SHARE_DENY_READ', 'STGM_SHARE_DENY_WRITE',
-    'STGM_SHARE_EXCLUSIVE', 'STGM_SIMPLE', 'STGM_TRANSACTED', 'STGM_WRITE',
+    "CLIPFORMAT", "DictPropertyBag", "IErrorLog", "IPersistFile",
+    "IPersistPropertyBag", "IPersistPropertyBag2", "IPropertyBag",
+    "IPropertyBag2", "tagPROPBAG2", "PROPBAG2_TYPE_DATA",
+    "PROPBAG2_TYPE_MONIKER", "PROPBAG2_TYPE_OBJECT", "PROPBAG2_TYPE_STORAGE",
+    "PROPBAG2_TYPE_STREAM", "PROPBAG2_TYPE_UNDEFINED", "PROPBAG2_TYPE_URL",
+    "STGM_CONVERT", "STGM_CREATE", "STGM_DELETEONRELEASE", "STGM_DIRECT",
+    "STGM_DIRECT_SWMR", "STGM_FAILIFTHERE", "STGM_NOSCRATCH",
+    "STGM_NOSNAPSHOT", "STGM_PRIORITY", "STGM_READ", "STGM_READWRITE",
+    "STGM_SHARE_DENY_NONE", "STGM_SHARE_DENY_READ", "STGM_SHARE_DENY_WRITE",
+    "STGM_SHARE_EXCLUSIVE", "STGM_SIMPLE", "STGM_TRANSACTED", "STGM_WRITE",
 ]
+# fmt: on

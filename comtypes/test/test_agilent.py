@@ -16,6 +16,7 @@ except WindowsError:
     pass
 
 else:
+
     class Test(unittest.TestCase):
         def test(self):
             # The point of this test is the ReadWaveform method below,
@@ -25,6 +26,7 @@ else:
             # XXX XXX XXX The following call crashes hard with an accessviolation when
             # the OANOCACHE environ variable is set.
             import os
+
             if "OANOCACHE" in os.environ:
                 print("Cannot test. buggy COM object?")
                 return
@@ -35,17 +37,18 @@ else:
             # agDrvr.Initialize("GPIB0::7::INSTR", False, False, "QueryInstrStatus=true")
 
             from comtypes.gen import IviScopeLib
+
             iviDrvr = agDrvr.QueryInterface(IviScopeLib.IIviScope)
 
             # Get driver Identity properties.  Driver initialization not required.
-##            print "Identifier:", iviDrvr.Identity.Identifier
-##            print "   Revision:",  agDrvr.Identity.Revision
-##            print "Description:", agDrvr.Identity.Description
+            # print "Identifier:", iviDrvr.Identity.Identifier
+            # print "   Revision:",  agDrvr.Identity.Revision
+            # print "Description:", agDrvr.Identity.Description
 
             # Get instrument Identity properties.
-##            print "InstrumentModel: ", agDrvr.Identity.InstrumentModel
-##            print "   FirmwareRevision: ", agDrvr.Identity.InstrumentFirmwareRevision
-##            print "   SerialNumber: ", agDrvr.System.SerialNumber
+            # print "InstrumentModel: ", agDrvr.Identity.InstrumentModel
+            # print "   FirmwareRevision: ", agDrvr.Identity.InstrumentFirmwareRevision
+            # print "   SerialNumber: ", agDrvr.System.SerialNumber
 
             # Setup for a measurement.  Reset in this case.
             agDrvr.Utility.Reset()
@@ -54,7 +57,7 @@ else:
             # ReadWaveform() takes a sweep and reads the data.
             #
             # Definition generated for ReadWaveform():
-            #COMMETHOD([helpstring(u'Acquires and returns a waveform on the configured channels.')],
+            # COMMETHOD([helpstring(u'Acquires and returns a waveform on the configured channels.')],
             #          HRESULT, 'ReadWaveform',
             #          ( ['in'], Agilent546XXTimeOutEnum, 'MaxTime' ),
             #          ( ['in', 'out'], POINTER(_midlSAFEARRAY(c_double)), 'pWaveformArray' ),
@@ -67,10 +70,12 @@ else:
             psaWaveform = _midlSAFEARRAY(c_double).create([])
             self._check_result(pMeasurement.ReadWaveform(20000))
             self._check_result(pMeasurement.ReadWaveform(20000, pInitialX=9.0))
-            self._check_result(pMeasurement.ReadWaveform(20000, pXIncrement=9.0, pInitialX=3.0))
+            self._check_result(
+                pMeasurement.ReadWaveform(20000, pXIncrement=9.0, pInitialX=3.0)
+            )
             self._check_result(pMeasurement.ReadWaveform(20000))
             self._check_result(pMeasurement.ReadWaveform(20000, []))
-            self._check_result(pMeasurement.ReadWaveform(20000, pWaveformArray = []))
+            self._check_result(pMeasurement.ReadWaveform(20000, pWaveformArray=[]))
             self._check_result(pMeasurement.ReadWaveform(20000, psaWaveform))
             self._check_result(pMeasurement.ReadWaveform(20000, pXIncrement=9.0))
 
@@ -86,7 +91,6 @@ else:
             self.assertFalse([x for x in array if not isinstance(x, float)])
             self.assertEqual(initial_x, 0.0)
             self.assertEqual(x_increment, 0.0)
-
 
 
 if __name__ == "__main__":

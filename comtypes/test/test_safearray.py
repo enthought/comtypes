@@ -7,7 +7,17 @@ from decimal import Decimal
 
 from comtypes import BSTR, IUnknown
 from comtypes._safearray import SafeArrayGetVartype
-from comtypes.automation import VARIANT, VARIANT_BOOL, VT_ARRAY, VT_BSTR, VT_I4, VT_R4, VT_R8, VT_VARIANT, _midlSAFEARRAY
+from comtypes.automation import (
+    VARIANT,
+    VARIANT_BOOL,
+    VT_ARRAY,
+    VT_BSTR,
+    VT_I4,
+    VT_R4,
+    VT_R8,
+    VT_VARIANT,
+    _midlSAFEARRAY,
+)
 from comtypes.safearray import safearray_as_ndarray
 from comtypes.test import is_resource_enabled
 from comtypes.test.find_memleak import find_memleak
@@ -22,6 +32,7 @@ def get_array(sa):
 def com_refcnt(o):
     """Return the COM refcount of an interface pointer"""
     import gc
+
     gc.collect()
     gc.collect()
     o.AddRef()
@@ -62,15 +73,12 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(tuple(a.tolist()), v.value)
 
     def test_2dim_array(self):
-        data = ((1, 2, 3, 4),
-                (5, 6, 7, 8),
-                (9, 10, 11, 12))
+        data = ((1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12))
         v = VARIANT(data)
         self.assertEqual(v.value, data)
 
 
 class SafeArrayTestCase(unittest.TestCase):
-
     def test_equality(self):
         a = _midlSAFEARRAY(c_long)
         b = _midlSAFEARRAY(c_long)
@@ -83,10 +91,8 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertNotEqual(a, c)
 
         # XXX remove:
-        self.assertEqual((a._itemtype_, a._vartype_),
-                             (c_long, VT_I4))
-        self.assertEqual((c._itemtype_, c._vartype_),
-                             (BSTR, VT_BSTR))
+        self.assertEqual((a._itemtype_, a._vartype_), (c_long, VT_I4))
+        self.assertEqual((c._itemtype_, c._vartype_), (BSTR, VT_BSTR))
 
     def test_VT_BSTR(self):
         t = _midlSAFEARRAY(BSTR)
@@ -148,6 +154,7 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertTrue(a is t)
 
         from comtypes.typeinfo import CreateTypeLib
+
         # will never be saved to disk
         punk = CreateTypeLib("spam").QueryInterface(IUnknown)
 
@@ -175,6 +182,7 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertTrue(a is t)
 
         from comtypes.typeinfo import CreateTypeLib
+
         # will never be saved to disk
         punk = CreateTypeLib("spam").QueryInterface(IUnknown)
 
@@ -187,7 +195,7 @@ class SafeArrayTestCase(unittest.TestCase):
 
         # Unpacking the array must not change the refcount, and must
         # return an equal object.
-        self.assertEqual((punk,)*4, sa[0])
+        self.assertEqual((punk,) * 4, sa[0])
         self.assertEqual(initial + 4, com_refcnt(punk))
 
         del sa
@@ -209,14 +217,16 @@ class SafeArrayTestCase(unittest.TestCase):
         a, b = com_refcnt(plib), com_refcnt(punk)
         sa = t.from_param([plib, punk, plib])
 
-####        self.failUnlessEqual((plib, punk, plib), sa[0])
-        self.assertEqual((a+2, b+1), (com_refcnt(plib), com_refcnt(punk)))
+        ####        self.failUnlessEqual((plib, punk, plib), sa[0])
+        self.assertEqual((a + 2, b + 1), (com_refcnt(plib), com_refcnt(punk)))
 
         del sa
         self.assertEqual((a, b), (com_refcnt(plib), com_refcnt(punk)))
 
-    @unittest.skip("This fails with a 'library not registered' error.  Need to figure out how to "
-                   "register TestComServerLib (without admin if possible).")
+    @unittest.skip(
+        "This fails with a 'library not registered' error.  Need to figure out how to "
+        "register TestComServerLib (without admin if possible)."
+    )
     def test_UDT(self):
         from comtypes.gen.TestComServerLib import MYCOLOR
 
@@ -225,11 +235,14 @@ class SafeArrayTestCase(unittest.TestCase):
 
         sa = t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
 
-        self.assertEqual([(x.red, x.green, x.blue) for x in sa[0]],
-                             [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)])
+        self.assertEqual(
+            [(x.red, x.green, x.blue) for x in sa[0]],
+            [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)],
+        )
 
         def doit():
             t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
+
         bytes = find_memleak(doit)
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
@@ -256,7 +269,7 @@ if is_resource_enabled("pythoncom"):
         # PyObject *PyCom_PyObjectFromVariant(const VARIANT *var)
         unpack = _dll.PyCom_PyObjectFromVariant
         unpack.restype = py_object
-        unpack.argtypes = POINTER(VARIANT),
+        unpack.argtypes = (POINTER(VARIANT),)
 
         # c:/sf/pywin32/com/win32com/src/oleargs.cpp 54
         # BOOL PyCom_VariantFromPyObject(PyObject *obj, VARIANT *var)
@@ -283,20 +296,20 @@ if is_resource_enabled("pythoncom"):
                 self.assertEqual(unpack(variant), data)
 
             def test_3dim(self):
-                data = ( ( (1, 2), (3, 4), (5, 6) ),
-                         ( (7, 8), (9, 10), (11, 12) ) )
+                data = (((1, 2), (3, 4), (5, 6)), ((7, 8), (9, 10), (11, 12)))
                 variant = pack(data)
                 self.assertEqual(variant.value, data)
                 self.assertEqual(unpack(variant), data)
 
             def test_4dim(self):
-                data = ( ( ( ( 1,  2), ( 3,  4) ),
-                           ( ( 5,  6), ( 7,  8) ) ),
-                         ( ( ( 9, 10), (11, 12) ),
-                           ( (13, 14), (15, 16) ) ) )
+                data = (
+                    (((1, 2), (3, 4)), ((5, 6), (7, 8))),
+                    (((9, 10), (11, 12)), ((13, 14), (15, 16))),
+                )
                 variant = pack(data)
                 self.assertEqual(variant.value, data)
                 self.assertEqual(unpack(variant), data)
+
 
 if __name__ == "__main__":
     unittest.main()

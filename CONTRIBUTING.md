@@ -9,7 +9,6 @@ We appreciate all contributions, from reporting bugs to implementing new feature
 ## Table of contents
 - [To keep the community healthy and sustainable :busts_in_silhouette:](#to-keep-the-community-healthy-and-sustainable-busts_in_silhouette)
 - [Reporting bugs :bug:](#reporting-bugs-bug)
-- [Breaking troubles down :flashlight:](#breaking-troubles-down-flashlight)
 - [Suggesting enhancements :sparkles:](#suggesting-enhancements-sparkles)
 - [Contributing to the codebase :open_file_folder:](#contributing-to-the-codebase-open_file_folder)
 - [Contributing to documentation :books:](#contributing-to-documentation-books)
@@ -19,19 +18,19 @@ We appreciate all contributions, from reporting bugs to implementing new feature
 
 If you have to understand all that this package has to offer, it would require an enormous amount of knowledge.
 
-- `Python`:snake:
-- `C`-lang:computer:
-- COM interface, implementation, client and server:door:
-- COM type library functionalities:wrench:
+- `Python` :snake:
+- `C`-lang :computer:
+- COM interface, implementation, client and server :door:
+- COM type library functionalities :wrench:
 
 However, there is **no means to say** that you must understand all of these things to be a contributor.
 
 The purpose of this document is to provide a pathway for you to contribute to this community even if you only know a small portion of this package.
 
 Please keep the followings in your mind:
-- :point_right:Please follow the following guidelines when posting a [GitHub Pull Request](https://github.com/enthought/comtypes/pulls) or filing a [GitHub Issue](https://github.com/enthought/comtypes/issues) on this project.
-- :bow:The community may not be able to process and reply to your issue or PR right-away. Participants in the community have a lot of work to do besides `comtypes`, but they would try their best.
-- :book:For code of conduct, please read [Contributor Covenant](https://www.contributor-covenant.org/).
+- :point_right: Please follow the following guidelines when posting a [GitHub Pull Request](https://github.com/enthought/comtypes/pulls) or filing a [GitHub Issue](https://github.com/enthought/comtypes/issues) on this project.
+- :bow: The community may not be able to process and reply to your issue or PR right-away. Participants in the community have a lot of work to do besides `comtypes`, but they would try their best.
+- :book: For code of conduct, please read [Contributor Covenant](https://www.contributor-covenant.org/).
 
 ## Reporting bugs :bug:
 
@@ -91,7 +90,7 @@ Those `.py` files act like ”caches”.
 
 If there are some problems with the developing code base, partial or non-executable modules might be created in `.../comtypes/gen/...`.  
 Importing them will cause some error.  
-If that happens, you should run `python -m clear_comtypes_cache` to clear those caches.  
+If that happens, you should run `python -m comtypes.clear_cache` to clear those caches.  
 The command will delete the entire `.../comtypes/gen` directory.  
 Importing `comtypes.client` will restore the directory and `__init__.py` file.
 

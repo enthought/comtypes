@@ -5,29 +5,11 @@ import sys
 import unittest as ut
 
 import comtypes.client
-from comtypes import COSERVERINFO
+from comtypes import COSERVERINFO, CLSCTX_INPROC_SERVER
 
 # create the typelib wrapper and import it
 comtypes.client.GetModule("scrrun.dll")
 from comtypes.gen import Scripting
-
-
-if sys.version_info >= (3, 0):
-    text_type = str
-else:
-    text_type = unicode
-
-
-# HACK: Prefer to use `contextlib.redirect_stdout`, but it's New in version 3.4
-@contextlib.contextmanager
-def silence_stdout():
-    old_target = sys.stdout
-    try:
-        with open(os.devnull, "w") as new_target:
-            sys.stdout = new_target
-            yield new_target
-    finally:
-        sys.stdout = old_target
 
 
 class Test_GetModule(ut.TestCase):
@@ -40,8 +22,10 @@ class Test_GetModule(ut.TestCase):
         self.assertIs(mod, Scripting)
 
     @ut.skipUnless(
-        os.path.splitdrive(Scripting.typelib_path)[0] == os.path.splitdrive(__file__)[0],
-        "This depends on typelib and test module are in same drive")
+        os.path.splitdrive(Scripting.typelib_path)[0]
+        == os.path.splitdrive(__file__)[0],
+        "This depends on typelib and test module are in same drive",
+    )
     def test_relpath(self):
         relpath = os.path.relpath(Scripting.typelib_path, __file__)
         mod = comtypes.client.GetModule(relpath)
@@ -71,6 +55,7 @@ class Test_GetModule(ut.TestCase):
 
     def test_ptr_itypelib(self):
         from comtypes import typeinfo
+
         mod = comtypes.client.GetModule(typeinfo.LoadTypeLibEx("scrrun.dll"))
         self.assertIs(mod, Scripting)
 
@@ -89,6 +74,10 @@ class Test_GetModule(ut.TestCase):
         # NOTE: `WindowsInstaller`, which has `Patch` definition in dll.
         comtypes.client.GetModule("msi.dll")
 
+    def test_abstracted_wrapper_module_in_friendly_module(self):
+        mod = comtypes.client.GetModule("scrrun.dll")
+        self.assertTrue(hasattr(mod, "__wrapper_module__"))
+
     def test_raises_typerror_if_takes_unsupported(self):
         with self.assertRaises(TypeError):
             comtypes.client.GetModule(object())
@@ -105,18 +94,22 @@ class Test_KnownSymbols(ut.TestCase):
 
     def test_symbols_in_comtypes(self):
         import comtypes
+
         self._doit(comtypes)
 
     def test_symbols_in_comtypes_automation(self):
         import comtypes.automation
+
         self._doit(comtypes.automation)
 
     def test_symbols_in_comtypes_typeinfo(self):
         import comtypes.typeinfo
+
         self._doit(comtypes.typeinfo)
 
     def test_symbols_in_comtypes_persist(self):
         import comtypes.persist
+
         self._doit(comtypes.persist)
 
 
@@ -133,43 +126,57 @@ class Test_CreateObject(ut.TestCase):
 
     def test_clsid_string(self):
         # create from string clsid
-        comtypes.client.CreateObject(text_type(Scripting.Dictionary._reg_clsid_))
         comtypes.client.CreateObject(str(Scripting.Dictionary._reg_clsid_))
 
-    @ut.skip(
-            "This test uses IE which is not available on all machines anymore. "
-            "Find another API to use."
-    )
     def test_remote(self):
-        ie = comtypes.client.CreateObject("InternetExplorer.Application",
-                                          machine="localhost")
-        self.assertEqual(ie.Visible, False)
-        ie.Visible = 1
-        # on a remote machine, this may not work.  Probably depends on
-        # how the server is run.
-        self.assertEqual(ie.Visible, True)
-        self.assertEqual(0, ie.Quit()) # 0 == S_OK
+        comtypes.client.GetModule("UIAutomationCore.dll")
+        from comtypes.gen.UIAutomationClient import (
+            CUIAutomation,
+            IUIAutomation,
+            IUIAutomationElement,
+        )
 
-    @ut.skip(
-            "This test uses IE which is not available on all machines anymore. "
-            "Find another API to use."
-    )
+        iuia = comtypes.client.CreateObject(
+            CUIAutomation().IPersist_GetClassID(),
+            interface=IUIAutomation,
+            clsctx=CLSCTX_INPROC_SERVER,
+            machine="localhost",
+        )
+        self.assertIsInstance(iuia, POINTER(IUIAutomation))
+        self.assertIsInstance(iuia, IUIAutomation)
+        self.assertIsInstance(iuia.GetRootElement(), POINTER(IUIAutomationElement))
+        self.assertIsInstance(iuia.GetRootElement(), IUIAutomationElement)
+
     def test_server_info(self):
-        serverinfo = COSERVERINFO()
-        serverinfo.pwszName = 'localhost'
-        pServerInfo = byref(serverinfo)
+        comtypes.client.GetModule("UIAutomationCore.dll")
+        from comtypes.gen.UIAutomationClient import (
+            CUIAutomation,
+            IUIAutomation,
+            IUIAutomationElement,
+        )
 
-        self.assertRaises(ValueError, comtypes.client.CreateObject,
-                "InternetExplorer.Application", machine='localhost',
-                pServerInfo=pServerInfo)
-        ie = comtypes.client.CreateObject("InternetExplorer.Application",
-                                          pServerInfo=pServerInfo)
-        self.assertEqual(ie.Visible, False)
-        ie.Visible = 1
-        # on a remote machine, this may not work.  Probably depends on
-        # how the server is run.
-        self.assertEqual(ie.Visible, True)
-        self.assertEqual(0, ie.Quit()) # 0 == S_OK
+        serverinfo = COSERVERINFO()
+        serverinfo.pwszName = "localhost"
+        pServerInfo = byref(serverinfo)
+        with self.assertRaises(ValueError):
+            # cannot set both the machine name and server info
+            comtypes.client.CreateObject(
+                CUIAutomation().IPersist_GetClassID(),
+                interface=IUIAutomation,
+                clsctx=CLSCTX_INPROC_SERVER,
+                machine="localhost",
+                pServerInfo=pServerInfo,
+            )
+        iuia = comtypes.client.CreateObject(
+            CUIAutomation().IPersist_GetClassID(),
+            interface=IUIAutomation,
+            clsctx=CLSCTX_INPROC_SERVER,
+            pServerInfo=pServerInfo,
+        )
+        self.assertIsInstance(iuia, POINTER(IUIAutomation))
+        self.assertIsInstance(iuia, IUIAutomation)
+        self.assertIsInstance(iuia.GetRootElement(), POINTER(IUIAutomationElement))
+        self.assertIsInstance(iuia.GetRootElement(), IUIAutomationElement)
 
 
 class Test_Constants(ut.TestCase):
@@ -225,20 +232,28 @@ class Test_Constants(ut.TestCase):
     def test_returns_other_than_enum_members(self):
         obj = comtypes.client.CreateObject("SAPI.SpVoice")
         from comtypes.gen import SpeechLib as sapi
+
         consts = comtypes.client.Constants(obj)
         # int (Constant c_int)
         self.assertEqual(consts.Speech_Max_Word_Length, sapi.Speech_Max_Word_Length)
         # str (Constant BSTR)
-        self.assertEqual(consts.SpeechVoiceSkipTypeSentence, sapi.SpeechVoiceSkipTypeSentence)
-        self.assertEqual(consts.SpeechAudioFormatGUIDWave, sapi.SpeechAudioFormatGUIDWave)
-        self.assertEqual(consts.SpeechRegistryLocalMachineRoot, sapi.SpeechRegistryLocalMachineRoot)
-        self.assertEqual(consts.SpeechGrammarTagDictation, sapi.SpeechGrammarTagDictation)
+        self.assertEqual(
+            consts.SpeechVoiceSkipTypeSentence, sapi.SpeechVoiceSkipTypeSentence
+        )
+        self.assertEqual(
+            consts.SpeechAudioFormatGUIDWave, sapi.SpeechAudioFormatGUIDWave
+        )
+        self.assertEqual(
+            consts.SpeechRegistryLocalMachineRoot, sapi.SpeechRegistryLocalMachineRoot
+        )
+        self.assertEqual(
+            consts.SpeechGrammarTagDictation, sapi.SpeechGrammarTagDictation
+        )
         # float (Constant c_float)
         self.assertEqual(consts.Speech_Default_Weight, sapi.Speech_Default_Weight)
 
-    @ut.skipUnless(sys.version_info >= (3, 0), "Some words are not in Python2 keywords")
     def test_munged_definitions(self):
-        with silence_stdout():  # supress warnings
+        with contextlib.redirect_stdout(None):  # supress warnings
             MSVidCtlLib = comtypes.client.GetModule("msvidctl.dll")
             consts = comtypes.client.Constants("msvidctl.dll")
         # `None` is a Python3 keyword.

@@ -1,6 +1,7 @@
 import sys
 import unittest
 from ctypes import *
+from unittest.mock import patch
 
 import comtypes.test
 
@@ -13,26 +14,23 @@ if sys.version_info >= (3, 0):
 else:
     text_type = unicode
 
+
 class IMalloc(IUnknown):
     _iid_ = GUID("{00000002-0000-0000-C000-000000000046}")
     _methods_ = [
-        COMMETHOD([], c_void_p, "Alloc",
-                  ([], c_ulong, "cb")),
-        COMMETHOD([], c_void_p, "Realloc",
-                  ([], c_void_p, "pv"),
-                  ([], c_ulong, "cb")),
-        COMMETHOD([], None, "Free",
-                  ([], c_void_p, "py")),
-        COMMETHOD([], c_ulong, "GetSize",
-                  ([], c_void_p, "pv")),
-        COMMETHOD([], c_int, "DidAlloc",
-                  ([], c_void_p, "pv")),
-        COMMETHOD([], None, "HeapMinimize") # 25
-        ]
+        COMMETHOD([], c_void_p, "Alloc", ([], c_ulong, "cb")),
+        COMMETHOD([], c_void_p, "Realloc", ([], c_void_p, "pv"), ([], c_ulong, "cb")),
+        COMMETHOD([], None, "Free", ([], c_void_p, "py")),
+        COMMETHOD([], c_ulong, "GetSize", ([], c_void_p, "pv")),
+        COMMETHOD([], c_int, "DidAlloc", ([], c_void_p, "pv")),
+        COMMETHOD([], None, "HeapMinimize"),  # 25
+    ]
+
 
 malloc = POINTER(IMalloc)()
 oledll.ole32.CoGetMalloc(1, byref(malloc))
 assert bool(malloc)
+
 
 def from_outparm(self):
     if not self:
@@ -42,7 +40,7 @@ def from_outparm(self):
         raise ValueError("memory was NOT allocated by CoTaskMemAlloc")
     windll.ole32.CoTaskMemFree(self)
     return result
-c_wchar_p.__ctypes_from_outparam__ = from_outparm
+
 
 def comstring(text, typ=c_wchar_p):
     text = text_type(text)
@@ -53,26 +51,30 @@ def comstring(text, typ=c_wchar_p):
     memmove(mem, text, size)
     return ptr
 
+
 class Test(unittest.TestCase):
     @unittest.skip("This fails for reasons I don't understand yet")
+    # TODO untested changes; this was modified because it had global effects on other tests
+    @patch.object(c_wchar_p, "__ctypes_from_outparam__", from_outparm)
     def test_c_char(self):
-##        ptr = c_wchar_p("abc")
-##        self.failUnlessEqual(ptr.__ctypes_from_outparam__(),
-##                             "abc")
+        # ptr = c_wchar_p("abc")
+        # self.failUnlessEqual(ptr.__ctypes_from_outparam__(),
+        #                         "abc")
 
-##        p = BSTR("foo bar spam")
+        # p = BSTR("foo bar spam")
 
         x = comstring("Hello, World")
         y = comstring("foo bar")
         z = comstring("spam, spam, and spam")
 
-##        (x.__ctypes_from_outparam__(), x.__ctypes_from_outparam__())
-        print((x.__ctypes_from_outparam__(), None)) #x.__ctypes_from_outparam__())
+        # (x.__ctypes_from_outparam__(), x.__ctypes_from_outparam__())
+        print((x.__ctypes_from_outparam__(), None))  # x.__ctypes_from_outparam__())
 
-##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
-##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
-##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
-##        print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
+        # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
+        # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
+        # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
+        # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
+
 
 if __name__ == "__main__":
     unittest.main()

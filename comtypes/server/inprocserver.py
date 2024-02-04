@@ -5,16 +5,15 @@ from comtypes.hresult import *
 
 import sys
 import logging
-if sys.version_info >= (3, 0):
-    import winreg
-else:
-    import _winreg as winreg
+import winreg
+
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
 _critical = logger.critical
 
 ################################################################
+
 
 class ClassFactory(COMObject):
     _com_interfaces_ = [IClassFactory]
@@ -36,8 +35,10 @@ class ClassFactory(COMObject):
             COMObject.__server__.Unlock()
         return S_OK
 
+
 # will be set by py2exe boot script 'from outside'
 _clsid_to_class = {}
+
 
 def inproc_find_class(clsid):
     if _clsid_to_class:
@@ -65,7 +66,9 @@ def inproc_find_class(clsid):
     _debug("Found class %s", result)
     return result
 
+
 _logging_configured = False
+
 
 def _setup_logging(clsid):
     """Read from the registry, and configure the logging module.
@@ -82,6 +85,7 @@ def _setup_logging(clsid):
     except WindowsError:
         return
     from comtypes.logutil import NTDebugHandler
+
     handler = NTDebugHandler()
     try:
         val, typ = winreg.QueryValueEx(hkey, "format")
@@ -104,6 +108,7 @@ def _setup_logging(clsid):
         level = getattr(logging, level)
         logging.getLogger(name).setLevel(level)
 
+
 def DllGetClassObject(rclsid, riid, ppv):
     COMObject.__run_inprocserver__()
 
@@ -124,12 +129,15 @@ def DllGetClassObject(rclsid, riid, ppv):
         if not cls:
             return CLASS_E_CLASSNOTAVAILABLE
 
-        result = ClassFactory(cls).IUnknown_QueryInterface(None, ctypes.pointer(iid), ctypes.c_void_p(ppv))
+        result = ClassFactory(cls).IUnknown_QueryInterface(
+            None, ctypes.pointer(iid), ctypes.c_void_p(ppv)
+        )
         _debug("DllGetClassObject() -> %s", result)
         return result
     except Exception:
         _critical("DllGetClassObject", exc_info=True)
         return E_FAIL
+
 
 def DllCanUnloadNow():
     COMObject.__run_inprocserver__()

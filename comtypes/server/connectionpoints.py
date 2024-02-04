@@ -6,12 +6,15 @@ from comtypes.connectionpoints import IConnectionPoint
 from comtypes.automation import IDispatch
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["ConnectableObjectMixin"]
 
+
 class ConnectionPointImpl(COMObject):
     """This object implements a connectionpoint"""
+
     _com_interfaces_ = [IConnectionPoint]
 
     def __init__(self, sink_interface, sink_typeinfo):
@@ -63,16 +66,27 @@ class ConnectionPointImpl(COMObject):
                     result = p.Invoke(dispid, *args, **kw)
                 except COMError as details:
                     if details.hresult == -2147023174:
-                        logger.warning("_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
-                                       self, name, args, kw,
-                                       exc_info=True)
+                        logger.warning(
+                            "_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
+                            self,
+                            name,
+                            args,
+                            kw,
+                            exc_info=True,
+                        )
                         try:
                             del self._connections[key]
                         except KeyError:
-                            pass # connection already gone
+                            pass  # connection already gone
                     else:
-                        logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
-                                       exc_info=True)
+                        logger.warning(
+                            "_call_sinks(%s, %s, *%s, **%s)",
+                            self,
+                            name,
+                            args,
+                            kw,
+                            exc_info=True,
+                        )
                 else:
                     results.append(result)
         else:
@@ -81,16 +95,28 @@ class ConnectionPointImpl(COMObject):
                     result = getattr(p, name)(*args, **kw)
                 except COMError as details:
                     if details.hresult == -2147023174:
-                        logger.warning("_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
-                                       self, name, args, kw,
-                                       exc_info=True)
+                        logger.warning(
+                            "_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
+                            self,
+                            name,
+                            args,
+                            kw,
+                            exc_info=True,
+                        )
                         del self._connections[key]
                     else:
-                        logger.warning("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw,
-                                       exc_info=True)
+                        logger.warning(
+                            "_call_sinks(%s, %s, *%s, **%s)",
+                            self,
+                            name,
+                            args,
+                            kw,
+                            exc_info=True,
+                        )
                 else:
                     results.append(result)
         return results
+
 
 class ConnectableObjectMixin(object):
     """Mixin which implements IConnectionPointContainer.
@@ -99,6 +125,7 @@ class ConnectableObjectMixin(object):
     event.  <interface> can either be the source interface, or an
     integer index into the _outgoing_interfaces_ list.
     """
+
     def __init__(self):
         super(ConnectableObjectMixin, self).__init__()
         self.__connections = {}
@@ -126,7 +153,9 @@ class ConnectableObjectMixin(object):
                 # no C layer between which will convert the second parameter
                 # from byref() to pointer().
                 conn = self.__connections[itf]
-                result = conn.IUnknown_QueryInterface(None, pointer(IConnectionPoint._iid_), ppcp)
+                result = conn.IUnknown_QueryInterface(
+                    None, pointer(IConnectionPoint._iid_), ppcp
+                )
                 logger.debug("connectionpoint found, QI() -> %s", result)
                 return result
         logger.debug("No connectionpoint found")
@@ -140,4 +169,3 @@ class ConnectableObjectMixin(object):
         if isinstance(itf, int):
             itf = self._outgoing_interfaces_[itf]
         return self.__connections[itf]._call_sinks(name, *args, **kw)
-

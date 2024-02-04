@@ -5,12 +5,17 @@ import comtypes.client, ctypes
 class IClassFactory(comtypes.IUnknown):
     _iid_ = comtypes.GUID("{00000001-0000-0000-C000-000000000046}")
     _methods_ = [
-        comtypes.STDMETHOD(comtypes.HRESULT, "CreateInstance",
-                           [ctypes.POINTER(comtypes.IUnknown),
-                            ctypes.POINTER(comtypes.GUID),
-                            ctypes.POINTER(ctypes.c_void_p)]),
-        comtypes.STDMETHOD(comtypes.HRESULT, "LockServer",
-                           [ctypes.c_int])]
+        comtypes.STDMETHOD(
+            comtypes.HRESULT,
+            "CreateInstance",
+            [
+                ctypes.POINTER(comtypes.IUnknown),
+                ctypes.POINTER(comtypes.GUID),
+                ctypes.POINTER(ctypes.c_void_p),
+            ],
+        ),
+        comtypes.STDMETHOD(comtypes.HRESULT, "LockServer", [ctypes.c_int]),
+    ]
 
     def CreateInstance(self, punkouter=None, interface=None, dynamic=False):
         if dynamic:
@@ -31,18 +36,20 @@ class IClassFactory(comtypes.IUnknown):
         # An interface was specified and obj is already that interface.
         return obj
 
-##class IExternalConnection(IUnknown):
-##    _iid_ = GUID("{00000019-0000-0000-C000-000000000046}")
-##    _methods_ = [
-##        STDMETHOD(HRESULT, "AddConnection", [c_ulong, c_ulong]),
-##        STDMETHOD(HRESULT, "ReleaseConnection", [c_ulong, c_ulong, c_ulong])]
+
+# class IExternalConnection(IUnknown):
+#     _iid_ = GUID("{00000019-0000-0000-C000-000000000046}")
+#     _methods_ = [
+#         STDMETHOD(HRESULT, "AddConnection", [c_ulong, c_ulong]),
+#         STDMETHOD(HRESULT, "ReleaseConnection", [c_ulong, c_ulong, c_ulong])]
 
 # The following code is untested:
 
 ACTIVEOBJECT_STRONG = 0x0
-ACTIVEOBJECT_WEAK   = 0x1
+ACTIVEOBJECT_WEAK = 0x1
 
 oleaut32 = ctypes.oledll.oleaut32
+
 
 def RegisterActiveObject(comobj, weak=True):
     punk = comobj._com_pointers_[comtypes.IUnknown._iid_]
@@ -52,11 +59,11 @@ def RegisterActiveObject(comobj, weak=True):
     else:
         flags = ACTIVEOBJECT_STRONG
     handle = ctypes.c_ulong()
-    oleaut32.RegisterActiveObject(punk,
-                                  ctypes.byref(clsid),
-                                  flags,
-                                  ctypes.byref(handle))
+    oleaut32.RegisterActiveObject(
+        punk, ctypes.byref(clsid), flags, ctypes.byref(handle)
+    )
     return handle.value
+
 
 def RevokeActiveObject(handle):
     oleaut32.RevokeActiveObject(handle, None)

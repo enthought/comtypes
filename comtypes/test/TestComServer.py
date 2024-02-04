@@ -1,5 +1,6 @@
 import sys, os
 import logging
+
 logging.basicConfig()
 ##logging.basicConfig(level=logging.DEBUG)
 ##logger = logging.getLogger(__name__)
@@ -38,18 +39,18 @@ from comtypes.gen import TestComServerLib
 # interfaces.  ISupportErrorInfo is implemented by the COMObject base
 # class.
 class TestComServer(
-    TestComServerLib.TestComServer, # the coclass from the typelib wrapper
+    TestComServerLib.TestComServer,  # the coclass from the typelib wrapper
     comtypes.server.connectionpoints.ConnectableObjectMixin,
-    ):
+):
 
     # The default interface from the typelib MUST be the first
     # interface, other interfaces can follow
 
-    _com_interfaces_ = TestComServerLib.TestComServer._com_interfaces_ + \
-                       [comtypes.typeinfo.IProvideClassInfo2,
-                        comtypes.errorinfo.ISupportErrorInfo,
-                        comtypes.connectionpoints.IConnectionPointContainer,
-                        ]
+    _com_interfaces_ = TestComServerLib.TestComServer._com_interfaces_ + [
+        comtypes.typeinfo.IProvideClassInfo2,
+        comtypes.errorinfo.ISupportErrorInfo,
+        comtypes.connectionpoints.IConnectionPointContainer,
+    ]
 
     # registry entries
     _reg_threading_ = "Both"
@@ -65,36 +66,36 @@ class TestComServer(
         # Hm, why is assignment to value needed?
 
         # these leak
-##        parray[0].value = (1, "2", None, 3.14)
-##        parray[0].value = (1, "2", None)
+        # parray[0].value = (1, "2", None, 3.14)
+        # parray[0].value = (1, "2", None)
 
-##        parray[0].value = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
-##        parray[0].value = (1,), (4,)
+        # parray[0].value = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+        # parray[0].value = (1,), (4,)
 
-##        parray[0].value = (), ()
-##        parray[0].value = (), 0
+        # parray[0].value = (), ()
+        # parray[0].value = (), 0
 
         # leakage
-##        parray[0].value = (((127900.0, None, 2620),
-##                            (127875.0, None, 2335),
-##                            (127675.0, 1071, None)),
-##                           127800.0)
+        # parray[0].value = (((127900.0, None, 2620),
+        #                     (127875.0, None, 2335),
+        #                     (127675.0, 1071, None)),
+        #                     127800.0)
 
         # reported *no* leakage, but leaks anyway
-##        parray[0].value = ((128000.0, None, 2576),
-##                           (127975.0, None, 1923),
-##                           (127950.0, None, 1734))
+        # parray[0].value = ((128000.0, None, 2576),
+        #                     (127975.0, None, 1923),
+        #                     (127950.0, None, 1734))
 
         # these don't leak
-##        parray[0].value = (1, 2, 3)
-##        parray[0].value = (1, 2, None)
-##        parray[0].value = (1, 3.14)
-##        parray[0].value = [1, "(1, 2, 3)"]
-##        parray[0].value = (1, "2")
-##        parray[0].value = [1, "2"]
-##        parray[0].value = (None, None, None)
+        # parray[0].value = (1, 2, 3)
+        # parray[0].value = (1, 2, None)
+        # parray[0].value = (1, 3.14)
+        # parray[0].value = [1, "(1, 2, 3)"]
+        # parray[0].value = (1, "2")
+        # parray[0].value = [1, "2"]
+        # parray[0].value = (None, None, None)
 
-##        parray[0].value = (),
+        # parray[0].value = (),
 
         return S_OK
 
@@ -115,7 +116,7 @@ class TestComServer(
     def ITestComServer_Exec2(self, what):
         exec(what)
 
-    _name = u"spam, spam, spam"
+    _name = "spam, spam, spam"
 
     def _get_name(self):
         return self._name
@@ -124,9 +125,9 @@ class TestComServer(
         self._name = name
         return S_OK
 
-##    def ITestComServer_SetName(self, this, name):
-##        self._name = name
-##        return S_OK
+    # def ITestComServer_SetName(self, this, name):
+    #     self._name = name
+    #     return S_OK
 
     def ITestComServer_sEtNaMe(self, this, name):
         # the method is spelled in a funny way to check case
@@ -134,18 +135,21 @@ class TestComServer(
         self._name = name
         return S_OK
 
-##    [id(18), helpstring("a method with [in] and [out] args in mixed order")]
-##    HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);
+    # [id(18), helpstring("a method with [in] and [out] args in mixed order")]
+    # HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);
     def MixedInOut(self, a, c):
-        return a+1, c+1
+        return a + 1, c + 1
+
 
 if __name__ == "__main__":
     try:
         from comtypes.server.register import UseCommandLine
-##    logging.basicConfig(level=logging.DEBUG)
+
+        # logging.basicConfig(level=logging.DEBUG)
         UseCommandLine(TestComServer)
     except Exception:
         import traceback
+
         traceback.print_exc()
         if sys.version_info >= (3, 0):
             input()

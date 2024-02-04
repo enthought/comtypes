@@ -35,11 +35,9 @@ Now, debug the object, and when done delete logging info:
 
   python mycomobj.py /nodebug
 """
-import sys, os
-if sys.version_info >= (3, 0):
-    import winreg
-else:
-    import _winreg as winreg
+import sys
+import os
+import winreg
 import logging
 
 import comtypes
@@ -51,16 +49,20 @@ from ctypes import windll, c_ulong, c_wchar_p, WinError, sizeof, create_string_b
 
 _debug = logging.getLogger(__name__).debug
 
+
 def get_winerror(exception):
     try:
         return exception.winerror
     except AttributeError:
         return exception.errno
 
+
 # a SHDeleteKey function, will remove a registry key with all subkeys.
 def _non_zero(retval, func, args):
     if retval:
         raise WinError(retval)
+
+
 SHDeleteKey = windll.shlwapi.SHDeleteKeyW
 SHDeleteKey.errcheck = _non_zero
 SHDeleteKey.argtypes = c_ulong, c_wchar_p
@@ -68,12 +70,16 @@ SHDeleteKey.argtypes = c_ulong, c_wchar_p
 Set = set
 
 
-_KEYS = {winreg.HKEY_CLASSES_ROOT: "HKCR",
-         winreg.HKEY_LOCAL_MACHINE: "HKLM",
-         winreg.HKEY_CURRENT_USER: "HKCU"}
+_KEYS = {
+    winreg.HKEY_CLASSES_ROOT: "HKCR",
+    winreg.HKEY_LOCAL_MACHINE: "HKLM",
+    winreg.HKEY_CURRENT_USER: "HKCU",
+}
+
 
 def _explain(hkey):
     return _KEYS.get(hkey, hkey)
+
 
 class Registrar(object):
     """COM class registration.
@@ -84,12 +90,15 @@ class Registrar(object):
     Registrars _register and _unregister methods which do the actual
     work.
     """
+
     def nodebug(self, cls):
         """Delete logging entries from the registry."""
         clsid = cls._reg_clsid_
         try:
-            _debug('DeleteKey( %s\\CLSID\\%s\\Logging"' % \
-                    (_explain(winreg.HKEY_CLASSES_ROOT), clsid))
+            _debug(
+                'DeleteKey( %s\\CLSID\\%s\\Logging"'
+                % (_explain(winreg.HKEY_CLASSES_ROOT), clsid)
+            )
             hkey = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s" % clsid)
             winreg.DeleteKey(hkey, "Logging")
         except WindowsError as detail:
@@ -101,20 +110,22 @@ class Registrar(object):
         # handlers
         # format
         clsid = cls._reg_clsid_
-        _debug('CreateKey( %s\\CLSID\\%s\\Logging"' % \
-                (_explain(winreg.HKEY_CLASSES_ROOT), clsid))
+        _debug(
+            'CreateKey( %s\\CLSID\\%s\\Logging"'
+            % (_explain(winreg.HKEY_CLASSES_ROOT), clsid)
+        )
         hkey = winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Logging" % clsid)
         for item in levels:
             name, value = item.split("=")
             v = getattr(logging, value)
             assert isinstance(v, int)
-        _debug('SetValueEx(levels, %s)' % levels)
+        _debug("SetValueEx(levels, %s)" % levels)
         winreg.SetValueEx(hkey, "levels", None, winreg.REG_MULTI_SZ, levels)
         if format:
-            _debug('SetValueEx(format, %s)' % format)
+            _debug("SetValueEx(format, %s)" % format)
             winreg.SetValueEx(hkey, "format", None, winreg.REG_SZ, format)
         else:
-            _debug('DeleteValue(format)')
+            _debug("DeleteValue(format)")
             try:
                 winreg.DeleteValue(hkey, "format")
             except WindowsError as detail:
@@ -139,7 +150,7 @@ class Registrar(object):
         table.sort()
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
-            _debug ('[%s\\%s]', _explain(hkey), subkey)
+            _debug("[%s\\%s]", _explain(hkey), subkey)
             _debug('%s="%s"', valuename or "@", value)
             k = winreg.CreateKey(hkey, subkey)
             winreg.SetValueEx(k, valuename, None, winreg.REG_SZ, str(value))
@@ -195,7 +206,10 @@ class Registrar(object):
                 _debug("UnRegisterTypeLib(%s, %s, %s)", *tlib)
                 UnRegisterTypeLib(*tlib)
             except WindowsError as detail:
-                if not get_winerror(detail) in (TYPE_E_REGISTRYACCESS, TYPE_E_CANTLOADLIBRARY):
+                if not get_winerror(detail) in (
+                    TYPE_E_REGISTRYACCESS,
+                    TYPE_E_CANTLOADLIBRARY,
+                ):
                     raise
         _debug("Done")
 
@@ -207,6 +221,7 @@ class Registrar(object):
             windll.kernel32.GetModuleFileNameA(handle, buf, sizeof(buf))
             return buf[:]
         import _ctypes
+
         return _ctypes.__file__
 
     def _get_full_classname(self, cls):
@@ -250,13 +265,16 @@ class Registrar(object):
         append = lambda *args: table.append(args)
 
         # basic entry - names the comobject
-        reg_clsid = str(cls._reg_clsid_) # that's the only required attribute for registration
+        reg_clsid = str(
+            cls._reg_clsid_
+        )  # that's the only required attribute for registration
         reg_desc = getattr(cls, "_reg_desc_", "")
         if not reg_desc:
             # Simple minded algorithm to construct a description from
             # the progid:
-            reg_desc = getattr(cls, "_reg_novers_progid_", "") or \
-                       getattr(cls, "_reg_progid_", "")
+            reg_desc = getattr(cls, "_reg_novers_progid_", "") or getattr(
+                cls, "_reg_progid_", ""
+            )
             if reg_desc:
                 reg_desc = reg_desc.replace(".", " ")
         append(HKCR, "CLSID\\%s" % reg_clsid, "", reg_desc)
@@ -264,26 +282,31 @@ class Registrar(object):
         reg_progid = getattr(cls, "_reg_progid_", None)
         if reg_progid:
             # for ProgIDFromCLSID:
-            append(HKCR, "CLSID\\%s\\ProgID" % reg_clsid, "", reg_progid) # 1
+            append(HKCR, "CLSID\\%s\\ProgID" % reg_clsid, "", reg_progid)  # 1
 
             # for CLSIDFromProgID
             if reg_desc:
-                append(HKCR, reg_progid, "", reg_desc) # 2
-            append(HKCR, "%s\\CLSID" % reg_progid, "", reg_clsid) # 3
+                append(HKCR, reg_progid, "", reg_desc)  # 2
+            append(HKCR, "%s\\CLSID" % reg_progid, "", reg_clsid)  # 3
 
             reg_novers_progid = getattr(cls, "_reg_novers_progid_", None)
             if reg_novers_progid:
-                append(HKCR, "CLSID\\%s\\VersionIndependentProgID" % reg_clsid, # 1a
-                       "", reg_novers_progid)
+                append(
+                    HKCR,
+                    "CLSID\\%s\\VersionIndependentProgID" % reg_clsid,  # 1a
+                    "",
+                    reg_novers_progid,
+                )
                 if reg_desc:
-                    append(HKCR, reg_novers_progid, "", reg_desc) # 2a
-                append(HKCR, "%s\\CurVer" % reg_novers_progid, "", reg_progid) #
-                append(HKCR, "%s\\CLSID" % reg_novers_progid, "", reg_clsid) # 3a
+                    append(HKCR, reg_novers_progid, "", reg_desc)  # 2a
+                append(HKCR, "%s\\CurVer" % reg_novers_progid, "", reg_progid)  #
+                append(HKCR, "%s\\CLSID" % reg_novers_progid, "", reg_clsid)  # 3a
 
         clsctx = getattr(cls, "_reg_clsctx_", 0)
 
-        if clsctx & comtypes.CLSCTX_LOCAL_SERVER \
-               and not hasattr(sys, "frozendllhandle"):
+        if clsctx & comtypes.CLSCTX_LOCAL_SERVER and not hasattr(
+            sys, "frozendllhandle"
+        ):
             exe = sys.executable
             if " " in exe:
                 exe = '"%s"' % exe
@@ -293,28 +316,50 @@ class Registrar(object):
                 script = os.path.abspath(sys.modules[cls.__module__].__file__)
                 if " " in script:
                     script = '"%s"' % script
-                append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", "%s %s" % (exe, script))
+                append(
+                    HKCR,
+                    "CLSID\\%s\\LocalServer32" % reg_clsid,
+                    "",
+                    "%s %s" % (exe, script),
+                )
             else:
                 append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", "%s" % exe)
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
-        if clsctx & comtypes.CLSCTX_INPROC_SERVER \
-               and getattr(sys, "frozen", None) in (None, "dll"):
-            append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
-                   "", self._get_serverdll())
+        if clsctx & comtypes.CLSCTX_INPROC_SERVER and getattr(sys, "frozen", None) in (
+            None,
+            "dll",
+        ):
+            append(
+                HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid, "", self._get_serverdll()
+            )
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
-            if not hasattr(sys, "frozendllhandle") \
-                   or not comtypes.server.inprocserver._clsid_to_class:
-                append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
-                       "PythonClass", self._get_full_classname(cls))
-                append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
-                       "PythonPath", self._get_pythonpath(cls))
+            if (
+                not hasattr(sys, "frozendllhandle")
+                or not comtypes.server.inprocserver._clsid_to_class
+            ):
+                append(
+                    HKCR,
+                    "CLSID\\%s\\InprocServer32" % reg_clsid,
+                    "PythonClass",
+                    self._get_full_classname(cls),
+                )
+                append(
+                    HKCR,
+                    "CLSID\\%s\\InprocServer32" % reg_clsid,
+                    "PythonPath",
+                    self._get_pythonpath(cls),
+                )
 
             reg_threading = getattr(cls, "_reg_threading_", None)
             if reg_threading is not None:
-                append(HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid,
-                       "ThreadingModel", reg_threading)
+                append(
+                    HKCR,
+                    "CLSID\\%s\\InprocServer32" % reg_clsid,
+                    "ThreadingModel",
+                    reg_threading,
+                )
 
         reg_tlib = getattr(cls, "_reg_typelib_", None)
         if reg_tlib is not None:
@@ -322,21 +367,29 @@ class Registrar(object):
 
         return table
 
+
 ################################################################
+
 
 def register(cls):
     Registrar().register(cls)
 
+
 def unregister(cls):
     Registrar().unregister(cls)
 
+
 def UseCommandLine(*classes):
-    usage = """Usage: %s [-regserver] [-unregserver] [-nodebug] [-f logformat] [-l loggername=level]""" % sys.argv[0]
-    opts, args = w_getopt.w_getopt(sys.argv[1:],
-                                   "regserver unregserver embedding l: f: nodebug")
+    usage = (
+        """Usage: %s [-regserver] [-unregserver] [-nodebug] [-f logformat] [-l loggername=level]"""
+        % sys.argv[0]
+    )
+    opts, args = w_getopt.w_getopt(
+        sys.argv[1:], "regserver unregserver embedding l: f: nodebug"
+    )
     if not opts:
         sys.stderr.write(usage + "\n")
-        return 0 # nothing for us to do
+        return 0  # nothing for us to do
 
     levels = []
     format = None
@@ -367,9 +420,11 @@ def UseCommandLine(*classes):
 
     if runit:
         import comtypes.server.localserver
+
         comtypes.server.localserver.run(classes)
 
-    return 1 # we have done something
+    return 1  # we have done something
+
 
 if __name__ == "__main__":
     UseCommandLine()

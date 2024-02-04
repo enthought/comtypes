@@ -6,6 +6,7 @@ be written to.
 """
 import ctypes, logging, os, sys, tempfile, types
 from ctypes import wintypes
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,6 +41,7 @@ def _find_gen_dir():
     """
     _create_comtypes_gen_package()
     from comtypes import gen
+
     gen_path = _ensure_list(gen.__path__)
     if not _is_writeable(gen_path):
         # check type of executable image to determine a subdirectory
@@ -58,7 +60,7 @@ def _find_gen_dir():
             subdir = r"comtypes_cache\%s-%s" % (base, version_str)
             basedir = tempfile.gettempdir()
 
-        else: # ftype in ('windows_exe', 'console_exe')
+        else:  # ftype in ('windows_exe', 'console_exe')
             # exe created by py2exe
             base = os.path.splitext(os.path.basename(sys.executable))[0]
             subdir = r"comtypes_cache\%s-%s" % (base, version_str)
@@ -73,25 +75,33 @@ def _find_gen_dir():
     logger.info("Using writeable comtypes cache directory: '%s'", result)
     return result
 
+
 ################################################################
 
 SHGetSpecialFolderPath = ctypes.OleDLL("shell32.dll").SHGetSpecialFolderPathW
 GetModuleFileName = ctypes.WinDLL("kernel32.dll").GetModuleFileNameW
-SHGetSpecialFolderPath.argtypes = [ctypes.c_ulong, ctypes.c_wchar_p,
-                                   ctypes.c_int, ctypes.c_int]
+SHGetSpecialFolderPath.argtypes = [
+    ctypes.c_ulong,
+    ctypes.c_wchar_p,
+    ctypes.c_int,
+    ctypes.c_int,
+]
 GetModuleFileName.restype = ctypes.c_ulong
 GetModuleFileName.argtypes = [wintypes.HMODULE, ctypes.c_wchar_p, ctypes.c_ulong]
 
 CSIDL_APPDATA = 26
 MAX_PATH = 260
 
+
 def _create_comtypes_gen_package():
     """Import (creating it if needed) the comtypes.gen package."""
     try:
         import comtypes.gen
+
         logger.info("Imported existing %s", comtypes.gen)
     except ImportError:
         import comtypes
+
         logger.info("Could not import comtypes.gen, trying to create it.")
         try:
             comtypes_path = os.path.abspath(os.path.join(comtypes.__path__[0], "gen"))
@@ -111,6 +121,7 @@ def _create_comtypes_gen_package():
             comtypes.gen.__path__ = []
             logger.info("Created a memory-only package.")
 
+
 def _is_writeable(path):
     """Check if the first part, if any, on path is a directory in
     which we can create files."""
@@ -119,6 +130,7 @@ def _is_writeable(path):
     # TODO: should we add os.X_OK flag as well? It seems unnecessary on Windows.
     return os.access(path[0], os.W_OK)
 
+
 def _get_module_filename(hmodule):
     """Call the Windows GetModuleFileName function which determines
     the path from a module handle."""
@@ -126,6 +138,7 @@ def _get_module_filename(hmodule):
     if GetModuleFileName(hmodule, path, MAX_PATH):
         return path.value
     raise ctypes.WinError()
+
 
 def _get_appdata_dir():
     """Return the 'file system directory that serves as a common
