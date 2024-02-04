@@ -1,6 +1,32 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.3.0
+--------------
+ * Improve error message on non Windows environments. By @CristiFati.
+ * Adjust styles of codebase. By @junkmd.
+ * Apply ``black==22.12.0`` formatter. By @junkmd.
+ * Modernize ``client.dynamic``. By @junkmd.
+ * Add tests for ``client.dynamic``. By @junkmd.
+ * Fix ``test_client``. By @junkmd.
+ * Fix ``test_getactiveobj``. By @junkmd.
+ * Make explicit the symbols that imports from the wrapper module into the friendly module. By @junkmd.
+ * Modernize type annotations in statically defined modules. By @junkmd.
+ * Fix several type annotations in statically defined modules. By @jonschz and @junkmd.
+ * Remove ``sys.version_info`` bridges from production codebase. By @junkmd.
+ * Remove ``for_stub=True`` conditional branch from the ``tools.codegenerator.ImportedNamespaces.getvalue``. By @junkmd.
+ * Fix ``codegenerator`` as generating ``__next__()`` instead of ``next()`` in ``IEnum...``. By @jonschz.
+ * Add unit test for generated ``IEnum...`` interfaces. By @jonschz.
+ * Remove ``'Programming Language :: Python :: 2.7'`` from ``setup.py``. By @junkmd.
+ * Change the base class of ``_ComMemberSpec`` and ``_DispMemberSpec`` to ``typing.NamedTuple``. By @junkmd.
+ * Delint and remove wildcard-import from ``typeinfo``. By @junkmd.
+ * Split ``DISPPARAMS`` instantiation in ``IDispatch.Invoke`` method. By @junkmd.
+ * Move ``clear_comtypes_cache`` to be a callable ``comtypes.clear_cache`` module. By @bennyrowland.
+ * Wrapper modules are now imported into friendly modules using an abstracted name, ``__wrapper_module__``. By @junkmd.
+ * Fix old index bug in ``call_with_inout`` within ``_fix_inout_args``. By @jonschz.
+ * Fix ``CONTRIBUTING.md``. By @junkmd.
+ * Update ``README.md``. By @junkmd.
+
 Release 1.2.1
 --------------
  * Replace ``distutils`` with ``setuptools``. By @junkmd.
