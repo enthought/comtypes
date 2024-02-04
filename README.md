@@ -13,8 +13,12 @@
 This package works on Windows only.
 - [`comtypes==1.1.7`](https://pypi.org/project/comtypes/1.1.7/) is the last version supporting Windows CE.
 
-Available on `Python` 2.7 and 3.3-3.12.
-- [Supporting `Python` 2.7 will be dropped](#ongoing-plans).
+Available on `Python` 3.7-3.12.
+- [`comtypes==1.2.1`](https://pypi.org/project/comtypes/1.2.1/) is the last version supporting `Python` 2.7 and 3.3-3.6.
+- In `Python` 3.7.6 and 3.8.1, `comtypes` would not work as reported in [GH-202](https://github.com/enthought/comtypes/issues/202).  
+This bug has been fixed in `Python` >= 3.7.7 and >= 3.8.2.
+- In `Python` 3.8 and 3.9, some of `comtypes` functionalities may not work correctly as reported in [GH-212](https://github.com/enthought/comtypes/issues/212).  
+This bug has been fixed in `Python` >= 3.10.10 and >= 3.11.2.
 
 ## Where to get it
 
@@ -45,16 +49,6 @@ https://github.com/enthought/comtypes
 
 <a id="ongoing-plans"></a>
 ### Ongoing plans
-#### Drop supporting `Python` 2.x from this package
-For the time being, the development target branch of this package is the [`drop_py2` branch](https://github.com/enthought/comtypes/tree/drop_py2) and the [`main` branch](https://github.com/enthought/comtypes/tree/main) is in maintenance-only-mode.
-
-As the name suggests, `drop_py2` is a mid-term-planning branch to drop supporting `Python` 2.x from this package, and start supporting `Python` 3.x only.
-
-The codebase changes in the `drop_py2` branch will be merged into the `main` branch in the future, and the `main` branch will back to the development target branch.  
-Until then, no changes will be made to the `main` branch except in the case of corresponding to regressions.
-
-Please refer to [the GitHub issue](https://github.com/enthought/comtypes/issues/392) for details.
-
 #### `GetModule` will also generate static typing for methods and properties
 `comtypes.client.GetModule` generates `Python` wrapper modules from a COM type library, containing interface classes, coclasses, constants, and structures. The `.py` files are generated in the `comtypes.gen` package.
 
