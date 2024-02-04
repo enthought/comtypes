@@ -1,6 +1,6 @@
 on:
   pull_request:
-    branches: [drop_py2]  # TODO: add `master`
+    branches: [main]
 
 jobs:
     formatter:
