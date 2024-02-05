@@ -7,6 +7,7 @@ from typing import (
     List,
     NamedTuple,
     Optional,
+    Sequence,
     Tuple,
     Type,
     Union as _UnionT,
@@ -51,7 +52,7 @@ def _unpack_argspec(
 
 
 def _resolve_argspec(
-    items: Tuple[_ArgSpecElmType, ...]
+    items: Sequence[_ArgSpecElmType],
 ) -> Tuple[Tuple[_ParamFlagType, ...], Tuple[Type[_CData], ...]]:
     """Unpacks and converts from argspec to paramflags and argtypes.
 
