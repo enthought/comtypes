@@ -7,6 +7,7 @@ from typing import (
     List,
     NamedTuple,
     Optional,
+    Sequence,
     Tuple,
     Type,
     Union as _UnionT,
@@ -51,7 +52,7 @@ def _unpack_argspec(
 
 
 def _resolve_argspec(
-    items: Tuple[_ArgSpecElmType, ...]
+    items: Sequence[_ArgSpecElmType],
 ) -> Tuple[Tuple[_ParamFlagType, ...], Tuple[Type[_CData], ...]]:
     """Unpacks and converts from argspec to paramflags and argtypes.
 
@@ -453,12 +454,11 @@ class DispMemberGenerator(object):
 
     # Should the funcs/mths we create have restype and/or argtypes attributes?
     def _make_disp_method(self, m: _DispMemberSpec) -> Callable[..., Any]:
-        memid = m.memid
         if "propget" in m.idlflags:
 
             def getfunc(obj, *args, **kw):
                 return obj.Invoke(
-                    memid, _invkind=2, *args, **kw
+                    m.memid, _invkind=2, _argspec=m.argspec, *args, **kw
                 )  # DISPATCH_PROPERTYGET
 
             return getfunc
@@ -466,7 +466,7 @@ class DispMemberGenerator(object):
 
             def putfunc(obj, *args, **kw):
                 return obj.Invoke(
-                    memid, _invkind=4, *args, **kw
+                    m.memid, _invkind=4, _argspec=m.argspec, *args, **kw
                 )  # DISPATCH_PROPERTYPUT
 
             return putfunc
@@ -474,17 +474,18 @@ class DispMemberGenerator(object):
 
             def putreffunc(obj, *args, **kw):
                 return obj.Invoke(
-                    memid, _invkind=8, *args, **kw
+                    m.memid, _invkind=8, _argspec=m.argspec, *args, **kw
                 )  # DISPATCH_PROPERTYPUTREF
 
             return putreffunc
-        # a first attempt to make use of the restype.  Still, support for
-        # named arguments and default argument values should be added.
+        # a first attempt to make use of the restype.
         if hasattr(m.restype, "__com_interface__"):
             interface = m.restype.__com_interface__  # type: ignore
 
             def comitffunc(obj, *args, **kw):
-                result = obj.Invoke(memid, _invkind=1, *args, **kw)
+                result = obj.Invoke(
+                    m.memid, _invkind=1, _argspec=m.argspec, *args, **kw
+                )
                 if result is None:
                     return
                 return result.QueryInterface(interface)
@@ -492,7 +493,9 @@ class DispMemberGenerator(object):
             return comitffunc
 
         def func(obj, *args, **kw):
-            return obj.Invoke(memid, _invkind=1, *args, **kw)  # DISPATCH_METHOD
+            return obj.Invoke(
+                m.memid, _invkind=1, _argspec=m.argspec, *args, **kw
+            )  # DISPATCH_METHOD
 
         return func
 
@@ -525,10 +528,10 @@ class bound_named_property(object):
         else:
             return self.fget(self.instance, index)
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kw):
         if self.fget is None:
             raise TypeError("object is not callable")
-        return self.fget(self.instance, *args)
+        return self.fget(self.instance, *args, **kw)
 
     def __setitem__(self, index, value):
         if self.fset is None:
