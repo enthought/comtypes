@@ -13,6 +13,8 @@ from typing import (
     ClassVar,
     List,
     Optional,
+    overload,
+    Sequence,
     TYPE_CHECKING,
     Tuple,
     Union as _UnionT,
@@ -842,6 +844,24 @@ class IDispatch(IUnknown):
 
         self.__com_Invoke(memid, riid_null, lcid, invkind, dp, var, None, argerr)
         return var._get_value(dynamic=True)
+
+    @overload
+    def Invoke(
+        self, dispid: int, *args: Any, _invkind: int = ..., _lcid: int = ...
+    ) -> Any:
+        ...  # noqa
+
+    @overload
+    def Invoke(
+        self,
+        dispid: int,
+        *args: Any,
+        _argspec: Sequence["hints._ArgSpecElmType"],
+        _invkind: int = ...,
+        _lcid: int = ...,
+        **kw: Any,
+    ) -> Any:
+        ...  # noqa
 
     def Invoke(self, dispid: int, *args: Any, **kw: Any) -> Any:
         """Invoke a method or property."""
