@@ -126,11 +126,6 @@ class Dispatch(object):
         "QueryInterface is forwarded to the real com object."
         return self._comobj.QueryInterface(*args)
 
-    def __cmp__(self, other):
-        if not isinstance(other, Dispatch):
-            return 1
-        return cmp(self._comobj, other._comobj)
-
     def __eq__(self, other):
         return isinstance(other, Dispatch) and self._comobj == other._comobj
 
