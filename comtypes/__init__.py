@@ -589,21 +589,6 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
                 _debug("Release %s", self)
                 self.Release()
 
-    def __cmp__(self, other):
-        """Compare pointers to COM interfaces."""
-        # COM identity rule
-        #
-        # XXX To compare COM interface pointers, should we
-        # automatically QueryInterface for IUnknown on both items, and
-        # compare the pointer values?
-        if not isinstance(other, _compointer_base):
-            return 1
-
-        # get the value property of the c_void_p baseclass, this is the pointer value
-        return cmp(
-            super(_compointer_base, self).value, super(_compointer_base, other).value
-        )
-
     def __eq__(self, other):
         if not isinstance(other, _compointer_base):
             return False

@@ -42,11 +42,6 @@ class GUID(Structure):
 
     __str__ = __unicode__
 
-    def __cmp__(self, other):
-        if isinstance(other, GUID):
-            return cmp(binary(self), binary(other))
-        return -1
-
     def __bool__(self):
         return self != GUID_null
 
