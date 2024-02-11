@@ -22,7 +22,7 @@ import io
 
 import comtypes
 from comtypes import typeinfo
-from comtypes.tools import tlbparser, typedesc
+from comtypes.tools import tlbparser, typedesc, typeannotator
 
 
 version = comtypes.__version__
@@ -561,6 +561,12 @@ class CodeGenerator(object):
             print("# -*- coding: mbcs -*-", file=output)
             print(file=output)
         print(self.imports.getvalue(), file=output)
+        print("from typing import TYPE_CHECKING", file=output)
+        print(file=output)
+        print("if TYPE_CHECKING:", file=output)
+        print("    from typing import Any, Tuple", file=output)
+        print("    from comtypes import hints", file=output)
+        print(file=output)
         print(file=output)
         print(self.declarations.getvalue(), file=output)
         print(file=output)
@@ -1100,6 +1106,12 @@ class CodeGenerator(object):
             print("            return item", file=self.stream)
             print("        raise IndexError(index)", file=self.stream)
 
+        annotaions = typeannotator.ComInterfaceMembersAnnotator(head.itf).generate()
+        if annotaions:
+            print(file=self.stream)
+            print("    if TYPE_CHECKING:  # commembers", file=self.stream)
+            print(annotaions, file=self.stream, end="")
+
         print(file=self.stream)
         print(file=self.stream)
 
@@ -1221,6 +1233,13 @@ class CodeGenerator(object):
         print("    _iid_ = GUID(%r)" % head.itf.iid, file=self.stream)
         print("    _idlflags_ = %s" % head.itf.idlflags, file=self.stream)
         print("    _methods_ = []", file=self.stream)
+
+        annotaions = typeannotator.DispInterfaceMembersAnnotator(head.itf).generate()
+        if annotaions:
+            print(file=self.stream)
+            print("    if TYPE_CHECKING:  # dispmembers", file=self.stream)
+            print(annotaions, file=self.stream, end="")
+
         print(file=self.stream)
         print(file=self.stream)
 
