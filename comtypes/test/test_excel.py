@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import datetime
+import sys
 import unittest
 
 from comtypes.client import CreateObject, GetModule
@@ -112,10 +113,16 @@ class BaseBindTest(object):
         sh.Range[sh.Cells.Item[4, 1], sh.Cells.Item[6, 3]].Select()
 
 
+PY_VER = "Python {0}.{1}.{2}".format(*sys.version_info[:3])
+
+
 @unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
-@unittest.skip(
-    "There is difference of `Range.Value` behavior "
-    "between Python >= 3.8.x and Python <= 3.7.x."
+@unittest.skipIf(
+    sys.version_info[:2] == (3, 8)
+    or sys.version_info[:2] == (3, 9)
+    or (sys.version_info[:2] == (3, 10) and sys.version_info < (3, 10, 10))
+    or (sys.version_info[:2] == (3, 11) and sys.version_info < (3, 11, 2)),
+    f"This fails in {PY_VER}. See https://github.com/enthought/comtypes/issues/212",
 )
 class Test_EarlyBind(BaseBindTest, unittest.TestCase):
     dynamic = False
