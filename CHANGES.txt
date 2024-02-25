@@ -1,6 +1,12 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.3.1
+--------------
+* Add type annotations to dynamically generated modules. By @junkmd.
+* Bring back Excel early-bind test. By @junkmd.
+* update ``README.md``. By @junkmd.
+
 Release 1.3.0
 --------------
  * Improve error message on non Windows environments. By @CristiFati.
