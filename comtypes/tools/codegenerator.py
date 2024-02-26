@@ -423,13 +423,13 @@ class CodeGenerator(object):
         self.stream = io.StringIO()
         self.imports = ImportedNamespaces()
         self.declarations = DeclaredNamespaces()
+        self.enums = EnumerationNamespaces()
         self._to_type_name = TypeNamer()
         self.known_symbols = known_symbols or {}
 
         self.done = set()  # type descriptions that have been generated
         self.names = set()  # names that have been generated
         self.externals = []  # typelibs imported to generated module
-        self.enums: Dict[str, List[str]] = {}
         self.aliases: Dict[str, str] = {}
         self.last_item_class = False
 
@@ -604,7 +604,7 @@ class CodeGenerator(object):
         print("from enum import IntFlag", file=output)
         print(file=output)
         importing_symbols = set(self.names)
-        importing_symbols -= set(self.enums)
+        importing_symbols -= set(self.enums.get_symbols())
         enum_aliases = {k: v for k, v in self.aliases.items() if v in self.enums}
         importing_symbols -= set(enum_aliases)
         importing_symbols.update(self.imports.get_symbols())
@@ -617,12 +617,7 @@ class CodeGenerator(object):
         print(symbols, file=output)
         print(file=output)
         print(file=output)
-        for enum_name, enum_members in self.enums.items():
-            print(f"class {enum_name}(IntFlag):", file=output)
-            for m_name in enum_members:
-                print(f"    {m_name} = __wrapper_module__.{m_name}", file=output)
-            print(file=output)
-            print(file=output)
+        print(self.enums.getvalue("__wrapper_module__"), file=output)
         if enum_aliases:
             for k, v in enum_aliases.items():
                 print(f"{k} = {v}", file=output)
@@ -665,7 +660,8 @@ class CodeGenerator(object):
                 print("# Fixing keyword as EnumValue for %s" % tp.name)
         tp_name = self._to_type_name(tp)
         print("%s = %d" % (tp_name, value), file=self.stream)
-        self.enums.setdefault(tp.enumeration.name, []).append(tp_name)
+        if tp.enumeration.name:
+            self.enums.add(tp.enumeration.name, tp_name)
         self.names.add(tp_name)
 
     def Enumeration(self, tp: typedesc.Enumeration) -> None:
@@ -1536,3 +1532,45 @@ class DeclaredNamespaces(object):
                 code = code + "  # %s" % comment
             lines.append(code)
         return "\n".join(lines)
+
+
+class EnumerationNamespaces(object):
+    def __init__(self):
+        self.data: Dict[str, List[str]] = {}
+
+    def add(self, enum_name: str, member_name: str) -> None:
+        """Adds a namespace will be enumeration and its member.
+
+        Examples:
+            >>> enums = EnumerationNamespaces()
+            >>> enums.add('Foo', 'ham')
+            >>> enums.add('Foo', 'spam')
+            >>> enums.add('Bar', 'bacon')
+            >>> assert 'Foo' in enums
+            >>> assert 'Baz' not in enums
+            >>> print(enums.getvalue('_0123'))  # <BLANKLINE> is necessary for doctest
+            class Foo(IntFlag):
+                ham = _0123.ham
+                spam = _0123.spam
+            <BLANKLINE>
+            class Bar(IntFlag):
+                bacon = _0123.bacon
+        """
+        self.data.setdefault(enum_name, []).append(member_name)
+
+    def __contains__(self, item: str) -> bool:
+        return item in self.data
+
+    def get_symbols(self) -> Set[str]:
+        return set(self.data)
+
+    def getvalue(self, wrapper_module_name: str) -> str:
+        blocks = []
+        for enum_name, enum_members in self.data.items():
+            lines = []
+            lines.append(f"class {enum_name}(IntFlag):")
+            for member_name in enum_members:
+                ref = f"{wrapper_module_name}.{member_name}"
+                lines.append(f"    {member_name} = {ref}")
+            blocks.append("\n".join(lines))
+        return "\n\n".join(blocks)
