@@ -429,6 +429,8 @@ class CodeGenerator(object):
         self.done = set()  # type descriptions that have been generated
         self.names = set()  # names that have been generated
         self.externals = []  # typelibs imported to generated module
+        self.enums: Dict[str, List[str]] = {}
+        self.aliases: Dict[str, str] = {}
         self.last_item_class = False
 
     def generate(self, item):
@@ -599,7 +601,12 @@ class CodeGenerator(object):
         txtwrapper = textwrap.TextWrapper(
             subsequent_indent="    ", initial_indent="    ", break_long_words=False
         )
+        print("from enum import IntFlag", file=output)
+        print(file=output)
         importing_symbols = set(self.names)
+        importing_symbols -= set(self.enums)
+        enum_aliases = {k: v for k, v in self.aliases.items() if v in self.enums}
+        importing_symbols -= set(enum_aliases)
         importing_symbols.update(self.imports.get_symbols())
         importing_symbols.update(self.declarations.get_symbols())
         joined_names = ", ".join(str(n) for n in importing_symbols)
@@ -608,6 +615,19 @@ class CodeGenerator(object):
             wrapped_names = "\n".join(txtwrapper.wrap(joined_names))
             symbols = f"from {modname} import (\n{wrapped_names}\n)"
         print(symbols, file=output)
+        print(file=output)
+        print(file=output)
+        for enum_name, enum_members in self.enums.items():
+            print(f"class {enum_name}(IntFlag):", file=output)
+            for m_name in enum_members:
+                print(f"    {m_name} = __wrapper_module__.{m_name}", file=output)
+            print(file=output)
+            print(file=output)
+        if enum_aliases:
+            for k, v in enum_aliases.items():
+                print(f"{k} = {v}", file=output)
+        else:
+            print("# no alias for enumerations", file=output)
         print(file=output)
         print(file=output)
         quoted_names = ", ".join(repr(str(n)) for n in self.names)
@@ -645,6 +665,7 @@ class CodeGenerator(object):
                 print("# Fixing keyword as EnumValue for %s" % tp.name)
         tp_name = self._to_type_name(tp)
         print("%s = %d" % (tp_name, value), file=self.stream)
+        self.enums.setdefault(tp.enumeration.name, []).append(tp_name)
         self.names.add(tp_name)
 
     def Enumeration(self, tp: typedesc.Enumeration) -> None:
@@ -653,10 +674,6 @@ class CodeGenerator(object):
             print("# values for enumeration '%s'" % tp.name, file=self.stream)
         else:
             print("# values for unnamed enumeration", file=self.stream)
-        # Some enumerations have the same name for the enum type
-        # and an enum value.  Excel's XlDisplayShapes is such an example.
-        # Since we don't have separate namespaces for the type and the values,
-        # we generate the TYPE last, overwriting the value. XXX
         for item in tp.values:
             self.generate(item)
         if tp.name:
@@ -675,6 +692,7 @@ class CodeGenerator(object):
                 self.declarations.add(tp.name, definition)
             else:
                 print("%s = %s" % (tp.name, definition), file=self.stream)
+                self.aliases[tp.name] = definition
                 self.last_item_class = False
         self.names.add(tp.name)
 
