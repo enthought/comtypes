@@ -596,7 +596,7 @@ class CodeGenerator(object):
         print(self._make_friendly_module_import_part(modname), file=output)
         print(file=output)
         print(file=output)
-        print(self.enums.getvalue("__wrapper_module__"), file=output)
+        print(self.enums.getvalue(), file=output)
         print(file=output)
         print(file=output)
         enum_aliases = self.enum_aliases
@@ -1558,13 +1558,14 @@ class EnumerationNamespaces(object):
             >>> enums.add('Bar', 'bacon')
             >>> assert 'Foo' in enums
             >>> assert 'Baz' not in enums
-            >>> print(enums.getvalue('_0123'))  # <BLANKLINE> is necessary for doctest
+            >>> print(enums.getvalue())  # <BLANKLINE> is necessary for doctest
             class Foo(IntFlag):
-                ham = _0123.ham
-                spam = _0123.spam
+                ham = __wrapper_module__.ham
+                spam = __wrapper_module__.spam
+            <BLANKLINE>
             <BLANKLINE>
             class Bar(IntFlag):
-                bacon = _0123.bacon
+                bacon = __wrapper_module__.bacon
         """
         self.data.setdefault(enum_name, []).append(member_name)
 
@@ -1574,13 +1575,12 @@ class EnumerationNamespaces(object):
     def get_symbols(self) -> Set[str]:
         return set(self.data)
 
-    def getvalue(self, wrapper_module_name: str) -> str:
+    def getvalue(self) -> str:
         blocks = []
         for enum_name, enum_members in self.data.items():
             lines = []
             lines.append(f"class {enum_name}(IntFlag):")
             for member_name in enum_members:
-                ref = f"{wrapper_module_name}.{member_name}"
-                lines.append(f"    {member_name} = {ref}")
+                lines.append(f"    {member_name} = __wrapper_module__.{member_name}")
             blocks.append("\n".join(lines))
         return "\n\n\n".join(blocks)
