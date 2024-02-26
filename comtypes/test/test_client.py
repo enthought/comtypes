@@ -229,6 +229,15 @@ class Test_Constants(ut.TestCase):
         self.assertEqual(consts.TextCompare, Scripting.TextCompare)
         self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
 
+    def test_enums_in_friendly_mod(self):
+        consts = comtypes.client.Constants("scrrun.dll")
+        comtypes.client.GetModule("scrrun.dll")
+        from comtypes.gen import Scripting
+
+        for e in Scripting.StandardStreamTypes:
+            self.assertIn(e.name, consts.StandardStreamTypes)
+            self.assertEqual(consts.StandardStreamTypes[e.name], e.value)
+
     def test_returns_other_than_enum_members(self):
         obj = comtypes.client.CreateObject("SAPI.SpVoice")
         from comtypes.gen import SpeechLib as sapi
