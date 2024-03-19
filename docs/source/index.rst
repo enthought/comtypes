@@ -606,49 +606,91 @@ modules containing the Python interface class (and more) automatically
 from COM typelibraries.
 
 ``GetModule(tlib)``
-
-    This function generates a Python wrapper for a COM typelibrary.
+    This function generates Python wrappers for a COM typelibrary.
     When a COM object exposes its own typeinfo, this function is
     called automatically when the object is created.
 
-    ``tlib`` can be an **ITypeLib** COM pointer from a loaded
-    typelibrary, the pathname of a file containing a type library
-    (.tlb, .exe or .dll), a tuple or list containing the GUID of a
-    typelibrary, a major and a minor version number, plus optionally a
-    LCID, or any object that has a _reg_libid_ and _reg_version_
-    attributes specifying a type library.
+    ``tlib`` can be the following:
 
-    ``GetModule(tlib)`` generates a Python module (if not already
-    present) from the typelibrary, containing interface classes,
-    coclasses, constants, and structures and returns the module object
-    itself.  The modules are generated inside the ``comtypes.gen``
-    package.  The module name is derived from the typelibrary guid,
-    version number and lcid.  The module name is a valid Python module
-    name, so it can be imported with an import statement.  A second
-    wrapper module is also created in the comtypes.gen package with a
-    shorter name that is derived from the type library *name* itself,
-    this does import everything from the real wrapper module but can
-    be imported easier because the module name is easier to type.
+    - an ``ITypeLib`` COM pointer from a loaded typelibrary
+    - the pathname of a file containing a type library (``.tlb``,
+      ``.exe`` or ``.dll``)
+    - a tuple or list containing the typelibrary's GUID, optionally
+      along with a major and a minor version numbers if versioning
+      is required, plus optionally a LCID.
+    - any object that has a ``_reg_libid_`` and ``_reg_version_``
+      attributes specifying a type library.
 
-    For example, the typelibrary for Internet Explorer has the name
-    ``SHDocVw`` (this is the name specified in the type library IDL
-    file, it is not the filename), the guid is
-    ``{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}``, and the version number
-    ``1.1``.  The name of the real typelib wrapper module is
-    ``comtypes.gen._EAB22AC0_30C1_11CF_A7EB_0000C05BAE0B_0_1_1`` and
-    the name of the second wrapper is ``comtypes.gen.SHDocVw``.
+    ``GetModule(tlib)`` generates two Python modules (if not already
+    present): a first wrapper module and a second friendly module,
+    within the ``comtypes.gen`` package with a single call and
+    returns the second friendly module.  If modules are already
+    present, it imports the two modules and returns the friendly
+    module.
 
-    When you want to freeze your script with py2exe you can ensure
-    that py2exe includes these typelib wrappers by writing:
+    A first wrapper module is created from the typelibrary, is
+    containing interface classes, coclasses, constants, and
+    structures.  The module name is derived from the typelibrary
+    guid, version numbers and lcid.  The module name is a valid
+    Python module name, so it can be imported with an import
+    statement.
+
+    A second friendly module is also created in the ``comtypes.gen``
+    package with a shorter name that is derived from the type
+    library *name* itself.  It does import the wrapper module with an
+    abstracted alias ``__wrapper_module__``, also imports interface
+    classes, coclasses, constants, and structures from the wrapper
+    module, and defines enumerations from typeinfo of the typelibrary
+    using `enum.IntFlag`_.  The friendly module can be imported
+    easier than the wrapper module because the module name is easier
+    to type and read.
+
+    For example, the typelibrary for Scripting Runtime has the name
+    ``Scripting`` (this is the name specified in the type library
+    IDL file, it is not the filename), the guid is
+    ``{420B2830-E718-11CF-893D-00A0C9054228}``, and the version
+    number ``1.0``.  The name of the first typelib wrapper module is
+    ``comtypes.gen._420B2830_E718_11CF_893D_00A0C9054228_0_1_0`` and
+    the name of the second friendly module is ``comtypes.gen.Scripting``.
+
+    When you want to freeze your script with ``py2exe`` you can ensure
+    that ``py2exe`` includes these typelib wrappers by writing:
 
     .. sourcecode:: python
 
-        import comtypes.gen.SHDocVw
+        import comtypes.gen.Scripting
 
     somewhere.
 
-``gen_dir``
+    *Added in version 1.3.0*: The friendly module imports the wrapper
+    module with an abstracted alias ``__wrapper_module__``.
 
+    *Changed in version 1.4.0*: The friendly module defines
+    enumerations from typeinfo of the typelibrary.
+    Prior to this, the friendly module imported everything from the
+    wrapper module, and all names used in enumerations were aliases
+    for ``ctypes.c_int``.  Even after version 1.4.0, by modifying the
+    codebase as follows, these names can continue to be used as
+    aliases for ``c_int`` rather than as enumerations.
+
+    .. sourcecode:: diff
+
+        - from comtypes.gen.friendlymodule import TheName
+        + from ctypes import c_int as TheName
+
+    .. sourcecode:: diff
+
+        from comtypes.gen import friendlymodule
+        - c_int_alias = friendlymodule.TheName
+        + c_int_alias = friendlymodule.__wrapper_module__.TheName
+
+    .. sourcecode:: diff
+
+        - from comtypes.gen import friendlymodule as mod
+        + from comtypes.gen.friendlymodule import __wrapper_module__ as mod
+        c_int_alias = mod.TheName
+
+``gen_dir``
     This variable determines the directory where the typelib wrappers
     are written to.  If it is ``None``, modules are only generated in
     memory.
@@ -671,29 +713,52 @@ from COM typelibraries.
 Examples
 --------
 
-Here   are several ways   to generate the  typelib  wrapper module for
-Internet Explorer with the ``GetModule`` function:
+Here are several ways to generate the typelib wrapper module for
+Scripting Dictionary with the ``GetModule`` function:
 
 .. sourcecode:: pycon
 
    >>> from comtypes.client import GetModule
-   >>> GetModule("shdocvw.dll")
-   >>> GetModule(["{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}", 1, 1)
-   >>>
+   >>> GetModule('scrrun.dll')  # doctest: +ELLIPSIS
+   <module 'comtypes.gen.Scripting'...>
+   >>> GetModule(('{420B2830-E718-11CF-893D-00A0C9054228}', 1, 0))  # doctest: +ELLIPSIS
+   <module 'comtypes.gen.Scripting'...>
+
+Members such as the first wrapper module, interface classes,
+coclasses, constants, and enumerations can be referenced from the
+friendly module generated by calling the ``GetModule`` function:
+
+.. sourcecode:: pycon
+
+   >>> from comtypes.client import GetModule
+   >>> Scripting = GetModule('scrrun.dll')
+   >>> Scripting.__wrapper_module__  # the first wrapper module  # doctest: +ELLIPSIS
+   <module 'comtypes.gen._420B2830_E718_11CF_893D_00A0C9054228_0_1_0'...>
+   >>> Scripting.IDictionary  # an interface class
+   <class 'comtypes.gen._420B2830_E718_11CF_893D_00A0C9054228_0_1_0.IDictionary'>
+   >>> Scripting.Dictionary  # a coclass
+   <class 'comtypes.gen._420B2830_E718_11CF_893D_00A0C9054228_0_1_0.Dictionary'>
+   >>> Scripting.BinaryCompare  # a constant
+   0
+   >>> Scripting.CompareMethod  # an enumeration
+   <flag 'CompareMethod'>
+   >>> Scripting.CompareMethod.BinaryCompare  # a member of the enumeration     
+   <CompareMethod.BinaryCompare: 0>
 
 This code snippet could be used to generate the typelib wrapper module
-for Internet Explorer automatically when your script is run, and would
-include the module into the exe-file when the script is frozen by
-py2exe:
+for Scripting Dictionary automatically when your script is run, and
+would include the module into the exe-file when the script is frozen
+by ``py2exe``:
 
 .. sourcecode:: pycon
 
     >>> import sys
-    >>> if not hasattr(sys, "frozen"):
-    >>>     from comtypes.client import GetModule
-    >>>     GetModule("shdocvw.dll")
-    >>> import comtypes.gen.ShDocVw
-    >>>
+    >>> if not hasattr(sys, 'frozen'):  # doctest: +ELLIPSIS
+    ...     from comtypes.client import GetModule
+    ...     GetModule('scrrun.dll')
+    ...
+    <module 'comtypes.gen.Scripting'...>
+    >>> import comtypes.gen.Scripting
 
 
 Case sensitivity
@@ -758,6 +823,8 @@ the github releases_ section.
 .. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
 
 .. _ctypes: http://starship.python.net/crew/theller/ctypes
+
+.. _`enum.IntFlag`: https://docs.python.org/3/library/enum.html#enum.IntFlag
 
 .. _github: https://github.com/enthought/comtypes
 
