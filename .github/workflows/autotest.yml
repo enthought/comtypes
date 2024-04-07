@@ -1,0 +1,30 @@
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, windows-2019]
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        architecture: ['x86', 'x64']
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+      - name: install comtypes
+        run: |
+          pip install --upgrade setuptools
+          python setup.py install
+          pip uninstall comtypes -y
+          python test_pip_install.py
+      - name: unittest comtypes
+        run: |
+          python -m unittest discover -v -s ./comtypes/test -t comtypes\test
