@@ -1,6 +1,11 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.0
+--------------
+* Add enumeration definitions in generated friendly modules. By @junkmd.
+* Add descriptions to ``index.rst`` about the enumeration types. By @junkmd.
+
 Release 1.3.1
 --------------
 * Add type annotations to dynamically generated modules. By @junkmd.
