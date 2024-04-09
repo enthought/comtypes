@@ -671,7 +671,7 @@ class CodeGenerator(object):
         tp_name = self._to_type_name(tp)
         print("%s = %d" % (tp_name, value), file=self.stream)
         if tp.enumeration.name:
-            self.enums.add(tp.enumeration.name, tp_name)
+            self.enums.add(tp.enumeration.name, tp_name, value)
         self.names.add(tp_name)
 
     def Enumeration(self, tp: typedesc.Enumeration) -> None:
@@ -1546,28 +1546,28 @@ class DeclaredNamespaces(object):
 
 class EnumerationNamespaces(object):
     def __init__(self):
-        self.data: Dict[str, List[str]] = {}
+        self.data: Dict[str, List[Tuple[str, int]]] = {}
 
-    def add(self, enum_name: str, member_name: str) -> None:
+    def add(self, enum_name: str, member_name: str, value: int) -> None:
         """Adds a namespace will be enumeration and its member.
 
         Examples:
             >>> enums = EnumerationNamespaces()
-            >>> enums.add('Foo', 'ham')
-            >>> enums.add('Foo', 'spam')
-            >>> enums.add('Bar', 'bacon')
+            >>> enums.add('Foo', 'ham', 1)
+            >>> enums.add('Foo', 'spam', 2)
+            >>> enums.add('Bar', 'bacon', 3)
             >>> assert 'Foo' in enums
             >>> assert 'Baz' not in enums
             >>> print(enums.getvalue())  # <BLANKLINE> is necessary for doctest
             class Foo(IntFlag):
-                ham = __wrapper_module__.ham
-                spam = __wrapper_module__.spam
+                ham = 1
+                spam = 2
             <BLANKLINE>
             <BLANKLINE>
             class Bar(IntFlag):
-                bacon = __wrapper_module__.bacon
+                bacon = 3
         """
-        self.data.setdefault(enum_name, []).append(member_name)
+        self.data.setdefault(enum_name, []).append((member_name, value))
 
     def __contains__(self, item: str) -> bool:
         return item in self.data
@@ -1580,7 +1580,7 @@ class EnumerationNamespaces(object):
         for enum_name, enum_members in self.data.items():
             lines = []
             lines.append(f"class {enum_name}(IntFlag):")
-            for member_name in enum_members:
-                lines.append(f"    {member_name} = __wrapper_module__.{member_name}")
+            for member_name, value in enum_members:
+                lines.append(f"    {member_name} = {value}")
             blocks.append("\n".join(lines))
         return "\n\n\n".join(blocks)
