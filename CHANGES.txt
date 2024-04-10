@@ -1,6 +1,10 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.1
+--------------
+* Fix `TypeError` when defining enumeration types
+
 Release 1.4.0
 --------------
 * Add enumeration definitions in generated friendly modules. By @junkmd.
