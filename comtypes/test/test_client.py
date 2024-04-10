@@ -74,6 +74,16 @@ class Test_GetModule(ut.TestCase):
         # NOTE: `WindowsInstaller`, which has `Patch` definition in dll.
         comtypes.client.GetModule("msi.dll")
 
+    def test_the_name_of_the_enum_member_and_the_coclass_are_duplicated(self):
+        # NOTE: In `MSHTML`, the name `htmlInputImage` is used both as a member of
+        # the `_htmlInput` enum type and as a CoClass that has `IHTMLElement` and
+        # others as interfaces.
+        # If a CoClass is assigned where an integer should be assigned, such as in
+        # the definition of an enumeration, the generation of the module will fail.
+        # See also https://github.com/enthought/comtypes/issues/524
+        with contextlib.redirect_stdout(None):  # supress warnings
+            comtypes.client.GetModule("mshtml.tlb")
+
     def test_abstracted_wrapper_module_in_friendly_module(self):
         mod = comtypes.client.GetModule("scrrun.dll")
         self.assertTrue(hasattr(mod, "__wrapper_module__"))
