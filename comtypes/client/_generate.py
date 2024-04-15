@@ -186,8 +186,8 @@ def _create_module(modulename: str, code: str) -> types.ModuleType:
 
 class ModuleGenerator(object):
     def __init__(self, tlib: typeinfo.ITypeLib, pathname: Optional[str]) -> None:
-        known_symbols, _ = _get_known_namespaces()
-        self.codegen = codegenerator.CodeGenerator(known_symbols)
+        known_symbols, known_interfaces = _get_known_namespaces()
+        self.codegen = codegenerator.CodeGenerator(known_symbols, known_interfaces)
         self.wrapper_name = codegenerator.name_wrapper_module(tlib)
         self.friendly_name = codegenerator.name_friendly_module(tlib)
         if pathname is None:

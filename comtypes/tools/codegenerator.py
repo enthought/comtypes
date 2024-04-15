@@ -419,7 +419,7 @@ class DispPropertyGenerator(object):
 
 
 class CodeGenerator(object):
-    def __init__(self, known_symbols=None):
+    def __init__(self, known_symbols=None, known_interfaces=None) -> None:
         self.stream = io.StringIO()
         self.imports = ImportedNamespaces()
         self.declarations = DeclaredNamespaces()
@@ -427,6 +427,7 @@ class CodeGenerator(object):
         self.unnamed_enum_members: List[Tuple[str, int]] = []
         self._to_type_name = TypeNamer()
         self.known_symbols = known_symbols or {}
+        self.known_interfaces = known_interfaces or {}
 
         self.done = set()  # type descriptions that have been generated
         self.names = set()  # names that have been generated
@@ -437,13 +438,20 @@ class CodeGenerator(object):
     def generate(self, item):
         if item in self.done:
             return
+        if isinstance(item, typedesc.ComInterface):
+            if self._is_known_interface(item):
+                self.imports.add(item.name, symbols=self.known_symbols)
+                self.done.add(item)
+                return
+            self.done.add(item)  # to avoid infinite recursion.
+            self.ComInterface(item)
+            return
         if isinstance(item, typedesc.StructureHead):
             name = getattr(item.struct, "name", None)
         else:
             name = getattr(item, "name", None)
         if name in self.known_symbols:
             self.imports.add(name, symbols=self.known_symbols)
-
             self.done.add(item)
             if isinstance(item, typedesc.Structure):
                 self.done.add(item.get_head())
@@ -1074,6 +1082,14 @@ class CodeGenerator(object):
         self.generate(itf.get_body())
         self.names.add(itf.name)
 
+    def _is_known_interface(self, item: typedesc.ComInterface) -> bool:
+        """Returns whether an interface is statically defined in `comtypes`,
+        based on its name and iid.
+        """
+        if item.name in self.known_interfaces:
+            return self.known_interfaces[item.name] == item.iid
+        return False
+
     def _is_enuminterface(self, itf: typedesc.ComInterface) -> bool:
         # Check if this is an IEnumXXX interface
         if not itf.name.startswith("IEnum"):
@@ -1085,7 +1101,7 @@ class CodeGenerator(object):
         return True
 
     def ComInterfaceHead(self, head: typedesc.ComInterfaceHead) -> None:
-        if head.itf.name in self.known_symbols:
+        if self._is_known_interface(head.itf):
             return
         base = head.itf.base
         if head.itf.base is None:
