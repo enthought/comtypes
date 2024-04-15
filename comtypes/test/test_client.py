@@ -59,12 +59,17 @@ class Test_GetModule(ut.TestCase):
         mod = comtypes.client.GetModule(typeinfo.LoadTypeLibEx("scrrun.dll"))
         self.assertIs(mod, Scripting)
 
-    def test_imports_IEnumVARIANT_from_other_generated_modules(self):
+    def test_mscorlib(self):
         # NOTE: `codegenerator` generates code that contains unused imports,
         # but removing them are attracting wierd bugs in library-wrappers
         # which depend on externals.
-        # NOTE: `mscorlib`, which imports `IEnumVARIANT` from `stdole`.
-        comtypes.client.GetModule(("{BED7F4EA-1A96-11D2-8F08-00A0C9A6186D}",))
+        # `mscorlib` imports `stdole` wrapper module and refers`IEnumVARIANT` from it.
+        mod = comtypes.client.GetModule(("{BED7F4EA-1A96-11D2-8F08-00A0C9A6186D}",))
+        # NOTE: `ModuleGenerator` treats the `ctypes._Pointer` base class for pointers
+        # as one of the known symbols, but `mscorlib` has the `_Pointer` com interface.
+        # Even though they have the same name, `codegenerator` generates code to define
+        # the `_Pointer` interface, rather than importing `_Pointer` from `ctypes`.
+        self.assertTrue(issubclass(mod._Pointer, comtypes.IUnknown))
 
     def test_no_replacing_Patch_namespace(self):
         # NOTE: An object named `Patch` is defined in some dll.
