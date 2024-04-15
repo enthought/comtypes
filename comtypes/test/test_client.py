@@ -82,7 +82,12 @@ class Test_GetModule(ut.TestCase):
         # the definition of an enumeration, the generation of the module will fail.
         # See also https://github.com/enthought/comtypes/issues/524
         with contextlib.redirect_stdout(None):  # supress warnings
-            comtypes.client.GetModule("mshtml.tlb")
+            mshtml = comtypes.client.GetModule("mshtml.tlb")
+        # When the member of an enumeration and a CoClass have the same name,
+        # the defined later one is assigned to the name in the module.
+        # By asserting whether the CoClass is assigned to that name, it ensures
+        # that the member of the enumeration is defined earlier.
+        self.assertTrue(issubclass(mshtml.htmlInputImage, comtypes.CoClass))
 
     def test_abstracted_wrapper_module_in_friendly_module(self):
         mod = comtypes.client.GetModule("scrrun.dll")
