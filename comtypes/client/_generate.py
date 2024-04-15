@@ -195,54 +195,54 @@ class ModuleGenerator(object):
         self.tlib = tlib
 
     def generate(self) -> types.ModuleType:
-        tlib, pathname = self.tlib, self.pathname
         # create and import the real typelib wrapper module
-        mod = self._create_wrapper_module(tlib, pathname)
-        # try to get the friendly-name, if not, returns the real typelib wrapper module
-        modulename = codegenerator.name_friendly_module(tlib)
-        if modulename is None:
+        mod = self._get_existing_wrapper_module()
+        if mod is None:
+            mod = self._create_wrapper_module()
+        if self.friendly_name is None:
             return mod
-        # create and import the friendly-named module
-        return self._create_friendly_module(tlib, modulename)
+        mod = self._get_existing_friendly_module()
+        if mod is not None:
+            return mod
+        return self._create_friendly_module()
 
-    def _create_friendly_module(
-        self, tlib: typeinfo.ITypeLib, modulename: str
-    ) -> types.ModuleType:
-        """helper which creates and imports the friendly-named module."""
+    def _get_existing_friendly_module(self) -> Optional[types.ModuleType]:
+        if self.friendly_name is None:
+            return
         try:
-            mod = _my_import(modulename)
+            mod = _my_import(self.friendly_name)
         except Exception as details:
-            logger.info("Could not import %s: %s", modulename, details)
+            logger.info("Could not import %s: %s", self.friendly_name, details)
         else:
             return mod
-        # the module is always regenerated if the import fails
-        logger.info("# Generating %s", modulename)
-        # determine the Python module name
-        modname = codegenerator.name_wrapper_module(tlib)
-        code = self.codegen.generate_friendly_code(modname)
-        return _create_module(modulename, code)
 
-    def _create_wrapper_module(
-        self, tlib: typeinfo.ITypeLib, pathname: Optional[str]
-    ) -> types.ModuleType:
-        """helper which creates and imports the real typelib wrapper module."""
-        modulename = codegenerator.name_wrapper_module(tlib)
-        if modulename in sys.modules:
-            return sys.modules[modulename]
+    def _create_friendly_module(self) -> types.ModuleType:
+        """helper which creates and imports the friendly-named module."""
+        if self.friendly_name is None:
+            raise TypeError
+        # the module is always regenerated if the import fails
+        logger.info("# Generating %s", self.friendly_name)
+        # determine the Python module name
+        code = self.codegen.generate_friendly_code(self.wrapper_name)
+        return _create_module(self.friendly_name, code)
+
+    def _get_existing_wrapper_module(self) -> Optional[types.ModuleType]:
+        if self.wrapper_name in sys.modules:
+            return sys.modules[self.wrapper_name]
         try:
-            return _my_import(modulename)
+            return _my_import(self.wrapper_name)
         except Exception as details:
-            logger.info("Could not import %s: %s", modulename, details)
+            logger.info("Could not import %s: %s", self.wrapper_name, details)
+
+    def _create_wrapper_module(self) -> types.ModuleType:
+        """helper which creates and imports the real typelib wrapper module."""
         # generate the module since it doesn't exist or is out of date
-        logger.info("# Generating %s", modulename)
-        p = tlbparser.TypeLibParser(tlib)
-        if pathname is None:
-            pathname = tlbparser.get_tlib_filename(tlib)
-        items = list(p.parse().values())
-        code = self.codegen.generate_wrapper_code(items, filename=pathname)
+        logger.info("# Generating %s", self.wrapper_name)
+        items = list(tlbparser.TypeLibParser(self.tlib).parse().values())
+        code = self.codegen.generate_wrapper_code(items, filename=self.pathname)
         for ext_tlib in self.codegen.externals:  # generates dependency COM-lib modules
             GetModule(ext_tlib)
-        return _create_module(modulename, code)
+        return _create_module(self.wrapper_name, code)
 
 
 def _get_known_symbols() -> Dict[str, str]:
