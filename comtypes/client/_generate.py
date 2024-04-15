@@ -1,11 +1,12 @@
 from __future__ import print_function
 import ctypes
 import importlib
+import inspect
 import logging
 import os
 import sys
 import types
-from typing import Any, Tuple, List, Optional, Dict, Union as _UnionT
+from typing import Any, Tuple, List, Mapping, Optional, Dict, Union as _UnionT
 import winreg
 
 from comtypes import GUID, typeinfo
@@ -185,7 +186,8 @@ def _create_module(modulename: str, code: str) -> types.ModuleType:
 
 class ModuleGenerator(object):
     def __init__(self, tlib: typeinfo.ITypeLib, pathname: Optional[str]) -> None:
-        self.codegen = codegenerator.CodeGenerator(_get_known_symbols())
+        known_symbols, _ = _get_known_namespaces()
+        self.codegen = codegenerator.CodeGenerator(known_symbols)
         self.wrapper_name = codegenerator.name_wrapper_module(tlib)
         self.friendly_name = codegenerator.name_friendly_module(tlib)
         if pathname is None:
@@ -245,8 +247,29 @@ class ModuleGenerator(object):
         return _create_module(self.wrapper_name, code)
 
 
-def _get_known_symbols() -> Dict[str, str]:
-    known_symbols: Dict[str, str] = {}
+_SymbolName = str
+_ModuleName = str
+_ItfName = str
+_ItfIid = str
+
+
+def _get_known_namespaces() -> Tuple[
+    Mapping[_SymbolName, _ModuleName], Mapping[_ItfName, _ItfIid]
+]:
+    """Returns symbols and interfaces that are already statically defined in `ctypes`
+    and `comtypes`.
+    From `ctypes`, all the names are obtained.
+    From `comtypes`, only the names in each module's `__known_symbols__` are obtained.
+
+    Note:
+        The interfaces that should be included in `__known_symbols__` should be limited
+        to those that can be said to be bound to the design concept of COM, such as
+        `IUnknown`, and those defined in `objidl` and `oaidl`.
+        `comtypes` does NOT aim to statically define all COM object interfaces in
+        its repository.
+    """
+    known_symbols: Dict[_SymbolName, _ModuleName] = {}
+    known_interfaces: Dict[_ItfName, _ItfIid] = {}
     for mod_name in (
         "comtypes.persist",
         "comtypes.typeinfo",
@@ -258,11 +281,16 @@ def _get_known_symbols() -> Dict[str, str]:
         mod = importlib.import_module(mod_name)
         if hasattr(mod, "__known_symbols__"):
             names: List[str] = mod.__known_symbols__
+            for name in names:
+                tgt = getattr(mod, name)
+                if inspect.isclass(tgt) and issubclass(tgt, comtypes.IUnknown):
+                    assert name not in known_interfaces
+                    known_interfaces[name] = str(tgt._iid_)
         else:
             names = list(mod.__dict__)
         for name in names:
             known_symbols[name] = mod.__name__
-    return known_symbols
+    return known_symbols, known_interfaces
 
 
 ################################################################
