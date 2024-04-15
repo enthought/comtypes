@@ -121,7 +121,7 @@ def GetModule(tlib: _UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType:
         pathname = None
         tlib = _load_tlib(tlib)
     logger.debug("GetModule(%s)", tlib.GetLibAttr())
-    return ModuleGenerator().generate(tlib, pathname)
+    return ModuleGenerator(tlib, pathname).generate()
 
 
 def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
@@ -184,12 +184,18 @@ def _create_module(modulename: str, code: str) -> types.ModuleType:
 
 
 class ModuleGenerator(object):
-    def __init__(self) -> None:
+    def __init__(self, tlib: typeinfo.ITypeLib, pathname: Optional[str]) -> None:
         self.codegen = codegenerator.CodeGenerator(_get_known_symbols())
+        self.wrapper_name = codegenerator.name_wrapper_module(tlib)
+        self.friendly_name = codegenerator.name_friendly_module(tlib)
+        if pathname is None:
+            self.pathname = tlbparser.get_tlib_filename(tlib)
+        else:
+            self.pathname = pathname
+        self.tlib = tlib
 
-    def generate(
-        self, tlib: typeinfo.ITypeLib, pathname: Optional[str]
-    ) -> types.ModuleType:
+    def generate(self) -> types.ModuleType:
+        tlib, pathname = self.tlib, self.pathname
         # create and import the real typelib wrapper module
         mod = self._create_wrapper_module(tlib, pathname)
         # try to get the friendly-name, if not, returns the real typelib wrapper module
