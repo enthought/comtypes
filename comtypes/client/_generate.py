@@ -160,30 +160,27 @@ def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
     raise TypeError("'%r' is not supported type for loading typelib" % obj)
 
 
-def _create_module_in_file(modulename: str, code: str) -> types.ModuleType:
-    """create module in file system, and import it"""
+def _create_module(modulename: str, code: str) -> types.ModuleType:
+    """Creates the module, then imports it."""
     # `modulename` is 'comtypes.gen.xxx'
-    filename = "%s.py" % modulename.split(".")[-1]
-    with open(os.path.join(comtypes.client.gen_dir, filename), "w") as ofi:
+    stem = modulename.split(".")[-1]
+    if comtypes.client.gen_dir is None:
+        # in memory system
+        import comtypes.gen as g
+
+        mod = types.ModuleType(modulename)
+        abs_gen_path = os.path.abspath(g.__path__[0])  # type: ignore
+        mod.__file__ = os.path.join(abs_gen_path, "<memory>")
+        exec(code, mod.__dict__)
+        sys.modules[modulename] = mod
+        setattr(g, stem, mod)
+        return mod
+    # in file system
+    with open(os.path.join(comtypes.client.gen_dir, f"{stem}.py"), "w") as ofi:
         print(code, file=ofi)
     # clear the import cache to make sure Python sees newly created modules
-    if hasattr(importlib, "invalidate_caches"):
-        importlib.invalidate_caches()
+    importlib.invalidate_caches()
     return _my_import(modulename)
-
-
-def _create_module_in_memory(modulename: str, code: str) -> types.ModuleType:
-    """create module in memory system, and import it"""
-    # `modulename` is 'comtypes.gen.xxx'
-    import comtypes.gen as g
-
-    mod = types.ModuleType(modulename)
-    abs_gen_path = os.path.abspath(g.__path__[0])  # type: ignore
-    mod.__file__ = os.path.join(abs_gen_path, "<memory>")
-    exec(code, mod.__dict__)
-    sys.modules[modulename] = mod
-    setattr(g, modulename.split(".")[-1], mod)
-    return mod
 
 
 class ModuleGenerator(object):
@@ -217,9 +214,7 @@ class ModuleGenerator(object):
         # determine the Python module name
         modname = codegenerator.name_wrapper_module(tlib)
         code = self.codegen.generate_friendly_code(modname)
-        if comtypes.client.gen_dir is None:
-            return _create_module_in_memory(modulename, code)
-        return _create_module_in_file(modulename, code)
+        return _create_module(modulename, code)
 
     def _create_wrapper_module(
         self, tlib: typeinfo.ITypeLib, pathname: Optional[str]
@@ -241,9 +236,7 @@ class ModuleGenerator(object):
         code = self.codegen.generate_wrapper_code(items, filename=pathname)
         for ext_tlib in self.codegen.externals:  # generates dependency COM-lib modules
             GetModule(ext_tlib)
-        if comtypes.client.gen_dir is None:
-            return _create_module_in_memory(modulename, code)
-        return _create_module_in_file(modulename, code)
+        return _create_module(modulename, code)
 
 
 def _get_known_symbols() -> Dict[str, str]:
