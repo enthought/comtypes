@@ -186,8 +186,6 @@ def _create_module(modulename: str, code: str) -> types.ModuleType:
 
 class ModuleGenerator(object):
     def __init__(self, tlib: typeinfo.ITypeLib, pathname: Optional[str]) -> None:
-        known_symbols, known_interfaces = _get_known_namespaces()
-        self.codegen = codegenerator.CodeGenerator(known_symbols, known_interfaces)
         self.wrapper_name = codegenerator.name_wrapper_module(tlib)
         self.friendly_name = codegenerator.name_friendly_module(tlib)
         if pathname is None:
@@ -197,16 +195,30 @@ class ModuleGenerator(object):
         self.tlib = tlib
 
     def generate(self) -> types.ModuleType:
-        # create and import the real typelib wrapper module
-        mod = self._get_existing_wrapper_module()
-        if mod is None:
-            mod = self._create_wrapper_module()
-        if self.friendly_name is None:
-            return mod
-        mod = self._get_existing_friendly_module()
-        if mod is not None:
-            return mod
-        return self._create_friendly_module()
+        # tries to import existing modules
+        wrapper_module = self._get_existing_wrapper_module()
+        if wrapper_module is not None:
+            if self.friendly_name is None:
+                return wrapper_module
+            else:
+                friendly_module = self._get_existing_friendly_module()
+                if friendly_module is not None:
+                    return friendly_module
+        # (re)generates wrapper and friendly modules
+        known_symbols, known_interfaces = _get_known_namespaces()
+        codegen = codegenerator.CodeGenerator(known_symbols, known_interfaces)
+        codebases: List[Tuple[str, str]] = []
+        logger.info("# Generating %s", self.wrapper_name)
+        items = list(tlbparser.TypeLibParser(self.tlib).parse().values())
+        wrp_code = codegen.generate_wrapper_code(items, filename=self.pathname)
+        codebases.append((self.wrapper_name, wrp_code))
+        if self.friendly_name is not None:
+            logger.info("# Generating %s", self.friendly_name)
+            frd_code = codegen.generate_friendly_code(self.wrapper_name)
+            codebases.append((self.friendly_name, frd_code))
+        for ext_tlib in codegen.externals:  # generates dependency COM-lib modules
+            GetModule(ext_tlib)
+        return [_create_module(name, code) for (name, code) in codebases][-1]
 
     def _get_existing_friendly_module(self) -> Optional[types.ModuleType]:
         if self.friendly_name is None:
@@ -218,16 +230,6 @@ class ModuleGenerator(object):
         else:
             return mod
 
-    def _create_friendly_module(self) -> types.ModuleType:
-        """helper which creates and imports the friendly-named module."""
-        if self.friendly_name is None:
-            raise TypeError
-        # the module is always regenerated if the import fails
-        logger.info("# Generating %s", self.friendly_name)
-        # determine the Python module name
-        code = self.codegen.generate_friendly_code(self.wrapper_name)
-        return _create_module(self.friendly_name, code)
-
     def _get_existing_wrapper_module(self) -> Optional[types.ModuleType]:
         if self.wrapper_name in sys.modules:
             return sys.modules[self.wrapper_name]
@@ -235,16 +237,6 @@ class ModuleGenerator(object):
             return _my_import(self.wrapper_name)
         except Exception as details:
             logger.info("Could not import %s: %s", self.wrapper_name, details)
-
-    def _create_wrapper_module(self) -> types.ModuleType:
-        """helper which creates and imports the real typelib wrapper module."""
-        # generate the module since it doesn't exist or is out of date
-        logger.info("# Generating %s", self.wrapper_name)
-        items = list(tlbparser.TypeLibParser(self.tlib).parse().values())
-        code = self.codegen.generate_wrapper_code(items, filename=self.pathname)
-        for ext_tlib in self.codegen.externals:  # generates dependency COM-lib modules
-            GetModule(ext_tlib)
-        return _create_module(self.wrapper_name, code)
 
 
 _SymbolName = str
