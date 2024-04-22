@@ -22,9 +22,9 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Protocol
 if sys.version_info >= (3, 10):
-    from typing import Concatenate, ParamSpec
+    from typing import Concatenate, ParamSpec, TypeAlias
 else:
-    from typing_extensions import Concatenate, ParamSpec
+    from typing_extensions import Concatenate, ParamSpec, TypeAlias
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
@@ -33,6 +33,16 @@ else:
 from comtypes.automation import IDispatch as IDispatch, VARIANT as VARIANT
 from comtypes.server import IClassFactory as IClassFactory
 from comtypes.typeinfo import ITypeInfo as ITypeInfo
+
+Incomplete: TypeAlias = Any
+"""The type symbol used temporarily until the COM library parsers or
+code generators is enhanced to annotate detailed type hints.
+"""
+
+Hresult: TypeAlias = int
+"""The value returned when calling a method with no `[out]` or
+`[out, retval]` arguments and with `HRESULT` restype in its definition.
+"""
 
 class _MethodTypeDesc(Protocol):
     arguments: List[Tuple[Any, str, List[str], Optional[Any]]]
