@@ -208,28 +208,26 @@ def _to_arg_definition(
     default: _DefValType,
 ) -> str:
     if default is not None:
-        elms = (idlflags, type_name, arg_name, default)
-        code = "        (%r, %s, '%s', %r)" % elms
+        code = f"        ({idlflags!r}, {type_name}, '{arg_name}', {default!r})"
         if len(code) > 80:
             code = (
                 "        (\n"
-                "            %r,\n"
-                "            %s,\n"
-                "            '%s',\n"
-                "            %r\n"
+                f"            {idlflags!r},\n"
+                f"            {type_name},\n"
+                f"            '{arg_name}',\n"
+                f"            {default!r}\n"
                 "        )"
-            ) % elms
+            )
     else:
-        elms = (idlflags, type_name, arg_name)
-        code = "        (%r, %s, '%s')" % elms
+        code = f"        ({idlflags!r}, {type_name}, '{arg_name}')"
         if len(code) > 80:
             code = (
                 "        (\n"
-                "            %r,\n"
-                "            %s,\n"
-                "            '%s',\n"
+                f"            {idlflags!r},\n"
+                f"            {type_name},\n"
+                f"            '{arg_name}',\n"
                 "        )"
-            ) % elms
+            )
     return code
 
 
@@ -240,8 +238,7 @@ class ComMethodGenerator(object):
         self._stream = io.StringIO()
         self._to_type_name = TypeNamer()
 
-    def generate(self):
-        # () -> str
+    def generate(self) -> str:
         if not self._m.arguments:
             self._make_noargs()
         else:
@@ -261,22 +258,26 @@ class ComMethodGenerator(object):
         return (idlflags, type_name, self._m.name)
 
     def _make_noargs(self) -> None:
-        elms = self._get_common_elms()
-        code = "    COMMETHOD(%r, %s, '%s')," % elms
+        flags, type_name, member_name = self._get_common_elms()
+        code = f"    COMMETHOD({flags!r}, {type_name}, '{member_name}'),"
         if len(code) > 80:
             code = (
                 "    COMMETHOD(\n"
-                "        %r,\n"
-                "        %s,\n"
-                "        '%s',\n"
+                f"        {flags!r},\n"
+                f"        {type_name},\n"
+                f"        '{member_name}',\n"
                 "    ),"
-            ) % elms
+            )
         print(code, file=self._stream)
 
     def _make_withargs(self) -> None:
+        flags, type_name, member_name = self._get_common_elms()
         code = (
-            "    COMMETHOD(\n" "        %r,\n" "        %s,\n" "        '%s',"
-        ) % self._get_common_elms()
+            "    COMMETHOD(\n"
+            f"        {flags!r},\n"
+            f"        {type_name},\n"
+            f"        '{member_name}',"
+        )
         print(code, file=self._stream)
         arglist = [_to_arg_definition(*i) for i in self._iter_args()]
         print(",\n".join(arglist), file=self._stream)
@@ -344,8 +345,7 @@ class DispMethodGenerator(object):
         self._stream = io.StringIO()
         self._to_type_name = TypeNamer()
 
-    def generate(self):
-        # () -> str
+    def generate(self) -> str:
         if not self._m.arguments:
             self._make_noargs()
         else:
@@ -362,22 +362,26 @@ class DispMethodGenerator(object):
         return (idlflags, type_name, self._m.name)
 
     def _make_noargs(self) -> None:
-        elms = self._get_common_elms()
-        code = "    DISPMETHOD(%r, %s, '%s')," % elms
+        flags, type_name, member_name = self._get_common_elms()
+        code = f"    DISPMETHOD({flags!r}, {type_name}, '{member_name}'),"
         if len(code) > 80:
             code = (
                 "    DISPMETHOD(\n"
-                "        %r,\n"
-                "        %s,\n"
-                "        '%s',\n"
+                f"        {flags!r},\n"
+                f"        {type_name},\n"
+                f"        '{member_name}',\n"
                 "    ),"
-            ) % elms
+            )
         print(code, file=self._stream)
 
     def _make_withargs(self) -> None:
+        flags, type_name, member_name = self._get_common_elms()
         code = (
-            "    DISPMETHOD(\n" "        %r,\n" "        %s,\n" "        '%s',"
-        ) % self._get_common_elms()
+            "    DISPMETHOD(\n"
+            f"        {flags!r},\n"
+            f"        {type_name},\n"
+            f"        '{member_name}',"
+        )
         print(code, file=self._stream)
         arglist = [_to_arg_definition(*i) for i in self._iter_args()]
         print(",\n".join(arglist), file=self._stream)
@@ -394,18 +398,17 @@ class DispPropertyGenerator(object):
         self._m = m
         self._to_type_name = TypeNamer()
 
-    def generate(self):
-        # () -> str
-        elms = self._get_common_elms()
-        code = "    DISPPROPERTY(%r, %s, '%s')," % elms
+    def generate(self) -> str:
+        flags, type_name, member_name = self._get_common_elms()
+        code = f"    DISPPROPERTY({flags!r}, {type_name}, '{member_name}'),"
         if len(code) > 80:
             code = (
                 "    DISPPROPERTY(\n"
-                "        %r,\n"
-                "        %s,\n"
-                "        '%s'\n"
+                f"        {flags!r},\n"
+                f"        {type_name},\n"
+                f"        '{member_name}'\n"
                 "    ),"
-            ) % elms
+            )
         return code + "\n"
 
     def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
