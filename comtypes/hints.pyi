@@ -35,13 +35,13 @@ from comtypes.server import IClassFactory as IClassFactory
 from comtypes.typeinfo import ITypeInfo as ITypeInfo
 
 Incomplete: TypeAlias = Any
-"""The type symbol used temporarily until the COM library parsers or
-code generators is enhanced to annotate detailed type hints.
+"""The type symbol is used temporarily until the COM library parsers or
+code generators are enhanced to annotate detailed type hints.
 """
 
 Hresult: TypeAlias = int
-"""The value returned when calling a method with no `[out]` or
-`[out, retval]` arguments and with `HRESULT` restype in its definition.
+"""The value returned when calling a method with no `[out]` or `[out, retval]`
+arguments and with `HRESULT` as its return type in its COM method definition.
 """
 
 class _MethodTypeDesc(Protocol):
