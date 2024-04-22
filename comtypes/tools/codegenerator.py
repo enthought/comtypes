@@ -1149,11 +1149,11 @@ class CodeGenerator(object):
             print("            return item", file=self.stream)
             print("        raise IndexError(index)", file=self.stream)
 
-        annotaions = typeannotator.ComInterfaceMembersAnnotator(head.itf).generate()
-        if annotaions:
+        annotations = typeannotator.ComInterfaceMembersAnnotator(head.itf).generate()
+        if annotations:
             print(file=self.stream)
             print("    if TYPE_CHECKING:  # commembers", file=self.stream)
-            print(annotaions, file=self.stream)
+            print(annotations, file=self.stream)
 
         print(file=self.stream)
         print(file=self.stream)
@@ -1277,11 +1277,11 @@ class CodeGenerator(object):
         print("    _idlflags_ = %s" % head.itf.idlflags, file=self.stream)
         print("    _methods_ = []", file=self.stream)
 
-        annotaions = typeannotator.DispInterfaceMembersAnnotator(head.itf).generate()
-        if annotaions:
+        annotations = typeannotator.DispInterfaceMembersAnnotator(head.itf).generate()
+        if annotations:
             print(file=self.stream)
             print("    if TYPE_CHECKING:  # dispmembers", file=self.stream)
-            print(annotaions, file=self.stream)
+            print(annotations, file=self.stream)
 
         print(file=self.stream)
         print(file=self.stream)
