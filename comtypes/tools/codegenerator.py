@@ -1153,7 +1153,7 @@ class CodeGenerator(object):
         if annotaions:
             print(file=self.stream)
             print("    if TYPE_CHECKING:  # commembers", file=self.stream)
-            print(annotaions, file=self.stream, end="")
+            print(annotaions, file=self.stream)
 
         print(file=self.stream)
         print(file=self.stream)
@@ -1281,7 +1281,7 @@ class CodeGenerator(object):
         if annotaions:
             print(file=self.stream)
             print("    if TYPE_CHECKING:  # dispmembers", file=self.stream)
-            print(annotaions, file=self.stream, end="")
+            print(annotaions, file=self.stream)
 
         print(file=self.stream)
         print(file=self.stream)
