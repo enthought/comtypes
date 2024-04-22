@@ -208,28 +208,26 @@ def _to_arg_definition(
     default: _DefValType,
 ) -> str:
     if default is not None:
-        elms = (idlflags, type_name, arg_name, default)
-        code = "        (%r, %s, '%s', %r)" % elms
+        code = f"        ({idlflags!r}, {type_name}, '{arg_name}', {default!r})"
         if len(code) > 80:
             code = (
                 "        (\n"
-                "            %r,\n"
-                "            %s,\n"
-                "            '%s',\n"
-                "            %r\n"
+                f"            {idlflags!r},\n"
+                f"            {type_name},\n"
+                f"            '{arg_name}',\n"
+                f"            {default!r}\n"
                 "        )"
-            ) % elms
+            )
     else:
-        elms = (idlflags, type_name, arg_name)
-        code = "        (%r, %s, '%s')" % elms
+        code = f"        ({idlflags!r}, {type_name}, '{arg_name}')"
         if len(code) > 80:
             code = (
                 "        (\n"
-                "            %r,\n"
-                "            %s,\n"
-                "            '%s',\n"
+                f"            {idlflags!r},\n"
+                f"            {type_name},\n"
+                f"            '{arg_name}',\n"
                 "        )"
-            ) % elms
+            )
     return code
 
 
@@ -237,16 +235,15 @@ class ComMethodGenerator(object):
     def __init__(self, m: typedesc.ComMethod, isdual: bool) -> None:
         self._m = m
         self._isdual = isdual
-        self._stream = io.StringIO()
+        self.data: List[str] = []
         self._to_type_name = TypeNamer()
 
-    def generate(self):
-        # () -> str
+    def generate(self) -> str:
         if not self._m.arguments:
             self._make_noargs()
         else:
             self._make_withargs()
-        return self._stream.getvalue()
+        return "\n".join(self.data)
 
     def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
         idlflags: List[_IdlFlagType] = []
@@ -261,26 +258,30 @@ class ComMethodGenerator(object):
         return (idlflags, type_name, self._m.name)
 
     def _make_noargs(self) -> None:
-        elms = self._get_common_elms()
-        code = "    COMMETHOD(%r, %s, '%s')," % elms
+        flags, type_name, member_name = self._get_common_elms()
+        code = f"    COMMETHOD({flags!r}, {type_name}, '{member_name}'),"
         if len(code) > 80:
             code = (
                 "    COMMETHOD(\n"
-                "        %r,\n"
-                "        %s,\n"
-                "        '%s',\n"
+                f"        {flags!r},\n"
+                f"        {type_name},\n"
+                f"        '{member_name}',\n"
                 "    ),"
-            ) % elms
-        print(code, file=self._stream)
+            )
+        self.data.append(code)
 
     def _make_withargs(self) -> None:
+        flags, type_name, member_name = self._get_common_elms()
         code = (
-            "    COMMETHOD(\n" "        %r,\n" "        %s,\n" "        '%s',"
-        ) % self._get_common_elms()
-        print(code, file=self._stream)
+            "    COMMETHOD(\n"
+            f"        {flags!r},\n"
+            f"        {type_name},\n"
+            f"        '{member_name}',"
+        )
+        self.data.append(code)
         arglist = [_to_arg_definition(*i) for i in self._iter_args()]
-        print(",\n".join(arglist), file=self._stream)
-        print("    ),", file=self._stream)
+        self.data.append(",\n".join(arglist))
+        self.data.append("    ),")
 
     def _iter_args(self) -> Iterator[Tuple[str, str, List[str], _DefValType]]:
         for typ, arg_name, _f, _defval in self._m.arguments:
@@ -341,16 +342,15 @@ class ComMethodGenerator(object):
 class DispMethodGenerator(object):
     def __init__(self, m: typedesc.DispMethod) -> None:
         self._m = m
-        self._stream = io.StringIO()
+        self.data: List[str] = []
         self._to_type_name = TypeNamer()
 
-    def generate(self):
-        # () -> str
+    def generate(self) -> str:
         if not self._m.arguments:
             self._make_noargs()
         else:
             self._make_withargs()
-        return self._stream.getvalue()
+        return "\n".join(self.data)
 
     def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
         idlflags: List[_IdlFlagType] = []
@@ -362,26 +362,30 @@ class DispMethodGenerator(object):
         return (idlflags, type_name, self._m.name)
 
     def _make_noargs(self) -> None:
-        elms = self._get_common_elms()
-        code = "    DISPMETHOD(%r, %s, '%s')," % elms
+        flags, type_name, member_name = self._get_common_elms()
+        code = f"    DISPMETHOD({flags!r}, {type_name}, '{member_name}'),"
         if len(code) > 80:
             code = (
                 "    DISPMETHOD(\n"
-                "        %r,\n"
-                "        %s,\n"
-                "        '%s',\n"
+                f"        {flags!r},\n"
+                f"        {type_name},\n"
+                f"        '{member_name}',\n"
                 "    ),"
-            ) % elms
-        print(code, file=self._stream)
+            )
+        self.data.append(code)
 
     def _make_withargs(self) -> None:
+        flags, type_name, member_name = self._get_common_elms()
         code = (
-            "    DISPMETHOD(\n" "        %r,\n" "        %s,\n" "        '%s',"
-        ) % self._get_common_elms()
-        print(code, file=self._stream)
+            "    DISPMETHOD(\n"
+            f"        {flags!r},\n"
+            f"        {type_name},\n"
+            f"        '{member_name}',"
+        )
+        self.data.append(code)
         arglist = [_to_arg_definition(*i) for i in self._iter_args()]
-        print(",\n".join(arglist), file=self._stream)
-        print("    ),", file=self._stream)
+        self.data.append(",\n".join(arglist))
+        self.data.append("    ),")
 
     def _iter_args(self) -> Iterator[Tuple[str, str, List[str], _DefValType]]:
         for typ, arg_name, idlflags, default in self._m.arguments:
@@ -394,19 +398,18 @@ class DispPropertyGenerator(object):
         self._m = m
         self._to_type_name = TypeNamer()
 
-    def generate(self):
-        # () -> str
-        elms = self._get_common_elms()
-        code = "    DISPPROPERTY(%r, %s, '%s')," % elms
+    def generate(self) -> str:
+        flags, type_name, member_name = self._get_common_elms()
+        code = f"    DISPPROPERTY({flags!r}, {type_name}, '{member_name}'),"
         if len(code) > 80:
             code = (
                 "    DISPPROPERTY(\n"
-                "        %r,\n"
-                "        %s,\n"
-                "        '%s'\n"
+                f"        {flags!r},\n"
+                f"        {type_name},\n"
+                f"        '{member_name}'\n"
                 "    ),"
-            ) % elms
-        return code + "\n"
+            )
+        return code
 
     def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
         idlflags: List[_IdlFlagType] = []
@@ -1149,11 +1152,11 @@ class CodeGenerator(object):
             print("            return item", file=self.stream)
             print("        raise IndexError(index)", file=self.stream)
 
-        annotaions = typeannotator.ComInterfaceMembersAnnotator(head.itf).generate()
-        if annotaions:
+        annotations = typeannotator.ComInterfaceMembersAnnotator(head.itf).generate()
+        if annotations:
             print(file=self.stream)
             print("    if TYPE_CHECKING:  # commembers", file=self.stream)
-            print(annotaions, file=self.stream, end="")
+            print(annotations, file=self.stream)
 
         print(file=self.stream)
         print(file=self.stream)
@@ -1277,11 +1280,11 @@ class CodeGenerator(object):
         print("    _idlflags_ = %s" % head.itf.idlflags, file=self.stream)
         print("    _methods_ = []", file=self.stream)
 
-        annotaions = typeannotator.DispInterfaceMembersAnnotator(head.itf).generate()
-        if annotaions:
+        annotations = typeannotator.DispInterfaceMembersAnnotator(head.itf).generate()
+        if annotations:
             print(file=self.stream)
             print("    if TYPE_CHECKING:  # dispmembers", file=self.stream)
-            print(annotaions, file=self.stream, end="")
+            print(annotations, file=self.stream)
 
         print(file=self.stream)
         print(file=self.stream)
@@ -1323,7 +1326,7 @@ class CodeGenerator(object):
         if __debug__ and m.doc:
             self.imports.add("comtypes", "helpstring")
         gen = ComMethodGenerator(m, isdual)
-        print(gen.generate(), file=self.stream, end="")
+        print(gen.generate(), file=self.stream)
         self.last_item_class = False
         for typ, _, _, default in m.arguments:
             if isinstance(typ, typedesc.ComInterface):
@@ -1341,7 +1344,7 @@ class CodeGenerator(object):
         if __debug__ and m.doc:
             self.imports.add("comtypes", "helpstring")
         gen = DispMethodGenerator(m)
-        print(gen.generate(), file=self.stream, end="")
+        print(gen.generate(), file=self.stream)
         self.last_item_class = False
         for _, _, _, default in m.arguments:
             if default is not None:
@@ -1353,7 +1356,7 @@ class CodeGenerator(object):
         if __debug__ and prop.doc:
             self.imports.add("comtypes", "helpstring")
         gen = DispPropertyGenerator(prop)
-        print(gen.generate(), file=self.stream, end="")
+        print(gen.generate(), file=self.stream)
         self.last_item_class = False
 
 
