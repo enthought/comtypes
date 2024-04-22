@@ -235,7 +235,7 @@ class ComMethodGenerator(object):
     def __init__(self, m: typedesc.ComMethod, isdual: bool) -> None:
         self._m = m
         self._isdual = isdual
-        self._stream = io.StringIO()
+        self.data: List[str] = []
         self._to_type_name = TypeNamer()
 
     def generate(self) -> str:
@@ -243,7 +243,7 @@ class ComMethodGenerator(object):
             self._make_noargs()
         else:
             self._make_withargs()
-        return self._stream.getvalue()
+        return "\n".join(self.data)
 
     def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
         idlflags: List[_IdlFlagType] = []
@@ -268,7 +268,7 @@ class ComMethodGenerator(object):
                 f"        '{member_name}',\n"
                 "    ),"
             )
-        print(code, file=self._stream)
+        self.data.append(code)
 
     def _make_withargs(self) -> None:
         flags, type_name, member_name = self._get_common_elms()
@@ -278,10 +278,10 @@ class ComMethodGenerator(object):
             f"        {type_name},\n"
             f"        '{member_name}',"
         )
-        print(code, file=self._stream)
+        self.data.append(code)
         arglist = [_to_arg_definition(*i) for i in self._iter_args()]
-        print(",\n".join(arglist), file=self._stream)
-        print("    ),", file=self._stream)
+        self.data.append(",\n".join(arglist))
+        self.data.append("    ),")
 
     def _iter_args(self) -> Iterator[Tuple[str, str, List[str], _DefValType]]:
         for typ, arg_name, _f, _defval in self._m.arguments:
@@ -342,7 +342,7 @@ class ComMethodGenerator(object):
 class DispMethodGenerator(object):
     def __init__(self, m: typedesc.DispMethod) -> None:
         self._m = m
-        self._stream = io.StringIO()
+        self.data: List[str] = []
         self._to_type_name = TypeNamer()
 
     def generate(self) -> str:
@@ -350,7 +350,7 @@ class DispMethodGenerator(object):
             self._make_noargs()
         else:
             self._make_withargs()
-        return self._stream.getvalue()
+        return "\n".join(self.data)
 
     def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
         idlflags: List[_IdlFlagType] = []
@@ -372,7 +372,7 @@ class DispMethodGenerator(object):
                 f"        '{member_name}',\n"
                 "    ),"
             )
-        print(code, file=self._stream)
+        self.data.append(code)
 
     def _make_withargs(self) -> None:
         flags, type_name, member_name = self._get_common_elms()
@@ -382,10 +382,10 @@ class DispMethodGenerator(object):
             f"        {type_name},\n"
             f"        '{member_name}',"
         )
-        print(code, file=self._stream)
+        self.data.append(code)
         arglist = [_to_arg_definition(*i) for i in self._iter_args()]
-        print(",\n".join(arglist), file=self._stream)
-        print("    ),", file=self._stream)
+        self.data.append(",\n".join(arglist))
+        self.data.append("    ),")
 
     def _iter_args(self) -> Iterator[Tuple[str, str, List[str], _DefValType]]:
         for typ, arg_name, idlflags, default in self._m.arguments:
@@ -409,7 +409,7 @@ class DispPropertyGenerator(object):
                 f"        '{member_name}'\n"
                 "    ),"
             )
-        return code + "\n"
+        return code
 
     def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
         idlflags: List[_IdlFlagType] = []
@@ -1326,7 +1326,7 @@ class CodeGenerator(object):
         if __debug__ and m.doc:
             self.imports.add("comtypes", "helpstring")
         gen = ComMethodGenerator(m, isdual)
-        print(gen.generate(), file=self.stream, end="")
+        print(gen.generate(), file=self.stream)
         self.last_item_class = False
         for typ, _, _, default in m.arguments:
             if isinstance(typ, typedesc.ComInterface):
@@ -1344,7 +1344,7 @@ class CodeGenerator(object):
         if __debug__ and m.doc:
             self.imports.add("comtypes", "helpstring")
         gen = DispMethodGenerator(m)
-        print(gen.generate(), file=self.stream, end="")
+        print(gen.generate(), file=self.stream)
         self.last_item_class = False
         for _, _, _, default in m.arguments:
             if default is not None:
@@ -1356,7 +1356,7 @@ class CodeGenerator(object):
         if __debug__ and prop.doc:
             self.imports.add("comtypes", "helpstring")
         gen = DispPropertyGenerator(prop)
-        print(gen.generate(), file=self.stream, end="")
+        print(gen.generate(), file=self.stream)
         self.last_item_class = False
 
 
