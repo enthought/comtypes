@@ -236,13 +236,13 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
                     #       should be a special callback.
                     inargs.append("**kwargs: Any")
                     break
-                inargs.append(f"{argname}: Any")
+                inargs.append(f"{argname}: hints.Incomplete")
             else:
-                inargs.append(f"{argname}: Any = ...")
+                inargs.append(f"{argname}: hints.Incomplete = ...")
                 has_optional = True
-        outargs = ["Any" for _ in self._iter_outarg_specs()]
+        outargs = ["hints.Incomplete" for _ in self._iter_outarg_specs()]
         if not outargs:
-            out = "Any"
+            out = "hints.Hresult"
         elif len(outargs) == 1:
             out = outargs[0]
         else:
@@ -279,11 +279,11 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
                     #       should be a special callback.
                     inargs.append("**kwargs: Any")
                     break
-                inargs.append(f"{argname}: Any")
+                inargs.append(f"{argname}: hints.Incomplete")
             else:
-                inargs.append(f"{argname}: Any = ...")
+                inargs.append(f"{argname}: hints.Incomplete = ...")
                 has_optional = True
-        out = "Any"
+        out = "hints.Incomplete"
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
         return f"def {name}({in_}) -> {out}: ..."
 
@@ -314,7 +314,8 @@ class DispInterfaceMembersAnnotator(object):
         property_lines: List[str] = []
         for mem in props:
             property_lines.append("@property  # dispprop")
-            property_lines.append(f"def {mem.name}(self) -> Any: ...")
+            out = "hints.Incomplete"
+            property_lines.append(f"def {mem.name}(self) -> {out}: ...")
         dispprops = "\n".join(f"        {p}" for p in property_lines)
         dispmethods = DispMethodsAnnotator().generate(methods)
         return "\n".join(d for d in (dispprops, dispmethods) if d)
