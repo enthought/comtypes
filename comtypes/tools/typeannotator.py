@@ -1,5 +1,4 @@
 import abc
-import io
 import keyword
 from typing import (
     Any,
@@ -55,7 +54,7 @@ _CatMths = Tuple[  # categorized methods
 
 class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
     def __init__(self) -> None:
-        self.stream = io.StringIO()
+        self.data: List[str] = []
 
     @abc.abstractmethod
     def to_method_annotator(self, method: _T_MTD) -> _MethodAnnotator[_T_MTD]:
@@ -100,7 +99,7 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             else:
                 self._define_member(f"pass  # what does `{name}` behave?")
             self._patch_dunder(name)
-        return self.stream.getvalue()
+        return "\n".join(f"        {d}" for d in self.data)
 
     def _patch_dunder(self, name: str) -> None:
         if name == "Count":
@@ -141,7 +140,7 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         self._define_member(content)
 
     def _define_member(self, content: str) -> None:
-        print(f"        {content}", file=self.stream)
+        self.data.append(content)
 
     def _gen_method(self, name: str, mth: _T_MTD) -> None:
         self._define_member(self.to_method_annotator(mth).getvalue(name))
@@ -237,13 +236,13 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
                     #       should be a special callback.
                     inargs.append("**kwargs: Any")
                     break
-                inargs.append(f"{argname}: Any")
+                inargs.append(f"{argname}: hints.Incomplete")
             else:
-                inargs.append(f"{argname}: Any = ...")
+                inargs.append(f"{argname}: hints.Incomplete = ...")
                 has_optional = True
-        outargs = ["Any" for _ in self._iter_outarg_specs()]
+        outargs = ["hints.Incomplete" for _ in self._iter_outarg_specs()]
         if not outargs:
-            out = "Any"
+            out = "hints.Hresult"
         elif len(outargs) == 1:
             out = outargs[0]
         else:
@@ -280,11 +279,11 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
                     #       should be a special callback.
                     inargs.append("**kwargs: Any")
                     break
-                inargs.append(f"{argname}: Any")
+                inargs.append(f"{argname}: hints.Incomplete")
             else:
-                inargs.append(f"{argname}: Any = ...")
+                inargs.append(f"{argname}: hints.Incomplete = ...")
                 has_optional = True
-        out = "Any"
+        out = "hints.Incomplete"
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
         return f"def {name}({in_}) -> {out}: ..."
 
@@ -297,7 +296,6 @@ class DispMethodsAnnotator(_MethodsAnnotator[typedesc.DispMethod]):
 class DispInterfaceMembersAnnotator(object):
     def __init__(self, itf: typedesc.DispInterface):
         self.itf = itf
-        self.stream = io.StringIO()
 
     def _categorize_members(
         self,
@@ -313,7 +311,11 @@ class DispInterfaceMembersAnnotator(object):
 
     def generate(self) -> str:
         props, methods = self._categorize_members()
+        property_lines: List[str] = []
         for mem in props:
-            print("        @property  # dispprop", file=self.stream)
-            print(f"        def {mem.name}(self) -> Any: ...", file=self.stream)
-        return self.stream.getvalue() + DispMethodsAnnotator().generate(methods)
+            property_lines.append("@property  # dispprop")
+            out = "hints.Incomplete"
+            property_lines.append(f"def {mem.name}(self) -> {out}: ...")
+        dispprops = "\n".join(f"        {p}" for p in property_lines)
+        dispmethods = DispMethodsAnnotator().generate(methods)
+        return "\n".join(d for d in (dispprops, dispmethods) if d)
