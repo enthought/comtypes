@@ -122,6 +122,9 @@ def GetModule(tlib: _UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType:
         pathname = None
         tlib = _load_tlib(tlib)
     logger.debug("GetModule(%s)", tlib.GetLibAttr())
+    mod = _get_existing_module(tlib)
+    if mod is not None:
+        return mod
     return ModuleGenerator(tlib, pathname).generate()
 
 
@@ -195,16 +198,7 @@ class ModuleGenerator(object):
         self.tlib = tlib
 
     def generate(self) -> types.ModuleType:
-        # tries to import existing modules
-        wrapper_module = self._get_existing_wrapper_module()
-        if wrapper_module is not None:
-            if self.friendly_name is None:
-                return wrapper_module
-            else:
-                friendly_module = self._get_existing_friendly_module()
-                if friendly_module is not None:
-                    return friendly_module
-        # (re)generates wrapper and friendly modules
+        """Generates wrapper and friendly modules."""
         known_symbols, known_interfaces = _get_known_namespaces()
         codegen = codegenerator.CodeGenerator(known_symbols, known_interfaces)
         codebases: List[Tuple[str, str]] = []
@@ -220,23 +214,35 @@ class ModuleGenerator(object):
             GetModule(ext_tlib)
         return [_create_module(name, code) for (name, code) in codebases][-1]
 
-    def _get_existing_friendly_module(self) -> Optional[types.ModuleType]:
-        if self.friendly_name is None:
-            return
+
+def _get_existing_module(tlib: typeinfo.ITypeLib) -> Optional[types.ModuleType]:
+    def _get_wrapper(name: str) -> Optional[types.ModuleType]:
+        if name in sys.modules:
+            return sys.modules[name]
         try:
-            mod = _my_import(self.friendly_name)
+            return _my_import(name)
         except Exception as details:
-            logger.info("Could not import %s: %s", self.friendly_name, details)
+            logger.info("Could not import %s: %s", name, details)
+
+    def _get_friendly(name: str) -> Optional[types.ModuleType]:
+        try:
+            mod = _my_import(name)
+        except Exception as details:
+            logger.info("Could not import %s: %s", friendly_name, details)
         else:
             return mod
 
-    def _get_existing_wrapper_module(self) -> Optional[types.ModuleType]:
-        if self.wrapper_name in sys.modules:
-            return sys.modules[self.wrapper_name]
-        try:
-            return _my_import(self.wrapper_name)
-        except Exception as details:
-            logger.info("Could not import %s: %s", self.wrapper_name, details)
+    wrapper_name = codegenerator.name_wrapper_module(tlib)
+    friendly_name = codegenerator.name_friendly_module(tlib)
+    wrapper_module = _get_wrapper(wrapper_name)
+    if wrapper_module is not None:
+        if friendly_name is None:
+            return wrapper_module
+        else:
+            friendly_module = _get_friendly(friendly_name)
+            if friendly_module is not None:
+                return friendly_module
+    return None
 
 
 _SymbolName = str
