@@ -216,14 +216,6 @@ class ModuleGenerator(object):
 
 
 def _get_existing_module(tlib: typeinfo.ITypeLib) -> Optional[types.ModuleType]:
-    def _get_wrapper(name: str) -> Optional[types.ModuleType]:
-        if name in sys.modules:
-            return sys.modules[name]
-        try:
-            return _my_import(name)
-        except Exception as details:
-            logger.info("Could not import %s: %s", name, details)
-
     def _get_friendly(name: str) -> Optional[types.ModuleType]:
         try:
             mod = _my_import(name)
@@ -231,6 +223,14 @@ def _get_existing_module(tlib: typeinfo.ITypeLib) -> Optional[types.ModuleType]:
             logger.info("Could not import %s: %s", friendly_name, details)
         else:
             return mod
+
+    def _get_wrapper(name: str) -> Optional[types.ModuleType]:
+        if name in sys.modules:
+            return sys.modules[name]
+        try:
+            return _my_import(name)
+        except Exception as details:
+            logger.info("Could not import %s: %s", name, details)
 
     wrapper_name = codegenerator.name_wrapper_module(tlib)
     friendly_name = codegenerator.name_friendly_module(tlib)
