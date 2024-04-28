@@ -45,8 +45,8 @@ def _patch_gen_pkg(new_path: Path) -> Iterator[types.ModuleType]:
     assert new_comtypes_gen_init.exists()
     orig_comtypes = sys.modules["comtypes"]
     orig_gen_names = list(filter(lambda k: k.startswith("comtypes.gen"), sys.modules))
-    orig_sys_path = list(sys.path)
-    with mock.patch.object(sys, "path", orig_sys_path):
+    tmp_sys_path = list(sys.path)  # copy
+    with mock.patch.object(sys, "path", tmp_sys_path):
         sys.path.insert(0, str(new_path))
         with mock.patch.dict(sys.modules):
             # The reason for removing the parent module (in this case, `comtypes`)
