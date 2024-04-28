@@ -164,6 +164,36 @@ def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
     raise TypeError("'%r' is not supported type for loading typelib" % obj)
 
 
+def _get_existing_module(tlib: typeinfo.ITypeLib) -> Optional[types.ModuleType]:
+    def _get_friendly(name: str) -> Optional[types.ModuleType]:
+        try:
+            mod = _my_import(name)
+        except Exception as details:
+            logger.info("Could not import %s: %s", friendly_name, details)
+        else:
+            return mod
+
+    def _get_wrapper(name: str) -> Optional[types.ModuleType]:
+        if name in sys.modules:
+            return sys.modules[name]
+        try:
+            return _my_import(name)
+        except Exception as details:
+            logger.info("Could not import %s: %s", name, details)
+
+    wrapper_name = codegenerator.name_wrapper_module(tlib)
+    friendly_name = codegenerator.name_friendly_module(tlib)
+    wrapper_module = _get_wrapper(wrapper_name)
+    if wrapper_module is not None:
+        if friendly_name is None:
+            return wrapper_module
+        else:
+            friendly_module = _get_friendly(friendly_name)
+            if friendly_module is not None:
+                return friendly_module
+    return None
+
+
 def _create_module(modulename: str, code: str) -> types.ModuleType:
     """Creates the module, then imports it."""
     # `modulename` is 'comtypes.gen.xxx'
@@ -213,36 +243,6 @@ class ModuleGenerator(object):
         for ext_tlib in codegen.externals:  # generates dependency COM-lib modules
             GetModule(ext_tlib)
         return [_create_module(name, code) for (name, code) in codebases][-1]
-
-
-def _get_existing_module(tlib: typeinfo.ITypeLib) -> Optional[types.ModuleType]:
-    def _get_friendly(name: str) -> Optional[types.ModuleType]:
-        try:
-            mod = _my_import(name)
-        except Exception as details:
-            logger.info("Could not import %s: %s", friendly_name, details)
-        else:
-            return mod
-
-    def _get_wrapper(name: str) -> Optional[types.ModuleType]:
-        if name in sys.modules:
-            return sys.modules[name]
-        try:
-            return _my_import(name)
-        except Exception as details:
-            logger.info("Could not import %s: %s", name, details)
-
-    wrapper_name = codegenerator.name_wrapper_module(tlib)
-    friendly_name = codegenerator.name_friendly_module(tlib)
-    wrapper_module = _get_wrapper(wrapper_name)
-    if wrapper_module is not None:
-        if friendly_name is None:
-            return wrapper_module
-        else:
-            friendly_module = _get_friendly(friendly_name)
-            if friendly_module is not None:
-                return friendly_module
-    return None
 
 
 _SymbolName = str
