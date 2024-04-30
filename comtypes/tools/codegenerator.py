@@ -441,10 +441,28 @@ class CodeGenerator(object):
     def generate(self, item):
         if item in self.done:
             return
+        if isinstance(item, typedesc.ComInterfaceHead):
+            if self._is_known_interface(item.itf):
+                self.imports.add(item.itf.name, symbols=self.known_symbols)
+                self.done.add(item)
+                return
+            self.done.add(item)
+            self.ComInterfaceHead(item)
+            return
+        if isinstance(item, typedesc.ComInterfaceBody):
+            if self._is_known_interface(item.itf):
+                self.imports.add(item.itf.name, symbols=self.known_symbols)
+                self.done.add(item)
+                return
+            self.done.add(item)
+            self.ComInterfaceBody(item)
+            return
         if isinstance(item, typedesc.ComInterface):
             if self._is_known_interface(item):
                 self.imports.add(item.name, symbols=self.known_symbols)
                 self.done.add(item)
+                self.done.add(item.get_head())
+                self.done.add(item.get_body())
                 return
             self.done.add(item)  # to avoid infinite recursion.
             self.ComInterface(item)
@@ -1104,14 +1122,11 @@ class CodeGenerator(object):
         return True
 
     def ComInterfaceHead(self, head: typedesc.ComInterfaceHead) -> None:
-        if self._is_known_interface(head.itf):
-            return
-        base = head.itf.base
         if head.itf.base is None:
             # we don't beed to generate IUnknown
             return
-        self.generate(base.get_head())
-        self.more.add(base)
+        self.generate(head.itf.base.get_head())
+        self.more.add(head.itf.base)
         basename = self._to_type_name(head.itf.base)
 
         self.imports.add("comtypes", "GUID")
