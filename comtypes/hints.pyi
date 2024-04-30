@@ -23,8 +23,10 @@ else:
     from typing_extensions import Protocol
 if sys.version_info >= (3, 10):
     from typing import Concatenate, ParamSpec, TypeAlias
+    from typing import TypeGuard as TypeGuard
 else:
     from typing_extensions import Concatenate, ParamSpec, TypeAlias
+    from typing_extensions import TypeGuard as TypeGuard
 if sys.version_info >= (3, 11):
     from typing import Self
 else:

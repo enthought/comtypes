@@ -176,7 +176,7 @@ class ComInterface(object):
         self,
         name: str,
         members: List[ComMethod],
-        base: Any,
+        base: "Optional[ComInterface]",
         iid: str,
         idlflags: List[str],
     ) -> None:
