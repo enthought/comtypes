@@ -421,6 +421,16 @@ class DispPropertyGenerator(object):
         return (idlflags, type_name, self._m.name)
 
 
+_InterfaceTypeDesc = _UnionT[
+    typedesc.ComInterface,
+    typedesc.ComInterfaceHead,
+    typedesc.ComInterfaceBody,
+    typedesc.DispInterface,
+    typedesc.DispInterfaceHead,
+    typedesc.DispInterfaceBody,
+]
+
+
 class CodeGenerator(object):
     def __init__(self, known_symbols=None, known_interfaces=None) -> None:
         self.stream = io.StringIO()
@@ -441,57 +451,8 @@ class CodeGenerator(object):
     def generate(self, item):
         if item in self.done:
             return
-        if isinstance(item, typedesc.ComInterfaceHead):
-            if self._is_known_interface(item.itf):
-                self.imports.add(item.itf.name, symbols=self.known_symbols)
-                self.done.add(item)
-                return
-            self.done.add(item)
-            self.ComInterfaceHead(item)
-            return
-        if isinstance(item, typedesc.ComInterfaceBody):
-            if self._is_known_interface(item.itf):
-                self.imports.add(item.itf.name, symbols=self.known_symbols)
-                self.done.add(item)
-                return
-            self.done.add(item)
-            self.ComInterfaceBody(item)
-            return
-        if isinstance(item, typedesc.ComInterface):
-            if self._is_known_interface(item):
-                self.imports.add(item.name, symbols=self.known_symbols)
-                self.done.add(item)
-                self.done.add(item.get_head())
-                self.done.add(item.get_body())
-                return
-            self.done.add(item)  # to avoid infinite recursion.
-            self.ComInterface(item)
-            return
-        if isinstance(item, typedesc.DispInterfaceHead):
-            if self._is_known_interface(item.itf):
-                self.imports.add(item.itf.name, symbols=self.known_symbols)
-                self.done.add(item)
-                return
-            self.done.add(item)
-            self.DispInterfaceHead(item)
-            return
-        if isinstance(item, typedesc.DispInterfaceBody):
-            if self._is_known_interface(item.itf):
-                self.imports.add(item.itf.name, symbols=self.known_symbols)
-                self.done.add(item)
-                return
-            self.done.add(item)
-            self.DispInterfaceBody(item)
-            return
-        if isinstance(item, typedesc.DispInterface):
-            if self._is_known_interface(item):
-                self.imports.add(item.name, symbols=self.known_symbols)
-                self.done.add(item)
-                self.done.add(item.get_head())
-                self.done.add(item.get_body())
-                return
-            self.done.add(item)  # to avoid infinite recursion.
-            self.DispInterface(item)
+        if self._is_interface_typedesc(item):
+            self._define_interface(item)
             return
         if isinstance(item, typedesc.StructureHead):
             name = getattr(item.struct, "name", None)
@@ -1123,6 +1084,48 @@ class CodeGenerator(object):
             )
 
         self.names.add(coclass.name)
+
+    def _is_interface_typedesc(
+        self, item: Any
+    ) -> "comtypes.hints.TypeGuard[_InterfaceTypeDesc]":
+        return isinstance(
+            item,
+            (
+                typedesc.ComInterface,
+                typedesc.ComInterfaceHead,
+                typedesc.ComInterfaceBody,
+                typedesc.DispInterface,
+                typedesc.DispInterfaceHead,
+                typedesc.DispInterfaceBody,
+            ),
+        )
+
+    def _define_interface(self, item: _InterfaceTypeDesc) -> None:
+        if isinstance(
+            item,
+            (
+                typedesc.ComInterfaceHead,
+                typedesc.ComInterfaceBody,
+                typedesc.DispInterfaceHead,
+                typedesc.DispInterfaceBody,
+            ),
+        ):
+            if self._is_known_interface(item.itf):
+                self.imports.add(item.itf.name, symbols=self.known_symbols)
+                self.done.add(item)
+                return
+        elif isinstance(item, (typedesc.ComInterface, typedesc.DispInterface)):
+            if self._is_known_interface(item):
+                self.imports.add(item.name, symbols=self.known_symbols)
+                self.done.add(item)
+                self.done.add(item.get_head())
+                self.done.add(item.get_body())
+                return
+        else:
+            raise TypeError
+        self.done.add(item)  # to avoid infinite recursion.
+        mth = getattr(self, type(item).__name__)
+        mth(item)
 
     def ComInterface(self, itf: typedesc.ComInterface) -> None:
         self.generate(itf.get_head())
