@@ -467,6 +467,32 @@ class CodeGenerator(object):
             self.done.add(item)  # to avoid infinite recursion.
             self.ComInterface(item)
             return
+        if isinstance(item, typedesc.DispInterfaceHead):
+            if self._is_known_interface(item.itf):
+                self.imports.add(item.itf.name, symbols=self.known_symbols)
+                self.done.add(item)
+                return
+            self.done.add(item)
+            self.DispInterfaceHead(item)
+            return
+        if isinstance(item, typedesc.DispInterfaceBody):
+            if self._is_known_interface(item.itf):
+                self.imports.add(item.itf.name, symbols=self.known_symbols)
+                self.done.add(item)
+                return
+            self.done.add(item)
+            self.DispInterfaceBody(item)
+            return
+        if isinstance(item, typedesc.DispInterface):
+            if self._is_known_interface(item):
+                self.imports.add(item.name, symbols=self.known_symbols)
+                self.done.add(item)
+                self.done.add(item.get_head())
+                self.done.add(item.get_body())
+                return
+            self.done.add(item)  # to avoid infinite recursion.
+            self.DispInterface(item)
+            return
         if isinstance(item, typedesc.StructureHead):
             name = getattr(item.struct, "name", None)
         else:
@@ -1103,7 +1129,9 @@ class CodeGenerator(object):
         self.generate(itf.get_body())
         self.names.add(itf.name)
 
-    def _is_known_interface(self, item: typedesc.ComInterface) -> bool:
+    def _is_known_interface(
+        self, item: _UnionT[typedesc.ComInterface, typedesc.DispInterface]
+    ) -> bool:
         """Returns whether an interface is statically defined in `comtypes`,
         based on its name and iid.
         """
