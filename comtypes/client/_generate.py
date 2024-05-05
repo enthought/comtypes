@@ -122,6 +122,9 @@ def GetModule(tlib: _UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType:
         pathname = None
         tlib = _load_tlib(tlib)
     logger.debug("GetModule(%s)", tlib.GetLibAttr())
+    mod = _get_existing_module(tlib)
+    if mod is not None:
+        return mod
     return ModuleGenerator(tlib, pathname).generate()
 
 
@@ -161,6 +164,36 @@ def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
     raise TypeError("'%r' is not supported type for loading typelib" % obj)
 
 
+def _get_existing_module(tlib: typeinfo.ITypeLib) -> Optional[types.ModuleType]:
+    def _get_friendly(name: str) -> Optional[types.ModuleType]:
+        try:
+            mod = _my_import(name)
+        except Exception as details:
+            logger.info("Could not import %s: %s", friendly_name, details)
+        else:
+            return mod
+
+    def _get_wrapper(name: str) -> Optional[types.ModuleType]:
+        if name in sys.modules:
+            return sys.modules[name]
+        try:
+            return _my_import(name)
+        except Exception as details:
+            logger.info("Could not import %s: %s", name, details)
+
+    wrapper_name = codegenerator.name_wrapper_module(tlib)
+    friendly_name = codegenerator.name_friendly_module(tlib)
+    wrapper_module = _get_wrapper(wrapper_name)
+    if wrapper_module is not None:
+        if friendly_name is None:
+            return wrapper_module
+        else:
+            friendly_module = _get_friendly(friendly_name)
+            if friendly_module is not None:
+                return friendly_module
+    return None
+
+
 def _create_module(modulename: str, code: str) -> types.ModuleType:
     """Creates the module, then imports it."""
     # `modulename` is 'comtypes.gen.xxx'
@@ -186,8 +219,6 @@ def _create_module(modulename: str, code: str) -> types.ModuleType:
 
 class ModuleGenerator(object):
     def __init__(self, tlib: typeinfo.ITypeLib, pathname: Optional[str]) -> None:
-        known_symbols, known_interfaces = _get_known_namespaces()
-        self.codegen = codegenerator.CodeGenerator(known_symbols, known_interfaces)
         self.wrapper_name = codegenerator.name_wrapper_module(tlib)
         self.friendly_name = codegenerator.name_friendly_module(tlib)
         if pathname is None:
@@ -197,54 +228,21 @@ class ModuleGenerator(object):
         self.tlib = tlib
 
     def generate(self) -> types.ModuleType:
-        # create and import the real typelib wrapper module
-        mod = self._get_existing_wrapper_module()
-        if mod is None:
-            mod = self._create_wrapper_module()
-        if self.friendly_name is None:
-            return mod
-        mod = self._get_existing_friendly_module()
-        if mod is not None:
-            return mod
-        return self._create_friendly_module()
-
-    def _get_existing_friendly_module(self) -> Optional[types.ModuleType]:
-        if self.friendly_name is None:
-            return
-        try:
-            mod = _my_import(self.friendly_name)
-        except Exception as details:
-            logger.info("Could not import %s: %s", self.friendly_name, details)
-        else:
-            return mod
-
-    def _create_friendly_module(self) -> types.ModuleType:
-        """helper which creates and imports the friendly-named module."""
-        if self.friendly_name is None:
-            raise TypeError
-        # the module is always regenerated if the import fails
-        logger.info("# Generating %s", self.friendly_name)
-        # determine the Python module name
-        code = self.codegen.generate_friendly_code(self.wrapper_name)
-        return _create_module(self.friendly_name, code)
-
-    def _get_existing_wrapper_module(self) -> Optional[types.ModuleType]:
-        if self.wrapper_name in sys.modules:
-            return sys.modules[self.wrapper_name]
-        try:
-            return _my_import(self.wrapper_name)
-        except Exception as details:
-            logger.info("Could not import %s: %s", self.wrapper_name, details)
-
-    def _create_wrapper_module(self) -> types.ModuleType:
-        """helper which creates and imports the real typelib wrapper module."""
-        # generate the module since it doesn't exist or is out of date
+        """Generates wrapper and friendly modules."""
+        known_symbols, known_interfaces = _get_known_namespaces()
+        codegen = codegenerator.CodeGenerator(known_symbols, known_interfaces)
+        codebases: List[Tuple[str, str]] = []
         logger.info("# Generating %s", self.wrapper_name)
         items = list(tlbparser.TypeLibParser(self.tlib).parse().values())
-        code = self.codegen.generate_wrapper_code(items, filename=self.pathname)
-        for ext_tlib in self.codegen.externals:  # generates dependency COM-lib modules
+        wrp_code = codegen.generate_wrapper_code(items, filename=self.pathname)
+        codebases.append((self.wrapper_name, wrp_code))
+        if self.friendly_name is not None:
+            logger.info("# Generating %s", self.friendly_name)
+            frd_code = codegen.generate_friendly_code(self.wrapper_name)
+            codebases.append((self.friendly_name, frd_code))
+        for ext_tlib in codegen.externals:  # generates dependency COM-lib modules
             GetModule(ext_tlib)
-        return _create_module(self.wrapper_name, code)
+        return [_create_module(name, code) for (name, code) in codebases][-1]
 
 
 _SymbolName = str
