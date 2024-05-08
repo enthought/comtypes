@@ -10,7 +10,7 @@ import comtypes.client
 import comtypes.gen
 
 
-imgbase = os.path.splitext(os.path.basename(sys.executable))[0]
+IMGBASE = os.path.splitext(os.path.basename(sys.executable))[0]
 
 
 class Test(unittest.TestCase):
@@ -55,7 +55,7 @@ class Test(unittest.TestCase):
         # the image is python25.dll
         path = os.path.join(
             tempfile.gettempdir(),
-            r"comtypes_cache\%s%d%d-%d%d" % (imgbase, ma, mi, ma, mi),
+            r"comtypes_cache\%s%d%d-%d%d" % (IMGBASE, ma, mi, ma, mi),
         )
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
@@ -66,7 +66,7 @@ class Test(unittest.TestCase):
         path = os.path.join(
             tempfile.gettempdir(),
             r"comtypes_cache\%s-%d%d"
-            % (imgbase, sys.version_info[0], sys.version_info[1]),
+            % (IMGBASE, sys.version_info[0], sys.version_info[1]),
         )
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
@@ -77,7 +77,7 @@ class Test(unittest.TestCase):
         path = os.path.join(
             tempfile.gettempdir(),
             r"comtypes_cache\%s-%d%d"
-            % (imgbase, sys.version_info[0], sys.version_info[1]),
+            % (IMGBASE, sys.version_info[0], sys.version_info[1]),
         )
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
