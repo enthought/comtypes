@@ -4,6 +4,7 @@ import sys
 import tempfile
 import types
 import unittest
+from unittest import mock
 
 import comtypes
 import comtypes.client
@@ -29,12 +30,6 @@ class Test(unittest.TestCase):
         comtypes.gen = mod
 
     def tearDown(self):
-        # Delete py2exe-attributes that we have attached to the sys module
-        for name in "frozen frozendllhandle".split():
-            try:
-                delattr(sys, name)
-            except AttributeError:
-                pass
         # restore the original comtypes.gen module
         comtypes.gen = self.orig_comtypesgen
         sys.modules["comtypes.gen"] = self.orig_comtypesgen
@@ -48,9 +43,10 @@ class Test(unittest.TestCase):
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
+    # patch py2exe-attributes to `sys` modules
+    @mock.patch.object(sys, "frozen", "dll", create=True)
+    @mock.patch.object(sys, "frozendllhandle", sys.dllhandle, create=True)
     def test_frozen_dll(self):
-        sys.frozen = "dll"
-        sys.frozendllhandle = sys.dllhandle
         # %TEMP%\comtypes_cache\<imagebasename>25-25
         # the image is python25.dll
         ma, mi = sys.version_info[:2]
@@ -59,8 +55,9 @@ class Test(unittest.TestCase):
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
+    # patch py2exe-attributes to `sys` modules
+    @mock.patch.object(sys, "frozen", "console_exe", create=True)
     def test_frozen_console_exe(self):
-        sys.frozen = "console_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
         ma, mi = sys.version_info[:2]
         cache = rf"comtypes_cache\{IMGBASE}-{ma:d}{mi:d}"
@@ -68,8 +65,9 @@ class Test(unittest.TestCase):
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
+    # patch py2exe-attributes to `sys` modules
+    @mock.patch.object(sys, "frozen", "windows_exe", create=True)
     def test_frozen_windows_exe(self):
-        sys.frozen = "windows_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
         ma, mi = sys.version_info[:2]
         cache = rf"comtypes_cache\{IMGBASE}-{ma:d}{mi:d}"
