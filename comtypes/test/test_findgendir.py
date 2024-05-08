@@ -43,7 +43,8 @@ class Test(unittest.TestCase):
     def test_script(self):
         # %APPDATA%\Python\Python25\comtypes_cache
         template = r"$APPDATA\Python\Python%d%d\comtypes_cache"
-        path = os.path.expandvars(template % sys.version_info[:2])
+        ma, mi = sys.version_info[:2]
+        path = os.path.expandvars(template % (ma, mi))
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
@@ -63,10 +64,10 @@ class Test(unittest.TestCase):
     def test_frozen_console_exe(self):
         sys.frozen = "console_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
+        ma, mi = sys.version_info[:2]
         path = os.path.join(
             tempfile.gettempdir(),
-            r"comtypes_cache\%s-%d%d"
-            % (IMGBASE, sys.version_info[0], sys.version_info[1]),
+            r"comtypes_cache\%s-%d%d" % (IMGBASE, ma, mi),
         )
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
@@ -74,10 +75,10 @@ class Test(unittest.TestCase):
     def test_frozen_windows_exe(self):
         sys.frozen = "windows_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
+        ma, mi = sys.version_info[:2]
         path = os.path.join(
             tempfile.gettempdir(),
-            r"comtypes_cache\%s-%d%d"
-            % (IMGBASE, sys.version_info[0], sys.version_info[1]),
+            r"comtypes_cache\%s-%d%d" % (IMGBASE, ma, mi),
         )
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
