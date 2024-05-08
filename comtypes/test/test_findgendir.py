@@ -42,9 +42,9 @@ class Test(unittest.TestCase):
 
     def test_script(self):
         # %APPDATA%\Python\Python25\comtypes_cache
-        template = r"$APPDATA\Python\Python%d%d\comtypes_cache"
         ma, mi = sys.version_info[:2]
-        path = os.path.expandvars(template % (ma, mi))
+        cache = r"$APPDATA\Python\Python%d%d\comtypes_cache" % (ma, mi)
+        path = os.path.expandvars(cache)
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
@@ -54,10 +54,8 @@ class Test(unittest.TestCase):
         ma, mi = sys.version_info[:2]
         # %TEMP%\comtypes_cache\<imagebasename>-25
         # the image is python25.dll
-        path = os.path.join(
-            tempfile.gettempdir(),
-            r"comtypes_cache\%s%d%d-%d%d" % (IMGBASE, ma, mi, ma, mi),
-        )
+        cache = r"comtypes_cache\%s%d%d-%d%d" % (IMGBASE, ma, mi, ma, mi)
+        path = os.path.join(tempfile.gettempdir(), cache)
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
@@ -65,10 +63,8 @@ class Test(unittest.TestCase):
         sys.frozen = "console_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
         ma, mi = sys.version_info[:2]
-        path = os.path.join(
-            tempfile.gettempdir(),
-            r"comtypes_cache\%s-%d%d" % (IMGBASE, ma, mi),
-        )
+        cache = r"comtypes_cache\%s-%d%d" % (IMGBASE, ma, mi)
+        path = os.path.join(tempfile.gettempdir(), cache)
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
@@ -76,10 +72,8 @@ class Test(unittest.TestCase):
         sys.frozen = "windows_exe"
         # %TEMP%\comtypes_cache\<imagebasename>-25
         ma, mi = sys.version_info[:2]
-        path = os.path.join(
-            tempfile.gettempdir(),
-            r"comtypes_cache\%s-%d%d" % (IMGBASE, ma, mi),
-        )
+        cache = r"comtypes_cache\%s-%d%d" % (IMGBASE, ma, mi)
+        path = os.path.join(tempfile.gettempdir(), cache)
         gen_dir = comtypes.client._find_gen_dir()
         self.assertEqual(path, gen_dir)
 
