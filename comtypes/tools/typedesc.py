@@ -4,6 +4,7 @@
 import ctypes
 from typing import Any, List, Optional, Tuple, Union as _UnionT
 
+from comtypes import typeinfo
 from comtypes.typeinfo import ITypeLib, TLIBATTR
 from comtypes.tools.typedesc_base import *
 
@@ -207,3 +208,21 @@ class CoClass(object):
 
     def add_interface(self, itf: Any, idlflags: int) -> None:
         self.interfaces.append((itf, idlflags))
+
+
+def groupby_impltypeflags(seq):
+    implemented = []
+    sources = []
+    for itf, impltypeflags in seq:
+        if impltypeflags & typeinfo.IMPLTYPEFLAG_FSOURCE:
+            # source interface
+            where = sources
+        else:
+            # sink interface
+            where = implemented
+        if impltypeflags & typeinfo.IMPLTYPEFLAG_FDEFAULT:
+            # The default interface should be the first item on the list
+            where.insert(0, itf)
+        else:
+            where.append(itf)
+    return implemented, sources
