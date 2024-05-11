@@ -2,7 +2,7 @@
 # in typedesc_base
 
 import ctypes
-from typing import Any, List, Optional, Tuple, Union as _UnionT
+from typing import Any, List, Optional, Sequence, Tuple, Union as _UnionT
 
 from comtypes import typeinfo
 from comtypes.typeinfo import ITypeLib, TLIBATTR
@@ -210,7 +210,14 @@ class CoClass(object):
         self.interfaces.append((itf, idlflags))
 
 
-def groupby_impltypeflags(seq):
+_ImplTypeFlags = int
+_ImplementedInterfaces = Sequence[_UnionT[ComInterface, DispInterface]]
+_SourceInterfaces = Sequence[_UnionT[ComInterface, DispInterface]]
+
+
+def groupby_impltypeflags(
+    seq: Sequence[Tuple[_UnionT[ComInterface, DispInterface], _ImplTypeFlags]]
+) -> Tuple[_ImplementedInterfaces, _SourceInterfaces]:
     implemented = []
     sources = []
     for itf, impltypeflags in seq:
