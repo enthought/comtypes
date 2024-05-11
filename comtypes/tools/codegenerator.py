@@ -1058,13 +1058,13 @@ class CodeGenerator(object):
         sources = []
         for item in coclass.interfaces:
             # item is (interface class, impltypeflags)
-            if item[1] & 2:  # IMPLTYPEFLAG_FSOURCE
+            if item[1] & typeinfo.IMPLTYPEFLAG_FSOURCE:
                 # source interface
                 where = sources
             else:
                 # sink interface
                 where = implemented
-            if item[1] & 1:  # IMPLTYPEFLAG_FDEAULT
+            if item[1] & typeinfo.IMPLTYPEFLAG_FDEFAULT:
                 # The default interface should be the first item on the list
                 where.insert(0, self._to_type_name(item[0]))
             else:
