@@ -1052,7 +1052,7 @@ class CodeGenerator(object):
         print(file=self.stream)
         print(file=self.stream)
 
-        for itf, idlflags in coclass.interfaces:
+        for itf, _ in coclass.interfaces:
             self.generate(itf.get_head())
         implemented = []
         sources = []
