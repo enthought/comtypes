@@ -223,6 +223,11 @@ def _to_outtype(typ: Any) -> str:
         return f"'{typ.name}'"
     elif isinstance(typ, typedesc.ComInterface):
         return f"'{typ.name}'"
+    elif isinstance(typ, typedesc.CoClass):
+        impl, _ = typedesc.groupby_impltypeflags(typ.interfaces)
+        if impl:
+            meta = f"hints.FirstComItfOf['{typ.name}']"
+            return f"hints.Annotated[{_to_outtype(impl[0])}, {meta}]"
     return "hints.Incomplete"
 
 
