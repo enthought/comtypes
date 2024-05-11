@@ -774,7 +774,7 @@ _T_IUnknown = TypeVar("_T_IUnknown", bound="IUnknown")
 
 if TYPE_CHECKING:
 
-    class _IUnknown_Base(c_void_p, metaclass=_cominterface_meta):
+    class _IUnknown_Base(c_void_p, metaclass=_cominterface_meta):  # type: ignore
         """This is workaround to avoid false-positive of static type checking.
 
         `IUnknown` behaves as a ctypes type, and `POINTER` can take it.
@@ -784,9 +784,7 @@ if TYPE_CHECKING:
         `builtins.object`.
         """
 
-        __com_QueryInterface: Callable[[Any, Any], int]
-        __com_AddRef: Callable[[], int]
-        __com_Release: Callable[[], int]
+        ...
 
 else:
     _IUnknown_Base = object
@@ -825,7 +823,7 @@ class IUnknown(_IUnknown_Base, metaclass=_cominterface_meta):
         p = POINTER(interface)()
         if iid is None:
             iid = interface._iid_
-        self.__com_QueryInterface(byref(iid), byref(p))
+        self.__com_QueryInterface(byref(iid), byref(p))  # type: ignore
         clsid = self.__dict__.get("__clsid")
         if clsid is not None:
             p.__dict__["__clsid"] = clsid
@@ -835,11 +833,11 @@ class IUnknown(_IUnknown_Base, metaclass=_cominterface_meta):
     # XXX There should be other ways to install a docstring.
     def AddRef(self) -> int:
         """Increase the internal refcount by one and return it."""
-        return self.__com_AddRef()
+        return self.__com_AddRef()  # type: ignore
 
     def Release(self) -> int:
         """Decrease the internal refcount by one and return it."""
-        return self.__com_Release()
+        return self.__com_Release()  # type: ignore
 
 
 ################################################################
