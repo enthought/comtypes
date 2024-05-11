@@ -196,6 +196,10 @@ class ComInterface(object):
         return self.itf_head
 
 
+_ImplTypeFlags = int
+_Interface = _UnionT[ComInterface, DispInterface]
+
+
 class CoClass(object):
     def __init__(
         self, name: str, clsid: str, idlflags: List[str], tlibattr: TLIBATTR
@@ -204,19 +208,18 @@ class CoClass(object):
         self.clsid = clsid
         self.idlflags = idlflags
         self.tlibattr = tlibattr
-        self.interfaces: List[Tuple[Any, int]] = []
+        self.interfaces: List[Tuple[_Interface, _ImplTypeFlags]] = []
 
-    def add_interface(self, itf: Any, idlflags: int) -> None:
+    def add_interface(self, itf: _Interface, idlflags: _ImplTypeFlags) -> None:
         self.interfaces.append((itf, idlflags))
 
 
-_ImplTypeFlags = int
-_ImplementedInterfaces = Sequence[_UnionT[ComInterface, DispInterface]]
-_SourceInterfaces = Sequence[_UnionT[ComInterface, DispInterface]]
+_ImplementedInterfaces = Sequence[_Interface]
+_SourceInterfaces = Sequence[_Interface]
 
 
 def groupby_impltypeflags(
-    seq: Sequence[Tuple[_UnionT[ComInterface, DispInterface], _ImplTypeFlags]]
+    seq: Sequence[Tuple[_Interface, _ImplTypeFlags]]
 ) -> Tuple[_ImplementedInterfaces, _SourceInterfaces]:
     implemented = []
     sources = []
