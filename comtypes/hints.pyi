@@ -21,6 +21,10 @@ if sys.version_info >= (3, 8):
     from typing import Protocol
 else:
     from typing_extensions import Protocol
+if sys.version_info >= (3, 9):
+    from typing import Annotated as Annotated
+else:
+    from typing_extensions import Annotated as Annotated
 if sys.version_info >= (3, 10):
     from typing import Concatenate, ParamSpec, TypeAlias
     from typing import TypeGuard as TypeGuard
