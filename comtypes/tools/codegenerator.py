@@ -1056,19 +1056,19 @@ class CodeGenerator(object):
             self.generate(itf.get_head())
         implemented = []
         sources = []
-        for item in coclass.interfaces:
+        for itf, impltypeflags in coclass.interfaces:
             # item is (interface class, impltypeflags)
-            if item[1] & typeinfo.IMPLTYPEFLAG_FSOURCE:
+            if impltypeflags & typeinfo.IMPLTYPEFLAG_FSOURCE:
                 # source interface
                 where = sources
             else:
                 # sink interface
                 where = implemented
-            if item[1] & typeinfo.IMPLTYPEFLAG_FDEFAULT:
+            if impltypeflags & typeinfo.IMPLTYPEFLAG_FDEFAULT:
                 # The default interface should be the first item on the list
-                where.insert(0, self._to_type_name(item[0]))
+                where.insert(0, self._to_type_name(itf))
             else:
-                where.append(self._to_type_name(item[0]))
+                where.append(self._to_type_name(itf))
 
         if implemented:
             self.last_item_class = False
