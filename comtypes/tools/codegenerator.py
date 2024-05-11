@@ -1054,21 +1054,9 @@ class CodeGenerator(object):
 
         for itf, _ in coclass.interfaces:
             self.generate(itf.get_head())
-        implemented = []
-        sources = []
-        for itf, impltypeflags in coclass.interfaces:
-            # item is (interface class, impltypeflags)
-            if impltypeflags & typeinfo.IMPLTYPEFLAG_FSOURCE:
-                # source interface
-                where = sources
-            else:
-                # sink interface
-                where = implemented
-            if impltypeflags & typeinfo.IMPLTYPEFLAG_FDEFAULT:
-                # The default interface should be the first item on the list
-                where.insert(0, self._to_type_name(itf))
-            else:
-                where.append(self._to_type_name(itf))
+        impl, src = groupby_impltypeflags(coclass.interfaces)
+        implemented = [self._to_type_name(itf) for itf in impl]
+        sources = [self._to_type_name(itf) for itf in src]
 
         if implemented:
             self.last_item_class = False
@@ -1404,6 +1392,24 @@ class CodeGenerator(object):
         gen = DispPropertyGenerator(prop)
         print(gen.generate(), file=self.stream)
         self.last_item_class = False
+
+
+def groupby_impltypeflags(seq):
+    implemented = []
+    sources = []
+    for itf, impltypeflags in seq:
+        if impltypeflags & typeinfo.IMPLTYPEFLAG_FSOURCE:
+            # source interface
+            where = sources
+        else:
+            # sink interface
+            where = implemented
+        if impltypeflags & typeinfo.IMPLTYPEFLAG_FDEFAULT:
+            # The default interface should be the first item on the list
+            where.insert(0, itf)
+        else:
+            where.append(itf)
+    return implemented, sources
 
 
 class TypeNamer(object):
