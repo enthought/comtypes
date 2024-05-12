@@ -1613,7 +1613,9 @@ class EnumerationNamespaces(object):
         Examples:
             <BLANKLINE> is necessary for doctest
             >>> enums = EnumerationNamespaces()
+            >>> assert not enums
             >>> enums.add('Foo', 'ham', 1)
+            >>> assert enums
             >>> enums.add('Foo', 'spam', 2)
             >>> enums.add('Bar', 'bacon', 3)
             >>> assert 'Foo' in enums
@@ -1640,6 +1642,9 @@ class EnumerationNamespaces(object):
 
     def __contains__(self, item: str) -> bool:
         return item in self.data
+
+    def __bool__(self) -> bool:
+        return bool(self.data)
 
     def get_symbols(self) -> Set[str]:
         return set(self.data)
