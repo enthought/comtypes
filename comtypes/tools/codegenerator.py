@@ -445,7 +445,7 @@ class CodeGenerator(object):
         self.done = set()  # type descriptions that have been generated
         self.names = set()  # names that have been generated
         self.externals = []  # typelibs imported to generated module
-        self.aliases: Dict[str, str] = {}
+        self.enum_aliases: Dict[str, str] = {}
         self.last_item_class = False
 
     def generate(self, item):
@@ -595,6 +595,12 @@ class CodeGenerator(object):
                 print(f"{n} = {v}", file=output)
             print(file=output)
         print(self.enums.to_constants(), file=output)
+        print(file=output)
+        if self.enum_aliases:
+            print("# aliases for enums", file=output)
+            for k, v in self.enum_aliases.items():
+                print(f"{k} = {v}", file=output)
+            print(file=output)
         print(self.stream.getvalue(), file=output)
         print(self._make_dunder_all_part(), file=output)
         print(file=output)
@@ -622,9 +628,8 @@ class CodeGenerator(object):
         print(self.enums.to_intflags(), file=output)
         print(file=output)
         print(file=output)
-        enum_aliases = self.enum_aliases
-        if enum_aliases:
-            for k, v in enum_aliases.items():
+        if self.enum_aliases:
+            for k, v in self.enum_aliases.items():
                 print(f"{k} = {v}", file=output)
             print(file=output)
             print(file=output)
@@ -661,10 +666,6 @@ class CodeGenerator(object):
             joined_names = "\n".join(txtwrapper.wrap(joined_names))
             part = f"from {modname} import (\n{joined_names}\n)"
         return part
-
-    @property
-    def enum_aliases(self) -> Dict[str, str]:
-        return {k: v for k, v in self.aliases.items() if v in self.enums}
 
     def need_VARIANT_imports(self, value):
         text = repr(value)
@@ -716,9 +717,11 @@ class CodeGenerator(object):
             if definition in self.known_symbols:
                 self.declarations.add(tp.name, definition)
             else:
-                print("%s = %s" % (tp.name, definition), file=self.stream)
-                self.aliases[tp.name] = definition
-                self.last_item_class = False
+                if isinstance(tp.typ, typedesc.Enumeration):
+                    self.enum_aliases[tp.name] = definition
+                else:
+                    print(f"{tp.name} = {definition}", file=self.stream)
+                    self.last_item_class = False
         self.names.add(tp.name)
 
     def FundamentalType(self, item: typedesc.FundamentalType) -> None:
