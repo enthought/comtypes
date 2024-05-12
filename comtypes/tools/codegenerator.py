@@ -594,8 +594,9 @@ class CodeGenerator(object):
             for n, v in self.unnamed_enum_members:
                 print(f"{n} = {v}", file=output)
             print(file=output)
-        print(self.enums.to_constants(), file=output)
-        print(file=output)
+        if self.enums:
+            print(self.enums.to_constants(), file=output)
+            print(file=output)
         if self.enum_aliases:
             print("# aliases for enums", file=output)
             for k, v in self.enum_aliases.items():
@@ -625,9 +626,10 @@ class CodeGenerator(object):
         print(self._make_friendly_module_import_part(modname), file=output)
         print(file=output)
         print(file=output)
-        print(self.enums.to_intflags(), file=output)
-        print(file=output)
-        print(file=output)
+        if self.enums:
+            print(self.enums.to_intflags(), file=output)
+            print(file=output)
+            print(file=output)
         if self.enum_aliases:
             for k, v in self.enum_aliases.items():
                 print(f"{k} = {v}", file=output)
