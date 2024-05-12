@@ -691,7 +691,7 @@ class CodeGenerator(object):
         if keyword.iskeyword(tp.name):
             # XXX use logging!
             if __warn_on_munge__:
-                print("# Fixing keyword as EnumValue for %s" % tp.name)
+                print(f"# Fixing keyword as EnumValue for {tp.name}")
         tp_name = self._to_type_name(tp)
         if tp.enumeration.name:
             self.enums.add(tp.enumeration.name, tp_name, value)
