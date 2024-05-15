@@ -147,20 +147,22 @@ class DispInterface(object):
     def __init__(
         self,
         name: str,
-        members: List[_UnionT[DispMethod, DispProperty]],
         base: Any,
         iid: str,
         idlflags: List[str],
         doc: Optional[str],
     ) -> None:
         self.name = name
-        self.members = members
+        self.members: List[_UnionT[DispMethod, DispProperty]] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
         self.itf_head = DispInterfaceHead(self)
         self.itf_body = DispInterfaceBody(self)
         self.doc = doc
+
+    def add_member(self, member: _UnionT[DispMethod, DispProperty]) -> None:
+        self.members.append(member)
 
     def get_body(self) -> DispInterfaceBody:
         return self.itf_body

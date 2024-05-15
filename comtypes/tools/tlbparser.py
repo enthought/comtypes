@@ -343,15 +343,13 @@ class Parser(object):
     ) -> typedesc.DispInterface:
         itf_name, doc = tinfo.GetDocumentation(-1)[0:2]
         assert ta.cImplTypes == 1
-
         hr = tinfo.GetRefTypeOfImplType(0)
         tibase = tinfo.GetRefTypeInfo(hr)
         base = self.parse_typeinfo(tibase)
-        members = []
         iid = str(ta.guid)
         idlflags = self.interface_type_flags(ta.wTypeFlags)
         doc = str(doc.split("\0")[0]) if doc is not None else doc
-        itf = typedesc.DispInterface(itf_name, members, base, iid, idlflags, doc)
+        itf = typedesc.DispInterface(itf_name, base, iid, idlflags, doc)
         self._register(itf_name, itf)
 
         # This code can only handle pure dispinterfaces.  Dual
@@ -366,7 +364,7 @@ class Parser(object):
             mth = typedesc.DispProperty(
                 vd.memid, var_name, typ, self.var_flags(vd.wVarFlags), var_doc
             )
-            itf.members.append(mth)
+            itf.add_member(mth)
 
         # At least the EXCEL typelib lists the IUnknown and IDispatch
         # methods even for this kind of interface.  I didn't find any
@@ -417,7 +415,7 @@ class Parser(object):
                 else:
                     default = None
                 mth.add_argument(typ, name, self.param_flags(flags), default)
-            itf.members.append(mth)
+            itf.add_member(mth)
         return itf
 
     def inv_kind(self, invkind: int) -> List[str]:
