@@ -30,11 +30,16 @@ class TypeLib(object):
 
 class Constant(object):
     def __init__(
-        self, name: str, typ: _UnionT[Typedef, FundamentalType], value: Any
+        self,
+        name: str,
+        typ: _UnionT[Typedef, FundamentalType],
+        value: Any,
+        doc: Optional[str],
     ) -> None:
         self.name = name
         self.typ = typ
         self.value = value
+        self.doc = doc
 
 
 class External(object):

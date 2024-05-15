@@ -267,10 +267,8 @@ class Parser(object):
             assert vd.varkind == typeinfo.VAR_CONST
             typ = self.make_type(vd.elemdescVar.tdesc, tinfo)
             var_value = vd._.lpvarValue[0].value
-            v = typedesc.Constant(name, typ, var_value)
+            v = typedesc.Constant(name, typ, var_value, var_doc)
             self._register(name, v)
-            if var_doc is not None:
-                v.doc = var_doc
 
     # TKIND_INTERFACE = 3
     def ParseInterface(
