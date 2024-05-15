@@ -202,13 +202,19 @@ _Interface = _UnionT[ComInterface, DispInterface]
 
 class CoClass(object):
     def __init__(
-        self, name: str, clsid: str, idlflags: List[str], tlibattr: TLIBATTR
+        self,
+        name: str,
+        clsid: str,
+        idlflags: List[str],
+        tlibattr: TLIBATTR,
+        doc: Optional[str],
     ) -> None:
         self.name = name
         self.clsid = clsid
         self.idlflags = idlflags
         self.tlibattr = tlibattr
         self.interfaces: List[Tuple[_Interface, _ImplTypeFlags]] = []
+        self.doc = doc
 
     def add_interface(self, itf: _Interface, idlflags: _ImplTypeFlags) -> None:
         self.interfaces.append((itf, idlflags))

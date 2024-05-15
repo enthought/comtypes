@@ -548,11 +548,9 @@ class Parser(object):
         #        version, control, hidden, and appobject
         coclass_name, doc = tinfo.GetDocumentation(-1)[0:2]
         tlibattr = tinfo.GetContainingTypeLib()[0].GetLibAttr()
-        coclass = typedesc.CoClass(
-            coclass_name, str(ta.guid), self.coclass_type_flags(ta.wTypeFlags), tlibattr
-        )
-        if doc is not None:
-            coclass.doc = doc
+        clsid = str(ta.guid)
+        idlflags = self.coclass_type_flags(ta.wTypeFlags)
+        coclass = typedesc.CoClass(coclass_name, clsid, idlflags, tlibattr, doc)
         self._register(coclass_name, coclass)
 
         for i in range(ta.cImplTypes):
