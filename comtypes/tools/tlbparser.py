@@ -289,7 +289,7 @@ class Parser(object):
 
         iid = str(ta.guid)
         idlflags = self.interface_type_flags(ta.wTypeFlags)
-        itf = typedesc.ComInterface(itf_name, [], None, iid, idlflags, itf_doc)
+        itf = typedesc.ComInterface(itf_name, None, iid, idlflags, itf_doc)
         self._register(itf_name, itf)
 
         if ta.cImplTypes:
@@ -299,7 +299,7 @@ class Parser(object):
 
         assert ta.cVars == 0, "vars on an Interface?"
 
-        members = []
+        members: List[Tuple[int, typedesc.ComMethod]] = []
         for i in range(ta.cFuncs):
             fd = tinfo.GetFuncDesc(i)
             func_name, func_doc = tinfo.GetDocumentation(fd.memid)[:2]
@@ -333,7 +333,7 @@ class Parser(object):
         # Sort the methods by oVft (VTable offset): Some typeinfo
         # don't list methods in VTable order.
         members.sort()
-        itf.members.extend([m[1] for m in members])
+        itf.extend_members([m for _, m in members])
 
         return itf
 

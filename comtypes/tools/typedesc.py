@@ -185,20 +185,22 @@ class ComInterface(object):
     def __init__(
         self,
         name: str,
-        members: List[ComMethod],
         base: "Optional[ComInterface]",
         iid: str,
         idlflags: List[str],
         doc: Optional[str],
     ) -> None:
         self.name = name
-        self.members = members
+        self.members: List[ComMethod] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
         self.itf_head = ComInterfaceHead(self)
         self.itf_body = ComInterfaceBody(self)
         self.doc = doc
+
+    def extend_members(self, members: Sequence[ComMethod]) -> None:
+        self.members.extend(members)
 
     def get_body(self) -> ComInterfaceBody:
         return self.itf_body
