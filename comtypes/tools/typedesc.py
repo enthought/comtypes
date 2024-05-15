@@ -180,6 +180,7 @@ class ComInterface(object):
         base: "Optional[ComInterface]",
         iid: str,
         idlflags: List[str],
+        doc: Optional[str],
     ) -> None:
         self.name = name
         self.members = members
@@ -188,6 +189,7 @@ class ComInterface(object):
         self.idlflags = idlflags
         self.itf_head = ComInterfaceHead(self)
         self.itf_body = ComInterfaceBody(self)
+        self.doc = doc
 
     def get_body(self) -> ComInterfaceBody:
         return self.itf_body

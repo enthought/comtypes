@@ -289,15 +289,9 @@ class Parser(object):
                 warnings.warn(message, UserWarning)
             return None
 
-        itf = typedesc.ComInterface(
-            itf_name,
-            members=[],
-            base=None,
-            iid=str(ta.guid),
-            idlflags=self.interface_type_flags(ta.wTypeFlags),
-        )
-        if itf_doc:
-            itf.doc = itf_doc
+        iid = str(ta.guid)
+        idlflags = self.interface_type_flags(ta.wTypeFlags)
+        itf = typedesc.ComInterface(itf_name, [], None, iid, idlflags, itf_doc)
         self._register(itf_name, itf)
 
         if ta.cImplTypes:
