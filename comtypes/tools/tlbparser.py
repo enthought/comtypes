@@ -350,15 +350,10 @@ class Parser(object):
         tibase = tinfo.GetRefTypeInfo(hr)
         base = self.parse_typeinfo(tibase)
         members = []
-        itf = typedesc.DispInterface(
-            itf_name,
-            members=members,
-            base=base,
-            iid=str(ta.guid),
-            idlflags=self.interface_type_flags(ta.wTypeFlags),
-        )
-        if doc is not None:
-            itf.doc = str(doc.split("\0")[0])
+        iid = str(ta.guid)
+        idlflags = self.interface_type_flags(ta.wTypeFlags)
+        doc = str(doc.split("\0")[0]) if doc is not None else doc
+        itf = typedesc.DispInterface(itf_name, members, base, iid, idlflags, doc)
         self._register(itf_name, itf)
 
         # This code can only handle pure dispinterfaces.  Dual

@@ -146,6 +146,7 @@ class DispInterface(object):
         base: Any,
         iid: str,
         idlflags: List[str],
+        doc: Optional[str],
     ) -> None:
         self.name = name
         self.members = members
@@ -154,6 +155,7 @@ class DispInterface(object):
         self.idlflags = idlflags
         self.itf_head = DispInterfaceHead(self)
         self.itf_body = DispInterfaceBody(self)
+        self.doc = doc
 
     def get_body(self) -> DispInterfaceBody:
         return self.itf_body
