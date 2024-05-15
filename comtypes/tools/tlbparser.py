@@ -1,20 +1,10 @@
-from __future__ import print_function
 import os
 import sys
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-    Tuple,
-    Union as _UnionT,
-)
-from ctypes import alignment, c_void_p, _Pointer, sizeof, windll
+from typing import Any
+from typing import Dict, List, Optional, Tuple
+from ctypes import alignment, byref, c_void_p, sizeof, windll
 
-from comtypes import automation, _CData, COMError, typeinfo
+from comtypes import automation, BSTR, COMError, typeinfo
 from comtypes.tools import typedesc
 from comtypes.client._code_cache import _get_module_filename
 
@@ -746,9 +736,6 @@ class TypeLibParser(Parser):
 def get_tlib_filename(tlib):
     # seems if the typelib is not registered, there's no way to
     # determine the filename.
-    from ctypes import windll, byref
-    from comtypes import BSTR
-
     la = tlib.GetLibAttr()
     name = BSTR()
     try:
