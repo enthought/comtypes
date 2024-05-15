@@ -30,11 +30,16 @@ class TypeLib(object):
 
 class Constant(object):
     def __init__(
-        self, name: str, typ: _UnionT[Typedef, FundamentalType], value: Any
+        self,
+        name: str,
+        typ: _UnionT[Typedef, FundamentalType],
+        value: Any,
+        doc: Optional[str],
     ) -> None:
         self.name = name
         self.typ = typ
         self.value = value
+        self.doc = doc
 
 
 class External(object):
@@ -142,18 +147,22 @@ class DispInterface(object):
     def __init__(
         self,
         name: str,
-        members: List[_UnionT[DispMethod, DispProperty]],
         base: Any,
         iid: str,
         idlflags: List[str],
+        doc: Optional[str],
     ) -> None:
         self.name = name
-        self.members = members
+        self.members: List[_UnionT[DispMethod, DispProperty]] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
         self.itf_head = DispInterfaceHead(self)
         self.itf_body = DispInterfaceBody(self)
+        self.doc = doc
+
+    def add_member(self, member: _UnionT[DispMethod, DispProperty]) -> None:
+        self.members.append(member)
 
     def get_body(self) -> DispInterfaceBody:
         return self.itf_body
@@ -176,18 +185,22 @@ class ComInterface(object):
     def __init__(
         self,
         name: str,
-        members: List[ComMethod],
         base: "Optional[ComInterface]",
         iid: str,
         idlflags: List[str],
+        doc: Optional[str],
     ) -> None:
         self.name = name
-        self.members = members
+        self.members: List[ComMethod] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
         self.itf_head = ComInterfaceHead(self)
         self.itf_body = ComInterfaceBody(self)
+        self.doc = doc
+
+    def extend_members(self, members: Sequence[ComMethod]) -> None:
+        self.members.extend(members)
 
     def get_body(self) -> ComInterfaceBody:
         return self.itf_body
@@ -202,13 +215,19 @@ _Interface = _UnionT[ComInterface, DispInterface]
 
 class CoClass(object):
     def __init__(
-        self, name: str, clsid: str, idlflags: List[str], tlibattr: TLIBATTR
+        self,
+        name: str,
+        clsid: str,
+        idlflags: List[str],
+        tlibattr: TLIBATTR,
+        doc: Optional[str],
     ) -> None:
         self.name = name
         self.clsid = clsid
         self.idlflags = idlflags
         self.tlibattr = tlibattr
         self.interfaces: List[Tuple[_Interface, _ImplTypeFlags]] = []
+        self.doc = doc
 
     def add_interface(self, itf: _Interface, idlflags: _ImplTypeFlags) -> None:
         self.interfaces.append((itf, idlflags))

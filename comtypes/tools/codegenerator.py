@@ -1039,14 +1039,14 @@ class CodeGenerator(object):
         self.last_item_class = True
 
         print("class %s(CoClass):" % coclass.name, file=self.stream)
-        doc = getattr(coclass, "doc", None)
-        if doc:
-            print(self._to_docstring(doc), file=self.stream)
+        if coclass.doc:
+            print(self._to_docstring(coclass.doc), file=self.stream)
         print("    _reg_clsid_ = GUID(%r)" % coclass.clsid, file=self.stream)
         print("    _idlflags_ = %s" % coclass.idlflags, file=self.stream)
         if self.filename is not None:
             print("    _typelib_path_ = typelib_path", file=self.stream)
-        # X print >> self.stream, "POINTER(%s).__ctypes_from_outparam__ = wrap" % coclass.name
+        # X print
+        # >> self.stream, "POINTER(%s).__ctypes_from_outparam__ = wrap" % coclass.name
 
         libid = coclass.tlibattr.guid
         wMajor, wMinor = coclass.tlibattr.wMajorVerNum, coclass.tlibattr.wMinorVerNum
@@ -1162,9 +1162,8 @@ class CodeGenerator(object):
         self.last_item_class = True
 
         print("class %s(%s):" % (head.itf.name, basename), file=self.stream)
-        doc = getattr(head.itf, "doc", None)
-        if doc:
-            print(self._to_docstring(doc), file=self.stream)
+        if head.itf.doc:
+            print(self._to_docstring(head.itf.doc), file=self.stream)
 
         print("    _case_insensitive_ = True", file=self.stream)
         print("    _iid_ = GUID(%r)" % head.itf.iid, file=self.stream)
@@ -1311,9 +1310,8 @@ class CodeGenerator(object):
         self.last_item_class = True
 
         print("class %s(%s):" % (head.itf.name, basename), file=self.stream)
-        doc = getattr(head.itf, "doc", None)
-        if doc:
-            print(self._to_docstring(doc), file=self.stream)
+        if head.itf.doc:
+            print(self._to_docstring(head.itf.doc), file=self.stream)
         print("    _case_insensitive_ = True", file=self.stream)
         print("    _iid_ = GUID(%r)" % head.itf.iid, file=self.stream)
         print("    _idlflags_ = %s" % head.itf.idlflags, file=self.stream)
