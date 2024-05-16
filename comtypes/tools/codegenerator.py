@@ -1,5 +1,6 @@
 # Code generator to generate code for everything contained in COM type
 # libraries.
+from collections import Counter
 import keyword
 import logging
 import os
@@ -1608,6 +1609,8 @@ class EnumerationNamespaces(object):
             >>> assert enums
             >>> enums.add('Foo', 'spam', 2)
             >>> enums.add('Bar', 'bacon', 3)
+            >>> enums.add('Bar', 'egg', 4)
+            >>> enums.add('Bar', 'egg', 5)
             >>> assert 'Foo' in enums
             >>> assert 'Baz' not in enums
             >>> print(enums.to_intflags())
@@ -1618,6 +1621,8 @@ class EnumerationNamespaces(object):
             <BLANKLINE>
             class Bar(IntFlag):
                 bacon = 3
+                # egg = 4  # duplicated. Perhaps there is a bug in the type library?
+                egg = 5
             >>> print(enums.to_constants())
             # values for enumeration 'Foo'
             ham = 1
@@ -1626,6 +1631,8 @@ class EnumerationNamespaces(object):
             <BLANKLINE>
             # values for enumeration 'Bar'
             bacon = 3
+            egg = 4  # duplicated within the 'Bar'. Perhaps there is a bug?
+            egg = 5
             Bar = c_int  # enum
         """
         self.data.setdefault(enum_name, []).append((member_name, value))
@@ -1642,10 +1649,19 @@ class EnumerationNamespaces(object):
     def to_constants(self) -> str:
         blocks = []
         for enum_name, enum_members in self.data.items():
+            key_counter = Counter(m for m, _ in enum_members)
             lines = []
             lines.append(f"# values for enumeration '{enum_name}'")
-            for n, v in enum_members:
-                lines.append(f"{n} = {v}")
+            for member_name, value in enum_members:
+                key_counter[member_name] -= 1
+                if key_counter[member_name] > 0:
+                    msg = (
+                        f"duplicated within the '{enum_name}'. "
+                        "Perhaps there is a bug?"
+                    )
+                    lines.append(f"{member_name} = {value}  # {msg}")
+                else:
+                    lines.append(f"{member_name} = {value}")
             lines.append(f"{enum_name} = c_int  # enum")
             blocks.append("\n".join(lines))
         return "\n\n".join(blocks)
@@ -1653,9 +1669,16 @@ class EnumerationNamespaces(object):
     def to_intflags(self) -> str:
         blocks = []
         for enum_name, enum_members in self.data.items():
+            key_counter = Counter(m for m, _ in enum_members)
             lines = []
             lines.append(f"class {enum_name}(IntFlag):")
             for member_name, value in enum_members:
-                lines.append(f"    {member_name} = {value}")
+                key_counter[member_name] -= 1
+                if key_counter[member_name] > 0:
+                    # Prevent the occurrence of `TypeError: Attempted to reuse key:`.
+                    msg = "duplicated. Perhaps there is a bug in the type library?"
+                    lines.append(f"    # {member_name} = {value}  # {msg}")
+                else:
+                    lines.append(f"    {member_name} = {value}")
             blocks.append("\n".join(lines))
         return "\n\n\n".join(blocks)
