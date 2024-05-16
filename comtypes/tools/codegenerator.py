@@ -1,23 +1,13 @@
 # Code generator to generate code for everything contained in COM type
 # libraries.
-from __future__ import print_function
-import ctypes
 import keyword
 import logging
 import os
-import sys
 import textwrap
-from typing import (
-    Any,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Union as _UnionT,
-)
+from typing import Any
+from typing import Dict, List, Set, Tuple
+from typing import Iterator, Sequence
+from typing import Optional, Union as _UnionT
 import io
 
 import comtypes
