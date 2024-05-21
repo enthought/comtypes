@@ -12,7 +12,7 @@ import io
 
 import comtypes
 from comtypes import typeinfo
-from comtypes.tools import tlbparser, typedesc, typeannotator
+from comtypes.tools import tlbparser, typedesc
 from comtypes.tools.codegenerator.helpers import (
     get_real_type,
     ASSUME_STRINGS,
@@ -28,6 +28,7 @@ from comtypes.tools.codegenerator.helpers import (
     DeclaredNamespaces,
     EnumerationNamespaces,
 )
+from comtypes.tools.codegenerator import typeannotator
 
 
 version = comtypes.__version__
