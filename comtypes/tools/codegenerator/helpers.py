@@ -1,5 +1,4 @@
 import keyword
-import logging
 import textwrap
 from typing import Any
 from typing import Dict, List, Set, Tuple
@@ -8,13 +7,6 @@ from typing import Union as _UnionT
 
 import comtypes
 from comtypes.tools import typedesc
-
-
-version = comtypes.__version__
-
-logger = logging.getLogger(__name__)
-
-__warn_on_munge__ = __debug__
 
 
 class lcid(object):
