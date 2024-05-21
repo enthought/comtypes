@@ -445,7 +445,7 @@ class CodeGenerator(object):
         self.done = set()  # type descriptions that have been generated
         self.names = set()  # names that have been generated
         self.externals = []  # typelibs imported to generated module
-        self.aliases: Dict[str, str] = {}
+        self.enum_aliases: Dict[str, str] = {}
         self.last_item_class = False
 
     def generate(self, item):
@@ -594,7 +594,14 @@ class CodeGenerator(object):
             for n, v in self.unnamed_enum_members:
                 print(f"{n} = {v}", file=output)
             print(file=output)
-        print(self.enums.to_constants(), file=output)
+        if self.enums:
+            print(self.enums.to_constants(), file=output)
+            print(file=output)
+        if self.enum_aliases:
+            print("# aliases for enums", file=output)
+            for k, v in self.enum_aliases.items():
+                print(f"{k} = {v}", file=output)
+            print(file=output)
         print(self.stream.getvalue(), file=output)
         print(self._make_dunder_all_part(), file=output)
         print(file=output)
@@ -619,12 +626,12 @@ class CodeGenerator(object):
         print(self._make_friendly_module_import_part(modname), file=output)
         print(file=output)
         print(file=output)
-        print(self.enums.to_intflags(), file=output)
-        print(file=output)
-        print(file=output)
-        enum_aliases = self.enum_aliases
-        if enum_aliases:
-            for k, v in enum_aliases.items():
+        if self.enums:
+            print(self.enums.to_intflags(), file=output)
+            print(file=output)
+            print(file=output)
+        if self.enum_aliases:
+            for k, v in self.enum_aliases.items():
                 print(f"{k} = {v}", file=output)
             print(file=output)
             print(file=output)
@@ -662,10 +669,6 @@ class CodeGenerator(object):
             part = f"from {modname} import (\n{joined_names}\n)"
         return part
 
-    @property
-    def enum_aliases(self) -> Dict[str, str]:
-        return {k: v for k, v in self.aliases.items() if v in self.enums}
-
     def need_VARIANT_imports(self, value):
         text = repr(value)
         if "Decimal(" in text:
@@ -690,7 +693,7 @@ class CodeGenerator(object):
         if keyword.iskeyword(tp.name):
             # XXX use logging!
             if __warn_on_munge__:
-                print("# Fixing keyword as EnumValue for %s" % tp.name)
+                print(f"# Fixing keyword as EnumValue for {tp.name}")
         tp_name = self._to_type_name(tp)
         if tp.enumeration.name:
             self.enums.add(tp.enumeration.name, tp_name, value)
@@ -716,9 +719,11 @@ class CodeGenerator(object):
             if definition in self.known_symbols:
                 self.declarations.add(tp.name, definition)
             else:
-                print("%s = %s" % (tp.name, definition), file=self.stream)
-                self.aliases[tp.name] = definition
-                self.last_item_class = False
+                if isinstance(tp.typ, typedesc.Enumeration):
+                    self.enum_aliases[tp.name] = definition
+                else:
+                    print(f"{tp.name} = {definition}", file=self.stream)
+                    self.last_item_class = False
         self.names.add(tp.name)
 
     def FundamentalType(self, item: typedesc.FundamentalType) -> None:
@@ -1034,14 +1039,14 @@ class CodeGenerator(object):
         self.last_item_class = True
 
         print("class %s(CoClass):" % coclass.name, file=self.stream)
-        doc = getattr(coclass, "doc", None)
-        if doc:
-            print(self._to_docstring(doc), file=self.stream)
+        if coclass.doc:
+            print(self._to_docstring(coclass.doc), file=self.stream)
         print("    _reg_clsid_ = GUID(%r)" % coclass.clsid, file=self.stream)
         print("    _idlflags_ = %s" % coclass.idlflags, file=self.stream)
         if self.filename is not None:
             print("    _typelib_path_ = typelib_path", file=self.stream)
-        # X print >> self.stream, "POINTER(%s).__ctypes_from_outparam__ = wrap" % coclass.name
+        # X print
+        # >> self.stream, "POINTER(%s).__ctypes_from_outparam__ = wrap" % coclass.name
 
         libid = coclass.tlibattr.guid
         wMajor, wMinor = coclass.tlibattr.wMajorVerNum, coclass.tlibattr.wMinorVerNum
@@ -1052,23 +1057,11 @@ class CodeGenerator(object):
         print(file=self.stream)
         print(file=self.stream)
 
-        for itf, idlflags in coclass.interfaces:
+        for itf, _ in coclass.interfaces:
             self.generate(itf.get_head())
-        implemented = []
-        sources = []
-        for item in coclass.interfaces:
-            # item is (interface class, impltypeflags)
-            if item[1] & 2:  # IMPLTYPEFLAG_FSOURCE
-                # source interface
-                where = sources
-            else:
-                # sink interface
-                where = implemented
-            if item[1] & 1:  # IMPLTYPEFLAG_FDEAULT
-                # The default interface should be the first item on the list
-                where.insert(0, self._to_type_name(item[0]))
-            else:
-                where.append(self._to_type_name(item[0]))
+        impl, src = typedesc.groupby_impltypeflags(coclass.interfaces)
+        implemented = [self._to_type_name(itf) for itf in impl]
+        sources = [self._to_type_name(itf) for itf in src]
 
         if implemented:
             self.last_item_class = False
@@ -1169,9 +1162,8 @@ class CodeGenerator(object):
         self.last_item_class = True
 
         print("class %s(%s):" % (head.itf.name, basename), file=self.stream)
-        doc = getattr(head.itf, "doc", None)
-        if doc:
-            print(self._to_docstring(doc), file=self.stream)
+        if head.itf.doc:
+            print(self._to_docstring(head.itf.doc), file=self.stream)
 
         print("    _case_insensitive_ = True", file=self.stream)
         print("    _iid_ = GUID(%r)" % head.itf.iid, file=self.stream)
@@ -1318,9 +1310,8 @@ class CodeGenerator(object):
         self.last_item_class = True
 
         print("class %s(%s):" % (head.itf.name, basename), file=self.stream)
-        doc = getattr(head.itf, "doc", None)
-        if doc:
-            print(self._to_docstring(doc), file=self.stream)
+        if head.itf.doc:
+            print(self._to_docstring(head.itf.doc), file=self.stream)
         print("    _case_insensitive_ = True", file=self.stream)
         print("    _iid_ = GUID(%r)" % head.itf.iid, file=self.stream)
         print("    _idlflags_ = %s" % head.itf.idlflags, file=self.stream)
@@ -1622,7 +1613,9 @@ class EnumerationNamespaces(object):
         Examples:
             <BLANKLINE> is necessary for doctest
             >>> enums = EnumerationNamespaces()
+            >>> assert not enums
             >>> enums.add('Foo', 'ham', 1)
+            >>> assert enums
             >>> enums.add('Foo', 'spam', 2)
             >>> enums.add('Bar', 'bacon', 3)
             >>> assert 'Foo' in enums
@@ -1649,6 +1642,9 @@ class EnumerationNamespaces(object):
 
     def __contains__(self, item: str) -> bool:
         return item in self.data
+
+    def __bool__(self) -> bool:
+        return bool(self.data)
 
     def get_symbols(self) -> Set[str]:
         return set(self.data)

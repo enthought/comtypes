@@ -2,8 +2,9 @@
 # in typedesc_base
 
 import ctypes
-from typing import Any, List, Optional, Tuple, Union as _UnionT
+from typing import Any, List, Optional, Sequence, Tuple, Union as _UnionT
 
+from comtypes import typeinfo
 from comtypes.typeinfo import ITypeLib, TLIBATTR
 from comtypes.tools.typedesc_base import *
 
@@ -29,11 +30,16 @@ class TypeLib(object):
 
 class Constant(object):
     def __init__(
-        self, name: str, typ: _UnionT[Typedef, FundamentalType], value: Any
+        self,
+        name: str,
+        typ: _UnionT[Typedef, FundamentalType],
+        value: Any,
+        doc: Optional[str],
     ) -> None:
         self.name = name
         self.typ = typ
         self.value = value
+        self.doc = doc
 
 
 class External(object):
@@ -141,18 +147,22 @@ class DispInterface(object):
     def __init__(
         self,
         name: str,
-        members: List[_UnionT[DispMethod, DispProperty]],
         base: Any,
         iid: str,
         idlflags: List[str],
+        doc: Optional[str],
     ) -> None:
         self.name = name
-        self.members = members
+        self.members: List[_UnionT[DispMethod, DispProperty]] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
         self.itf_head = DispInterfaceHead(self)
         self.itf_body = DispInterfaceBody(self)
+        self.doc = doc
+
+    def add_member(self, member: _UnionT[DispMethod, DispProperty]) -> None:
+        self.members.append(member)
 
     def get_body(self) -> DispInterfaceBody:
         return self.itf_body
@@ -175,18 +185,22 @@ class ComInterface(object):
     def __init__(
         self,
         name: str,
-        members: List[ComMethod],
         base: "Optional[ComInterface]",
         iid: str,
         idlflags: List[str],
+        doc: Optional[str],
     ) -> None:
         self.name = name
-        self.members = members
+        self.members: List[ComMethod] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
         self.itf_head = ComInterfaceHead(self)
         self.itf_body = ComInterfaceBody(self)
+        self.doc = doc
+
+    def extend_members(self, members: Sequence[ComMethod]) -> None:
+        self.members.extend(members)
 
     def get_body(self) -> ComInterfaceBody:
         return self.itf_body
@@ -195,15 +209,49 @@ class ComInterface(object):
         return self.itf_head
 
 
+_ImplTypeFlags = int
+_Interface = _UnionT[ComInterface, DispInterface]
+
+
 class CoClass(object):
     def __init__(
-        self, name: str, clsid: str, idlflags: List[str], tlibattr: TLIBATTR
+        self,
+        name: str,
+        clsid: str,
+        idlflags: List[str],
+        tlibattr: TLIBATTR,
+        doc: Optional[str],
     ) -> None:
         self.name = name
         self.clsid = clsid
         self.idlflags = idlflags
         self.tlibattr = tlibattr
-        self.interfaces: List[Tuple[Any, int]] = []
+        self.interfaces: List[Tuple[_Interface, _ImplTypeFlags]] = []
+        self.doc = doc
 
-    def add_interface(self, itf: Any, idlflags: int) -> None:
+    def add_interface(self, itf: _Interface, idlflags: _ImplTypeFlags) -> None:
         self.interfaces.append((itf, idlflags))
+
+
+_ImplementedInterfaces = Sequence[_Interface]
+_SourceInterfaces = Sequence[_Interface]
+
+
+def groupby_impltypeflags(
+    seq: Sequence[Tuple[_Interface, _ImplTypeFlags]]
+) -> Tuple[_ImplementedInterfaces, _SourceInterfaces]:
+    implemented = []
+    sources = []
+    for itf, impltypeflags in seq:
+        if impltypeflags & typeinfo.IMPLTYPEFLAG_FSOURCE:
+            # source interface
+            where = sources
+        else:
+            # sink interface
+            where = implemented
+        if impltypeflags & typeinfo.IMPLTYPEFLAG_FDEFAULT:
+            # The default interface should be the first item on the list
+            where.insert(0, itf)
+        else:
+            where.append(itf)
+    return implemented, sources

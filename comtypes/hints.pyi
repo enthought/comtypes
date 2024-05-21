@@ -21,6 +21,10 @@ if sys.version_info >= (3, 8):
     from typing import Protocol
 else:
     from typing_extensions import Protocol
+if sys.version_info >= (3, 9):
+    from typing import Annotated as Annotated
+else:
+    from typing_extensions import Annotated as Annotated
 if sys.version_info >= (3, 10):
     from typing import Concatenate, ParamSpec, TypeAlias
     from typing import TypeGuard as TypeGuard
@@ -32,6 +36,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+import comtypes
 from comtypes.automation import IDispatch as IDispatch, VARIANT as VARIANT
 from comtypes.server import IClassFactory as IClassFactory
 from comtypes.typeinfo import ITypeInfo as ITypeInfo
@@ -45,6 +50,16 @@ Hresult: TypeAlias = int
 """The value returned when calling a method with no `[out]` or `[out, retval]`
 arguments and with `HRESULT` as its return type in its COM method definition.
 """
+
+_T_coclass = TypeVar("_T_coclass", bound=comtypes.CoClass)
+
+class FirstComItfOf(Generic[_T_coclass]):
+    """When the type assigned to the parameter marked as `'out'` is `CoClass`,
+    the return type of that method at runtime becomes `_com_interface_[0]`
+    due to the metaclass.
+    This is used as `Annotated` metadata for such parameters, taking `CoClass`
+    as an argument.
+    """
 
 class _MethodTypeDesc(Protocol):
     arguments: List[Tuple[Any, str, List[str], Optional[Any]]]

@@ -216,6 +216,21 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             self._define_normal_prop(name, setter=setter)
 
 
+def _to_outtype(typ: Any) -> str:
+    if isinstance(typ, typedesc.PointerType):
+        return _to_outtype(typ.typ)
+    elif isinstance(typ, typedesc.DispInterface):
+        return f"'{typ.name}'"
+    elif isinstance(typ, typedesc.ComInterface):
+        return f"'{typ.name}'"
+    elif isinstance(typ, typedesc.CoClass):
+        impl, _ = typedesc.groupby_impltypeflags(typ.interfaces)
+        if impl:
+            meta = f"hints.FirstComItfOf['{typ.name}']"
+            return f"hints.Annotated[{_to_outtype(impl[0])}, {meta}]"
+    return "hints.Incomplete"
+
+
 class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
     def _iter_outarg_specs(self) -> Iterator[Tuple[Any, str]]:
         for typ, name, flags, _ in self.method.arguments:
@@ -240,7 +255,7 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
             else:
                 inargs.append(f"{argname}: hints.Incomplete = ...")
                 has_optional = True
-        outargs = ["hints.Incomplete" for _ in self._iter_outarg_specs()]
+        outargs = [_to_outtype(ot) for ot, _ in self._iter_outarg_specs()]
         if not outargs:
             out = "hints.Hresult"
         elif len(outargs) == 1:
@@ -283,7 +298,7 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
             else:
                 inargs.append(f"{argname}: hints.Incomplete = ...")
                 has_optional = True
-        out = "hints.Incomplete"
+        out = _to_outtype(self.method.returns)
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
         return f"def {name}({in_}) -> {out}: ..."
 
@@ -314,7 +329,7 @@ class DispInterfaceMembersAnnotator(object):
         property_lines: List[str] = []
         for mem in props:
             property_lines.append("@property  # dispprop")
-            out = "hints.Incomplete"
+            out = _to_outtype(mem.typ)
             property_lines.append(f"def {mem.name}(self) -> {out}: ...")
         dispprops = "\n".join(f"        {p}" for p in property_lines)
         dispmethods = DispMethodsAnnotator().generate(methods)

@@ -1,20 +1,10 @@
-from __future__ import print_function
 import os
 import sys
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-    Tuple,
-    Union as _UnionT,
-)
-from ctypes import alignment, c_void_p, _Pointer, sizeof, windll
+from typing import Any
+from typing import Dict, List, Optional, Tuple
+from ctypes import alignment, byref, c_void_p, sizeof, windll
 
-from comtypes import automation, _CData, COMError, typeinfo
+from comtypes import automation, BSTR, COMError, typeinfo
 from comtypes.tools import typedesc
 from comtypes.client._code_cache import _get_module_filename
 
@@ -267,10 +257,8 @@ class Parser(object):
             assert vd.varkind == typeinfo.VAR_CONST
             typ = self.make_type(vd.elemdescVar.tdesc, tinfo)
             var_value = vd._.lpvarValue[0].value
-            v = typedesc.Constant(name, typ, var_value)
+            v = typedesc.Constant(name, typ, var_value, var_doc)
             self._register(name, v)
-            if var_doc is not None:
-                v.doc = var_doc
 
     # TKIND_INTERFACE = 3
     def ParseInterface(
@@ -289,15 +277,9 @@ class Parser(object):
                 warnings.warn(message, UserWarning)
             return None
 
-        itf = typedesc.ComInterface(
-            itf_name,
-            members=[],
-            base=None,
-            iid=str(ta.guid),
-            idlflags=self.interface_type_flags(ta.wTypeFlags),
-        )
-        if itf_doc:
-            itf.doc = itf_doc
+        iid = str(ta.guid)
+        idlflags = self.interface_type_flags(ta.wTypeFlags)
+        itf = typedesc.ComInterface(itf_name, None, iid, idlflags, itf_doc)
         self._register(itf_name, itf)
 
         if ta.cImplTypes:
@@ -307,7 +289,7 @@ class Parser(object):
 
         assert ta.cVars == 0, "vars on an Interface?"
 
-        members = []
+        members: List[Tuple[int, typedesc.ComMethod]] = []
         for i in range(ta.cFuncs):
             fd = tinfo.GetFuncDesc(i)
             func_name, func_doc = tinfo.GetDocumentation(fd.memid)[:2]
@@ -341,7 +323,7 @@ class Parser(object):
         # Sort the methods by oVft (VTable offset): Some typeinfo
         # don't list methods in VTable order.
         members.sort()
-        itf.members.extend([m[1] for m in members])
+        itf.extend_members([m for _, m in members])
 
         return itf
 
@@ -351,20 +333,13 @@ class Parser(object):
     ) -> typedesc.DispInterface:
         itf_name, doc = tinfo.GetDocumentation(-1)[0:2]
         assert ta.cImplTypes == 1
-
         hr = tinfo.GetRefTypeOfImplType(0)
         tibase = tinfo.GetRefTypeInfo(hr)
         base = self.parse_typeinfo(tibase)
-        members = []
-        itf = typedesc.DispInterface(
-            itf_name,
-            members=members,
-            base=base,
-            iid=str(ta.guid),
-            idlflags=self.interface_type_flags(ta.wTypeFlags),
-        )
-        if doc is not None:
-            itf.doc = str(doc.split("\0")[0])
+        iid = str(ta.guid)
+        idlflags = self.interface_type_flags(ta.wTypeFlags)
+        doc = str(doc.split("\0")[0]) if doc is not None else doc
+        itf = typedesc.DispInterface(itf_name, base, iid, idlflags, doc)
         self._register(itf_name, itf)
 
         # This code can only handle pure dispinterfaces.  Dual
@@ -379,7 +354,7 @@ class Parser(object):
             mth = typedesc.DispProperty(
                 vd.memid, var_name, typ, self.var_flags(vd.wVarFlags), var_doc
             )
-            itf.members.append(mth)
+            itf.add_member(mth)
 
         # At least the EXCEL typelib lists the IUnknown and IDispatch
         # methods even for this kind of interface.  I didn't find any
@@ -430,7 +405,7 @@ class Parser(object):
                 else:
                     default = None
                 mth.add_argument(typ, name, self.param_flags(flags), default)
-            itf.members.append(mth)
+            itf.add_member(mth)
         return itf
 
     def inv_kind(self, invkind: int) -> List[str]:
@@ -548,11 +523,9 @@ class Parser(object):
         #        version, control, hidden, and appobject
         coclass_name, doc = tinfo.GetDocumentation(-1)[0:2]
         tlibattr = tinfo.GetContainingTypeLib()[0].GetLibAttr()
-        coclass = typedesc.CoClass(
-            coclass_name, str(ta.guid), self.coclass_type_flags(ta.wTypeFlags), tlibattr
-        )
-        if doc is not None:
-            coclass.doc = doc
+        clsid = str(ta.guid)
+        idlflags = self.coclass_type_flags(ta.wTypeFlags)
+        coclass = typedesc.CoClass(coclass_name, clsid, idlflags, tlibattr, doc)
         self._register(coclass_name, coclass)
 
         for i in range(ta.cImplTypes):
@@ -763,9 +736,6 @@ class TypeLibParser(Parser):
 def get_tlib_filename(tlib):
     # seems if the typelib is not registered, there's no way to
     # determine the filename.
-    from ctypes import windll, byref
-    from comtypes import BSTR
-
     la = tlib.GetLibAttr()
     name = BSTR()
     try:
