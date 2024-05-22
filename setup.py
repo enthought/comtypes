@@ -160,6 +160,7 @@ setup_params = dict(
         "comtypes.client",
         "comtypes.server",
         "comtypes.tools",
+        "comtypes.tools.codegenerator",
         "comtypes.test",
     ],
 )
