@@ -16,7 +16,7 @@ from comtypes.tools import tlbparser, typedesc
 from comtypes.tools.codegenerator import namespaces
 from comtypes.tools.codegenerator import packing
 from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
-from comtypes.tools.codegenerator.helpers_ import (
+from comtypes.tools.codegenerator.helpers import (
     get_real_type,
     ASSUME_STRINGS,
     ComMethodGenerator,
