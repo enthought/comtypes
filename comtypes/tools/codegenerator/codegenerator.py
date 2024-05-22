@@ -15,10 +15,10 @@ from comtypes import typeinfo
 from comtypes.tools import tlbparser, typedesc
 from comtypes.tools.codegenerator import namespaces
 from comtypes.tools.codegenerator import packing
-from comtypes.tools.codegenerator._helpers import (
+from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
+from comtypes.tools.codegenerator.helpers_ import (
     get_real_type,
     ASSUME_STRINGS,
-    name_wrapper_module,
     ComMethodGenerator,
     DispMethodGenerator,
     DispPropertyGenerator,
