@@ -13,7 +13,8 @@ import io
 import comtypes
 from comtypes import typeinfo
 from comtypes.tools import tlbparser, typedesc
-from comtypes.tools.codegenerator.helpers import (
+from comtypes.tools.codegenerator import namespaces
+from comtypes.tools.codegenerator.helpers_ import (
     get_real_type,
     ASSUME_STRINGS,
     calc_packing,
@@ -24,9 +25,6 @@ from comtypes.tools.codegenerator.helpers import (
     DispMethodGenerator,
     DispPropertyGenerator,
     TypeNamer,
-    ImportedNamespaces,
-    DeclaredNamespaces,
-    EnumerationNamespaces,
 )
 from comtypes.tools.codegenerator import typeannotator
 
@@ -51,9 +49,9 @@ _InterfaceTypeDesc = _UnionT[
 class CodeGenerator(object):
     def __init__(self, known_symbols=None, known_interfaces=None) -> None:
         self.stream = io.StringIO()
-        self.imports = ImportedNamespaces()
-        self.declarations = DeclaredNamespaces()
-        self.enums = EnumerationNamespaces()
+        self.imports = namespaces.ImportedNamespaces()
+        self.declarations = namespaces.DeclaredNamespaces()
+        self.enums = namespaces.EnumerationNamespaces()
         self.unnamed_enum_members: List[Tuple[str, int]] = []
         self._to_type_name = TypeNamer()
         self.known_symbols = known_symbols or {}
