@@ -14,12 +14,10 @@ import comtypes
 from comtypes import typeinfo
 from comtypes.tools import tlbparser, typedesc
 from comtypes.tools.codegenerator import namespaces
-from comtypes.tools.codegenerator.helpers_ import (
+from comtypes.tools.codegenerator import packing
+from comtypes.tools.codegenerator._helpers import (
     get_real_type,
     ASSUME_STRINGS,
-    calc_packing,
-    PackingError,
-    dont_assert_size,
     name_wrapper_module,
     ComMethodGenerator,
     DispMethodGenerator,
@@ -462,11 +460,11 @@ class CodeGenerator(object):
         # on COM interfaces:
         if not methods:
             try:
-                pack = calc_packing(body.struct, fields)
+                pack = packing.calc_packing(body.struct, fields)
                 if pack is not None:
                     self.last_item_class = False
                     print("%s._pack_ = %s" % (body.struct.name, pack), file=self.stream)
-            except PackingError as details:
+            except packing.PackingError as details:
                 # if packing fails, write a warning comment to the output.
                 import warnings
 
@@ -523,7 +521,7 @@ class CodeGenerator(object):
                     "# The size and alignment check for %s is skipped."
                 )
                 print(msg % body.struct.name, file=self.stream)
-            elif body.struct.name not in dont_assert_size:
+            elif body.struct.name not in packing.dont_assert_size:
                 print(file=self.stream)
                 size = body.struct.size // 8
                 print(

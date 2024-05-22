@@ -1,4 +1,4 @@
-from comtypes.tools.codegenerator.helpers_ import (  # noqa
+from comtypes.tools.codegenerator._helpers import (  # noqa
     name_friendly_module,
     name_wrapper_module,
 )
