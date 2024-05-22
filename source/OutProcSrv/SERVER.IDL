@@ -1,0 +1,64 @@
+//
+// Server.idl
+//
+// This file will be processed by the MIDL compiler to
+// produce the type library (server.tlb) and marshaling code.
+//
+
+import "oaidl.idl" ;
+
+typedef [uuid(00FABB0F-5691-41A6-B7C1-11606671F8E5)]
+struct T_TEST_RECORD {
+	BSTR question ;
+	long answer ;
+	VARIANT_BOOL needs_clarification ;
+} T_TEST_RECORD ;
+
+// Interface IDualComtypesTest
+[
+	odl,
+	uuid(0C4E01E8-4625-46A2-BC4C-2E889A8DBBD6),
+	dual,
+	helpstring("IDualComtypesTest Interface"),
+	nonextensible,
+	oleautomation
+]
+interface IDualComtypesTest : IDispatch
+{
+	[id(0x00000001)]
+	HRESULT InitRecord([in, out] T_TEST_RECORD* test_record) ;
+} ;
+
+// Interface IComtypesTest
+[
+	uuid(033E4C10-0A7F-4E93-8377-499AD4B6583A)
+]
+dispinterface IComtypesTest
+{
+	interface IDualComtypesTest;
+} ;
+
+//
+// Component and type library descriptions
+//
+[
+	uuid(07D2AEE5-1DF8-4D2C-953A-554ADFD25F99),
+	version(1.0),
+	helpstring("Comtypes Test COM Server 1.0 Type Library")
+]
+library ComtypesTestLib
+{
+	// TLib : OLE Automation : {00020430-0000-0000-C000-000000000046}
+	importlib("stdole2.tlb") ;
+
+	// Component
+	[
+		uuid(06571915-2431-4CA3-9C01-53002B060DAB),
+		helpstring("Component Class")
+	]
+	coclass Component
+	{
+		[default] interface IDualComtypesTest ;
+		dispinterface IComtypesTest ;
+	} ;
+} ;
