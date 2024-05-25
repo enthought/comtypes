@@ -10,6 +10,7 @@
 // Cmpnt.cpp - Component
 //
 #include <objbase.h>
+#include <string.h>
 #include <iostream>
 #include <sstream>
 
@@ -60,6 +61,45 @@ HRESULT __stdcall CA::InitRecord(T_TEST_RECORD* test_record)
 	}
 	test_record->answer = 42 ;
 	test_record->needs_clarification = VARIANT_TRUE ;
+
+	return S_OK ;
+}
+
+HRESULT __stdcall CA::VerifyRecord(T_TEST_RECORD* test_record,
+																   VARIANT_BOOL* result)
+{
+	// Display the received T_TEST_RECORD structure.
+	if (test_record->question == NULL){
+		test_record->question = ::SysAllocString(L"") ;
+	}
+	std::ostringstream sout ;
+	sout << "Received T_TEST_RECORD structure contains:  " << std::ends ;
+	trace(sout.str().c_str()) ;
+	sout.str("") ;
+	sout << "\n\t\t" << "question: " << test_record->question << std::ends ;
+	trace(sout.str().c_str()) ;
+	sout.str("") ;
+	sout << "\n\t\t" << "answer: " << test_record->answer << std::ends ;
+	trace(sout.str().c_str()) ;
+	sout.str("") ;
+	sout << "\n\t\t" << "needs_clarification: " << test_record->needs_clarification << std::ends ;
+	trace(sout.str().c_str()) ;
+	sout.str("") ;
+
+	// Check if we received an initialization record.
+	if (_wcsicmp(test_record->question, L"The meaning of life, the universe and everything?") == 0
+		&& test_record->answer == 42
+		&& test_record->needs_clarification == VARIANT_TRUE){
+		*result = VARIANT_TRUE ;
+	}
+	else {
+		*result =  VARIANT_FALSE ;
+	}
+
+	// Modify the received record.
+	// This modification should not change the record on the client side
+	// because it is just an [in] parameter and not passed with VT_BYREF.
+	test_record->answer == 12 ;
 
 	return S_OK ;
 }

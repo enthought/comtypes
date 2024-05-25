@@ -27,6 +27,10 @@ interface IDualComtypesTest : IDispatch
 {
 	[id(0x00000001)]
 	HRESULT InitRecord([in, out] T_TEST_RECORD* test_record) ;
+	[id(0x00000002)]
+	HRESULT VerifyRecord(
+					[in] T_TEST_RECORD* test_record,
+					[out, retval] VARIANT_BOOL* result);
 } ;
 
 // Interface IComtypesTest

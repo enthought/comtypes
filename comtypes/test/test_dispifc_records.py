@@ -23,12 +23,14 @@ class Test(unittest.TestCase):
     """Test dispmethods with record pointer parameters."""
 
     def test(self):
-        # Explicitely ask for the dispinterface of the COM-server.
+        # Explicitely ask for the dispinterface of the component.
         dispifc = CreateObject(
             ProgID, clsctx=CLSCTX_LOCAL_SERVER, interface=ComtypesTestLib.IComtypesTest
         )
 
-        # Test passing a record by reference.
+        # Passing a record by reference to a method that has declared the parameter
+        # as [in, out] we expect modifications of the record on the server side to
+        # also change the record on the client side.
         test_record = ComtypesTestLib.T_TEST_RECORD()
         self.assertEqual(test_record.question, None)
         self.assertEqual(test_record.answer, 0)
@@ -40,7 +42,9 @@ class Test(unittest.TestCase):
         self.assertEqual(test_record.answer, 42)
         self.assertEqual(test_record.needs_clarification, True)
 
-        # Test passing a record pointer.
+        # Passing a record pointer to a method that has declared the parameter
+        # as [in, out] we expect modifications of the record on the server side to
+        # also change the record on the client side.
         test_record = ComtypesTestLib.T_TEST_RECORD()
         self.assertEqual(test_record.question, None)
         self.assertEqual(test_record.answer, 0)
@@ -52,6 +56,27 @@ class Test(unittest.TestCase):
         )
         self.assertEqual(test_record.answer, 42)
         self.assertEqual(test_record.needs_clarification, True)
+
+        # Passing a record to a method that has declared the parameter just as [in]
+        # we expect modifications of the record on the server side NOT to change
+        # the record on the client side.
+        # We also need to test if the record gets properly passed to the method on
+        # the server side. For this, the 'VerifyRecord' method returns 'True' if
+        # all record fields have the initialization values provided by 'InitRecord'.
+        self.assertTrue(dispifc.VerifyRecord(test_record))
+        # Check if the 'answer' field is unchanged although the method modifies this
+        # field on the server side.
+        self.assertEqual(test_record.answer, 42)
+        # Also perform the inverted test.
+        # For this, first create a blank record.
+        test_record = ComtypesTestLib.T_TEST_RECORD()
+        self.assertEqual(test_record.question, None)
+        self.assertEqual(test_record.answer, 0)
+        self.assertEqual(test_record.needs_clarification, False)
+        # Perform the check on initialization values.
+        self.assertFalse(dispifc.VerifyRecord(test_record))
+        # The record on the client side should be unchanged.
+        self.assertEqual(test_record.answer, 0)
 
 
 if __name__ == "__main__":
