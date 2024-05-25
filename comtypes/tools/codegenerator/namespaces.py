@@ -1,6 +1,7 @@
 from collections import Counter
 import textwrap
 from typing import Dict, List, Set, Tuple
+from typing import Iterator, Sequence
 
 
 class ImportedNamespaces(object):
@@ -173,7 +174,7 @@ class EnumerationNamespaces(object):
             class Bar(IntFlag):
                 bacon = 3
                 # egg = 4  # duplicated. Perhaps there is a bug in the type library?
-                egg = 5
+                egg = 5  # duplicated. Perhaps there is a bug in the type library?
             >>> print(enums.to_constants())
             # values for enumeration 'Foo'
             ham = 1
@@ -183,7 +184,7 @@ class EnumerationNamespaces(object):
             # values for enumeration 'Bar'
             bacon = 3
             egg = 4  # duplicated within the 'Bar'. Perhaps there is a bug?
-            egg = 5
+            egg = 5  # duplicated within the 'Bar'. Perhaps there is a bug?
             Bar = c_int  # enum
         """
         self.data.setdefault(enum_name, []).append((member_name, value))
@@ -197,39 +198,52 @@ class EnumerationNamespaces(object):
     def get_symbols(self) -> Set[str]:
         return set(self.data)
 
+    def _iter_members(
+        self, members: Sequence[Tuple[str, int]]
+    ) -> Iterator[Tuple[str, bool, int]]:
+        key_counter = Counter(m for m, _ in members)
+        decrementee = dict(key_counter)  # shallow copy
+        for name, value in members:
+            decrementee[name] -= 1
+            # definition, is_dupl, rest_dupl_count
+            yield f"{name} = {value}", key_counter[name] > 1, decrementee[name]
+
+    def _iter_items(self) -> Iterator[Tuple[str, Iterator[Tuple[str, bool, int]]]]:
+        for name, members in self.data.items():
+            yield name, self._iter_members(members)
+
     def to_constants(self) -> str:
         blocks = []
-        for enum_name, enum_members in self.data.items():
-            key_counter = Counter(m for m, _ in enum_members)
+        for enum_name, members in self._iter_items():
             lines = []
             lines.append(f"# values for enumeration '{enum_name}'")
-            for member_name, value in enum_members:
-                key_counter[member_name] -= 1
-                if key_counter[member_name] > 0:
-                    msg = (
-                        f"duplicated within the '{enum_name}'. "
-                        "Perhaps there is a bug?"
-                    )
-                    lines.append(f"{member_name} = {value}  # {msg}")
+            for definition, is_dupl, _ in members:
+                if is_dupl:
+                    msg1 = f"duplicated within the '{enum_name}'."
+                    msg2 = "Perhaps there is a bug?"
+                    lines.append(f"{definition}  # {msg1} {msg2}")
                 else:
-                    lines.append(f"{member_name} = {value}")
+                    lines.append(definition)
             lines.append(f"{enum_name} = c_int  # enum")
             blocks.append("\n".join(lines))
         return "\n\n".join(blocks)
 
     def to_intflags(self) -> str:
         blocks = []
-        for enum_name, enum_members in self.data.items():
-            key_counter = Counter(m for m, _ in enum_members)
+        for enum_name, members in self._iter_items():
             lines = []
             lines.append(f"class {enum_name}(IntFlag):")
-            for member_name, value in enum_members:
-                key_counter[member_name] -= 1
-                if key_counter[member_name] > 0:
-                    # Prevent the occurrence of `TypeError: Attempted to reuse key:`.
+            for definition, is_dupl, rest_dupl_count in members:
+                if is_dupl:
                     msg = "duplicated. Perhaps there is a bug in the type library?"
-                    lines.append(f"    # {member_name} = {value}  # {msg}")
+                    base_line = f"{definition}  # {msg}"
+                    if rest_dupl_count > 0:
+                        # Prevent raising `TypeError: Attempted to reuse key:`.
+                        # See https://github.com/enthought/comtypes/issues/550
+                        lines.append(f"    # {base_line}")
+                    else:
+                        lines.append(f"    {base_line}")
                 else:
-                    lines.append(f"    {member_name} = {value}")
+                    lines.append(f"    {definition}")
             blocks.append("\n".join(lines))
         return "\n\n\n".join(blocks)
