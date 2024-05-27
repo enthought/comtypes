@@ -22,12 +22,16 @@ except (ImportError, OSError):
 class Test(unittest.TestCase):
     """Test dispmethods with record pointer parameters."""
 
-    def test(self):
+    EXPECTED_INITED_QUESTIONS = "The meaning of life, the universe and everything?"
+
+    def _create_dispifc(self) -> "ComtypesTestLib.IComtypesTest":
         # Explicitely ask for the dispinterface of the component.
-        dispifc = CreateObject(
+        return CreateObject(
             ProgID, clsctx=CLSCTX_LOCAL_SERVER, interface=ComtypesTestLib.IComtypesTest
         )
 
+    def test_byref(self):
+        dispifc = self._create_dispifc()
         # Passing a record by reference to a method that has declared the parameter
         # as [in, out] we expect modifications of the record on the server side to
         # also change the record on the client side.
@@ -42,6 +46,8 @@ class Test(unittest.TestCase):
         self.assertEqual(test_record.answer, 42)
         self.assertEqual(test_record.needs_clarification, True)
 
+    def test_pointer(self):
+        dispifc = self._create_dispifc()
         # Passing a record pointer to a method that has declared the parameter
         # as [in, out] we expect modifications of the record on the server side to
         # also change the record on the client side.
@@ -57,26 +63,31 @@ class Test(unittest.TestCase):
         self.assertEqual(test_record.answer, 42)
         self.assertEqual(test_record.needs_clarification, True)
 
+    def test_record(self):
         # Passing a record to a method that has declared the parameter just as [in]
         # we expect modifications of the record on the server side NOT to change
         # the record on the client side.
         # We also need to test if the record gets properly passed to the method on
         # the server side. For this, the 'VerifyRecord' method returns 'True' if
-        # all record fields have the initialization values provided by 'InitRecord'.
-        self.assertTrue(dispifc.VerifyRecord(test_record))
-        # Check if the 'answer' field is unchanged although the method modifies this
-        # field on the server side.
-        self.assertEqual(test_record.answer, 42)
-        # Also perform the inverted test.
-        # For this, first create a blank record.
-        test_record = ComtypesTestLib.T_TEST_RECORD()
-        self.assertEqual(test_record.question, None)
-        self.assertEqual(test_record.answer, 0)
-        self.assertEqual(test_record.needs_clarification, False)
-        # Perform the check on initialization values.
-        self.assertFalse(dispifc.VerifyRecord(test_record))
-        # The record on the client side should be unchanged.
-        self.assertEqual(test_record.answer, 0)
+        # all record fields have values equivalent to the initialization values
+        # provided by 'InitRecord'.
+        inited_record = ComtypesTestLib.T_TEST_RECORD()
+        inited_record.question = self.EXPECTED_INITED_QUESTIONS
+        inited_record.answer = 42
+        inited_record.needs_clarification = True
+        for rec, expected, (q, a, nc) in [
+            (inited_record, True, (self.EXPECTED_INITED_QUESTIONS, 42, True)),
+            # Also perform the inverted test. For this, create a blank record.
+            (ComtypesTestLib.T_TEST_RECORD(), False, (None, 0, False)),
+        ]:
+            with self.subTest(expected=expected, q=q, a=a, nc=nc):
+                # Perform the check on initialization values.
+                self.assertEqual(self._create_dispifc().VerifyRecord(rec), expected)
+                self.assertEqual(rec.question, q)
+                # Check if the 'answer' field is unchanged although the method
+                # modifies this field on the server side.
+                self.assertEqual(rec.answer, a)
+                self.assertEqual(rec.needs_clarification, nc)
 
 
 if __name__ == "__main__":
