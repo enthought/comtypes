@@ -40,9 +40,7 @@ class Test(unittest.TestCase):
         self.assertEqual(test_record.answer, 0)
         self.assertEqual(test_record.needs_clarification, False)
         dispifc.InitRecord(byref(test_record))
-        self.assertEqual(
-            test_record.question, "The meaning of life, the universe and everything?"
-        )
+        self.assertEqual(test_record.question, self.EXPECTED_INITED_QUESTIONS)
         self.assertEqual(test_record.answer, 42)
         self.assertEqual(test_record.needs_clarification, True)
 
@@ -55,11 +53,8 @@ class Test(unittest.TestCase):
         self.assertEqual(test_record.question, None)
         self.assertEqual(test_record.answer, 0)
         self.assertEqual(test_record.needs_clarification, False)
-        test_record_pointer = pointer(test_record)
-        dispifc.InitRecord(test_record_pointer)
-        self.assertEqual(
-            test_record.question, "The meaning of life, the universe and everything?"
-        )
+        dispifc.InitRecord(pointer(test_record))
+        self.assertEqual(test_record.question, self.EXPECTED_INITED_QUESTIONS)
         self.assertEqual(test_record.answer, 42)
         self.assertEqual(test_record.needs_clarification, True)
 
