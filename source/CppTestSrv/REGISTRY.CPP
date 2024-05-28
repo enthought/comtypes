@@ -191,7 +191,7 @@ LONG UnregisterServer(const CLSID& clsid,         // Class ID
 	}
 
 	// Unregister the Type Library.
-	HRESULT hr = UnRegisterTypeLib(LIBID_ComtypesTestLib, 
+	HRESULT hr = UnRegisterTypeLib(LIBID_ComtypesCppTestSrvLib, 
 									1, 0, // Major/Minor version numbers
 									0x00, 
 									SYS_WIN64) ;

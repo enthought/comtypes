@@ -7,7 +7,7 @@
 */
 
 //
-// Cmpnt.cpp - Component
+// CoComtypesDispIfcParamTests.cpp - Component
 //
 
 #include "Iface.h"
@@ -18,7 +18,7 @@
 // Component A
 //
 class CA : public CUnknown,
-           public IDualComtypesTest
+           public IDualRecordParamTest
 {
 public:	
 	// Creation
@@ -58,7 +58,7 @@ private:
 		EXCEPINFO* pExcepInfo,
 		UINT* pArgErr) ;
 
-	// Interface IDualComtypesTest
+	// Interface IDualRecordParamTest
 	virtual HRESULT __stdcall InitRecord(T_TEST_RECORD* test_record) ;
 	virtual HRESULT __stdcall VerifyRecord(
 										T_TEST_RECORD* test_record,

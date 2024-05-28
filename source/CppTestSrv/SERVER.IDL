@@ -14,16 +14,17 @@ struct T_TEST_RECORD {
 	VARIANT_BOOL needs_clarification ;
 } T_TEST_RECORD ;
 
-// Interface IDualComtypesTest
+
+// Interface IDualRecordParamTest
 [
 	odl,
 	uuid(0C4E01E8-4625-46A2-BC4C-2E889A8DBBD6),
 	dual,
-	helpstring("IDualComtypesTest Interface"),
+	helpstring("Dual Interface for testing record parameters."),
 	nonextensible,
 	oleautomation
 ]
-interface IDualComtypesTest : IDispatch
+interface IDualRecordParamTest : IDispatch
 {
 	[id(0x00000001)]
 	HRESULT InitRecord([in, out] T_TEST_RECORD* test_record) ;
@@ -33,14 +34,17 @@ interface IDualComtypesTest : IDispatch
 					[out, retval] VARIANT_BOOL* result);
 } ;
 
-// Interface IComtypesTest
+
+// Interface IDispRecordParamTest
 [
-	uuid(033E4C10-0A7F-4E93-8377-499AD4B6583A)
+	uuid(033E4C10-0A7F-4E93-8377-499AD4B6583A),
+	helpstring("Dispinterface for testing record parameters.")
 ]
-dispinterface IComtypesTest
+dispinterface IDispRecordParamTest
 {
-	interface IDualComtypesTest;
+	interface IDualRecordParamTest;
 } ;
+
 
 //
 // Component and type library descriptions
@@ -48,21 +52,21 @@ dispinterface IComtypesTest
 [
 	uuid(07D2AEE5-1DF8-4D2C-953A-554ADFD25F99),
 	version(1.0),
-	helpstring("Comtypes Test COM Server 1.0 Type Library")
+	helpstring("Comtypes C++ Test COM Server 1.0 Type Library.")
 ]
-library ComtypesTestLib
+library ComtypesCppTestSrvLib
 {
 	// TLib : OLE Automation : {00020430-0000-0000-C000-000000000046}
 	importlib("stdole2.tlb") ;
 
-	// Component
+	// CoComtypesDispIfcParamTests
 	[
 		uuid(06571915-2431-4CA3-9C01-53002B060DAB),
-		helpstring("Component Class")
+		helpstring("Comtypes component for dispinterface parameter tests.")
 	]
-	coclass Component
+	coclass CoComtypesDispIfcParamTests
 	{
-		[default] interface IDualComtypesTest ;
-		dispinterface IComtypesTest ;
+		interface IDualRecordParamTest ;
+		dispinterface IDispRecordParamTest ;
 	} ;
 } ;

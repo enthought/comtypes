@@ -7,7 +7,7 @@
 */
 
 //
-// Cmpnt.cpp - Component
+// CoComtypesDispIfcParamTests.cpp - Component
 //
 #include <objbase.h>
 #include <string.h>
@@ -18,12 +18,12 @@
 #include "Util.h"
 #include "CUnknown.h"
 #include "CFactory.h" // Needed for module handle
-#include "Cmpnt.h"
+#include "CoComtypesDispIfcParamTests.h"
 
 // We need to put this declaration here because we explicitely expose a dispinterface
 // in parallel to the dual interface but dispinterfaces don't appear in the
 // MIDL-generated header file.
-EXTERN_C const IID DIID_IComtypesTest;
+EXTERN_C const IID DIID_IDispRecordParamTest;
 
 static inline void trace(const char* msg)
 	{ Util::Trace("Component", msg, S_OK) ;}
@@ -32,7 +32,7 @@ static inline void trace(const char* msg, HRESULT hr)
 
 ///////////////////////////////////////////////////////////
 //
-// Interface IDualComtypesTest - Implementation
+// Interface IDualRecordParamTest - Implementation
 //
 
 HRESULT __stdcall CA::InitRecord(T_TEST_RECORD* test_record)
@@ -133,13 +133,13 @@ CA::~CA()
 HRESULT __stdcall CA::NondelegatingQueryInterface(const IID& iid,
                                                   void** ppv)
 { 	
-	if (iid == IID_IDualComtypesTest)
+	if (iid == IID_IDualRecordParamTest)
 	{
-		return FinishQI(static_cast<IDualComtypesTest*>(this), ppv) ;
+		return FinishQI(static_cast<IDualRecordParamTest*>(this), ppv) ;
 	}
-	else 	if (iid == DIID_IComtypesTest)
+	else 	if (iid == DIID_IDispRecordParamTest)
 	{
-		trace("Queried for IComtypesTest.") ;
+		trace("Queried for IDispRecordParamTest.") ;
 		return FinishQI(static_cast<IDispatch*>(this), ppv) ;
 	}
 	else 	if (iid == IID_IDispatch)
@@ -164,7 +164,7 @@ HRESULT CA::Init()
 	if (m_pITypeInfo == NULL)
 	{
 		ITypeLib* pITypeLib = NULL ;
-		hr = ::LoadRegTypeLib(LIBID_ComtypesTestLib, 
+		hr = ::LoadRegTypeLib(LIBID_ComtypesCppTestSrvLib, 
 		                      1, 0, // Major/Minor version numbers
 		                      0x00, 
 		                      &pITypeLib) ;
@@ -175,7 +175,7 @@ HRESULT CA::Init()
 		}
 
 		// Get type information for the interface of the object.
-		hr = pITypeLib->GetTypeInfoOfGuid(IID_IDualComtypesTest,
+		hr = pITypeLib->GetTypeInfoOfGuid(IID_IDualRecordParamTest,
 		                                  &m_pITypeInfo) ;
 		pITypeLib->Release() ;
 		if (FAILED(hr))  

@@ -29,7 +29,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
       - name: Build and register the OutProc COM server
         run: |
-          cd source/OutProcSrv
+          cd source/CppTestSrv
           nmake /f Makefile
           ./server.exe /RegServer
       - name: unittest comtypes
@@ -37,5 +37,5 @@ jobs:
           python -m unittest discover -v -s ./comtypes/test -t comtypes\test
       - name: Unregister the OutProc COM server
         run: |
-          cd source/OutProcSrv
+          cd source/CppTestSrv
           ./server.exe /UnregServer

@@ -8,7 +8,7 @@
 
 #include "CFactory.h"
 #include "Iface.h"
-#include "Cmpnt.h"
+#include "CoComtypesDispIfcParamTests.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -35,11 +35,11 @@
 //
 CFactoryData g_FactoryDataArray[] =
 {
-	{&CLSID_Component, CA::CreateInstance, 
-		L"Comtypes Test automation server component",	// Friendly Name
-		L"ComtypesTest.COM.Server.1",									// ProgID
-		L"ComtypesTest.COM.Server",										// Version-independent ProgID
-		&LIBID_ComtypesTestLib,												// Type Library ID
+	{&CLSID_CoComtypesDispIfcParamTests, CA::CreateInstance, 
+		L"Comtypes component for dispinterface parameter tests",	// Friendly Name
+		L"Comtypes.DispIfcParamTests.1",									// ProgID
+		L"Comtypes.DispIfcParamTests",										// Version-independent ProgID
+		&LIBID_ComtypesCppTestSrvLib,												// Type Library ID
 		NULL, 0}
 } ;
 int g_cFactoryDataEntries
