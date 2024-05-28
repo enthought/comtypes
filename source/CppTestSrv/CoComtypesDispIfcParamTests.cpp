@@ -99,7 +99,7 @@ HRESULT __stdcall CA::VerifyRecord(StructRecordParamTest* test_record,
 	// Modify the received record.
 	// This modification should not change the record on the client side
 	// because it is just an [in] parameter and not passed with VT_BYREF.
-	test_record->answer == 12 ;
+	test_record->answer = 12 ;
 
 	return S_OK ;
 }
