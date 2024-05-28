@@ -35,14 +35,14 @@ static inline void trace(const char* msg, HRESULT hr)
 // Interface IDualRecordParamTest - Implementation
 //
 
-HRESULT __stdcall CA::InitRecord(T_TEST_RECORD* test_record)
+HRESULT __stdcall CA::InitRecord(StructRecordParamTest* test_record)
 {
-	// Display the received T_TEST_RECORD structure.
+	// Display the received StructRecordParamTest structure.
 	if (test_record->question == NULL){
 		test_record->question = ::SysAllocString(L"") ;
 	}
 	std::ostringstream sout ;
-	sout << "Received T_TEST_RECORD structure contains:  " << std::ends ;
+	sout << "Received StructRecordParamTest structure contains:  " << std::ends ;
 	trace(sout.str().c_str()) ;
 	sout.str("") ;
 	sout << "\n\t\t" << "question: " << test_record->question << std::ends ;
@@ -65,15 +65,15 @@ HRESULT __stdcall CA::InitRecord(T_TEST_RECORD* test_record)
 	return S_OK ;
 }
 
-HRESULT __stdcall CA::VerifyRecord(T_TEST_RECORD* test_record,
+HRESULT __stdcall CA::VerifyRecord(StructRecordParamTest* test_record,
 																   VARIANT_BOOL* result)
 {
-	// Display the received T_TEST_RECORD structure.
+	// Display the received StructRecordParamTest structure.
 	if (test_record->question == NULL){
 		test_record->question = ::SysAllocString(L"") ;
 	}
 	std::ostringstream sout ;
-	sout << "Received T_TEST_RECORD structure contains:  " << std::ends ;
+	sout << "Received StructRecordParamTest structure contains:  " << std::ends ;
 	trace(sout.str().c_str()) ;
 	sout.str("") ;
 	sout << "\n\t\t" << "question: " << test_record->question << std::ends ;

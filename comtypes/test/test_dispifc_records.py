@@ -36,7 +36,7 @@ class Test(unittest.TestCase):
         # Passing a record by reference to a method that has declared the parameter
         # as [in, out] we expect modifications of the record on the server side to
         # also change the record on the client side.
-        test_record = ComtypesCppTestSrvLib.T_TEST_RECORD()
+        test_record = ComtypesCppTestSrvLib.StructRecordParamTest()
         self.assertEqual(test_record.question, None)
         self.assertEqual(test_record.answer, 0)
         self.assertEqual(test_record.needs_clarification, False)
@@ -50,7 +50,7 @@ class Test(unittest.TestCase):
         # Passing a record pointer to a method that has declared the parameter
         # as [in, out] we expect modifications of the record on the server side to
         # also change the record on the client side.
-        test_record = ComtypesCppTestSrvLib.T_TEST_RECORD()
+        test_record = ComtypesCppTestSrvLib.StructRecordParamTest()
         self.assertEqual(test_record.question, None)
         self.assertEqual(test_record.answer, 0)
         self.assertEqual(test_record.needs_clarification, False)
@@ -67,14 +67,14 @@ class Test(unittest.TestCase):
         # the server side. For this, the 'VerifyRecord' method returns 'True' if
         # all record fields have values equivalent to the initialization values
         # provided by 'InitRecord'.
-        inited_record = ComtypesCppTestSrvLib.T_TEST_RECORD()
+        inited_record = ComtypesCppTestSrvLib.StructRecordParamTest()
         inited_record.question = self.EXPECTED_INITED_QUESTIONS
         inited_record.answer = 42
         inited_record.needs_clarification = True
         for rec, expected, (q, a, nc) in [
             (inited_record, True, (self.EXPECTED_INITED_QUESTIONS, 42, True)),
             # Also perform the inverted test. For this, create a blank record.
-            (ComtypesCppTestSrvLib.T_TEST_RECORD(), False, (None, 0, False)),
+            (ComtypesCppTestSrvLib.StructRecordParamTest(), False, (None, 0, False)),
         ]:
             with self.subTest(expected=expected, q=q, a=a, nc=nc):
                 # Perform the check on initialization values.

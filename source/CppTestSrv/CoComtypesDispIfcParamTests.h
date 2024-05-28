@@ -59,10 +59,10 @@ private:
 		UINT* pArgErr) ;
 
 	// Interface IDualRecordParamTest
-	virtual HRESULT __stdcall InitRecord(T_TEST_RECORD* test_record) ;
+	virtual HRESULT __stdcall InitRecord(StructRecordParamTest* test_record) ;
 	virtual HRESULT __stdcall VerifyRecord(
-										T_TEST_RECORD* test_record,
-										VARIANT_BOOL* result) ;
+										 StructRecordParamTest* test_record,
+										 VARIANT_BOOL* result) ;
 
 	// Initialization
  	virtual HRESULT Init() ;
