@@ -6,11 +6,10 @@ from comtypes import CLSCTX_LOCAL_SERVER
 from comtypes.client import CreateObject, GetModule
 from ctypes import byref, pointer
 
-ComtypesTestLib_GUID = "07D2AEE5-1DF8-4D2C-953A-554ADFD25F99"
-ProgID = "ComtypesTest.COM.Server"
+ComtypesTestLib_GUID = "{07D2AEE5-1DF8-4D2C-953A-554ADFD25F99}"
 
 try:
-    GetModule([f"{{{ComtypesTestLib_GUID}}}", 1, 0, 0])
+    GetModule((ComtypesTestLib_GUID, 1, 0, 0))
     import comtypes.gen.ComtypesTestLib as ComtypesTestLib
 
     IMPORT_FAILED = False
@@ -27,7 +26,9 @@ class Test(unittest.TestCase):
     def _create_dispifc(self) -> "ComtypesTestLib.IComtypesTest":
         # Explicitely ask for the dispinterface of the component.
         return CreateObject(
-            ProgID, clsctx=CLSCTX_LOCAL_SERVER, interface=ComtypesTestLib.IComtypesTest
+            "ComtypesTest.COM.Server",
+            clsctx=CLSCTX_LOCAL_SERVER,
+            interface=ComtypesTestLib.IComtypesTest,
         )
 
     def test_byref(self):
