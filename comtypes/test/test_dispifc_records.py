@@ -18,7 +18,7 @@ except (ImportError, OSError):
 
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
-class Test(unittest.TestCase):
+class Test_DispMethods(unittest.TestCase):
     """Test dispmethods with record and record pointer parameters."""
 
     EXPECTED_INITED_QUESTIONS = "The meaning of life, the universe and everything?"
@@ -31,7 +31,7 @@ class Test(unittest.TestCase):
             interface=ComtypesCppTestSrvLib.IDispRecordParamTest,
         )
 
-    def test_byref(self):
+    def test_inout_byref(self):
         dispifc = self._create_dispifc()
         # Passing a record by reference to a method that has declared the parameter
         # as [in, out] we expect modifications of the record on the server side to
@@ -45,7 +45,7 @@ class Test(unittest.TestCase):
         self.assertEqual(test_record.answer, 42)
         self.assertEqual(test_record.needs_clarification, True)
 
-    def test_pointer(self):
+    def test_inout_pointer(self):
         dispifc = self._create_dispifc()
         # Passing a record pointer to a method that has declared the parameter
         # as [in, out] we expect modifications of the record on the server side to
@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
         self.assertEqual(test_record.answer, 42)
         self.assertEqual(test_record.needs_clarification, True)
 
-    def test_record(self):
+    def test_in_record(self):
         # Passing a record to a method that has declared the parameter just as [in]
         # we expect modifications of the record on the server side NOT to change
         # the record on the client side.
