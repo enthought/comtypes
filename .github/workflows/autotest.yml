@@ -25,6 +25,17 @@ jobs:
           python setup.py install
           pip uninstall comtypes -y
           python test_pip_install.py
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Build and register the OutProc COM server
+        run: |
+          cd source/CppTestSrv
+          nmake /f Makefile
+          ./server.exe /RegServer
       - name: unittest comtypes
         run: |
           python -m unittest discover -v -s ./comtypes/test -t comtypes\test
+      - name: Unregister the OutProc COM server
+        run: |
+          cd source/CppTestSrv
+          ./server.exe /UnregServer

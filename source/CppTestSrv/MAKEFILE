@@ -1,0 +1,88 @@
+#
+# Builds the out-of-proc (local server) version of component.
+# Call with: nmake -f makefile.
+#
+#
+!MESSAGE Building local out-of-proc server.
+TARGETS = server.exe
+
+#
+# Flags - Always compiles debug.
+#
+CPP_FLAGS = /c /MTd /Zi /Od /D_DEBUG /DUNICODE /EHsc
+EXE_LINK_FLAGS = /DEBUG /NODEFAULTLIB:LIBCMT
+
+LIBS = kernel32.lib uuid.lib advapi32.lib ole32.lib oleaut32.lib
+
+#################################################
+#
+# Targets
+#
+
+all : $(TARGETS)
+
+#################################################
+#
+# Proxy source files
+#
+iface.h server.tlb proxy.c guids.c dlldata.c : server.idl
+	midl /h iface.h /iid guids.c /proxy proxy.c server.idl 
+
+#################################################
+#
+# Shared source files
+#
+
+guids.obj : guids.c
+		cl /c /DWIN32 /DUNICODE /DREGISTER_PROXY_DLL guids.c
+
+#################################################
+#
+# Component/server source files
+#
+
+server.obj : server.cpp cunknown.h cfactory.h iface.h
+	cl $(CPP_FLAGS) server.cpp
+
+CoComtypesDispIfcParamTests.obj : CoComtypesDispIfcParamTests.cpp CoComtypesDispIfcParamTests.h iface.h \
+		registry.h CUnknown.h
+	cl $(CPP_FLAGS) CoComtypesDispIfcParamTests.cpp
+
+#
+# Helper classes
+#
+
+CUnknown.obj : CUnknown.cpp CUnknown.h
+	cl $(CPP_FLAGS) CUnknown.cpp
+
+CFactory.obj : CFactory.cpp CFactory.h
+	cl $(CPP_FLAGS) CFactory.cpp
+
+registry.obj : registry.cpp registry.h
+	cl $(CPP_FLAGS) registry.cpp
+
+# util.cpp compiled for server.
+util.obj : util.cpp util.h
+	cl $(CPP_FLAGS) util.cpp 
+
+outproc.obj : outproc.cpp CFactory.h CUnknown.h
+	cl $(CPP_FLAGS) outproc.cpp
+
+
+#################################################
+#
+# Link component - Automatically register component.
+#
+
+SERVER_OBJS = Server.obj     \
+              CoComtypesDispIfcParamTests.obj      \
+              Registry.obj   \
+              Cfactory.obj   \
+              Cunknown.obj   \
+              Util.obj       \
+              Guids.obj	
+
+Server.exe:  $(SERVER_OBJS) outproc.obj
+	link $(EXE_LINK_FLAGS) $(SERVER_OBJS)	               \
+		outproc.obj libcmtd.lib   \
+		libcpmtd.lib $(LIBS) user32.lib gdi32.lib
