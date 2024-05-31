@@ -5,11 +5,11 @@ on:
     branches: [main]
 
 jobs:
-  tests:
+  unit-tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, windows-2019]
+        os: [windows-latest]
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
         architecture: ['x86', 'x64']
         npsupport: ['with npsupport', 'without npsupport']
@@ -20,12 +20,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}
-      - name: install comtypes
-        run: |
-          pip install --upgrade setuptools
-          python setup.py install
-          pip uninstall comtypes -y
-          python test_pip_install.py
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Build and register the OutProc COM server
@@ -43,3 +37,24 @@ jobs:
         run: |
           cd source/CppTestSrv
           ./server.exe /UnregServer
+
+  install-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, windows-2019]
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        architecture: ['x86', 'x64']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+      - name: install comtypes
+        run: |
+          pip install --upgrade setuptools
+          python setup.py install
+          pip uninstall comtypes -y
+          python test_pip_install.py
