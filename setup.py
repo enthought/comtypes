@@ -134,7 +134,6 @@ setup_params = dict(
     author_email="theller@python.net",
     url="https://github.com/enthought/comtypes",
     download_url="https://github.com/enthought/comtypes/releases",
-    license="MIT License",
     package_data={
         "comtypes.test": [
             "TestComServer.idl",
