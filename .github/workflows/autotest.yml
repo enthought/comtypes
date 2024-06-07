@@ -5,7 +5,40 @@ on:
     branches: [main]
 
 jobs:
-  tests:
+  unit-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        architecture: ['x86', 'x64']
+        npsupport: ['with npsupport', 'without npsupport']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Build and register the OutProc COM server
+        run: |
+          cd source/CppTestSrv
+          nmake /f Makefile
+          ./server.exe /RegServer
+      - name: unittest comtypes
+        run: |
+          if ("${{ matrix.npsupport }}" -eq "with npsupport") {
+            pip install numpy
+          }
+          python -m unittest discover -v -s ./comtypes/test -t comtypes\test
+      - name: Unregister the OutProc COM server
+        run: |
+          cd source/CppTestSrv
+          ./server.exe /UnregServer
+
+  install-tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -13,9 +46,9 @@ jobs:
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
         architecture: ['x86', 'x64']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}
@@ -25,6 +58,3 @@ jobs:
           python setup.py install
           pip uninstall comtypes -y
           python test_pip_install.py
-      - name: unittest comtypes
-        run: |
-          python -m unittest discover -v -s ./comtypes/test -t comtypes\test

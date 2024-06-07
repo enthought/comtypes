@@ -393,12 +393,36 @@ class tagVARIANT(Structure):
             ref = value._obj
             self._.c_void_p = addressof(ref)
             self.__keepref = value
-            self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
+            if isinstance(ref, Structure) and hasattr(ref, "_recordinfo_"):
+                guids = ref._recordinfo_
+                from comtypes.typeinfo import GetRecordInfoFromGuids
+
+                ri = GetRecordInfoFromGuids(*guids)
+                self.vt = VT_RECORD | VT_BYREF
+                # Assigning a COM pointer to a structure field does NOT
+                # call AddRef(), have to call it manually:
+                ri.AddRef()
+                self._.pRecInfo = ri
+                self._.pvRecord = cast(value, c_void_p)
+            else:
+                self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         elif isinstance(value, _Pointer):
             ref = value.contents
             self._.c_void_p = addressof(ref)
             self.__keepref = value
-            self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
+            if isinstance(ref, Structure) and hasattr(ref, "_recordinfo_"):
+                guids = ref._recordinfo_
+                from comtypes.typeinfo import GetRecordInfoFromGuids
+
+                ri = GetRecordInfoFromGuids(*guids)
+                self.vt = VT_RECORD | VT_BYREF
+                # Assigning a COM pointer to a structure field does NOT
+                # call AddRef(), have to call it manually:
+                ri.AddRef()
+                self._.pRecInfo = ri
+                self._.pvRecord = cast(value, c_void_p)
+            else:
+                self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         else:
             raise TypeError("Cannot put %r in VARIANT" % value)
         # buffer ->  SAFEARRAY of VT_UI1 ?
