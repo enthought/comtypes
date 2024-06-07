@@ -79,17 +79,6 @@ classifiers = [
 ]
 
 
-def read_version():
-    # Determine the version number by reading it from the file
-    # 'comtypes\__init__.py'.  We cannot import this file (with py3,
-    # at least) because it is in py2.x syntax.
-    for line in open("comtypes/__init__.py"):
-        if line.startswith("__version__ = "):
-            var, value = line.split('=')
-            return value.strip().strip('"').strip("'")
-    raise NotImplementedError("__version__ is not found in __init__.py")
-
-
 class post_install(install):
     # both this static variable and method initialize_options() help to avoid
     # weird setuptools error with "pip install comtypes", details are here:
@@ -157,7 +146,6 @@ setup_params = dict(
         'build_py': build_py,
         'install': post_install,
     },
-    version=read_version(),
     packages=[
         "comtypes",
         "comtypes.client",
