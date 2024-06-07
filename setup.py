@@ -6,7 +6,6 @@ import subprocess
 
 from setuptools import Command, setup
 from setuptools.command.install import install
-from setuptools.command.build_py import build_py
 
 
 class test(Command):
@@ -109,7 +108,6 @@ if __name__ == '__main__':
     dist = setup(
         cmdclass={
             'test': test,
-            'build_py': build_py,
             'install': post_install,
         },
     )
