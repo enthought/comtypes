@@ -68,17 +68,6 @@ class test(Command):
             self.failure = self.failure or package_failure
 
 
-classifiers = [
-    'Development Status :: 5 - Production/Stable',
-    'Intended Audience :: Developers',
-    'License :: OSI Approved :: MIT License',
-    'Operating System :: Microsoft :: Windows',
-    'Programming Language :: Python',
-    'Programming Language :: Python :: 3',
-    'Topic :: Software Development :: Libraries :: Python Modules',
-]
-
-
 class post_install(install):
     # both this static variable and method initialize_options() help to avoid
     # weird setuptools error with "pip install comtypes", details are here:
@@ -116,48 +105,14 @@ class post_install(install):
                 print("Failed to run post install script!")
 
 
-setup_params = dict(
-    name="comtypes",
-    description="Pure Python COM package",
-    author="Thomas Heller",
-    author_email="theller@python.net",
-    url="https://github.com/enthought/comtypes",
-    download_url="https://github.com/enthought/comtypes/releases",
-    package_data={
-        "comtypes.test": [
-            "TestComServer.idl",
-            "TestComServer.tlb",
-            "TestDispServer.idl",
-            "TestDispServer.tlb",
-            "mytypelib.idl",
-            "mylib.idl",
-            "mylib.tlb",
-            "urlhist.tlb",
-            "test_jscript.js",
-        ],
-        "comtypes": ["hints.pyi"],
-    },
-    classifiers=classifiers,
-    entry_points={
-        "console_scripts": ["clear_comtypes_cache=comtypes.clear_cache:main"]
-    },
-    cmdclass={
-        'test': test,
-        'build_py': build_py,
-        'install': post_install,
-    },
-    packages=[
-        "comtypes",
-        "comtypes.client",
-        "comtypes.server",
-        "comtypes.tools",
-        "comtypes.tools.codegenerator",
-        "comtypes.test",
-    ],
-)
-
 if __name__ == '__main__':
-    dist = setup(**setup_params)
+    dist = setup(
+        cmdclass={
+            'test': test,
+            'build_py': build_py,
+            'install': post_install,
+        },
+    )
     # Exit with a failure code if only running the tests and they failed
     if dist.commands == ['test']:
         command = dist.command_obj['test']
