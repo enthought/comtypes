@@ -9,10 +9,6 @@ from setuptools.command.install import install
 from setuptools.command.build_py import build_py
 
 
-with open('README.md') as readme_stream:
-    readme = readme_stream.read()
-
-
 class test(Command):
     # Original version of this class posted
     # by Berthold Hoellmann to distutils-sig@python.org
@@ -134,8 +130,6 @@ class post_install(install):
 setup_params = dict(
     name="comtypes",
     description="Pure Python COM package",
-    long_description=readme,
-    long_description_content_type="text/markdown",
     author="Thomas Heller",
     author_email="theller@python.net",
     url="https://github.com/enthought/comtypes",
