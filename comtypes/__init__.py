@@ -1,5 +1,5 @@
 # comtypes version numbers follow semver (http://semver.org/) and PEP 440
-__version__ = "1.4.3"
+__version__ = "1.4.4"
 
 import atexit
 from ctypes import *
