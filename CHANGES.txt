@@ -1,6 +1,12 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.4
+--------------
+* Stop mentioning the last version supporting Windows CE in ``README.md``. By @forderud.
+* Declare the minimum Python version as 3.7. By @jaraco.
+* Move package configuration to declarative config. By @jaraco.
+
 Release 1.4.3
 --------------
 * Refactor ``test_findgendir``. By @junkmd.
