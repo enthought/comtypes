@@ -1,4 +1,5 @@
 """comtypes package install script"""
+
 import sys
 import os
 import subprocess
@@ -18,14 +19,19 @@ class test(Command):
     description = "run tests"
 
     user_options = [
-        ('tests=', 't',
-         "comma-separated list of packages that contain test modules"),
-        ('use-resources=', 'u',
-         "resources to use - resource names are defined by tests"),
-        ('refcounts', 'r',
-         "repeat tests to search for refcount leaks (requires "
-         "'sys.gettotalrefcount')"),
-        ]
+        ('tests=', 't', "comma-separated list of packages that contain test modules"),
+        (
+            'use-resources=',
+            'u',
+            "resources to use - resource names are defined by tests",
+        ),
+        (
+            'refcounts',
+            'r',
+            "repeat tests to search for refcount leaks (requires "
+            "'sys.gettotalrefcount')",
+        ),
+    ]
 
     boolean_options = ["refcounts"]
 
@@ -49,6 +55,7 @@ class test(Command):
 
         # Register our ATL COM tester dll
         import comtypes.test
+
         script_path = os.path.dirname(__file__)
         source_dir = os.path.abspath(os.path.join(script_path, "source"))
         comtypes.test.register_server(source_dir)
@@ -56,12 +63,12 @@ class test(Command):
         comtypes.test.use_resources.extend(self.use_resources)
         for name in self.tests:
             package = __import__(name, globals(), locals(), ['*'])
-            sys.stdout.write("Testing package %s %s\n"
-                             % (name, (sys.version, sys.platform, os.name)))
-            package_failure = comtypes.test.run_tests(package,
-                                                      "test_*.py",
-                                                      self.verbose,
-                                                      self.refcounts)
+            sys.stdout.write(
+                "Testing package %s %s\n" % (name, (sys.version, sys.platform, os.name))
+            )
+            package_failure = comtypes.test.run_tests(
+                package, "test_*.py", self.verbose, self.refcounts
+            )
             self.failure = self.failure or package_failure
 
 
@@ -73,7 +80,7 @@ classifiers = [
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
     'Topic :: Software Development :: Libraries :: Python Modules',
-    ]
+]
 
 
 def read_version():
@@ -88,7 +95,6 @@ def read_version():
 
 
 class post_install(install):
-
     # both this static variable and method initialize_options() help to avoid
     # weird setuptools error with "pip install comtypes", details are here:
     # https://github.com/enthought/comtypes/issues/155
@@ -96,8 +102,11 @@ class post_install(install):
     # https://github.com/pypa/setuptools/blob/3b90be7bb6323eb44d0f28864509c1d47aa098de/setuptools/command/install.py
     user_options = install.user_options + [
         ('old-and-unmanageable', None, "Try not to use this!"),
-        ('single-version-externally-managed', None,
-         "used by system package builders to create 'flat' eggs"),
+        (
+            'single-version-externally-managed',
+            None,
+            "used by system package builders to create 'flat' eggs",
+        ),
     ]
 
     def initialize_options(self):
@@ -112,7 +121,12 @@ class post_install(install):
             print("Executing post install script...")
             print(f'"{sys.executable}" -m comtypes.clear_cache -y')
             try:
-                subprocess.check_call([sys.executable, "-m", "comtypes.clear_cache", '-y'])
+                subprocess.check_call([
+                    sys.executable,
+                    "-m",
+                    "comtypes.clear_cache",
+                    '-y',
+                ])
             except subprocess.CalledProcessError:
                 print("Failed to run post install script!")
 
@@ -135,25 +149,20 @@ setup_params = dict(
             "TestDispServer.tlb",
             "mytypelib.idl",
             "mylib.idl",
-            "mylib.tlb"
-            "urlhist.tlb",
+            "mylib.tlb" "urlhist.tlb",
             "test_jscript.js",
         ],
-        "comtypes": [
-            "hints.pyi"
-        ]},
+        "comtypes": ["hints.pyi"],
+    },
     classifiers=classifiers,
-
     entry_points={
         "console_scripts": ["clear_comtypes_cache=comtypes.clear_cache:main"]
     },
-
     cmdclass={
         'test': test,
         'build_py': build_py,
         'install': post_install,
     },
-
     version=read_version(),
     packages=[
         "comtypes",
