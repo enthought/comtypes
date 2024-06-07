@@ -12,7 +12,6 @@
 `comtypes` allows to define, call, and implement custom and dispatch-based COM interfaces in pure `Python`.
 
 This package works on Windows only.
-- [`comtypes==1.1.7`](https://pypi.org/project/comtypes/1.1.7/) is the last version supporting Windows CE.
 
 Available on `Python` 3.7-3.12.
 - [`comtypes==1.2.1`](https://pypi.org/project/comtypes/1.2.1/) is the last version supporting `Python` 2.7 and 3.3-3.6.
