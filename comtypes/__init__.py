@@ -52,6 +52,7 @@ from comtypes._memberspec import (
 )
 from comtypes._tlib_version_checker import _check_version  # noqa
 from comtypes._bstr import BSTR  # noqa
+from comtypes._py_instance_method import instancemethod
 
 
 _all_slice = slice(None, None, None)
@@ -71,18 +72,6 @@ logger = logging.getLogger(__name__)
 #    No handlers could be found for logger "comtypes"
 # when logging is not configured and logger.error() is called.
 logger.addHandler(NullHandler())
-
-
-pythonapi.PyInstanceMethod_New.argtypes = [py_object]
-pythonapi.PyInstanceMethod_New.restype = py_object
-PyInstanceMethod_Type = type(pythonapi.PyInstanceMethod_New(id))
-
-
-def instancemethod(func, inst, cls):
-    mth = PyInstanceMethod_Type(func)
-    if inst is None:
-        return mth
-    return mth.__get__(inst)
 
 
 class ReturnHRESULT(Exception):
