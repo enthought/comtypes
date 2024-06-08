@@ -50,7 +50,11 @@ from comtypes._memberspec import (
     _encode_idl,
     _resolve_argspec,
 )
-
+from comtypes._tlib_version_checker import _check_version  # noqa
+from comtypes._bstr import BSTR  # noqa
+from comtypes._py_instance_method import instancemethod
+from comtypes._idl_stuff import defaultvalue, helpstring, dispid  # noqa
+from comtypes._idl_stuff import STDMETHOD, DISPMETHOD, DISPPROPERTY, COMMETHOD  # noqa
 
 _all_slice = slice(None, None, None)
 
@@ -69,34 +73,6 @@ logger = logging.getLogger(__name__)
 #    No handlers could be found for logger "comtypes"
 # when logging is not configured and logger.error() is called.
 logger.addHandler(NullHandler())
-
-
-def _check_version(actual, tlib_cached_mtime=None):
-    from comtypes.tools.codegenerator import version as required
-
-    if actual != required:
-        raise ImportError("Wrong version")
-    if not hasattr(sys, "frozen"):
-        g = sys._getframe(1).f_globals
-        tlb_path = g.get("typelib_path")
-        try:
-            tlib_curr_mtime = os.stat(tlb_path).st_mtime
-        except (OSError, TypeError):
-            return
-        if not tlib_cached_mtime or abs(tlib_curr_mtime - tlib_cached_mtime) >= 1:
-            raise ImportError("Typelib different than module")
-
-
-pythonapi.PyInstanceMethod_New.argtypes = [py_object]
-pythonapi.PyInstanceMethod_New.restype = py_object
-PyInstanceMethod_Type = type(pythonapi.PyInstanceMethod_New(id))
-
-
-def instancemethod(func, inst, cls):
-    mth = PyInstanceMethod_Type(func)
-    if inst is None:
-        return mth
-    return mth.__get__(inst)
 
 
 class ReturnHRESULT(Exception):
@@ -663,108 +639,6 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
             except KeyError:
                 raise TypeError("Interface %s not supported" % cls._iid_)
         return value.QueryInterface(cls.__com_interface__)
-
-
-################################################################
-
-
-class BSTR(_SimpleCData):
-    "The windows BSTR data type"
-    _type_ = "X"
-    _needsfree = False
-
-    def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.value)
-
-    def __ctypes_from_outparam__(self):
-        self._needsfree = True
-        return self.value
-
-    def __del__(self, _free=windll.oleaut32.SysFreeString):
-        # Free the string if self owns the memory
-        # or if instructed by __ctypes_from_outparam__.
-        if self._b_base_ is None or self._needsfree:
-            _free(self)
-
-    @classmethod
-    def from_param(cls, value):
-        """Convert into a foreign function call parameter."""
-        if isinstance(value, cls):
-            return value
-        # Although the builtin SimpleCData.from_param call does the
-        # right thing, it doesn't ensure that SysFreeString is called
-        # on destruction.
-        return cls(value)
-
-
-################################################################
-# IDL stuff
-
-
-class helpstring(str):
-    "Specifies the helpstring for a COM method or property."
-
-
-class defaultvalue(object):
-    "Specifies the default value for parameters marked optional."
-
-    def __init__(self, value):
-        self.value = value
-
-
-class dispid(int):
-    "Specifies the DISPID of a method or property."
-
-
-# XXX STDMETHOD, COMMETHOD, DISPMETHOD, and DISPPROPERTY should return
-# instances with more methods or properties, and should not behave as an unpackable.
-
-
-def STDMETHOD(restype, name, argtypes=()) -> _ComMemberSpec:
-    "Specifies a COM method slot without idlflags"
-    return _ComMemberSpec(restype, name, argtypes, None, (), None)
-
-
-def DISPMETHOD(idlflags, restype, name, *argspec) -> _DispMemberSpec:
-    "Specifies a method of a dispinterface"
-    return _DispMemberSpec("DISPMETHOD", name, tuple(idlflags), restype, argspec)
-
-
-def DISPPROPERTY(idlflags, proptype, name) -> _DispMemberSpec:
-    "Specifies a property of a dispinterface"
-    return _DispMemberSpec("DISPPROPERTY", name, tuple(idlflags), proptype, ())
-
-
-# tuple(idlflags) is for the method itself: (dispid, 'readonly')
-
-# sample generated code:
-#     DISPPROPERTY([5, 'readonly'], OLE_YSIZE_HIMETRIC, 'Height'),
-#     DISPMETHOD(
-#         [6], None, 'Render', ([], c_int, 'hdc'), ([], c_int, 'x'), ([], c_int, 'y')
-#     )
-
-
-def COMMETHOD(idlflags, restype, methodname, *argspec) -> _ComMemberSpec:
-    """Specifies a COM method slot with idlflags.
-
-    XXX should explain the sematics of the arguments.
-    """
-    # collect all helpstring instances
-    # We should suppress docstrings when Python is started with -OO
-    # join them together(does this make sense?) and replace by None if empty.
-    helptext = "".join(t for t in idlflags if isinstance(t, helpstring)) or None
-    paramflags, argtypes = _resolve_argspec(argspec)
-    if "propget" in idlflags:
-        name = "_get_%s" % methodname
-    elif "propput" in idlflags:
-        name = "_set_%s" % methodname
-    elif "propputref" in idlflags:
-        name = "_setref_%s" % methodname
-    else:
-        name = methodname
-    return _ComMemberSpec(
-        restype, name, argtypes, paramflags, tuple(idlflags), helptext
-    )
 
 
 ################################################################
