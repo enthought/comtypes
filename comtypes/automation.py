@@ -20,6 +20,7 @@ from typing import (
 
 from comtypes import BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.hresult import *
+from comtypes._memberspec import _DispMemberSpec
 import comtypes.patcher
 import comtypes
 
@@ -791,7 +792,7 @@ RawInvokeFunc = Callable[
 
 
 class IDispatch(IUnknown):
-    _disp_methods_: ClassVar[List[comtypes._DispMemberSpec]]
+    _disp_methods_: ClassVar[List[_DispMemberSpec]]
     _GetTypeInfo: Callable[[int, int], IUnknown]
     __com_GetIDsOfNames: RawGetIDsOfNamesFunc
     __com_Invoke: RawInvokeFunc
