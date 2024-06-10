@@ -15,8 +15,16 @@ except ImportError as e:
     raise ImportError(msg) from e
 
 import atexit
+
+# HACK: Workaround for projects that depend on this package
+# There should be several projects around the world that depend on this package
+# and indirectly reference the symbols of `ctypes` from `comtypes`.
+# If we remove the wildcard import from `ctypes`, they might break. So it is
+# left in the following line.
+from ctypes import *  # noqa
 from ctypes import HRESULT  # noqa
-from ctypes import c_int, c_ulong, oledll, _SimpleCData, windll
+from ctypes import _Pointer, _SimpleCData  # noqa
+from ctypes import c_int, c_ulong, oledll, windll
 import logging
 import sys
 from typing import TYPE_CHECKING
