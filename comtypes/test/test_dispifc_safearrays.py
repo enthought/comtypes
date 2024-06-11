@@ -38,7 +38,9 @@ class Test_DispMethods(unittest.TestCase):
         # Passing a safearray by reference to a method that has declared the parameter
         # as [in, out] we expect modifications of the safearray on the server side to
         # also change the safearray on the client side.
-        test_array = comtypes.safearray._midlSAFEARRAY(c_double).create([c_double() for i in range(10)])
+        test_array = comtypes.safearray._midlSAFEARRAY(c_double).create(
+            [c_double() for i in range(10)]
+        )
         self.assertEqual(test_array.unpack(), self.ZERO_ARRAY)
         dispifc.InitArray(byref(test_array))
         self.assertEqual(test_array.unpack(), self.EXPECTED_INITED_ARRAY)
@@ -48,7 +50,9 @@ class Test_DispMethods(unittest.TestCase):
         # Passing a safearray pointer to a method that has declared the parameter
         # as [in, out] we expect modifications of the safearray on the server side to
         # also change the safearray on the client side.
-        test_array = comtypes.safearray._midlSAFEARRAY(c_double).create([c_double() for i in range(10)])
+        test_array = comtypes.safearray._midlSAFEARRAY(c_double).create(
+            [c_double() for i in range(10)]
+        )
         self.assertEqual(test_array.unpack(), self.ZERO_ARRAY)
         dispifc.InitArray(pointer(test_array))
         self.assertEqual(test_array.unpack(), self.EXPECTED_INITED_ARRAY)
@@ -61,9 +65,13 @@ class Test_DispMethods(unittest.TestCase):
         # the server side. For this, the 'VerifyArray' method returns 'True' if
         # the safearray items have values equal to the initialization values
         # provided by 'InitArray'.
-        inited_array = comtypes.safearray._midlSAFEARRAY(c_double).create([c_double(i) for i in range(10)])
+        inited_array = comtypes.safearray._midlSAFEARRAY(c_double).create(
+            [c_double(i) for i in range(10)]
+        )
         # Also perform the inverted test. For this, create a safearray with zeros.
-        zero_array = comtypes.safearray._midlSAFEARRAY(c_double).create([c_double() for i in range(10)])
+        zero_array = comtypes.safearray._midlSAFEARRAY(c_double).create(
+            [c_double() for i in range(10)]
+        )
         for sa, expected, array_content in [
             (inited_array, True, self.EXPECTED_INITED_ARRAY),
             (zero_array, False, self.ZERO_ARRAY),
