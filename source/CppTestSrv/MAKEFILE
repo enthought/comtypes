@@ -48,6 +48,10 @@ CoComtypesDispRecordParamTest.obj : CoComtypesDispRecordParamTest.cpp \
 		CoComtypesDispRecordParamTest.h iface.h registry.h CUnknown.h
 	cl $(CPP_FLAGS) CoComtypesDispRecordParamTest.cpp
 
+CoComtypesDispSafearrayParamTest.obj : CoComtypesDispSafearrayParamTest.cpp \
+		CoComtypesDispSafearrayParamTest.h iface.h registry.h CUnknown.h
+	cl $(CPP_FLAGS) CoComtypesDispSafearrayParamTest.cpp
+
 #
 # Helper classes
 #
@@ -76,6 +80,7 @@ outproc.obj : outproc.cpp CFactory.h CUnknown.h
 
 SERVER_OBJS = Server.obj     \
               CoComtypesDispRecordParamTest.obj      \
+              CoComtypesDispSafearrayParamTest.obj      \
               Registry.obj   \
               Cfactory.obj   \
               Cunknown.obj   \

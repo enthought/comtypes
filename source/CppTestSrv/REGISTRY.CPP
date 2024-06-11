@@ -152,7 +152,8 @@ HRESULT RegisterServer(HMODULE hModule,        // DLL module handle
 //
 LONG UnregisterServer(const CLSID& clsid,         // Class ID
                       LPCWSTR szVerIndProgID, // Programmatic
-                      LPCWSTR szProgID)       //   IDs
+                      LPCWSTR szProgID,       //   IDs
+					  const GUID* libid)      // Library ID
 {
 	// Convert the CLSID into a char.
 	wchar_t szCLSID[GUID_STRING_SIZE] ;
@@ -190,12 +191,15 @@ LONG UnregisterServer(const CLSID& clsid,         // Class ID
 		       (lResult == ERROR_FILE_NOT_FOUND)) ; // Subkey may not exist.
 	}
 
-	// Unregister the Type Library.
-	HRESULT hr = UnRegisterTypeLib(LIBID_ComtypesCppTestSrvLib, 
-									1, 0, // Major/Minor version numbers
-									0x00, 
-									SYS_WIN64) ;
-	assert(hr == S_OK) ;
+	// Unregister the Type Library if it's still registered.
+	if (libid != NULL)
+	{
+		HRESULT hr = UnRegisterTypeLib(*libid,
+										1, 0, // Major/Minor version numbers
+										0x00,
+										SYS_WIN64) ;
+		assert(hr == S_OK) ;
+	}
 
 	return S_OK ;
 }
