@@ -20,7 +20,6 @@ from typing import (
 
 from comtypes import BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.hresult import *
-from comtypes._memberspec import _DispMemberSpec
 import comtypes.patcher
 import comtypes
 
@@ -405,6 +404,9 @@ class tagVARIANT(Structure):
                 ri.AddRef()
                 self._.pRecInfo = ri
                 self._.pvRecord = cast(value, c_void_p)
+            elif isinstance(ref, _Pointer) and isinstance(ref.contents, _safearray.tagSAFEARRAY):
+                self.vt = VT_ARRAY | ref._vartype_ | VT_BYREF
+                self._.pparray = cast(value, POINTER(POINTER(_safearray.tagSAFEARRAY)))
             else:
                 self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         elif isinstance(value, _Pointer):
@@ -422,6 +424,13 @@ class tagVARIANT(Structure):
                 ri.AddRef()
                 self._.pRecInfo = ri
                 self._.pvRecord = cast(value, c_void_p)
+            elif isinstance(ref, _safearray.tagSAFEARRAY):
+                obj = _midlSAFEARRAY(value._itemtype_).create(value.unpack())
+                memmove(byref(self._), byref(obj), sizeof(obj))
+                self.vt = VT_ARRAY | obj._vartype_
+            elif isinstance(ref, _Pointer) and isinstance(ref.contents, _safearray.tagSAFEARRAY):
+                self.vt = VT_ARRAY | ref._vartype_ | VT_BYREF
+                self._.pparray = cast(value, POINTER(POINTER(_safearray.tagSAFEARRAY)))
             else:
                 self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         else:
@@ -792,7 +801,7 @@ RawInvokeFunc = Callable[
 
 
 class IDispatch(IUnknown):
-    _disp_methods_: ClassVar[List[_DispMemberSpec]]
+    _disp_methods_: ClassVar[List[comtypes._DispMemberSpec]]
     _GetTypeInfo: Callable[[int, int], IUnknown]
     __com_GetIDsOfNames: RawGetIDsOfNamesFunc
     __com_Invoke: RawInvokeFunc
