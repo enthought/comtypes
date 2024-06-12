@@ -16,7 +16,8 @@ import os
 import queue
 import sys
 
-from comtypes import COMError, ReturnHRESULT, instancemethod, _encode_idl
+from comtypes import COMError, ReturnHRESULT, instancemethod
+from comtypes._memberspec import _encode_idl
 from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
 from comtypes import IPersist
 from comtypes.hresult import (
