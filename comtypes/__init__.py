@@ -38,7 +38,6 @@ else:
 from comtypes.GUID import GUID
 from comtypes import patcher  # noqa
 from comtypes._npsupport import interop as npsupport  # noqa
-from comtypes._memberspec import _encode_idl  # noqa
 from comtypes._tlib_version_checker import _check_version  # noqa
 from comtypes._bstr import BSTR  # noqa
 from comtypes._py_instance_method import instancemethod  # noqa
