@@ -187,13 +187,13 @@ from comtypes._post_coinit.bstr import BSTR  # noqa
 ################################################################
 # IPersist is a trivial interface, which allows to ask an object about
 # its clsid.
-from comtypes._base import IPersist, IServiceProvider  # noqa
+from comtypes._post_coinit.misc import IPersist, IServiceProvider  # noqa
 
 
 ################################################################
 
 
-from comtypes._base import (  # noqa
+from comtypes._post_coinit.misc import (  # noqa
     _is_object,
     CoGetObject,
     CoCreateInstance,
