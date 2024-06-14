@@ -39,7 +39,6 @@ from comtypes.GUID import GUID
 from comtypes import patcher  # noqa
 from comtypes._npsupport import interop as npsupport  # noqa
 from comtypes._tlib_version_checker import _check_version  # noqa
-from comtypes._bstr import BSTR  # noqa
 from comtypes._py_instance_method import instancemethod  # noqa
 from comtypes._idl_stuff import defaultvalue, helpstring, dispid  # noqa
 from comtypes._idl_stuff import STDMETHOD, DISPMETHOD, DISPPROPERTY, COMMETHOD  # noqa
@@ -179,6 +178,10 @@ from comtypes._post_coinit import _shutdown
 from comtypes._post_coinit.unknwn import IUnknown  # noqa
 
 atexit.register(_shutdown)
+
+################################################################
+
+from comtypes._post_coinit.bstr import BSTR  # noqa
 
 
 ################################################################
