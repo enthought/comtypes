@@ -30,7 +30,7 @@ jobs:
       - name: unittest comtypes
         run: |
           if ("${{ matrix.npsupport }}" -eq "with npsupport") {
-            pip install numpy
+            pip install 'numpy<2'
           }
           python -m unittest discover -v -s ./comtypes/test -t comtypes\test
       - name: Unregister the OutProc COM server
