@@ -59,13 +59,13 @@ library ComtypesCppTestSrvLib
 	// TLib : OLE Automation : {00020430-0000-0000-C000-000000000046}
 	importlib("stdole2.tlb") ;
 
-	// CoComtypesDispIfcParamTests
-	// Component that implements interfaces used for dispinterface parameter tests.
+	// CoComtypesDispRecordParamTest
+	// Component that implements interfaces used for dispinterface record parameter tests.
 	[
-		uuid(06571915-2431-4CA3-9C01-53002B060DAB),
-		helpstring("Comtypes component for dispinterface parameter tests.")
+		uuid(5E78C9A8-4C19-4285-BCD6-3FFBBA5B17A8),
+		helpstring("Comtypes component for dispinterface record parameter tests.")
 	]
-	coclass CoComtypesDispIfcParamTests
+	coclass CoComtypesDispRecordParamTest
 	{
 		interface IDualRecordParamTest ;
 		dispinterface IDispRecordParamTest ;

@@ -8,7 +8,7 @@
 
 #include "CFactory.h"
 #include "Iface.h"
-#include "CoComtypesDispIfcParamTests.h"
+#include "CoComtypesDispRecordParamTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -35,10 +35,10 @@
 //
 CFactoryData g_FactoryDataArray[] =
 {
-	{&CLSID_CoComtypesDispIfcParamTests, CA::CreateInstance, 
-		L"Comtypes component for dispinterface parameter tests",	// Friendly Name
-		L"Comtypes.DispIfcParamTests.1",									// ProgID
-		L"Comtypes.DispIfcParamTests",										// Version-independent ProgID
+	{&CLSID_CoComtypesDispRecordParamTest, CA::CreateInstance, 
+		L"Comtypes component for dispinterface record parameter tests",	// Friendly Name
+		L"Comtypes.DispRecordParamTest.1",									// ProgID
+		L"Comtypes.DispRecordParamTest",										// Version-independent ProgID
 		&LIBID_ComtypesCppTestSrvLib,												// Type Library ID
 		NULL, 0}
 } ;
