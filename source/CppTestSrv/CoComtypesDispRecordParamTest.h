@@ -7,7 +7,7 @@
 */
 
 //
-// CoComtypesDispIfcParamTests.cpp - Component
+// CoComtypesDispRecordParamTest.cpp - Component
 //
 
 #include "Iface.h"

@@ -7,7 +7,7 @@
 */
 
 //
-// CoComtypesDispIfcParamTests.cpp - Component
+// CoComtypesDispRecordParamTest.cpp - Component
 //
 #include <objbase.h>
 #include <string.h>
@@ -18,7 +18,7 @@
 #include "Util.h"
 #include "CUnknown.h"
 #include "CFactory.h" // Needed for module handle
-#include "CoComtypesDispIfcParamTests.h"
+#include "CoComtypesDispRecordParamTest.h"
 
 // We need to put this declaration here because we explicitely expose a dispinterface
 // in parallel to the dual interface but dispinterfaces don't appear in the
@@ -26,9 +26,9 @@
 EXTERN_C const IID DIID_IDispRecordParamTest;
 
 static inline void trace(const char* msg)
-	{ Util::Trace("Component", msg, S_OK) ;}
+	{ Util::Trace("CoComtypesDispRecordParamTest", msg, S_OK) ;}
 static inline void trace(const char* msg, HRESULT hr)
-	{ Util::Trace("Component", msg, hr) ;}
+	{ Util::Trace("CoComtypesDispRecordParamTest", msg, hr) ;}
 
 ///////////////////////////////////////////////////////////
 //
