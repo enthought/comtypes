@@ -405,6 +405,11 @@ class tagVARIANT(Structure):
                 ri.AddRef()
                 self._.pRecInfo = ri
                 self._.pvRecord = cast(value, c_void_p)
+            elif isinstance(ref, _Pointer) and isinstance(
+                ref.contents, _safearray.tagSAFEARRAY
+            ):
+                self.vt = VT_ARRAY | ref._vartype_ | VT_BYREF
+                self._.pparray = cast(value, POINTER(POINTER(_safearray.tagSAFEARRAY)))
             else:
                 self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         elif isinstance(value, _Pointer):
@@ -422,6 +427,15 @@ class tagVARIANT(Structure):
                 ri.AddRef()
                 self._.pRecInfo = ri
                 self._.pvRecord = cast(value, c_void_p)
+            elif isinstance(ref, _safearray.tagSAFEARRAY):
+                obj = _midlSAFEARRAY(value._itemtype_).create(value.unpack())
+                memmove(byref(self._), byref(obj), sizeof(obj))
+                self.vt = VT_ARRAY | obj._vartype_
+            elif isinstance(ref, _Pointer) and isinstance(
+                ref.contents, _safearray.tagSAFEARRAY
+            ):
+                self.vt = VT_ARRAY | ref._vartype_ | VT_BYREF
+                self._.pparray = cast(value, POINTER(POINTER(_safearray.tagSAFEARRAY)))
             else:
                 self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         else:
