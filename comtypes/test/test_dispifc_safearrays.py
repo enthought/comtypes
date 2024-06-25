@@ -1,11 +1,12 @@
 # coding: utf-8
 
+from ctypes import byref, c_double, pointer
 import unittest
-import comtypes
 
+import comtypes
+import comtypes.safearray
 from comtypes import CLSCTX_LOCAL_SERVER
 from comtypes.client import CreateObject, GetModule
-from ctypes import byref, pointer, c_double
 
 ComtypesCppTestSrvLib_GUID = "{07D2AEE5-1DF8-4D2C-953A-554ADFD25F99}"
 
@@ -33,12 +34,12 @@ class Test_DispMethods(unittest.TestCase):
             interface=ComtypesCppTestSrvLib.IDispSafearrayParamTest,
         )
 
-    def _create_zero_array(self) -> comtypes.safearray._midlSAFEARRAY:
+    def _create_zero_array(self):
         return comtypes.safearray._midlSAFEARRAY(c_double).create(
             [c_double() for _ in range(10)]
         )
 
-    def _create_consecutive_array(self) -> comtypes.safearray._midlSAFEARRAY:
+    def _create_consecutive_array(self):
         return comtypes.safearray._midlSAFEARRAY(c_double).create(
             [c_double(i) for i in range(10)]
         )
@@ -60,7 +61,7 @@ class Test_DispMethods(unittest.TestCase):
         # also change the safearray on the client side.
         test_array = self._create_zero_array()
         self.assertEqual(test_array.unpack(), self.UNPACKED_ZERO_VALS)
-        dispifc.InitArray(byref(test_array))
+        dispifc.InitArray(pointer(test_array))
         self.assertEqual(test_array.unpack(), self.UNPACKED_CONSECUTIVE_VALS)
 
     def test_in_safearray(self):
