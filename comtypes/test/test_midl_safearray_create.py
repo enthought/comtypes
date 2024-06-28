@@ -5,21 +5,19 @@ import unittest
 
 import comtypes
 import comtypes.safearray
-from comtypes import CLSCTX_INPROC_SERVER
+from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
 from comtypes.client import CreateObject, GetModule
 import comtypes.typeinfo
 
 GetModule("UIAutomationCore.dll")
 from comtypes.gen.UIAutomationClient import CUIAutomation, IUIAutomation
 
-GetModule("scrrun.dll")
-from comtypes.gen.Scripting import Dictionary, IDictionary
-
 ComtypesCppTestSrvLib_GUID = "{07D2AEE5-1DF8-4D2C-953A-554ADFD25F99}"
 
 try:
     GetModule((ComtypesCppTestSrvLib_GUID, 1, 0, 0))
     from comtypes.gen.ComtypesCppTestSrvLib import StructRecordParamTest
+    from comtypes.gen.ComtypesCppTestSrvLib import IDispSafearrayParamTest
 
     IMPORT_FAILED = False
 except (ImportError, OSError):
@@ -43,19 +41,22 @@ class Test_midlSAFEARRAY_create(unittest.TestCase):
                 (unpacked,) = sa.unpack()
                 self.assertIsInstance(unpacked, POINTER(IUIAutomation))
 
+    @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
     def test_idisp(self):
-        extra = pointer(IDictionary._iid_)
-        idic = CreateObject(Dictionary, interface=IDictionary)
-        idic["foo"] = "bar"
-        sa_type = comtypes.safearray._midlSAFEARRAY(POINTER(IDictionary))
+        extra = pointer(IDispSafearrayParamTest._iid_)
+        idisp = CreateObject(
+            "Comtypes.DispSafearrayParamTest",
+            clsctx=CLSCTX_LOCAL_SERVER,
+            interface=IDispSafearrayParamTest,
+        )
+        sa_type = comtypes.safearray._midlSAFEARRAY(POINTER(IDispSafearrayParamTest))
         for ptn, sa in [
-            ("with extra", sa_type.create([idic], extra=extra)),
-            ("without extra", sa_type.create([idic])),
+            ("with extra", sa_type.create([idisp], extra=extra)),
+            ("without extra", sa_type.create([idisp])),
         ]:
             with self.subTest(ptn=ptn):
                 (unpacked,) = sa.unpack()
-                self.assertIsInstance(unpacked, POINTER(IDictionary))
-                self.assertEqual(unpacked["foo"], "bar")
+                self.assertIsInstance(unpacked, POINTER(IDispSafearrayParamTest))
 
     @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
     def test_record(self):
