@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from ctypes import byref, c_int, pointer, POINTER
+from ctypes import c_int, pointer, POINTER
 import unittest
 
 import comtypes
@@ -64,7 +64,9 @@ class Test_midlSAFEARRAY_create(unittest.TestCase):
             *StructRecordParamTest._recordinfo_
         )
         record = StructRecordParamTest()
+        record.question = "The meaning of life, the universe and everything?"
         record.answer = 42
+        record.needs_clarification = True
         sa_type = comtypes.safearray._midlSAFEARRAY(StructRecordParamTest)
         for ptn, sa in [
             ("with extra", sa_type.create([record], extra=extra)),
@@ -73,7 +75,12 @@ class Test_midlSAFEARRAY_create(unittest.TestCase):
             with self.subTest(ptn=ptn):
                 (unpacked,) = sa.unpack()
                 self.assertIsInstance(unpacked, StructRecordParamTest)
+                self.assertEqual(
+                    unpacked.question,
+                    "The meaning of life, the universe and everything?",
+                )
                 self.assertEqual(unpacked.answer, 42)
+                self.assertEqual(unpacked.needs_clarification, True)
 
     def test_ctype(self):
         extra = None
