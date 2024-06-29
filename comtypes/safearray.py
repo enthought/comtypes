@@ -109,7 +109,7 @@ def _make_safearray_type(itemtype):
         _needsfree = False
 
         @classmethod
-        def create(cls, value, extra=None):
+        def create(cls, value, extra=extra):
             """Create a POINTER(SAFEARRAY_...) instance of the correct
             type; value is an object containing the items to store.
 

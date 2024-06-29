@@ -7,6 +7,8 @@
 
 import "oaidl.idl" ;
 
+// Simple structure used for tests related to IRecordInfo or GetRecordInfoFromGuids functionality.
+// If a new test would require other fields do NOT modify this structure but add a new structure instead.
 typedef [uuid(00FABB0F-5691-41A6-B7C1-11606671F8E5)]
 struct StructRecordParamTest {
 	BSTR question ;
