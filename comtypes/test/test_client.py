@@ -117,6 +117,11 @@ class Test_KnownSymbols(ut.TestCase):
 
         self._doit(comtypes)
 
+    def test_symbols_in_comtypes_objidl(self):
+        import comtypes.objidl
+
+        self._doit(comtypes.objidl)
+
     def test_symbols_in_comtypes_automation(self):
         import comtypes.automation
 
