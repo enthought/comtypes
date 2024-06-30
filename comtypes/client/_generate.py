@@ -272,6 +272,7 @@ def _get_known_namespaces() -> Tuple[
         "comtypes.persist",
         "comtypes.typeinfo",
         "comtypes.automation",
+        "comtypes.objidl",
         "comtypes",
         "ctypes.wintypes",
         "ctypes",
