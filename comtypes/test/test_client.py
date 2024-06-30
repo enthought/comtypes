@@ -71,6 +71,12 @@ class Test_GetModule(ut.TestCase):
         # the `_Pointer` interface, rather than importing `_Pointer` from `ctypes`.
         self.assertTrue(issubclass(mod._Pointer, comtypes.IUnknown))
 
+    def test_portabledeviceapi(self):
+        mod = comtypes.client.GetModule("portabledeviceapi.dll")
+        from comtypes.objidl import ISequentialStream
+
+        self.assertTrue(issubclass(mod.IStream, ISequentialStream))
+
     def test_no_replacing_Patch_namespace(self):
         # NOTE: An object named `Patch` is defined in some dll.
         # Depending on how the namespace is defined in the static module,
