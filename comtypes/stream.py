@@ -11,6 +11,11 @@ class ISequentialStream(IUnknown):
     _idlflags_ = []
 
     _methods_ = [
+        # Note that these functions are called `Read` and `Write` in Microsoft's documentation,
+        # see https://learn.microsoft.com/en-us/windows/win32/api/objidl/nn-objidl-isequentialstream.
+        # However, the comtypes code generation detects these as `RemoteRead` and `RemoteWrite` 
+        # for very subtle reasons, see e.g. https://stackoverflow.com/q/19820999/. We will not
+        # rename these in this manual import for the sake of consistency.
         COMMETHOD(
             [],
             HRESULT,
@@ -41,6 +46,7 @@ class ISequentialStream(IUnknown):
         pv = (c_ubyte * cb)()
         pcb_read = pointer(c_ulong(0))
         self.__com_RemoteRead(pv, c_ulong(cb), pcb_read)  # type: ignore
+        # return both `out` parameters
         return pv, pcb_read.contents.value
 
     if TYPE_CHECKING:
