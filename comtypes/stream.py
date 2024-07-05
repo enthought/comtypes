@@ -13,7 +13,7 @@ class ISequentialStream(IUnknown):
     _methods_ = [
         # Note that these functions are called `Read` and `Write` in Microsoft's documentation,
         # see https://learn.microsoft.com/en-us/windows/win32/api/objidl/nn-objidl-isequentialstream.
-        # However, the comtypes code generation detects these as `RemoteRead` and `RemoteWrite` 
+        # However, the comtypes code generation detects these as `RemoteRead` and `RemoteWrite`
         # for very subtle reasons, see e.g. https://stackoverflow.com/q/19820999/. We will not
         # rename these in this manual import for the sake of consistency.
         COMMETHOD(

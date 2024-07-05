@@ -73,7 +73,7 @@ class Test_GetModule(ut.TestCase):
 
     def test_portabledeviceapi(self):
         mod = comtypes.client.GetModule("portabledeviceapi.dll")
-        from comtypes.objidl import ISequentialStream
+        from comtypes.stream import ISequentialStream
 
         self.assertTrue(issubclass(mod.IStream, ISequentialStream))
 
@@ -123,10 +123,10 @@ class Test_KnownSymbols(ut.TestCase):
 
         self._doit(comtypes)
 
-    def test_symbols_in_comtypes_objidl(self):
-        import comtypes.objidl
+    def test_symbols_in_comtypes_stream(self):
+        import comtypes.stream
 
-        self._doit(comtypes.objidl)
+        self._doit(comtypes.stream)
 
     def test_symbols_in_comtypes_automation(self):
         import comtypes.automation
