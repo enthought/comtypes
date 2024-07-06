@@ -21,8 +21,8 @@ class Test(ut.TestCase):
         #     import comtypes.gen._565783C6_CB41_11D1_8B02_00600806D9B6_0_1_1 as mod
         #   WinXP:
         #     import comtypes.gen._565783C6_CB41_11D1_8B02_00600806D9B6_0_1_2 as mod
-        # So, the one that's referenced onm WbemScripting will be used, whether the actual
-        # typelib is available or not.  XXX
+        # So, the one that's referenced onm WbemScripting will be used, whether the
+        # actual typelib is available or not.  XXX
         from comtypes.gen import WbemScripting
 
         WbemScripting.wbemPrivilegeCreateToken
