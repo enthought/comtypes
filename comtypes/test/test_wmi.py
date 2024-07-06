@@ -1,17 +1,10 @@
-import sys
 import unittest as ut
-from ctypes import POINTER
+
 from comtypes.client import CoGetObject
 from comtypes.test import requires
 
 requires("time")
 
-if sys.version_info >= (3, 0):
-    base_text_type = str
-    text_type = str
-else:
-    base_text_type = basestring
-    text_type = unicode
 
 # WMI has dual interfaces.
 # Some methods/properties have "[out] POINTER(VARIANT)" parameters.
@@ -42,20 +35,18 @@ class Test(ut.TestCase):
             c = item.Properties_("Caption").Value
             self.assertEqual(a, b)
             self.assertEqual(a, c)
-            self.assertTrue(isinstance(a, base_text_type))
-            self.assertTrue(isinstance(b, base_text_type))
-            self.assertTrue(isinstance(c, base_text_type))
+            self.assertTrue(isinstance(a, str))
+            self.assertTrue(isinstance(b, str))
+            self.assertTrue(isinstance(c, str))
             result = {}
             for prop in item.Properties_:
-                self.assertTrue(isinstance(prop.Name, base_text_type))
+                self.assertTrue(isinstance(prop.Name, str))
                 prop.Value
                 result[prop.Name] = prop.Value
                 # print "\t", (prop.Name, prop.Value)
             self.assertEqual(len(item.Properties_), item.Properties_.Count)
             self.assertEqual(len(item.Properties_), len(result))
-            self.assertTrue(
-                isinstance(item.Properties_["Description"].Value, text_type)
-            )
+            self.assertTrue(isinstance(item.Properties_["Description"].Value, str))
         # len(obj) is forwared to obj.Count
         self.assertEqual(len(disks), disks.Count)
 
