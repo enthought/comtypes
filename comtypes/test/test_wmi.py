@@ -12,7 +12,7 @@ requires("time")
 # that's what VARIANT.__ctypes_from_outparam__ does.
 class Test(ut.TestCase):
     def test_wmi(self):
-        wmi = CoGetObject("winmgmts:")
+        wmi: "WbemScripting.ISWbemServices" = CoGetObject("winmgmts:")
         disks = wmi.InstancesOf("Win32_LogicalDisk")
 
         # There are different typelibs installed for WMI on win2k and winXP.
@@ -30,6 +30,7 @@ class Test(ut.TestCase):
         for item in disks:
             # obj[index] is forwarded to obj.Item(index)
             # .Value is a property with "[out] POINTER(VARIANT)" parameter.
+            item: "WbemScripting.ISWbemObject"
             a = item.Properties_["Caption"].Value
             b = item.Properties_.Item("Caption").Value
             c = item.Properties_("Caption").Value
@@ -40,6 +41,7 @@ class Test(ut.TestCase):
             self.assertTrue(isinstance(c, str))
             result = {}
             for prop in item.Properties_:
+                prop: "WbemScripting.ISWbemProperty"
                 self.assertTrue(isinstance(prop.Name, str))
                 prop.Value
                 result[prop.Name] = prop.Value
