@@ -1,14 +1,17 @@
 # This stub contains...
 # - symbols those what might occur recursive imports in runtime.
 # - utilities for type hints.
+import ctypes
 import sys
 from typing import (
     Any,
     Callable,
+    ClassVar,
     Generic,
     Iterator,
     List,
     NoReturn,
+    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -40,6 +43,7 @@ import comtypes
 from comtypes.automation import IDispatch as IDispatch, VARIANT as VARIANT
 from comtypes.server import IClassFactory as IClassFactory
 from comtypes.typeinfo import ITypeInfo as ITypeInfo
+from comtypes._safearray import tagSAFEARRAY as tagSAFEARRAY
 
 Incomplete: TypeAlias = Any
 """The type symbol is used temporarily until the COM library parsers or
@@ -50,6 +54,18 @@ Hresult: TypeAlias = int
 """The value returned when calling a method with no `[out]` or `[out, retval]`
 arguments and with `HRESULT` as its return type in its COM method definition.
 """
+
+_CT = TypeVar("_CT", bound=ctypes._CData)
+
+class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
+    contents: tagSAFEARRAY
+    _itemtype_: ClassVar[_CT]  # type: ignore
+    _vartype_: ClassVar[int]
+    _needsfree: ClassVar[bool]
+
+    @classmethod
+    def create(cls, value: Sequence[_CT], extra: Any = ...) -> LP_SAFEARRAY[_CT]: ...
+    def unpack(self) -> Sequence[Any]: ...
 
 _T_coclass = TypeVar("_T_coclass", bound=comtypes.CoClass)
 
