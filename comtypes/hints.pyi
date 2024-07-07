@@ -40,6 +40,7 @@ else:
     from typing_extensions import Self
 
 import comtypes
+from comtypes import IUnknown as IUnknown, GUID as GUID
 from comtypes.automation import IDispatch as IDispatch, VARIANT as VARIANT
 from comtypes.server import IClassFactory as IClassFactory
 from comtypes.typeinfo import ITypeInfo as ITypeInfo
@@ -56,6 +57,7 @@ arguments and with `HRESULT` as its return type in its COM method definition.
 """
 
 _CT = TypeVar("_CT", bound=ctypes._CData)
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
 class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
     contents: tagSAFEARRAY
@@ -63,8 +65,21 @@ class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
     _vartype_: ClassVar[int]
     _needsfree: ClassVar[bool]
 
+    @overload
+    @classmethod
+    def create(
+        cls: Type[LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]]],
+        value: Sequence[_T_IUnknown],
+        extra: ctypes._Pointer[GUID] = ...,
+    ) -> LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]]: ...
+    @overload
     @classmethod
     def create(cls, value: Sequence[_CT], extra: Any = ...) -> LP_SAFEARRAY[_CT]: ...
+    @overload
+    def unpack(
+        self: LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]],
+    ) -> Sequence[_T_IUnknown]: ...
+    @overload
     def unpack(self) -> Sequence[Any]: ...
 
 _T_coclass = TypeVar("_T_coclass", bound=comtypes.CoClass)
