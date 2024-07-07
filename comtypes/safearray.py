@@ -101,7 +101,7 @@ def _make_safearray_type(itemtype):
         else:
             raise TypeError(itemtype)
 
-    @Patch(POINTER(sa_type))
+    @Patch(POINTER(sa_type))  # type: ignore
     class _(object):
         # Should explain the ideas how SAFEARRAY is used in comtypes
         _itemtype_ = itemtype  # a ctypes type
@@ -362,7 +362,7 @@ def _make_safearray_type(itemtype):
             indices[dim] = restore
             return tuple(result)  # for compatibility with pywin32.
 
-    @Patch(POINTER(POINTER(sa_type)))
+    @Patch(POINTER(POINTER(sa_type)))  # type: ignore
     class __(object):
         @classmethod
         def from_param(cls, value):
