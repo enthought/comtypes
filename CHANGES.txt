@@ -1,6 +1,18 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.5
+--------------
+* Split ``__init__.py`` into some modules. By @junkmd.
+* Fix importing ``_DispMemberSpec`` in ``automation``. By @junkmd.
+* Fix importing ``_encode_idl`` in ``_comobject``. By @junkmd.
+* Change the name of the component that implements the interface for record parameter testing. By @geppi.
+* Implement ``SAFEARRAY`` pointers and ``SAFEARRAY``s as method parameters of a Dispatch Interface. By @geppi.
+* Change the default value of the ``extra`` parameter in the ``create`` method of ``tagSAFEARRAY`` subtypes. By @geppi.
+* Implement static import for ``ISequentialStream``. By jonschz.
+* Modernize ``test_wmi``. By @junkmd.
+* Add static typing for ``_midlSAFEARRAY``. By @junkmd.
+
 Release 1.4.4
 --------------
 * Stop mentioning the last version supporting Windows CE in ``README.md``. By @forderud.
