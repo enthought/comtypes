@@ -26,13 +26,14 @@ import comtypes
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
-
-try:
     from comtypes import _safearray
-except (ImportError, AttributeError):
+else:
+    try:
+        from comtypes import _safearray
+    except (ImportError, AttributeError):
 
-    class _safearray(object):
-        tagSAFEARRAY = None
+        class _safearray(object):
+            tagSAFEARRAY = None
 
 
 LCID = DWORD

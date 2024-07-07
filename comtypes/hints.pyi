@@ -1,14 +1,17 @@
 # This stub contains...
 # - symbols those what might occur recursive imports in runtime.
 # - utilities for type hints.
+import ctypes
 import sys
 from typing import (
     Any,
     Callable,
+    ClassVar,
     Generic,
     Iterator,
     List,
     NoReturn,
+    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -37,9 +40,11 @@ else:
     from typing_extensions import Self
 
 import comtypes
+from comtypes import IUnknown as IUnknown, GUID as GUID
 from comtypes.automation import IDispatch as IDispatch, VARIANT as VARIANT
 from comtypes.server import IClassFactory as IClassFactory
 from comtypes.typeinfo import ITypeInfo as ITypeInfo
+from comtypes._safearray import tagSAFEARRAY as tagSAFEARRAY
 
 Incomplete: TypeAlias = Any
 """The type symbol is used temporarily until the COM library parsers or
@@ -50,6 +55,35 @@ Hresult: TypeAlias = int
 """The value returned when calling a method with no `[out]` or `[out, retval]`
 arguments and with `HRESULT` as its return type in its COM method definition.
 """
+
+_CT = TypeVar("_CT", bound=ctypes._CData)
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
+_T_Struct = TypeVar("_T_Struct", bound=ctypes.Structure)
+
+class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
+    contents: tagSAFEARRAY
+    _itemtype_: ClassVar[_CT]  # type: ignore
+    _vartype_: ClassVar[int]
+    _needsfree: ClassVar[bool]
+
+    @overload
+    @classmethod
+    def create(
+        cls: Type[LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]]],
+        value: Sequence[_T_IUnknown],
+        extra: ctypes._Pointer[GUID] = ...,
+    ) -> LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]]: ...
+    @overload
+    @classmethod
+    def create(cls, value: Sequence[_CT], extra: Any = ...) -> LP_SAFEARRAY[_CT]: ...
+    @overload
+    def unpack(
+        self: LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]],
+    ) -> Sequence[_T_IUnknown]: ...
+    @overload
+    def unpack(self: LP_SAFEARRAY[_T_Struct]) -> Sequence[_T_Struct]: ...
+    @overload
+    def unpack(self) -> Sequence[Any]: ...
 
 _T_coclass = TypeVar("_T_coclass", bound=comtypes.CoClass)
 
