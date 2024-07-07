@@ -58,6 +58,7 @@ arguments and with `HRESULT` as its return type in its COM method definition.
 
 _CT = TypeVar("_CT", bound=ctypes._CData)
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
+_T_Struct = TypeVar("_T_Struct", bound=ctypes.Structure)
 
 class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
     contents: tagSAFEARRAY
@@ -79,6 +80,8 @@ class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
     def unpack(
         self: LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]],
     ) -> Sequence[_T_IUnknown]: ...
+    @overload
+    def unpack(self: LP_SAFEARRAY[_T_Struct]) -> Sequence[_T_Struct]: ...
     @overload
     def unpack(self) -> Sequence[Any]: ...
 
