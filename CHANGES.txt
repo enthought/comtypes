@@ -9,7 +9,7 @@ Release 1.4.5
 * Change the name of the component that implements the interface for record parameter testing. By @geppi.
 * Implement ``SAFEARRAY`` pointers and ``SAFEARRAY``s as method parameters of a Dispatch Interface. By @geppi.
 * Change the default value of the ``extra`` parameter in the ``create`` method of ``tagSAFEARRAY`` subtypes. By @geppi.
-* Implement static import for ``ISequentialStream``. By jonschz.
+* Implement static import for ``ISequentialStream``. By @jonschz.
 * Modernize ``test_wmi``. By @junkmd.
 * Add static typing for ``_midlSAFEARRAY``. By @junkmd.
 
