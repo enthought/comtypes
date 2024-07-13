@@ -11,14 +11,16 @@ from typing import (
     Any,
     Callable,
     ClassVar,
+    Dict,
     List,
     Optional,
     TYPE_CHECKING,
     Tuple,
+    Type,
     Union as _UnionT,
 )
 
-from comtypes import BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
+from comtypes import _CData, BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.hresult import *
 from comtypes._memberspec import _DispMemberSpec
 import comtypes.patcher
@@ -980,7 +982,7 @@ _arraycode_to_vartype = {
     "B": VT_UI1,
 }
 
-_ctype_to_vartype = {
+_ctype_to_vartype: Dict[Type[_CData], int] = {
     c_byte: VT_I1,
     c_ubyte: VT_UI1,
     c_short: VT_I2,
@@ -1016,7 +1018,7 @@ _ctype_to_vartype = {
     # POINTER(IDispatch): VT_DISPATCH,
 }
 
-_vartype_to_ctype = {}
+_vartype_to_ctype: Dict[int, Type[_CData]] = {}
 for c, v in _ctype_to_vartype.items():
     _vartype_to_ctype[v] = c
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
