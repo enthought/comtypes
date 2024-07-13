@@ -45,6 +45,10 @@ from comtypes.automation import (
     tagVARIANT,
 )
 
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
+
+
 _CT = TypeVar("_CT", bound=_CData)
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
@@ -499,6 +503,27 @@ class IRecordInfo(IUnknown):
         result = array[:]
         # XXX Should SysFreeString the array contents. How to?
         return result
+
+    if TYPE_CHECKING:
+        # fmt: off
+        # def RecordInit
+        # def RecordClear
+        def RecordCopy(  # noqa
+            self, pvExisting: hints.Incomplete, pvNew: hints.Incomplete
+        ) -> hints.Hresult: ...
+        def GetGuid(self) -> GUID: ...  # noqa
+        def GetName(self) -> str: ...  # noqa
+        def GetSize(self) -> int: ...  # noqa
+        def GetTypeInfo(self) -> ITypeInfo: ...  # noqa
+        # def GetField
+        # def GetFieldNoCopy
+        # def PutField
+        # def PutFieldNoCopy
+        def IsMatchingType(self, value: "IRecordInfo") -> bool: ...  # noqa
+        # def RecordCreate
+        def RecordCreateCopy(self, pvSource: hints.Incomplete) -> int: ...  # noqa
+        def RecordDestroy(self, pvRecord: hints.Incomplete) -> hints.Hresult: ...  # noqa
+        # fmt: on
 
 
 IRecordInfo._methods_ = [
