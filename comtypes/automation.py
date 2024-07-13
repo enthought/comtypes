@@ -7,18 +7,8 @@ from ctypes import *
 from ctypes import _Pointer
 from _ctypes import CopyComPointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    List,
-    Optional,
-    TYPE_CHECKING,
-    Tuple,
-    Type,
-    Union as _UnionT,
-)
+from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Type
+from typing import Callable, Union as _UnionT
 
 from comtypes import _CData, BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.hresult import *
