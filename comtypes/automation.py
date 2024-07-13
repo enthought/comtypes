@@ -649,7 +649,7 @@ class _(object):
     def __setitem__(self, index, value):
         # This is to support the same sematics as a pointer instance:
         # variant[0] = value
-        self[index].value = value
+        self[index].value = value  # type: ignore
 
 
 ################################################################
