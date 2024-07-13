@@ -8,7 +8,6 @@ from ctypes import _Pointer
 from _ctypes import CopyComPointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Type
-from typing import Callable, Union as _UnionT
 
 from comtypes import _CData, BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.hresult import *
@@ -781,28 +780,8 @@ DISPID_DESTRUCTOR = -7
 DISPID_COLLECT = -8
 
 
-RawGetIDsOfNamesFunc = Callable[
-    [_byref_type, "Array[c_wchar_p]", int, int, "Array[DISPID]"], int
-]
-# fmt: off
-RawInvokeFunc = Callable[
-    [
-        int, _byref_type, int, int,  # dispIdMember, riid, lcid, wFlags
-        _UnionT[_byref_type, DISPPARAMS],  # *pDispParams
-        _UnionT[_byref_type, VARIANT],  # pVarResult
-        _UnionT[_byref_type, EXCEPINFO, None],  # pExcepInfo
-        _UnionT[_byref_type, c_uint],  # puArgErr
-    ],
-    int,
-]
-# fmt: on
-
-
 class IDispatch(IUnknown):
     _disp_methods_: ClassVar[List[_DispMemberSpec]]
-    _GetTypeInfo: Callable[[int, int], IUnknown]
-    __com_GetIDsOfNames: RawGetIDsOfNamesFunc
-    __com_Invoke: RawInvokeFunc
 
     _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
     _methods_ = [
@@ -843,7 +822,7 @@ class IDispatch(IUnknown):
         """Return type information.  Index 0 specifies typeinfo for IDispatch"""
         import comtypes.typeinfo
 
-        result = self._GetTypeInfo(index, lcid)
+        result = self._GetTypeInfo(index, lcid)  # type: ignore
         return result.QueryInterface(comtypes.typeinfo.ITypeInfo)
 
     def GetIDsOfNames(self, *names: str, **kw: Any) -> List[int]:
@@ -852,7 +831,7 @@ class IDispatch(IUnknown):
         assert not kw
         arr = (c_wchar_p * len(names))(*names)
         ids = (DISPID * len(names))()
-        self.__com_GetIDsOfNames(riid_null, arr, len(names), lcid, ids)
+        self.__com_GetIDsOfNames(riid_null, arr, len(names), lcid, ids)  # type: ignore
         return ids[:]
 
     def _invoke(self, memid: int, invkind: int, lcid: int, *args: Any) -> Any:
@@ -872,7 +851,9 @@ class IDispatch(IUnknown):
                 dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
             dp.rgvarg = array
 
-        self.__com_Invoke(memid, riid_null, lcid, invkind, dp, var, None, argerr)
+        self.__com_Invoke(  # type: ignore
+            memid, riid_null, lcid, invkind, dp, var, None, argerr
+        )
         return var._get_value(dynamic=True)
 
     def __make_dp(self, _invkind: int, *args: Any) -> DISPPARAMS:
@@ -908,7 +889,7 @@ class IDispatch(IUnknown):
         excepinfo = EXCEPINFO()
         argerr = c_uint()
         try:
-            self.__com_Invoke(
+            self.__com_Invoke(  # type: ignore
                 dispid,
                 riid_null,
                 _lcid,
