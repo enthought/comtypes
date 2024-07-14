@@ -232,14 +232,14 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
         has_optional = False
         for _, argname, default in self.inarg_specs:
             if keyword.iskeyword(argname):
-                inargs = ["*args: Any", "**kwargs: Any"]
+                inargs = ["*args: hints.Any", "**kwargs: hints.Any"]
                 break
             if default is None:
                 if has_optional:
                     # probably propput or propputref
                     # HACK: Something that goes into this conditional branch
                     #       should be a special callback.
-                    inargs.append("**kwargs: Any")
+                    inargs.append("**kwargs: hints.Any")
                     break
                 inargs.append(f"{argname}: hints.Incomplete")
             else:
@@ -251,7 +251,7 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
         elif len(outargs) == 1:
             out = outargs[0]
         else:
-            out = "Tuple[" + ", ".join(outargs) + "]"
+            out = "hints.Tuple[" + ", ".join(outargs) + "]"
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
         return f"def {name}({in_}) -> {out}: ..."
 
@@ -275,14 +275,14 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
         has_optional = False
         for _, argname, default in self.inarg_specs:
             if keyword.iskeyword(argname):
-                inargs = ["*args: Any", "**kwargs: Any"]
+                inargs = ["*args: hints.Any", "**kwargs: hints.Any"]
                 break
             if default is None:
                 if has_optional:
                     # probably propput or propputref
                     # HACK: Something that goes into this conditional branch
                     #       should be a special callback.
-                    inargs.append("**kwargs: Any")
+                    inargs.append("**kwargs: hints.Any")
                     break
                 inargs.append(f"{argname}: hints.Incomplete")
             else:
