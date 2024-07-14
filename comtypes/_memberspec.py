@@ -2,7 +2,7 @@ import ctypes
 from typing import Any, NamedTuple
 from typing import Dict, List, Tuple, Type
 from typing import Optional, Union as _UnionT
-from typing import Callable, Iterator
+from typing import Callable, Iterator, Sequence
 
 from comtypes import _CData
 import comtypes
@@ -43,7 +43,7 @@ def _unpack_argspec(
 
 
 def _resolve_argspec(
-    items: Tuple[_ArgSpecElmType, ...]
+    items: Sequence[_ArgSpecElmType],
 ) -> Tuple[Tuple[_ParamFlagType, ...], Tuple[Type[_CData], ...]]:
     """Unpacks and converts from argspec to paramflags and argtypes.
 
