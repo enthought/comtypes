@@ -2,6 +2,7 @@
 import array
 import datetime
 import decimal
+import itertools
 import sys
 from ctypes import *
 from ctypes import _Pointer
@@ -10,11 +11,11 @@ from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 from typing import Any, ClassVar, overload, TYPE_CHECKING
 from typing import Optional, Union as _UnionT
 from typing import Dict, List, Tuple, Type
-from typing import Callable, Sequence
+from typing import Callable, Container, Mapping, Sequence
 
 from comtypes import _CData, BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.hresult import *
-from comtypes._memberspec import _DispMemberSpec
+from comtypes._memberspec import _DispMemberSpec, _resolve_argspec
 import comtypes.patcher
 import comtypes
 
@@ -889,9 +890,8 @@ class IDispatch(IUnknown):
         # For comtypes this is handled in DISPPARAMS.__del__ and VARIANT.__del__.
         _invkind = kw.pop("_invkind", 1)  # DISPATCH_METHOD
         _lcid = kw.pop("_lcid", 0)
-        if kw:
-            raise ValueError("named parameters not yet implemented")
-        dp = DispParamsGenerator(_invkind).generate(*args)
+        _argspec = kw.pop("_argspec", ())
+        dp = DispParamsGenerator(_invkind, _argspec).generate(*args, **kw)
         result = VARIANT()
         excepinfo = EXCEPINFO()
         argerr = c_uint()
@@ -942,45 +942,38 @@ class IDispatch(IUnknown):
 
 
 class DispParamsGenerator(object):
-    __slots__ = ("invkind",)
+    __slots__ = ("invkind", "argspec")
 
-    def __init__(self, invkind: int) -> None:
+    def __init__(
+        self, invkind: int, argspec: Sequence["hints._ArgSpecElmType"]
+    ) -> None:
         self.invkind = invkind
+        self.argspec = argspec
 
-    def generate(self, *args: Any) -> DISPPARAMS:
+    def generate(self, *args: Any, **kw: Any) -> DISPPARAMS:
         """Generate `DISPPARAMS` for passing to `IDispatch::Invoke`.
 
-        Examples:
-            >>> _get_rgvarg = lambda dp: [dp.rgvarg[i] for i in range(dp.cArgs)]
-
-            >>> dp = DispParamsGenerator(DISPATCH_METHOD).generate(9)
-            >>> _get_rgvarg(dp), bool(dp.rgdispidNamedArgs), dp.cArgs, dp.cNamedArgs
-            ([VARIANT(vt=0x3, 9)], False, 1, 0)
-            >>> dp = DispParamsGenerator(DISPATCH_PROPERTYGET).generate('foo', 3.14)
-            >>> _get_rgvarg(dp), bool(dp.rgdispidNamedArgs), dp.cArgs, dp.cNamedArgs
-            ([VARIANT(vt=0x5, 3.14), VARIANT(vt=0x8, 'foo')], False, 2, 0)
-            >>> dp = DispParamsGenerator(DISPATCH_PROPERTYPUT).generate(8)
-            >>> _get_rgvarg(dp), dp.rgdispidNamedArgs.contents, dp.cArgs, dp.cNamedArgs
-            ([VARIANT(vt=0x3, 8)], c_long(-3), 1, 1)
-            >>> dp = DispParamsGenerator(DISPATCH_PROPERTYPUTREF).generate(7, 'bar')
-            >>> _get_rgvarg(dp), dp.rgdispidNamedArgs.contents, dp.cArgs, dp.cNamedArgs
-            ([VARIANT(vt=0x8, 'bar'), VARIANT(vt=0x3, 7)], c_long(-3), 2, 1)
-
-            >>> gen = DispParamsGenerator(DISPATCH_METHOD)
-            >>> _get_rgvarg(gen.generate())
-            []
-            >>> _get_rgvarg(gen.generate(4))
-            [VARIANT(vt=0x3, 4)]
-            >>> _get_rgvarg(gen.generate(4, 3.14))
-            [VARIANT(vt=0x5, 3.14), VARIANT(vt=0x3, 4)]
-            >>> _get_rgvarg(gen.generate(4, 3.14, 'foo'))
-            [VARIANT(vt=0x8, 'foo'), VARIANT(vt=0x5, 3.14), VARIANT(vt=0x3, 4)]
+        Notes:
+            The following would be occured only when `**kw` is passed.
+            - Check the required arguments specified by the `argspec` are satisfied.
+            - Complement non-passed optional arguments with their default values
+              from the `argspec`.
         """
-        array = (VARIANT * len(args))()
-        for i, a in enumerate(args[::-1]):
+        if kw:
+            new_args = self._resolve_kwargs(*args, **kw)
+        else:
+            # Argument validation based on `argspec` is not triggered unless `**kw`
+            # is passed, because...
+            # - for backward compatibility with `1.2.0` and earlier.
+            # - there might be unexpected `argspec` in the real world.
+            # - `IDispatch.Invoke` might be called as a public method and `_argspec`
+            #   is not passed.
+            new_args = args
+        array = (VARIANT * len(new_args))()
+        for i, a in enumerate(new_args[::-1]):
             array[i].value = a
         dp = DISPPARAMS()
-        dp.cArgs = len(args)
+        dp.cArgs = len(new_args)
         if self.invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):  # propput
             dp.cNamedArgs = 1
             dp.rgvarg = array
@@ -989,6 +982,97 @@ class DispParamsGenerator(object):
             dp.cNamedArgs = 0
             dp.rgvarg = array
         return dp
+
+    def _resolve_kwargs(self, *args: Any, **kw: Any) -> Sequence[Any]:
+        pfs, _ = _resolve_argspec(self.argspec)
+        arg_names, arg_defaults = self._resolve_paramflags(pfs)
+        self._validate_unexpected(kw, arg_names, arg_defaults)
+        new_args, used_names = [], set()
+        for name in itertools.chain(arg_names, arg_defaults):
+            if not args and not kw:
+                break
+            if name in kw:
+                if args or name in used_names:
+                    raise TypeError(f"got multiple values for argument {name!r}")
+                new_args.append(kw.pop(name))
+                used_names.add(name)
+            elif args:
+                new_args.append(args[0])
+                used_names.add(name)
+                args = args[1:]
+            elif name in arg_defaults:
+                new_args.append(arg_defaults[name])
+                used_names.add(name)
+            else:
+                continue
+        self._validate_missings(arg_names, used_names)
+        if args or kw:
+            # messages should be...
+            # - takes 0 positional arguments but 1 was given
+            # - takes 1 positional argument but N were given
+            # - takes L to M positional arguments but N were given
+            #
+            # `kw` resolution is only called when `**kw` is passed to `generate`.
+            # And `TypeError: got multiple values` is raised when there are
+            # multiple arguments.
+            # This conditional branch is for edge cases that may arise in the future.
+            raise TypeError  # too many arguments
+        return new_args
+
+    def _resolve_paramflags(
+        self, pfs: Sequence["hints._ParamFlagType"]
+    ) -> Tuple[Sequence[str], Mapping[str, Any]]:
+        arg_names, arg_defaults = [], {}
+        for p in pfs:
+            if len(p) == 2:
+                if arg_defaults:
+                    raise ValueError("unexpected ordered params")
+                _, name = p
+                if name is None:
+                    raise ValueError("unnamed argument")
+                arg_names.append(name)
+            else:
+                _, name, defval = p
+                if name is None:
+                    raise ValueError("unnamed argument")
+                arg_defaults[name] = defval
+        return arg_names, arg_defaults
+
+    def _validate_unexpected(
+        self,
+        kw: Mapping[str, Any],
+        arg_names: Sequence[str],
+        arg_defaults: Mapping[str, Any],
+    ) -> None:
+        for name in kw:
+            if name not in arg_names and name not in arg_defaults:
+                raise TypeError(f"got an unexpected keyword argument {name!r}")
+
+    def _validate_excessive(
+        self,
+        args: Sequence[Any],
+        kw: Mapping[str, Any],
+        arg_names: Sequence[str],
+    ) -> None:
+        len_required_positionals = len(set(arg_names) - set(kw.keys()))
+        print(arg_names, kw.keys(), set(arg_names) - set(kw.keys()))
+        len_args = len(args)
+        if len_args > len_required_positionals:
+            raise TypeError
+
+    def _validate_missings(
+        self, arg_names: Sequence[str], used_names: Container[str]
+    ) -> None:
+        mis = [n for n in arg_names if n not in used_names]
+        if not mis:
+            return
+        if len(mis) == 1:
+            head = "missing 1 required positional argument"
+            tail = repr(mis[0])
+        else:
+            head = f"missing {len(mis)} required positional arguments"
+            tail = ", ".join(map(repr, mis[:-1])) + f" and {mis[-1]!r}"
+        raise TypeError(f"{head}: {tail}")
 
 
 ################################################################
