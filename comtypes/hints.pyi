@@ -32,6 +32,7 @@ from comtypes import IUnknown as IUnknown, GUID as GUID
 from comtypes.automation import IDispatch as IDispatch, VARIANT as VARIANT
 from comtypes.server import IClassFactory as IClassFactory
 from comtypes.typeinfo import ITypeInfo as ITypeInfo
+from comtypes._memberspec import _ArgSpecElmType as _ArgSpecElmType
 from comtypes._safearray import tagSAFEARRAY as tagSAFEARRAY
 
 Incomplete: TypeAlias = Any

@@ -7,7 +7,10 @@ from ctypes import *
 from ctypes import _Pointer
 from _ctypes import CopyComPointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
-from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Type
+from typing import Any, ClassVar, overload, TYPE_CHECKING
+from typing import Optional, Union as _UnionT
+from typing import Dict, List, Tuple, Type
+from typing import Callable, Sequence
 
 from comtypes import _CData, BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.hresult import *
@@ -855,6 +858,24 @@ class IDispatch(IUnknown):
             memid, riid_null, lcid, invkind, dp, var, None, argerr
         )
         return var._get_value(dynamic=True)
+
+    @overload
+    def Invoke(
+        self, dispid: int, *args: Any, _invkind: int = ..., _lcid: int = ...
+    ) -> Any:
+        ...  # noqa
+
+    @overload
+    def Invoke(
+        self,
+        dispid: int,
+        *args: Any,
+        _argspec: Sequence["hints._ArgSpecElmType"],
+        _invkind: int = ...,
+        _lcid: int = ...,
+        **kw: Any,
+    ) -> Any:
+        ...  # noqa
 
     def Invoke(self, dispid: int, *args: Any, **kw: Any) -> Any:
         """Invoke a method or property."""
