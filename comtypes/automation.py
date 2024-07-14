@@ -856,20 +856,6 @@ class IDispatch(IUnknown):
         )
         return var._get_value(dynamic=True)
 
-    def __make_dp(self, _invkind: int, *args: Any) -> DISPPARAMS:
-        array = (VARIANT * len(args))()
-        for i, a in enumerate(args[::-1]):
-            array[i].value = a
-        dp = DISPPARAMS()
-        dp.cArgs = len(args)
-        dp.rgvarg = array
-        if _invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):  # propput
-            dp.cNamedArgs = 1
-            dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
-        else:
-            dp.cNamedArgs = 0
-        return dp
-
     def Invoke(self, dispid: int, *args: Any, **kw: Any) -> Any:
         """Invoke a method or property."""
 
@@ -884,7 +870,7 @@ class IDispatch(IUnknown):
         _lcid = kw.pop("_lcid", 0)
         if kw:
             raise ValueError("named parameters not yet implemented")
-        dp = self.__make_dp(_invkind, *args)
+        dp = DispParamsGenerator(_invkind).generate(*args)
         result = VARIANT()
         excepinfo = EXCEPINFO()
         argerr = c_uint()
@@ -932,6 +918,56 @@ class IDispatch(IUnknown):
         return result._get_value(dynamic=True)
 
     # XXX Would separate methods for _METHOD, _PROPERTYGET and _PROPERTYPUT be better?
+
+
+class DispParamsGenerator(object):
+    __slots__ = ("invkind",)
+
+    def __init__(self, invkind: int) -> None:
+        self.invkind = invkind
+
+    def generate(self, *args: Any) -> DISPPARAMS:
+        """Generate `DISPPARAMS` for passing to `IDispatch::Invoke`.
+
+        Examples:
+            >>> _get_rgvarg = lambda dp: [dp.rgvarg[i] for i in range(dp.cArgs)]
+
+            >>> dp = DispParamsGenerator(DISPATCH_METHOD).generate(9)
+            >>> _get_rgvarg(dp), bool(dp.rgdispidNamedArgs), dp.cArgs, dp.cNamedArgs
+            ([VARIANT(vt=0x3, 9)], False, 1, 0)
+            >>> dp = DispParamsGenerator(DISPATCH_PROPERTYGET).generate('foo', 3.14)
+            >>> _get_rgvarg(dp), bool(dp.rgdispidNamedArgs), dp.cArgs, dp.cNamedArgs
+            ([VARIANT(vt=0x5, 3.14), VARIANT(vt=0x8, 'foo')], False, 2, 0)
+            >>> dp = DispParamsGenerator(DISPATCH_PROPERTYPUT).generate(8)
+            >>> _get_rgvarg(dp), dp.rgdispidNamedArgs.contents, dp.cArgs, dp.cNamedArgs
+            ([VARIANT(vt=0x3, 8)], c_long(-3), 1, 1)
+            >>> dp = DispParamsGenerator(DISPATCH_PROPERTYPUTREF).generate(7, 'bar')
+            >>> _get_rgvarg(dp), dp.rgdispidNamedArgs.contents, dp.cArgs, dp.cNamedArgs
+            ([VARIANT(vt=0x8, 'bar'), VARIANT(vt=0x3, 7)], c_long(-3), 2, 1)
+
+            >>> gen = DispParamsGenerator(DISPATCH_METHOD)
+            >>> _get_rgvarg(gen.generate())
+            []
+            >>> _get_rgvarg(gen.generate(4))
+            [VARIANT(vt=0x3, 4)]
+            >>> _get_rgvarg(gen.generate(4, 3.14))
+            [VARIANT(vt=0x5, 3.14), VARIANT(vt=0x3, 4)]
+            >>> _get_rgvarg(gen.generate(4, 3.14, 'foo'))
+            [VARIANT(vt=0x8, 'foo'), VARIANT(vt=0x5, 3.14), VARIANT(vt=0x3, 4)]
+        """
+        array = (VARIANT * len(args))()
+        for i, a in enumerate(args[::-1]):
+            array[i].value = a
+        dp = DISPPARAMS()
+        dp.cArgs = len(args)
+        if self.invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):  # propput
+            dp.cNamedArgs = 1
+            dp.rgvarg = array
+            dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
+        else:
+            dp.cNamedArgs = 0
+            dp.rgvarg = array
+        return dp
 
 
 ################################################################
