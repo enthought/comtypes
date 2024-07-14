@@ -196,7 +196,6 @@ class CodeGenerator(object):
         print("from typing import TYPE_CHECKING", file=output)
         print(file=output)
         print("if TYPE_CHECKING:", file=output)
-        print("    from typing import Any, Tuple", file=output)
         print("    from comtypes import hints", file=output)
         print(file=output)
         print(file=output)

@@ -3,9 +3,9 @@
 # - utilities for type hints.
 import ctypes
 import sys
-from typing import Any, ClassVar, Generic, NoReturn, TypeVar, overload
+from typing import Any as Any, ClassVar, Generic, NoReturn, TypeVar, overload
 from typing import Optional, Union as _UnionT
-from typing import List, Tuple, Type
+from typing import List, Tuple as Tuple, Type
 from typing import Callable, Iterator, Sequence
 
 if sys.version_info >= (3, 8):
