@@ -1,16 +1,8 @@
 import ctypes
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    NamedTuple,
-    Optional,
-    Tuple,
-    Type,
-    Union as _UnionT,
-)
+from typing import Any, NamedTuple
+from typing import Dict, List, Tuple, Type
+from typing import Optional, Union as _UnionT
+from typing import Callable, Iterator
 
 from comtypes import _CData
 import comtypes
