@@ -874,7 +874,7 @@ class IDispatch(IUnknown):
         """Invoke a method or property."""
 
         # Memory management in Dispatch::Invoke calls:
-        # http://msdn.microsoft.com/library/en-us/automat/htm/chap5_4x2q.asp
+        # https://learn.microsoft.com/en-us/previous-versions/windows/desktop/automat/passing-parameters
         # Quote:
         #     The *CALLING* code is responsible for releasing all strings and
         #     objects referred to by rgvarg[ ] or placed in *pVarResult.
