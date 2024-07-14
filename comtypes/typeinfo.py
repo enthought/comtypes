@@ -5,45 +5,18 @@
 # then hacked manually
 import os
 import sys
-from typing import (
-    Any,
-    Callable,
-    List,
-    Optional,
-    overload,
-    Sequence,
-    Type,
-    TypeVar,
-    Tuple,
-    Union as _UnionT,
-)
+from typing import Any, overload, TypeVar, TYPE_CHECKING
+from typing import List, Type, Tuple
+from typing import Optional, Union as _UnionT
+from typing import Callable, Sequence
 import weakref
 
 import ctypes
 from ctypes import HRESULT, POINTER, _Pointer, byref, c_int, c_void_p, c_wchar_p
 from ctypes.wintypes import DWORD, LONG, UINT, ULONG, WCHAR, WORD
-from comtypes import (
-    BSTR,
-    _CData,
-    COMMETHOD,
-    _GUID,
-    GUID,
-    IID,
-    IUnknown,
-    STDMETHOD,
-    TYPE_CHECKING,
-)
-from comtypes.automation import (
-    DISPID,
-    DISPPARAMS,
-    EXCEPINFO,
-    LCID,
-    SCODE,
-    VARIANT,
-    VARIANTARG,
-    VARTYPE,
-    tagVARIANT,
-)
+from comtypes import BSTR, _CData, COMMETHOD, _GUID, GUID, IID, IUnknown, STDMETHOD
+from comtypes.automation import DISPID, LCID, SCODE
+from comtypes.automation import DISPPARAMS, EXCEPINFO, VARIANT, VARIANTARG, VARTYPE
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
