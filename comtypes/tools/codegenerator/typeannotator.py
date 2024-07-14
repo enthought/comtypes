@@ -1,18 +1,8 @@
 import abc
 import keyword
-from typing import (
-    Any,
-    Dict,
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TYPE_CHECKING,
-    TypeVar,
-)
+from typing import Any, Generic, TypeVar, TYPE_CHECKING
+from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Iterable, Iterator
 
 from comtypes.tools import typedesc
 
