@@ -35,7 +35,7 @@ class GUID(Structure):
             _CLSIDFromString(str(name), byref(self))
 
     def __repr__(self):
-        return 'GUID("%s")' % str(self)
+        return f'GUID("{str(self)}")'
 
     def __str__(self) -> str:
         p = c_wchar_p()
@@ -73,7 +73,7 @@ class GUID(Structure):
             _CLSIDFromProgID(str(progid), byref(inst))
             return inst
         else:
-            raise TypeError("Cannot construct guid from %r" % progid)
+            raise TypeError(f"Cannot construct guid from {progid!r}")
 
     def as_progid(self) -> str:
         """Convert a GUID into a progid"""
