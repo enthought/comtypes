@@ -76,7 +76,7 @@ class GUID(Structure):
             raise TypeError("Cannot construct guid from %r" % progid)
 
     def as_progid(self) -> str:
-        "Convert a GUID into a progid"
+        """Convert a GUID into a progid"""
         progid = c_wchar_p()
         _ProgIDFromCLSID(byref(self), byref(progid))
         result = progid.value
@@ -86,7 +86,7 @@ class GUID(Structure):
 
     @classmethod
     def create_new(cls) -> "hints.Self":
-        "Create a brand new guid"
+        """Create a brand new guid"""
         guid = cls()
         _CoCreateGuid(byref(guid))
         return guid
