@@ -33,14 +33,12 @@ class GUID(Structure):
     def __repr__(self):
         return 'GUID("%s")' % str(self)
 
-    def __unicode__(self):
+    def __str__(self):
         p = c_wchar_p()
         _StringFromCLSID(byref(self), byref(p))
         result = p.value
         _CoTaskMemFree(p)
         return result
-
-    __str__ = __unicode__
 
     def __cmp__(self, other):
         if isinstance(other, GUID):
