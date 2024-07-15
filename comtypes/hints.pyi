@@ -23,9 +23,9 @@ else:
     from typing_extensions import Concatenate, ParamSpec, TypeAlias
     from typing_extensions import TypeGuard as TypeGuard
 if sys.version_info >= (3, 11):
-    from typing import Self
+    from typing import Self as Self
 else:
-    from typing_extensions import Self
+    from typing_extensions import Self as Self
 
 import comtypes
 from comtypes import IUnknown as IUnknown, GUID as GUID

@@ -1,8 +1,12 @@
-from ctypes import *
-import sys
+from ctypes import oledll, windll
+from ctypes import byref, c_byte, c_ushort, c_ulong, c_wchar_p, Structure
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
 
 
-def binary(obj):
+def binary(obj: "GUID") -> bytes:
     return bytes(obj)
 
 
@@ -31,37 +35,32 @@ class GUID(Structure):
             _CLSIDFromString(str(name), byref(self))
 
     def __repr__(self):
-        return 'GUID("%s")' % str(self)
+        return f'GUID("{str(self)}")'
 
-    def __unicode__(self):
+    def __str__(self) -> str:
         p = c_wchar_p()
         _StringFromCLSID(byref(self), byref(p))
         result = p.value
         _CoTaskMemFree(p)
-        return result
+        # stringified `GUID_null` would be '{00000000-0000-0000-0000-000000000000}'
+        # Should we do `assert result is not None`?
+        return result  # type: ignore
 
-    __str__ = __unicode__
-
-    def __cmp__(self, other):
-        if isinstance(other, GUID):
-            return cmp(binary(self), binary(other))
-        return -1
-
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return self != GUID_null
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return isinstance(other, GUID) and binary(self) == binary(other)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         # We make GUID instances hashable, although they are mutable.
         return hash(binary(self))
 
-    def copy(self):
+    def copy(self) -> "GUID":
         return GUID(str(self))
 
     @classmethod
-    def from_progid(cls, progid):
+    def from_progid(cls, progid: Any) -> "hints.Self":
         """Get guid from progid, ..."""
         if hasattr(progid, "_reg_clsid_"):
             progid = progid._reg_clsid_
@@ -74,19 +73,20 @@ class GUID(Structure):
             _CLSIDFromProgID(str(progid), byref(inst))
             return inst
         else:
-            raise TypeError("Cannot construct guid from %r" % progid)
+            raise TypeError(f"Cannot construct guid from {progid!r}")
 
-    def as_progid(self):
-        "Convert a GUID into a progid"
+    def as_progid(self) -> str:
+        """Convert a GUID into a progid"""
         progid = c_wchar_p()
         _ProgIDFromCLSID(byref(self), byref(progid))
         result = progid.value
         _CoTaskMemFree(progid)
-        return result
+        # Should we do `assert result is not None`?
+        return result  # type: ignore
 
     @classmethod
-    def create_new(cls):
-        "Create a brand new guid"
+    def create_new(cls) -> "hints.Self":
+        """Create a brand new guid"""
         guid = cls()
         _CoCreateGuid(byref(guid))
         return guid
