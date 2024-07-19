@@ -114,6 +114,8 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             content = f"{mem_name} = hints.named_property('{mem_name}', fset={setter})"
         else:
             return
+        if keyword.iskeyword(mem_name):
+            content = f"pass  # avoid using a keyword for {content}"
         self._define_member(content)
 
     def _define_normal_prop(
@@ -127,6 +129,8 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             content = f"{mem_name} = hints.normal_property(fset={setter})"
         else:
             return
+        if keyword.iskeyword(mem_name):
+            content = f"pass  # avoid using a keyword for {content}"
         self._define_member(content)
 
     def _define_member(self, content: str) -> None:
@@ -253,7 +257,10 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
         else:
             out = "hints.Tuple[" + ", ".join(outargs) + "]"
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
-        return f"def {name}({in_}) -> {out}: ..."
+        content = f"def {name}({in_}) -> {out}: ..."
+        if keyword.iskeyword(name):
+            content = f"pass  # avoid using a keyword for {content}"
+        return content
 
 
 class ComMethodsAnnotator(_MethodsAnnotator[typedesc.ComMethod]):
@@ -290,7 +297,10 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
                 has_optional = True
         out = _to_outtype(self.method.returns)
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
-        return f"def {name}({in_}) -> {out}: ..."
+        content = f"def {name}({in_}) -> {out}: ..."
+        if keyword.iskeyword(name):
+            content = f"pass  # avoid using a keyword for {content}"
+        return content
 
 
 class DispMethodsAnnotator(_MethodsAnnotator[typedesc.DispMethod]):
@@ -318,9 +328,14 @@ class DispInterfaceMembersAnnotator(object):
         props, methods = self._categorize_members()
         property_lines: List[str] = []
         for mem in props:
-            property_lines.append("@property  # dispprop")
             out = _to_outtype(mem.typ)
-            property_lines.append(f"def {mem.name}(self) -> {out}: ...")
+            decorator = "@property  # dispprop"
+            content = f"def {mem.name}(self) -> {out}: ..."
+            if keyword.iskeyword(mem.name):
+                decorator = f"pass  # {decorator}"
+                content = f"pass  # avoid using a keyword for {content}"
+            property_lines.append(decorator)
+            property_lines.append(content)
         dispprops = "\n".join(f"        {p}" for p in property_lines)
         dispmethods = DispMethodsAnnotator().generate(methods)
         return "\n".join(d for d in (dispprops, dispmethods) if d)
