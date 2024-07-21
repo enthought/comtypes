@@ -305,10 +305,10 @@ class Parser(object):
             mth = typedesc.ComMethod(
                 fd.invkind, fd.memid, func_name, returns, flags, func_doc
             )
-            for p in range(fd.cParams):
-                elemdesc = fd.lprgelemdescParam[p]
+            for j in range(fd.cParams):
+                elemdesc = fd.lprgelemdescParam[j]
                 typ = self.make_type(elemdesc.tdesc, tinfo)
-                name = names[p + 1]
+                name = names[j + 1]
                 flags = elemdesc._.paramdesc.wParamFlags
                 if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
@@ -391,10 +391,10 @@ class Parser(object):
             mth = typedesc.DispMethod(
                 fd.memid, fd.invkind, func_name, returns, flags, func_doc
             )
-            for p in range(fd.cParams):
-                elemdesc = fd.lprgelemdescParam[p]
+            for j in range(fd.cParams):
+                elemdesc = fd.lprgelemdescParam[j]
                 typ = self.make_type(elemdesc.tdesc, tinfo)
-                name = names[p + 1]
+                name = names[j + 1]
                 flags = elemdesc._.paramdesc.wParamFlags
                 if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
