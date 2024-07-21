@@ -309,10 +309,11 @@ class Parser(object):
                 elemdesc = fd.lprgelemdescParam[j]
                 typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
-                flags = elemdesc._.paramdesc.wParamFlags
+                paramdesc = elemdesc._.paramdesc
+                flags = paramdesc.wParamFlags
                 if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
-                    var = elemdesc._.paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
+                    var = paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
                     default: Any = var.value
                 else:
                     default = None
@@ -395,10 +396,11 @@ class Parser(object):
                 elemdesc = fd.lprgelemdescParam[j]
                 typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
-                flags = elemdesc._.paramdesc.wParamFlags
+                paramdesc = elemdesc._.paramdesc
+                flags = paramdesc.wParamFlags
                 if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
-                    var = elemdesc._.paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
+                    var = paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
                     default: Any = var.value
                 else:
                     default = None
