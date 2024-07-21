@@ -298,6 +298,7 @@ class Parser(object):
             names = tinfo.GetNames(fd.memid, fd.cParams + 1)
             names.append("rhs")
             names = names[: fd.cParams + 1]
+            # function name first, then parameter names
             assert len(names) == fd.cParams + 1
             flags = self.func_flags(fd.wFuncFlags)
             flags += self.inv_kind(fd.invkind)
@@ -305,16 +306,13 @@ class Parser(object):
                 fd.invkind, fd.memid, func_name, returns, flags, func_doc
             )
             for p in range(fd.cParams):
-                typ = self.make_type(fd.lprgelemdescParam[p].tdesc, tinfo)
+                elemdesc = fd.lprgelemdescParam[p]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[p + 1]
-                flags = fd.lprgelemdescParam[p]._.paramdesc.wParamFlags
+                flags = elemdesc._.paramdesc.wParamFlags
                 if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
-                    var = (
-                        fd.lprgelemdescParam[p]
-                        ._.paramdesc.pparamdescex[0]
-                        .varDefaultValue
-                    )
+                    var = elemdesc._.paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
                     default: Any = var.value
                 else:
                     default = None
@@ -386,21 +384,21 @@ class Parser(object):
             names = tinfo.GetNames(fd.memid, fd.cParams + 1)
             names.append("rhs")
             names = names[: fd.cParams + 1]
-            assert (
-                len(names) == fd.cParams + 1
-            )  # function name first, then parameter names
+            # function name first, then parameter names
+            assert len(names) == fd.cParams + 1
             flags = self.func_flags(fd.wFuncFlags)
             flags += self.inv_kind(fd.invkind)
             mth = typedesc.DispMethod(
                 fd.memid, fd.invkind, func_name, returns, flags, func_doc
             )
             for p in range(fd.cParams):
-                descparam = fd.lprgelemdescParam[p]
-                typ = self.make_type(descparam.tdesc, tinfo)
+                elemdesc = fd.lprgelemdescParam[p]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[p + 1]
-                flags = descparam._.paramdesc.wParamFlags
+                flags = elemdesc._.paramdesc.wParamFlags
                 if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
-                    var = descparam._.paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
+                    # XXX should be handled by VARIANT itself
+                    var = elemdesc._.paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
                     default: Any = var.value
                 else:
                     default = None
