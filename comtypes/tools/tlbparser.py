@@ -310,14 +310,14 @@ class Parser(object):
                 typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
                 paramdesc = elemdesc._.paramdesc
-                flags = paramdesc.wParamFlags
-                if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
+                paramflags = paramdesc.wParamFlags
+                if paramflags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
                     var = paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
                     default: Any = var.value
                 else:
                     default = None
-                mth.add_argument(typ, name, self.param_flags(flags), default)
+                mth.add_argument(typ, name, self.param_flags(paramflags), default)
             members.append((fd.oVft, mth))
         # Sort the methods by oVft (VTable offset): Some typeinfo
         # don't list methods in VTable order.
@@ -397,14 +397,14 @@ class Parser(object):
                 typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
                 paramdesc = elemdesc._.paramdesc
-                flags = paramdesc.wParamFlags
-                if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
+                paramflags = paramdesc.wParamFlags
+                if paramflags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
                     var = paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
                     default: Any = var.value
                 else:
                     default = None
-                mth.add_argument(typ, name, self.param_flags(flags), default)
+                mth.add_argument(typ, name, self.param_flags(paramflags), default)
             itf.add_member(mth)
         return itf
 
