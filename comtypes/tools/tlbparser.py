@@ -310,14 +310,13 @@ class Parser(object):
                 typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
                 paramdesc = elemdesc._.paramdesc
-                paramflags = paramdesc.wParamFlags
-                if paramflags & typeinfo.PARAMFLAG_FHASDEFAULT:
+                if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
-                    var = paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
-                    default: Any = var.value
+                    default: Any = paramdesc.pparamdescex[0].varDefaultValue.value
                 else:
                     default = None
-                mth.add_argument(typ, name, self.param_flags(paramflags), default)
+                param_flags = self.param_flags(paramdesc.wParamFlags)
+                mth.add_argument(typ, name, param_flags, default)
             members.append((fd.oVft, mth))
         # Sort the methods by oVft (VTable offset): Some typeinfo
         # don't list methods in VTable order.
@@ -397,14 +396,13 @@ class Parser(object):
                 typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
                 paramdesc = elemdesc._.paramdesc
-                paramflags = paramdesc.wParamFlags
-                if paramflags & typeinfo.PARAMFLAG_FHASDEFAULT:
+                if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
-                    var = paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
-                    default: Any = var.value
+                    default: Any = paramdesc.pparamdescex[0].varDefaultValue.value
                 else:
                     default = None
-                mth.add_argument(typ, name, self.param_flags(paramflags), default)
+                param_flags = self.param_flags(paramdesc.wParamFlags)
+                mth.add_argument(typ, name, param_flags, default)
             itf.add_member(mth)
         return itf
 
