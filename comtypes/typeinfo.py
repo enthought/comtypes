@@ -1199,7 +1199,7 @@ class N11tagELEMDESC5DOLLAR_204E(ctypes.Union):
 class tagPARAMDESC(ctypes.Structure):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 609
     if TYPE_CHECKING:
-        pparamdescex: "tagPARAMDESCEX"
+        pparamdescex: "_Pointer[tagPARAMDESCEX]"
         wParamFlags: int
 
 

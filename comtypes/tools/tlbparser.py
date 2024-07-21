@@ -298,27 +298,25 @@ class Parser(object):
             names = tinfo.GetNames(fd.memid, fd.cParams + 1)
             names.append("rhs")
             names = names[: fd.cParams + 1]
+            # function name first, then parameter names
             assert len(names) == fd.cParams + 1
             flags = self.func_flags(fd.wFuncFlags)
             flags += self.inv_kind(fd.invkind)
             mth = typedesc.ComMethod(
                 fd.invkind, fd.memid, func_name, returns, flags, func_doc
             )
-            for p in range(fd.cParams):
-                typ = self.make_type(fd.lprgelemdescParam[p].tdesc, tinfo)
-                name = names[p + 1]
-                flags = fd.lprgelemdescParam[p]._.paramdesc.wParamFlags
-                if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
+            for j in range(fd.cParams):
+                elemdesc = fd.lprgelemdescParam[j]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
+                name = names[j + 1]
+                paramdesc = elemdesc._.paramdesc
+                if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
-                    var = (
-                        fd.lprgelemdescParam[p]
-                        ._.paramdesc.pparamdescex[0]
-                        .varDefaultValue
-                    )
-                    default: Any = var.value
+                    default: Any = paramdesc.pparamdescex[0].varDefaultValue.value
                 else:
                     default = None
-                mth.add_argument(typ, name, self.param_flags(flags), default)
+                param_flags = self.param_flags(paramdesc.wParamFlags)
+                mth.add_argument(typ, name, param_flags, default)
             members.append((fd.oVft, mth))
         # Sort the methods by oVft (VTable offset): Some typeinfo
         # don't list methods in VTable order.
@@ -386,25 +384,25 @@ class Parser(object):
             names = tinfo.GetNames(fd.memid, fd.cParams + 1)
             names.append("rhs")
             names = names[: fd.cParams + 1]
-            assert (
-                len(names) == fd.cParams + 1
-            )  # function name first, then parameter names
+            # function name first, then parameter names
+            assert len(names) == fd.cParams + 1
             flags = self.func_flags(fd.wFuncFlags)
             flags += self.inv_kind(fd.invkind)
             mth = typedesc.DispMethod(
                 fd.memid, fd.invkind, func_name, returns, flags, func_doc
             )
-            for p in range(fd.cParams):
-                descparam = fd.lprgelemdescParam[p]
-                typ = self.make_type(descparam.tdesc, tinfo)
-                name = names[p + 1]
-                flags = descparam._.paramdesc.wParamFlags
-                if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
-                    var = descparam._.paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
-                    default: Any = var.value
+            for j in range(fd.cParams):
+                elemdesc = fd.lprgelemdescParam[j]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
+                name = names[j + 1]
+                paramdesc = elemdesc._.paramdesc
+                if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
+                    # XXX should be handled by VARIANT itself
+                    default: Any = paramdesc.pparamdescex[0].varDefaultValue.value
                 else:
                     default = None
-                mth.add_argument(typ, name, self.param_flags(flags), default)
+                param_flags = self.param_flags(paramdesc.wParamFlags)
+                mth.add_argument(typ, name, param_flags, default)
             itf.add_member(mth)
         return itf
 
