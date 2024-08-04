@@ -1,10 +1,6 @@
 Comtypes CHANGELOG
 ==================
 
-Release 1.4.6
---------------
-* Fix Annoying SyntaxWarning. By @v01d-gh.
-
 Release 1.4.5
 --------------
 * Split ``__init__.py`` into some modules. By @junkmd.
