@@ -34,10 +34,10 @@ def _find_gen_dir():
     appended to comtypes.gen.__path__ .
 
     For a Python script using comtypes, the additional directory is
-    '%APPDATA%\<username>\Python\Python25\comtypes_cache'.
+    '%APPDATA%\\<username>\\Python\\Python25\\comtypes_cache'.
 
     For an executable frozen with py2exe, the additional directory is
-    '%TEMP%\comtypes_cache\<imagebasename>-25'.
+    '%TEMP%\\comtypes_cache\\<imagebasename>-25'.
     """
     _create_comtypes_gen_package()
     from comtypes import gen
