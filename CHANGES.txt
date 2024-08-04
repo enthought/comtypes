@@ -1,6 +1,18 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.6
+--------------
+* Add tests and method annotations for ``IRecordInfo``. By @junkmd.
+* Improve static typings in ``automation``. By @junkmd.
+* Tidy up import part in some modules. By @junkmd.
+* Refer to ``Any`` and ``Tuple`` from the ``hints`` stub instead of directly importing them in generated modules. By @junkmd.
+* Modernize ``GUID.py``. By @junkmd.
+* Improve ``codegenerator.modulenamer`` static typing. By @junkmd.
+* Avoid using keywords in ``TYPE_CHECKING`` blocks. By @junkmd.
+* Improve member defining parts of ``ParseInterface`` and ``ParseDispatch``. By @junkmd.
+* Fix Annoying SyntaxWarning. By @v01d-gh.
+
 Release 1.4.5
 --------------
 * Split ``__init__.py`` into some modules. By @junkmd.
