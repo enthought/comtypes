@@ -16,9 +16,11 @@ import comtypes.patcher
 import comtypes
 
 if TYPE_CHECKING:
+    from ctypes import _CArgObject
     from comtypes import hints  # type: ignore
     from comtypes import _safearray
 else:
+    _CArgObject = type(byref(c_int()))
     try:
         from comtypes import _safearray
     except (ImportError, AttributeError):
@@ -609,8 +611,6 @@ v.vt = VT_ERROR
 v._.VT_I4 = 0x80020004
 del v
 
-_carg_obj = type(byref(c_int()))
-
 
 @comtypes.patcher.Patch(POINTER(VARIANT))
 class _(object):
@@ -625,7 +625,7 @@ class _(object):
         if isinstance(arg, POINTER(VARIANT)):
             return arg
         # accept byref(VARIANT) instance
-        if isinstance(arg, _carg_obj) and isinstance(arg._obj, VARIANT):
+        if isinstance(arg, _CArgObject) and isinstance(arg._obj, VARIANT):
             return arg
         # accept VARIANT instance
         if isinstance(arg, VARIANT):
