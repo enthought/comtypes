@@ -52,7 +52,6 @@ INVOKEKIND = tagINVOKEKIND
 # helpers
 IID_NULL = GUID()
 riid_null = byref(IID_NULL)
-_byref_type = type(byref(c_int()))
 
 # 30. December 1899, midnight.  For VT_DATE.
 _com_null_date = datetime.datetime(1899, 12, 30, 0, 0, 0)
@@ -384,7 +383,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, c_uint64):
             self.vt = VT_UI8
             self._.VT_UI8 = value
-        elif isinstance(value, _byref_type):
+        elif isinstance(value, _CArgObject):
             ref = value._obj
             self._.c_void_p = addressof(ref)
             self.__keepref = value
