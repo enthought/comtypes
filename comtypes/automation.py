@@ -4,7 +4,7 @@ import datetime
 import decimal
 import sys
 from ctypes import *
-from ctypes import _Pointer
+from ctypes import _Pointer, Array as _CArrayType
 from _ctypes import CopyComPointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Type
@@ -610,7 +610,6 @@ v._.VT_I4 = 0x80020004
 del v
 
 _carg_obj = type(byref(c_int()))
-from ctypes import Array as _CArrayType
 
 
 @comtypes.patcher.Patch(POINTER(VARIANT))
@@ -750,7 +749,7 @@ EXCEPINFO = tagEXCEPINFO
 
 class tagDISPPARAMS(Structure):
     if TYPE_CHECKING:
-        rgvarg: Array[VARIANT]
+        rgvarg: _CArrayType[VARIANT]
         rgdispidNamedArgs: _Pointer[DISPID]
         cArgs: int
         cNamedArgs: int
