@@ -750,7 +750,7 @@ EXCEPINFO = tagEXCEPINFO
 
 class tagDISPPARAMS(Structure):
     if TYPE_CHECKING:
-        rgvarg: Array[VARIANT]
+        rgvarg: _CArrayType[VARIANT]
         rgdispidNamedArgs: _Pointer[DISPID]
         cArgs: int
         cNamedArgs: int
