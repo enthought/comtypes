@@ -16,9 +16,11 @@ import comtypes.patcher
 import comtypes
 
 if TYPE_CHECKING:
+    from ctypes import _CArgObject
     from comtypes import hints  # type: ignore
     from comtypes import _safearray
 else:
+    _CArgObject = type(byref(c_int()))
     try:
         from comtypes import _safearray
     except (ImportError, AttributeError):
@@ -50,7 +52,6 @@ INVOKEKIND = tagINVOKEKIND
 # helpers
 IID_NULL = GUID()
 riid_null = byref(IID_NULL)
-_byref_type = type(byref(c_int()))
 
 # 30. December 1899, midnight.  For VT_DATE.
 _com_null_date = datetime.datetime(1899, 12, 30, 0, 0, 0)
@@ -382,7 +383,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, c_uint64):
             self.vt = VT_UI8
             self._.VT_UI8 = value
-        elif isinstance(value, _byref_type):
+        elif isinstance(value, _CArgObject):
             ref = value._obj
             self._.c_void_p = addressof(ref)
             self.__keepref = value
@@ -609,8 +610,6 @@ v.vt = VT_ERROR
 v._.VT_I4 = 0x80020004
 del v
 
-_carg_obj = type(byref(c_int()))
-
 
 @comtypes.patcher.Patch(POINTER(VARIANT))
 class _(object):
@@ -625,7 +624,7 @@ class _(object):
         if isinstance(arg, POINTER(VARIANT)):
             return arg
         # accept byref(VARIANT) instance
-        if isinstance(arg, _carg_obj) and isinstance(arg._obj, VARIANT):
+        if isinstance(arg, _CArgObject) and isinstance(arg._obj, VARIANT):
             return arg
         # accept VARIANT instance
         if isinstance(arg, VARIANT):
