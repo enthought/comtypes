@@ -5,70 +5,58 @@
 [![GitHub Repo stars](https://img.shields.io/github/stars/enthought/comtypes?style=social)](https://github.com/enthought/comtypes/stargazers) [![GitHub forks](https://img.shields.io/github/forks/enthought/comtypes?style=social)](https://github.com/enthought/comtypes/network/members)  
 [![Tidelift Subscription](https://tidelift.com/badges/package/pypi/comtypes)](https://tidelift.com/subscription/pkg/pypi-comtypes?utm_source=pypi-comtypes&utm_medium=readme)
 
-## About
 
-`comtypes` is a lightweight `Python` [COM](https://learn.microsoft.com/en-us/windows/win32/com/component-object-model--com--portal) package, based on the [`ctypes`](https://docs.python.org/library/ctypes.html) FFI library.
+`comtypes` is a lightweight pure Python [COM](https://learn.microsoft.com/en-us/windows/win32/com/component-object-model--com--portal) package based on the [`ctypes`](https://docs.python.org/library/ctypes.html) foreign function library.
 
-`comtypes` allows to define, call, and implement custom and dispatch-based COM interfaces in pure `Python`.
+`comtypes` allows you to define, call, and implement custom and dispatch-based COM interfaces in pure Python.
 
-This package works on Windows only.
+`comtypes` requires Windows and Python 3.7 or later.
+- Version [1.2.1](https://pypi.org/project/comtypes/1.2.1/) is the last version to support Python 2.7 and 3.3–3.6.
+- `comtypes` does not work with Python 3.7.6 and 3.8.1 as reported in [GH-202](https://github.com/enthought/comtypes/issues/202), however, this bug has been fixed in Python 3.7 releases greater than or equal to 3.7.7 and Python 3.8 releases greater than or equal to 3.8.2.
+- Certain `comtypes` functions may not work correctly in Python 3.8 and 3.9 as reported in [GH-212](https://github.com/enthought/comtypes/issues/212). This bug has been fixed in Python >= 3.10.10 and >= 3.11.2.
 
-Available on `Python` 3.7-3.12.
-- [`comtypes==1.2.1`](https://pypi.org/project/comtypes/1.2.1/) is the last version supporting `Python` 2.7 and 3.3-3.6.
-- In `Python` 3.7.6 and 3.8.1, `comtypes` would not work as reported in [GH-202](https://github.com/enthought/comtypes/issues/202).  
-This bug has been fixed in `Python` >= 3.7.7 and >= 3.8.2.
-- In `Python` 3.8 and 3.9, some of `comtypes` functionalities may not work correctly as reported in [GH-212](https://github.com/enthought/comtypes/issues/212).  
-This bug has been fixed in `Python` >= 3.10.10 and >= 3.11.2.
+## Installation
 
-## Where to get it
-
-The source code is currently hosted on GitHub at:
-https://github.com/enthought/comtypes
-
-An installer for the latest released version is available at the [Python Package Index (PyPI)](https://pypi.org/project/comtypes).
-
+`comtypes` is available on [PyPI](https://pypi.org/project/comtypes) and may be installed with `pip`:
 ```sh
 # PyPI
 pip install comtypes
 ```
 
-## Dependencies
+The source code for `comtypes` may be found on [GitHub](https://github.com/enthought/comtypes).
 
-`comtypes` requires no third-party packages to run - this is truly **pure** `Python` package.
+### Dependencies
 
-Optional features include the follows...
-- to process arrays as `numpy`'s `ndarray`
-- type hints be interpreted by `mypy` or several static type checkers
+`comtypes` is a pure Python package — it has no additional required dependencies.
 
-But these third-parties are not required as a prerequisite for runtime.
+Optional functionality may be enabled by installing:
+- `numpy`, in order to process arrays as `numpy`'s `ndarray`.
+- `mypy` or other static type checkers, in order to interpret type hints.
 
-## Community of the developers
+None of these packages, however, are required in order to run `comtypes`.
 
-Tracking issues, reporting bugs and contributing to the codebase and documentation are on GitHub at:
-https://github.com/enthought/comtypes
+## Community
 
-## For Enterprise
+Issues may be tracked, bugs may be reported and contributions may be made to the codebase and documentation on `comtypes`' [GitHub](https://github.com/enthought/comtypes) repository.
 
-Available as part of the Tidelift Subscription.
+## Enterprise
 
-This project and the maintainers of thousands of other packages are working with Tidelift to deliver one enterprise subscription that covers all of the open source you use.
-
-[Learn more](https://tidelift.com/subscription/pkg/pypi-comtypes?utm_source=pypi-comtypes&utm_medium=referral&utm_campaign=github).
+`comtypes` is available as part of the Tidelift Subscription. `comtypes` and the maintainers of thousands of other packages are working with Tidelift to deliver one enterprise subscription that covers all of the open source you use. To learn more, you can visit Tidelift's website [here](https://tidelift.com/subscription/pkg/pypi-comtypes?utm_source=pypi-comtypes&utm_medium=referral&utm_campaign=github).
 
 ## Frequently Asked Questions
 
 ### Q: Why does this package not support platforms other than Windows?
-**A:** [The Microsoft Component Object Model (COM)](https://learn.microsoft.com/en-us/windows/win32/com/com-technical-overview) is a technology that is unique to Windows and is not supported on other platforms.
+**A:** The [Microsoft Component Object Model (COM)](https://learn.microsoft.com/en-us/windows/win32/com/com-technical-overview) is a technology that is unique to Windows and is not supported on other platforms.
 
 [The phrase _"COM is a platform-independent"_ in the MS documentation](https://learn.microsoft.com/en-us/windows/win32/com/component-object-model--com--portal) means that COM maintains compatibility across different versions of Windows, and does NOT imply that it is supported on Linux or Mac.
 
-As long as COM is not supported outside of Windows, this project does not plan to port to other platforms.
+For as long as COM is not supported outside of Windows, we do not plan on porting `comtypes` to other platforms.
 
 ### Q: Why does `cannot import name 'COMError' from '_ctypes'` error occur when using this package on platforms other than Windows?
-**A:** The [`_ctypes`](https://github.com/python/cpython/blob/main/Modules/_ctypes/_ctypes.c) is part of the internal implementation of the [`ctypes`](https://github.com/python/cpython/blob/main/Lib/ctypes/) standard library that exists for Python on all platforms.  
-However, `COMError` and COM-related features are implemented only in Python for Windows.
+**A:** The [`_ctypes`](https://github.com/python/cpython/blob/main/Modules/_ctypes/_ctypes.c) is part of the internal implementation of the [`ctypes`](https://github.com/python/cpython/blob/main/Lib/ctypes/) standard library that exists for Python on all platforms.
+However, `COMError` and COM-related features are only implemented in Python for Windows.
 
-In cross-platform software development, care must be taken to ensure that codebase dependent on `comtypes` does not execute in environments other than Windows.
+In cross-platform software development, care must be taken to ensure that codebases that depend on `comtypes` do not execute in environments other than Windows.
 
 ### Q: Despite a script that depends on `comtypes` having run successfully before, a error (`ImportError`, `NameError`, or `SyntaxError`) is raised now, and the same error occurs again and again.
 
@@ -83,7 +71,6 @@ After deleting these partial modules and running the script again, `comtypes.cli
 
 However, if the script implementation does not use `comtypes.client.GetModule` or processes generated files, it may not be a solution.
 
-## Documentation:
+## Documentation
 
-The documentation is currently hosted on pythonhosted at:
-https://pythonhosted.org/comtypes
+`comtypes`' documentation is currently hosted [here](https://pythonhosted.org/comtypes) on PythonHosted.
