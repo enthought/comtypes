@@ -39,9 +39,13 @@ None of these packages, however, are required in order to run `comtypes`.
 
 Issues may be tracked, bugs may be reported and contributions may be made to the codebase and documentation on `comtypes`' [GitHub](https://github.com/enthought/comtypes) repository.
 
-## Enterprise
+## For Enterprise
 
-`comtypes` is available as part of the Tidelift Subscription. `comtypes` and the maintainers of thousands of other packages are working with Tidelift to deliver one enterprise subscription that covers all of the open source you use. To learn more, you can visit Tidelift's website [here](https://tidelift.com/subscription/pkg/pypi-comtypes?utm_source=pypi-comtypes&utm_medium=referral&utm_campaign=github).
+Available as part of the Tidelift Subscription.
+
+This project and the maintainers of thousands of other packages are working with Tidelift to deliver one enterprise subscription that covers all of the open source you use.
+
+[Learn more](https://tidelift.com/subscription/pkg/pypi-comtypes?utm_source=pypi-comtypes&utm_medium=referral&utm_campaign=github).
 
 ## Frequently Asked Questions
 
