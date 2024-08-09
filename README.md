@@ -6,7 +6,7 @@
 [![Tidelift Subscription](https://tidelift.com/badges/package/pypi/comtypes)](https://tidelift.com/subscription/pkg/pypi-comtypes?utm_source=pypi-comtypes&utm_medium=readme)
 
 
-`comtypes` is a lightweight pure Python [COM](https://learn.microsoft.com/en-us/windows/win32/com/component-object-model--com--portal) package based on the [`ctypes`](https://docs.python.org/library/ctypes.html) foreign function library.
+`comtypes` is a lightweight pure Python [COM](https://learn.microsoft.com/en-us/windows/win32/com/component-object-model--com--portal) package based on the [`ctypes`](https://docs.python.org/library/ctypes.html) foreign function interface library.
 
 `comtypes` allows you to define, call, and implement custom and dispatch-based COM interfaces in pure Python.
 
