@@ -17,7 +17,7 @@
 
 ## Installation
 
-`comtypes` is available on [PyPI](https://pypi.org/project/comtypes) and may be installed with `pip`:
+`comtypes` is available on [PyPI](https://pypi.org/project/comtypes) and can be installed with `pip`:
 ```sh
 # PyPI
 pip install comtypes
