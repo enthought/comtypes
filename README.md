@@ -23,7 +23,7 @@
 pip install comtypes
 ```
 
-The source code for `comtypes` may be found on [GitHub](https://github.com/enthought/comtypes).
+The source code is currently hosted [here](https://github.com/enthought/comtypes) on GitHub.
 
 ### Dependencies
 
