@@ -29,7 +29,7 @@ The source code is currently hosted [here](https://github.com/enthought/comtypes
 
 `comtypes` is a pure Python package — it has no additional required dependencies.
 
-Optional functionality may be enabled by installing:
+Optional functionalities can be enabled by installing:
 - `numpy`, in order to process arrays as `numpy`'s `ndarray`.
 - `mypy` or other static type checkers, in order to interpret type hints.
 
