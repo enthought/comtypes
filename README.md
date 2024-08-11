@@ -54,7 +54,7 @@ This project and the maintainers of thousands of other packages are working with
 
 [The phrase _"COM is a platform-independent"_ in the MS documentation](https://learn.microsoft.com/en-us/windows/win32/com/component-object-model--com--portal) means that COM maintains compatibility across different versions of Windows, and does NOT imply that it is supported on Linux or Mac.
 
-For as long as COM is not supported outside of Windows, we do not plan on porting `comtypes` to other platforms.
+For as long as COM is not supported outside of Windows, there is no plan to port `comtypes` to other platforms.
 
 ### Q: Why does `cannot import name 'COMError' from '_ctypes'` error occur when using this package on platforms other than Windows?
 **A:** The [`_ctypes`](https://github.com/python/cpython/blob/main/Modules/_ctypes/_ctypes.c) is part of the internal implementation of the [`ctypes`](https://github.com/python/cpython/blob/main/Lib/ctypes/) standard library that exists for Python on all platforms.
