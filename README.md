@@ -37,7 +37,7 @@ None of these packages, however, are required in order to run `comtypes`.
 
 ## Community
 
-Issues may be tracked, bugs may be reported and contributions may be made to the codebase and documentation on `comtypes`' [GitHub](https://github.com/enthought/comtypes) repository.
+The [GitHub repository](https://github.com/enthought/comtypes) is used for tracking issues, reporting bugs, and contributing to the codebase and documentation.
 
 ## For Enterprise
 
