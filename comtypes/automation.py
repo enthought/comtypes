@@ -138,11 +138,8 @@ class tagDEC(Structure):
 
         """
         digits = (self.Hi32 << 64) + self.Lo64
-        decimal_str = "{0}{1}e-{2}".format(
-            "-" if self.sign else "",
-            digits,
-            self.scale,
-        )
+        sign = "-" if self.sign else ""
+        decimal_str = "{0}{1}e-{2}".format(sign, digits, self.scale)
         return decimal.Decimal(decimal_str)
 
 
