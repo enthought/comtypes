@@ -130,7 +130,7 @@ class tagDEC(Structure):
         ("Lo64", c_ulonglong),
     ]
 
-    def as_decimal(self):
+    def as_decimal(self) -> decimal.Decimal:
         """Convert a tagDEC struct to Decimal.
 
         See http://msdn.microsoft.com/en-us/library/cc234586.aspx for the tagDEC
@@ -138,12 +138,8 @@ class tagDEC(Structure):
 
         """
         digits = (self.Hi32 << 64) + self.Lo64
-        decimal_str = "{0}{1}e-{2}".format(
-            "-" if self.sign else "",
-            digits,
-            self.scale,
-        )
-        return decimal.Decimal(decimal_str)
+        sign = "-" if self.sign else ""
+        return decimal.Decimal(f"{sign}{digits}e-{self.scale}")
 
 
 DECIMAL = tagDEC
