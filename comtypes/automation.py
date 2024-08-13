@@ -130,7 +130,7 @@ class tagDEC(Structure):
         ("Lo64", c_ulonglong),
     ]
 
-    def as_decimal(self):
+    def as_decimal(self) -> decimal.Decimal:
         """Convert a tagDEC struct to Decimal.
 
         See http://msdn.microsoft.com/en-us/library/cc234586.aspx for the tagDEC
