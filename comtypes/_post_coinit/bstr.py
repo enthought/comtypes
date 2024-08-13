@@ -12,7 +12,7 @@ class BSTR(_SimpleCData):
     _needsfree = False
 
     def __repr__(self) -> str:
-        return "%s(%r)" % (self.__class__.__name__, self.value)
+        return f"{self.__class__.__name__}({self.value!r})"
 
     def __ctypes_from_outparam__(self) -> Any:
         self._needsfree = True
