@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 
 class BSTR(_SimpleCData):
-    "The windows BSTR data type"
+    """The windows BSTR data type"""
     _type_ = "X"
     _needsfree = False
 
