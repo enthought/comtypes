@@ -340,24 +340,26 @@ class ITypeInfo(IUnknown):
             """Releases a VARDESC previously returned by VarDesc"""
             ...
 
-    def GetTypeAttr(self):
+    def GetTypeAttr(self) -> "TYPEATTR":
         """Return the TYPEATTR for this type"""
         return _deref_with_release(
             self._GetTypeAttr(), self.ReleaseTypeAttr  # type: ignore
         )
 
-    def GetDocumentation(self, memid):
+    def GetDocumentation(
+        self, memid: int
+    ) -> Tuple[str, Optional[str], int, Optional[str]]:
         """Return name, docstring, helpcontext, and helpfile for 'memid'."""
         name, doc, helpctx, helpfile = self._GetDocumentation(memid)  # type: ignore
         return fix_name(name), fix_name(doc), helpctx, fix_name(helpfile)
 
-    def GetFuncDesc(self, index):
+    def GetFuncDesc(self, index: int) -> "FUNCDESC":
         """Return FUNCDESC for index"""
         return _deref_with_release(
             self._GetFuncDesc(index), self.ReleaseFuncDesc  # type: ignore
         )
 
-    def GetVarDesc(self, index):
+    def GetVarDesc(self, index: int) -> "VARDESC":
         """Return VARDESC for index"""
         return _deref_with_release(
             self._GetVarDesc(index), self.ReleaseVarDesc  # type: ignore
