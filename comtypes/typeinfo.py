@@ -218,7 +218,9 @@ class ITypeLib(IUnknown):
             """Return an ITypeComp pointer."""
             ...
 
-        def GetDocumentation(self, index: int) -> Tuple[str, str, int, Optional[str]]:
+        def GetDocumentation(
+            self, index: int
+        ) -> Tuple[str, Optional[str], int, Optional[str]]:
             """Return documentation for a type description."""
             ...
 
