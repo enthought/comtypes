@@ -13,7 +13,7 @@ import weakref
 import ctypes
 from ctypes import HRESULT, POINTER, _Pointer, byref, c_int, c_void_p, c_wchar_p
 from ctypes.wintypes import DWORD, LONG, UINT, ULONG, WCHAR, WORD
-from comtypes import BSTR, _CData, COMMETHOD, _GUID, GUID, IID, IUnknown, STDMETHOD
+from comtypes import BSTR, _CData, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.automation import DISPID, LCID, SCODE
 from comtypes.automation import DISPPARAMS, EXCEPINFO, VARIANT, VARIANTARG, VARTYPE
 
