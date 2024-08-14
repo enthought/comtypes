@@ -226,11 +226,11 @@ class ITypeLib(IUnknown):
             """Release TLIBATTR"""
             ...
 
-    _GetLibAttr: Callable[[], "_Pointer[TLIBATTR]"]
-
     def GetLibAttr(self) -> "TLIBATTR":
         """Return type library attributes"""
-        return _deref_with_release(self._GetLibAttr(), self.ReleaseTLibAttr)
+        return _deref_with_release(
+            self._GetLibAttr(), self.ReleaseTLibAttr  # type: ignore
+        )
 
     def IsName(self, name: str, lHashVal: int = 0) -> Optional[str]:
         """Check if there is type information for this name.
@@ -340,27 +340,28 @@ class ITypeInfo(IUnknown):
             """Releases a VARDESC previously returned by VarDesc"""
             ...
 
-    _GetTypeAttr: Callable[[], "_Pointer[TYPEATTR]"]
-    _GetFuncDesc: Callable[[int], "_Pointer[FUNCDESC]"]
-    _GetVarDesc: Callable[[int], "_Pointer[VARDESC]"]
-    _GetDocumentation: Callable[[int], Tuple[str, str, int, Optional[str]]]
-
     def GetTypeAttr(self):
         """Return the TYPEATTR for this type"""
-        return _deref_with_release(self._GetTypeAttr(), self.ReleaseTypeAttr)
+        return _deref_with_release(
+            self._GetTypeAttr(), self.ReleaseTypeAttr  # type: ignore
+        )
 
     def GetDocumentation(self, memid):
         """Return name, docstring, helpcontext, and helpfile for 'memid'."""
-        name, doc, helpcontext, helpfile = self._GetDocumentation(memid)
-        return fix_name(name), fix_name(doc), helpcontext, fix_name(helpfile)
+        name, doc, helpctx, helpfile = self._GetDocumentation(memid)  # type: ignore
+        return fix_name(name), fix_name(doc), helpctx, fix_name(helpfile)
 
     def GetFuncDesc(self, index):
         """Return FUNCDESC for index"""
-        return _deref_with_release(self._GetFuncDesc(index), self.ReleaseFuncDesc)
+        return _deref_with_release(
+            self._GetFuncDesc(index), self.ReleaseFuncDesc  # type: ignore
+        )
 
     def GetVarDesc(self, index):
         """Return VARDESC for index"""
-        return _deref_with_release(self._GetVarDesc(index), self.ReleaseVarDesc)
+        return _deref_with_release(
+            self._GetVarDesc(index), self.ReleaseVarDesc  # type: ignore
+        )
 
     def GetNames(self, memid: int, count: int = 1) -> List[str]:
         """Return names for memid"""
@@ -454,13 +455,12 @@ class ICreateTypeLib2(ICreateTypeLib):
 class ICreateTypeInfo(IUnknown):
     _iid_ = GUID("{00020405-0000-0000-C000-000000000046}")
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 915
-    _SetFuncAndParamNames: Callable[[int, "ctypes.Array[c_wchar_p]", int], int]
 
     def SetFuncAndParamNames(self, index: int, *names: str) -> int:
         rgszNames = (c_wchar_p * len(names))()
         for i, n in enumerate(names):
             rgszNames[i] = n
-        return self._SetFuncAndParamNames(index, rgszNames, len(names))
+        return self._SetFuncAndParamNames(index, rgszNames, len(names))  # type: ignore
 
 
 class IRecordInfo(IUnknown):
