@@ -77,6 +77,13 @@ class Test_GetModule(ut.TestCase):
 
         self.assertTrue(issubclass(mod.IStream, ISequentialStream))
 
+    def test_msvidctl(self):
+        with contextlib.redirect_stdout(None):  # supress warnings
+            mod = comtypes.client.GetModule("msvidctl.dll")
+        from comtypes.persist import IPersist
+
+        self.assertIs(mod.IPersist, IPersist)
+
     def test_no_replacing_Patch_namespace(self):
         # NOTE: An object named `Patch` is defined in some dll.
         # Depending on how the namespace is defined in the static module,
