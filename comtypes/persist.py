@@ -12,9 +12,15 @@ interface, useful in client code.
 from ctypes import c_int, c_ulong, c_ushort, c_wchar_p
 from ctypes import POINTER, Structure
 from ctypes.wintypes import WORD, DWORD, BOOL
+from typing import TYPE_CHECKING
+
 from comtypes import GUID, IUnknown, COMMETHOD, HRESULT
 from comtypes import IPersist
 from comtypes.automation import VARIANT, tagEXCEPINFO
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
+
 
 # XXX Replace by canonical solution!!!
 WSTRING = c_wchar_p
@@ -236,6 +242,15 @@ class IPersistFile(IPersist):
             [], HRESULT, "GetCurFile", (["out"], POINTER(LPOLESTR), "ppszFileName")
         ),
     ]
+
+    if TYPE_CHECKING:
+        # fmt: off
+        def IsDirty(self) -> hints.Hresult: ...  # noqa
+        def Load(self, pszFileName: str, dwMode: int) -> hints.Hresult: ...  # noqa
+        def Save(self, pszFileName: str, fRemember: bool) -> hints.Hresult: ...  # noqa
+        def SaveCompleted(self, pszFileName: str) -> hints.Hresult: ...  # noqa
+        def GetCurFile(self) -> str: ...  # noqa
+        # fmt: on
 
 
 from comtypes import COMObject
