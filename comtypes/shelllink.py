@@ -3,6 +3,7 @@ from ctypes import c_char_p, c_int, c_short, c_wchar_p
 from ctypes import POINTER
 from ctypes import byref, create_string_buffer, create_unicode_buffer
 from ctypes.wintypes import DWORD, WIN32_FIND_DATAA, WIN32_FIND_DATAW, MAX_PATH
+from typing import Tuple
 
 from comtypes import IUnknown, GUID, COMMETHOD, HRESULT, CoClass
 
@@ -116,31 +117,31 @@ class IShellLinkA(IUnknown):
         COMMETHOD([], HRESULT, "SetPath", (["in"], c_char_p, "pszFile")),
     ]
 
-    def GetPath(self, flags=SLGP_SHORTPATH):
+    def GetPath(self, flags: int = SLGP_SHORTPATH) -> bytes:
         buf = create_string_buffer(MAX_PATH)
         # We're not interested in WIN32_FIND_DATA
-        self.__com_GetPath(buf, MAX_PATH, None, flags)
+        self.__com_GetPath(buf, MAX_PATH, None, flags)  # type: ignore
         return buf.value
 
-    def GetDescription(self):
+    def GetDescription(self) -> bytes:
         buf = create_string_buffer(1024)
-        self.__com_GetDescription(buf, 1024)
+        self.__com_GetDescription(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetWorkingDirectory(self):
+    def GetWorkingDirectory(self) -> bytes:
         buf = create_string_buffer(MAX_PATH)
-        self.__com_GetWorkingDirectory(buf, MAX_PATH)
+        self.__com_GetWorkingDirectory(buf, MAX_PATH)  # type: ignore
         return buf.value
 
-    def GetArguments(self):
+    def GetArguments(self) -> bytes:
         buf = create_string_buffer(1024)
-        self.__com_GetArguments(buf, 1024)
+        self.__com_GetArguments(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetIconLocation(self):
+    def GetIconLocation(self) -> Tuple[bytes, int]:
         iIcon = c_int()
         buf = create_string_buffer(MAX_PATH)
-        self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))
+        self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))  # type: ignore
         return buf.value, iIcon.value
 
 
@@ -229,31 +230,31 @@ class IShellLinkW(IUnknown):
         COMMETHOD([], HRESULT, "SetPath", (["in"], c_wchar_p, "pszFile")),
     ]
 
-    def GetPath(self, flags=SLGP_SHORTPATH):
+    def GetPath(self, flags: int = SLGP_SHORTPATH) -> str:
         buf = create_unicode_buffer(MAX_PATH)
         # We're not interested in WIN32_FIND_DATA
-        self.__com_GetPath(buf, MAX_PATH, None, flags)
+        self.__com_GetPath(buf, MAX_PATH, None, flags)  # type: ignore
         return buf.value
 
-    def GetDescription(self):
+    def GetDescription(self) -> str:
         buf = create_unicode_buffer(1024)
-        self.__com_GetDescription(buf, 1024)
+        self.__com_GetDescription(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetWorkingDirectory(self):
+    def GetWorkingDirectory(self) -> str:
         buf = create_unicode_buffer(MAX_PATH)
-        self.__com_GetWorkingDirectory(buf, MAX_PATH)
+        self.__com_GetWorkingDirectory(buf, MAX_PATH)  # type: ignore
         return buf.value
 
-    def GetArguments(self):
+    def GetArguments(self) -> str:
         buf = create_unicode_buffer(1024)
-        self.__com_GetArguments(buf, 1024)
+        self.__com_GetArguments(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetIconLocation(self):
+    def GetIconLocation(self) -> Tuple[str, int]:
         iIcon = c_int()
         buf = create_unicode_buffer(MAX_PATH)
-        self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))
+        self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))  # type: ignore
         return buf.value, iIcon.value
 
 
