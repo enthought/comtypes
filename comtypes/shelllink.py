@@ -3,9 +3,14 @@ from ctypes import c_char_p, c_int, c_short, c_wchar_p
 from ctypes import POINTER
 from ctypes import byref, create_string_buffer, create_unicode_buffer
 from ctypes.wintypes import DWORD, WIN32_FIND_DATAA, WIN32_FIND_DATAW, MAX_PATH
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 
 from comtypes import IUnknown, GUID, COMMETHOD, HRESULT, CoClass
+
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
+
 
 # for GetPath
 SLGP_SHORTPATH = 0x1
@@ -116,6 +121,27 @@ class IShellLinkA(IUnknown):
         ),
         COMMETHOD([], HRESULT, "SetPath", (["in"], c_char_p, "pszFile")),
     ]
+
+    if TYPE_CHECKING:
+        # fmt: off
+        def GetIDList(self) -> hints.Incomplete: ...  # noqa
+        def SetIDList(self, pidl: hints.Incomplete) -> hints.Incomplete: ...  # noqa
+        def SetDescription(self, pszName: bytes) -> hints.Incomplete: ...  # noqa
+        def SetWorkingDirectory(self, pszDir: bytes) -> hints.Hresult: ...   # noqa
+        def SetArguments(self, pszArgs: bytes) -> hints.Hresult: ...   # noqa
+        @property
+        def Hotkey(self) -> int: ...   # noqa
+        @Hotkey.setter
+        def Hotkey(self, pwHotkey: int) -> None: ...   # noqa
+        @property
+        def ShowCmd(self) -> int: ...   # noqa
+        @ShowCmd.setter
+        def ShowCmd(self, piShowCmd: int) -> None: ...   # noqa
+        def SetIconLocation(self, pszIconPath: bytes, iIcon: int) -> hints.Hresult: ...   # noqa
+        def SetRelativePath(self, pszPathRel: bytes, dwReserved: hints.Literal[0]) -> hints.Hresult: ...   # noqa
+        def Resolve(self, hwnd: int, fFlags: int) -> hints.Hresult: ...   # noqa
+        def SetPath(self, pszFile: bytes) -> hints.Hresult: ...   # noqa
+        # fmt: on
 
     def GetPath(self, flags: int = SLGP_SHORTPATH) -> bytes:
         buf = create_string_buffer(MAX_PATH)
@@ -229,6 +255,27 @@ class IShellLinkW(IUnknown):
         ),
         COMMETHOD([], HRESULT, "SetPath", (["in"], c_wchar_p, "pszFile")),
     ]
+
+    if TYPE_CHECKING:
+        # fmt: off
+        def GetIDList(self) -> hints.Incomplete: ...  # noqa
+        def SetIDList(self, pidl: hints.Incomplete) -> hints.Incomplete: ...  # noqa
+        def SetDescription(self, pszName: str) -> hints.Incomplete: ...  # noqa
+        def SetWorkingDirectory(self, pszDir: str) -> hints.Hresult: ...   # noqa
+        def SetArguments(self, pszArgs: str) -> hints.Hresult: ...   # noqa
+        @property
+        def Hotkey(self) -> int: ...   # noqa
+        @Hotkey.setter
+        def Hotkey(self, pwHotkey: int) -> None: ...   # noqa
+        @property
+        def ShowCmd(self) -> int: ...   # noqa
+        @ShowCmd.setter
+        def ShowCmd(self, piShowCmd: int) -> None: ...   # noqa
+        def SetIconLocation(self, pszIconPath: str, iIcon: int) -> hints.Hresult: ...   # noqa
+        def SetRelativePath(self, pszPathRel: str, dwReserved: hints.Literal[0]) -> hints.Hresult: ...   # noqa
+        def Resolve(self, hwnd: int, fFlags: int) -> hints.Hresult: ...   # noqa
+        def SetPath(self, pszFile: str) -> hints.Hresult: ...   # noqa
+        # fmt: on
 
     def GetPath(self, flags: int = SLGP_SHORTPATH) -> str:
         buf = create_unicode_buffer(MAX_PATH)
