@@ -12,7 +12,7 @@ interface, useful in client code.
 from ctypes import c_int, c_ulong, c_ushort, c_wchar_p
 from ctypes import POINTER, Structure
 from ctypes.wintypes import WORD, DWORD, BOOL
-from comtypes import GUID, IUnknown, COMMETHOD, HRESULT, dispid
+from comtypes import GUID, IUnknown, COMMETHOD, HRESULT
 from comtypes import IPersist
 from comtypes.automation import VARIANT, tagEXCEPINFO
 
