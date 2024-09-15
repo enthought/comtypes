@@ -114,5 +114,18 @@ class Test_RemoteCopyTo(ut.TestCase):
         self.assertEqual(bytearray(dst_buf)[0:dst_read], test_data)
 
 
+class Test_Clone(ut.TestCase):
+    def test_Clone(self):
+        orig = _create_stream()
+        test_data = b"spam egg bacon ham"
+        pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
+        orig.RemoteWrite(pv, len(test_data))
+        orig.Commit(STGC_DEFAULT)
+        orig.RemoteSeek(0, STREAM_SEEK_SET)
+        new_stm = orig.Clone()
+        buf, read = new_stm.RemoteRead(1024)
+        self.assertEqual(bytearray(buf)[0:read], test_data)
+
+
 if __name__ == "__main__":
     ut.main()
