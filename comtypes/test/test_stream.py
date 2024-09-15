@@ -1,6 +1,6 @@
 import unittest as ut
 
-from ctypes import POINTER, byref, c_bool, c_ubyte
+from ctypes import POINTER, byref, c_bool, c_ubyte, c_ulonglong, oledll, pointer
 import comtypes
 import comtypes.client
 
@@ -85,6 +85,15 @@ class Test_RemoteSeek(ut.TestCase):
         self.assertEqual(newpos, 5)
         buf, read = stream.RemoteRead(1024)
         self.assertEqual(bytearray(buf)[0:read], b"egg bacon ham")
+
+
+class Test_SetSize(ut.TestCase):
+    def test_SetSize(self):
+        stream = _create_stream()
+        stream.SetSize(42)
+        pui = pointer(c_ulonglong())
+        oledll.shlwapi.IStream_Size(stream, pui)
+        self.assertEqual(pui.contents.value, 42)
 
 
 if __name__ == "__main__":
