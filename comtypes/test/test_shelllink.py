@@ -50,17 +50,15 @@ class Test_IShellLinkA(ut.TestCase):
         self.assertEqual(shortcut.GetArguments(), b"-f")
 
     def test_set_and_get_hotkey(self):
-        HOTKEYF_ALT = 0x04
-        HOTKEYF_CONTROL = 0x02
+        hotkey = shelllink.HOTKEYF_ALT | shelllink.HOTKEYF_CONTROL
         shortcut = self._create_shortcut()
-        shortcut.Hotkey = HOTKEYF_ALT | HOTKEYF_CONTROL
-        self.assertEqual(shortcut.Hotkey, HOTKEYF_ALT | HOTKEYF_CONTROL)
+        shortcut.Hotkey = hotkey
+        self.assertEqual(shortcut.Hotkey, hotkey)
 
     def test_set_and_get_showcmd(self):
-        SW_SHOWMAXIMIZED = 0x03
         shortcut = self._create_shortcut()
-        shortcut.ShowCmd = SW_SHOWMAXIMIZED
-        self.assertEqual(shortcut.ShowCmd, SW_SHOWMAXIMIZED)
+        shortcut.ShowCmd = shelllink.SW_SHOWMAXIMIZED
+        self.assertEqual(shortcut.ShowCmd, shelllink.SW_SHOWMAXIMIZED)
 
     def test_set_and_get_icon_location(self):
         shortcut = self._create_shortcut()
@@ -113,17 +111,15 @@ class Test_IShellLinkW(ut.TestCase):
         self.assertEqual(shortcut.GetArguments(), "-f")
 
     def test_set_and_get_hotkey(self):
-        HOTKEYF_ALT = 0x04
-        HOTKEYF_CONTROL = 0x02
+        hotkey = shelllink.HOTKEYF_ALT | shelllink.HOTKEYF_CONTROL
         shortcut = self._create_shortcut()
-        shortcut.Hotkey = HOTKEYF_ALT | HOTKEYF_CONTROL
-        self.assertEqual(shortcut.Hotkey, HOTKEYF_ALT | HOTKEYF_CONTROL)
+        shortcut.Hotkey = hotkey
+        self.assertEqual(shortcut.Hotkey, hotkey)
 
     def test_set_and_get_showcmd(self):
-        SW_SHOWMAXIMIZED = 0x03
         shortcut = self._create_shortcut()
-        shortcut.ShowCmd = SW_SHOWMAXIMIZED
-        self.assertEqual(shortcut.ShowCmd, SW_SHOWMAXIMIZED)
+        shortcut.ShowCmd = shelllink.SW_SHOWMAXIMIZED
+        self.assertEqual(shortcut.ShowCmd, shelllink.SW_SHOWMAXIMIZED)
 
     def test_set_and_get_icon_location(self):
         shortcut = self._create_shortcut()
