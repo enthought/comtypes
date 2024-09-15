@@ -34,6 +34,7 @@ longlong_type = typedesc.FundamentalType("long long int", 64, 64)
 ulonglong_type = typedesc.FundamentalType("long long unsigned int", 64, 64)
 float_type = typedesc.FundamentalType("float", 32, 32)
 double_type = typedesc.FundamentalType("double", 64, 64)
+void_type = typedesc.FundamentalType("void", 0, 0)
 
 # basic COM data types
 BSTR_type = typedesc.Typedef("BSTR", PTR(wchar_t_type))
@@ -89,7 +90,7 @@ COMTYPES = {
     automation.VT_UI8: ulonglong_type,  # 21
     automation.VT_INT: int_type,  # 22
     automation.VT_UINT: uint_type,  # 23
-    automation.VT_VOID: typedesc.FundamentalType("void", 0, 0),  # 24
+    automation.VT_VOID: void_type,  # 24
     automation.VT_HRESULT: HRESULT_type,  # 25
     automation.VT_LPSTR: PTR(char_type),  # 30
     automation.VT_LPWSTR: PTR(wchar_t_type),  # 31

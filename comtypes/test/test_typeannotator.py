@@ -7,6 +7,7 @@ from comtypes.tools.tlbparser import (
     HRESULT_type,
     VARIANT_type,
     VARIANT_BOOL_type,
+    void_type,
 )
 
 
@@ -20,7 +21,6 @@ idispatch_type = typedesc.ComInterface(
     ["restricted"],
     None,
 )
-void_type = typedesc.FundamentalType("void", 0, 0)
 
 
 class Test_AvoidUsingKeywords(unittest.TestCase):
