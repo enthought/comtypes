@@ -96,5 +96,23 @@ class Test_SetSize(ut.TestCase):
         self.assertEqual(pui.contents.value, 42)
 
 
+class Test_RemoteCopyTo(ut.TestCase):
+    def test_RemoteCopyTo(self):
+        src = _create_stream()
+        dst = _create_stream()
+        test_data = b"parrot"
+        pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
+        src_written = src.RemoteWrite(pv, len(test_data))
+        src.Commit(STGC_DEFAULT)
+        src.RemoteSeek(0, STREAM_SEEK_SET)
+        cpy_read, cpy_written = src.RemoteCopyTo(dst, src_written)
+        self.assertEqual(cpy_read, len(test_data))
+        self.assertEqual(cpy_written, len(test_data))
+        dst.Commit(STGC_DEFAULT)
+        dst.RemoteSeek(0, STREAM_SEEK_SET)
+        dst_buf, dst_read = dst.RemoteRead(1024)
+        self.assertEqual(bytearray(dst_buf)[0:dst_read], test_data)
+
+
 if __name__ == "__main__":
     ut.main()
