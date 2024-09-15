@@ -8,6 +8,10 @@ comtypes.client.GetModule("portabledeviceapi.dll")
 from comtypes.gen.PortableDeviceApiLib import IStream
 
 
+STGC_DEFAULT = 0
+STREAM_SEEK_SET = 0
+
+
 def _create_stream() -> IStream:
     # Create an IStream
     stream = POINTER(IStream)()  # type: ignore
@@ -35,9 +39,8 @@ class Test_RemoteRead(ut.TestCase):
         stream.RemoteWrite(pv, len(test_data))
 
         # Make sure the data actually gets written before trying to read back
-        stream.Commit(0)
+        stream.Commit(STGC_DEFAULT)
         # Move the stream back to the beginning
-        STREAM_SEEK_SET = 0
         stream.RemoteSeek(0, STREAM_SEEK_SET)
 
         buffer_size = 1024
