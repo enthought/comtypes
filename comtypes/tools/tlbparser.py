@@ -737,11 +737,6 @@ def get_tlib_filename(tlib: typeinfo.ITypeLib) -> Optional[str]:
     # determine the filename.
     la = tlib.GetLibAttr()
     name = BSTR()
-    try:
-        windll.oleaut32.QueryPathOfRegTypeLib
-    except AttributeError:
-        # Windows CE doesn't have this function
-        return None
     if 0 == windll.oleaut32.QueryPathOfRegTypeLib(
         byref(la.guid), la.wMajorVerNum, la.wMinorVerNum, 0, byref(name)  # lcid
     ):
