@@ -732,7 +732,7 @@ class TypeLibParser(Parser):
 # path = r"c:\vc98\include\activscp.tlb"
 
 
-def get_tlib_filename(tlib):
+def get_tlib_filename(tlib: typeinfo.ITypeLib) -> Optional[str]:
     # seems if the typelib is not registered, there's no way to
     # determine the filename.
     la = tlib.GetLibAttr()
