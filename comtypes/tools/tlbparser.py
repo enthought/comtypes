@@ -732,16 +732,11 @@ class TypeLibParser(Parser):
 # path = r"c:\vc98\include\activscp.tlb"
 
 
-def get_tlib_filename(tlib):
+def get_tlib_filename(tlib: typeinfo.ITypeLib) -> Optional[str]:
     # seems if the typelib is not registered, there's no way to
     # determine the filename.
     la = tlib.GetLibAttr()
     name = BSTR()
-    try:
-        windll.oleaut32.QueryPathOfRegTypeLib
-    except AttributeError:
-        # Windows CE doesn't have this function
-        return None
     if 0 == windll.oleaut32.QueryPathOfRegTypeLib(
         byref(la.guid), la.wMajorVerNum, la.wMinorVerNum, 0, byref(name)  # lcid
     ):
