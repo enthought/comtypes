@@ -605,7 +605,7 @@ class Parser(object):
         name = tinfo.GetDocumentation(-1)[0]
         modname = self._typelib_module()
         try:
-            return self.items["%s.%s" % (modname, name)]
+            return self.items[f"{modname}.{name}"]
         except KeyError:
             pass
 
