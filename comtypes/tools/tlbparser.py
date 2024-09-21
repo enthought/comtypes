@@ -269,7 +269,7 @@ class Parser(object):
             # Don't known what artefact that is - we ignore it.
             # It's an interface without methods anyway.
             if itf_name != "IOleControlTypes":
-                message = "Ignoring interface %s which has no base interface" % itf_name
+                message = f"Ignoring interface {itf_name} which has no base interface"
                 import warnings
 
                 warnings.warn(message, UserWarning)
