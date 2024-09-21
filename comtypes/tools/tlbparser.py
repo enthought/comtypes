@@ -589,13 +589,13 @@ class Parser(object):
         self, name: Optional[str], value: Any, tlib: Optional[typeinfo.ITypeLib] = None
     ) -> None:
         modname = self._typelib_module(tlib)
-        fullname = "%s.%s" % (modname, name)
+        fullname = f"{modname}.{name}"
         if fullname in self.items:
             # XXX Can we really allow this? It happens, at least.
             if isinstance(value, typedesc.External):
                 return
             # BUG: We try to register an item that's already registered.
-            raise ValueError("Bug: Multiple registered name '%s': %r" % (name, value))
+            raise ValueError(f"Bug: Multiple registered name '{name}': {value!r}")
         self.items[fullname] = value
 
     def parse_typeinfo(self, tinfo: typeinfo.ITypeInfo) -> Any:
