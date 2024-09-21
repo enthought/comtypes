@@ -1125,8 +1125,8 @@ tagTLIBATTR._fields_ = [
 class N11tagTYPEDESC5DOLLAR_203E(ctypes.Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 584
     if TYPE_CHECKING:
-        lptdesc: TYPEDESC
-        lpadesc: tagARRAYDESC
+        lptdesc: _Pointer[tagTYPEDESC]
+        lpadesc: _Pointer[tagARRAYDESC]
         hreftype: int
 
 
@@ -1175,7 +1175,7 @@ class N10tagVARDESC5DOLLAR_205E(ctypes.Union):
     # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 807
     if TYPE_CHECKING:
         oInst: int
-        lpvarValue: VARIANT
+        lpvarValue: _Pointer[VARIANT]
 
 
 N10tagVARDESC5DOLLAR_205E._fields_ = [

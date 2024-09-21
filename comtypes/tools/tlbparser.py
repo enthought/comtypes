@@ -127,20 +127,18 @@ class Parser(object):
                 )
             return typ
         elif tdesc.vt == automation.VT_PTR:
-            ptrdesc: typeinfo.TYPEDESC = tdesc._.lptdesc[0]
-            typ = self.make_type(ptrdesc, tinfo)
-            return PTR(typ)
+            return PTR(self.make_type(tdesc._.lptdesc[0], tinfo))
         elif tdesc.vt == automation.VT_USERDEFINED:
             try:
                 ti = tinfo.GetRefTypeInfo(tdesc._.hreftype)
             except COMError as details:
-                type_name = "__error_hreftype_%d__" % tdesc._.hreftype
+                type_name = f"__error_hreftype_{tdesc._.hreftype:d}__"
                 tlib_name = get_tlib_filename(self.tlib)
                 if tlib_name is None:
                     tlib_name = "unknown typelib"
                 message = (
-                    "\n\tGetRefTypeInfo failed in %s: %s\n\tgenerating type '%s' instead"
-                    % (tlib_name, details, type_name)
+                    f"\n\tGetRefTypeInfo failed in {tlib_name}: {details}"
+                    f"\n\tgenerating type '{type_name}' instead"
                 )
                 import warnings
 
@@ -154,8 +152,7 @@ class Parser(object):
             return result
         elif tdesc.vt == automation.VT_SAFEARRAY:
             # SAFEARRAY(<type>), see Don Box pp.331f
-            safearraydesc: typeinfo.TYPEDESC = tdesc._.lptdesc[0]
-            return midlSAFEARRAY(self.make_type(safearraydesc, tinfo))
+            return midlSAFEARRAY(self.make_type(tdesc._.lptdesc[0], tinfo))
         raise NotImplementedError(tdesc.vt)
 
     ################################################################
@@ -272,7 +269,7 @@ class Parser(object):
             # Don't known what artefact that is - we ignore it.
             # It's an interface without methods anyway.
             if itf_name != "IOleControlTypes":
-                message = "Ignoring interface %s which has no base interface" % itf_name
+                message = f"Ignoring interface {itf_name} which has no base interface"
                 import warnings
 
                 warnings.warn(message, UserWarning)
@@ -592,13 +589,13 @@ class Parser(object):
         self, name: Optional[str], value: Any, tlib: Optional[typeinfo.ITypeLib] = None
     ) -> None:
         modname = self._typelib_module(tlib)
-        fullname = "%s.%s" % (modname, name)
+        fullname = f"{modname}.{name}"
         if fullname in self.items:
             # XXX Can we really allow this? It happens, at least.
             if isinstance(value, typedesc.External):
                 return
             # BUG: We try to register an item that's already registered.
-            raise ValueError("Bug: Multiple registered name '%s': %r" % (name, value))
+            raise ValueError(f"Bug: Multiple registered name '{name}': {value!r}")
         self.items[fullname] = value
 
     def parse_typeinfo(self, tinfo: typeinfo.ITypeInfo) -> Any:
