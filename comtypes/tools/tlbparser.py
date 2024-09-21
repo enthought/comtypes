@@ -611,14 +611,7 @@ class Parser(object):
 
         tlib = tinfo.GetContainingTypeLib()[0]
         if tlib != self.tlib:
-            ta = tinfo.GetTypeAttr()
-            size = ta.cbSizeInstance * 8
-            align = ta.cbAlignment * 8
-            typ = typedesc.External(
-                tlib, name, size, align, tlib.GetDocumentation(-1)[:2]
-            )
-            self._register(name, typ, tlib)
-            return typ
+            return self._parse_External(name, tlib, tinfo)
 
         ta = tinfo.GetTypeAttr()
         tkind = ta.typekind
@@ -652,6 +645,17 @@ class Parser(object):
         else:
             print("NYI", tkind)
             # raise "NYI", tkind
+
+    def _parse_External(
+        self, name: str, tlib: typeinfo.ITypeLib, tinfo: typeinfo.ITypeInfo
+    ) -> typedesc.External:
+        ta = tinfo.GetTypeAttr()
+        size = ta.cbSizeInstance * 8
+        align = ta.cbAlignment * 8
+        docs = tlib.GetDocumentation(-1)[:2]
+        typ = typedesc.External(tlib, name, size, align, docs)
+        self._register(name, typ, tlib)
+        return typ
 
     def parse_LibraryDescription(self):
         la = self.tlib.GetLibAttr()
