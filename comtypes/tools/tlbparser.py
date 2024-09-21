@@ -605,20 +605,13 @@ class Parser(object):
         name = tinfo.GetDocumentation(-1)[0]
         modname = self._typelib_module()
         try:
-            return self.items["%s.%s" % (modname, name)]
+            return self.items[f"{modname}.{name}"]
         except KeyError:
             pass
 
         tlib = tinfo.GetContainingTypeLib()[0]
         if tlib != self.tlib:
-            ta = tinfo.GetTypeAttr()
-            size = ta.cbSizeInstance * 8
-            align = ta.cbAlignment * 8
-            typ = typedesc.External(
-                tlib, name, size, align, tlib.GetDocumentation(-1)[:2]
-            )
-            self._register(name, typ, tlib)
-            return typ
+            return self._parse_External(name, tlib, tinfo)
 
         ta = tinfo.GetTypeAttr()
         tkind = ta.typekind
@@ -639,10 +632,7 @@ class Parser(object):
             except COMError:
                 # no dual interface
                 return self.ParseDispatch(tinfo, ta)
-            tinfo = tinfo.GetRefTypeInfo(href)
-            ta = tinfo.GetTypeAttr()
-            assert ta.typekind == typeinfo.TKIND_INTERFACE
-            return self.ParseInterface(tinfo, ta)
+            return self._parse_DualInterface(tinfo.GetRefTypeInfo(href))
         elif tkind == typeinfo.TKIND_COCLASS:  # 5
             return self.ParseCoClass(tinfo, ta)
         elif tkind == typeinfo.TKIND_ALIAS:  # 6
@@ -652,6 +642,24 @@ class Parser(object):
         else:
             print("NYI", tkind)
             # raise "NYI", tkind
+
+    def _parse_DualInterface(
+        self, tinfo: typeinfo.ITypeInfo
+    ) -> Optional[typedesc.ComInterface]:
+        ta = tinfo.GetTypeAttr()
+        assert ta.typekind == typeinfo.TKIND_INTERFACE
+        return self.ParseInterface(tinfo, ta)
+
+    def _parse_External(
+        self, name: str, tlib: typeinfo.ITypeLib, tinfo: typeinfo.ITypeInfo
+    ) -> typedesc.External:
+        ta = tinfo.GetTypeAttr()
+        size = ta.cbSizeInstance * 8
+        align = ta.cbAlignment * 8
+        docs = tlib.GetDocumentation(-1)[:2]
+        typ = typedesc.External(tlib, name, size, align, docs)
+        self._register(name, typ, tlib)
+        return typ
 
     def parse_LibraryDescription(self):
         la = self.tlib.GetLibAttr()
