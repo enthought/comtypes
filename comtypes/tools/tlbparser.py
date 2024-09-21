@@ -127,9 +127,7 @@ class Parser(object):
                 )
             return typ
         elif tdesc.vt == automation.VT_PTR:
-            ptrdesc: typeinfo.TYPEDESC = tdesc._.lptdesc[0]
-            typ = self.make_type(ptrdesc, tinfo)
-            return PTR(typ)
+            return PTR(self.make_type(tdesc._.lptdesc[0], tinfo))
         elif tdesc.vt == automation.VT_USERDEFINED:
             try:
                 ti = tinfo.GetRefTypeInfo(tdesc._.hreftype)
@@ -154,8 +152,7 @@ class Parser(object):
             return result
         elif tdesc.vt == automation.VT_SAFEARRAY:
             # SAFEARRAY(<type>), see Don Box pp.331f
-            safearraydesc: typeinfo.TYPEDESC = tdesc._.lptdesc[0]
-            return midlSAFEARRAY(self.make_type(safearraydesc, tinfo))
+            return midlSAFEARRAY(self.make_type(tdesc._.lptdesc[0], tinfo))
         raise NotImplementedError(tdesc.vt)
 
     ################################################################
