@@ -632,10 +632,7 @@ class Parser(object):
             except COMError:
                 # no dual interface
                 return self.ParseDispatch(tinfo, ta)
-            tinfo = tinfo.GetRefTypeInfo(href)
-            ta = tinfo.GetTypeAttr()
-            assert ta.typekind == typeinfo.TKIND_INTERFACE
-            return self.ParseInterface(tinfo, ta)
+            return self._parse_DualInterface(tinfo.GetRefTypeInfo(href))
         elif tkind == typeinfo.TKIND_COCLASS:  # 5
             return self.ParseCoClass(tinfo, ta)
         elif tkind == typeinfo.TKIND_ALIAS:  # 6
@@ -645,6 +642,13 @@ class Parser(object):
         else:
             print("NYI", tkind)
             # raise "NYI", tkind
+
+    def _parse_DualInterface(
+        self, tinfo: typeinfo.ITypeInfo
+    ) -> Optional[typedesc.ComInterface]:
+        ta = tinfo.GetTypeAttr()
+        assert ta.typekind == typeinfo.TKIND_INTERFACE
+        return self.ParseInterface(tinfo, ta)
 
     def _parse_External(
         self, name: str, tlib: typeinfo.ITypeLib, tinfo: typeinfo.ITypeInfo
