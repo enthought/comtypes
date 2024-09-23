@@ -1,13 +1,19 @@
 import textwrap
-from typing import Optional
+from typing import Optional, Union as _UnionT
 from typing import Dict, List, Set, Tuple
+from typing import Mapping, Sequence
 
 
 class ImportedNamespaces(object):
-    def __init__(self):
-        self.data = {}
+    def __init__(self) -> None:
+        self.data: Dict[str, Optional[str]] = {}
 
-    def add(self, name1, name2=None, symbols=None):
+    def add(
+        self,
+        name1: str,
+        name2: Optional[str] = None,
+        symbols: Optional[Mapping[str, str]] = None,
+    ) -> None:
         """Adds a namespace will be imported.
 
         Examples:
@@ -44,7 +50,7 @@ class ImportedNamespaces(object):
             from_, import_ = name1, name2
         self.data[import_] = from_
 
-    def __contains__(self, item):
+    def __contains__(self, item: _UnionT[str, Tuple[str, str]]) -> bool:
         """Returns item has already added.
 
         Examples:
@@ -78,7 +84,7 @@ class ImportedNamespaces(object):
             names.add(key)
         return names
 
-    def _make_line(self, from_, imports):
+    def _make_line(self, from_: str, imports: Sequence[str]) -> str:
         import_ = ", ".join(imports)
         code = "from %s import %s" % (from_, import_)
         if len(code) <= 80:
@@ -90,16 +96,16 @@ class ImportedNamespaces(object):
         code = "from %s import (\n%s\n)" % (from_, import_)
         return code
 
-    def getvalue(self):
-        ns = {}
-        lines = []
+    def getvalue(self) -> str:
+        ns: Dict[str, Optional[Set[str]]] = {}
+        lines: List[str] = []
         for key, val in self.data.items():
             if val is None:
                 ns[key] = val
             elif key == "*":
                 lines.append("from %s import *" % val)
             else:
-                ns.setdefault(val, set()).add(key)
+                ns.setdefault(val, set()).add(key)  # type: ignore
         for key, val in ns.items():
             if val is None:
                 lines.append("import %s" % key)
