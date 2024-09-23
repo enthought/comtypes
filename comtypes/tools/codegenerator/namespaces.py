@@ -1,4 +1,5 @@
 import textwrap
+from typing import Optional
 from typing import Dict, List, Set, Tuple
 
 
@@ -109,10 +110,10 @@ class ImportedNamespaces(object):
 
 
 class DeclaredNamespaces(object):
-    def __init__(self):
-        self.data = {}
+    def __init__(self) -> None:
+        self.data: Dict[Tuple[str, str], Optional[str]] = {}
 
-    def add(self, alias, definition, comment=None):
+    def add(self, alias: str, definition: str, comment: Optional[str] = None) -> None:
         """Adds a namespace will be declared.
 
         Examples:
@@ -134,7 +135,7 @@ class DeclaredNamespaces(object):
             names.add(alias)
         return names
 
-    def getvalue(self):
+    def getvalue(self) -> str:
         lines = []
         for (alias, definition), comment in self.data.items():
             code = "%s = %s" % (alias, definition)
