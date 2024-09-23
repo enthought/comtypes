@@ -145,7 +145,7 @@ class DeclaredNamespaces(object):
 
 
 class EnumerationNamespaces(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.data: Dict[str, List[Tuple[str, int]]] = {}
 
     def add(self, enum_name: str, member_name: str, value: int) -> None:
