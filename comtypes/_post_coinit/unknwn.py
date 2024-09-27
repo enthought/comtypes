@@ -96,11 +96,20 @@ class _cominterface_meta(type):
             {"__com_interface__": new_cls, "_needs_com_addref_": None},
         )
 
-        from ctypes import _pointer_type_cache
+        from ctypes import _pointer_type_cache  # type: ignore
 
         _pointer_type_cache[new_cls] = p
 
         if new_cls._case_insensitive_:
+            new_cls._patch_to_ptr_type(p, True)
+        else:
+            new_cls._patch_to_ptr_type(p, False)
+
+        return new_cls
+
+    @staticmethod
+    def _patch_to_ptr_type(p, case_insensitive) -> None:
+        if case_insensitive:
 
             @patcher.Patch(p)
             class CaseInsensitive(object):
@@ -154,8 +163,6 @@ class _cominterface_meta(type):
                 from _ctypes import CopyComPointer
 
                 CopyComPointer(value, self)
-
-        return new_cls
 
     def __setattr__(self, name, value):
         if name == "_methods_":
