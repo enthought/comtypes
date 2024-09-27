@@ -96,7 +96,7 @@ class _cominterface_meta(type):
             {"__com_interface__": new_cls, "_needs_com_addref_": None},
         )
 
-        from ctypes import _pointer_type_cache
+        from ctypes import _pointer_type_cache  # type: ignore
 
         _pointer_type_cache[new_cls] = p
 
