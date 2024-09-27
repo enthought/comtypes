@@ -101,14 +101,13 @@ class _cominterface_meta(type):
         _pointer_type_cache[new_cls] = p
 
         if new_cls._case_insensitive_:
-            new_cls._patch_to_ptr_type(p, True)
-        else:
-            new_cls._patch_to_ptr_type(p, False)
+            new_cls._patch_case_insensitive_to_ptr_type(p)
+        new_cls._patch_reference_fix_to_ptrptr_type(p)
 
         return new_cls
 
     @staticmethod
-    def _patch_to_ptr_type(p, case_insensitive) -> None:
+    def _patch_case_insensitive_to_ptr_type(p, case_insensitive=True) -> None:
         if case_insensitive:
 
             @patcher.Patch(p)
@@ -119,7 +118,7 @@ class _cominterface_meta(type):
                     try:
                         fixed_name = self.__map_case__[name.lower()]
                     except KeyError:
-                        raise AttributeError(name)
+                        raise AttributeError(name)  # Should we use exception-chaining?
                     if fixed_name != name:  # prevent unbounded recursion
                         return getattr(self, fixed_name)
                     raise AttributeError(name)
@@ -136,6 +135,8 @@ class _cominterface_meta(type):
                         self, self.__map_case__.get(name.lower(), name), value
                     )
 
+    @staticmethod
+    def _patch_reference_fix_to_ptrptr_type(p: Type) -> None:
         @patcher.Patch(POINTER(p))
         class ReferenceFix(object):
             def __setitem__(self, index, value):
