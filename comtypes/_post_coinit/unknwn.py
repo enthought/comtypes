@@ -107,33 +107,31 @@ class _cominterface_meta(type):
         return new_cls
 
     @staticmethod
-    def _patch_case_insensitive_to_ptr_type(p, case_insensitive=True) -> None:
-        if case_insensitive:
+    def _patch_case_insensitive_to_ptr_type(p: Type) -> None:
+        @patcher.Patch(p)
+        class CaseInsensitive(object):
+            # case insensitive attributes for COM methods and properties
+            def __getattr__(self, name):
+                """Implement case insensitive access to methods and properties"""
+                try:
+                    fixed_name = self.__map_case__[name.lower()]
+                except KeyError:
+                    raise AttributeError(name)  # Should we use exception-chaining?
+                if fixed_name != name:  # prevent unbounded recursion
+                    return getattr(self, fixed_name)
+                raise AttributeError(name)
 
-            @patcher.Patch(p)
-            class CaseInsensitive(object):
-                # case insensitive attributes for COM methods and properties
-                def __getattr__(self, name):
-                    """Implement case insensitive access to methods and properties"""
-                    try:
-                        fixed_name = self.__map_case__[name.lower()]
-                    except KeyError:
-                        raise AttributeError(name)  # Should we use exception-chaining?
-                    if fixed_name != name:  # prevent unbounded recursion
-                        return getattr(self, fixed_name)
-                    raise AttributeError(name)
-
-                # __setattr__ is pretty heavy-weight, because it is called for
-                # EVERY attribute assignment.  Settings a non-com attribute
-                # through this function takes 8.6 usec, while without this
-                # function it takes 0.7 sec - 12 times slower.
-                #
-                # How much faster would this be if implemented in C?
-                def __setattr__(self, name, value):
-                    """Implement case insensitive access to methods and properties"""
-                    object.__setattr__(
-                        self, self.__map_case__.get(name.lower(), name), value
-                    )
+            # __setattr__ is pretty heavy-weight, because it is called for
+            # EVERY attribute assignment.  Settings a non-com attribute
+            # through this function takes 8.6 usec, while without this
+            # function it takes 0.7 sec - 12 times slower.
+            #
+            # How much faster would this be if implemented in C?
+            def __setattr__(self, name, value):
+                """Implement case insensitive access to methods and properties"""
+                object.__setattr__(
+                    self, self.__map_case__.get(name.lower(), name), value
+                )
 
     @staticmethod
     def _patch_reference_fix_to_ptrptr_type(p: Type) -> None:
