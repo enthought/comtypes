@@ -157,11 +157,11 @@ class _cominterface_meta(type):
                     # CopyComPointer should do if index != 0.
                     if bool(value):
                         value.AddRef()
-                    super(POINTER(p), self).__setitem__(index, value)
+                    super(POINTER(p), self).__setitem__(index, value)  # type: ignore
                     return
                 from _ctypes import CopyComPointer
 
-                CopyComPointer(value, self)
+                CopyComPointer(value, self)  # type: ignore
 
     def __setattr__(self, name, value):
         if name == "_methods_":
