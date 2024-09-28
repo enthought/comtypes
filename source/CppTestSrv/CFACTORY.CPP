@@ -207,7 +207,21 @@ HRESULT CFactory::UnregisterAll()
 	{
 		UnregisterServer(*(g_FactoryDataArray[i].m_pCLSID),
 		                 g_FactoryDataArray[i].m_szVerIndProgID, 
-		                 g_FactoryDataArray[i].m_szProgID) ;
+		                 g_FactoryDataArray[i].m_szProgID,
+						 g_FactoryDataArray[i].m_pLIBID) ;
+		// We can only unregister a TypeLib once.
+		// So if we just unregistered a TypeLib set all pointers to the same TypeLib to NULL.
+		if (g_FactoryDataArray[i].m_pLIBID != NULL)
+		{
+			const GUID* libid = g_FactoryDataArray[i].m_pLIBID ;
+			for(int j = 0 ; j < g_cFactoryDataEntries ; j++)
+			{
+				if (g_FactoryDataArray[j].m_pLIBID != NULL && g_FactoryDataArray[j].m_pLIBID == libid)
+				{
+					g_FactoryDataArray[j].m_pLIBID = NULL ;
+				}
+			}
+		}
 	}
 	return S_OK ;
 }

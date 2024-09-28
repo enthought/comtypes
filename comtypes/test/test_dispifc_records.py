@@ -26,7 +26,7 @@ class Test_DispMethods(unittest.TestCase):
     def _create_dispifc(self) -> "ComtypesCppTestSrvLib.IDispRecordParamTest":
         # Explicitely ask for the dispinterface of the component.
         return CreateObject(
-            "Comtypes.DispIfcParamTests",
+            "Comtypes.DispRecordParamTest",
             clsctx=CLSCTX_LOCAL_SERVER,
             interface=ComtypesCppTestSrvLib.IDispRecordParamTest,
         )

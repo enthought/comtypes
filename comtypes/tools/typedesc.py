@@ -49,7 +49,7 @@ class External(object):
         name: str,
         size: int,
         align: int,
-        docs: Optional[Tuple[str, str]] = None,
+        docs: Optional[Tuple[str, Optional[str]]] = None,
     ) -> None:
         # the type library containing the symbol
         self.tlib = tlib

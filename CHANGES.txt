@@ -1,6 +1,48 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.7
+--------------
+* Improve ``_CArrayType`` alias import. By @junkmd.
+* Rename ``_byref_type`` and ``_carg_obj`` to ``_CArgObject``. By @junkmd.
+* Fix typos and make the wording more natural in ``README.md``. By @umarbutler.
+* Modernize ``BSTR`` definition. By @junkmd.
+* Modernize ``tagDEC`` definition. By @junkmd.
+* Remove methods with mangling names in ``typeinfo``. By @junkmd.
+* Rename ``test_istream`` to ``test_stream``. By @junkmd.
+* Add ``test_msvidctl``. By @junkmd.
+* Add ``test_storage``. By @junkmd.
+* Add ``test_monikers``. By @junkmd.
+* Add ``test_shelllink``. By @junkmd.
+* Add ``test_persist``. By @junkmd.
+* Modernize ``persist``. By @junkmd.
+* Add type annotations to ``shelllink``. By @junkmd.
+* Bump ``python_requires`` to ``>=3.8`` in ``setup.cfg``. By @junkmd.
+
+Release 1.4.6
+--------------
+* Add tests and method annotations for ``IRecordInfo``. By @junkmd.
+* Improve static typings in ``automation``. By @junkmd.
+* Tidy up import part in some modules. By @junkmd.
+* Refer to ``Any`` and ``Tuple`` from the ``hints`` stub instead of directly importing them in generated modules. By @junkmd.
+* Modernize ``GUID.py``. By @junkmd.
+* Improve ``codegenerator.modulenamer`` static typing. By @junkmd.
+* Avoid using keywords in ``TYPE_CHECKING`` blocks. By @junkmd.
+* Improve member defining parts of ``ParseInterface`` and ``ParseDispatch``. By @junkmd.
+* Fix Annoying SyntaxWarning. By @v01d-gh.
+
+Release 1.4.5
+--------------
+* Split ``__init__.py`` into some modules. By @junkmd.
+* Fix importing ``_DispMemberSpec`` in ``automation``. By @junkmd.
+* Fix importing ``_encode_idl`` in ``_comobject``. By @junkmd.
+* Change the name of the component that implements the interface for record parameter testing. By @geppi.
+* Implement ``SAFEARRAY`` pointers and ``SAFEARRAY``s as method parameters of a Dispatch Interface. By @geppi.
+* Change the default value of the ``extra`` parameter in the ``create`` method of ``tagSAFEARRAY`` subtypes. By @geppi.
+* Implement static import for ``ISequentialStream``. By @jonschz.
+* Modernize ``test_wmi``. By @junkmd.
+* Add static typing for ``_midlSAFEARRAY``. By @junkmd.
+
 Release 1.4.4
 --------------
 * Stop mentioning the last version supporting Windows CE in ``README.md``. By @forderud.

@@ -26,6 +26,7 @@ HRESULT RegisterServer(HMODULE hModule,
 // call this function from their DllUnregisterServer function.
 HRESULT UnregisterServer(const CLSID& clsid,
                          LPCWSTR szVerIndProgID,
-                         LPCWSTR szProgID) ;
+                         LPCWSTR szProgID,
+                         const GUID* libid) ;
 
 #endif

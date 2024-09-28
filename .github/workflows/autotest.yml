@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         architecture: ['x86', 'x64']
         npsupport: ['with npsupport', 'without npsupport']
     steps:
@@ -30,7 +30,7 @@ jobs:
       - name: unittest comtypes
         run: |
           if ("${{ matrix.npsupport }}" -eq "with npsupport") {
-            pip install numpy
+            pip install 'numpy<2'
           }
           python -m unittest discover -v -s ./comtypes/test -t comtypes\test
       - name: Unregister the OutProc COM server
@@ -43,7 +43,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, windows-2019]
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         architecture: ['x86', 'x64']
     steps:
       - uses: actions/checkout@v4

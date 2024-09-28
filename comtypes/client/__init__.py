@@ -12,15 +12,8 @@ import ctypes
 import logging
 import os
 import sys
-from typing import (
-    Any,
-    Optional,
-    overload,
-    Type,
-    TYPE_CHECKING,
-    TypeVar,
-    Union as _UnionT,
-)
+from typing import Any, overload, TypeVar, TYPE_CHECKING
+from typing import Optional, Type, Union as _UnionT
 
 import comtypes
 from comtypes.hresult import *

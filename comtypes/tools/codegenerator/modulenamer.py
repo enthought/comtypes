@@ -1,19 +1,18 @@
+from typing import Optional
+
 import comtypes
+from comtypes import typeinfo
 
 
-def name_wrapper_module(tlib):
+def name_wrapper_module(tlib: typeinfo.ITypeLib) -> str:
     """Determine the name of a typelib wrapper module"""
     libattr = tlib.GetLibAttr()
-    modname = "_%s_%s_%s_%s" % (
-        str(libattr.guid)[1:-1].replace("-", "_"),
-        libattr.lcid,
-        libattr.wMajorVerNum,
-        libattr.wMinorVerNum,
-    )
-    return "comtypes.gen.%s" % modname
+    guid = str(libattr.guid)[1:-1].replace("-", "_")
+    modname = f"_{guid}_{libattr.lcid}_{libattr.wMajorVerNum}_{libattr.wMinorVerNum}"
+    return f"comtypes.gen.{modname}"
 
 
-def name_friendly_module(tlib):
+def name_friendly_module(tlib: typeinfo.ITypeLib) -> Optional[str]:
     """Determine the friendly-name of a typelib module.
     If cannot get friendly-name from typelib, returns `None`.
     """
@@ -21,4 +20,4 @@ def name_friendly_module(tlib):
         modulename = tlib.GetDocumentation(-1)[0]
     except comtypes.COMError:
         return
-    return "comtypes.gen.%s" % modulename
+    return f"comtypes.gen.{modulename}"

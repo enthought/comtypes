@@ -7,7 +7,7 @@
 */
 
 //
-// CoComtypesDispIfcParamTests.cpp - Component
+// CoComtypesDispSafearrayParamTest.cpp - Component
 //
 
 #include "Iface.h"
@@ -15,10 +15,10 @@
 
 ///////////////////////////////////////////////////////////
 //
-// Component A
+// Component B
 //
-class CA : public CUnknown,
-           public IDualRecordParamTest
+class CB : public CUnknown,
+		   public IDualSafearrayParamTest
 {
 public:	
 	// Creation
@@ -58,20 +58,20 @@ private:
 		EXCEPINFO* pExcepInfo,
 		UINT* pArgErr) ;
 
-	// Interface IDualRecordParamTest
-	virtual HRESULT __stdcall InitRecord(StructRecordParamTest* test_record) ;
-	virtual HRESULT __stdcall VerifyRecord(
-										 StructRecordParamTest* test_record,
+	// Interface IDualSafearrayParamTest
+	virtual HRESULT __stdcall InitArray(SAFEARRAY* *test_array) ;
+	virtual HRESULT __stdcall VerifyArray(
+										 SAFEARRAY *test_array,
 										 VARIANT_BOOL* result) ;
 
 	// Initialization
  	virtual HRESULT Init() ;
 
 	// Constructor
-	CA(IUnknown* pUnknownOuter) ;
+	CB(IUnknown* pUnknownOuter) ;
 
 	// Destructor
-	~CA() ;
+	~CB() ;
 
 	// Pointer to type information.
 	ITypeInfo* m_pITypeInfo ;

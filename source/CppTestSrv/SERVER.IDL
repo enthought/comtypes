@@ -7,6 +7,8 @@
 
 import "oaidl.idl" ;
 
+// Simple structure used for tests related to IRecordInfo or GetRecordInfoFromGuids functionality.
+// If a new test would require other fields do NOT modify this structure but add a new structure instead.
 typedef [uuid(00FABB0F-5691-41A6-B7C1-11606671F8E5)]
 struct StructRecordParamTest {
 	BSTR question ;
@@ -46,6 +48,36 @@ dispinterface IDispRecordParamTest
 } ;
 
 
+// Interface IDualSafearrayParamTest
+[
+	odl,
+	uuid(1F4F3B8B-D07E-4BB6-8D2C-D79B375696DA),
+	dual,
+	helpstring("IDualSafearrayParamTest Interface"),
+	nonextensible,
+	oleautomation
+]
+interface IDualSafearrayParamTest : IDispatch
+{
+	[id(0x00000001)]
+	HRESULT InitArray([in, out] SAFEARRAY(double)* test_array) ;
+	[id(0x00000002)]
+	HRESULT VerifyArray(
+					[in] SAFEARRAY(double) test_array,
+					[out, retval] VARIANT_BOOL* result);
+} ;
+
+
+// Interface IDispSafearrayParamTest
+[
+	uuid(4097A6D0-A111-40E2-BD0B-177B775A9496)
+]
+dispinterface IDispSafearrayParamTest
+{
+	interface IDualSafearrayParamTest;
+} ;
+
+
 //
 // Component and type library descriptions
 //
@@ -59,15 +91,28 @@ library ComtypesCppTestSrvLib
 	// TLib : OLE Automation : {00020430-0000-0000-C000-000000000046}
 	importlib("stdole2.tlb") ;
 
-	// CoComtypesDispIfcParamTests
-	// Component that implements interfaces used for dispinterface parameter tests.
+	// CoComtypesDispRecordParamTest
+	// Component that implements interfaces used for dispinterface record parameter tests.
 	[
-		uuid(06571915-2431-4CA3-9C01-53002B060DAB),
-		helpstring("Comtypes component for dispinterface parameter tests.")
+		uuid(5E78C9A8-4C19-4285-BCD6-3FFBBA5B17A8),
+		helpstring("Comtypes component for dispinterface record parameter tests.")
 	]
-	coclass CoComtypesDispIfcParamTests
+	coclass CoComtypesDispRecordParamTest
 	{
 		interface IDualRecordParamTest ;
 		dispinterface IDispRecordParamTest ;
+	} ;
+
+
+	// CoComtypesDispSafearrayParamTest
+	// Component that implements interfaces used for dispinterface Safearray parameter tests.
+	[
+		uuid(091D762E-FF4B-4532-8B24-23807FE873C3),
+		helpstring("Comtypes component for dispinterface Safearray parameter tests.")
+	]
+	coclass CoComtypesDispSafearrayParamTest
+	{
+		interface IDualSafearrayParamTest ;
+		dispinterface IDispSafearrayParamTest ;
 	} ;
 } ;

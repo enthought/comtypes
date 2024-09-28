@@ -262,7 +262,7 @@ def _get_known_namespaces() -> Tuple[
     Note:
         The interfaces that should be included in `__known_symbols__` should be limited
         to those that can be said to be bound to the design concept of COM, such as
-        `IUnknown`, and those defined in `objidl` and `oaidl`.
+        `IUnknown`, `IDispatch` and `ITypeInfo`.
         `comtypes` does NOT aim to statically define all COM object interfaces in
         its repository.
     """
@@ -272,6 +272,7 @@ def _get_known_namespaces() -> Tuple[
         "comtypes.persist",
         "comtypes.typeinfo",
         "comtypes.automation",
+        "comtypes.stream",
         "comtypes",
         "ctypes.wintypes",
         "ctypes",

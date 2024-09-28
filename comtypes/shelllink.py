@@ -1,7 +1,16 @@
 from __future__ import print_function
-from ctypes import *
+from ctypes import c_char_p, c_int, c_short, c_wchar_p
+from ctypes import POINTER
+from ctypes import byref, create_string_buffer, create_unicode_buffer
 from ctypes.wintypes import DWORD, WIN32_FIND_DATAA, WIN32_FIND_DATAW, MAX_PATH
+from typing import Tuple, TYPE_CHECKING
+
 from comtypes import IUnknown, GUID, COMMETHOD, HRESULT, CoClass
+
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
+
 
 # for GetPath
 SLGP_SHORTPATH = 0x1
@@ -9,19 +18,24 @@ SLGP_UNCPRIORITY = 0x2
 SLGP_RAWPATH = 0x4
 
 # for SetShowCmd, GetShowCmd
-##SW_SHOWNORMAL
-##SW_SHOWMAXIMIZED
-##SW_SHOWMINNOACTIVE
-
+SW_SHOWNORMAL = 0x01
+SW_SHOWMAXIMIZED = 0x03
+SW_SHOWMINNOACTIVE = 0x07
 
 # for Resolve
-##SLR_INVOKE_MSI
-##SLR_NOLINKINFO
-##SLR_NO_UI
-##SLR_NOUPDATE
-##SLR_NOSEARCH
-##SLR_NOTRACK
-##SLR_UPDATE
+SLR_INVOKE_MSI = 0x0080
+SLR_NOLINKINFO = 0x0040
+SLR_NO_UI = 0x0001
+SLR_NOUPDATE = 0x0008
+SLR_NOSEARCH = 0x0010
+SLR_NOTRACK = 0x0020
+SLR_UPDATE = 0x0004
+
+# for Hotkey
+HOTKEYF_ALT = 0x04
+HOTKEYF_CONTROL = 0x02
+HOTKEYF_EXT = 0x08
+HOTKEYF_SHIFT = 0x01
 
 # fake these...
 ITEMIDLIST = c_int
@@ -113,31 +127,52 @@ class IShellLinkA(IUnknown):
         COMMETHOD([], HRESULT, "SetPath", (["in"], c_char_p, "pszFile")),
     ]
 
-    def GetPath(self, flags=SLGP_SHORTPATH):
+    if TYPE_CHECKING:
+        # fmt: off
+        def GetIDList(self) -> hints.Incomplete: ...  # noqa
+        def SetIDList(self, pidl: hints.Incomplete) -> hints.Incomplete: ...  # noqa
+        def SetDescription(self, pszName: bytes) -> hints.Incomplete: ...  # noqa
+        def SetWorkingDirectory(self, pszDir: bytes) -> hints.Hresult: ...   # noqa
+        def SetArguments(self, pszArgs: bytes) -> hints.Hresult: ...   # noqa
+        @property
+        def Hotkey(self) -> int: ...   # noqa
+        @Hotkey.setter
+        def Hotkey(self, pwHotkey: int) -> None: ...   # noqa
+        @property
+        def ShowCmd(self) -> int: ...   # noqa
+        @ShowCmd.setter
+        def ShowCmd(self, piShowCmd: int) -> None: ...   # noqa
+        def SetIconLocation(self, pszIconPath: bytes, iIcon: int) -> hints.Hresult: ...   # noqa
+        def SetRelativePath(self, pszPathRel: bytes, dwReserved: hints.Literal[0]) -> hints.Hresult: ...   # noqa
+        def Resolve(self, hwnd: int, fFlags: int) -> hints.Hresult: ...   # noqa
+        def SetPath(self, pszFile: bytes) -> hints.Hresult: ...   # noqa
+        # fmt: on
+
+    def GetPath(self, flags: int = SLGP_SHORTPATH) -> bytes:
         buf = create_string_buffer(MAX_PATH)
         # We're not interested in WIN32_FIND_DATA
-        self.__com_GetPath(buf, MAX_PATH, None, flags)
+        self.__com_GetPath(buf, MAX_PATH, None, flags)  # type: ignore
         return buf.value
 
-    def GetDescription(self):
+    def GetDescription(self) -> bytes:
         buf = create_string_buffer(1024)
-        self.__com_GetDescription(buf, 1024)
+        self.__com_GetDescription(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetWorkingDirectory(self):
+    def GetWorkingDirectory(self) -> bytes:
         buf = create_string_buffer(MAX_PATH)
-        self.__com_GetWorkingDirectory(buf, MAX_PATH)
+        self.__com_GetWorkingDirectory(buf, MAX_PATH)  # type: ignore
         return buf.value
 
-    def GetArguments(self):
+    def GetArguments(self) -> bytes:
         buf = create_string_buffer(1024)
-        self.__com_GetArguments(buf, 1024)
+        self.__com_GetArguments(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetIconLocation(self):
+    def GetIconLocation(self) -> Tuple[bytes, int]:
         iIcon = c_int()
         buf = create_string_buffer(MAX_PATH)
-        self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))
+        self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))  # type: ignore
         return buf.value, iIcon.value
 
 
@@ -226,31 +261,52 @@ class IShellLinkW(IUnknown):
         COMMETHOD([], HRESULT, "SetPath", (["in"], c_wchar_p, "pszFile")),
     ]
 
-    def GetPath(self, flags=SLGP_SHORTPATH):
+    if TYPE_CHECKING:
+        # fmt: off
+        def GetIDList(self) -> hints.Incomplete: ...  # noqa
+        def SetIDList(self, pidl: hints.Incomplete) -> hints.Incomplete: ...  # noqa
+        def SetDescription(self, pszName: str) -> hints.Incomplete: ...  # noqa
+        def SetWorkingDirectory(self, pszDir: str) -> hints.Hresult: ...   # noqa
+        def SetArguments(self, pszArgs: str) -> hints.Hresult: ...   # noqa
+        @property
+        def Hotkey(self) -> int: ...   # noqa
+        @Hotkey.setter
+        def Hotkey(self, pwHotkey: int) -> None: ...   # noqa
+        @property
+        def ShowCmd(self) -> int: ...   # noqa
+        @ShowCmd.setter
+        def ShowCmd(self, piShowCmd: int) -> None: ...   # noqa
+        def SetIconLocation(self, pszIconPath: str, iIcon: int) -> hints.Hresult: ...   # noqa
+        def SetRelativePath(self, pszPathRel: str, dwReserved: hints.Literal[0]) -> hints.Hresult: ...   # noqa
+        def Resolve(self, hwnd: int, fFlags: int) -> hints.Hresult: ...   # noqa
+        def SetPath(self, pszFile: str) -> hints.Hresult: ...   # noqa
+        # fmt: on
+
+    def GetPath(self, flags: int = SLGP_SHORTPATH) -> str:
         buf = create_unicode_buffer(MAX_PATH)
         # We're not interested in WIN32_FIND_DATA
-        self.__com_GetPath(buf, MAX_PATH, None, flags)
+        self.__com_GetPath(buf, MAX_PATH, None, flags)  # type: ignore
         return buf.value
 
-    def GetDescription(self):
+    def GetDescription(self) -> str:
         buf = create_unicode_buffer(1024)
-        self.__com_GetDescription(buf, 1024)
+        self.__com_GetDescription(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetWorkingDirectory(self):
+    def GetWorkingDirectory(self) -> str:
         buf = create_unicode_buffer(MAX_PATH)
-        self.__com_GetWorkingDirectory(buf, MAX_PATH)
+        self.__com_GetWorkingDirectory(buf, MAX_PATH)  # type: ignore
         return buf.value
 
-    def GetArguments(self):
+    def GetArguments(self) -> str:
         buf = create_unicode_buffer(1024)
-        self.__com_GetArguments(buf, 1024)
+        self.__com_GetArguments(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetIconLocation(self):
+    def GetIconLocation(self) -> Tuple[str, int]:
         iIcon = c_int()
         buf = create_unicode_buffer(MAX_PATH)
-        self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))
+        self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))  # type: ignore
         return buf.value, iIcon.value
 
 

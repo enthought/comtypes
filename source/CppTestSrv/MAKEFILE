@@ -44,9 +44,13 @@ guids.obj : guids.c
 server.obj : server.cpp cunknown.h cfactory.h iface.h
 	cl $(CPP_FLAGS) server.cpp
 
-CoComtypesDispIfcParamTests.obj : CoComtypesDispIfcParamTests.cpp CoComtypesDispIfcParamTests.h iface.h \
-		registry.h CUnknown.h
-	cl $(CPP_FLAGS) CoComtypesDispIfcParamTests.cpp
+CoComtypesDispRecordParamTest.obj : CoComtypesDispRecordParamTest.cpp \
+		CoComtypesDispRecordParamTest.h iface.h registry.h CUnknown.h
+	cl $(CPP_FLAGS) CoComtypesDispRecordParamTest.cpp
+
+CoComtypesDispSafearrayParamTest.obj : CoComtypesDispSafearrayParamTest.cpp \
+		CoComtypesDispSafearrayParamTest.h iface.h registry.h CUnknown.h
+	cl $(CPP_FLAGS) CoComtypesDispSafearrayParamTest.cpp
 
 #
 # Helper classes
@@ -75,7 +79,8 @@ outproc.obj : outproc.cpp CFactory.h CUnknown.h
 #
 
 SERVER_OBJS = Server.obj     \
-              CoComtypesDispIfcParamTests.obj      \
+              CoComtypesDispRecordParamTest.obj      \
+              CoComtypesDispSafearrayParamTest.obj      \
               Registry.obj   \
               Cfactory.obj   \
               Cunknown.obj   \

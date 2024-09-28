@@ -4,34 +4,29 @@ import datetime
 import decimal
 import sys
 from ctypes import *
-from ctypes import _Pointer
+from ctypes import _Pointer, Array as _CArrayType
 from _ctypes import CopyComPointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    List,
-    Optional,
-    TYPE_CHECKING,
-    Tuple,
-    Union as _UnionT,
-)
+from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Type
 
-from comtypes import BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
+from comtypes import _CData, BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.hresult import *
+from comtypes._memberspec import _DispMemberSpec
 import comtypes.patcher
 import comtypes
 
 if TYPE_CHECKING:
+    from ctypes import _CArgObject
     from comtypes import hints  # type: ignore
-
-try:
     from comtypes import _safearray
-except (ImportError, AttributeError):
+else:
+    _CArgObject = type(byref(c_int()))
+    try:
+        from comtypes import _safearray
+    except (ImportError, AttributeError):
 
-    class _safearray(object):
-        tagSAFEARRAY = None
+        class _safearray(object):
+            tagSAFEARRAY = None
 
 
 LCID = DWORD
@@ -57,7 +52,6 @@ INVOKEKIND = tagINVOKEKIND
 # helpers
 IID_NULL = GUID()
 riid_null = byref(IID_NULL)
-_byref_type = type(byref(c_int()))
 
 # 30. December 1899, midnight.  For VT_DATE.
 _com_null_date = datetime.datetime(1899, 12, 30, 0, 0, 0)
@@ -136,7 +130,7 @@ class tagDEC(Structure):
         ("Lo64", c_ulonglong),
     ]
 
-    def as_decimal(self):
+    def as_decimal(self) -> decimal.Decimal:
         """Convert a tagDEC struct to Decimal.
 
         See http://msdn.microsoft.com/en-us/library/cc234586.aspx for the tagDEC
@@ -144,12 +138,8 @@ class tagDEC(Structure):
 
         """
         digits = (self.Hi32 << 64) + self.Lo64
-        decimal_str = "{0}{1}e-{2}".format(
-            "-" if self.sign else "",
-            digits,
-            self.scale,
-        )
-        return decimal.Decimal(decimal_str)
+        sign = "-" if self.sign else ""
+        return decimal.Decimal(f"{sign}{digits}e-{self.scale}")
 
 
 DECIMAL = tagDEC
@@ -389,7 +379,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, c_uint64):
             self.vt = VT_UI8
             self._.VT_UI8 = value
-        elif isinstance(value, _byref_type):
+        elif isinstance(value, _CArgObject):
             ref = value._obj
             self._.c_void_p = addressof(ref)
             self.__keepref = value
@@ -404,6 +394,11 @@ class tagVARIANT(Structure):
                 ri.AddRef()
                 self._.pRecInfo = ri
                 self._.pvRecord = cast(value, c_void_p)
+            elif isinstance(ref, _Pointer) and isinstance(
+                ref.contents, _safearray.tagSAFEARRAY
+            ):
+                self.vt = VT_ARRAY | ref._vartype_ | VT_BYREF
+                self._.pparray = cast(value, POINTER(POINTER(_safearray.tagSAFEARRAY)))
             else:
                 self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         elif isinstance(value, _Pointer):
@@ -421,6 +416,15 @@ class tagVARIANT(Structure):
                 ri.AddRef()
                 self._.pRecInfo = ri
                 self._.pvRecord = cast(value, c_void_p)
+            elif isinstance(ref, _safearray.tagSAFEARRAY):
+                obj = _midlSAFEARRAY(value._itemtype_).create(value.unpack())
+                memmove(byref(self._), byref(obj), sizeof(obj))
+                self.vt = VT_ARRAY | obj._vartype_
+            elif isinstance(ref, _Pointer) and isinstance(
+                ref.contents, _safearray.tagSAFEARRAY
+            ):
+                self.vt = VT_ARRAY | ref._vartype_ | VT_BYREF
+                self._.pparray = cast(value, POINTER(POINTER(_safearray.tagSAFEARRAY)))
             else:
                 self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         else:
@@ -602,9 +606,6 @@ v.vt = VT_ERROR
 v._.VT_I4 = 0x80020004
 del v
 
-_carg_obj = type(byref(c_int()))
-from ctypes import Array as _CArrayType
-
 
 @comtypes.patcher.Patch(POINTER(VARIANT))
 class _(object):
@@ -619,7 +620,7 @@ class _(object):
         if isinstance(arg, POINTER(VARIANT)):
             return arg
         # accept byref(VARIANT) instance
-        if isinstance(arg, _carg_obj) and isinstance(arg._obj, VARIANT):
+        if isinstance(arg, _CArgObject) and isinstance(arg._obj, VARIANT):
             return arg
         # accept VARIANT instance
         if isinstance(arg, VARIANT):
@@ -633,7 +634,7 @@ class _(object):
     def __setitem__(self, index, value):
         # This is to support the same sematics as a pointer instance:
         # variant[0] = value
-        self[index].value = value
+        self[index].value = value  # type: ignore
 
 
 ################################################################
@@ -743,7 +744,7 @@ EXCEPINFO = tagEXCEPINFO
 
 class tagDISPPARAMS(Structure):
     if TYPE_CHECKING:
-        rgvarg: Array[VARIANT]
+        rgvarg: _CArrayType[VARIANT]
         rgdispidNamedArgs: _Pointer[DISPID]
         cArgs: int
         cNamedArgs: int
@@ -773,28 +774,8 @@ DISPID_DESTRUCTOR = -7
 DISPID_COLLECT = -8
 
 
-RawGetIDsOfNamesFunc = Callable[
-    [_byref_type, "Array[c_wchar_p]", int, int, "Array[DISPID]"], int
-]
-# fmt: off
-RawInvokeFunc = Callable[
-    [
-        int, _byref_type, int, int,  # dispIdMember, riid, lcid, wFlags
-        _UnionT[_byref_type, DISPPARAMS],  # *pDispParams
-        _UnionT[_byref_type, VARIANT],  # pVarResult
-        _UnionT[_byref_type, EXCEPINFO, None],  # pExcepInfo
-        _UnionT[_byref_type, c_uint],  # puArgErr
-    ],
-    int,
-]
-# fmt: on
-
-
 class IDispatch(IUnknown):
-    _disp_methods_: ClassVar[List[comtypes._DispMemberSpec]]
-    _GetTypeInfo: Callable[[int, int], IUnknown]
-    __com_GetIDsOfNames: RawGetIDsOfNamesFunc
-    __com_Invoke: RawInvokeFunc
+    _disp_methods_: ClassVar[List[_DispMemberSpec]]
 
     _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
     _methods_ = [
@@ -835,7 +816,7 @@ class IDispatch(IUnknown):
         """Return type information.  Index 0 specifies typeinfo for IDispatch"""
         import comtypes.typeinfo
 
-        result = self._GetTypeInfo(index, lcid)
+        result = self._GetTypeInfo(index, lcid)  # type: ignore
         return result.QueryInterface(comtypes.typeinfo.ITypeInfo)
 
     def GetIDsOfNames(self, *names: str, **kw: Any) -> List[int]:
@@ -844,7 +825,7 @@ class IDispatch(IUnknown):
         assert not kw
         arr = (c_wchar_p * len(names))(*names)
         ids = (DISPID * len(names))()
-        self.__com_GetIDsOfNames(riid_null, arr, len(names), lcid, ids)
+        self.__com_GetIDsOfNames(riid_null, arr, len(names), lcid, ids)  # type: ignore
         return ids[:]
 
     def _invoke(self, memid: int, invkind: int, lcid: int, *args: Any) -> Any:
@@ -864,7 +845,9 @@ class IDispatch(IUnknown):
                 dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
             dp.rgvarg = array
 
-        self.__com_Invoke(memid, riid_null, lcid, invkind, dp, var, None, argerr)
+        self.__com_Invoke(  # type: ignore
+            memid, riid_null, lcid, invkind, dp, var, None, argerr
+        )
         return var._get_value(dynamic=True)
 
     def __make_dp(self, _invkind: int, *args: Any) -> DISPPARAMS:
@@ -900,7 +883,7 @@ class IDispatch(IUnknown):
         excepinfo = EXCEPINFO()
         argerr = c_uint()
         try:
-            self.__com_Invoke(
+            self.__com_Invoke(  # type: ignore
                 dispid,
                 riid_null,
                 _lcid,
@@ -964,7 +947,7 @@ _arraycode_to_vartype = {
     "B": VT_UI1,
 }
 
-_ctype_to_vartype = {
+_ctype_to_vartype: Dict[Type[_CData], int] = {
     c_byte: VT_I1,
     c_ubyte: VT_UI1,
     c_short: VT_I2,
@@ -1000,7 +983,7 @@ _ctype_to_vartype = {
     # POINTER(IDispatch): VT_DISPATCH,
 }
 
-_vartype_to_ctype = {}
+_vartype_to_ctype: Dict[int, Type[_CData]] = {}
 for c, v in _ctype_to_vartype.items():
     _vartype_to_ctype[v] = c
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]

@@ -34,6 +34,7 @@ longlong_type = typedesc.FundamentalType("long long int", 64, 64)
 ulonglong_type = typedesc.FundamentalType("long long unsigned int", 64, 64)
 float_type = typedesc.FundamentalType("float", 32, 32)
 double_type = typedesc.FundamentalType("double", 64, 64)
+void_type = typedesc.FundamentalType("void", 0, 0)
 
 # basic COM data types
 BSTR_type = typedesc.Typedef("BSTR", PTR(wchar_t_type))
@@ -89,7 +90,7 @@ COMTYPES = {
     automation.VT_UI8: ulonglong_type,  # 21
     automation.VT_INT: int_type,  # 22
     automation.VT_UINT: uint_type,  # 23
-    automation.VT_VOID: typedesc.FundamentalType("void", 0, 0),  # 24
+    automation.VT_VOID: void_type,  # 24
     automation.VT_HRESULT: HRESULT_type,  # 25
     automation.VT_LPSTR: PTR(char_type),  # 30
     automation.VT_LPWSTR: PTR(wchar_t_type),  # 31
@@ -126,20 +127,18 @@ class Parser(object):
                 )
             return typ
         elif tdesc.vt == automation.VT_PTR:
-            ptrdesc: typeinfo.TYPEDESC = tdesc._.lptdesc[0]
-            typ = self.make_type(ptrdesc, tinfo)
-            return PTR(typ)
+            return PTR(self.make_type(tdesc._.lptdesc[0], tinfo))
         elif tdesc.vt == automation.VT_USERDEFINED:
             try:
                 ti = tinfo.GetRefTypeInfo(tdesc._.hreftype)
             except COMError as details:
-                type_name = "__error_hreftype_%d__" % tdesc._.hreftype
+                type_name = f"__error_hreftype_{tdesc._.hreftype:d}__"
                 tlib_name = get_tlib_filename(self.tlib)
                 if tlib_name is None:
                     tlib_name = "unknown typelib"
                 message = (
-                    "\n\tGetRefTypeInfo failed in %s: %s\n\tgenerating type '%s' instead"
-                    % (tlib_name, details, type_name)
+                    f"\n\tGetRefTypeInfo failed in {tlib_name}: {details}"
+                    f"\n\tgenerating type '{type_name}' instead"
                 )
                 import warnings
 
@@ -153,8 +152,7 @@ class Parser(object):
             return result
         elif tdesc.vt == automation.VT_SAFEARRAY:
             # SAFEARRAY(<type>), see Don Box pp.331f
-            safearraydesc: typeinfo.TYPEDESC = tdesc._.lptdesc[0]
-            return midlSAFEARRAY(self.make_type(safearraydesc, tinfo))
+            return midlSAFEARRAY(self.make_type(tdesc._.lptdesc[0], tinfo))
         raise NotImplementedError(tdesc.vt)
 
     ################################################################
@@ -271,7 +269,7 @@ class Parser(object):
             # Don't known what artefact that is - we ignore it.
             # It's an interface without methods anyway.
             if itf_name != "IOleControlTypes":
-                message = "Ignoring interface %s which has no base interface" % itf_name
+                message = f"Ignoring interface {itf_name} which has no base interface"
                 import warnings
 
                 warnings.warn(message, UserWarning)
@@ -298,27 +296,25 @@ class Parser(object):
             names = tinfo.GetNames(fd.memid, fd.cParams + 1)
             names.append("rhs")
             names = names[: fd.cParams + 1]
+            # function name first, then parameter names
             assert len(names) == fd.cParams + 1
             flags = self.func_flags(fd.wFuncFlags)
             flags += self.inv_kind(fd.invkind)
             mth = typedesc.ComMethod(
                 fd.invkind, fd.memid, func_name, returns, flags, func_doc
             )
-            for p in range(fd.cParams):
-                typ = self.make_type(fd.lprgelemdescParam[p].tdesc, tinfo)
-                name = names[p + 1]
-                flags = fd.lprgelemdescParam[p]._.paramdesc.wParamFlags
-                if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
+            for j in range(fd.cParams):
+                elemdesc = fd.lprgelemdescParam[j]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
+                name = names[j + 1]
+                paramdesc = elemdesc._.paramdesc
+                if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
-                    var = (
-                        fd.lprgelemdescParam[p]
-                        ._.paramdesc.pparamdescex[0]
-                        .varDefaultValue
-                    )
-                    default: Any = var.value
+                    default: Any = paramdesc.pparamdescex[0].varDefaultValue.value
                 else:
                     default = None
-                mth.add_argument(typ, name, self.param_flags(flags), default)
+                param_flags = self.param_flags(paramdesc.wParamFlags)
+                mth.add_argument(typ, name, param_flags, default)
             members.append((fd.oVft, mth))
         # Sort the methods by oVft (VTable offset): Some typeinfo
         # don't list methods in VTable order.
@@ -386,25 +382,25 @@ class Parser(object):
             names = tinfo.GetNames(fd.memid, fd.cParams + 1)
             names.append("rhs")
             names = names[: fd.cParams + 1]
-            assert (
-                len(names) == fd.cParams + 1
-            )  # function name first, then parameter names
+            # function name first, then parameter names
+            assert len(names) == fd.cParams + 1
             flags = self.func_flags(fd.wFuncFlags)
             flags += self.inv_kind(fd.invkind)
             mth = typedesc.DispMethod(
                 fd.memid, fd.invkind, func_name, returns, flags, func_doc
             )
-            for p in range(fd.cParams):
-                descparam = fd.lprgelemdescParam[p]
-                typ = self.make_type(descparam.tdesc, tinfo)
-                name = names[p + 1]
-                flags = descparam._.paramdesc.wParamFlags
-                if flags & typeinfo.PARAMFLAG_FHASDEFAULT:
-                    var = descparam._.paramdesc.pparamdescex[0].varDefaultValue  # type: ignore
-                    default: Any = var.value
+            for j in range(fd.cParams):
+                elemdesc = fd.lprgelemdescParam[j]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
+                name = names[j + 1]
+                paramdesc = elemdesc._.paramdesc
+                if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
+                    # XXX should be handled by VARIANT itself
+                    default: Any = paramdesc.pparamdescex[0].varDefaultValue.value
                 else:
                     default = None
-                mth.add_argument(typ, name, self.param_flags(flags), default)
+                param_flags = self.param_flags(paramdesc.wParamFlags)
+                mth.add_argument(typ, name, param_flags, default)
             itf.add_member(mth)
         return itf
 
@@ -593,33 +589,26 @@ class Parser(object):
         self, name: Optional[str], value: Any, tlib: Optional[typeinfo.ITypeLib] = None
     ) -> None:
         modname = self._typelib_module(tlib)
-        fullname = "%s.%s" % (modname, name)
+        fullname = f"{modname}.{name}"
         if fullname in self.items:
             # XXX Can we really allow this? It happens, at least.
             if isinstance(value, typedesc.External):
                 return
             # BUG: We try to register an item that's already registered.
-            raise ValueError("Bug: Multiple registered name '%s': %r" % (name, value))
+            raise ValueError(f"Bug: Multiple registered name '{name}': {value!r}")
         self.items[fullname] = value
 
     def parse_typeinfo(self, tinfo: typeinfo.ITypeInfo) -> Any:
         name = tinfo.GetDocumentation(-1)[0]
         modname = self._typelib_module()
         try:
-            return self.items["%s.%s" % (modname, name)]
+            return self.items[f"{modname}.{name}"]
         except KeyError:
             pass
 
         tlib = tinfo.GetContainingTypeLib()[0]
         if tlib != self.tlib:
-            ta = tinfo.GetTypeAttr()
-            size = ta.cbSizeInstance * 8
-            align = ta.cbAlignment * 8
-            typ = typedesc.External(
-                tlib, name, size, align, tlib.GetDocumentation(-1)[:2]
-            )
-            self._register(name, typ, tlib)
-            return typ
+            return self._parse_External(name, tlib, tinfo)
 
         ta = tinfo.GetTypeAttr()
         tkind = ta.typekind
@@ -640,10 +629,7 @@ class Parser(object):
             except COMError:
                 # no dual interface
                 return self.ParseDispatch(tinfo, ta)
-            tinfo = tinfo.GetRefTypeInfo(href)
-            ta = tinfo.GetTypeAttr()
-            assert ta.typekind == typeinfo.TKIND_INTERFACE
-            return self.ParseInterface(tinfo, ta)
+            return self._parse_DualInterface(tinfo.GetRefTypeInfo(href))
         elif tkind == typeinfo.TKIND_COCLASS:  # 5
             return self.ParseCoClass(tinfo, ta)
         elif tkind == typeinfo.TKIND_ALIAS:  # 6
@@ -653,6 +639,24 @@ class Parser(object):
         else:
             print("NYI", tkind)
             # raise "NYI", tkind
+
+    def _parse_DualInterface(
+        self, tinfo: typeinfo.ITypeInfo
+    ) -> Optional[typedesc.ComInterface]:
+        ta = tinfo.GetTypeAttr()
+        assert ta.typekind == typeinfo.TKIND_INTERFACE
+        return self.ParseInterface(tinfo, ta)
+
+    def _parse_External(
+        self, name: str, tlib: typeinfo.ITypeLib, tinfo: typeinfo.ITypeInfo
+    ) -> typedesc.External:
+        ta = tinfo.GetTypeAttr()
+        size = ta.cbSizeInstance * 8
+        align = ta.cbAlignment * 8
+        docs = tlib.GetDocumentation(-1)[:2]
+        typ = typedesc.External(tlib, name, size, align, docs)
+        self._register(name, typ, tlib)
+        return typ
 
     def parse_LibraryDescription(self):
         la = self.tlib.GetLibAttr()
@@ -733,16 +737,11 @@ class TypeLibParser(Parser):
 # path = r"c:\vc98\include\activscp.tlb"
 
 
-def get_tlib_filename(tlib):
+def get_tlib_filename(tlib: typeinfo.ITypeLib) -> Optional[str]:
     # seems if the typelib is not registered, there's no way to
     # determine the filename.
     la = tlib.GetLibAttr()
     name = BSTR()
-    try:
-        windll.oleaut32.QueryPathOfRegTypeLib
-    except AttributeError:
-        # Windows CE doesn't have this function
-        return None
     if 0 == windll.oleaut32.QueryPathOfRegTypeLib(
         byref(la.guid), la.wMajorVerNum, la.wMinorVerNum, 0, byref(name)  # lcid
     ):

@@ -1,9 +1,16 @@
 import threading
 import array
+from typing import TYPE_CHECKING
 import comtypes
 from ctypes import POINTER, Structure, byref, cast, c_long, memmove, pointer, sizeof
 from comtypes import _safearray, IUnknown, com_interface_registry
 from comtypes.patcher import Patch
+
+if TYPE_CHECKING:
+    from typing import Type, TypeVar
+    from comtypes import hints  # type: ignore
+
+    _CT = TypeVar("_CT", bound=comtypes._CData)
 
 _safearray_type_cache = {}
 
@@ -49,18 +56,18 @@ safearray_as_ndarray = _SafeArrayAsNdArrayContextManager()
 
 ################################################################
 # This is THE PUBLIC function: the gateway to the SAFEARRAY functionality.
-def _midlSAFEARRAY(itemtype):
+def _midlSAFEARRAY(itemtype: "Type[_CT]") -> "Type[hints.LP_SAFEARRAY[_CT]]":
     """This function mimics the 'SAFEARRAY(aType)' IDL idiom.  It
     returns a subtype of SAFEARRAY, instances will be built with a
     typecode VT_...  corresponding to the aType, which must be one of
     the supported ctypes.
     """
     try:
-        return POINTER(_safearray_type_cache[itemtype])
+        return POINTER(_safearray_type_cache[itemtype])  # type: ignore
     except KeyError:
         sa_type = _make_safearray_type(itemtype)
         _safearray_type_cache[itemtype] = sa_type
-        return POINTER(sa_type)
+        return POINTER(sa_type)  # type: ignore
 
 
 def _make_safearray_type(itemtype):
@@ -109,7 +116,7 @@ def _make_safearray_type(itemtype):
         _needsfree = False
 
         @classmethod
-        def create(cls, value, extra=None):
+        def create(cls, value, extra=extra):
             """Create a POINTER(SAFEARRAY_...) instance of the correct
             type; value is an object containing the items to store.
 
