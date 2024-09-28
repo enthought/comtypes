@@ -3,6 +3,7 @@ import textwrap
 from typing import Optional, Union as _UnionT
 from typing import Dict, List, Set, Tuple
 from typing import Iterator, Mapping, Sequence
+import warnings
 
 
 class ImportedNamespaces(object):
@@ -168,7 +169,13 @@ class EnumerationNamespaces(object):
             >>> enums.add('Foo', 'spam', 2)
             >>> enums.add('Bar', 'bacon', 3)
             >>> enums.add('Bar', 'egg', 4)
-            >>> enums.add('Bar', 'egg', 5)
+            >>> import warnings
+            >>> with warnings.catch_warnings(record=True) as w:
+            ...     enums.add('Bar', 'egg', 5)
+            ...     print(w[-1].message.args[0].replace(', ', ',\\n'))
+            The 'egg' member of the 'Bar' enumeration is already assigned 4,
+            but it will be overwritten with 5,
+            based on the type information.
             >>> assert 'Foo' in enums
             >>> assert 'Baz' not in enums
             >>> print(enums.to_intflags())
@@ -193,7 +200,20 @@ class EnumerationNamespaces(object):
             egg = 5  # duplicated within the 'Bar'. Perhaps there is a bug?
             Bar = c_int  # enum
         """
-        self.data.setdefault(enum_name, []).append((member_name, value))
+        members = self.data.setdefault(enum_name, [])
+        if members:
+            mapping = dict(members)
+            if member_name in mapping:
+                # This may be a bug in the COM type library.
+                # See also https://github.com/enthought/comtypes/issues/550
+                warnings.warn(
+                    f"The '{member_name}' member of the '{enum_name}' enumeration "
+                    f"is already assigned {mapping[member_name]}, "
+                    f"but it will be overwritten with {value}, "
+                    "based on the type information.",
+                    UserWarning,
+                )
+        members.append((member_name, value))
 
     def __contains__(self, item: str) -> bool:
         return item in self.data
