@@ -278,7 +278,7 @@ class Test_ArgspecPermutations(ut.TestCase):
                 (orig_0th, *orig_call_args), orig_kw = orig.call_args
                 self.assertEqual(orig_kw, {})
                 self.assertIs(orig_0th, self_)
-                for ((typ, f, val), orig) in zip(
+                for (typ, f, val), orig in zip(
                     testing_params.call_args_validators, orig_call_args
                 ):
                     self.assertIsInstance(orig, typ)
