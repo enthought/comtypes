@@ -144,9 +144,9 @@ class DeclaredNamespaces(object):
     def getvalue(self) -> str:
         lines = []
         for (alias, definition), comment in self.data.items():
-            code = "%s = %s" % (alias, definition)
+            code = f"{alias} = {definition}"
             if comment:
-                code = code + "  # %s" % comment
+                code = code + f"  # {comment}"
             lines.append(code)
         return "\n".join(lines)
 
