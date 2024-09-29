@@ -743,7 +743,7 @@ def get_tlib_filename(tlib: typeinfo.ITypeLib) -> Optional[str]:
     la = tlib.GetLibAttr()
     name = BSTR()
     if 0 == windll.oleaut32.QueryPathOfRegTypeLib(
-        byref(la.guid), la.wMajorVerNum, la.wMinorVerNum, 0, byref(name)  # lcid
+        byref(la.guid), la.wMajorVerNum, la.wMinorVerNum, 0, byref(name)
     ):
         full_filename = name.value.split("\0")[0]
         if not os.path.isabs(full_filename):
