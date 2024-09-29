@@ -86,14 +86,14 @@ class ImportedNamespaces(object):
 
     def _make_line(self, from_: str, imports: Sequence[str]) -> str:
         import_ = ", ".join(imports)
-        code = "from %s import %s" % (from_, import_)
+        code = f"from {from_} import {import_}"
         if len(code) <= 80:
             return code
         wrapper = textwrap.TextWrapper(
             subsequent_indent="    ", initial_indent="    ", break_long_words=False
         )
         import_ = "\n".join(wrapper.wrap(import_))
-        code = "from %s import (\n%s\n)" % (from_, import_)
+        code = f"from {from_} import (\n{import_}\n)"
         return code
 
     def getvalue(self) -> str:
@@ -103,12 +103,12 @@ class ImportedNamespaces(object):
             if val is None:
                 ns[key] = val
             elif key == "*":
-                lines.append("from %s import *" % val)
+                lines.append(f"from {val} import *")
             else:
                 ns.setdefault(val, set()).add(key)  # type: ignore
         for key, val in ns.items():
             if val is None:
-                lines.append("import %s" % key)
+                lines.append(f"import {key}")
             else:
                 names = sorted(val, key=lambda s: s.lower())
                 lines.append(self._make_line(key, names))
@@ -144,9 +144,9 @@ class DeclaredNamespaces(object):
     def getvalue(self) -> str:
         lines = []
         for (alias, definition), comment in self.data.items():
-            code = "%s = %s" % (alias, definition)
+            code = f"{alias} = {definition}"
             if comment:
-                code = code + "  # %s" % comment
+                code = code + f"  # {comment}"
             lines.append(code)
         return "\n".join(lines)
 
