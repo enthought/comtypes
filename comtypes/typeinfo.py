@@ -231,7 +231,8 @@ class ITypeLib(IUnknown):
     def GetLibAttr(self) -> "TLIBATTR":
         """Return type library attributes"""
         return _deref_with_release(
-            self._GetLibAttr(), self.ReleaseTLibAttr  # type: ignore
+            self._GetLibAttr(),  # type: ignore
+            self.ReleaseTLibAttr,
         )
 
     def IsName(self, name: str, lHashVal: int = 0) -> Optional[str]:
@@ -345,7 +346,8 @@ class ITypeInfo(IUnknown):
     def GetTypeAttr(self) -> "TYPEATTR":
         """Return the TYPEATTR for this type"""
         return _deref_with_release(
-            self._GetTypeAttr(), self.ReleaseTypeAttr  # type: ignore
+            self._GetTypeAttr(),  # type: ignore
+            self.ReleaseTypeAttr,
         )
 
     def GetDocumentation(
@@ -358,13 +360,15 @@ class ITypeInfo(IUnknown):
     def GetFuncDesc(self, index: int) -> "FUNCDESC":
         """Return FUNCDESC for index"""
         return _deref_with_release(
-            self._GetFuncDesc(index), self.ReleaseFuncDesc  # type: ignore
+            self._GetFuncDesc(index),  # type: ignore
+            self.ReleaseFuncDesc,
         )
 
     def GetVarDesc(self, index: int) -> "VARDESC":
         """Return VARDESC for index"""
         return _deref_with_release(
-            self._GetVarDesc(index), self.ReleaseVarDesc  # type: ignore
+            self._GetVarDesc(index),  # type: ignore
+            self.ReleaseVarDesc,
         )
 
     def GetNames(self, memid: int, count: int = 1) -> List[str]:

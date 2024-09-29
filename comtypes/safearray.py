@@ -192,9 +192,7 @@ def _make_safearray_type(itemtype):
                 nitems *= d
                 rgsa[i].cElements = d
                 rgsa[i].lBound = lBound
-            pa = _safearray.SafeArrayCreateEx(
-                cls._vartype_, value.ndim, rgsa, extra  # cDims  # rgsaBound
-            )  # pvExtra
+            pa = _safearray.SafeArrayCreateEx(cls._vartype_, value.ndim, rgsa, extra)
             if not pa:
                 if cls._vartype_ == VT_RECORD and extra is None:
                     raise TypeError(

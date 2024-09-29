@@ -106,7 +106,8 @@ def GetModule(tlib: _UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType:
         frame = sys._getframe(1)
         _file_: Optional[str] = frame.f_globals.get("__file__", None)
         pathname, is_abs = _resolve_filename(
-            tlib_string, _file_ and os.path.dirname(_file_)  # type: ignore
+            tlib_string,
+            _file_ and os.path.dirname(_file_),  # type: ignore
         )
         logger.debug("GetModule(%s), resolved: %s", pathname, is_abs)
         tlib = _load_tlib(pathname)  # don't register
@@ -251,9 +252,9 @@ _ItfName = str
 _ItfIid = str
 
 
-def _get_known_namespaces() -> Tuple[
-    Mapping[_SymbolName, _ModuleName], Mapping[_ItfName, _ItfIid]
-]:
+def _get_known_namespaces() -> (
+    Tuple[Mapping[_SymbolName, _ModuleName], Mapping[_ItfName, _ItfIid]]
+):
     """Returns symbols and interfaces that are already statically defined in `ctypes`
     and `comtypes`.
     From `ctypes`, all the names are obtained.
