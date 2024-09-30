@@ -153,14 +153,22 @@ def CoCreateInstance(
 if TYPE_CHECKING:
 
     @overload
-    def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
-        # type: (GUID, Optional[int], Optional[COSERVERINFO], None) -> hints.IClassFactory
-        pass
+    def CoGetClassObject(
+        clsid: GUID,
+        clsctx: Optional[int] = None,
+        pServerInfo: "Optional[COSERVERINFO]" = None,
+        interface: None = None,
+    ) -> hints.IClassFactory:
+        ...
 
     @overload
-    def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
-        # type: (GUID, Optional[int], Optional[COSERVERINFO], Type[_T_IUnknown]) -> _T_IUnknown
-        pass
+    def CoGetClassObject(
+        clsid: GUID,
+        clsctx: Optional[int] = None,
+        pServerInfo: "Optional[COSERVERINFO]" = None,
+        interface: Type[_T_IUnknown] = hints.IClassFactory,
+    ) -> _T_IUnknown:
+        ...
 
 
 def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
