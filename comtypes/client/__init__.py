@@ -193,14 +193,22 @@ def _manage(
 if TYPE_CHECKING:
 
     @overload
-    def GetClassObject(progid, clsctx=None, pServerInfo=None):
-        # type: (_UnionT[str, CoClass, GUID], Optional[int], Optional[comtypes.COSERVERINFO]) -> hints.IClassFactory
-        pass
+    def GetClassObject(
+        progid: _UnionT[str, CoClass, GUID],
+        clsctx: Optional[int] = None,
+        pServerInfo: Optional[comtypes.COSERVERINFO] = None,
+        interface: None = None,
+    ) -> hints.IClassFactory:
+        ...
 
     @overload
-    def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
-        # type: (_UnionT[str, CoClass, GUID], Optional[int], Optional[comtypes.COSERVERINFO], Optional[Type[_T_IUnknown]]) -> _T_IUnknown
-        pass
+    def GetClassObject(
+        progid: _UnionT[str, CoClass, GUID],
+        clsctx: Optional[int] = None,
+        pServerInfo: Optional[comtypes.COSERVERINFO] = None,
+        interface: Type[_T_IUnknown] = hints.IClassFactory,
+    ) -> _T_IUnknown:
+        ...
 
 
 def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
