@@ -91,7 +91,7 @@ class _cominterface_meta(type):
 
         # The interface 'self' is used as a mixin.
         p = type(_compointer_base)(
-            "POINTER(%s)" % self.__name__,
+            f"POINTER({self.__name__})",
             _ptr_bases,
             {"__com_interface__": self, "_needs_com_addref_": None},
         )
