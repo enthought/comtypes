@@ -58,7 +58,7 @@ class _coclass_meta(type):
                 "from_param": classmethod(_coclass_from_param),
             },
         )
-        from ctypes import _pointer_type_cache
+        from ctypes import _pointer_type_cache  # type: ignore
 
         _pointer_type_cache[self] = PTR
 
