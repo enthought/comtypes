@@ -51,7 +51,7 @@ class _coclass_meta(type):
             clsid = namespace["_reg_clsid_"]
             comtypes.com_coclass_registry[str(clsid)] = self
         PTR = _coclass_pointer_meta(
-            "POINTER(%s)" % self.__name__,
+            f"POINTER({self.__name__})",
             (self, c_void_p),
             {
                 "__ctypes_from_outparam__": _wrap_coclass,
