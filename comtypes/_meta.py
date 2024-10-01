@@ -43,26 +43,26 @@ class _coclass_meta(type):
     # will QueryInterface for the default interface: the first one on
     # the coclass' _com_interfaces_ list.
     def __new__(cls, name, bases, namespace):
-        klass = type.__new__(cls, name, bases, namespace)
+        self = type.__new__(cls, name, bases, namespace)
         if bases == (object,):
-            return klass
+            return self
         # XXX We should insist that a _reg_clsid_ is present.
         if "_reg_clsid_" in namespace:
             clsid = namespace["_reg_clsid_"]
-            comtypes.com_coclass_registry[str(clsid)] = klass
+            comtypes.com_coclass_registry[str(clsid)] = self
         PTR = _coclass_pointer_meta(
-            "POINTER(%s)" % klass.__name__,
-            (klass, c_void_p),
+            f"POINTER({self.__name__})",
+            (self, c_void_p),
             {
                 "__ctypes_from_outparam__": _wrap_coclass,
                 "from_param": classmethod(_coclass_from_param),
             },
         )
-        from ctypes import _pointer_type_cache
+        from ctypes import _pointer_type_cache  # type: ignore
 
-        _pointer_type_cache[klass] = PTR
+        _pointer_type_cache[self] = PTR
 
-        return klass
+        return self
 
 
 # will not work if we change the order of the two base classes!
