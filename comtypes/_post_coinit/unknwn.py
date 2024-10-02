@@ -102,7 +102,7 @@ class _cominterface_meta(type):
 
         if self._case_insensitive_:
             self._patch_case_insensitive_to_ptr_type(p)
-        self._patch_reference_fix_to_ptrptr_type(POINTER(p))
+        self._patch_reference_fix_to_ptrptr_type(POINTER(p))  # type: ignore
 
         return self
 
