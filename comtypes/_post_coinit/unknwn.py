@@ -102,7 +102,7 @@ class _cominterface_meta(type):
 
         if self._case_insensitive_:
             self._patch_case_insensitive_to_ptr_type(p)
-        self._patch_reference_fix_to_ptrptr_type(p)
+        self._patch_reference_fix_to_ptrptr_type(POINTER(p))
 
         return self
 
@@ -134,8 +134,8 @@ class _cominterface_meta(type):
                 )
 
     @staticmethod
-    def _patch_reference_fix_to_ptrptr_type(p: Type) -> None:
-        @patcher.Patch(POINTER(p))
+    def _patch_reference_fix_to_ptrptr_type(pp: Type) -> None:
+        @patcher.Patch(pp)
         class ReferenceFix(object):
             def __setitem__(self, index, value):
                 # We override the __setitem__ method of the
@@ -157,7 +157,7 @@ class _cominterface_meta(type):
                     # CopyComPointer should do if index != 0.
                     if bool(value):
                         value.AddRef()
-                    super(POINTER(p), self).__setitem__(index, value)  # type: ignore
+                    super(pp, self).__setitem__(index, value)  # type: ignore
                     return
                 from _ctypes import CopyComPointer
 
