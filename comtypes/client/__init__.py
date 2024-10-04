@@ -145,14 +145,10 @@ ctypes.POINTER(automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam  #
 #
 @overload
 def GetActiveObject(progid: _UnionT[str, CoClass, GUID]) -> Any: ...
-
-
 @overload
 def GetActiveObject(
     progid: _UnionT[str, CoClass, GUID], interface: Type[_T_IUnknown]
 ) -> _T_IUnknown: ...
-
-
 def GetActiveObject(
     progid: _UnionT[str, CoClass, GUID],
     interface: Optional[Type[IUnknown]] = None,
@@ -198,7 +194,6 @@ if TYPE_CHECKING:
         pServerInfo: Optional[comtypes.COSERVERINFO] = None,
         interface: None = None,
     ) -> hints.IClassFactory: ...
-
     @overload
     def GetClassObject(
         progid: _UnionT[str, CoClass, GUID],
@@ -222,8 +217,6 @@ def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
 
 @overload
 def CreateObject(progid: _UnionT[str, Type[CoClass], GUID]) -> Any: ...
-
-
 @overload
 def CreateObject(
     progid: _UnionT[str, Type[CoClass], GUID],
@@ -233,8 +226,6 @@ def CreateObject(
     dynamic: bool = ...,
     pServerInfo: Optional[comtypes.COSERVERINFO] = None,
 ) -> _T_IUnknown: ...
-
-
 def CreateObject(
     progid: _UnionT[str, Type[CoClass], GUID],  # which object to create
     clsctx: Optional[int] = None,  # how to create the object
@@ -301,14 +292,10 @@ def CreateObject(
 
 @overload
 def CoGetObject(displayname: str, interface: Type[_T_IUnknown]) -> _T_IUnknown: ...
-
-
 @overload
 def CoGetObject(
     displayname: str, interface: None = None, dynamic: bool = False
 ) -> Any: ...
-
-
 def CoGetObject(
     displayname: str,
     interface: Optional[Type[comtypes.IUnknown]] = None,

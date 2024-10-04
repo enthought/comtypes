@@ -270,15 +270,9 @@ class ITypeLib(IUnknown):
 
 
 @overload
-def fix_name(name: None) -> None:
-    pass
-
-
+def fix_name(name: None) -> None: ...
 @overload
-def fix_name(name: str) -> str:
-    pass
-
-
+def fix_name(name: str) -> str: ...
 def fix_name(name):
     # Some typelibs contain BSTR with embedded NUL characters,
     # probably the len of the BSTR is wrong.
