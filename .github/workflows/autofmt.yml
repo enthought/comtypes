@@ -17,3 +17,5 @@ jobs:
             run: pip install ruff==0.6.9
           - name: Check format
             run: python -m ruff format comtypes/. --check --diff
+          - name: Check lint
+            run: python -m ruff check --output-format=github comtypes/.
