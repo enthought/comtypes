@@ -1,4 +1,5 @@
-""" Consolidation of numpy support utilities. """
+"""Consolidation of numpy support utilities."""
+
 import sys
 
 is_64bits = sys.maxsize > 2**32

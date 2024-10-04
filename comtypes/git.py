@@ -3,6 +3,7 @@
 The global interface table provides a way to marshal interface pointers
 between different threading appartments.
 """
+
 from ctypes import *
 from comtypes import (
     IUnknown,

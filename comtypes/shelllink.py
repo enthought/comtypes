@@ -319,7 +319,6 @@ class ShellLink(CoClass):
 
 
 if __name__ == "__main__":
-
     import sys
     import comtypes
     from comtypes.client import CreateObject

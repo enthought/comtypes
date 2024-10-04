@@ -125,6 +125,7 @@ try:
         )
         # implementation
         Name = "foo"
+
         # test
         def test_Name(self):
             p = wrap(self.create())
@@ -137,6 +138,7 @@ try:
         itf.add(
             "[id(101)] HRESULT MixedInOut([in] int a, [out] int *b, [in] int c, [out] int *d);"
         )
+
         # implementation
         def MixedInOut(self, a, c):
             return a + 1, c + 1
@@ -151,6 +153,7 @@ try:
         itf.add(
             "[id(102)] HRESULT MultiInOutArgs([in, out] int *pa, [in, out] int *pb);"
         )
+
         # implementation
         def MultiInOutArgs(self, pa, pb):
             return pa[0] * 3, pb[0] * 4
@@ -174,6 +177,7 @@ try:
         ################
         # definition
         itf.add("HRESULT MultiInOutArgs3([out] int *pa, [out] int *pb);")
+
         # implementation
         def MultiInOutArgs3(self):
             return 42, 43
@@ -186,6 +190,7 @@ try:
         ################
         # definition
         itf.add("HRESULT MultiInOutArgs4([out] int *pa, [in, out] int *pb);")
+
         # implementation
         def MultiInOutArgs4(self, pb):
             return pb[0] + 3, pb[0] + 4
@@ -238,6 +243,7 @@ try:
         # Test events.
         itf.add("""HRESULT DoSomething();""")
         outgoing.add("""[id(103)] HRESULT OnSomething();""")
+
         # implementation
         def DoSomething(self):
             "Implement the DoSomething method"

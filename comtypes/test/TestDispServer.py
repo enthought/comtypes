@@ -31,6 +31,7 @@ from comtypes.gen import TestDispServerLib
 
 ################################################################
 
+
 # Implement the CoClass by defining a subclass of the
 # TestDispServerLib.TestDispServer class in the wrapper file.  The
 # COMObject base class provides default implementations of the
@@ -42,7 +43,6 @@ class TestDispServer(
     TestDispServerLib.TestDispServer,  # the coclass from the typelib wrapper
     comtypes.server.connectionpoints.ConnectableObjectMixin,
 ):
-
     # The default interface from the typelib MUST be the first
     # interface, other interfaces can follow
 

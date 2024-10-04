@@ -33,8 +33,7 @@ class _MethodAnnotator(abc.ABC, Generic[_T_MTD]):
         return result
 
     @abc.abstractmethod
-    def getvalue(self, name: str) -> str:
-        ...
+    def getvalue(self, name: str) -> str: ...
 
 
 _CatMths = Tuple[  # categorized methods
@@ -47,8 +46,7 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         self.data: List[str] = []
 
     @abc.abstractmethod
-    def to_method_annotator(self, method: _T_MTD) -> _MethodAnnotator[_T_MTD]:
-        ...
+    def to_method_annotator(self, method: _T_MTD) -> _MethodAnnotator[_T_MTD]: ...
 
     def _iter_methods(self, members: Iterable[_T_MTD]) -> Iterator[_CatMths[_T_MTD]]:
         methods: Dict[str, List[Optional[_T_MTD]]] = {}

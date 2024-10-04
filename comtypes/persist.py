@@ -9,6 +9,7 @@
 The 'DictPropertyBag' class is a class implementing the IPropertyBag
 interface, useful in client code.
 """
+
 from ctypes import c_int, c_ulong, c_ushort, c_wchar_p
 from ctypes import POINTER, Structure
 from ctypes.wintypes import WORD, DWORD, BOOL

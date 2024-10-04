@@ -371,6 +371,7 @@ class _cominterface_meta(type):
 
 class _compointer_meta(type(c_void_p), _cominterface_meta):
     "metaclass for COM interface pointer classes"
+
     # no functionality, but needed to avoid a metaclass conflict
 
 

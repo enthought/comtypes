@@ -33,6 +33,7 @@ from comtypes.gen import TestComServerLib
 
 ################################################################
 
+
 # Implement the CoClass.  Use the coclass from the wrapper as base
 # class, and use DualDispMixin as base class which provides default
 # implementations of IDispatch, IProvideClassInfo, IProvideClassInfo2
@@ -42,7 +43,6 @@ class TestComServer(
     TestComServerLib.TestComServer,  # the coclass from the typelib wrapper
     comtypes.server.connectionpoints.ConnectableObjectMixin,
 ):
-
     # The default interface from the typelib MUST be the first
     # interface, other interfaces can follow
 
