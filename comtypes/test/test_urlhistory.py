@@ -9,6 +9,7 @@ from comtypes.patcher import Patch
 GetModule(os.path.join(os.path.dirname(__file__), "urlhist.tlb"))
 from comtypes.gen import urlhistLib
 
+
 # The pwcsTitle and pwcsUrl fields of the _STATURL structure must be
 # freed by the caller.  The only way to do this without patching the
 # generated code directly is to monkey-patch the

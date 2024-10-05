@@ -270,15 +270,9 @@ class ITypeLib(IUnknown):
 
 
 @overload
-def fix_name(name: None) -> None:
-    pass
-
-
+def fix_name(name: None) -> None: ...
 @overload
-def fix_name(name: str) -> str:
-    pass
-
-
+def fix_name(name: str) -> str: ...
 def fix_name(name):
     # Some typelibs contain BSTR with embedded NUL characters,
     # probably the len of the BSTR is wrong.
@@ -485,25 +479,23 @@ class IRecordInfo(IUnknown):
         return result
 
     if TYPE_CHECKING:
-        # fmt: off
         # def RecordInit
         # def RecordClear
-        def RecordCopy(  # noqa
+        def RecordCopy(
             self, pvExisting: hints.Incomplete, pvNew: hints.Incomplete
         ) -> hints.Hresult: ...
-        def GetGuid(self) -> GUID: ...  # noqa
-        def GetName(self) -> str: ...  # noqa
-        def GetSize(self) -> int: ...  # noqa
-        def GetTypeInfo(self) -> ITypeInfo: ...  # noqa
+        def GetGuid(self) -> GUID: ...
+        def GetName(self) -> str: ...
+        def GetSize(self) -> int: ...
+        def GetTypeInfo(self) -> ITypeInfo: ...
         # def GetField
         # def GetFieldNoCopy
         # def PutField
         # def PutFieldNoCopy
-        def IsMatchingType(self, value: "IRecordInfo") -> bool: ...  # noqa
+        def IsMatchingType(self, value: "IRecordInfo") -> bool: ...
         # def RecordCreate
-        def RecordCreateCopy(self, pvSource: hints.Incomplete) -> int: ...  # noqa
-        def RecordDestroy(self, pvRecord: hints.Incomplete) -> hints.Hresult: ...  # noqa
-        # fmt: on
+        def RecordCreateCopy(self, pvSource: hints.Incomplete) -> int: ...
+        def RecordDestroy(self, pvRecord: hints.Incomplete) -> hints.Hresult: ...
 
 
 IRecordInfo._methods_ = [

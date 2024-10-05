@@ -9,6 +9,7 @@
 The 'DictPropertyBag' class is a class implementing the IPropertyBag
 interface, useful in client code.
 """
+
 from ctypes import c_int, c_ulong, c_ushort, c_wchar_p
 from ctypes import POINTER, Structure
 from ctypes.wintypes import WORD, DWORD, BOOL
@@ -244,13 +245,12 @@ class IPersistFile(IPersist):
     ]
 
     if TYPE_CHECKING:
-        # fmt: off
-        def IsDirty(self) -> hints.Hresult: ...  # noqa
-        def Load(self, pszFileName: str, dwMode: int) -> hints.Hresult: ...  # noqa
-        def Save(self, pszFileName: str, fRemember: bool) -> hints.Hresult: ...  # noqa
-        def SaveCompleted(self, pszFileName: str) -> hints.Hresult: ...  # noqa
-        def GetCurFile(self) -> str: ...  # noqa
-        # fmt: on
+
+        def IsDirty(self) -> hints.Hresult: ...
+        def Load(self, pszFileName: str, dwMode: int) -> hints.Hresult: ...
+        def Save(self, pszFileName: str, fRemember: bool) -> hints.Hresult: ...
+        def SaveCompleted(self, pszFileName: str) -> hints.Hresult: ...
+        def GetCurFile(self) -> str: ...
 
 
 from comtypes import COMObject

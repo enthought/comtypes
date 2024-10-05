@@ -1,6 +1,7 @@
 """This module defines the funtions byref_at(cobj, offset)
 and cast_field(struct, fieldname, fieldtype).
 """
+
 from ctypes import *
 
 

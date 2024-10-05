@@ -16,7 +16,6 @@ def setUpModule():
 
 
 class Test(unittest.TestCase):
-
     if is_resource_enabled("pythoncom"):
 
         def test_win32com(self):

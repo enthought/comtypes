@@ -88,15 +88,9 @@ class IServiceProvider(IUnknown):
 
 
 @overload
-def CoGetObject(displayname: str, interface: None) -> IUnknown:
-    ...
-
-
+def CoGetObject(displayname: str, interface: None) -> IUnknown: ...
 @overload
-def CoGetObject(displayname: str, interface: Type[_T_IUnknown]) -> _T_IUnknown:
-    ...
-
-
+def CoGetObject(displayname: str, interface: Type[_T_IUnknown]) -> _T_IUnknown: ...
 def CoGetObject(displayname: str, interface: Optional[Type[IUnknown]]) -> IUnknown:
     """Convert a displayname to a moniker, then bind and return the object
     identified by the moniker."""
@@ -117,20 +111,14 @@ def CoCreateInstance(
     interface: None = None,
     clsctx: Optional[int] = None,
     punkouter: Optional[_pUnkOuter] = None,
-) -> IUnknown:
-    ...
-
-
+) -> IUnknown: ...
 @overload
 def CoCreateInstance(
     clsid: GUID,
     interface: Type[_T_IUnknown],
     clsctx: Optional[int] = None,
     punkouter: Optional[_pUnkOuter] = None,
-) -> _T_IUnknown:
-    ...
-
-
+) -> _T_IUnknown: ...
 def CoCreateInstance(
     clsid: GUID,
     interface: Optional[Type[IUnknown]] = None,
@@ -158,17 +146,14 @@ if TYPE_CHECKING:
         clsctx: Optional[int] = None,
         pServerInfo: "Optional[COSERVERINFO]" = None,
         interface: None = None,
-    ) -> hints.IClassFactory:
-        ...
-
+    ) -> hints.IClassFactory: ...
     @overload
     def CoGetClassObject(
         clsid: GUID,
         clsctx: Optional[int] = None,
         pServerInfo: "Optional[COSERVERINFO]" = None,
         interface: Type[_T_IUnknown] = hints.IClassFactory,
-    ) -> _T_IUnknown:
-        ...
+    ) -> _T_IUnknown: ...
 
 
 def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
@@ -185,15 +170,9 @@ def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
 
 
 @overload
-def GetActiveObject(clsid: GUID, interface: None = None) -> IUnknown:
-    ...
-
-
+def GetActiveObject(clsid: GUID, interface: None = None) -> IUnknown: ...
 @overload
-def GetActiveObject(clsid: GUID, interface: Type[_T_IUnknown]) -> _T_IUnknown:
-    ...
-
-
+def GetActiveObject(clsid: GUID, interface: Type[_T_IUnknown]) -> _T_IUnknown: ...
 def GetActiveObject(
     clsid: GUID, interface: Optional[Type[IUnknown]] = None
 ) -> IUnknown:
@@ -343,10 +322,7 @@ def CoCreateInstanceEx(
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
     pServerInfo: Optional[COSERVERINFO] = None,
-) -> IUnknown:
-    ...
-
-
+) -> IUnknown: ...
 @overload
 def CoCreateInstanceEx(
     clsid: GUID,
@@ -354,10 +330,7 @@ def CoCreateInstanceEx(
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
     pServerInfo: Optional[COSERVERINFO] = None,
-) -> _T_IUnknown:
-    ...
-
-
+) -> _T_IUnknown: ...
 def CoCreateInstanceEx(
     clsid: GUID,
     interface: Optional[Type[IUnknown]] = None,
