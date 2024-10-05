@@ -43,7 +43,7 @@ def _unpack_argspec(
 
 
 def _resolve_argspec(
-    items: Tuple[_ArgSpecElmType, ...]
+    items: Tuple[_ArgSpecElmType, ...],
 ) -> Tuple[Tuple[_ParamFlagType, ...], Tuple[Type[_CData], ...]]:
     """Unpacks and converts from argspec to paramflags and argtypes.
 

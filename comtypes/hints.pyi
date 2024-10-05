@@ -253,7 +253,7 @@ _T_E = TypeVar("_T_E")
 def to_dunder_iter(
     newenum: _UnionT[
         _Descriptor[_T_Inst, Iterator[_T_E]], Callable[[_T_Inst], Iterator[_T_E]]
-    ]
+    ],
 ) -> Callable[[_T_Inst], Iterator[_T_E]]: ...
 @overload
 def to_dunder_iter(newenum: Any) -> Callable[..., NoReturn]: ...
@@ -266,7 +266,7 @@ def to_dunder_call(
         _GetSetNamedProperty[_T_Inst, _P_Get, _R_Get, ...],
         _GetOnlyNamedProperty[_T_Inst, _P_Get, _R_Get],
         Callable[Concatenate[_T_Inst, _P_Get], _R_Get],
-    ]
+    ],
 ) -> Callable[Concatenate[_T_Inst, _P_Get], _R_Get]: ...
 @overload
 def to_dunder_call(item: Any) -> Callable[..., NoReturn]: ...
@@ -278,7 +278,7 @@ def to_dunder_getitem(
         _GetSetNamedProperty[_T_Inst, _P_Get, _R_Get, ...],
         _GetOnlyNamedProperty[_T_Inst, _P_Get, _R_Get],
         Callable[Concatenate[_T_Inst, _P_Get], _R_Get],
-    ]
+    ],
 ) -> Callable[Concatenate[_T_Inst, _P_Get], _R_Get]: ...
 @overload
 def to_dunder_getitem(item: Any) -> Callable[..., NoReturn]: ...
@@ -289,7 +289,7 @@ def to_dunder_setitem(
     item: _UnionT[
         _GetSetNamedProperty[_T_Inst, ..., Any, _P_Set],
         _SetOnlyNamedProperty[_T_Inst, _P_Set],
-    ]
+    ],
 ) -> Callable[Concatenate[_T_Inst, _P_Set], Any]: ...
 @overload
 def to_dunder_setitem(item: Any) -> Callable[..., NoReturn]: ...

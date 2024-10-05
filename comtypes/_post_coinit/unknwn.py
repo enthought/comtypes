@@ -69,12 +69,12 @@ class _cominterface_meta(type):
     def __new__(cls, name, bases, namespace):
         methods = namespace.pop("_methods_", None)
         dispmethods = namespace.pop("_disp_methods_", None)
-        new_cls = type.__new__(cls, name, bases, namespace)
+        self = type.__new__(cls, name, bases, namespace)
 
         if methods is not None:
-            new_cls._methods_ = methods
+            self._methods_ = methods
         if dispmethods is not None:
-            new_cls._disp_methods_ = dispmethods
+            self._disp_methods_ = dispmethods
 
         # If we sublass a COM interface, for example:
         #
@@ -85,26 +85,26 @@ class _cominterface_meta(type):
         # subclass of POINTER(IUnknown) because of the way ctypes
         # typechecks work.
         if bases == (object,):
-            _ptr_bases = (new_cls, _compointer_base)
+            _ptr_bases = (self, _compointer_base)
         else:
-            _ptr_bases = (new_cls, POINTER(bases[0]))
+            _ptr_bases = (self, POINTER(bases[0]))
 
-        # The interface 'new_cls' is used as a mixin.
+        # The interface 'self' is used as a mixin.
         p = type(_compointer_base)(
-            "POINTER(%s)" % new_cls.__name__,
+            f"POINTER({self.__name__})",
             _ptr_bases,
-            {"__com_interface__": new_cls, "_needs_com_addref_": None},
+            {"__com_interface__": self, "_needs_com_addref_": None},
         )
 
         from ctypes import _pointer_type_cache  # type: ignore
 
-        _pointer_type_cache[new_cls] = p
+        _pointer_type_cache[self] = p
 
-        if new_cls._case_insensitive_:
-            new_cls._patch_case_insensitive_to_ptr_type(p)
-        new_cls._patch_reference_fix_to_ptrptr_type(p)
+        if self._case_insensitive_:
+            self._patch_case_insensitive_to_ptr_type(p)
+        self._patch_reference_fix_to_ptrptr_type(POINTER(p))  # type: ignore
 
-        return new_cls
+        return self
 
     @staticmethod
     def _patch_case_insensitive_to_ptr_type(p: Type) -> None:
@@ -134,8 +134,8 @@ class _cominterface_meta(type):
                 )
 
     @staticmethod
-    def _patch_reference_fix_to_ptrptr_type(p: Type) -> None:
-        @patcher.Patch(POINTER(p))
+    def _patch_reference_fix_to_ptrptr_type(pp: Type) -> None:
+        @patcher.Patch(pp)
         class ReferenceFix(object):
             def __setitem__(self, index, value):
                 # We override the __setitem__ method of the
@@ -157,7 +157,7 @@ class _cominterface_meta(type):
                     # CopyComPointer should do if index != 0.
                     if bool(value):
                         value.AddRef()
-                    super(POINTER(p), self).__setitem__(index, value)  # type: ignore
+                    super(pp, self).__setitem__(index, value)  # type: ignore
                     return
                 from _ctypes import CopyComPointer
 
@@ -371,6 +371,7 @@ class _cominterface_meta(type):
 
 class _compointer_meta(type(c_void_p), _cominterface_meta):
     "metaclass for COM interface pointer classes"
+
     # no functionality, but needed to avoid a metaclass conflict
 
 

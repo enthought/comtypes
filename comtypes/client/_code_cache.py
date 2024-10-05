@@ -4,6 +4,7 @@ The main function is _find_gen_dir(), which on-demand creates the
 comtypes.gen package and returns a directory where generated code can
 be written to.
 """
+
 import ctypes, logging, os, sys, tempfile, types
 from ctypes import wintypes
 

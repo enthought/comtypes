@@ -238,7 +238,7 @@ _SourceInterfaces = Sequence[_Interface]
 
 
 def groupby_impltypeflags(
-    seq: Sequence[Tuple[_Interface, _ImplTypeFlags]]
+    seq: Sequence[Tuple[_Interface, _ImplTypeFlags]],
 ) -> Tuple[_ImplementedInterfaces, _SourceInterfaces]:
     implemented = []
     sources = []

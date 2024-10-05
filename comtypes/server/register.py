@@ -35,6 +35,7 @@ Now, debug the object, and when done delete logging info:
 
   python mycomobj.py /nodebug
 """
+
 import sys
 import os
 import winreg

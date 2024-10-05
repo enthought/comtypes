@@ -12,4 +12,5 @@ This subpackage is called simultaneously with the initialization of `comtypes`.
 So it is necessary to maintain minimal settings to keep the lightweight action
 when the package is initialized.
 """
+
 from comtypes._post_coinit.unknwn import _shutdown  # noqa

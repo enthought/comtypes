@@ -349,7 +349,6 @@ else:
 
 
 class LocalServer(object):
-
     _queue = None
 
     def run(self, classobjects):

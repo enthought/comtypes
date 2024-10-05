@@ -1,5 +1,6 @@
 import comtypes.client, ctypes
 
+
 ################################################################
 # Interfaces
 class IClassFactory(comtypes.IUnknown):
