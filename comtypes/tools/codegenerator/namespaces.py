@@ -1,4 +1,5 @@
 import textwrap
+from typing import overload
 from typing import Optional, Union as _UnionT
 from typing import Dict, List, Set, Tuple
 from typing import Mapping, Sequence
@@ -7,6 +8,15 @@ from typing import Mapping, Sequence
 class ImportedNamespaces(object):
     def __init__(self) -> None:
         self.data: Dict[str, Optional[str]] = {}
+
+    # fmt: off
+    @overload
+    def add(self, __module: str) -> None: ...  # noqa
+    @overload
+    def add(self, __module: str, __symbol: str) -> None: ...  # noqa
+    @overload
+    def add(self, __symbol: str, *, symbols: Mapping[str, str]) -> None: ...  # noqa
+    # fmt: on
 
     def add(
         self,
