@@ -11,11 +11,11 @@ class ImportedNamespaces(object):
 
     # fmt: off
     @overload
-    def add(self, __module: str) -> None: ...  # noqa
+    def add(self, modulename: str, /) -> None: ...  # noqa
     @overload
-    def add(self, __module: str, __symbol: str) -> None: ...  # noqa
+    def add(self, modulename: str, symbol: str, /) -> None: ...  # noqa
     @overload
-    def add(self, __symbol: str, *, symbols: Mapping[str, str]) -> None: ...  # noqa
+    def add(self, symbol: str, /, *, symbols: Mapping[str, str]) -> None: ...  # noqa
     # fmt: on
 
     def add(
