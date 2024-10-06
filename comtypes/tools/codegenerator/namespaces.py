@@ -9,15 +9,12 @@ class ImportedNamespaces(object):
     def __init__(self) -> None:
         self.data: Dict[str, Optional[str]] = {}
 
-    # fmt: off
     @overload
-    def add(self, modulename: str, /) -> None: ...  # noqa
+    def add(self, modulename: str, /) -> None: ...
     @overload
-    def add(self, modulename: str, symbol: str, /) -> None: ...  # noqa
+    def add(self, modulename: str, symbol: str, /) -> None: ...
     @overload
-    def add(self, symbol: str, /, *, symbols: Mapping[str, str]) -> None: ...  # noqa
-    # fmt: on
-
+    def add(self, symbol: str, /, *, symbols: Mapping[str, str]) -> None: ...
     def add(
         self,
         name1: str,
