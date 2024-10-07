@@ -90,6 +90,14 @@ class _cominterface_meta(type):
             _ptr_bases = (self, POINTER(bases[0]))
 
         # The interface 'self' is used as a mixin.
+        # HACK: Could `type(_compointer_base)` be replaced with `_compointer_meta`?
+        # `type(klass)` returns its metaclass.
+        # Since this specification, `type(_compointer_base)` will return
+        # `_compointer_meta` as per the class definition.
+        # The reason for this implementation might be a remnant of the differences in
+        # how metaclasses work between Python 3.x and Python 2.x.
+        # If there are no problems with the versions of Python that `comtypes`
+        # supports, this replacement could make the process flow easier to understand.
         p = type(_compointer_base)(
             f"POINTER({self.__name__})",
             _ptr_bases,
