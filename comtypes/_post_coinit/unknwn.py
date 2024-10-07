@@ -85,8 +85,10 @@ class _cominterface_meta(type):
         # subclass of POINTER(IUnknown) because of the way ctypes
         # typechecks work.
         if bases == (object,):
+            # `self` is `IUnknown` type.
             _ptr_bases = (self, _compointer_base)
         else:
+            # `self` is an interface type derived from `IUnknown`.
             _ptr_bases = (self, POINTER(bases[0]))
 
         # The interface 'self' is used as a mixin.
