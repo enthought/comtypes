@@ -369,10 +369,11 @@ class _cominterface_meta(type):
 ################################################################
 
 
+# will not work if we change the order of the two base classes!
 class _compointer_meta(type(c_void_p), _cominterface_meta):
-    "metaclass for COM interface pointer classes"
+    """metaclass for COM interface pointer classes"""
 
-    # no functionality, but needed to avoid a metaclass conflict
+    pass  # no functionality, but needed to avoid a metaclass conflict
 
 
 class _compointer_base(c_void_p, metaclass=_compointer_meta):
