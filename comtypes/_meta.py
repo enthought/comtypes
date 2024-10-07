@@ -67,4 +67,6 @@ class _coclass_meta(type):
 
 # will not work if we change the order of the two base classes!
 class _coclass_pointer_meta(type(c_void_p), _coclass_meta):
-    pass
+    # metaclass for CoClass pointer
+
+    pass  # no functionality, but needed to avoid a metaclass conflict
