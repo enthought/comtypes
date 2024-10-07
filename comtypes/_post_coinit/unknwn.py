@@ -85,11 +85,21 @@ class _cominterface_meta(type):
         # subclass of POINTER(IUnknown) because of the way ctypes
         # typechecks work.
         if bases == (object,):
+            # `self` is the `IUnknown` type.
             _ptr_bases = (self, _compointer_base)
         else:
+            # `self` is an interface type derived from `IUnknown`.
             _ptr_bases = (self, POINTER(bases[0]))
 
         # The interface 'self' is used as a mixin.
+        # HACK: Could `type(_compointer_base)` be replaced with `_compointer_meta`?
+        # `type(klass)` returns its metaclass.
+        # Since this specification, `type(_compointer_base)` will return the
+        # `_compointer_meta` type as per the class definition.
+        # The reason for this implementation might be a remnant of the differences in
+        # how metaclasses work between Python 3.x and Python 2.x.
+        # If there are no problems with the versions of Python that `comtypes`
+        # supports, this replacement could make the process flow easier to understand.
         p = type(_compointer_base)(
             f"POINTER({self.__name__})",
             _ptr_bases,
@@ -369,10 +379,11 @@ class _cominterface_meta(type):
 ################################################################
 
 
+# will not work if we change the order of the two base classes!
 class _compointer_meta(type(c_void_p), _cominterface_meta):
-    "metaclass for COM interface pointer classes"
+    """metaclass for COM interface pointer classes"""
 
-    # no functionality, but needed to avoid a metaclass conflict
+    pass  # no functionality, but needed to avoid a metaclass conflict
 
 
 class _compointer_base(c_void_p, metaclass=_compointer_meta):
