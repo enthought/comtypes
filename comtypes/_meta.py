@@ -45,6 +45,17 @@ class _coclass_meta(type):
     def __new__(cls, name, bases, namespace):
         self = type.__new__(cls, name, bases, namespace)
         if bases == (object,):
+            # HACK: Could this conditional branch be removed since it is never reached?
+            # Since definition is `class CoClass(COMObject, metaclass=_coclass_meta)`,
+            # the `bases` parameter passed to `_coclass_meta.__new__` would be
+            # `(COMObject,)`.
+            # Moreover, since `COMObject` derives from `object` and does not specify
+            # a metaclass, `(object,)` will not be passed as the `bases` parameter
+            # to `_coclass_meta.__new__`.
+            # The reason for this implementation might be a remnant of the differences
+            # in how metaclasses work between Python 3.x and Python 2.x.
+            # If there are no problems with the versions of Python that `comtypes`
+            # supports, this removal could make the process flow easier to understand.
             return self
         # XXX We should insist that a _reg_clsid_ is present.
         if "_reg_clsid_" in namespace:
