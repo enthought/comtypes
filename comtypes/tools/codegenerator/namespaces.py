@@ -1,5 +1,6 @@
 from collections import Counter
 import textwrap
+from typing import overload
 from typing import Optional, Union as _UnionT
 from typing import Dict, List, Set, Tuple
 from typing import Iterator, Mapping, Sequence
@@ -10,6 +11,12 @@ class ImportedNamespaces(object):
     def __init__(self) -> None:
         self.data: Dict[str, Optional[str]] = {}
 
+    @overload
+    def add(self, modulename: str, /) -> None: ...
+    @overload
+    def add(self, modulename: str, symbolname: str, /) -> None: ...
+    @overload
+    def add(self, symbolname: str, /, *, symbols: Mapping[str, str]) -> None: ...
     def add(
         self,
         name1: str,
