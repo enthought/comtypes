@@ -1,8 +1,10 @@
+from collections import Counter
 import textwrap
 from typing import overload
 from typing import Optional, Union as _UnionT
 from typing import Dict, List, Set, Tuple
-from typing import Mapping, Sequence
+from typing import Iterator, Mapping, Sequence
+import warnings
 
 
 class ImportedNamespaces(object):
@@ -173,6 +175,14 @@ class EnumerationNamespaces(object):
             >>> assert enums
             >>> enums.add('Foo', 'spam', 2)
             >>> enums.add('Bar', 'bacon', 3)
+            >>> enums.add('Bar', 'egg', 4)
+            >>> import warnings
+            >>> with warnings.catch_warnings(record=True) as w:
+            ...     enums.add('Bar', 'egg', 5)
+            ...     print(w[-1].message.args[0].replace(', ', ',\\n'))
+            The 'egg' member of the 'Bar' enumeration is already assigned 4,
+            but it will be overwritten with 5,
+            based on the type information.
             >>> assert 'Foo' in enums
             >>> assert 'Baz' not in enums
             >>> print(enums.to_intflags())
@@ -183,6 +193,8 @@ class EnumerationNamespaces(object):
             <BLANKLINE>
             class Bar(IntFlag):
                 bacon = 3
+                # egg = 4  # duplicated. Perhaps there is a bug in the type library?
+                egg = 5  # duplicated. Perhaps there is a bug in the type library?
             >>> print(enums.to_constants())
             # values for enumeration 'Foo'
             ham = 1
@@ -191,9 +203,24 @@ class EnumerationNamespaces(object):
             <BLANKLINE>
             # values for enumeration 'Bar'
             bacon = 3
+            egg = 4  # duplicated within the 'Bar'. Perhaps there is a bug?
+            egg = 5  # duplicated within the 'Bar'. Perhaps there is a bug?
             Bar = c_int  # enum
         """
-        self.data.setdefault(enum_name, []).append((member_name, value))
+        members = self.data.setdefault(enum_name, [])
+        if members:
+            mapping = dict(members)
+            if member_name in mapping:
+                # This may be a bug in the COM type library.
+                # See also https://github.com/enthought/comtypes/issues/550
+                warnings.warn(
+                    f"The '{member_name}' member of the '{enum_name}' enumeration "
+                    f"is already assigned {mapping[member_name]}, "
+                    f"but it will be overwritten with {value}, "
+                    "based on the type information.",
+                    UserWarning,
+                )
+        members.append((member_name, value))
 
     def __contains__(self, item: str) -> bool:
         return item in self.data
@@ -204,23 +231,52 @@ class EnumerationNamespaces(object):
     def get_symbols(self) -> Set[str]:
         return set(self.data)
 
+    def _iter_members(
+        self, members: Sequence[Tuple[str, int]]
+    ) -> Iterator[Tuple[str, bool, int]]:
+        key_counter = Counter(m for m, _ in members)
+        decrementee = dict(key_counter)  # shallow copy
+        for name, value in members:
+            decrementee[name] -= 1
+            # definition, is_dupl, rest_dupl_count
+            yield f"{name} = {value}", key_counter[name] > 1, decrementee[name]
+
+    def _iter_items(self) -> Iterator[Tuple[str, Iterator[Tuple[str, bool, int]]]]:
+        for name, members in self.data.items():
+            yield name, self._iter_members(members)
+
     def to_constants(self) -> str:
         blocks = []
-        for enum_name, enum_members in self.data.items():
+        for enum_name, members in self._iter_items():
             lines = []
             lines.append(f"# values for enumeration '{enum_name}'")
-            for n, v in enum_members:
-                lines.append(f"{n} = {v}")
+            for definition, is_dupl, _ in members:
+                if is_dupl:
+                    msg1 = f"duplicated within the '{enum_name}'."
+                    msg2 = "Perhaps there is a bug?"
+                    lines.append(f"{definition}  # {msg1} {msg2}")
+                else:
+                    lines.append(definition)
             lines.append(f"{enum_name} = c_int  # enum")
             blocks.append("\n".join(lines))
         return "\n\n".join(blocks)
 
     def to_intflags(self) -> str:
         blocks = []
-        for enum_name, enum_members in self.data.items():
+        for enum_name, members in self._iter_items():
             lines = []
             lines.append(f"class {enum_name}(IntFlag):")
-            for member_name, value in enum_members:
-                lines.append(f"    {member_name} = {value}")
+            for definition, is_dupl, rest_dupl_count in members:
+                if is_dupl:
+                    msg = "duplicated. Perhaps there is a bug in the type library?"
+                    base_line = f"{definition}  # {msg}"
+                    if rest_dupl_count > 0:
+                        # Prevent raising `TypeError: Attempted to reuse key:`.
+                        # See https://github.com/enthought/comtypes/issues/550
+                        lines.append(f"    # {base_line}")
+                    else:
+                        lines.append(f"    {base_line}")
+                else:
+                    lines.append(f"    {definition}")
             blocks.append("\n".join(lines))
         return "\n\n\n".join(blocks)
