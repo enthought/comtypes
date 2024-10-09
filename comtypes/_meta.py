@@ -61,6 +61,18 @@ class _coclass_meta(type):
         if "_reg_clsid_" in namespace:
             clsid = namespace["_reg_clsid_"]
             comtypes.com_coclass_registry[str(clsid)] = self
+
+        # `_coclass_pointer_meta` is a subclass inherited from `_coclass_meta`.
+        # In other words, when the `__new__` method of this metaclass is called, an
+        # instance of `_coclass_pointer_meta` might be created and assigned to `self`.
+        if isinstance(self, _coclass_pointer_meta):
+            # `self` is the `_coclass_pointer_meta` type or a `POINTER(coclass)` type.
+            # Prevent creating/registering a pointer to a pointer (to a pointer...),
+            # or specifying the metaclass type instance in the `bases` parameter when
+            # instantiating it, which would lead to infinite recursion.
+            # Depending on a version or revision of Python, this may be essential.
+            return self
+
         PTR = _coclass_pointer_meta(
             f"POINTER({self.__name__})",
             (self, c_void_p),
