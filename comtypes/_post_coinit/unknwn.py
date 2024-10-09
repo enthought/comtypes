@@ -76,6 +76,31 @@ class _cominterface_meta(type):
         if dispmethods is not None:
             self._disp_methods_ = dispmethods
 
+        # ` _compointer_meta` is a subclass inherited from `_cominterface_meta`.
+        # `_compointer_base` uses `_compointer_meta` as its metaclass.
+        # In other words, when the `__new__` method of this metaclass is called,
+        # `_compointer_base` type or an subclass of it might be created and assigned
+        # to `self`.
+        if bases == (c_void_p,):
+            # `self` is the `_compointer_base` type.
+            # On some versions of Python, `_compointer_base` is not yet available in
+            # the accessible namespace at this point in its initialization, and
+            # referencing it could raise a `NameError`.
+            # This metaclass is intended to be used only as a base class for defining
+            # the `_compointer_meta` or as the metaclass for the `IUnknown`, so the
+            # situation where the `bases` parameter is `(c_void_p,)` is limited to when
+            # the `_compointer_meta` is specified as the metaclass of the
+            # `_compointer_base`.
+            # Prevent specifying the metaclass type instance in the `bases` parameter
+            # when instantiating it, as this would lead to infinite recursion.
+            return self
+        if issubclass(self, _compointer_base):
+            # `self` is a `POINTER(interface)` type.
+            # Prevent creating/registering a pointer to a pointer (to a pointer...),
+            # which would lead to infinite recursion.
+            # Depending on a version or revision of Python, this may be essential.
+            return self
+
         # If we sublass a COM interface, for example:
         #
         # class IDispatch(IUnknown):
