@@ -1,4 +1,3 @@
-from __future__ import print_function
 from ctypes import c_char_p, c_int, c_short, c_wchar_p
 from ctypes import POINTER
 from ctypes import byref, create_string_buffer, create_unicode_buffer

@@ -1,5 +1,4 @@
 # -*- coding: latin-1 -*-
-from __future__ import print_function
 
 import datetime
 import sys

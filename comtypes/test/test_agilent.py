@@ -2,7 +2,6 @@
 # is installed.  It is not requires to have a physical instrument
 # connected, the driver is used in simulation mode.
 
-from __future__ import print_function
 import unittest
 from comtypes.test import ResourceDenied
 from comtypes.client import CreateObject
