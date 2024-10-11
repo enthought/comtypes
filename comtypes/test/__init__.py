@@ -1,6 +1,5 @@
 # comtypes.test package.
 
-from __future__ import print_function
 import ctypes
 import getopt
 import os
