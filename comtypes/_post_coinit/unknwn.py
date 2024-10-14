@@ -324,16 +324,13 @@ class _cominterface_meta(type):
 
     def __get_baseinterface_methodcount(self):
         "Return the number of com methods in the base interfaces"
-        try:
-            result = 0
-            for itf in self.mro()[1:-1]:
-                result += len(itf.__dict__["_methods_"])
-            return result
-        except KeyError as err:
-            (name,) = err.args
-            if name == "_methods_":
-                raise TypeError("baseinterface '%s' has no _methods_" % itf.__name__)
-            raise
+        result = 0
+        for itf in self.mro()[1:-1]:
+            if "_methods_" in vars(itf):
+                result += len(vars(itf)["_methods_"])
+            else:
+                raise TypeError(f"baseinterface '{itf.__name__}' has no _methods_")
+        return result
 
     def _make_methods(self, methods: List[_ComMemberSpec]) -> None:
         if self._case_insensitive_:
