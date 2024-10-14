@@ -81,9 +81,7 @@ def _make_safearray_type(itemtype):
     )
 
     meta = type(_safearray.tagSAFEARRAY)
-    sa_type = meta.__new__(
-        meta, "SAFEARRAY_%s" % itemtype.__name__, (_safearray.tagSAFEARRAY,), {}
-    )
+    sa_type = meta(f"SAFEARRAY_{itemtype.__name__}", (_safearray.tagSAFEARRAY,), {})
 
     try:
         vartype = _ctype_to_vartype[itemtype]
