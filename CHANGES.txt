@@ -1,6 +1,24 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.8
+--------------
+* Remove Python 3.7 and add Python 3.13 to the CI pipelines. By @junkmd.
+* Add constant definitions to ``shelllink``. By @junkmd.
+* Add more tests to ``test_stream``. By @junkmd.
+* Add the ``void_type`` definition to ``tlbparser``. By @junkmd.
+* Modernize ``tools.tlbparser.get_tlib_filename``. By @junkmd.
+* Extract the methods for parsing externals and dual interfaces from ``Parser.parse_typeinfo``. By @junkmd.
+* Fix type annotations referenced by ``tlbparser``. By @junkmd.
+* Modernize ``codegenerator.namespaces``. By @junkmd.
+* Improve static typing for ``CoGetClassObject`` and ``GetClassObject``. By @junkmd.
+* Refactor the ``__new__`` methods of ``_cominterface_meta`` and ``_coclass_meta``. By @junkmd.
+* Prevent errors caused by defining members with the same name within an enum type. By @junkmd.
+* Remove remaining ``__cmp__`` methods. By @newwingbird.
+* Remove remaining ``from __future__ import print_function`` lines. By @newwingbird.
+* Prevent ``itf`` to be an unbound variable in ``_cominterface_meta.__get_baseinterface_methodcount``. By @newwingbird.
+* Modify the metaclasses to ensure compatibility with Python 3.13 and earlier versions. By @junkmd.
+
 Release 1.4.7
 --------------
 * Improve ``_CArrayType`` alias import. By @junkmd.
