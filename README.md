@@ -1,7 +1,8 @@
 # comtypes
 
 ![Works on Windows only](https://img.shields.io/badge/-Windows-0078D6.svg?logo=windows&style=flat)  
-[![PyPI version](https://badge.fury.io/py/comtypes.svg)](https://pypi.org/project/comtypes/) [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/comtypes)](https://pypi.org/project/comtypes/) [![PyPI - License](https://img.shields.io/pypi/l/comtypes)](https://pypi.org/project/comtypes/) [![PyPI - Downloads](https://img.shields.io/pypi/dm/comtypes)](https://pypi.org/project/comtypes/)  
+[![PyPI version](https://badge.fury.io/py/comtypes.svg)](https://pypi.org/project/comtypes/) [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/comtypes)](https://pypi.org/project/comtypes/) [![PyPI - Python Requires](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpypi.org%2Fpypi%2Fcomtypes%2Fjson&query=info.requires_python&label=Python&nbsp;Requires)](https://pypi.org/project/comtypes/)  
+[![PyPI - License](https://img.shields.io/pypi/l/comtypes)](https://pypi.org/project/comtypes/) [![PyPI - Downloads](https://img.shields.io/pypi/dm/comtypes)](https://pypi.org/project/comtypes/)  
 [![GitHub Repo stars](https://img.shields.io/github/stars/enthought/comtypes?style=social)](https://github.com/enthought/comtypes/stargazers) [![GitHub forks](https://img.shields.io/github/forks/enthought/comtypes?style=social)](https://github.com/enthought/comtypes/network/members) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)  
 [![Tidelift Subscription](https://tidelift.com/badges/package/pypi/comtypes)](https://tidelift.com/subscription/pkg/pypi-comtypes?utm_source=pypi-comtypes&utm_medium=readme)
 
@@ -11,6 +12,7 @@
 `comtypes` allows you to define, call, and implement custom and dispatch-based COM interfaces in pure Python.
 
 `comtypes` requires Windows and Python 3.8 or later.
+- Version <= [1.4.7](https://pypi.org/project/comtypes/1.4.7/) does not work with Python 3.13 as reported in [GH-618](https://github.com/enthought/comtypes/issues/618). Version [1.4.8](https://pypi.org/project/comtypes/1.4.8/) can work with Python 3.13.
 - Version [1.4.6](https://pypi.org/project/comtypes/1.4.6/) is the last version to support Python 3.7.
 - Version [1.2.1](https://pypi.org/project/comtypes/1.2.1/) is the last version to support Python 2.7 and 3.3–3.6.
 - `comtypes` does not work with Python 3.8.1 as reported in [GH-202](https://github.com/enthought/comtypes/issues/202). This bug has been fixed in Python >= 3.8.2.
