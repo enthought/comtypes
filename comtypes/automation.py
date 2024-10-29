@@ -13,7 +13,17 @@ from _ctypes import CopyComPointer
 
 import comtypes
 import comtypes.patcher
-from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, COMError, IUnknown, _CData
+from comtypes import (
+    BSTR,
+    COMMETHOD,
+    GUID,
+    IID,
+    STDMETHOD,
+    COMError,
+    IUnknown,
+    _CData,
+    _safearray,
+)
 from comtypes._memberspec import _DispMemberSpec
 from comtypes.hresult import *
 from comtypes.safearray import _midlSAFEARRAY
