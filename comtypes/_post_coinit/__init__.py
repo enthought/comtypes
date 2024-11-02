@@ -13,4 +13,4 @@ So it is necessary to maintain minimal settings to keep the lightweight action
 when the package is initialized.
 """
 
-from comtypes._post_coinit._unknwn import _shutdown  # noqa
+from comtypes._post_coinit.unknwn import _shutdown  # noqa
