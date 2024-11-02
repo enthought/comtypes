@@ -10,10 +10,8 @@ from typing import Callable, Iterator, Sequence
 
 if sys.version_info >= (3, 8):
     from typing import Protocol
-    from typing import Literal as Literal
 else:
     from typing_extensions import Protocol
-    from typing_extensions import Literal as Literal
 if sys.version_info >= (3, 9):
     from typing import Annotated as Annotated
 else:
