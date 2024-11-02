@@ -175,7 +175,7 @@ com_coclass_registry = {}
 ################################################################
 # IUnknown, the root of all evil...
 from comtypes._post_coinit import _shutdown
-from comtypes._post_coinit.unknwn import IUnknown  # noqa
+from comtypes._post_coinit._unknwn import IUnknown  # noqa
 
 atexit.register(_shutdown)
 
