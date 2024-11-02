@@ -1,20 +1,18 @@
 # https://learn.microsoft.com/en-us/windows/win32/api/unknwn/
 
-from ctypes import byref, c_ulong, c_void_p, HRESULT, POINTER
-
 import logging
 import sys
+from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
 from typing import ClassVar, TYPE_CHECKING, TypeVar
 from typing import Optional
 from typing import List, Type
 
-from comtypes._post_coinit import _cominterface_meta_patcher as _meta_patch
 from comtypes import GUID, _ole32_nohresult, com_interface_registry
 from comtypes._idl_stuff import STDMETHOD
 from comtypes._memberspec import ComMemberGenerator, DispMemberGenerator
 from comtypes._memberspec import _ComMemberSpec, _DispMemberSpec
+from comtypes._post_coinit import _cominterface_meta_patcher as _meta_patch
 from comtypes._py_instance_method import instancemethod
-
 
 logger = logging.getLogger(__name__)
 
