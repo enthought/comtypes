@@ -26,7 +26,6 @@ def case_insensitive(p: Type) -> None:
         # EVERY attribute assignment.  Settings a non-com attribute
         # through this function takes 8.6 usec, while without this
         # function it takes 0.7 sec - 12 times slower.
-        #
         # How much faster would this be if implemented in C?
         def __setattr__(self, name, value):
             """Implement case insensitive access to methods and properties"""
@@ -40,12 +39,10 @@ def reference_fix(pp: Type) -> None:
             # We override the __setitem__ method of the
             # POINTER(POINTER(interface)) type, so that the COM
             # reference count is managed correctly.
-            #
             # This is so that we can implement COM methods that have to
             # return COM pointers more easily and consistent.  Instead of
             # using CopyComPointer in the method implementation, we can
             # simply do:
-            #
             # def GetTypeInfo(self, this, ..., pptinfo):
             #     if not pptinfo: return E_POINTER
             #     pptinfo[0] = a_com_interface_pointer
