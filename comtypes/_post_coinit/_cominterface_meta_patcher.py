@@ -115,7 +115,7 @@ class _cominterface_meta(type):
                     (hresult, text, details) = err.args
                     if hresult == -2147352565:  # DISP_E_BADINDEX
                         raise IndexError("invalid index")
-                    else:
+                    else:  # Unknown error
                         raise
 
                 # Note that result may be NULL COM pointer. There is no way
@@ -134,7 +134,7 @@ class _cominterface_meta(type):
                     (hresult, text, details) = err.args
                     if hresult == -2147352565:  # DISP_E_BADINDEX
                         raise IndexError("invalid index")
-                    else:
+                    else:  # Unknown error
                         raise
                 except TypeError:
                     msg = "%r object does not support item assignment"
