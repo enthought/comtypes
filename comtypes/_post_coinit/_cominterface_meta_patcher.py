@@ -155,7 +155,6 @@ class _cominterface_meta(type):
                 enum = self._NewEnum
                 if isinstance(enum, types.MethodType):
                     # _NewEnum should be a propget property, with dispid -4.
-                    #
                     # Sometimes, however, it is a method.
                     enum = enum()
                 if hasattr(enum, "Next"):
