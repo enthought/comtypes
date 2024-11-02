@@ -1,6 +1,5 @@
-from _ctypes import COMError
-
 import types
+from _ctypes import COMError
 from typing import Type
 
 from comtypes import patcher
