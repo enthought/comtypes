@@ -26,6 +26,7 @@ def case_insensitive(p: Type) -> None:
         # EVERY attribute assignment.  Settings a non-com attribute
         # through this function takes 8.6 usec, while without this
         # function it takes 0.7 sec - 12 times slower.
+        #
         # How much faster would this be if implemented in C?
         def __setattr__(self, name, value):
             """Implement case insensitive access to methods and properties"""
@@ -39,10 +40,12 @@ def reference_fix(pp: Type) -> None:
             # We override the __setitem__ method of the
             # POINTER(POINTER(interface)) type, so that the COM
             # reference count is managed correctly.
+            #
             # This is so that we can implement COM methods that have to
             # return COM pointers more easily and consistent.  Instead of
             # using CopyComPointer in the method implementation, we can
             # simply do:
+            #
             # def GetTypeInfo(self, this, ..., pptinfo):
             #     if not pptinfo: return E_POINTER
             #     pptinfo[0] = a_com_interface_pointer
@@ -58,17 +61,6 @@ def reference_fix(pp: Type) -> None:
             from _ctypes import CopyComPointer
 
             CopyComPointer(value, self)  # type: ignore
-
-    def _make_specials(self):
-        # This call installs methods that forward the Python protocols
-        # to COM protocols.
-
-        def has_name(name):
-            # Determine whether a property or method named 'name'
-            # exists
-            if self._case_insensitive_:
-                return name.lower() in self.__map_case__
-            return hasattr(self, name)
 
 
 def sized(itf: Type) -> None:
@@ -108,7 +100,7 @@ def callable_and_subscriptable(itf: Type) -> None:
                 (hresult, text, details) = err.args
                 if hresult == -2147352565:  # DISP_E_BADINDEX
                     raise IndexError("invalid index")
-                else:  # Unknown error
+                else:
                     raise
 
             # Note that result may be NULL COM pointer. There is no way
@@ -127,7 +119,7 @@ def callable_and_subscriptable(itf: Type) -> None:
                 (hresult, text, details) = err.args
                 if hresult == -2147352565:  # DISP_E_BADINDEX
                     raise IndexError("invalid index")
-                else:  # Unknown error
+                else:
                     raise
             except TypeError:
                 msg = "%r object does not support item assignment"
@@ -149,6 +141,7 @@ def iterator(itf: Type) -> None:
             enum = self._NewEnum
             if isinstance(enum, types.MethodType):
                 # _NewEnum should be a propget property, with dispid -4.
+                #
                 # Sometimes, however, it is a method.
                 enum = enum()
             if hasattr(enum, "Next"):
