@@ -62,17 +62,6 @@ def reference_fix(pp: Type) -> None:
 
             CopyComPointer(value, self)  # type: ignore
 
-    def _make_specials(self):
-        # This call installs methods that forward the Python protocols
-        # to COM protocols.
-
-        def has_name(name):
-            # Determine whether a property or method named 'name'
-            # exists
-            if self._case_insensitive_:
-                return name.lower() in self.__map_case__
-            return hasattr(self, name)
-
 
 def sized(itf: Type) -> None:
     @patcher.Patch(itf)
