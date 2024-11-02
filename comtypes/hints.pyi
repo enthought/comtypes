@@ -3,15 +3,11 @@
 # - utilities for type hints.
 import ctypes
 import sys
-from typing import Any as Any, ClassVar, Generic, NoReturn, TypeVar, overload
+from typing import Any as Any, ClassVar, Generic, NoReturn, Protocol, TypeVar, overload
 from typing import Optional, Union as _UnionT
-from typing import List, Tuple as Tuple, Type
+from typing import Tuple as Tuple, Type
 from typing import Callable, Iterator, Sequence
 
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
 if sys.version_info >= (3, 9):
     from typing import Annotated as Annotated
 else:
@@ -82,11 +78,6 @@ class FirstComItfOf(Generic[_T_coclass]):
     This is used as `Annotated` metadata for such parameters, taking `CoClass`
     as an argument.
     """
-
-class _MethodTypeDesc(Protocol):
-    arguments: List[Tuple[Any, str, List[str], Optional[Any]]]
-    idlflags: List[str]
-    name: str
 
 _P_Put = ParamSpec("_P_Put")
 _R_Put = TypeVar("_R_Put")

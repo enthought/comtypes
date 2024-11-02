@@ -1,19 +1,19 @@
 import abc
 import keyword
-from typing import Any, Generic, TypeVar, TYPE_CHECKING
+from typing import Any, Generic, Protocol, TypeVar
 from typing import Dict, List, Optional, Sequence, Tuple
 from typing import Iterable, Iterator
 
 from comtypes.tools import typedesc
 
-if TYPE_CHECKING:
-    from comtypes import hints
+
+class _MethodTypeDesc(Protocol):
+    arguments: List[Tuple[Any, str, List[str], Optional[Any]]]
+    idlflags: List[str]
+    name: str
 
 
-if TYPE_CHECKING:
-    _T_MTD = TypeVar("_T_MTD", bound=hints._MethodTypeDesc)
-else:
-    _T_MTD = TypeVar("_T_MTD")
+_T_MTD = TypeVar("_T_MTD", bound=_MethodTypeDesc)
 
 
 class _MethodAnnotator(abc.ABC, Generic[_T_MTD]):
