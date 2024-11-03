@@ -360,7 +360,7 @@ class DispPropertyGenerator(PropertyGenerator):
 
 
 class ComMemberGenerator(object):
-    def __init__(self, cls_name: str, vtbl_offset: int, iid: comtypes.GUID) -> None:
+    def __init__(self, cls_name: str, vtbl_offset: int, iid: "comtypes.GUID") -> None:
         self._vtbl_offset = vtbl_offset
         self._iid = iid
         self._props = ComPropertyGenerator(cls_name)
