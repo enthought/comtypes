@@ -35,7 +35,6 @@ if TYPE_CHECKING:
 else:
     _CData = _SimpleCData.__mro__[:-1][-1]
 
-from comtypes.GUID import GUID
 from comtypes import patcher  # noqa
 from comtypes._npsupport import interop as npsupport  # noqa
 from comtypes._tlib_version_checker import _check_version  # noqa
@@ -73,8 +72,6 @@ class ReturnHRESULT(Exception):
 # class IDLWarning(UserWarning):
 #    "Warn about questionable type information"
 
-_GUID = GUID
-IID = GUID
 DWORD = c_ulong
 
 wireHWND = c_ulong
@@ -182,7 +179,10 @@ atexit.register(_shutdown)
 ################################################################
 
 from comtypes._post_coinit.bstr import BSTR  # noqa
+from comtypes._post_coinit.guid import GUID
 
+_GUID = GUID
+IID = GUID
 
 ################################################################
 # IPersist is a trivial interface, which allows to ask an object about
