@@ -15,11 +15,11 @@ from typing import (  # noqa
 if TYPE_CHECKING:
     from comtypes import hints as hints  # noqa  # type: ignore
 
-from comtypes import GUID
 from comtypes._idl_stuff import COMMETHOD  # noqa
 from comtypes import CLSCTX_SERVER, CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER
 from comtypes import _ole32, oledll, DWORD
 from comtypes._post_coinit.unknwn import IUnknown
+from comtypes._post_coinit.guid import GUID
 
 
 def _is_object(obj):

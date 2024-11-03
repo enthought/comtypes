@@ -7,11 +7,12 @@ from typing import ClassVar, TYPE_CHECKING, TypeVar
 from typing import Optional
 from typing import List, Type
 
-from comtypes import GUID, _ole32_nohresult, com_interface_registry
+from comtypes import _ole32_nohresult, com_interface_registry
 from comtypes._idl_stuff import STDMETHOD
 from comtypes._memberspec import ComMemberGenerator, DispMemberGenerator
 from comtypes._memberspec import _ComMemberSpec, _DispMemberSpec
 from comtypes._post_coinit import _cominterface_meta_patcher as _meta_patch
+from comtypes._post_coinit.guid import GUID
 from comtypes._py_instance_method import instancemethod
 
 logger = logging.getLogger(__name__)
