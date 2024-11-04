@@ -302,7 +302,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
 
     def __repr__(self):
         ptr = super(_compointer_base, self).value
-        return "<%s ptr=0x%x at %x>" % (self.__class__.__name__, ptr or 0, id(self))
+        return f"<{self.__class__.__name__} ptr=0x{ptr or 0:x} at {id(self):x}>"
 
     # This fixes the problem when there are multiple python interface types
     # wrapping the same COM interface.  This could happen because some interfaces
@@ -338,7 +338,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
                 # a kind of QueryInterface
                 return table[cls._iid_]
             except KeyError:
-                raise TypeError("Interface %s not supported" % cls._iid_)
+                raise TypeError(f"Interface {cls._iid_} not supported")
         return value.QueryInterface(cls.__com_interface__)
 
 
