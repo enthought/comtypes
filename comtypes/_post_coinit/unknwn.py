@@ -231,12 +231,12 @@ class _cominterface_meta(type):
             member_gen.add(m)
         for name, func, raw_func, is_prop in member_gen.methods():
             raw_mth = instancemethod(raw_func, None, self)
-            setattr(self, "_%s__com_%s" % (self.__name__, name), raw_mth)
+            setattr(self, f"_{self.__name__}__com_{name}", raw_mth)
             mth = instancemethod(func, None, self)
             if not is_prop:
                 # We install the method in the class, except when it's a property.
                 # And we make sure we don't overwrite a property that's already present.
-                mthname = name if not hasattr(self, name) else ("_%s" % name)
+                mthname = name if not hasattr(self, name) else f"_{name}"
                 setattr(self, mthname, mth)
             # For a method, this is the real name.
             # For a property, this is the name WITHOUT the _set_ or _get_ prefix.
@@ -247,7 +247,7 @@ class _cominterface_meta(type):
         # create public properties / attribute accessors
         for name, accessor in member_gen.properties():
             # Again, we should not overwrite class attributes that are already present.
-            propname = name if not hasattr(self, name) else ("_%s" % name)
+            propname = name if not hasattr(self, name) else f"_{name}"
             setattr(self, propname, accessor)
             # COM is case insensitive
             if self._case_insensitive_:
@@ -302,7 +302,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
 
     def __repr__(self):
         ptr = super(_compointer_base, self).value
-        return "<%s ptr=0x%x at %x>" % (self.__class__.__name__, ptr or 0, id(self))
+        return f"<{self.__class__.__name__} ptr=0x{ptr or 0:x} at {id(self):x}>"
 
     # This fixes the problem when there are multiple python interface types
     # wrapping the same COM interface.  This could happen because some interfaces
@@ -338,7 +338,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
                 # a kind of QueryInterface
                 return table[cls._iid_]
             except KeyError:
-                raise TypeError("Interface %s not supported" % cls._iid_)
+                raise TypeError(f"Interface {cls._iid_} not supported")
         return value.QueryInterface(cls.__com_interface__)
 
 
