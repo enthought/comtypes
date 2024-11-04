@@ -231,12 +231,12 @@ class _cominterface_meta(type):
             member_gen.add(m)
         for name, func, raw_func, is_prop in member_gen.methods():
             raw_mth = instancemethod(raw_func, None, self)
-            setattr(self, "_%s__com_%s" % (self.__name__, name), raw_mth)
+            setattr(self, f"_{self.__name__}__com_{name}", raw_mth)
             mth = instancemethod(func, None, self)
             if not is_prop:
                 # We install the method in the class, except when it's a property.
                 # And we make sure we don't overwrite a property that's already present.
-                mthname = name if not hasattr(self, name) else ("_%s" % name)
+                mthname = name if not hasattr(self, name) else f"_{name}"
                 setattr(self, mthname, mth)
             # For a method, this is the real name.
             # For a property, this is the name WITHOUT the _set_ or _get_ prefix.
@@ -247,7 +247,7 @@ class _cominterface_meta(type):
         # create public properties / attribute accessors
         for name, accessor in member_gen.properties():
             # Again, we should not overwrite class attributes that are already present.
-            propname = name if not hasattr(self, name) else ("_%s" % name)
+            propname = name if not hasattr(self, name) else f"_{name}"
             setattr(self, propname, accessor)
             # COM is case insensitive
             if self._case_insensitive_:
