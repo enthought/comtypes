@@ -317,26 +317,3 @@ class ShellLink(CoClass):
     _reg_clsid_ = GUID("{00021401-0000-0000-C000-000000000046}")
     _idlflags_ = []
     _com_interfaces_ = [IShellLinkW, IShellLinkA]
-
-
-if __name__ == "__main__":
-    import sys
-    import comtypes
-    from comtypes.client import CreateObject
-    from comtypes.persist import IPersistFile
-
-    shortcut = CreateObject(ShellLink)
-    print(shortcut)
-    ##help(shortcut)
-
-    shortcut.SetPath(sys.executable)
-
-    shortcut.SetDescription("Python %s" % sys.version)
-    shortcut.SetIconLocation(sys.executable, 1)
-
-    print(shortcut.GetPath(2))
-    print(shortcut.GetIconLocation())
-
-    pf = shortcut.QueryInterface(IPersistFile)
-    pf.Save("foo.lnk", True)
-    print(pf.GetCurFile())
