@@ -38,7 +38,6 @@ else:
 from comtypes import patcher  # noqa
 from comtypes._npsupport import interop as npsupport  # noqa
 from comtypes._tlib_version_checker import _check_version  # noqa
-from comtypes._py_instance_method import instancemethod  # noqa
 
 _all_slice = slice(None, None, None)
 
@@ -204,6 +203,7 @@ from comtypes._post_coinit.misc import IPersist, IServiceProvider  # noqa
 ################################################################
 
 
+from comtypes._post_coinit.instancemethod import instancemethod  # noqa
 from comtypes._post_coinit.misc import (  # noqa
     _is_object,
     CoGetObject,
