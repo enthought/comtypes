@@ -38,9 +38,6 @@ else:
 from comtypes import patcher  # noqa
 from comtypes._npsupport import interop as npsupport  # noqa
 from comtypes._tlib_version_checker import _check_version  # noqa
-from comtypes._py_instance_method import instancemethod  # noqa
-from comtypes._idl_stuff import defaultvalue, helpstring, dispid  # noqa
-from comtypes._idl_stuff import STDMETHOD, DISPMETHOD, DISPPROPERTY, COMMETHOD  # noqa
 
 _all_slice = slice(None, None, None)
 
@@ -170,6 +167,19 @@ com_coclass_registry = {}
 
 
 ################################################################
+# IDL stuff
+
+from comtypes._memberspec import (  # noqa
+    COMMETHOD,
+    DISPMETHOD,
+    DISPPROPERTY,
+    STDMETHOD,
+    defaultvalue,
+    dispid,
+    helpstring,
+)
+
+################################################################
 # IUnknown, the root of all evil...
 from comtypes._post_coinit import _shutdown
 from comtypes._post_coinit.unknwn import IUnknown  # noqa
@@ -193,6 +203,7 @@ from comtypes._post_coinit.misc import IPersist, IServiceProvider  # noqa
 ################################################################
 
 
+from comtypes._post_coinit.instancemethod import instancemethod  # noqa
 from comtypes._post_coinit.misc import (  # noqa
     _is_object,
     CoGetObject,
