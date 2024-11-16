@@ -4,29 +4,26 @@ import datetime
 import decimal
 import sys
 from ctypes import *
-from ctypes import _Pointer, Array as _CArrayType
-from _ctypes import CopyComPointer
+from ctypes import Array as _CArrayType
+from ctypes import _Pointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
-from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type
 
-from comtypes import _CData, BSTR, COMError, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
-from comtypes.hresult import *
-from comtypes._memberspec import _DispMemberSpec
-import comtypes.patcher
+from _ctypes import COMError, CopyComPointer
+
 import comtypes
+import comtypes.patcher
+from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData, _safearray
+from comtypes._memberspec import _DispMemberSpec
+from comtypes.hresult import *
+from comtypes.safearray import _midlSAFEARRAY
 
 if TYPE_CHECKING:
     from ctypes import _CArgObject
+
     from comtypes import hints  # type: ignore
-    from comtypes import _safearray
 else:
     _CArgObject = type(byref(c_int()))
-    try:
-        from comtypes import _safearray
-    except (ImportError, AttributeError):
-
-        class _safearray(object):
-            tagSAFEARRAY = None
 
 
 LCID = DWORD
@@ -989,12 +986,6 @@ for c, v in _ctype_to_vartype.items():
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
 _ctype_to_vartype[c_char] = VT_UI1
-
-
-try:
-    from comtypes.safearray import _midlSAFEARRAY
-except (ImportError, AttributeError):
-    pass
 
 
 # fmt: off
