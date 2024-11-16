@@ -76,8 +76,7 @@ def winerror(exc):
         # cases we return a generic error code.
         return E_FAIL
     raise TypeError(
-        "Expected comtypes.COMERROR or WindowsError instance, got %s"
-        % type(exc).__name__
+        f"Expected comtypes.COMERROR or WindowsError instance, got {type(exc).__name__}"
     )
 
 
@@ -178,7 +177,7 @@ def hack(inst, mth, paramflags, interface, mthname):
                 args[args_out_idx[0]][0] = result
             elif args_out != 0:
                 if len(result) != args_out:
-                    msg = "Method should have returned a %s-tuple" % args_out
+                    msg = f"Method should have returned a {args_out}-tuple"
                     raise ValueError(msg)
                 for i, value in enumerate(result):
                     args[args_out_idx[i]][0] = value
@@ -198,7 +197,7 @@ def hack(inst, mth, paramflags, interface, mthname):
             except (ValueError, TypeError):
                 msg = str(details)
             else:
-                msg = "%s: %s" % (source, descr)
+                msg = f"{source}: {descr}"
             hr = HRESULT_FROM_WIN32(hr)
             return ReportError(msg, iid=interface._iid_, clsid=clsid, hresult=hr)
         except WindowsError as details:
@@ -251,7 +250,7 @@ class _MethodFinder(object):
         return getattr(self.inst, mthname)
 
     def find_impl(self, interface, mthname, paramflags, idlflags):
-        fq_name = "%s_%s" % (interface.__name__, mthname)
+        fq_name = f"{interface.__name__}_{mthname}"
         if interface._case_insensitive_:
             # simple name, like 'QueryInterface'
             mthname = self.names.get(mthname.lower(), mthname)
@@ -306,7 +305,7 @@ def _create_vtbl_type(fields, itf):
         class Vtbl(Structure):
             _fields_ = fields
 
-        Vtbl.__name__ = "Vtbl_%s" % itf.__name__
+        Vtbl.__name__ = f"Vtbl_{itf.__name__}"
         _vtbl_types[fields] = Vtbl
         return Vtbl
 

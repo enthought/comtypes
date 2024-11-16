@@ -122,8 +122,8 @@ def callable_and_subscriptable(itf: Type) -> None:
                 else:
                     raise
             except TypeError:
-                msg = "%r object does not support item assignment"
-                raise TypeError(msg % type(self))
+                msg = f"{type(self)!r} object does not support item assignment"
+                raise TypeError(msg)
 
 
 def iterator(itf: Type) -> None:

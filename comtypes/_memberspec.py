@@ -64,7 +64,7 @@ def _resolve_argspec(
                 elif typ is ctypes.POINTER(VARIANT):
                     defval = ctypes.pointer(VARIANT.missing)
                 else:
-                    # msg = ("'optional' only allowed for VARIANT and VARIANT*, not for %s" % typ.__name__)
+                    # msg = f"'optional' only allowed for VARIANT and VARIANT*, not for {typ.__name__}"
                     # warnings.warn(msg, IDLWarning, stacklevel=2)
                     defval = typ()
         if defval is _NOTHING:
@@ -176,11 +176,11 @@ def COMMETHOD(idlflags, restype, methodname, *argspec) -> _ComMemberSpec:
     helptext = "".join(t for t in idlflags if isinstance(t, helpstring)) or None
     paramflags, argtypes = _resolve_argspec(argspec)
     if "propget" in idlflags:
-        name = "_get_%s" % methodname
+        name = f"_get_{methodname}"
     elif "propput" in idlflags:
-        name = "_set_%s" % methodname
+        name = f"_set_{methodname}"
     elif "propputref" in idlflags:
-        name = "_setref_%s" % methodname
+        name = f"_setref_{methodname}"
     else:
         name = methodname
     return _ComMemberSpec(
@@ -382,7 +382,7 @@ class PropertyGenerator(object):
                 # Hm, must be a descriptor where the __get__ method
                 # returns a bound object having __getitem__ and
                 # __setitem__ methods.
-                prop = named_property("%s.%s" % (self._cls_name, name), fget, fset, doc)
+                prop = named_property(f"{self._cls_name}.{name}", fget, fset, doc)
             yield (name, prop)
 
     def to_propget_keys(self, m: _MemberSpec) -> Tuple[str, _DocType, int]:
@@ -605,11 +605,11 @@ class bound_named_property(object):
             self.fset(self.instance, index, value)
 
     def __repr__(self):
-        return "<bound_named_property %r at %x>" % (self.name, id(self))
+        return f"<bound_named_property {self.name!r} at {id(self):x}>"
 
     def __iter__(self):
         """Explicitly disallow iteration."""
-        msg = "%r is not iterable" % self.name
+        msg = f"{self.name!r} is not iterable"
         raise TypeError(msg)
 
 
@@ -630,4 +630,4 @@ class named_property(object):
         raise AttributeError("Unsettable attribute")
 
     def __repr__(self):
-        return "<named_property %r at %x>" % (self.name, id(self))
+        return f"<named_property {self.name!r} at {id(self):x}>"
