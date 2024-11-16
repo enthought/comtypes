@@ -9,21 +9,11 @@ from ctypes import _Pointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type
 
-from _ctypes import CopyComPointer
+from _ctypes import COMError, CopyComPointer
 
 import comtypes
 import comtypes.patcher
-from comtypes import (
-    BSTR,
-    COMMETHOD,
-    GUID,
-    IID,
-    STDMETHOD,
-    COMError,
-    IUnknown,
-    _CData,
-    _safearray,
-)
+from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData, _safearray
 from comtypes._memberspec import _DispMemberSpec
 from comtypes.hresult import *
 from comtypes.safearray import _midlSAFEARRAY
