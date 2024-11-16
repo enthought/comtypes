@@ -610,7 +610,7 @@ class bound_named_property(object):
 
     def __iter__(self):
         """Explicitly disallow iteration."""
-        msg = "%r is not iterable" % self.name
+        msg = f"{self.name!r} is not iterable"
         raise TypeError(msg)
 
 
