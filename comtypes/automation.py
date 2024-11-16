@@ -209,14 +209,14 @@ class tagVARIANT(Structure):
 
     def __repr__(self):
         if self.vt & VT_BYREF:
-            return "VARIANT(vt=0x%x, byref(%r))" % (self.vt, self[0])
+            return f"VARIANT(vt=0x{self.vt:x}, byref({self[0]!r}))"
         elif self is type(self).null:
             return "VARIANT.null"
         elif self is type(self).empty:
             return "VARIANT.empty"
         elif self is type(self).missing:
             return "VARIANT.missing"
-        return "VARIANT(vt=0x%x, %r)" % (self.vt, self.value)
+        return f"VARIANT(vt=0x{self.vt:x}, {self.value!r})"
 
     @classmethod
     def from_param(cls, value):
@@ -425,7 +425,7 @@ class tagVARIANT(Structure):
             else:
                 self.vt = _ctype_to_vartype[type(ref)] | VT_BYREF
         else:
-            raise TypeError("Cannot put %r in VARIANT" % value)
+            raise TypeError(f"Cannot put {value!r} in VARIANT")
         # buffer ->  SAFEARRAY of VT_UI1 ?
 
     # c:/sf/pywin32/com/win32com/src/oleargs.cpp 197
@@ -521,7 +521,7 @@ class tagVARIANT(Structure):
             typ = _vartype_to_ctype[self.vt & ~VT_ARRAY]
             return cast(self._.pparray, _midlSAFEARRAY(typ)).unpack()
         else:
-            raise NotImplementedError("typecode %d = 0x%x)" % (vt, vt))
+            raise NotImplementedError(f"typecode {vt} = 0x{vt:x})")
 
     def __getitem__(self, index):
         if index != 0:
@@ -711,17 +711,7 @@ class tagEXCEPINFO(Structure):
         scode: int
 
     def __repr__(self):
-        return "<EXCEPINFO %s>" % (
-            (
-                self.wCode,
-                self.bstrSource,
-                self.bstrDescription,
-                self.bstrHelpFile,
-                self.dwHelpContext,
-                self.pfnDeferredFillIn,
-                self.scode,
-            ),
-        )
+        return f"<EXCEPINFO {self.wCode, self.bstrSource, self.bstrDescription, self.bstrHelpFile, self.dwHelpContext, self.pfnDeferredFillIn, self.scode}>"
 
 
 tagEXCEPINFO._fields_ = [
@@ -917,7 +907,7 @@ class IDispatch(IUnknown):
                 raise COMError(
                     hresult,
                     text,
-                    ("TypeError: Parameter %s" % (argerr.value + 1), args),
+                    (f"TypeError: Parameter {argerr.value + 1}", args),
                 )
             raise
         return result._get_value(dynamic=True)
