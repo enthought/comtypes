@@ -17,7 +17,7 @@ def case_insensitive(p: Type) -> None:
             try:
                 fixed_name = self.__map_case__[name.lower()]
             except KeyError:
-                raise AttributeError(f"{name}")  # Should we use exception-chaining?
+                raise AttributeError(name)  # Should we use exception-chaining?
             if fixed_name != name:  # prevent unbounded recursion
                 return getattr(self, fixed_name)
             raise AttributeError(name)

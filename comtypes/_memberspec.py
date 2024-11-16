@@ -175,15 +175,14 @@ def COMMETHOD(idlflags, restype, methodname, *argspec) -> _ComMemberSpec:
     # join them together(does this make sense?) and replace by None if empty.
     helptext = "".join(t for t in idlflags if isinstance(t, helpstring)) or None
     paramflags, argtypes = _resolve_argspec(argspec)
-    name = (
-        f"_get_{methodname}"
-        if "propget" in idlflags
-        else f"_set_{methodname}"
-        if "propput" in idlflags
-        else f"_setref_{methodname}"
-        if "propputref" in idlflags
-        else methodname
-    )
+    if "propget" in idlflags:
+        name = f"_get_{methodname}"
+    elif "propput" in idlflags:
+        name = f"_set_{methodname}"
+    elif "propputref" in idlflags:
+        name = f"_setref_{methodname}"
+    else:
+        name = methodname
     return _ComMemberSpec(
         restype, name, argtypes, paramflags, tuple(idlflags), helptext
     )
