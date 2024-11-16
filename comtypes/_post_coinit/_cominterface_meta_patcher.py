@@ -17,7 +17,7 @@ def case_insensitive(p: Type) -> None:
             try:
                 fixed_name = self.__map_case__[name.lower()]
             except KeyError:
-                raise AttributeError(name)  # Should we use exception-chaining?
+                raise AttributeError(f"{name}")  # Should we use exception-chaining?
             if fixed_name != name:  # prevent unbounded recursion
                 return getattr(self, fixed_name)
             raise AttributeError(name)
@@ -122,8 +122,8 @@ def callable_and_subscriptable(itf: Type) -> None:
                 else:
                     raise
             except TypeError:
-                msg = "%r object does not support item assignment"
-                raise TypeError(msg % type(self))
+                msg = f"{type(self)!r} object does not support item assignment"
+                raise TypeError(msg)
 
 
 def iterator(itf: Type) -> None:
