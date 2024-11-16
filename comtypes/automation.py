@@ -711,7 +711,15 @@ class tagEXCEPINFO(Structure):
         scode: int
 
     def __repr__(self):
-        info = (self.wCode, self.bstrSource, self.bstrDescription, self.bstrHelpFile, self.dwHelpContext, self.pfnDeferredFillIn, self.scode)
+        info = (
+            self.wCode,
+            self.bstrSource,
+            self.bstrDescription,
+            self.bstrHelpFile,
+            self.dwHelpContext,
+            self.pfnDeferredFillIn,
+            self.scode,
+        )
         return f"<EXCEPINFO {info}>"
 
 
