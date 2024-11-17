@@ -51,20 +51,20 @@ def _find_gen_dir():
         pymaj, pymin = sys.version_info[:2]
         if ftype == None:
             # Python script
-            subdir = f"Python\\Python{pymaj:d}{pymin:d}\\comtypes_cache"
+            subdir = rf"Python\\Python{pymaj:d}{pymin:d}\\comtypes_cache"
             basedir = _get_appdata_dir()
 
         elif ftype == "dll":
             # dll created with py2exe
             path = _get_module_filename(sys.frozendllhandle)
             base = os.path.splitext(os.path.basename(path))[0]
-            subdir = f"comtypes_cache\\{base}-{pymaj:d}{pymin:d}"
+            subdir = rf"comtypes_cache\\{base}-{pymaj:d}{pymin:d}"
             basedir = tempfile.gettempdir()
 
         else:  # ftype in ('windows_exe', 'console_exe')
             # exe created by py2exe
             base = os.path.splitext(os.path.basename(sys.executable))[0]
-            subdir = f"comtypes_cache\\{base}-{pymaj:d}{pymin:d}"
+            subdir = rf"comtypes_cache\\{base}-{pymaj:d}{pymin:d}"
             basedir = tempfile.gettempdir()
 
         gen_dir = os.path.join(basedir, subdir)

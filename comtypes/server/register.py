@@ -324,7 +324,7 @@ class Registrar(object):
                     f"{exe} {script}",
                 )
             else:
-                append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", f"{exe}")
+                append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", "%s" % exe)
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
