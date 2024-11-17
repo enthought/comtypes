@@ -103,9 +103,9 @@ def ReportException(
             tb = tb.tb_next
         line = tb.tb_frame.f_lineno
         name = tb.tb_frame.f_globals["__name__"]
-        text = "%s: %s (%s, line %d)" % (typ, value, name, line)
+        text = f"{typ}: {value} ({name}, line {line})"
     else:
-        text = "%s: %s" % (typ, value)
+        text = f"{typ}: {value}"
     return ReportError(
         text,
         iid,
