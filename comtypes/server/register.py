@@ -230,7 +230,7 @@ class Registrar(object):
         modname = cls.__module__
         if modname == "__main__":
             modname = os.path.splitext(os.path.basename(sys.argv[0]))[0]
-        return "%s.%s" % (modname, cls.__name__)
+        return f"{modname}.{cls.__name__}"
 
     def _get_pythonpath(self, cls):
         """Return the filesystem path of the module containing 'cls'."""
@@ -310,21 +310,21 @@ class Registrar(object):
         ):
             exe = sys.executable
             if " " in exe:
-                exe = '"%s"' % exe
+                exe = f'"{exe}"'
             if not hasattr(sys, "frozen"):
                 if not __debug__:
-                    exe = "%s -O" % exe
+                    exe = f"{exe} -O"
                 script = os.path.abspath(sys.modules[cls.__module__].__file__)
                 if " " in script:
-                    script = '"%s"' % script
+                    script = f'"{script}"'
                 append(
                     HKCR,
                     "CLSID\\%s\\LocalServer32" % reg_clsid,
                     "",
-                    "%s %s" % (exe, script),
+                    f"{exe} {script}",
                 )
             else:
-                append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", "%s" % exe)
+                append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", f"{exe}")
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
@@ -381,10 +381,7 @@ def unregister(cls):
 
 
 def UseCommandLine(*classes):
-    usage = (
-        """Usage: %s [-regserver] [-unregserver] [-nodebug] [-f logformat] [-l loggername=level]"""
-        % sys.argv[0]
-    )
+    usage = f"""Usage: {sys.argv[0]} [-regserver] [-unregserver] [-nodebug] [-f logformat] [-l loggername=level]"""
     opts, args = w_getopt.w_getopt(
         sys.argv[1:], "regserver unregserver embedding l: f: nodebug"
     )
