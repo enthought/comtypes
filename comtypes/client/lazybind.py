@@ -67,7 +67,7 @@ class NamedProperty(object):
 
     def __iter__(self):
         """Explicitly disallow iteration."""
-        msg = "%r is not iterable" % self.disp
+        msg = f"{self.disp!r} is not iterable"
         raise TypeError(msg)
 
 
@@ -151,7 +151,7 @@ class Dispatch(object):
                 if descr.cParams == 1:
                     return self._comobj._invoke(descr.memid, descr.invkind, 0)
             else:
-                raise RuntimeError("funckind %d not yet implemented" % descr.funckind)
+                raise RuntimeError(f"funckind {descr.funckind:d} not yet implemented")
             put = self.__bind(name, DISPATCH_PROPERTYPUT)
             putref = self.__bind(name, DISPATCH_PROPERTYPUTREF)
             return NamedProperty(self, descr, put, putref)
