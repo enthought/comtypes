@@ -222,7 +222,7 @@ class EventDumper(object):
         "Create event handler methods on demand"
         if name.startswith("__") and name.endswith("__"):
             raise AttributeError(name)
-        print(f"# event found: {name}")
+        print("# event found:", name)
 
         def handler(self, this, *args, **kw):
             # XXX handler is called with 'this'.  Should we really print "None" instead?
