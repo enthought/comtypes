@@ -58,7 +58,7 @@ def _find_gen_dir():
             # dll created with py2exe
             path = _get_module_filename(sys.frozendllhandle)
             base = os.path.splitext(os.path.basename(path))[0]
-            subdir = f"Python\\Python{pymaj:d}{pymin:d}\\comtypes_cache"
+            subdir = f"comtypes_cache\\{base}-{pymaj:d}{pymin:d}"
             basedir = tempfile.gettempdir()
 
         else:  # ftype in ('windows_exe', 'console_exe')
