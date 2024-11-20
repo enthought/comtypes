@@ -317,9 +317,9 @@ class Registrar(object):
                 script = os.path.abspath(sys.modules[cls.__module__].__file__)
                 if " " in script:
                     script = f'"{script}"'
-                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
+                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
             else:
-                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
+                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
