@@ -278,30 +278,30 @@ class Registrar(object):
             )
             if reg_desc:
                 reg_desc = reg_desc.replace(".", " ")
-        append(HKCR, "CLSID\\%s" % reg_clsid, "", reg_desc)
+        append(HKCR, f"CLSID\\{reg_clsid}", "", reg_desc)
 
         reg_progid = getattr(cls, "_reg_progid_", None)
         if reg_progid:
             # for ProgIDFromCLSID:
-            append(HKCR, "CLSID\\%s\\ProgID" % reg_clsid, "", reg_progid)  # 1
+            append(HKCR, f"CLSID\\{reg_clsid}\\ProgID", "", reg_progid)  # 1
 
             # for CLSIDFromProgID
             if reg_desc:
                 append(HKCR, reg_progid, "", reg_desc)  # 2
-            append(HKCR, "%s\\CLSID" % reg_progid, "", reg_clsid)  # 3
+            append(HKCR, f"{reg_progid}\\CLSID", "", reg_clsid)  # 3
 
             reg_novers_progid = getattr(cls, "_reg_novers_progid_", None)
             if reg_novers_progid:
                 append(
                     HKCR,
-                    "CLSID\\%s\\VersionIndependentProgID" % reg_clsid,  # 1a
+                    f"CLSID\\{reg_clsid}\\VersionIndependentProgID",  # 1a
                     "",
                     reg_novers_progid,
                 )
                 if reg_desc:
                     append(HKCR, reg_novers_progid, "", reg_desc)  # 2a
-                append(HKCR, "%s\\CurVer" % reg_novers_progid, "", reg_progid)  #
-                append(HKCR, "%s\\CLSID" % reg_novers_progid, "", reg_clsid)  # 3a
+                append(HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
+                append(HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
 
         clsctx = getattr(cls, "_reg_clsctx_", 0)
 
