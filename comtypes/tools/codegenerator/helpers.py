@@ -22,7 +22,7 @@ class dispid(object):
         self.memid = memid
 
     def __repr__(self):
-        return "dispid(%s)" % self.memid
+        return f"dispid({self.memid})"
 
 
 class helpstring(object):
@@ -30,7 +30,7 @@ class helpstring(object):
         self.text = text
 
     def __repr__(self):
-        return "helpstring(%r)" % self.text
+        return f"helpstring({self.text!r})"
 
 
 # XXX Should this be in ctypes itself?
@@ -299,22 +299,22 @@ class TypeNamer(object):
         # to refer to the type. Assumes the 'from ctypes import *'
         # namespace is available.
         if isinstance(t, typedesc.SAFEARRAYType):
-            return "_midlSAFEARRAY(%s)" % self(t.typ)
+            return f"_midlSAFEARRAY({self(t.typ)})"
         # if isinstance(t, typedesc.CoClass):
         #     return "%s._com_interfaces_[0]" % t.name
         if isinstance(t, typedesc.Typedef):
             return t.name
         if isinstance(t, typedesc.PointerType):
             _t, pcnt = self._inspect_PointerType(t)
-            return "%s%s%s" % ("POINTER(" * pcnt, self(_t), ")" * pcnt)
+            return f"{'POINTER(' * pcnt}{self(_t)}{')' * pcnt}"
         elif isinstance(t, typedesc.ArrayType):
-            return "%s * %s" % (self(t.typ), int(t.max) + 1)
+            return f"{self(t.typ)} * {int(t.max) + 1}"
         elif isinstance(t, typedesc.FunctionType):
             args = [self(x) for x in [t.returns] + list(t.iterArgTypes())]
             if "__stdcall__" in t.attributes:
-                return "WINFUNCTYPE(%s)" % ", ".join(args)
+                return f"WINFUNCTYPE({', '.join(args)})"
             else:
-                return "CFUNCTYPE(%s)" % ", ".join(args)
+                return f"CFUNCTYPE({', '.join(args)})"
         elif isinstance(t, typedesc.CvQualifiedType):
             # const and volatile are ignored
             return "%s" % self(t.typ)
@@ -334,7 +334,7 @@ class TypeNamer(object):
             # t.symbol_name - symbol to generate
             # t.tlib - the ITypeLib pointer to the typelibrary containing the symbols definition
             modname = name_wrapper_module(t.tlib)
-            return "%s.%s" % (modname, t.symbol_name)
+            return f"{modname}.{t.symbol_name}"
         return t.name
 
     def _inspect_PointerType(
