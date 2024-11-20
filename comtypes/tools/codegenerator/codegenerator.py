@@ -859,7 +859,7 @@ class CodeGenerator(object):
                     f"#     def {name}({', '.join(['self'] + inargs)}):",
                     file=self.stream,
                 )
-                print(f"#         {doc!r}", file=self.stream)
+                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
                 print(f"#         #return {', '.join(outargs)}", file=self.stream)
             elif typ == 1:  # propget
                 print("#     @property", file=self.stream)
@@ -867,14 +867,14 @@ class CodeGenerator(object):
                     f"#     def {name}({', '.join(['self'] + inargs)}):",
                     file=self.stream,
                 )
-                print(f"#         {doc!r}", file=self.stream)
+                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
                 print(f"#         #return {', '.join(outargs)}", file=self.stream)
             elif typ == 2:  # propput
                 print(
                     f"#     def _set({', '.join(['self'] + inargs + outargs)}):",
                     file=self.stream,
                 )
-                print(f"#         {doc!r}", file=self.stream)
+                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
                 print(
                     f"#     {name} = property(fset = _set, doc = _set.__doc__)",
                     file=self.stream,
@@ -884,13 +884,13 @@ class CodeGenerator(object):
                     f"#     def _get({', '.join(['self'] + inargs)}):",
                     file=self.stream,
                 )
-                print(f"#         {doc!r}", file=self.stream)
+                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
                 print(f"#         #return {', '.join(outargs)}", file=self.stream)
                 print(
                     f"#     def _set({', '.join(['self'] + inargs + outargs)}):",
                     file=self.stream,
                 )
-                print(f"#         {doc!r}", file=self.stream)
+                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
                 print(
                     f"#     {name} = property(_get, _set, doc = _set.__doc__)",
                     file=self.stream,
