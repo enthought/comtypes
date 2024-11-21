@@ -100,7 +100,7 @@ class Registrar(object):
                 'DeleteKey( %s\\CLSID\\%s\\Logging"'
                 % (_explain(winreg.HKEY_CLASSES_ROOT), clsid)
             )
-            hkey = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s" % clsid)
+            hkey = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}")
             winreg.DeleteKey(hkey, "Logging")
         except WindowsError as detail:
             if get_winerror(detail) != 2:
@@ -115,7 +115,7 @@ class Registrar(object):
             'CreateKey( %s\\CLSID\\%s\\Logging"'
             % (_explain(winreg.HKEY_CLASSES_ROOT), clsid)
         )
-        hkey = winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Logging" % clsid)
+        hkey = winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}\Logging")
         for item in levels:
             name, value = item.split("=")
             v = getattr(logging, value)
@@ -230,7 +230,7 @@ class Registrar(object):
         modname = cls.__module__
         if modname == "__main__":
             modname = os.path.splitext(os.path.basename(sys.argv[0]))[0]
-        return "%s.%s" % (modname, cls.__name__)
+        return f"{modname}.{cls.__name__}"
 
     def _get_pythonpath(self, cls):
         """Return the filesystem path of the module containing 'cls'."""
@@ -278,30 +278,30 @@ class Registrar(object):
             )
             if reg_desc:
                 reg_desc = reg_desc.replace(".", " ")
-        append(HKCR, "CLSID\\%s" % reg_clsid, "", reg_desc)
+        append(HKCR, f"CLSID\\{reg_clsid}", "", reg_desc)
 
         reg_progid = getattr(cls, "_reg_progid_", None)
         if reg_progid:
             # for ProgIDFromCLSID:
-            append(HKCR, "CLSID\\%s\\ProgID" % reg_clsid, "", reg_progid)  # 1
+            append(HKCR, f"CLSID\\{reg_clsid}\\ProgID", "", reg_progid)  # 1
 
             # for CLSIDFromProgID
             if reg_desc:
                 append(HKCR, reg_progid, "", reg_desc)  # 2
-            append(HKCR, "%s\\CLSID" % reg_progid, "", reg_clsid)  # 3
+            append(HKCR, f"{reg_progid}\\CLSID", "", reg_clsid)  # 3
 
             reg_novers_progid = getattr(cls, "_reg_novers_progid_", None)
             if reg_novers_progid:
                 append(
                     HKCR,
-                    "CLSID\\%s\\VersionIndependentProgID" % reg_clsid,  # 1a
+                    f"CLSID\\{reg_clsid}\\VersionIndependentProgID",  # 1a
                     "",
                     reg_novers_progid,
                 )
                 if reg_desc:
                     append(HKCR, reg_novers_progid, "", reg_desc)  # 2a
-                append(HKCR, "%s\\CurVer" % reg_novers_progid, "", reg_progid)  #
-                append(HKCR, "%s\\CLSID" % reg_novers_progid, "", reg_clsid)  # 3a
+                append(HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
+                append(HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
 
         clsctx = getattr(cls, "_reg_clsctx_", 0)
 
@@ -310,21 +310,16 @@ class Registrar(object):
         ):
             exe = sys.executable
             if " " in exe:
-                exe = '"%s"' % exe
+                exe = f'"{exe}"'
             if not hasattr(sys, "frozen"):
                 if not __debug__:
-                    exe = "%s -O" % exe
+                    exe = f"{exe} -O"
                 script = os.path.abspath(sys.modules[cls.__module__].__file__)
                 if " " in script:
-                    script = '"%s"' % script
-                append(
-                    HKCR,
-                    "CLSID\\%s\\LocalServer32" % reg_clsid,
-                    "",
-                    "%s %s" % (exe, script),
-                )
+                    script = f'"{script}"'
+                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
             else:
-                append(HKCR, "CLSID\\%s\\LocalServer32" % reg_clsid, "", "%s" % exe)
+                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
@@ -333,7 +328,7 @@ class Registrar(object):
             "dll",
         ):
             append(
-                HKCR, "CLSID\\%s\\InprocServer32" % reg_clsid, "", self._get_serverdll()
+                HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", self._get_serverdll()
             )
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
@@ -342,13 +337,13 @@ class Registrar(object):
             ):
                 append(
                     HKCR,
-                    "CLSID\\%s\\InprocServer32" % reg_clsid,
+                    rf"CLSID\{reg_clsid}\InprocServer32",
                     "PythonClass",
                     self._get_full_classname(cls),
                 )
                 append(
                     HKCR,
-                    "CLSID\\%s\\InprocServer32" % reg_clsid,
+                    rf"CLSID\{reg_clsid}\InprocServer32",
                     "PythonPath",
                     self._get_pythonpath(cls),
                 )
@@ -357,14 +352,14 @@ class Registrar(object):
             if reg_threading is not None:
                 append(
                     HKCR,
-                    "CLSID\\%s\\InprocServer32" % reg_clsid,
+                    rf"CLSID\{reg_clsid}\InprocServer32",
                     "ThreadingModel",
                     reg_threading,
                 )
 
         reg_tlib = getattr(cls, "_reg_typelib_", None)
         if reg_tlib is not None:
-            append(HKCR, "CLSID\\%s\\Typelib" % reg_clsid, "", reg_tlib[0])
+            append(HKCR, rf"CLSID\{reg_clsid}\Typelib", "", reg_tlib[0])
 
         return table
 
@@ -381,10 +376,7 @@ def unregister(cls):
 
 
 def UseCommandLine(*classes):
-    usage = (
-        """Usage: %s [-regserver] [-unregserver] [-nodebug] [-f logformat] [-l loggername=level]"""
-        % sys.argv[0]
-    )
+    usage = f"""Usage: {sys.argv[0]} [-regserver] [-unregserver] [-nodebug] [-f logformat] [-l loggername=level]"""
     opts, args = w_getopt.w_getopt(
         sys.argv[1:], "regserver unregserver embedding l: f: nodebug"
     )

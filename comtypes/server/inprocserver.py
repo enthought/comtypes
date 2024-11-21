@@ -44,7 +44,7 @@ def inproc_find_class(clsid):
     if _clsid_to_class:
         return _clsid_to_class[clsid]
 
-    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, "CLSID\\%s\\InprocServer32" % clsid)
+    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, f"CLSID\\{clsid}\\InprocServer32")
     try:
         pathdir = winreg.QueryValueEx(key, "PythonPath")[0]
     except:

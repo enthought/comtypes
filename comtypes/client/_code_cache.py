@@ -48,23 +48,23 @@ def _find_gen_dir():
         # check type of executable image to determine a subdirectory
         # where generated modules are placed.
         ftype = getattr(sys, "frozen", None)
-        version_str = "%d%d" % sys.version_info[:2]
+        pymaj, pymin = sys.version_info[:2]
         if ftype == None:
             # Python script
-            subdir = r"Python\Python%s\comtypes_cache" % version_str
+            subdir = rf"Python\Python{pymaj:d}{pymin:d}\comtypes_cache"
             basedir = _get_appdata_dir()
 
         elif ftype == "dll":
             # dll created with py2exe
             path = _get_module_filename(sys.frozendllhandle)
             base = os.path.splitext(os.path.basename(path))[0]
-            subdir = r"comtypes_cache\%s-%s" % (base, version_str)
+            subdir = rf"comtypes_cache\{base}-{pymaj:d}{pymin:d}"
             basedir = tempfile.gettempdir()
 
         else:  # ftype in ('windows_exe', 'console_exe')
             # exe created by py2exe
             base = os.path.splitext(os.path.basename(sys.executable))[0]
-            subdir = r"comtypes_cache\%s-%s" % (base, version_str)
+            subdir = rf"comtypes_cache\{base}-{pymaj:d}{pymin:d}"
             basedir = tempfile.gettempdir()
 
         gen_dir = os.path.join(basedir, subdir)

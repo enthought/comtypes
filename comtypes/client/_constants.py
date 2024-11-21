@@ -118,7 +118,7 @@ class Constants(object):
                     # XXX is necessary warning? should use logging?
                     # import comtypes.tools
                     # if comtypes.tools.__warn_on_munge__:
-                    #     print("# Fixing keyword as VAR_CONST for %s" % name)
+                    #     print(f"# Fixing keyword as VAR_CONST for {name}")
                     name += "_"
                 members[name] = vdesc._.lpvarValue[0].value
         return _frozen_attr_dict(members)

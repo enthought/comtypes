@@ -139,20 +139,16 @@ def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
     elif isinstance(obj, GUID):
         clsid = str(obj)
         # lookup associated typelib in registry
-        with winreg.OpenKey(
-            winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\TypeLib" % clsid
-        ) as key:
+        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}\TypeLib") as key:
             libid = winreg.EnumValue(key, 0)[1]
-        with winreg.OpenKey(
-            winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Version" % clsid
-        ) as key:
+        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}\Version") as key:
             ver = winreg.EnumValue(key, 0)[1].split(".")
         return typeinfo.LoadRegTypeLib(GUID(libid), int(ver[0]), int(ver[1]), 0)
     # obj is a sequence containing libid
     elif isinstance(obj, (tuple, list)):
         libid, ver = obj[0], obj[1:]
         if not ver:  # case of version numbers are not containing
-            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"TypeLib\%s" % libid) as key:
+            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, rf"TypeLib\{libid}") as key:
                 ver = [int(v, base=16) for v in winreg.EnumKey(key, 0).split(".")]
         return typeinfo.LoadRegTypeLib(GUID(libid), *ver)
     # obj is a COMObject implementation
@@ -161,7 +157,7 @@ def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
     # obj is a pointer of ITypeLib
     elif isinstance(obj, ctypes.POINTER(typeinfo.ITypeLib)):
         return obj  # type: ignore
-    raise TypeError("'%r' is not supported type for loading typelib" % obj)
+    raise TypeError(f"'{obj!r}' is not supported type for loading typelib")
 
 
 def _get_existing_module(tlib: typeinfo.ITypeLib) -> Optional[types.ModuleType]:
