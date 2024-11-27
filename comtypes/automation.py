@@ -956,6 +956,7 @@ _ctype_to_vartype: Dict[Type[_CData], int] = {
     c_ulonglong: VT_UI8,
     VARIANT_BOOL: VT_BOOL,
     BSTR: VT_BSTR,
+    HRESULT: VT_HRESULT,
     VARIANT: VT_VARIANT,
     # SAFEARRAY(VARIANT *)
     #
