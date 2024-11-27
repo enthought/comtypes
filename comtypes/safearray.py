@@ -78,6 +78,7 @@ def _make_safearray_type(itemtype):
         VT_UNKNOWN,
         IDispatch,
         VT_DISPATCH,
+        VT_HRESULT,
     )
 
     meta = type(_safearray.tagSAFEARRAY)
@@ -123,6 +124,15 @@ def _make_safearray_type(itemtype):
             one-dimensional arrays.  To create multidimensional arrys,
             numpy arrays must be passed.
             """
+            if cls._vartype_ == VT_HRESULT:
+                raise TypeError(
+                    # There are COM type libraries that define the
+                    # `_midlSAFEARRAY(HRESULT)` type; however, creating `HRESULT`
+                    # safearray pointer instance does not work.
+                    # See also: https://github.com/enthought/comtypes/issues/668
+                    "Cannot create SAFEARRAY type VT_HRESULT."
+                )
+
             if comtypes.npsupport.isndarray(value):
                 return cls.create_from_ndarray(value, extra)
 
