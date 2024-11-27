@@ -131,7 +131,7 @@ def _make_safearray_type(itemtype):
                     # safearray pointer instance does not work.
                     # See also: https://github.com/enthought/comtypes/issues/668
                     "Cannot create SAFEARRAY type VT_HRESULT."
-                    )
+                )
 
             if comtypes.npsupport.isndarray(value):
                 return cls.create_from_ndarray(value, extra)
