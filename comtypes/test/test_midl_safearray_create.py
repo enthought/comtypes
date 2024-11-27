@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from ctypes import c_int, pointer, POINTER
+from ctypes import c_int, pointer, HRESULT, POINTER
 import unittest
 
 import comtypes
@@ -81,6 +81,14 @@ class Test_midlSAFEARRAY_create(unittest.TestCase):
                 )
                 self.assertEqual(unpacked.answer, 42)
                 self.assertEqual(unpacked.needs_clarification, True)
+
+    def test_HRESULT(self):
+        hr = HRESULT(1)
+        sa_type = comtypes.safearray._midlSAFEARRAY(HRESULT)
+        with self.assertRaises(TypeError):
+            sa_type.create([hr], extra=None)
+        with self.assertRaises(TypeError):
+            sa_type.create([hr])
 
     def test_ctype(self):
         extra = None
