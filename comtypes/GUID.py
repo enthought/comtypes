@@ -1,3 +1,5 @@
+"""comtypes.GUID module"""
+
 from ctypes import oledll, windll
 from ctypes import byref, c_byte, c_ushort, c_ulong, c_wchar_p, Structure
 from typing import Any, TYPE_CHECKING
