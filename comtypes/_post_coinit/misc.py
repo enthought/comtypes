@@ -16,10 +16,10 @@ if TYPE_CHECKING:
     from comtypes import hints as hints  # noqa  # type: ignore
 
 from comtypes._memberspec import COMMETHOD
+from comtypes import GUID
 from comtypes import CLSCTX_SERVER, CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER
 from comtypes import _ole32, oledll, DWORD
 from comtypes._post_coinit.unknwn import IUnknown
-from comtypes._post_coinit.guid import GUID
 
 
 def _is_object(obj):
