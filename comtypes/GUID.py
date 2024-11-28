@@ -1,3 +1,5 @@
+"""comtypes.GUID module"""
+
 from ctypes import oledll, windll
 from ctypes import byref, c_byte, c_ushort, c_ulong, c_wchar_p, Structure
 from typing import Any, TYPE_CHECKING
@@ -28,6 +30,8 @@ _CoCreateGuid = _ole32.CoCreateGuid
 
 
 class GUID(Structure):
+    """Globally unique identifier structure."""
+
     _fields_ = [("Data1", DWORD), ("Data2", WORD), ("Data3", WORD), ("Data4", BYTE * 8)]
 
     def __init__(self, name=None):
