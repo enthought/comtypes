@@ -1,3 +1,9 @@
+import unittest
+
+# Force module to raise.
+raise unittest.SkipTest("This test module cannot run as-is.  Investigate why")
+
+
 try:
     # Force module to raise.  We catch this error later.  Yes, a dirty hack for python2.7.
     raise WindowsError("This test module cannot run as-is.  Investigate why")
