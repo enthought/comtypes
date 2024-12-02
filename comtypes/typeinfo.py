@@ -632,7 +632,7 @@ def LoadTypeLib(szFile: str) -> ITypeLib:
 
 
 def UnRegisterTypeLib(
-    libID: str, wVerMajor: int, wVerMinor: int, lcid: int = 0, syskind: int = SYS_WIN32
+    libID: str, wVerMajor: int, wVerMinor: int, lcid: int = 0, syskind: int = SYS_WIN64
 ) -> int:
     """Unregister a registered type library"""
     return _oleaut32.UnRegisterTypeLib(
