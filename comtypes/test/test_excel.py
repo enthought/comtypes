@@ -3,6 +3,7 @@
 import datetime
 import sys
 import unittest
+from typing import ClassVar
 
 from comtypes.client import CreateObject, GetModule
 
@@ -27,6 +28,7 @@ except (ImportError, OSError):
 
 class BaseBindTest(object):
     # `dynamic = True/False` must be defined in subclasses!
+    dynamic: ClassVar[bool]
 
     def setUp(self):
         self.xl = CreateObject("Excel.Application", dynamic=self.dynamic)
