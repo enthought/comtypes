@@ -3,6 +3,7 @@
 import datetime
 import sys
 import unittest
+from typing import ClassVar
 
 from comtypes.client import CreateObject, GetModule
 
@@ -27,6 +28,7 @@ except (ImportError, OSError):
 
 class BaseBindTest(object):
     # `dynamic = True/False` must be defined in subclasses!
+    dynamic: ClassVar[bool]
 
     def setUp(self):
         self.xl = CreateObject("Excel.Application", dynamic=self.dynamic)
@@ -62,17 +64,21 @@ class BaseBindTest(object):
         # call property to retrieve value
         expected_values = ((10.0, 20.0, 31.4), ("x", "y", "z"), (3.0, 2.0, 1.0))
         # XXX: in Python >= 3.8.x, fails below
-        self.assertEqual(xl.Range["A1:C3"].Value(), expected_values)
+        self.assertEqual(xl.Range["A1:C3"].Value(), expected_values)  # type: ignore
         # index with empty tuple
-        self.assertEqual(xl.Range["A1:C3"].Value[()], expected_values)
+        self.assertEqual(xl.Range["A1:C3"].Value[()], expected_values)  # type: ignore
         # index with empty slice
-        self.assertEqual(xl.Range["A1:C3"].Value[:], expected_values)
-        self.assertEqual(xl.Range["A1:C3"].Value[xlRangeValueDefault], expected_values)
-        self.assertEqual(xl.Range["A1", "C3"].Value[()], expected_values)
+        self.assertEqual(xl.Range["A1:C3"].Value[:], expected_values)  # type: ignore
+        self.assertEqual(  # type: ignore
+            xl.Range["A1:C3"].Value[xlRangeValueDefault], expected_values
+        )
+        self.assertEqual(  # type: ignore
+            xl.Range["A1", "C3"].Value[()], expected_values
+        )
 
         # Test for iteration support in "Range" interface
         iter(xl.Range["A1:C3"])
-        self.assertEqual(
+        self.assertEqual(  # type: ignore
             [c.Value() for c in xl.Range["A1:C3"]],
             [10.0, 20.0, 31.4, "x", "y", "z", 3.0, 2.0, 1.0],
         )
@@ -83,25 +89,29 @@ class BaseBindTest(object):
         for i in range(20):
             val = "Hi %d" % i
             xl.Cells.Item[i + 1, i + 1].Value[()] = val
-            self.assertEqual(xl.Cells.Item[i + 1, i + 1].Value[()], val)
+            self.assertEqual(  # type: ignore
+                xl.Cells.Item[i + 1, i + 1].Value[()], val
+            )
 
         for i in range(20):
             val = "Hi %d" % i
             xl.Cells(i + 1, i + 1).Value[()] = val
-            self.assertEqual(xl.Cells(i + 1, i + 1).Value[()], val)
+            self.assertEqual(xl.Cells(i + 1, i + 1).Value[()], val)  # type: ignore
 
         # test dates out with Excel
         xl.Range["A5"].Value[()] = "Excel time"
         xl.Range["B5"].Formula = "=Now()"
-        self.assertEqual(xl.Cells.Item[5, 2].Formula, "=NOW()")
+        self.assertEqual(xl.Cells.Item[5, 2].Formula, "=NOW()")  # type: ignore
 
         xl.Range["A6"].Calculate()
         excel_time = xl.Range["B5"].Value[()]
-        self.assertEqual(type(excel_time), datetime.datetime)
+        self.assertEqual(type(excel_time), datetime.datetime)  # type: ignore
         python_time = datetime.datetime.now()
 
-        self.assertTrue(python_time >= excel_time)
-        self.assertTrue(python_time - excel_time < datetime.timedelta(seconds=1))
+        self.assertTrue(python_time >= excel_time)  # type: ignore
+        self.assertTrue(  # type: ignore
+            python_time - excel_time < datetime.timedelta(seconds=1)
+        )
 
         # some random code, grabbed from c.l.p
         sh = wb.Worksheets[1]
