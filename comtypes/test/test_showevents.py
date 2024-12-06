@@ -1,8 +1,11 @@
 import doctest
 import unittest
+from typing import Optional
 
 
-def load_tests(loader, tests, ignore):
+def load_tests(
+    loader: unittest.TestLoader, tests: unittest.TestSuite, pattern: Optional[str]
+) -> unittest.TestSuite:
     import comtypes.test.test_showevents
 
     tests.addTests(doctest.DocTestSuite(comtypes.test.test_showevents))
