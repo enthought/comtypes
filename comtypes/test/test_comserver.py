@@ -1,5 +1,4 @@
 import doctest
-import sys
 import unittest
 from ctypes import pointer
 
