@@ -156,7 +156,7 @@ else:
                 )
 
 
-class TestCase(unittest.TestCase):
+class TestEvents(unittest.TestCase):
     def test(self):
         import comtypes.test.test_comserver
 
@@ -164,6 +164,8 @@ class TestCase(unittest.TestCase):
             comtypes.test.test_comserver, verbose=False, optionflags=doctest.ELLIPSIS
         )
 
+
+class ShowEventsExamples:
     # The following functions are never called, they only contain doctests:
 
     def ShowEventsFloat(self):
