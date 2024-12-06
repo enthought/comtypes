@@ -6,19 +6,25 @@ from ctypes import pointer
 import comtypes.test.TestComServer
 from comtypes import BSTR
 from comtypes.client import CreateObject
-from comtypes.server.register import register  # , unregister
+from comtypes.server.register import register, unregister
 from comtypes.test import is_resource_enabled
 from comtypes.test.find_memleak import find_memleak
 
 
 def setUpModule():
-    raise unittest.SkipTest(
-        "This test requires the tests to be run as admin since it tries to "
-        "register the test COM server.  Is this a good idea?"
-    )
+    try:
+        register(comtypes.test.TestComServer.TestComServer)
+    except WindowsError as e:
+        if e.winerror != 5:  # [Error 5] Access is denied
+            raise e
+        raise unittest.SkipTest(
+            "This test requires the tests to be run as admin since it tries to "
+            "register the test COM server."
+        )
 
-    # If this test is ever NOT skipped, then this line needs to run.  Keeping it here for posterity.
-    register(comtypes.test.TestComServer.TestComServer)
+
+def tearDownModule():
+    unregister(comtypes.test.TestComServer.TestComServer)
 
 
 class TestInproc(unittest.TestCase):
