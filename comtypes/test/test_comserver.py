@@ -1,7 +1,10 @@
+import doctest
 import sys
 import unittest
+from ctypes import pointer
 
 import comtypes.test.TestComServer
+from comtypes import BSTR
 from comtypes.client import CreateObject
 from comtypes.server.register import register  # , unregister
 from comtypes.test import is_resource_enabled
@@ -33,9 +36,6 @@ class TestInproc(unittest.TestCase):
         self.assertEqual(o.MixedInOut(2, 4), (3, 5))
 
     def test_getname(self):
-        from ctypes import pointer
-        from comtypes import BSTR
-
         # This tests a tricky bug, introduced with this patch:
         # http://www.python.org/sf/1643874
         #
@@ -142,12 +142,10 @@ else:
                 )
 
 
-import doctest
-import comtypes.test.test_comserver
-
-
 class TestCase(unittest.TestCase):
     def test(self):
+        import comtypes.test.test_comserver
+
         doctest.testmod(comtypes.test.test_comserver, optionflags=doctest.ELLIPSIS)
 
     # The following functions are never called, they only contain doctests:
