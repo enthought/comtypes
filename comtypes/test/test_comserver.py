@@ -1,6 +1,7 @@
 import doctest
 import unittest
 from ctypes import pointer
+from typing import Any
 
 import comtypes.test.TestComServer
 from comtypes import BSTR
@@ -26,19 +27,16 @@ def tearDownModule():
     unregister(comtypes.test.TestComServer.TestComServer)
 
 
-class TestInproc(unittest.TestCase):
-    def create_object(self):
-        return CreateObject(
-            "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_INPROC_SERVER
-        )
+class BaseServerTest(object):
+    def create_object(self) -> Any: ...
 
     def _find_memleak(self, func):
         bytes = find_memleak(func)
-        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes, "Leaks %d bytes" % bytes)  # type: ignore
 
     def test_mixedinout(self):
         o = self.create_object()
-        self.assertEqual(o.MixedInOut(2, 4), (3, 5))
+        self.assertEqual(o.MixedInOut(2, 4), (3, 5))  # type: ignore
 
     def test_getname(self):
         # This tests a tricky bug, introduced with this patch:
@@ -58,7 +56,7 @@ class TestInproc(unittest.TestCase):
         for i in range(10):
             BSTR("f" * len(name))
         # Make sure the pointer is still valid:
-        self.assertEqual(pb[0], name)
+        self.assertEqual(pb[0], name)  # type: ignore
 
     def test_get_id(self):
         obj = self.create_object()
@@ -90,7 +88,7 @@ class TestInproc(unittest.TestCase):
         def func():
             return obj.eval("(1, 2, 3)")
 
-        self.assertEqual(func(), (1, 2, 3))
+        self.assertEqual(func(), (1, 2, 3))  # type: ignore
         self._find_memleak(func)
 
     def test_get_typeinfo(self):
@@ -104,7 +102,14 @@ class TestInproc(unittest.TestCase):
         self._find_memleak(func)
 
 
-class TestLocalServer(TestInproc):
+class TestInproc(BaseServerTest, unittest.TestCase):
+    def create_object(self):
+        return CreateObject(
+            "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_INPROC_SERVER
+        )
+
+
+class TestLocalServer(BaseServerTest, unittest.TestCase):
     def create_object(self):
         return CreateObject(
             "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
