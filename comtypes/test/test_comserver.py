@@ -158,7 +158,7 @@ class TestCase(unittest.TestCase):
 
     # The following functions are never called, they only contain doctests:
 
-    def ShowEvents(self):
+    def ShowEventsFloat(self):
         """
         >>> from comtypes.client import CreateObject, ShowEvents
         >>>
@@ -174,26 +174,26 @@ class TestCase(unittest.TestCase):
         >>>
         """
 
-        # The following test, if enabled, works but the testsuit
-        # crashes elsewhere.  Is there s problem with SAFEARRAYs?
+    # # The following test, if enabled, works but the testsuit
+    # # crashes elsewhere.  Is there s problem with SAFEARRAYs?
 
-    if is_resource_enabled("CRASHES"):
+    # if is_resource_enabled("CRASHES"):
 
-        def Fails(self):
-            """
-            >>> from comtypes.client import CreateObject, ShowEvents
-            >>>
-            >>> o = CreateObject("TestComServerLib.TestComServer")
-            >>> con = ShowEvents(o)
-            # event found: ITestComServerEvents_EvalStarted
-            # event found: ITestComServerEvents_EvalCompleted
-            >>> result = o.eval("['32'] * 2")
-            Event ITestComServerEvents_EvalStarted(None, u"['32'] * 2")
-            Event ITestComServerEvents_EvalCompleted(None, u"['32'] * 2", VARIANT(vt=0x200c, (u'32', u'32')))
-            >>> result
-            (u'32', u'32')
-            >>>
-            """
+    #     def Fails(self):
+    #         """
+    #         >>> from comtypes.client import CreateObject, ShowEvents
+    #         >>>
+    #         >>> o = CreateObject("TestComServerLib.TestComServer")
+    #         >>> con = ShowEvents(o)
+    #         # event found: ITestComServerEvents_EvalStarted
+    #         # event found: ITestComServerEvents_EvalCompleted
+    #         >>> result = o.eval("['32'] * 2")
+    #         Event ITestComServerEvents_EvalStarted(None, u"['32'] * 2")
+    #         Event ITestComServerEvents_EvalCompleted(None, u"['32'] * 2", VARIANT(vt=0x200c, (u'32', u'32')))
+    #         >>> result
+    #         (u'32', u'32')
+    #         >>>
+    #         """
 
     def GetEvents(self):
         """
