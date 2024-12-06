@@ -156,41 +156,21 @@ class TestCase(unittest.TestCase):
 
     # The following functions are never called, they only contain doctests:
 
-    if sys.version_info >= (3, 0):
-
-        def ShowEvents(self):
-            """
-            >>> from comtypes.client import CreateObject, ShowEvents
-            >>>
-            >>> o = CreateObject("TestComServerLib.TestComServer")
-            >>> con = ShowEvents(o)
-            # event found: ITestComServerEvents_EvalStarted
-            # event found: ITestComServerEvents_EvalCompleted
-            >>> result = o.eval("10. / 4")
-            Event ITestComServerEvents_EvalStarted(None, '10. / 4')
-            Event ITestComServerEvents_EvalCompleted(None, '10. / 4', VARIANT(vt=0x5, 2.5))
-            >>> result
-            2.5
-            >>>
-            """
-
-    else:
-
-        def ShowEvents(self):
-            """
-            >>> from comtypes.client import CreateObject, ShowEvents
-            >>>
-            >>> o = CreateObject("TestComServerLib.TestComServer")
-            >>> con = ShowEvents(o)
-            # event found: ITestComServerEvents_EvalStarted
-            # event found: ITestComServerEvents_EvalCompleted
-            >>> result = o.eval("10. / 4")
-            Event ITestComServerEvents_EvalStarted(None, u'10. / 4')
-            Event ITestComServerEvents_EvalCompleted(None, u'10. / 4', VARIANT(vt=0x5, 2.5))
-            >>> result
-            2.5
-            >>>
-            """
+    def ShowEvents(self):
+        """
+        >>> from comtypes.client import CreateObject, ShowEvents
+        >>>
+        >>> o = CreateObject("TestComServerLib.TestComServer")
+        >>> con = ShowEvents(o)
+        # event found: ITestComServerEvents_EvalStarted
+        # event found: ITestComServerEvents_EvalCompleted
+        >>> result = o.eval("10. / 4")
+        Event ITestComServerEvents_EvalStarted(None, '10. / 4')
+        Event ITestComServerEvents_EvalCompleted(None, '10. / 4', VARIANT(vt=0x5, 2.5))
+        >>> result
+        2.5
+        >>>
+        """
 
         # The following test, if enabled, works but the testsuit
         # crashes elsewhere.  Is there s problem with SAFEARRAYs?
