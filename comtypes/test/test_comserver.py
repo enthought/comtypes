@@ -122,6 +122,7 @@ except ImportError:
     pass
 else:
 
+    @unittest.skip("This depends on 'pywin32'.")
     class TestInproc_win32com(TestInproc):
         def create_object(self):
             return Dispatch("TestComServerLib.TestComServer")
@@ -140,6 +141,7 @@ else:
 
     if is_resource_enabled("ui"):
 
+        @unittest.skip("This depends on 'pywin32'.")
         class TestLocalServer_win32com(TestInproc_win32com):
             def create_object(self):
                 return Dispatch(
