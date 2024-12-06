@@ -60,50 +60,48 @@ class TestInproc(unittest.TestCase):
         # Make sure the pointer is still valid:
         self.assertEqual(pb[0], name)
 
-    if is_resource_enabled("memleaks"):
+    def test_get_id(self):
+        obj = self.create_object()
+        self._find_memleak(lambda: obj.id)
 
-        def test_get_id(self):
-            obj = self.create_object()
-            self._find_memleak(lambda: obj.id)
+    def test_get_name(self):
+        obj = self.create_object()
+        self._find_memleak(lambda: obj.name)
 
-        def test_get_name(self):
-            obj = self.create_object()
-            self._find_memleak(lambda: obj.name)
+    def test_set_name(self):
+        obj = self.create_object()
 
-        def test_set_name(self):
-            obj = self.create_object()
+        def func():
+            obj.name = "abcde"
 
-            def func():
-                obj.name = "abcde"
+        self._find_memleak(func)
 
-            self._find_memleak(func)
+    def test_SetName(self):
+        obj = self.create_object()
 
-        def test_SetName(self):
-            obj = self.create_object()
+        def func():
+            obj.SetName("abcde")
 
-            def func():
-                obj.SetName("abcde")
+        self._find_memleak(func)
 
-            self._find_memleak(func)
+    def test_eval(self):
+        obj = self.create_object()
 
-        def test_eval(self):
-            obj = self.create_object()
+        def func():
+            return obj.eval("(1, 2, 3)")
 
-            def func():
-                return obj.eval("(1, 2, 3)")
+        self.assertEqual(func(), (1, 2, 3))
+        self._find_memleak(func)
 
-            self.assertEqual(func(), (1, 2, 3))
-            self._find_memleak(func)
+    def test_get_typeinfo(self):
+        obj = self.create_object()
 
-        def test_get_typeinfo(self):
-            obj = self.create_object()
+        def func():
+            obj.GetTypeInfo(0)
+            obj.GetTypeInfoCount()
+            obj.QueryInterface(comtypes.IUnknown)
 
-            def func():
-                obj.GetTypeInfo(0)
-                obj.GetTypeInfoCount()
-                obj.QueryInterface(comtypes.IUnknown)
-
-            self._find_memleak(func)
+        self._find_memleak(func)
 
 
 class TestLocalServer(TestInproc):
