@@ -160,7 +160,9 @@ class TestCase(unittest.TestCase):
     def test(self):
         import comtypes.test.test_comserver
 
-        doctest.testmod(comtypes.test.test_comserver, optionflags=doctest.ELLIPSIS)
+        doctest.testmod(
+            comtypes.test.test_comserver, verbose=False, optionflags=doctest.ELLIPSIS
+        )
 
     # The following functions are never called, they only contain doctests:
 
