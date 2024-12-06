@@ -106,13 +106,11 @@ class TestInproc(unittest.TestCase):
             self._find_memleak(func)
 
 
-if is_resource_enabled("ui"):
-
-    class TestLocalServer(TestInproc):
-        def create_object(self):
-            return CreateObject(
-                "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
-            )
+class TestLocalServer(TestInproc):
+    def create_object(self):
+        return CreateObject(
+            "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
+        )
 
 
 try:
