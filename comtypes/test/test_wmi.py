@@ -1,9 +1,6 @@
 import unittest as ut
 
 from comtypes.client import CoGetObject
-from comtypes.test import requires
-
-requires("time")
 
 
 # WMI has dual interfaces.
