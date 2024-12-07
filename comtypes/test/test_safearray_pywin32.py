@@ -3,71 +3,70 @@ from ctypes import POINTER, PyDLL, byref, py_object
 from ctypes.wintypes import BOOL
 
 from comtypes.automation import VARIANT
-from comtypes.test import is_resource_enabled
 
 
-if is_resource_enabled("pythoncom"):
-    try:
-        import pythoncom
-    except ImportError:
-        # pywin32 not installed...
-        pass
-    else:
-        # pywin32 is available.  The pythoncom dll contains two handy
-        # exported functions that allow to create a VARIANT from a Python
-        # object, also a function that unpacks a VARIANT into a Python
-        # object.
-        #
-        # This allows us to create und unpack SAFEARRAY instances
-        # contained in VARIANTs, and check for consistency with the
-        # comtypes code.
+raise unittest.SkipTest("This depends on 'pywin32'.")
 
-        _dll = PyDLL(pythoncom.__file__)
+import pythoncom
+# pywin32 not installed...
 
-        # c:/sf/pywin32/com/win32com/src/oleargs.cpp 213
-        # PyObject *PyCom_PyObjectFromVariant(const VARIANT *var)
-        unpack = _dll.PyCom_PyObjectFromVariant
-        unpack.restype = py_object
-        unpack.argtypes = (POINTER(VARIANT),)
+# pywin32 is available.  The pythoncom dll contains two handy
+# exported functions that allow to create a VARIANT from a Python
+# object, also a function that unpacks a VARIANT into a Python
+# object.
+#
+# This allows us to create und unpack SAFEARRAY instances
+# contained in VARIANTs, and check for consistency with the
+# comtypes code.
 
-        # c:/sf/pywin32/com/win32com/src/oleargs.cpp 54
-        # BOOL PyCom_VariantFromPyObject(PyObject *obj, VARIANT *var)
-        _pack = _dll.PyCom_VariantFromPyObject
-        _pack.argtypes = py_object, POINTER(VARIANT)
-        _pack.restype = BOOL
+_dll = PyDLL(pythoncom.__file__)
 
-        def pack(obj):
-            var = VARIANT()
-            _pack(obj, byref(var))
-            return var
+# c:/sf/pywin32/com/win32com/src/oleargs.cpp 213
+# PyObject *PyCom_PyObjectFromVariant(const VARIANT *var)
+unpack = _dll.PyCom_PyObjectFromVariant
+unpack.restype = py_object
+unpack.argtypes = (POINTER(VARIANT),)
 
-        class PyWinTest(unittest.TestCase):
-            def test_1dim(self):
-                data = (1, 2, 3)
-                variant = pack(data)
-                self.assertEqual(variant.value, data)
-                self.assertEqual(unpack(variant), data)
+# c:/sf/pywin32/com/win32com/src/oleargs.cpp 54
+# BOOL PyCom_VariantFromPyObject(PyObject *obj, VARIANT *var)
+_pack = _dll.PyCom_VariantFromPyObject
+_pack.argtypes = py_object, POINTER(VARIANT)
+_pack.restype = BOOL
 
-            def test_2dim(self):
-                data = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
-                variant = pack(data)
-                self.assertEqual(variant.value, data)
-                self.assertEqual(unpack(variant), data)
 
-            def test_3dim(self):
-                data = (((1, 2), (3, 4), (5, 6)), ((7, 8), (9, 10), (11, 12)))
-                variant = pack(data)
-                self.assertEqual(variant.value, data)
-                self.assertEqual(unpack(variant), data)
+def pack(obj):
+    var = VARIANT()
+    _pack(obj, byref(var))
+    return var
 
-            def test_4dim(self):
-                data = (
-                    (((1, 2), (3, 4)), ((5, 6), (7, 8))),
-                    (((9, 10), (11, 12)), ((13, 14), (15, 16))),
-                )
-                variant = pack(data)
-                self.assertEqual(variant.value, data)
-                self.assertEqual(unpack(variant), data)
+
+class PyWinTest(unittest.TestCase):
+    def test_1dim(self):
+        data = (1, 2, 3)
+        variant = pack(data)
+        self.assertEqual(variant.value, data)
+        self.assertEqual(unpack(variant), data)
+
+    def test_2dim(self):
+        data = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+        variant = pack(data)
+        self.assertEqual(variant.value, data)
+        self.assertEqual(unpack(variant), data)
+
+    def test_3dim(self):
+        data = (((1, 2), (3, 4), (5, 6)), ((7, 8), (9, 10), (11, 12)))
+        variant = pack(data)
+        self.assertEqual(variant.value, data)
+        self.assertEqual(unpack(variant), data)
+
+    def test_4dim(self):
+        data = (
+            (((1, 2), (3, 4)), ((5, 6), (7, 8))),
+            (((9, 10), (11, 12)), ((13, 14), (15, 16))),
+        )
+        variant = pack(data)
+        self.assertEqual(variant.value, data)
+        self.assertEqual(unpack(variant), data)
 
 
 if __name__ == "__main__":
