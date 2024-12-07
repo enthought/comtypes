@@ -1,14 +1,11 @@
 import unittest
-
-from ctypes import PyDLL, py_object, c_void_p, byref, POINTER
+from ctypes import POINTER, PyDLL, byref, c_void_p, py_object
 from ctypes.wintypes import BOOL
 
 from comtypes import IUnknown
-from comtypes.client import CreateObject
 from comtypes.automation import IDispatch
-from comtypes.test import requires
+from comtypes.client import CreateObject
 
-requires("pythoncom")
 try:
     import pythoncom
     import win32com.client
