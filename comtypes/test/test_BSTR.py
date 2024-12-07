@@ -1,10 +1,7 @@
-import unittest, os
-from ctypes import *
+import unittest
+from ctypes import WINFUNCTYPE, c_uint, c_void_p, oledll, windll
+
 from comtypes import BSTR
-from comtypes.test import requires
-
-##requires("memleaks")
-
 from comtypes.test.find_memleak import find_memleak
 
 
