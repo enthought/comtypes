@@ -12,7 +12,7 @@ jobs:
         os: [windows-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
         architecture: ['x86', 'x64']
-        npsupport: ['with npsupport', 'without npsupport']
+        support: ['with 3rd parties', 'without 3rd parties']
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -29,7 +29,7 @@ jobs:
           ./server.exe /RegServer
       - name: unittest comtypes
         run: |
-          if ("${{ matrix.npsupport }}" -eq "with npsupport") {
+          if ("${{ matrix.support }}" -eq "with 3rd parties") {
             pip install 'numpy<2'
           }
           python -m unittest discover -v -s ./comtypes/test -t comtypes\test
