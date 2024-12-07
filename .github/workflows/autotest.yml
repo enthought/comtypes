@@ -31,6 +31,7 @@ jobs:
         run: |
           if ("${{ matrix.support }}" -eq "with 3rd parties") {
             pip install 'numpy<2'
+            pip install pywin32
           }
           python -m unittest discover -v -s ./comtypes/test -t comtypes\test
       - name: Unregister the OutProc COM server
