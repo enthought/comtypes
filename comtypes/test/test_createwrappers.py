@@ -15,8 +15,6 @@ def setUpModule():
     )
 
 
-# requires("typelibs")
-
 # filter warnings about interfaces without a base interface; they will
 # be skipped in the code generation.
 warnings.filterwarnings(

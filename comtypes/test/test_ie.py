@@ -1,10 +1,7 @@
 import unittest as ut
-from ctypes import *
+from ctypes import Structure, c_long, c_uint, c_ulong
 
-import comtypes.test
 from comtypes.client import CreateObject, GetEvents
-
-comtypes.test.requires("ui")
 
 
 def setUpModule():
@@ -61,7 +58,7 @@ class MSG(Structure):
 
 
 def PumpWaitingMessages():
-    from ctypes import windll, byref
+    from ctypes import byref, windll
 
     user32 = windll.user32
     msg = MSG()

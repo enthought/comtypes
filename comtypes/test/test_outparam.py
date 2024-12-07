@@ -1,18 +1,25 @@
-import sys
 import unittest
-from ctypes import *
+from ctypes import (
+    POINTER,
+    byref,
+    c_int,
+    c_ulong,
+    c_void_p,
+    c_wchar,
+    c_wchar_p,
+    cast,
+    memmove,
+    oledll,
+    sizeof,
+    windll,
+    wstring_at,
+)
 from unittest.mock import patch
 
-import comtypes.test
+from comtypes import COMMETHOD, GUID, IUnknown
 
-comtypes.test.requires("devel")
 
-from comtypes import IUnknown, GUID, COMMETHOD
-
-if sys.version_info >= (3, 0):
-    text_type = str
-else:
-    text_type = unicode
+text_type = str
 
 
 class IMalloc(IUnknown):
