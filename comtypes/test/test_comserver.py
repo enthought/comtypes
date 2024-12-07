@@ -7,7 +7,6 @@ import comtypes.test.TestComServer
 from comtypes import BSTR
 from comtypes.client import CreateObject
 from comtypes.server.register import register, unregister
-from comtypes.test import is_resource_enabled
 from comtypes.test.find_memleak import find_memleak
 
 
@@ -145,15 +144,12 @@ else:
             # Is mixed [in], [out] args not compatible with IDispatch???
             pass
 
-    if is_resource_enabled("ui"):
-
-        @unittest.skip("This depends on 'pywin32'.")
-        class TestLocalServer_win32com(TestInproc_win32com):
-            def create_object(self):
-                return Dispatch(
-                    "TestComServerLib.TestComServer",
-                    clsctx=comtypes.CLSCTX_LOCAL_SERVER,
-                )
+    @unittest.skip("This depends on 'pywin32'.")
+    class TestLocalServer_win32com(TestInproc_win32com):
+        def create_object(self):
+            return Dispatch(
+                "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
+            )
 
 
 class TestEvents(unittest.TestCase):
@@ -187,23 +183,21 @@ class ShowEventsExamples:
     # # The following test, if enabled, works but the testsuit
     # # crashes elsewhere.  Is there s problem with SAFEARRAYs?
 
-    # if is_resource_enabled("CRASHES"):
-
-    #     def Fails(self):
-    #         """
-    #         >>> from comtypes.client import CreateObject, ShowEvents
-    #         >>>
-    #         >>> o = CreateObject("TestComServerLib.TestComServer")
-    #         >>> con = ShowEvents(o)
-    #         # event found: ITestComServerEvents_EvalStarted
-    #         # event found: ITestComServerEvents_EvalCompleted
-    #         >>> result = o.eval("['32'] * 2")
-    #         Event ITestComServerEvents_EvalStarted(None, u"['32'] * 2")
-    #         Event ITestComServerEvents_EvalCompleted(None, u"['32'] * 2", VARIANT(vt=0x200c, (u'32', u'32')))
-    #         >>> result
-    #         (u'32', u'32')
-    #         >>>
-    #         """
+    # def Fails(self):
+    #     """
+    #     >>> from comtypes.client import CreateObject, ShowEvents
+    #     >>>
+    #     >>> o = CreateObject("TestComServerLib.TestComServer")
+    #     >>> con = ShowEvents(o)
+    #     # event found: ITestComServerEvents_EvalStarted
+    #     # event found: ITestComServerEvents_EvalCompleted
+    #     >>> result = o.eval("['32'] * 2")
+    #     Event ITestComServerEvents_EvalStarted(None, u"['32'] * 2")
+    #     Event ITestComServerEvents_EvalCompleted(None, u"['32'] * 2", VARIANT(vt=0x200c, (u'32', u'32')))
+    #     >>> result
+    #     (u'32', u'32')
+    #     >>>
+    #     """
 
     def GetEvents(self):
         """
