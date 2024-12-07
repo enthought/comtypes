@@ -1,92 +1,99 @@
+import os
 import unittest
 
 import comtypes.test.TestDispServer
-from comtypes.server.register import register  # , unregister
-from comtypes.test import is_resource_enabled
+from comtypes.server.register import register, unregister
 
 
 def setUpModule():
-    raise unittest.SkipTest(
-        "This test requires the tests to be run as admin since it tries to "
-        "register the test COM server.  Is this a good idea?"
-    )
+    try:
+        register(comtypes.test.TestDispServer.TestDispServer)
+    except WindowsError as e:
+        if e.winerror != 5:  # [Error 5] Access is denied
+            raise e
+        raise unittest.SkipTest(
+            "This test requires the tests to be run as admin since it tries to "
+            "register the test COM server."
+        )
 
-    # If this test is ever NOT skipped, then this line needs to run.  Keeping it here for posterity.
-    register(comtypes.test.TestDispServer.TestDispServer)
+
+def tearDownModule():
+    unregister(comtypes.test.TestDispServer.TestDispServer)
 
 
-class Test(unittest.TestCase):
-    if is_resource_enabled("pythoncom"):
+@unittest.skip("This depends on 'pywin32'.")
+class Test_win32com(unittest.TestCase):
+    def test_win32com(self):
+        # EnsureDispatch is case-sensitive
+        from win32com.client.gencache import EnsureDispatch
 
-        def test_win32com(self):
-            # EnsureDispatch is case-sensitive
-            from win32com.client.gencache import EnsureDispatch
+        d = EnsureDispatch("TestDispServerLib.TestDispServer")
 
-            d = EnsureDispatch("TestDispServerLib.TestDispServer")
+        self.assertEqual(d.eval("3.14"), 3.14)
+        self.assertEqual(d.eval("1 + 2"), 3)
+        self.assertEqual(d.eval("[1 + 2, 'foo', None]"), (3, "foo", None))
 
-            self.assertEqual(d.eval("3.14"), 3.14)
-            self.assertEqual(d.eval("1 + 2"), 3)
-            self.assertEqual(d.eval("[1 + 2, 'foo', None]"), (3, "foo", None))
+        self.assertEqual(d.eval2("3.14"), 3.14)
+        self.assertEqual(d.eval2("1 + 2"), 3)
+        self.assertEqual(d.eval2("[1 + 2, 'foo', None]"), (3, "foo", None))
 
-            self.assertEqual(d.eval2("3.14"), 3.14)
-            self.assertEqual(d.eval2("1 + 2"), 3)
-            self.assertEqual(d.eval2("[1 + 2, 'foo', None]"), (3, "foo", None))
+        d.eval(
+            "__import__('comtypes.client').client.CreateObject('Scripting.Dictionary')"
+        )
 
-            d.eval(
-                "__import__('comtypes.client').client.CreateObject('Scripting.Dictionary')"
-            )
+        server_id = d.eval("id(self)")
+        self.assertEqual(d.id, server_id)
 
-            server_id = d.eval("id(self)")
-            self.assertEqual(d.id, server_id)
+        self.assertEqual(d.name, "spam, spam, spam")
 
-            self.assertEqual(d.name, "spam, spam, spam")
+        d.SetName("foo bar")
+        self.assertEqual(d.name, "foo bar")
 
-            d.SetName("foo bar")
-            self.assertEqual(d.name, "foo bar")
+        d.name = "blah"
+        self.assertEqual(d.name, "blah")
 
-            d.name = "blah"
-            self.assertEqual(d.name, "blah")
+    def test_win32com_dyndispatch(self):
+        # dynamic Dispatch is case-IN-sensitive
+        from win32com.client.dynamic import Dispatch
 
-        def test_win32com_dyndispatch(self):
-            # dynamic Dispatch is case-IN-sensitive
-            from win32com.client.dynamic import Dispatch
+        d = Dispatch("TestDispServerLib.TestDispServer")
 
-            d = Dispatch("TestDispServerLib.TestDispServer")
+        self.assertEqual(d.eval("3.14"), 3.14)
+        self.assertEqual(d.eval("1 + 2"), 3)
+        self.assertEqual(d.eval("[1 + 2, 'foo', None]"), (3, "foo", None))
 
-            self.assertEqual(d.eval("3.14"), 3.14)
-            self.assertEqual(d.eval("1 + 2"), 3)
-            self.assertEqual(d.eval("[1 + 2, 'foo', None]"), (3, "foo", None))
+        self.assertEqual(d.eval2("3.14"), 3.14)
+        self.assertEqual(d.eval2("1 + 2"), 3)
+        self.assertEqual(d.eval2("[1 + 2, 'foo', None]"), (3, "foo", None))
 
-            self.assertEqual(d.eval2("3.14"), 3.14)
-            self.assertEqual(d.eval2("1 + 2"), 3)
-            self.assertEqual(d.eval2("[1 + 2, 'foo', None]"), (3, "foo", None))
+        d.eval(
+            "__import__('comtypes.client').client.CreateObject('Scripting.Dictionary')"
+        )
 
-            d.eval(
-                "__import__('comtypes.client').client.CreateObject('Scripting.Dictionary')"
-            )
+        self.assertEqual(d.EVAL("3.14"), 3.14)
+        self.assertEqual(d.EVAL("1 + 2"), 3)
+        self.assertEqual(d.EVAL("[1 + 2, 'foo', None]"), (3, "foo", None))
 
-            self.assertEqual(d.EVAL("3.14"), 3.14)
-            self.assertEqual(d.EVAL("1 + 2"), 3)
-            self.assertEqual(d.EVAL("[1 + 2, 'foo', None]"), (3, "foo", None))
+        self.assertEqual(d.EVAL2("3.14"), 3.14)
+        self.assertEqual(d.EVAL2("1 + 2"), 3)
+        self.assertEqual(d.EVAL2("[1 + 2, 'foo', None]"), (3, "foo", None))
 
-            self.assertEqual(d.EVAL2("3.14"), 3.14)
-            self.assertEqual(d.EVAL2("1 + 2"), 3)
-            self.assertEqual(d.EVAL2("[1 + 2, 'foo', None]"), (3, "foo", None))
+        server_id = d.eval("id(self)")
+        self.assertEqual(d.id, server_id)
+        self.assertEqual(d.ID, server_id)
 
-            server_id = d.eval("id(self)")
-            self.assertEqual(d.id, server_id)
-            self.assertEqual(d.ID, server_id)
+        self.assertEqual(d.Name, "spam, spam, spam")
+        self.assertEqual(d.nAME, "spam, spam, spam")
 
-            self.assertEqual(d.Name, "spam, spam, spam")
-            self.assertEqual(d.nAME, "spam, spam, spam")
+        d.SetName("foo bar")
+        self.assertEqual(d.Name, "foo bar")
 
-            d.SetName("foo bar")
-            self.assertEqual(d.Name, "foo bar")
+        # fails.  Why?
+        # d.name = "blah"
+        # self.assertEqual(d.Name, "blah")
 
-            # fails.  Why?
-            # d.name = "blah"
-            # self.assertEqual(d.Name, "blah")
 
+class Test_comtypes(unittest.TestCase):
     def test_comtypes(self):
         from comtypes.client import CreateObject
 
@@ -125,9 +132,10 @@ class Test(unittest.TestCase):
         d.name = "blah"
         self.assertEqual(d.Name, "blah")
 
-    def test_withjscript(self):
-        import os
 
+@unittest.skip("This raises 'ClassFactory cannot supply requested class'. Why?")
+class Test_jscript(unittest.TestCase):
+    def test_withjscript(self):
         jscript = os.path.join(os.path.dirname(__file__), "test_jscript.js")
         errcode = os.system("cscript -nologo %s" % jscript)
         self.assertEqual(errcode, 0)
