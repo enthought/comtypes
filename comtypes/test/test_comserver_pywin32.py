@@ -5,8 +5,17 @@ import comtypes.test.TestComServer
 from comtypes.server.register import register, unregister
 from comtypes.test.find_memleak import find_memleak
 
+try:
+    from win32com.client import Dispatch
+
+    IMPORT_FAILED = False
+except ImportError:
+    IMPORT_FAILED = True
+
 
 def setUpModule():
+    if IMPORT_FAILED:
+        raise unittest.SkipTest("This depends on 'pywin32'.")
     try:
         register(comtypes.test.TestComServer.TestComServer)
     except WindowsError as e:
@@ -69,21 +78,16 @@ class BaseServerTest(object):
     # Is mixed [in], [out] args not compatible with IDispatch???
 
 
-try:
-    from win32com.client import Dispatch
-except ImportError:
-    pass
-else:
+class TestInproc(BaseServerTest, unittest.TestCase):
+    def create_object(self):
+        return Dispatch("TestComServerLib.TestComServer")
 
-    class TestInproc(BaseServerTest, unittest.TestCase):
-        def create_object(self):
-            return Dispatch("TestComServerLib.TestComServer")
 
-    class TestLocalServer(BaseServerTest, unittest.TestCase):
-        def create_object(self):
-            return Dispatch(
-                "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
-            )
+class TestLocalServer(BaseServerTest, unittest.TestCase):
+    def create_object(self):
+        return Dispatch(
+            "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
+        )
 
 
 if __name__ == "__main__":
