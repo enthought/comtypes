@@ -129,7 +129,7 @@ class TestLocalServer(BaseServerTest, unittest.TestCase):
 
 
 @unittest.skipIf(IMPORT_PYWIN32_FAILED, "This depends on 'pywin32'.")
-class TestInproc_win32com(TestInproc):
+class TestInproc_win32com(BaseServerTest, unittest.TestCase):
     def create_object(self):
         return Dispatch("TestComServerLib.TestComServer")
 
@@ -150,13 +150,13 @@ class TestInproc_win32com(TestInproc):
 
 
 @unittest.skipIf(IMPORT_PYWIN32_FAILED, "This depends on 'pywin32'.")
-class TestLocalServer_win32com(TestInproc_win32com):
+class TestLocalServer_win32com(BaseServerTest, unittest.TestCase):
     def create_object(self):
         return Dispatch(
             "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
         )
 
-    # These tests are skipped for the same reason as `TestLocalServer_win32com`.
+    # These tests are skipped for the same reason as `TestInproc_win32com`.
     @unittest.skip("This test make no sense with win32com.")
     def test_get_typeinfo(self):
         pass
