@@ -95,6 +95,10 @@ class TestLocalServer(BaseServerTest, unittest.TestCase):
 
 
 class Test_win32com_Dispatch(unittest.TestCase):
+    @unittest.skip(
+        "It likely fails due to bugs in `GenerateChildFromTypeLibSpec` "
+        "or `GetModuleForCLSID`."
+    )
     def test_win32com_ensure_dispatch(self):
         # EnsureDispatch is case-sensitive
         d = EnsureDispatch("TestDispServerLib.TestDispServer")
