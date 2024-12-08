@@ -1,7 +1,7 @@
 """SAFEARRAY api functions, data types, and constants."""
 
 from ctypes import c_uint, c_ushort, c_void_p, POINTER, Structure, WinDLL
-from ctypes.wintypes import DWORD, LONG, UINT
+from ctypes.wintypes import DWORD, LONG, UINT, USHORT
 
 from comtypes import HRESULT, GUID
 
@@ -19,7 +19,6 @@ from comtypes import HRESULT, GUID
 
 VARTYPE = c_ushort
 PVOID = c_void_p
-USHORT = c_ushort
 
 _oleaut32 = WinDLL("oleaut32")
 

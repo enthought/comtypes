@@ -5,6 +5,7 @@ between different threading appartments.
 """
 
 from ctypes import *
+from ctypes.wintypes import DWORD
 from comtypes import (
     IUnknown,
     STDMETHOD,
@@ -15,7 +16,6 @@ from comtypes import (
     CLSCTX_INPROC_SERVER,
 )
 
-DWORD = c_ulong
 
 
 class IGlobalInterfaceTable(IUnknown):

@@ -1,10 +1,10 @@
 import sys
 from ctypes import *
+from ctypes.wintypes import DWORD
 from comtypes import IUnknown, HRESULT, COMMETHOD, GUID, BSTR
 from comtypes.hresult import *
 
 LPCOLESTR = c_wchar_p
-DWORD = c_ulong
 
 
 class ICreateErrorInfo(IUnknown):
