@@ -4,6 +4,14 @@ import unittest
 import comtypes.test.TestDispServer
 from comtypes.server.register import register, unregister
 
+try:
+    from win32com.client import Dispatch
+    from win32com.client.gencache import EnsureDispatch
+
+    IMPORT_PYWIN32_FAILED = False
+except ImportError:
+    IMPORT_PYWIN32_FAILED = True
+
 
 def setUpModule():
     try:
@@ -25,8 +33,6 @@ def tearDownModule():
 class Test_win32com(unittest.TestCase):
     def test_win32com(self):
         # EnsureDispatch is case-sensitive
-        from win32com.client.gencache import EnsureDispatch
-
         d = EnsureDispatch("TestDispServerLib.TestDispServer")
 
         self.assertEqual(d.eval("3.14"), 3.14)
@@ -54,8 +60,6 @@ class Test_win32com(unittest.TestCase):
 
     def test_win32com_dyndispatch(self):
         # dynamic Dispatch is case-IN-sensitive
-        from win32com.client.dynamic import Dispatch
-
         d = Dispatch("TestDispServerLib.TestDispServer")
 
         self.assertEqual(d.eval("3.14"), 3.14)
