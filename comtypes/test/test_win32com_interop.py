@@ -2,8 +2,8 @@ import unittest
 from ctypes import POINTER, PyDLL, byref, c_void_p, py_object
 from ctypes.wintypes import BOOL
 
-from comtypes import IUnknown
-from comtypes.automation import IDispatch, VARIANT
+from comtypes import COMObject, IUnknown
+from comtypes.automation import VARIANT, IDispatch
 from comtypes.client import CreateObject
 
 try:
@@ -120,9 +120,6 @@ def comtypes_get_refcount(ptr):
     a comtypes COM object"""
     ptr.AddRef()
     return ptr.Release()
-
-
-from comtypes import COMObject
 
 
 class MyComObject(COMObject):
