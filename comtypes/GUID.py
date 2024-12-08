@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 def binary(obj: "GUID") -> bytes:
     return bytes(obj)
 
+
 _ole32 = oledll.ole32
 
 _StringFromCLSID = _ole32.StringFromCLSID
