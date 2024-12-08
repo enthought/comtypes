@@ -31,6 +31,10 @@ def tearDownModule():
 
 @unittest.skipIf(IMPORT_PYWIN32_FAILED, "This depends on 'pywin32'.")
 class Test_win32com(unittest.TestCase):
+    @unittest.skip(
+        "It likely fails due to bugs in `GenerateChildFromTypeLibSpec` "
+        "or `GetModuleForCLSID`."
+    )
     def test_win32com_ensure_dispatch(self):
         # EnsureDispatch is case-sensitive
         d = EnsureDispatch("TestDispServerLib.TestDispServer")
