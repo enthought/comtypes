@@ -121,37 +121,6 @@ class TestLocalServer(BaseServerTest, unittest.TestCase):
         pass
 
 
-try:
-    from win32com.client import Dispatch
-except ImportError:
-    pass
-else:
-
-    @unittest.skip("This depends on 'pywin32'.")
-    class TestInproc_win32com(TestInproc):
-        def create_object(self):
-            return Dispatch("TestComServerLib.TestComServer")
-
-        # These tests make no sense with win32com, override to disable them:
-        def test_get_typeinfo(self):
-            pass
-
-        def test_getname(self):
-            pass
-
-        def test_mixedinout(self):
-            # Not sure about this; it raise 'Invalid Number of parameters'
-            # Is mixed [in], [out] args not compatible with IDispatch???
-            pass
-
-    @unittest.skip("This depends on 'pywin32'.")
-    class TestLocalServer_win32com(TestInproc_win32com):
-        def create_object(self):
-            return Dispatch(
-                "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
-            )
-
-
 class TestEvents(unittest.TestCase):
     def test(self):
         import comtypes.test.test_comserver
