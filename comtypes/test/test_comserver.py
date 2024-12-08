@@ -10,6 +10,14 @@ from comtypes.server.register import register, unregister
 from comtypes.test.find_memleak import find_memleak
 
 
+try:
+    from win32com.client import Dispatch
+
+    IMPORT_PYWIN32_FAILED = False
+except ImportError:
+    IMPORT_PYWIN32_FAILED = True
+
+
 def setUpModule():
     try:
         register(comtypes.test.TestComServer.TestComServer)
@@ -121,35 +129,30 @@ class TestLocalServer(BaseServerTest, unittest.TestCase):
         pass
 
 
-try:
-    from win32com.client import Dispatch
-except ImportError:
-    pass
-else:
+@unittest.skip("This depends on 'pywin32'.")
+class TestInproc_win32com(TestInproc):
+    def create_object(self):
+        return Dispatch("TestComServerLib.TestComServer")
 
-    @unittest.skip("This depends on 'pywin32'.")
-    class TestInproc_win32com(TestInproc):
-        def create_object(self):
-            return Dispatch("TestComServerLib.TestComServer")
+    # These tests make no sense with win32com, override to disable them:
+    def test_get_typeinfo(self):
+        pass
 
-        # These tests make no sense with win32com, override to disable them:
-        def test_get_typeinfo(self):
-            pass
+    def test_getname(self):
+        pass
 
-        def test_getname(self):
-            pass
+    def test_mixedinout(self):
+        # Not sure about this; it raise 'Invalid Number of parameters'
+        # Is mixed [in], [out] args not compatible with IDispatch???
+        pass
 
-        def test_mixedinout(self):
-            # Not sure about this; it raise 'Invalid Number of parameters'
-            # Is mixed [in], [out] args not compatible with IDispatch???
-            pass
 
-    @unittest.skip("This depends on 'pywin32'.")
-    class TestLocalServer_win32com(TestInproc_win32com):
-        def create_object(self):
-            return Dispatch(
-                "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
-            )
+@unittest.skip("This depends on 'pywin32'.")
+class TestLocalServer_win32com(TestInproc_win32com):
+    def create_object(self):
+        return Dispatch(
+            "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
+        )
 
 
 class TestEvents(unittest.TestCase):
