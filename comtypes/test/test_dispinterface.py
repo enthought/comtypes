@@ -29,9 +29,9 @@ def tearDownModule():
     unregister(comtypes.test.TestDispServer.TestDispServer)
 
 
-@unittest.skip("This depends on 'pywin32'.")
+@unittest.skipIf(IMPORT_PYWIN32_FAILED, "This depends on 'pywin32'.")
 class Test_win32com(unittest.TestCase):
-    def test_win32com(self):
+    def test_win32com_ensure_dispatch(self):
         # EnsureDispatch is case-sensitive
         d = EnsureDispatch("TestDispServerLib.TestDispServer")
 
@@ -58,7 +58,7 @@ class Test_win32com(unittest.TestCase):
         d.name = "blah"
         self.assertEqual(d.name, "blah")
 
-    def test_win32com_dyndispatch(self):
+    def test_win32com_dynamic_dispatch(self):
         # dynamic Dispatch is case-IN-sensitive
         d = Dispatch("TestDispServerLib.TestDispServer")
 
