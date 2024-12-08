@@ -2,8 +2,8 @@ import unittest
 from ctypes import POINTER, PyDLL, byref, c_void_p, py_object
 from ctypes.wintypes import BOOL
 
-from comtypes import IUnknown
-from comtypes.automation import IDispatch
+from comtypes import COMObject, IUnknown
+from comtypes.automation import VARIANT, IDispatch
 from comtypes.client import CreateObject
 
 try:
@@ -11,6 +11,27 @@ try:
     import win32com.client
 
     IMPORT_FAILED = False
+    # pywin32 is available.  The pythoncom dll contains two handy
+    # exported functions that allow to create a VARIANT from a Python
+    # object, also a function that unpacks a VARIANT into a Python
+    # object.
+    #
+    # This allows us to create und unpack SAFEARRAY instances
+    # contained in VARIANTs, and check for consistency with the
+    # comtypes code.
+    _dll = PyDLL(pythoncom.__file__)
+
+    # c:/sf/pywin32/com/win32com/src/oleargs.cpp 213
+    # PyObject *PyCom_PyObjectFromVariant(const VARIANT *var)
+    unpack = _dll.PyCom_PyObjectFromVariant
+    unpack.restype = py_object
+    unpack.argtypes = (POINTER(VARIANT),)
+
+    # c:/sf/pywin32/com/win32com/src/oleargs.cpp 54
+    # BOOL PyCom_VariantFromPyObject(PyObject *obj, VARIANT *var)
+    _pack = _dll.PyCom_VariantFromPyObject
+    _pack.argtypes = py_object, POINTER(VARIANT)
+    _pack.restype = BOOL
     # We use the PyCom_PyObjectFromIUnknown function in pythoncom25.dll to
     # convert a comtypes COM pointer into a pythoncom COM pointer.
     # Fortunately this function is exported by the dll...
@@ -38,6 +59,47 @@ def setUpModule():
         )
 
 
+################################################################
+
+
+def pack(obj):
+    var = VARIANT()
+    _pack(obj, byref(var))
+    return var
+
+
+class PyWinSafeArrayTest(unittest.TestCase):
+    def test_1dim(self):
+        data = (1, 2, 3)
+        variant = pack(data)
+        self.assertEqual(variant.value, data)
+        self.assertEqual(unpack(variant), data)
+
+    def test_2dim(self):
+        data = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+        variant = pack(data)
+        self.assertEqual(variant.value, data)
+        self.assertEqual(unpack(variant), data)
+
+    def test_3dim(self):
+        data = (((1, 2), (3, 4), (5, 6)), ((7, 8), (9, 10), (11, 12)))
+        variant = pack(data)
+        self.assertEqual(variant.value, data)
+        self.assertEqual(unpack(variant), data)
+
+    def test_4dim(self):
+        data = (
+            (((1, 2), (3, 4)), ((5, 6), (7, 8))),
+            (((9, 10), (11, 12)), ((13, 14), (15, 16))),
+        )
+        variant = pack(data)
+        self.assertEqual(variant.value, data)
+        self.assertEqual(unpack(variant), data)
+
+
+################################################################
+
+
 def comtypes2pywin(ptr, interface=None):
     """Convert a comtypes pointer 'ptr' into a pythoncom
     PyI<interface> object.
@@ -53,17 +115,11 @@ def comtypes2pywin(ptr, interface=None):
     return _PyCom_PyObjectFromIUnknown(ptr, byref(interface._iid_), True)
 
 
-################################################################
-
-
 def comtypes_get_refcount(ptr):
     """Helper function for testing: return the COM reference count of
     a comtypes COM object"""
     ptr.AddRef()
     return ptr.Release()
-
-
-from comtypes import COMObject
 
 
 class MyComObject(COMObject):
@@ -72,9 +128,6 @@ class MyComObject(COMObject):
     IUnknown methods; they are implemented in the base class."""
 
     _com_interfaces_ = [IDispatch]
-
-
-################################################################
 
 
 class ConvertComtypesPtrToPythonComObjTest(unittest.TestCase):
