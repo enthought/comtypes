@@ -10,7 +10,7 @@ try:
     import pythoncom
     import win32com.client
 
-    skip = False
+    IMPORT_FAILED = False
     # We use the PyCom_PyObjectFromIUnknown function in pythoncom25.dll to
     # convert a comtypes COM pointer into a pythoncom COM pointer.
     # Fortunately this function is exported by the dll...
@@ -27,11 +27,11 @@ except ImportError:
     # if it is available since pythoncom is not a project dependency and adding tests depending
     # on the vagaries of various testing environments is not deterministic.
     # TODO: Evaluate if we should just remove this test or what.
-    skip = True
+    IMPORT_FAILED = True
 
 
 def setUpModule():
-    if skip:
+    if IMPORT_FAILED:
         raise unittest.SkipTest(
             "This test requires the pythoncom library installed.  If this is "
             "important tests then we need to add dev dependencies to the project that include pythoncom."
