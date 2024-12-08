@@ -9,6 +9,13 @@ from comtypes.client import CreateObject
 from comtypes.server.register import register, unregister
 from comtypes.test.find_memleak import find_memleak
 
+try:
+    from win32com.client import Dispatch
+
+    IMPORT_PYWIN32_FAILED = False
+except ImportError:
+    IMPORT_PYWIN32_FAILED = True
+
 
 def setUpModule():
     try:
@@ -121,35 +128,46 @@ class TestLocalServer(BaseServerTest, unittest.TestCase):
         pass
 
 
-try:
-    from win32com.client import Dispatch
-except ImportError:
-    pass
-else:
+@unittest.skipIf(IMPORT_PYWIN32_FAILED, "This depends on 'pywin32'.")
+class TestInproc_win32com(BaseServerTest, unittest.TestCase):
+    def create_object(self):
+        return Dispatch("TestComServerLib.TestComServer")
 
-    @unittest.skip("This depends on 'pywin32'.")
-    class TestInproc_win32com(TestInproc):
-        def create_object(self):
-            return Dispatch("TestComServerLib.TestComServer")
+    # These tests make no sense with win32com, override to disable them:
+    @unittest.skip("This test make no sense with win32com.")
+    def test_get_typeinfo(self):
+        pass
 
-        # These tests make no sense with win32com, override to disable them:
-        def test_get_typeinfo(self):
-            pass
+    @unittest.skip("This test make no sense with win32com.")
+    def test_getname(self):
+        pass
 
-        def test_getname(self):
-            pass
+    @unittest.skip("This test make no sense with win32com.")
+    def test_mixedinout(self):
+        # Not sure about this; it raise 'Invalid Number of parameters'
+        # Is mixed [in], [out] args not compatible with IDispatch???
+        pass
 
-        def test_mixedinout(self):
-            # Not sure about this; it raise 'Invalid Number of parameters'
-            # Is mixed [in], [out] args not compatible with IDispatch???
-            pass
 
-    @unittest.skip("This depends on 'pywin32'.")
-    class TestLocalServer_win32com(TestInproc_win32com):
-        def create_object(self):
-            return Dispatch(
-                "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
-            )
+@unittest.skipIf(IMPORT_PYWIN32_FAILED, "This depends on 'pywin32'.")
+class TestLocalServer_win32com(BaseServerTest, unittest.TestCase):
+    def create_object(self):
+        return Dispatch(
+            "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
+        )
+
+    # These tests are skipped for the same reason as `TestInproc_win32com`.
+    @unittest.skip("This test make no sense with win32com.")
+    def test_get_typeinfo(self):
+        pass
+
+    @unittest.skip("This test make no sense with win32com.")
+    def test_getname(self):
+        pass
+
+    @unittest.skip("This test make no sense with win32com.")
+    def test_mixedinout(self):
+        pass
 
 
 class TestEvents(unittest.TestCase):

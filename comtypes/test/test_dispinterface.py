@@ -4,6 +4,14 @@ import unittest
 import comtypes.test.TestDispServer
 from comtypes.server.register import register, unregister
 
+try:
+    from win32com.client import Dispatch
+    from win32com.client.gencache import EnsureDispatch
+
+    IMPORT_PYWIN32_FAILED = False
+except ImportError:
+    IMPORT_PYWIN32_FAILED = True
+
 
 def setUpModule():
     try:
@@ -21,12 +29,14 @@ def tearDownModule():
     unregister(comtypes.test.TestDispServer.TestDispServer)
 
 
-@unittest.skip("This depends on 'pywin32'.")
+@unittest.skipIf(IMPORT_PYWIN32_FAILED, "This depends on 'pywin32'.")
 class Test_win32com(unittest.TestCase):
-    def test_win32com(self):
+    @unittest.skip(
+        "It likely fails due to bugs in `GenerateChildFromTypeLibSpec` "
+        "or `GetModuleForCLSID`."
+    )
+    def test_win32com_ensure_dispatch(self):
         # EnsureDispatch is case-sensitive
-        from win32com.client.gencache import EnsureDispatch
-
         d = EnsureDispatch("TestDispServerLib.TestDispServer")
 
         self.assertEqual(d.eval("3.14"), 3.14)
@@ -52,10 +62,8 @@ class Test_win32com(unittest.TestCase):
         d.name = "blah"
         self.assertEqual(d.name, "blah")
 
-    def test_win32com_dyndispatch(self):
+    def test_win32com_dynamic_dispatch(self):
         # dynamic Dispatch is case-IN-sensitive
-        from win32com.client.dynamic import Dispatch
-
         d = Dispatch("TestDispServerLib.TestDispServer")
 
         self.assertEqual(d.eval("3.14"), 3.14)
