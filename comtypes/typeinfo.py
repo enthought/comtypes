@@ -12,7 +12,7 @@ import weakref
 
 import ctypes
 from ctypes import HRESULT, POINTER, _Pointer, byref, c_int, c_void_p, c_wchar_p
-from ctypes.wintypes import DWORD, LONG, UINT, ULONG, WCHAR, WORD
+from ctypes.wintypes import DWORD, LONG, UINT, ULONG, WCHAR, WORD, INT, SHORT, USHORT
 from comtypes import BSTR, _CData, COMMETHOD, GUID, IID, IUnknown, STDMETHOD
 from comtypes.automation import DISPID, LCID, SCODE
 from comtypes.automation import DISPPARAMS, EXCEPINFO, VARIANT, VARIANTARG, VARTYPE
@@ -28,15 +28,12 @@ is_64_bit = sys.maxsize > 2**32
 
 BOOL = c_int
 HREFTYPE = DWORD
-INT = c_int
 MEMBERID = DISPID
 OLECHAR = WCHAR
 PVOID = c_void_p
-SHORT = ctypes.c_short
 # See https://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx#ULONG_PTR  # noqa
 ULONG_PTR = ctypes.c_uint64 if is_64_bit else ctypes.c_ulong
 
-USHORT = ctypes.c_ushort
 LPOLESTR = POINTER(OLECHAR)
 
 ################################################################

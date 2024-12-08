@@ -25,6 +25,7 @@ from ctypes import *  # noqa
 from ctypes import HRESULT  # noqa
 from ctypes import _Pointer, _SimpleCData  # noqa
 from ctypes import c_int, c_ulong, oledll, windll
+from ctypes.wintypes import DWORD
 import logging
 import sys
 from typing import TYPE_CHECKING
@@ -72,7 +73,6 @@ class ReturnHRESULT(Exception):
 
 _GUID = GUID
 IID = GUID
-DWORD = c_ulong
 
 wireHWND = c_ulong
 
