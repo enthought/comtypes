@@ -77,39 +77,33 @@ class MyComObject(COMObject):
 ################################################################
 
 
-class Test(unittest.TestCase):
-    def tearDown(self):
-        if hasattr(self, "ie"):
-            self.ie.Quit()
-            del self.ie
-
+class ConvertComtypesPtrToPythonComObjTest(unittest.TestCase):
     def test_mycomobject(self):
         o = MyComObject()
         p = comtypes2pywin(o, IDispatch)
         disp = win32com.client.Dispatch(p)
         self.assertEqual(repr(disp), "<COMObject <unknown>>")
 
-    def test_ie(self):
-        # Convert a comtypes COM interface pointer into a win32com COM
-        # pointer.
-        ie = self.ie = CreateObject("InternetExplorer.Application")
+    def test_refcount(self):
+        # Convert a comtypes COM interface pointer into a win32com COM pointer.
+        dic = CreateObject("Scripting.Dictionary")
         # The COM refcount of the created object is 1:
-        self.assertEqual(comtypes_get_refcount(ie), 1)
-        # IE starts invisible:
-        self.assertEqual(ie.Visible, False)
+        self.assertEqual(comtypes_get_refcount(dic), 1)
+        dic["foo"] = "bar"
+        self.assertEqual(dic.Item("foo"), "bar")
 
         # Create a pythoncom PyIDispatch object from it:
-        p = comtypes2pywin(ie, interface=IDispatch)
-        self.assertEqual(comtypes_get_refcount(ie), 2)
+        p = comtypes2pywin(dic, interface=IDispatch)
+        self.assertEqual(comtypes_get_refcount(dic), 2)
 
         # Make it usable...
         disp = win32com.client.Dispatch(p)
-        self.assertEqual(comtypes_get_refcount(ie), 2)
-        self.assertEqual(disp.Visible, False)
+        self.assertEqual(comtypes_get_refcount(dic), 2)
+        self.assertEqual(disp.Item("foo"), "bar")
 
         # Cleanup and make sure that the COM refcounts are correct
         del p, disp
-        self.assertEqual(comtypes_get_refcount(ie), 1)
+        self.assertEqual(comtypes_get_refcount(dic), 1)
 
 
 if __name__ == "__main__":
