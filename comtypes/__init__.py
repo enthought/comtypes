@@ -25,7 +25,7 @@ from ctypes import *  # noqa
 from ctypes import HRESULT  # noqa
 from ctypes import _Pointer, _SimpleCData  # noqa
 from ctypes import c_int, c_ulong, oledll, windll
-from ctypes.wintypes import DWORD
+from ctypes.wintypes import DWORD #noqa
 import logging
 import sys
 from typing import TYPE_CHECKING
