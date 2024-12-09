@@ -177,7 +177,9 @@ class VariantTest(unittest.TestCase):
 
         v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
         value = v.value
-        self.assertEqual((1.0, 2.0, 3.0), (value.red, value.green, value.blue))
+        self.assertEqual(1.0, value.red)  # type: ignore
+        self.assertEqual(2.0, value.green)  # type: ignore
+        self.assertEqual(3.0, value.blue)  # type: ignore
 
         def func():
             v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
