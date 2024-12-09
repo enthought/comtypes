@@ -211,7 +211,7 @@ class SafeArrayTest(unittest.TestCase):
 
 
 class PropPutRefTest(unittest.TestCase):
-    def test(self, dynamic=False):
+    def doit(self, dynamic: bool):
         d = CreateObject("Scripting.Dictionary", dynamic=dynamic)
         s = CreateObject("TestComServerLib.TestComServer", dynamic=dynamic)
         s.name = "the value"
@@ -235,8 +235,11 @@ class PropPutRefTest(unittest.TestCase):
         d.Item["var"] = VARIANT(s)
         self.assertEqual(d.Item["var"], s)
 
-    def test_dispatch(self):
-        return self.test(dynamic=True)
+    def test_earlybind(self):
+        self.doit(dynamic=False)
+
+    def test_latebind(self):
+        self.doit(dynamic=True)
 
 
 class TestEvents(unittest.TestCase):
