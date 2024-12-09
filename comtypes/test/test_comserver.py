@@ -5,7 +5,7 @@ from typing import Any
 
 import comtypes.test.TestComServer
 from comtypes import BSTR
-from comtypes.automation import VARIANT
+from comtypes.automation import VARIANT, _midlSAFEARRAY
 from comtypes.client import CreateObject
 from comtypes.server.register import register, unregister
 from comtypes.test.find_memleak import find_memleak
@@ -184,6 +184,27 @@ class VariantTest(unittest.TestCase):
             return v.value
 
         bytes = find_memleak(func)
+        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
+
+
+class SafeArrayTest(unittest.TestCase):
+    def test_UDT(self):
+        from comtypes.gen.TestComServerLib import MYCOLOR
+
+        t = _midlSAFEARRAY(MYCOLOR)
+        self.assertTrue(t is _midlSAFEARRAY(MYCOLOR))
+
+        sa = t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
+
+        self.assertEqual(
+            [(x.red, x.green, x.blue) for x in sa[0]],
+            [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)],
+        )
+
+        def doit():
+            t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
+
+        bytes = find_memleak(doit)
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
 
