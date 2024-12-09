@@ -1,7 +1,8 @@
 """comtypes.GUID module"""
 
 from ctypes import oledll, windll
-from ctypes import byref, c_byte, c_ushort, c_ulong, c_wchar_p, Structure
+from ctypes import byref, c_wchar_p, Structure
+from ctypes.wintypes import BYTE, WORD, DWORD
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -11,10 +12,6 @@ if TYPE_CHECKING:
 def binary(obj: "GUID") -> bytes:
     return bytes(obj)
 
-
-BYTE = c_byte
-WORD = c_ushort
-DWORD = c_ulong
 
 _ole32 = oledll.ole32
 
