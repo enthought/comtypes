@@ -221,29 +221,6 @@ class SafeArrayTestCase(unittest.TestCase):
         del sa
         self.assertEqual((a, b), (com_refcnt(plib), com_refcnt(punk)))
 
-    @unittest.skip(
-        "This fails with a 'library not registered' error.  Need to figure out how to "
-        "register TestComServerLib (without admin if possible)."
-    )
-    def test_UDT(self):
-        from comtypes.gen.TestComServerLib import MYCOLOR
-
-        t = _midlSAFEARRAY(MYCOLOR)
-        self.assertTrue(t is _midlSAFEARRAY(MYCOLOR))
-
-        sa = t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
-
-        self.assertEqual(
-            [(x.red, x.green, x.blue) for x in sa[0]],
-            [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)],
-        )
-
-        def doit():
-            t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
-
-        bytes = find_memleak(doit)
-        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
-
 
 if __name__ == "__main__":
     unittest.main()
