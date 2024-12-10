@@ -194,23 +194,6 @@ class VariantTestCase(unittest.TestCase):
         v.value = ""
         self.assertEqual(v.vt, VT_BSTR)
 
-    @unittest.skip(
-        "Fails on creating `TestComServerLib.TestComServer`.  Library not registered."
-    )
-    def test_UDT(self):
-        from comtypes.gen.TestComServerLib import MYCOLOR
-
-        v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
-        value = v.value
-        self.assertEqual((1.0, 2.0, 3.0), (value.red, value.green, value.blue))
-
-        def func():
-            v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
-            return v.value
-
-        bytes = find_memleak(func)
-        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
-
     def test_ctypes_in_variant(self):
         v = VARIANT()
         objs = [

@@ -5,6 +5,7 @@ from typing import Any
 
 import comtypes.test.TestComServer
 from comtypes import BSTR
+from comtypes.automation import VARIANT, _midlSAFEARRAY
 from comtypes.client import CreateObject
 from comtypes.server.register import register, unregister
 from comtypes.test.find_memleak import find_memleak
@@ -168,6 +169,77 @@ class TestLocalServer_win32com(BaseServerTest, unittest.TestCase):
     @unittest.skip("This test make no sense with win32com.")
     def test_mixedinout(self):
         pass
+
+
+class VariantTest(unittest.TestCase):
+    def test_UDT(self):
+        from comtypes.gen.TestComServerLib import MYCOLOR
+
+        v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
+        value = v.value
+        self.assertEqual(1.0, value.red)  # type: ignore
+        self.assertEqual(2.0, value.green)  # type: ignore
+        self.assertEqual(3.0, value.blue)  # type: ignore
+
+        def func():
+            v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
+            return v.value
+
+        bytes = find_memleak(func)
+        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
+
+
+class SafeArrayTest(unittest.TestCase):
+    def test_UDT(self):
+        from comtypes.gen.TestComServerLib import MYCOLOR
+
+        t = _midlSAFEARRAY(MYCOLOR)
+        self.assertTrue(t is _midlSAFEARRAY(MYCOLOR))
+
+        sa = t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
+
+        self.assertEqual(
+            [(x.red, x.green, x.blue) for x in sa[0]],
+            [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)],
+        )
+
+        def doit():
+            t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
+
+        bytes = find_memleak(doit)
+        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
+
+
+class PropPutRefTest(unittest.TestCase):
+    def doit(self, dynamic: bool):
+        d = CreateObject("Scripting.Dictionary", dynamic=dynamic)
+        s = CreateObject("TestComServerLib.TestComServer", dynamic=dynamic)
+        s.name = "the value"
+
+        # This calls propputref, since we assign an Object
+        d.Item["object"] = s
+        # This calls propput, since we assing a Value
+        d.Item["value"] = s.name
+
+        self.assertEqual(d.Item["object"], s)
+        self.assertEqual(d.Item["object"].name, "the value")
+        self.assertEqual(d.Item["value"], "the value")
+
+        # Changing the default property of the object
+        s.name = "foo bar"
+        self.assertEqual(d.Item["object"], s)
+        self.assertEqual(d.Item["object"].name, "foo bar")
+        self.assertEqual(d.Item["value"], "the value")
+
+        # This also calls propputref since we assign an Object
+        d.Item["var"] = VARIANT(s)
+        self.assertEqual(d.Item["var"], s)
+
+    def test_earlybind(self):
+        self.doit(dynamic=False)
+
+    def test_latebind(self):
+        self.doit(dynamic=True)
 
 
 class TestEvents(unittest.TestCase):
