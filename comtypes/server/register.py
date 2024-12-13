@@ -232,8 +232,8 @@ class RegistryEntries(object):
         self._cls = cls
         self._table = []
 
-    def _add(self, key: str, subkey: str, name: str, value: str) -> None:
-        self._table.append((key, subkey, name, value))
+    def _add(self, rootkey: int, subkey: str, name: str, value: str) -> None:
+        self._table.append((rootkey, subkey, name, value))
 
     def _get_full_classname(self, cls):
         """Return <modulename>.<classname> for 'cls'."""
@@ -248,7 +248,7 @@ class RegistryEntries(object):
         dirname = os.path.dirname(sys.modules[modname].__file__)
         return os.path.abspath(dirname)
 
-    def __iter__(self) -> Iterator[Tuple[str, str, str, str]]:
+    def __iter__(self) -> Iterator[Tuple[int, str, str, str]]:
         """Return a iterator of tuples containing registry entries.
 
         The tuples must be (key, subkey, name, value).
