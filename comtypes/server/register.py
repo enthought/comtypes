@@ -36,17 +36,18 @@ Now, debug the object, and when done delete logging info:
   python mycomobj.py /nodebug
 """
 
-import sys
-import os
-import winreg
 import logging
+import os
+import sys
+import winreg
+from ctypes import WinError, c_ulong, c_wchar_p, create_string_buffer, sizeof, windll
+from typing import Iterator, Tuple
 
 import comtypes
-from comtypes.typeinfo import LoadTypeLibEx, UnRegisterTypeLib, REGKIND_REGISTER
+import comtypes.server.inprocserver
 from comtypes.hresult import *
 from comtypes.server import w_getopt
-import comtypes.server.inprocserver
-from ctypes import windll, c_ulong, c_wchar_p, WinError, sizeof, create_string_buffer
+from comtypes.typeinfo import REGKIND_REGISTER, LoadTypeLibEx, UnRegisterTypeLib
 
 _debug = logging.getLogger(__name__).debug
 
@@ -243,7 +244,7 @@ class RegistryEntries(object):
         dirname = os.path.dirname(sys.modules[modname].__file__)
         return os.path.abspath(dirname)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, str, str, str]]:
         """Return a iterator of tuples containing registry entries.
 
         The tuples must be (key, subkey, name, value).
