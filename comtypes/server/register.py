@@ -147,8 +147,7 @@ class Registrar(object):
             self._register(cls, executable)
 
     def _register(self, cls, executable=None):
-        table = self._registry_entries(cls)
-        table.sort()
+        table = sorted(RegistryEntries(cls))
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
             _debug("[%s\\%s]", _explain(hkey), subkey)
@@ -184,7 +183,7 @@ class Registrar(object):
     def _unregister(self, cls, force=False):
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
-        table = [t[:2] for t in self._registry_entries(cls)]
+        table = [t[:2] for t in RegistryEntries(cls)]
         # only unique entries
         table = list(set(table))
         table.sort()
@@ -214,9 +213,6 @@ class Registrar(object):
                     raise
         _debug("Done")
 
-    def _registry_entries(self, cls):
-        return RegistryEntries().get(cls)
-
 
 def _get_serverdll():
     """Return the pathname of the dll hosting the COM object."""
@@ -231,6 +227,9 @@ def _get_serverdll():
 
 
 class RegistryEntries(object):
+    def __init__(self, cls):
+        self._cls = cls
+
     def _get_full_classname(self, cls):
         """Return <modulename>.<classname> for 'cls'."""
         modname = cls.__module__
@@ -244,8 +243,8 @@ class RegistryEntries(object):
         dirname = os.path.dirname(sys.modules[modname].__file__)
         return os.path.abspath(dirname)
 
-    def get(self, cls):
-        """Return a sequence of tuples containing registry entries.
+    def __iter__(self):
+        """Return a iterator of tuples containing registry entries.
 
         The tuples must be (key, subkey, name, value).
 
@@ -265,6 +264,7 @@ class RegistryEntries(object):
         Note that the first part of the progid string is typically the
         IDL library name of the type library containing the coclass.
         """
+        cls = self._cls
         HKCR = winreg.HKEY_CLASSES_ROOT
 
         # table format: rootkey, subkey, valuename, value
@@ -365,7 +365,7 @@ class RegistryEntries(object):
         if reg_tlib is not None:
             append(HKCR, rf"CLSID\{reg_clsid}\Typelib", "", reg_tlib[0])
 
-        return table
+        yield from table
 
 
 ################################################################
