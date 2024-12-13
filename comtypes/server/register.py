@@ -159,7 +159,7 @@ class Registrar(object):
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
             if hasattr(sys, "frozendllhandle"):
-                dll = self._get_serverdll()
+                dll = _get_serverdll()
                 _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", dll)
                 LoadTypeLibEx(dll, REGKIND_REGISTER)
             else:
@@ -214,17 +214,23 @@ class Registrar(object):
                     raise
         _debug("Done")
 
-    def _get_serverdll(self):
-        """Return the pathname of the dll hosting the COM object."""
-        handle = getattr(sys, "frozendllhandle", None)
-        if handle is not None:
-            buf = create_string_buffer(260)
-            windll.kernel32.GetModuleFileNameA(handle, buf, sizeof(buf))
-            return buf[:]
-        import _ctypes
+    def _registry_entries(self, cls):
+        return RegistryEntries().get(cls)
 
-        return _ctypes.__file__
 
+def _get_serverdll():
+    """Return the pathname of the dll hosting the COM object."""
+    handle = getattr(sys, "frozendllhandle", None)
+    if handle is not None:
+        buf = create_string_buffer(260)
+        windll.kernel32.GetModuleFileNameA(handle, buf, sizeof(buf))
+        return buf[:]
+    import _ctypes
+
+    return _ctypes.__file__
+
+
+class RegistryEntries(object):
     def _get_full_classname(self, cls):
         """Return <modulename>.<classname> for 'cls'."""
         modname = cls.__module__
@@ -238,7 +244,7 @@ class Registrar(object):
         dirname = os.path.dirname(sys.modules[modname].__file__)
         return os.path.abspath(dirname)
 
-    def _registry_entries(self, cls):
+    def get(self, cls):
         """Return a sequence of tuples containing registry entries.
 
         The tuples must be (key, subkey, name, value).
@@ -327,9 +333,7 @@ class Registrar(object):
             None,
             "dll",
         ):
-            append(
-                HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", self._get_serverdll()
-            )
+            append(HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", _get_serverdll())
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
                 not hasattr(sys, "frozendllhandle")
