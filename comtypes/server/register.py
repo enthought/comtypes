@@ -230,6 +230,10 @@ def _get_serverdll():
 class RegistryEntries(object):
     def __init__(self, cls):
         self._cls = cls
+        self._table = []
+
+    def _add(self, key: str, subkey: str, name: str, value: str) -> None:
+        self._table.append((key, subkey, name, value))
 
     def _get_full_classname(self, cls):
         """Return <modulename>.<classname> for 'cls'."""
@@ -268,10 +272,6 @@ class RegistryEntries(object):
         cls = self._cls
         HKCR = winreg.HKEY_CLASSES_ROOT
 
-        # table format: rootkey, subkey, valuename, value
-        table = []
-        append = lambda *args: table.append(args)
-
         # basic entry - names the comobject
 
         # that's the only required attribute for registration
@@ -285,30 +285,30 @@ class RegistryEntries(object):
             )
             if reg_desc:
                 reg_desc = reg_desc.replace(".", " ")
-        append(HKCR, f"CLSID\\{reg_clsid}", "", reg_desc)
+        self._add(HKCR, f"CLSID\\{reg_clsid}", "", reg_desc)
 
         reg_progid = getattr(cls, "_reg_progid_", None)
         if reg_progid:
             # for ProgIDFromCLSID:
-            append(HKCR, f"CLSID\\{reg_clsid}\\ProgID", "", reg_progid)  # 1
+            self._add(HKCR, f"CLSID\\{reg_clsid}\\ProgID", "", reg_progid)  # 1
 
             # for CLSIDFromProgID
             if reg_desc:
-                append(HKCR, reg_progid, "", reg_desc)  # 2
-            append(HKCR, f"{reg_progid}\\CLSID", "", reg_clsid)  # 3
+                self._add(HKCR, reg_progid, "", reg_desc)  # 2
+            self._add(HKCR, f"{reg_progid}\\CLSID", "", reg_clsid)  # 3
 
             reg_novers_progid = getattr(cls, "_reg_novers_progid_", None)
             if reg_novers_progid:
-                append(
+                self._add(
                     HKCR,
                     f"CLSID\\{reg_clsid}\\VersionIndependentProgID",  # 1a
                     "",
                     reg_novers_progid,
                 )
                 if reg_desc:
-                    append(HKCR, reg_novers_progid, "", reg_desc)  # 2a
-                append(HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
-                append(HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
+                    self._add(HKCR, reg_novers_progid, "", reg_desc)  # 2a
+                self._add(HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
+                self._add(HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
 
         clsctx = getattr(cls, "_reg_clsctx_", 0)
 
@@ -324,9 +324,11 @@ class RegistryEntries(object):
                 script = os.path.abspath(sys.modules[cls.__module__].__file__)
                 if " " in script:
                     script = f'"{script}"'
-                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
+                self._add(
+                    HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}"
+                )
             else:
-                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
+                self._add(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
@@ -334,19 +336,19 @@ class RegistryEntries(object):
             None,
             "dll",
         ):
-            append(HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", _get_serverdll())
+            self._add(HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", _get_serverdll())
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
                 not hasattr(sys, "frozendllhandle")
                 or not comtypes.server.inprocserver._clsid_to_class
             ):
-                append(
+                self._add(
                     HKCR,
                     rf"CLSID\{reg_clsid}\InprocServer32",
                     "PythonClass",
                     self._get_full_classname(cls),
                 )
-                append(
+                self._add(
                     HKCR,
                     rf"CLSID\{reg_clsid}\InprocServer32",
                     "PythonPath",
@@ -355,7 +357,7 @@ class RegistryEntries(object):
 
             reg_threading = getattr(cls, "_reg_threading_", None)
             if reg_threading is not None:
-                append(
+                self._add(
                     HKCR,
                     rf"CLSID\{reg_clsid}\InprocServer32",
                     "ThreadingModel",
@@ -364,9 +366,9 @@ class RegistryEntries(object):
 
         reg_tlib = getattr(cls, "_reg_typelib_", None)
         if reg_tlib is not None:
-            append(HKCR, rf"CLSID\{reg_clsid}\Typelib", "", reg_tlib[0])
+            self._add(HKCR, rf"CLSID\{reg_clsid}\Typelib", "", reg_tlib[0])
 
-        yield from table
+        yield from self._table
 
 
 ################################################################
