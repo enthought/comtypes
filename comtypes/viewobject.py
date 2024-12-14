@@ -61,11 +61,7 @@ class tagExtentInfo(Structure):
 
     def __repr__(self):
         size = (self.sizelProposed.cx, self.sizelProposed.cy)
-        return "<ExtentInfo(mode=%s, size=%s) at %x>" % (
-            self.dwExtentMode,
-            size,
-            id(self),
-        )
+        return f"<ExtentInfo(mode={self.dwExtentMode}, size={size}) at {id(self):x}>"
 
 
 assert sizeof(tagExtentInfo) == 16, sizeof(tagExtentInfo)
