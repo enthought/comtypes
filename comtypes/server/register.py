@@ -36,17 +36,18 @@ Now, debug the object, and when done delete logging info:
   python mycomobj.py /nodebug
 """
 
-import sys
-import os
-import winreg
 import logging
+import os
+import sys
+import winreg
+from ctypes import WinError, c_ulong, c_wchar_p, create_string_buffer, sizeof, windll
+from typing import Iterator, Tuple
 
 import comtypes
-from comtypes.typeinfo import LoadTypeLibEx, UnRegisterTypeLib, REGKIND_REGISTER
+import comtypes.server.inprocserver
 from comtypes.hresult import *
 from comtypes.server import w_getopt
-import comtypes.server.inprocserver
-from ctypes import windll, c_ulong, c_wchar_p, WinError, sizeof, create_string_buffer
+from comtypes.typeinfo import REGKIND_REGISTER, LoadTypeLibEx, UnRegisterTypeLib
 
 _debug = logging.getLogger(__name__).debug
 
@@ -147,8 +148,7 @@ class Registrar(object):
             self._register(cls, executable)
 
     def _register(self, cls, executable=None):
-        table = self._registry_entries(cls)
-        table.sort()
+        table = sorted(RegistryEntries(cls))
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
             _debug("[%s\\%s]", _explain(hkey), subkey)
@@ -159,7 +159,7 @@ class Registrar(object):
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
             if hasattr(sys, "frozendllhandle"):
-                dll = self._get_serverdll()
+                dll = _get_serverdll()
                 _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", dll)
                 LoadTypeLibEx(dll, REGKIND_REGISTER)
             else:
@@ -184,7 +184,7 @@ class Registrar(object):
     def _unregister(self, cls, force=False):
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
-        table = [t[:2] for t in self._registry_entries(cls)]
+        table = [t[:2] for t in RegistryEntries(cls)]
         # only unique entries
         table = list(set(table))
         table.sort()
@@ -214,16 +214,26 @@ class Registrar(object):
                     raise
         _debug("Done")
 
-    def _get_serverdll(self):
-        """Return the pathname of the dll hosting the COM object."""
-        handle = getattr(sys, "frozendllhandle", None)
-        if handle is not None:
-            buf = create_string_buffer(260)
-            windll.kernel32.GetModuleFileNameA(handle, buf, sizeof(buf))
-            return buf[:]
-        import _ctypes
 
-        return _ctypes.__file__
+def _get_serverdll():
+    """Return the pathname of the dll hosting the COM object."""
+    handle = getattr(sys, "frozendllhandle", None)
+    if handle is not None:
+        buf = create_string_buffer(260)
+        windll.kernel32.GetModuleFileNameA(handle, buf, sizeof(buf))
+        return buf[:]
+    import _ctypes
+
+    return _ctypes.__file__
+
+
+class RegistryEntries(object):
+    def __init__(self, cls):
+        self._cls = cls
+        self._table = []
+
+    def _add(self, rootkey: int, subkey: str, name: str, value: str) -> None:
+        self._table.append((rootkey, subkey, name, value))
 
     def _get_full_classname(self, cls):
         """Return <modulename>.<classname> for 'cls'."""
@@ -238,8 +248,8 @@ class Registrar(object):
         dirname = os.path.dirname(sys.modules[modname].__file__)
         return os.path.abspath(dirname)
 
-    def _registry_entries(self, cls):
-        """Return a sequence of tuples containing registry entries.
+    def __iter__(self) -> Iterator[Tuple[int, str, str, str]]:
+        """Return a iterator of tuples containing registry entries.
 
         The tuples must be (key, subkey, name, value).
 
@@ -259,16 +269,13 @@ class Registrar(object):
         Note that the first part of the progid string is typically the
         IDL library name of the type library containing the coclass.
         """
+        cls = self._cls
         HKCR = winreg.HKEY_CLASSES_ROOT
 
-        # table format: rootkey, subkey, valuename, value
-        table = []
-        append = lambda *args: table.append(args)
-
         # basic entry - names the comobject
-        reg_clsid = str(
-            cls._reg_clsid_
-        )  # that's the only required attribute for registration
+
+        # that's the only required attribute for registration
+        reg_clsid = str(cls._reg_clsid_)
         reg_desc = getattr(cls, "_reg_desc_", "")
         if not reg_desc:
             # Simple minded algorithm to construct a description from
@@ -278,30 +285,30 @@ class Registrar(object):
             )
             if reg_desc:
                 reg_desc = reg_desc.replace(".", " ")
-        append(HKCR, f"CLSID\\{reg_clsid}", "", reg_desc)
+        self._add(HKCR, f"CLSID\\{reg_clsid}", "", reg_desc)
 
         reg_progid = getattr(cls, "_reg_progid_", None)
         if reg_progid:
             # for ProgIDFromCLSID:
-            append(HKCR, f"CLSID\\{reg_clsid}\\ProgID", "", reg_progid)  # 1
+            self._add(HKCR, f"CLSID\\{reg_clsid}\\ProgID", "", reg_progid)  # 1
 
             # for CLSIDFromProgID
             if reg_desc:
-                append(HKCR, reg_progid, "", reg_desc)  # 2
-            append(HKCR, f"{reg_progid}\\CLSID", "", reg_clsid)  # 3
+                self._add(HKCR, reg_progid, "", reg_desc)  # 2
+            self._add(HKCR, f"{reg_progid}\\CLSID", "", reg_clsid)  # 3
 
             reg_novers_progid = getattr(cls, "_reg_novers_progid_", None)
             if reg_novers_progid:
-                append(
+                self._add(
                     HKCR,
                     f"CLSID\\{reg_clsid}\\VersionIndependentProgID",  # 1a
                     "",
                     reg_novers_progid,
                 )
                 if reg_desc:
-                    append(HKCR, reg_novers_progid, "", reg_desc)  # 2a
-                append(HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
-                append(HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
+                    self._add(HKCR, reg_novers_progid, "", reg_desc)  # 2a
+                self._add(HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
+                self._add(HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
 
         clsctx = getattr(cls, "_reg_clsctx_", 0)
 
@@ -317,9 +324,11 @@ class Registrar(object):
                 script = os.path.abspath(sys.modules[cls.__module__].__file__)
                 if " " in script:
                     script = f'"{script}"'
-                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
+                self._add(
+                    HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}"
+                )
             else:
-                append(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
+                self._add(HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
@@ -327,21 +336,19 @@ class Registrar(object):
             None,
             "dll",
         ):
-            append(
-                HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", self._get_serverdll()
-            )
+            self._add(HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", _get_serverdll())
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
                 not hasattr(sys, "frozendllhandle")
                 or not comtypes.server.inprocserver._clsid_to_class
             ):
-                append(
+                self._add(
                     HKCR,
                     rf"CLSID\{reg_clsid}\InprocServer32",
                     "PythonClass",
                     self._get_full_classname(cls),
                 )
-                append(
+                self._add(
                     HKCR,
                     rf"CLSID\{reg_clsid}\InprocServer32",
                     "PythonPath",
@@ -350,7 +357,7 @@ class Registrar(object):
 
             reg_threading = getattr(cls, "_reg_threading_", None)
             if reg_threading is not None:
-                append(
+                self._add(
                     HKCR,
                     rf"CLSID\{reg_clsid}\InprocServer32",
                     "ThreadingModel",
@@ -359,9 +366,9 @@ class Registrar(object):
 
         reg_tlib = getattr(cls, "_reg_typelib_", None)
         if reg_tlib is not None:
-            append(HKCR, rf"CLSID\{reg_clsid}\Typelib", "", reg_tlib[0])
+            self._add(HKCR, rf"CLSID\{reg_clsid}\Typelib", "", reg_tlib[0])
 
-        return table
+        yield from self._table
 
 
 ################################################################
