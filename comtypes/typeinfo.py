@@ -680,13 +680,7 @@ class tagTLIBATTR(ctypes.Structure):
         wLibFlags: int
 
     def __repr__(self):
-        return "TLIBATTR(GUID=%s, Version=%s.%s, LCID=%s, FLags=0x%x)" % (
-            self.guid,
-            self.wMajorVerNum,
-            self.wMinorVerNum,
-            self.lcid,
-            self.wLibFlags,
-        )
+        return f"TLIBATTR(GUID={self.guid}, Version={self.wMajorVerNum}.{self.wMinorVerNum}, LCID={self.lcid}, FLags=0x{self.wLibFlags:x})"
 
 
 TLIBATTR = tagTLIBATTR
@@ -715,13 +709,7 @@ class tagTYPEATTR(ctypes.Structure):
         idldescType: "IDLDESC"
 
     def __repr__(self):
-        return "TYPEATTR(GUID=%s, typekind=%s, funcs=%s, vars=%s, impltypes=%s)" % (
-            self.guid,
-            self.typekind,
-            self.cFuncs,
-            self.cVars,
-            self.cImplTypes,
-        )
+        return f"TYPEATTR(GUID={self.guid}, typekind={self.typekind}, funcs={self.cFuncs}, vars={self.cVars}, impltypes={self.cImplTypes})"
 
 
 TYPEATTR = tagTYPEATTR
@@ -745,14 +733,14 @@ class tagFUNCDESC(ctypes.Structure):
 
     def __repr__(self):
         return (
-            "FUNCDESC("
+            f"FUNCDESC("
             f"memid={self.memid}, "
             f"cParams={self.cParams}, "
             f"cParamsOpt={self.cParamsOpt}, "
             f"callconv={self.callconv}, "
-            f"invkind={self.invkind,}, "
+            f"invkind={self.invkind}, "
             f"funckind={self.funckind}"
-            ")"
+            f")"
         )
 
 

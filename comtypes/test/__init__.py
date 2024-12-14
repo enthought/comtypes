@@ -64,7 +64,7 @@ def requires(resource, msg=None):
         return
     if not is_resource_enabled(resource):
         if msg is None:
-            msg = "Use of the `%s' resource not enabled" % resource
+            msg = f"Use of the `{resource}` resource not enabled"
         raise ResourceDenied(msg)
 
 
@@ -94,12 +94,10 @@ def get_tests(package, mask, verbosity):
         except ResourceDenied as detail:
             skipped.append(modname)
             if verbosity > 1:
-                print("Skipped %s: %s" % (modname, detail), file=sys.stderr)
+                print(f"Skipped {modname}: {detail}", file=sys.stderr)
             continue
         except Exception as detail:
-            print(
-                "Warning: could not import %s: %s" % (modname, detail), file=sys.stderr
-            )
+            print(f"Warning: could not import {modname}: {detail}", file=sys.stderr)
             continue
         for name in dir(mod):
             if name.startswith("_"):
@@ -149,9 +147,9 @@ def test_with_refcounts(runner, verbosity, testcase):
         cleanup()
         refcounts[i] = sys.gettotalrefcount() - rc
     if [_f for _f in refcounts if _f]:
-        print("%s leaks:\n\t" % testcase, refcounts)
+        print(f"{testcase} leaks:\n\t", refcounts)
     elif verbosity:
-        print("%s: ok." % testcase)
+        print(f"{testcase}: ok.")
 
 
 class TestRunner(unittest.TextTestRunner):
@@ -180,21 +178,21 @@ class TestRunner(unittest.TextTestRunner):
                     len(skipped) != 1 and "s" or "",
                 )
             )
-            self.stream.writeln("Unavailable resources: %s" % ", ".join(requested))
+            self.stream.writeln(f"Unavailable resources: {', '.join(requested)}")
         else:
             self.stream.writeln(
-                "Ran %d test%s in %.3fs" % (run, run != 1 and "s" or "", timeTaken)
+                f"Ran {run} test{'s' if run != 1 else ''} in {timeTaken:.3f}s"
             )
         self.stream.writeln()
         if not result.wasSuccessful():
             self.stream.write("FAILED (")
             failed, errored = list(map(len, (result.failures, result.errors)))
             if failed:
-                self.stream.write("failures=%d" % failed)
+                self.stream.write(f"failures={failed}")
             if errored:
                 if failed:
                     self.stream.write(", ")
-                self.stream.write("errors=%d" % errored)
+                self.stream.write(f"errors={errored}")
             self.stream.writeln(")")
         else:
             self.stream.writeln("OK")
