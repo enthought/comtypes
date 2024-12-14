@@ -33,7 +33,7 @@ class Test_get_serverdll(ut.TestCase):
                 self.assertEqual(260, nSize)
 
 
-class Test_RegistryEntries_NonFrozen(ut.TestCase):
+class Test_NonFrozen_RegistryEntries(ut.TestCase):
     def test_reg_clsid(self):
         reg_clsid = GUID.create_new()
 
@@ -236,7 +236,7 @@ class Test_RegistryEntries_NonFrozen(ut.TestCase):
         self.assertEqual(expected, list(RegistryEntries(Cls)))
 
 
-class Test_RegistryEntries_Frozen(ut.TestCase):
+class Test_Frozen_RegistryEntries(ut.TestCase):
     @mock.patch.object(register, "sys")
     def test_local_dll(self, _sys):
         _sys.mock_add_spec(["executable", "frozen"])
