@@ -233,3 +233,39 @@ class Test_RegistryEntries_NonFrozen(ut.TestCase):
             (HKCR, rf"{clsid_sub}\Typelib", "", libid),
         ]
         self.assertEqual(expected, list(RegistryEntries(Cls)))
+
+
+class Test_RegistryEntries_Frozen(ut.TestCase):
+    @mock.patch.object(register, "sys")
+    def test_local_dll(self, _sys):
+        _sys.mock_add_spec(["executable", "frozen"])
+        _sys.executable = sys.executable
+        _sys.frozen = "dll"
+        reg_clsid = GUID.create_new()
+        reg_clsctx = comtypes.CLSCTX_LOCAL_SERVER
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+            _reg_clsctx_ = reg_clsctx
+
+        clsid_sub = rf"CLSID\{reg_clsid}"
+        expected = [
+            (HKCR, clsid_sub, "", ""),
+            (HKCR, rf"{clsid_sub}\LocalServer32", "", sys.executable),
+        ]
+        self.assertEqual(expected, list(RegistryEntries(Cls)))
+
+    @mock.patch.object(register, "sys")
+    def test_local_frozendllhandle(self, _sys):
+        _sys.mock_add_spec(["frozen", "frozendllhandle"])
+        _sys.frozen = "dll"
+        _sys.frozendllhandle = 1234
+        reg_clsid = GUID.create_new()
+        reg_clsctx = comtypes.CLSCTX_LOCAL_SERVER
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+            _reg_clsctx_ = reg_clsctx
+
+        expected = [(HKCR, rf"CLSID\{reg_clsid}", "", "")]
+        self.assertEqual(expected, list(RegistryEntries(Cls)))
