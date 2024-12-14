@@ -25,20 +25,20 @@ def _calc_packing(struct, fields, pack, isStruct):
             size += a - size % a
         if isStruct:
             if size != f.offset:
-                raise PackingError("field %s offset (%s/%s)" % (f.name, size, f.offset))
+                raise PackingError(f"field {f.name} offset ({size}/{f.offset})")
             size += s
         else:
             size = max(size, s)
         total_align = max(total_align, a)
     if total_align != struct.align:
-        raise PackingError("total alignment (%s/%s)" % (total_align, struct.align))
+        raise PackingError(f"total alignment ({total_align}/{struct.align})")
     a = total_align
     if pack is not None:
         a = min(pack, a)
     if size % a:
         size += a - size % a
     if size != struct.size:
-        raise PackingError("total size (%s/%s)" % (size, struct.size))
+        raise PackingError(f"total size ({size}/{struct.size})")
 
 
 def calc_packing(struct, fields):
@@ -55,7 +55,7 @@ def calc_packing(struct, fields):
 
             return int(pack / 8)
 
-    raise PackingError("PACKING FAILED: %s" % details)
+    raise PackingError(f"PACKING FAILED: {details}")
 
 
 class PackingError(Exception):

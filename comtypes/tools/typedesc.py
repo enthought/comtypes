@@ -20,12 +20,7 @@ class TypeLib(object):
         self.doc = doc
 
     def __repr__(self):
-        return "<TypeLib(%s: %s, %s, %s)>" % (
-            self.name,
-            self.guid,
-            self.major,
-            self.minor,
-        )
+        return f"<TypeLib({self.name}: {self.guid}, {self.major}, {self.minor})>"
 
 
 class Constant(object):
