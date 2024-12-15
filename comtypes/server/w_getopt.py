@@ -5,7 +5,9 @@ class GetoptError(Exception):
     pass
 
 
-def w_getopt(args, options):
+def w_getopt(
+    args: Sequence[str], options: str
+) -> Tuple[Sequence[Tuple[str, str]], Sequence[str]]:
     """A getopt for Windows.
 
     Options may start with either '-' or '/', the option names may
