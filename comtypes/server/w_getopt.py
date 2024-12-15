@@ -1,3 +1,6 @@
+from typing import Sequence, Tuple
+
+
 class GetoptError(Exception):
     pass
 
