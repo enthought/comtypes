@@ -55,8 +55,8 @@ def add_test(fname):
             return
         comtypes.client.GetModule(fname)
 
-    test.__doc__ = "test GetModule(%r)" % fname
-    setattr(Test, "test_%d" % number, test)
+    test.__doc__ = f"test GetModule({fname!r})"
+    setattr(Test, f"test_{number}", test)
     number += 1
 
 
