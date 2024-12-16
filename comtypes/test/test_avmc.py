@@ -37,7 +37,7 @@ class Test(unittest.TestCase):
 
     def check_leaks(self, func, limit=0):
         bytes = find_memleak(func)
-        self.assertFalse(bytes > limit, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes > limit, f"Leaks {bytes} bytes")
 
 
 if __name__ == "__main__":

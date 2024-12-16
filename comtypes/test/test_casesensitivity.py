@@ -31,13 +31,11 @@ class TestCase(unittest.TestCase):
         # names in the base class __map_case__ must also appear in the
         # subclass.
         for name in iem.IWebBrowser.__map_case__:
-            self.assertTrue(
-                name in iem.IWebBrowserApp.__map_case__, "%s missing" % name
-            )
-            self.assertTrue(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
+            self.assertTrue(name in iem.IWebBrowserApp.__map_case__, f"{name} missing")
+            self.assertTrue(name in iem.IWebBrowser2.__map_case__, f"{name} missing")
 
         for name in iem.IWebBrowserApp.__map_case__:
-            self.assertTrue(name in iem.IWebBrowser2.__map_case__, "%s missing" % name)
+            self.assertTrue(name in iem.IWebBrowser2.__map_case__, f"{name} missing")
 
 
 if __name__ == "__main__":

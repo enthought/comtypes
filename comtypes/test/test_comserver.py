@@ -39,7 +39,7 @@ class BaseServerTest(object):
 
     def _find_memleak(self, func):
         bytes = find_memleak(func)
-        self.assertFalse(bytes, "Leaks %d bytes" % bytes)  # type: ignore
+        self.assertFalse(bytes, f"Leaks {bytes} bytes")  # type: ignore
 
     def test_mixedinout(self):
         o = self.create_object()
@@ -186,7 +186,7 @@ class VariantTest(unittest.TestCase):
             return v.value
 
         bytes = find_memleak(func)
-        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes, f"Leaks {bytes} bytes")  # type: ignore
 
 
 class SafeArrayTest(unittest.TestCase):
@@ -207,7 +207,7 @@ class SafeArrayTest(unittest.TestCase):
             t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
 
         bytes = find_memleak(doit)
-        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes, f"Leaks {bytes} bytes")  # type: ignore
 
 
 class PropPutRefTest(unittest.TestCase):

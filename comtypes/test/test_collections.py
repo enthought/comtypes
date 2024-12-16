@@ -74,7 +74,7 @@ class Test(unittest.TestCase):
                 item.ProcessImageFileName
 
         bytes = find_memleak(doit, (20, 20))
-        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes, f"Leaks {bytes} bytes")
 
     @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_2(self):
@@ -87,7 +87,7 @@ class Test(unittest.TestCase):
             iter(apps).Next(99)
 
         bytes = find_memleak(doit, (20, 20))
-        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes, f"Leaks {bytes} bytes")
 
     @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_3(self):
@@ -102,7 +102,7 @@ class Test(unittest.TestCase):
                     pass
 
         bytes = find_memleak(doit, (20, 20))
-        self.assertFalse(bytes, "Leaks %d bytes" % bytes)
+        self.assertFalse(bytes, f"Leaks {bytes} bytes")
 
 
 class TestCollectionInterface(unittest.TestCase):
