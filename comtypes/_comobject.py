@@ -1,8 +1,13 @@
+import logging
+import os
+import queue
+import sys
+from _ctypes import CopyComPointer
 from ctypes import (
-    FormatError,
     POINTER,
-    Structure,
     WINFUNCTYPE,
+    FormatError,
+    Structure,
     byref,
     c_long,
     c_void_p,
@@ -10,29 +15,22 @@ from ctypes import (
     pointer,
     windll,
 )
-from _ctypes import CopyComPointer
-import logging
-import os
-import queue
-import sys
 
-from comtypes import COMError, ReturnHRESULT, instancemethod
+from comtypes import COMError, IPersist, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
-from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
-from comtypes import IPersist
+from comtypes.errorinfo import ISupportErrorInfo, ReportError, ReportException
 from comtypes.hresult import (
     DISP_E_BADINDEX,
     DISP_E_MEMBERNOTFOUND,
     E_FAIL,
-    E_NOINTERFACE,
     E_INVALIDARG,
+    E_NOINTERFACE,
     E_NOTIMPL,
     RPC_E_CHANGED_MODE,
     S_FALSE,
     S_OK,
 )
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
-
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
