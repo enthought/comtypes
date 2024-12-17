@@ -283,7 +283,13 @@ class _MethodFinder(object):
             pass
         return getattr(self.inst, mthname)
 
-    def find_impl(self, interface, mthname, paramflags, idlflags):
+    def find_impl(
+        self,
+        interface: Type[IUnknown],
+        mthname: str,
+        paramflags: Optional[Tuple["_ParamFlagType", ...]],
+        idlflags: Tuple[Union[str, int], ...],
+    ) -> Optional[Callable[..., Any]]:
         fq_name = f"{interface.__name__}_{mthname}"
         if interface._case_insensitive_:
             # simple name, like 'QueryInterface'
