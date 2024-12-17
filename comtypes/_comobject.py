@@ -1,8 +1,13 @@
+import logging
+import os
+import queue
+import sys
+from _ctypes import CopyComPointer
 from ctypes import (
-    FormatError,
     POINTER,
-    Structure,
     WINFUNCTYPE,
+    FormatError,
+    Structure,
     byref,
     c_long,
     c_void_p,
@@ -10,22 +15,17 @@ from ctypes import (
     pointer,
     windll,
 )
-from _ctypes import CopyComPointer
-import logging
-import os
-import queue
-import sys
+from typing import TYPE_CHECKING, Callable, Optional, Sequence
 
-from comtypes import COMError, ReturnHRESULT, instancemethod
+from comtypes import COMError, IPersist, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
-from comtypes.errorinfo import ISupportErrorInfo, ReportException, ReportError
-from comtypes import IPersist
+from comtypes.errorinfo import ISupportErrorInfo, ReportError, ReportException
 from comtypes.hresult import (
     DISP_E_BADINDEX,
     DISP_E_MEMBERNOTFOUND,
     E_FAIL,
-    E_NOINTERFACE,
     E_INVALIDARG,
+    E_NOINTERFACE,
     E_NOTIMPL,
     RPC_E_CHANGED_MODE,
     S_FALSE,
@@ -33,6 +33,8 @@ from comtypes.hresult import (
 )
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -53,7 +55,7 @@ class E_NotImplemented(Exception):
     """COM method is not implemented"""
 
 
-def HRESULT_FROM_WIN32(errcode):
+def HRESULT_FROM_WIN32(errcode: Optional[int]) -> int:
     "Convert a Windows error code into a HRESULT value."
     if errcode is None:
         return 0x80000000
@@ -62,7 +64,7 @@ def HRESULT_FROM_WIN32(errcode):
     return (errcode & 0xFFFF) | 0x80070000
 
 
-def winerror(exc):
+def winerror(exc: Exception) -> int:
     """Return the windows error code from a WindowsError or COMError
     instance."""
     if isinstance(exc, COMError):
@@ -80,7 +82,7 @@ def winerror(exc):
     )
 
 
-def _do_implement(interface_name, method_name):
+def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
     def _not_implemented(*args):
         """Return E_NOTIMPL because the method is not implemented."""
         _debug("unimplemented method %s_%s called", interface_name, method_name)
@@ -326,14 +328,14 @@ except AttributeError:
     _release = _lock.release
     # win 64 doesn't have these functions
 
-    def _InterlockedIncrement(ob):
+    def _InterlockedIncrement(ob: c_long) -> int:
         _acquire()
         refcnt = ob.value + 1
         ob.value = refcnt
         _release()
         return refcnt
 
-    def _InterlockedDecrement(ob):
+    def _InterlockedDecrement(ob: c_long) -> int:
         _acquire()
         refcnt = ob.value - 1
         ob.value = refcnt
@@ -348,9 +350,9 @@ else:
 
 
 class LocalServer(object):
-    _queue = None
+    _queue: Optional[queue.Queue] = None
 
-    def run(self, classobjects):
+    def run(self, classobjects: Sequence["hints.localserver.ClassFactory"]) -> None:
         # Use windll instead of oledll so that we don't get an
         # exception on a FAILED hresult:
         result = windll.ole32.CoInitialize(None)
@@ -370,19 +372,19 @@ class LocalServer(object):
         for obj in classobjects:
             obj._revoke_class()
 
-    def run_sta(self):
+    def run_sta(self) -> None:
         from comtypes import messageloop
 
         messageloop.run()
 
-    def run_mta(self):
+    def run_mta(self) -> None:
         self._queue = queue.Queue()
         self._queue.get()
 
-    def Lock(self):
+    def Lock(self) -> None:
         oledll.ole32.CoAddRefServerProcess()
 
-    def Unlock(self):
+    def Unlock(self) -> None:
         rc = oledll.ole32.CoReleaseServerProcess()
         if rc == 0:
             if self._queue:
@@ -392,16 +394,16 @@ class LocalServer(object):
 
 
 class InprocServer(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.locks = c_long(0)
 
-    def Lock(self):
+    def Lock(self) -> None:
         _InterlockedIncrement(self.locks)
 
-    def Unlock(self):
+    def Unlock(self) -> None:
         _InterlockedDecrement(self.locks)
 
-    def DllCanUnloadNow(self):
+    def DllCanUnloadNow(self) -> int:
         if self.locks.value:
             return S_FALSE
         if COMObject._instances_:
