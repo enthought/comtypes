@@ -21,6 +21,7 @@ from typing import (
     Callable,
     ClassVar,
     Dict,
+    List,
     Optional,
     Sequence,
     Tuple,
@@ -45,7 +46,7 @@ from comtypes.hresult import (
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 
 if TYPE_CHECKING:
-    from ctypes import _FuncPointer
+    from ctypes import _FuncPointer, _Pointer
 
     from comtypes import hints  # type: ignore
     from comtypes._memberspec import _ParamFlagType
@@ -452,9 +453,13 @@ class InprocServer(object):
 
 
 class COMObject(object):
+    _com_interfaces_: ClassVar[List[Type[IUnknown]]]
     _instances_: ClassVar[Dict["COMObject", None]] = {}
     _reg_clsid_: ClassVar[GUID]
+    _reg_typelib_: ClassVar[Tuple[str, int, int]]
     __typelib: "hints.ITypeLib"
+    _com_pointers_: Dict[GUID, "_Pointer[_Pointer[Structure]]"]
+    _dispimpl_: Dict[Tuple[int, int], Callable[..., Any]]
 
     def __new__(cls, *args, **kw):
         self = super(COMObject, cls).__new__(cls)
@@ -610,7 +615,7 @@ class COMObject(object):
 
     ################################################################
     # LocalServer / InprocServer stuff
-    __server__ = None
+    __server__: Union[None, InprocServer, LocalServer] = None
 
     @staticmethod
     def __run_inprocserver__():
