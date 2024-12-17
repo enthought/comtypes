@@ -328,14 +328,14 @@ except AttributeError:
     _release = _lock.release
     # win 64 doesn't have these functions
 
-    def _InterlockedIncrement(ob):
+    def _InterlockedIncrement(ob: c_long) -> int:
         _acquire()
         refcnt = ob.value + 1
         ob.value = refcnt
         _release()
         return refcnt
 
-    def _InterlockedDecrement(ob):
+    def _InterlockedDecrement(ob: c_long) -> int:
         _acquire()
         refcnt = ob.value - 1
         ob.value = refcnt
