@@ -2,7 +2,7 @@ import logging
 import os
 import queue
 import sys
-from _ctypes import CopyComPointer
+from _ctypes import COMError, CopyComPointer
 from ctypes import (
     POINTER,
     WINFUNCTYPE,
@@ -17,7 +17,7 @@ from ctypes import (
 )
 from typing import TYPE_CHECKING, Callable, Optional, Sequence
 
-from comtypes import COMError, IPersist, ReturnHRESULT, instancemethod
+from comtypes import IPersist, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
 from comtypes.errorinfo import ISupportErrorInfo, ReportError, ReportException
 from comtypes.hresult import (
