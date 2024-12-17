@@ -25,6 +25,7 @@ from typing import (
     Sequence,
     Tuple,
     Type,
+    Union,
 )
 
 from comtypes import GUID, IPersist, IUnknown, ReturnHRESULT, instancemethod
@@ -260,7 +261,13 @@ class _MethodFinder(object):
         # map lower case names to names with correct spelling.
         self.names = dict([(n.lower(), n) for n in dir(inst)])
 
-    def get_impl(self, interface, mthname, paramflags, idlflags):
+    def get_impl(
+        self,
+        interface: Type[IUnknown],
+        mthname: str,
+        paramflags: Optional[Tuple["_ParamFlagType", ...]],
+        idlflags: Tuple[Union[str, int], ...],
+    ) -> Callable[..., Any]:
         mth = self.find_impl(interface, mthname, paramflags, idlflags)
         if mth is None:
             return _do_implement(interface.__name__, mthname)
