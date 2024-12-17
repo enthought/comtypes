@@ -15,7 +15,7 @@ from ctypes import (
     pointer,
     windll,
 )
-from typing import TYPE_CHECKING, Optional, Sequence
+from typing import TYPE_CHECKING, Callable, Optional, Sequence
 
 from comtypes import COMError, IPersist, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
@@ -82,7 +82,7 @@ def winerror(exc: Exception) -> int:
     )
 
 
-def _do_implement(interface_name, method_name):
+def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
     def _not_implemented(*args):
         """Return E_NOTIMPL because the method is not implemented."""
         _debug("unimplemented method %s_%s called", interface_name, method_name)
