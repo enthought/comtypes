@@ -15,9 +15,9 @@ from ctypes import (
     pointer,
     windll,
 )
-from typing import TYPE_CHECKING, Callable, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, Tuple, Type
 
-from comtypes import IPersist, ReturnHRESULT, instancemethod
+from comtypes import IPersist, IUnknown, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
 from comtypes.errorinfo import ISupportErrorInfo, ReportError, ReportException
 from comtypes.hresult import (
@@ -35,6 +35,7 @@ from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
+    from comtypes._memberspec import _ParamFlagType
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -91,7 +92,13 @@ def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
     return _not_implemented
 
 
-def catch_errors(obj, mth, paramflags, interface, mthname):
+def catch_errors(
+    obj: "COMObject",
+    mth: Callable[..., Any],
+    paramflags: Optional[Tuple["_ParamFlagType", ...]],
+    interface: Type[IUnknown],
+    mthname: str,
+) -> Callable[..., Any]:
     clsid = getattr(obj, "_reg_clsid_", None)
 
     def call_with_this(*args, **kw):
