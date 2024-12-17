@@ -15,9 +15,19 @@ from ctypes import (
     pointer,
     windll,
 )
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Sequence, Tuple, Type
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+)
 
-from comtypes import IPersist, IUnknown, ReturnHRESULT, instancemethod
+from comtypes import GUID, IPersist, IUnknown, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
 from comtypes.errorinfo import ISupportErrorInfo, ReportError, ReportException
 from comtypes.hresult import (
@@ -429,7 +439,9 @@ class InprocServer(object):
 
 
 class COMObject(object):
-    _instances_ = {}
+    _instances_: ClassVar[Dict["COMObject", None]] = {}
+    _reg_clsid_: ClassVar[GUID]
+    __typelib: "hints.ITypeLib"
 
     def __new__(cls, *args, **kw):
         self = super(COMObject, cls).__new__(cls)
