@@ -273,7 +273,7 @@ class _MethodFinder(object):
             return _do_implement(interface.__name__, mthname)
         return hack(self.inst, mth, paramflags, interface, mthname)
 
-    def find_method(self, fq_name, mthname):
+    def find_method(self, fq_name: str, mthname: str) -> Callable[..., Any]:
         # Try to find a method, first with the fully qualified name
         # ('IUnknown_QueryInterface'), if that fails try the simple
         # name ('QueryInterface')
