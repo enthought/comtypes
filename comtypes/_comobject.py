@@ -141,7 +141,13 @@ def catch_errors(
 ################################################################
 
 
-def hack(inst, mth, paramflags, interface, mthname):
+def hack(
+    inst: "COMObject",
+    mth: Callable[..., Any],
+    paramflags: Optional[Tuple["_ParamFlagType", ...]],
+    interface: Type[IUnknown],
+    mthname: str,
+) -> Callable[..., Any]:
     if paramflags is None:
         return catch_errors(inst, mth, paramflags, interface, mthname)
     code = mth.__code__
