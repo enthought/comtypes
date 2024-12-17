@@ -64,7 +64,7 @@ def HRESULT_FROM_WIN32(errcode: Optional[int]) -> int:
     return (errcode & 0xFFFF) | 0x80070000
 
 
-def winerror(exc):
+def winerror(exc: Exception) -> int:
     """Return the windows error code from a WindowsError or COMError
     instance."""
     if isinstance(exc, COMError):
