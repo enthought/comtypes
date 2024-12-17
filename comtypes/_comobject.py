@@ -15,7 +15,7 @@ from ctypes import (
     pointer,
     windll,
 )
-from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Sequence, Tuple, Type
 
 from comtypes import IPersist, IUnknown, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
@@ -330,7 +330,7 @@ def _create_vtbl_type(
 
 
 # Ugh. Another type cache to avoid leaking types.
-_vtbl_types = {}
+_vtbl_types: Dict[Tuple[Tuple[str, Type["_FuncPointer"]], ...], Type[Structure]] = {}
 
 ################################################################
 
