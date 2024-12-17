@@ -394,16 +394,16 @@ class LocalServer(object):
 
 
 class InprocServer(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.locks = c_long(0)
 
-    def Lock(self):
+    def Lock(self) -> None:
         _InterlockedIncrement(self.locks)
 
-    def Unlock(self):
+    def Unlock(self) -> None:
         _InterlockedDecrement(self.locks)
 
-    def DllCanUnloadNow(self):
+    def DllCanUnloadNow(self) -> int:
         if self.locks.value:
             return S_FALSE
         if COMObject._instances_:
