@@ -2,7 +2,7 @@ import logging
 import os
 import queue
 import sys
-from _ctypes import CopyComPointer
+from _ctypes import COMError, CopyComPointer
 from ctypes import (
     POINTER,
     WINFUNCTYPE,
@@ -15,9 +15,19 @@ from ctypes import (
     pointer,
     windll,
 )
-from typing import TYPE_CHECKING, Callable, Optional, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+)
 
-from comtypes import COMError, IPersist, ReturnHRESULT, instancemethod
+from comtypes import GUID, IPersist, IUnknown, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
 from comtypes.errorinfo import ISupportErrorInfo, ReportError, ReportException
 from comtypes.hresult import (
@@ -34,7 +44,10 @@ from comtypes.hresult import (
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 
 if TYPE_CHECKING:
+    from ctypes import _FuncPointer
+
     from comtypes import hints  # type: ignore
+    from comtypes._memberspec import _ParamFlagType
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -91,7 +104,13 @@ def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
     return _not_implemented
 
 
-def catch_errors(obj, mth, paramflags, interface, mthname):
+def catch_errors(
+    obj: "COMObject",
+    mth: Callable[..., Any],
+    paramflags: Optional[Tuple["_ParamFlagType", ...]],
+    interface: Type[IUnknown],
+    mthname: str,
+) -> Callable[..., Any]:
     clsid = getattr(obj, "_reg_clsid_", None)
 
     def call_with_this(*args, **kw):
@@ -134,7 +153,13 @@ def catch_errors(obj, mth, paramflags, interface, mthname):
 ################################################################
 
 
-def hack(inst, mth, paramflags, interface, mthname):
+def hack(
+    inst: "COMObject",
+    mth: Callable[..., Any],
+    paramflags: Optional[Tuple["_ParamFlagType", ...]],
+    interface: Type[IUnknown],
+    mthname: str,
+) -> Callable[..., Any]:
     if paramflags is None:
         return catch_errors(inst, mth, paramflags, interface, mthname)
     code = mth.__code__
@@ -299,7 +324,9 @@ class _MethodFinder(object):
         return instancemethod(get, self.inst, type(self.inst))
 
 
-def _create_vtbl_type(fields, itf):
+def _create_vtbl_type(
+    fields: Tuple[Tuple[str, Type["_FuncPointer"]], ...], itf: Type[IUnknown]
+) -> Type[Structure]:
     try:
         return _vtbl_types[fields]
     except KeyError:
@@ -313,7 +340,7 @@ def _create_vtbl_type(fields, itf):
 
 
 # Ugh. Another type cache to avoid leaking types.
-_vtbl_types = {}
+_vtbl_types: Dict[Tuple[Tuple[str, Type["_FuncPointer"]], ...], Type[Structure]] = {}
 
 ################################################################
 
@@ -412,7 +439,9 @@ class InprocServer(object):
 
 
 class COMObject(object):
-    _instances_ = {}
+    _instances_: ClassVar[Dict["COMObject", None]] = {}
+    _reg_clsid_: ClassVar[GUID]
+    __typelib: "hints.ITypeLib"
 
     def __new__(cls, *args, **kw):
         self = super(COMObject, cls).__new__(cls)
