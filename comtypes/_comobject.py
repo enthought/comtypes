@@ -315,7 +315,7 @@ class _MethodFinder(object):
         _debug("%r: %s.%s not implemented", self.inst, interface.__name__, mthname)
         return None
 
-    def setter(self, propname):
+    def setter(self, propname: str) -> Callable[[Any], Any]:
         #
         def set(self, value):
             try:
