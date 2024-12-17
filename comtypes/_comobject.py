@@ -34,6 +34,8 @@ from comtypes.hresult import (
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 
 if TYPE_CHECKING:
+    from ctypes import _FuncPointer
+
     from comtypes import hints  # type: ignore
     from comtypes._memberspec import _ParamFlagType
 
@@ -312,7 +314,9 @@ class _MethodFinder(object):
         return instancemethod(get, self.inst, type(self.inst))
 
 
-def _create_vtbl_type(fields, itf):
+def _create_vtbl_type(
+    fields: Tuple[Tuple[str, Type["_FuncPointer"]], ...], itf: Type[IUnknown]
+) -> Type[Structure]:
     try:
         return _vtbl_types[fields]
     except KeyError:
