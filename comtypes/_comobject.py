@@ -15,6 +15,7 @@ from ctypes import (
     pointer,
     windll,
 )
+from typing import TYPE_CHECKING, Optional, Sequence
 
 from comtypes import COMError, IPersist, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
@@ -31,6 +32,9 @@ from comtypes.hresult import (
     S_OK,
 )
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -346,9 +350,9 @@ else:
 
 
 class LocalServer(object):
-    _queue = None
+    _queue: Optional[queue.Queue] = None
 
-    def run(self, classobjects):
+    def run(self, classobjects: Sequence["hints.localserver.ClassFactory"]) -> None:
         # Use windll instead of oledll so that we don't get an
         # exception on a FAILED hresult:
         result = windll.ole32.CoInitialize(None)
@@ -368,19 +372,19 @@ class LocalServer(object):
         for obj in classobjects:
             obj._revoke_class()
 
-    def run_sta(self):
+    def run_sta(self) -> None:
         from comtypes import messageloop
 
         messageloop.run()
 
-    def run_mta(self):
+    def run_mta(self) -> None:
         self._queue = queue.Queue()
         self._queue.get()
 
-    def Lock(self):
+    def Lock(self) -> None:
         oledll.ole32.CoAddRefServerProcess()
 
-    def Unlock(self):
+    def Unlock(self) -> None:
         rc = oledll.ole32.CoReleaseServerProcess()
         if rc == 0:
             if self._queue:

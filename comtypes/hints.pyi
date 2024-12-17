@@ -27,6 +27,7 @@ import comtypes
 from comtypes import IUnknown as IUnknown, GUID as GUID
 from comtypes.automation import IDispatch as IDispatch, VARIANT as VARIANT
 from comtypes.server import IClassFactory as IClassFactory
+from comtypes.server import localserver as localserver
 from comtypes.typeinfo import ITypeInfo as ITypeInfo
 from comtypes._safearray import tagSAFEARRAY as tagSAFEARRAY
 
