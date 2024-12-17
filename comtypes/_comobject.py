@@ -55,7 +55,7 @@ class E_NotImplemented(Exception):
     """COM method is not implemented"""
 
 
-def HRESULT_FROM_WIN32(errcode):
+def HRESULT_FROM_WIN32(errcode: Optional[int]) -> int:
     "Convert a Windows error code into a HRESULT value."
     if errcode is None:
         return 0x80000000
