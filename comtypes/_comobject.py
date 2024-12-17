@@ -327,7 +327,7 @@ class _MethodFinder(object):
 
         return instancemethod(set, self.inst, type(self.inst))
 
-    def getter(self, propname):
+    def getter(self, propname: str) -> Callable[[], Any]:
         def get(self):
             try:
                 return getattr(self, propname)
