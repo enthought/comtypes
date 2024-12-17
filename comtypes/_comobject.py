@@ -255,7 +255,7 @@ def hack(
 
 
 class _MethodFinder(object):
-    def __init__(self, inst):
+    def __init__(self, inst: "COMObject") -> None:
         self.inst = inst
         # map lower case names to names with correct spelling.
         self.names = dict([(n.lower(), n) for n in dir(inst)])
