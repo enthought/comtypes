@@ -1,34 +1,48 @@
-import comtypes.client, ctypes
+import ctypes
+from ctypes import HRESULT, POINTER, byref
+from typing import TYPE_CHECKING, Any, Optional, Type
+
+import comtypes
+import comtypes.client
+import comtypes.client.dynamic
+from comtypes import GUID, STDMETHOD, IUnknown
+from comtypes.automation import IDispatch
+
+if TYPE_CHECKING:
+    from ctypes import _Pointer
+
+    from comtypes import hints  # type: ignore
 
 
 ################################################################
 # Interfaces
-class IClassFactory(comtypes.IUnknown):
-    _iid_ = comtypes.GUID("{00000001-0000-0000-C000-000000000046}")
+class IClassFactory(IUnknown):
+    _iid_ = GUID("{00000001-0000-0000-C000-000000000046}")
     _methods_ = [
-        comtypes.STDMETHOD(
-            comtypes.HRESULT,
+        STDMETHOD(
+            HRESULT,
             "CreateInstance",
-            [
-                ctypes.POINTER(comtypes.IUnknown),
-                ctypes.POINTER(comtypes.GUID),
-                ctypes.POINTER(ctypes.c_void_p),
-            ],
+            [POINTER(IUnknown), POINTER(GUID), POINTER(ctypes.c_void_p)],
         ),
-        comtypes.STDMETHOD(comtypes.HRESULT, "LockServer", [ctypes.c_int]),
+        STDMETHOD(HRESULT, "LockServer", [ctypes.c_int]),
     ]
 
-    def CreateInstance(self, punkouter=None, interface=None, dynamic=False):
+    def CreateInstance(
+        self,
+        punkouter: Optional[Type["_Pointer[IUnknown]"]] = None,
+        interface: Optional[Type[IUnknown]] = None,
+        dynamic: bool = False,
+    ) -> Any:
         if dynamic:
             if interface is not None:
                 raise ValueError("interface and dynamic are mutually exclusive")
-            realInterface = comtypes.automation.IDispatch
+            itf = IDispatch
         elif interface is None:
-            realInterface = comtypes.IUnknown
+            itf = IUnknown
         else:
-            realInterface = interface
-        obj = ctypes.POINTER(realInterface)()
-        self.__com_CreateInstance(punkouter, realInterface._iid_, ctypes.byref(obj))
+            itf = interface
+        obj = POINTER(itf)()
+        self.__com_CreateInstance(punkouter, itf._iid_, byref(obj))  # type: ignore
         if dynamic:
             return comtypes.client.dynamic.Dispatch(obj)
         elif interface is None:
@@ -36,6 +50,10 @@ class IClassFactory(comtypes.IUnknown):
             return comtypes.client.GetBestInterface(obj)
         # An interface was specified and obj is already that interface.
         return obj
+
+    if TYPE_CHECKING:
+
+        def LockServer(self, fLock: int) -> hints.Hresult: ...
 
 
 # class IExternalConnection(IUnknown):
@@ -52,19 +70,17 @@ ACTIVEOBJECT_WEAK = 0x1
 oleaut32 = ctypes.oledll.oleaut32
 
 
-def RegisterActiveObject(comobj, weak=True):
-    punk = comobj._com_pointers_[comtypes.IUnknown._iid_]
+def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
+    punk = comobj._com_pointers_[IUnknown._iid_]
     clsid = comobj._reg_clsid_
     if weak:
         flags = ACTIVEOBJECT_WEAK
     else:
         flags = ACTIVEOBJECT_STRONG
     handle = ctypes.c_ulong()
-    oleaut32.RegisterActiveObject(
-        punk, ctypes.byref(clsid), flags, ctypes.byref(handle)
-    )
+    oleaut32.RegisterActiveObject(punk, byref(clsid), flags, byref(handle))
     return handle.value
 
 
-def RevokeActiveObject(handle):
+def RevokeActiveObject(handle: int) -> None:
     oleaut32.RevokeActiveObject(handle, None)
