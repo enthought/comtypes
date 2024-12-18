@@ -36,13 +36,13 @@ class IClassFactory(IUnknown):
         if dynamic:
             if interface is not None:
                 raise ValueError("interface and dynamic are mutually exclusive")
-            realInterface = IDispatch
+            itf = IDispatch
         elif interface is None:
-            realInterface = IUnknown
+            itf = IUnknown
         else:
-            realInterface = interface
-        obj = POINTER(realInterface)()
-        self.__com_CreateInstance(punkouter, realInterface._iid_, byref(obj))
+            itf = interface
+        obj = POINTER(itf)()
+        self.__com_CreateInstance(punkouter, itf._iid_, byref(obj))  # type: ignore
         if dynamic:
             return comtypes.client.dynamic.Dispatch(obj)
         elif interface is None:
