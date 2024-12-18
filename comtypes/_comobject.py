@@ -683,8 +683,11 @@ class COMObject(object):
         pass
 
     def IUnknown_Release(
-        self, this, __InterlockedDecrement=_InterlockedDecrement, _debug=_debug
-    ):
+        self,
+        this: Any,
+        __InterlockedDecrement: Callable[[c_long], int] = _InterlockedDecrement,
+        _debug=_debug,
+    ) -> int:
         # If this is called at COM shutdown, _InterlockedDecrement()
         # must still be available, although module level variables may
         # have been deleted already - so we supply it as default
