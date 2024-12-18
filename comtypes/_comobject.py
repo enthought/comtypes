@@ -893,7 +893,7 @@ class COMObject(object):
 
     ################################################################
     # IPersist interface
-    def IPersist_GetClassID(self):
+    def IPersist_GetClassID(self) -> GUID:
         return self._reg_clsid_
 
 
