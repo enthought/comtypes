@@ -1,9 +1,13 @@
 import ctypes
 from ctypes import HRESULT, POINTER, byref
+from typing import TYPE_CHECKING
 
 import comtypes
 import comtypes.client
 from comtypes import GUID, STDMETHOD, IUnknown
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
 
 
 ################################################################
@@ -37,6 +41,10 @@ class IClassFactory(IUnknown):
             return comtypes.client.GetBestInterface(obj)
         # An interface was specified and obj is already that interface.
         return obj
+
+    if TYPE_CHECKING:
+
+        def LockServer(self, fLock: int) -> hints.Hresult: ...
 
 
 # class IExternalConnection(IUnknown):
