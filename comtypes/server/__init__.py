@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Optional, Type
 
 import comtypes
 import comtypes.client
+import comtypes.client.dynamic
 from comtypes import GUID, STDMETHOD, IUnknown
 from comtypes.automation import IDispatch
 
