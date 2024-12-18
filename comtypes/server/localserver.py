@@ -2,6 +2,7 @@ import logging
 import queue
 import sys
 from ctypes import *
+from typing import Sequence, Type
 
 import comtypes
 from comtypes.hresult import *
@@ -17,7 +18,7 @@ REGCLS_SUSPENDED = 4  # register it as suspended, will be activated
 REGCLS_SURROGATE = 8  # must be used when a surrogate process
 
 
-def run(classes):
+def run(classes: Sequence[Type[comtypes.COMObject]]) -> None:
     classobjects = [ClassFactory(cls) for cls in classes]
     comtypes.COMObject.__run_localserver__(classobjects)
 
