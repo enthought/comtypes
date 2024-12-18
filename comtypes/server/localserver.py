@@ -39,7 +39,7 @@ class ClassFactory(comtypes.COMObject):
     def IUnknown_AddRef(self, this: Any) -> int:
         return 2
 
-    def IUnknown_Release(self, this):
+    def IUnknown_Release(self, this: Any) -> int:
         return 1
 
     def _register_class(self):
