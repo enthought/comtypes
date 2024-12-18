@@ -49,7 +49,7 @@ if TYPE_CHECKING:
     from ctypes import _FuncPointer, _Pointer
 
     from comtypes import hints  # type: ignore
-    from comtypes._memberspec import _ParamFlagType
+    from comtypes._memberspec import _ArgSpecElmType, _ParamFlagType
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -593,20 +593,26 @@ class COMObject(object):
                         )  # DISPATCH_PROPERTYPUT
                         # Add DISPATCH_PROPERTYPUTREF also?
 
-    def __make_dispentry(self, finder, interface, mthname, idlflags, argspec, invkind):
-        # We build a _dispmap_ entry now that maps invkind and
-        # dispid to implementations that the finder finds;
-        # IDispatch_Invoke will later call it.
+    def __make_dispentry(
+        self,
+        finder: _MethodFinder,
+        interface: Type[IUnknown],
+        mthname: str,
+        idlflags: Tuple[Union[str, int], ...],
+        argspec: Tuple["_ArgSpecElmType", ...],
+        invkind: int,
+    ) -> None:
+        # We build a _dispmap_ entry now that maps invkind and dispid to
+        # implementations that the finder finds; IDispatch_Invoke will later call it.
         paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec]
         # XXX can the dispid be at a different index?  Check codegenerator.
         dispid = idlflags[0]
         impl = finder.get_impl(interface, mthname, paramflags, idlflags)
-        self._dispimpl_[(dispid, invkind)] = impl
-        # invkind is really a set of flags; we allow both
-        # DISPATCH_METHOD and DISPATCH_PROPERTYGET (win32com uses
-        # this, maybe other languages too?)
+        self._dispimpl_[(dispid, invkind)] = impl  # type: ignore
+        # invkind is really a set of flags; we allow both DISPATCH_METHOD and
+        # DISPATCH_PROPERTYGET (win32com uses this, maybe other languages too?)
         if invkind in (1, 2):
-            self._dispimpl_[(dispid, 3)] = impl
+            self._dispimpl_[(dispid, 3)] = impl  # type: ignore
 
     def _get_method_finder_(self, itf):
         # This method can be overridden to customize how methods are
