@@ -2,7 +2,7 @@ import logging
 import queue
 import sys
 from ctypes import *
-from typing import Sequence, Type
+from typing import Optional, Sequence, Type
 
 import comtypes
 from comtypes.hresult import *
@@ -25,9 +25,9 @@ def run(classes: Sequence[Type[comtypes.COMObject]]) -> None:
 
 class ClassFactory(comtypes.COMObject):
     _com_interfaces_ = [IClassFactory]
-    _locks = 0
-    _queue = None
-    regcls = REGCLS_MULTIPLEUSE
+    _locks: int = 0
+    _queue: Optional[queue.Queue] = None
+    regcls: int = REGCLS_MULTIPLEUSE
 
     def __init__(self, cls, *args, **kw):
         super(ClassFactory, self).__init__()
