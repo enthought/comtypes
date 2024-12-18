@@ -29,7 +29,7 @@ class ClassFactory(comtypes.COMObject):
     _queue: Optional[queue.Queue] = None
     regcls: int = REGCLS_MULTIPLEUSE
 
-    def __init__(self, cls, *args, **kw):
+    def __init__(self, cls: Type[comtypes.COMObject], *args, **kw) -> None:
         super(ClassFactory, self).__init__()
         self._cls = cls
         self._register_class()
