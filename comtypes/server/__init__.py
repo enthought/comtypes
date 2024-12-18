@@ -1,12 +1,14 @@
 import ctypes
 from ctypes import HRESULT, POINTER, byref
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional, Type
 
 import comtypes
 import comtypes.client
 from comtypes import GUID, STDMETHOD, IUnknown
 
 if TYPE_CHECKING:
+    from ctypes import _Pointer
+
     from comtypes import hints  # type: ignore
 
 
@@ -23,7 +25,12 @@ class IClassFactory(IUnknown):
         STDMETHOD(HRESULT, "LockServer", [ctypes.c_int]),
     ]
 
-    def CreateInstance(self, punkouter=None, interface=None, dynamic=False):
+    def CreateInstance(
+        self,
+        punkouter: Optional[Type["_Pointer[IUnknown]"]] = None,
+        interface: Optional[Type[IUnknown]] = None,
+        dynamic: bool = False,
+    ) -> Any:
         if dynamic:
             if interface is not None:
                 raise ValueError("interface and dynamic are mutually exclusive")
