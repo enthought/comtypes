@@ -623,7 +623,7 @@ class COMObject(object):
     __server__: Union[None, InprocServer, LocalServer] = None
 
     @staticmethod
-    def __run_inprocserver__():
+    def __run_inprocserver__() -> None:
         if COMObject.__server__ is None:
             COMObject.__server__ = InprocServer()
         elif isinstance(COMObject.__server__, InprocServer):
@@ -632,7 +632,9 @@ class COMObject(object):
             raise RuntimeError("Wrong server type")
 
     @staticmethod
-    def __run_localserver__(classobjects):
+    def __run_localserver__(
+        classobjects: Sequence["hints.localserver.ClassFactory"],
+    ) -> None:
         assert COMObject.__server__ is None
         # XXX Decide whether we are in STA or MTA
         server = COMObject.__server__ = LocalServer()
@@ -640,14 +642,14 @@ class COMObject(object):
         COMObject.__server__ = None
 
     @staticmethod
-    def __keep__(obj):
+    def __keep__(obj: "COMObject") -> None:
         COMObject._instances_[obj] = None
         _debug("%d active COM objects: Added   %r", len(COMObject._instances_), obj)
         if COMObject.__server__:
             COMObject.__server__.Lock()
 
     @staticmethod
-    def __unkeep__(obj):
+    def __unkeep__(obj: "COMObject") -> None:
         try:
             del COMObject._instances_[obj]
         except AttributeError:
