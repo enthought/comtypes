@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Optional, Type
 import comtypes
 import comtypes.client
 from comtypes import GUID, STDMETHOD, IUnknown
+from comtypes.automation import IDispatch
 
 if TYPE_CHECKING:
     from ctypes import _Pointer
@@ -34,7 +35,7 @@ class IClassFactory(IUnknown):
         if dynamic:
             if interface is not None:
                 raise ValueError("interface and dynamic are mutually exclusive")
-            realInterface = comtypes.automation.IDispatch
+            realInterface = IDispatch
         elif interface is None:
             realInterface = IUnknown
         else:
