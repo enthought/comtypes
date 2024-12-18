@@ -5,7 +5,7 @@ from ctypes import *
 from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence, Type
 
 import comtypes
-from comtypes.hresult import *
+from comtypes import hresult
 from comtypes.server import IClassFactory
 
 if TYPE_CHECKING:
@@ -82,4 +82,4 @@ class ClassFactory(comtypes.COMObject):
             comtypes.COMObject.__server__.Lock()
         else:
             comtypes.COMObject.__server__.Unlock()
-        return S_OK
+        return hresult.S_OK

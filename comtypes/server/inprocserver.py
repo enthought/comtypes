@@ -4,8 +4,7 @@ import sys
 import winreg
 from typing import Any, Literal, Optional, Type
 
-from comtypes import GUID, COMObject, IUnknown
-from comtypes.hresult import *
+from comtypes import GUID, COMObject, IUnknown, hresult
 from comtypes.server import IClassFactory
 
 logger = logging.getLogger(__name__)
@@ -39,7 +38,7 @@ class ClassFactory(COMObject):
             COMObject.__server__.Lock()
         else:
             COMObject.__server__.Unlock()
-        return S_OK
+        return hresult.S_OK
 
 
 # will be set by py2exe boot script 'from outside'
@@ -133,7 +132,7 @@ def DllGetClassObject(rclsid: int, riid: int, ppv: int) -> int:
 
         cls = inproc_find_class(clsid)
         if not cls:
-            return CLASS_E_CLASSNOTAVAILABLE
+            return hresult.CLASS_E_CLASSNOTAVAILABLE
 
         result = ClassFactory(cls).IUnknown_QueryInterface(
             None, ctypes.pointer(iid), ctypes.c_void_p(ppv)
@@ -142,7 +141,7 @@ def DllGetClassObject(rclsid: int, riid: int, ppv: int) -> int:
         return result
     except Exception:
         _critical("DllGetClassObject", exc_info=True)
-        return E_FAIL
+        return hresult.E_FAIL
 
 
 def DllCanUnloadNow() -> Literal[1]:  # S_FALSE
@@ -150,4 +149,4 @@ def DllCanUnloadNow() -> Literal[1]:  # S_FALSE
     result = COMObject.__server__.DllCanUnloadNow()
     # To avoid a memory leak when PyInitialize()/PyUninitialize() are
     # called several times, we refuse to unload the dll.
-    return S_FALSE
+    return hresult.S_FALSE
