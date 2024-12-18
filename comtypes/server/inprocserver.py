@@ -2,7 +2,7 @@ import ctypes
 import logging
 import sys
 import winreg
-from typing import Literal, Type
+from typing import Any, Literal, Type
 
 from comtypes import GUID, COMObject
 from comtypes.hresult import *
@@ -28,7 +28,7 @@ class ClassFactory(COMObject):
         _debug("CreateInstance() -> %s", result)
         return result
 
-    def IClassFactory_LockServer(self, this, fLock):
+    def IClassFactory_LockServer(self, this: Any, fLock: bool) -> Literal[0]:
         if fLock:
             COMObject.__server__.Lock()
         else:
