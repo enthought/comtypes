@@ -70,7 +70,7 @@ def inproc_find_class(clsid):
 _logging_configured = False
 
 
-def _setup_logging(clsid):
+def _setup_logging(clsid: GUID) -> None:
     """Read from the registry, and configure the logging module.
 
     Currently, the handler (NTDebugHandler) is hardcoded.
