@@ -614,9 +614,8 @@ class COMObject(object):
         if invkind in (1, 2):
             self._dispimpl_[(dispid, 3)] = impl  # type: ignore
 
-    def _get_method_finder_(self, itf):
-        # This method can be overridden to customize how methods are
-        # found.
+    def _get_method_finder_(self, itf: Type[IUnknown]) -> _MethodFinder:
+        # This method can be overridden to customize how methods are found.
         return _MethodFinder(self)
 
     ################################################################
