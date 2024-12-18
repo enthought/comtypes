@@ -512,10 +512,10 @@ class COMObject(object):
         for itf in interfaces[::-1]:
             self.__make_interface_pointer(itf)
 
-    def __make_interface_pointer(self, itf):
-        methods = []  # method implementations
-        fields = []  # (name, prototype) for virtual function table
-        iids = []  # interface identifiers.
+    def __make_interface_pointer(self, itf: Type[IUnknown]) -> None:
+        methods: List[Callable[..., Any]] = []  # method implementations
+        fields: List[Tuple[str, Type["_FuncPointer"]]] = []  # virtual function table
+        iids: List[GUID] = []  # interface identifiers.
         # iterate over interface inheritance in reverse order to build the
         # virtual function table, and leave out the 'object' base class.
         finder = self._get_method_finder_(itf)
