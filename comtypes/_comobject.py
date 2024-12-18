@@ -701,7 +701,9 @@ class COMObject(object):
             self._com_pointers_ = {}
         return result
 
-    def IUnknown_QueryInterface(self, this, riid, ppvObj, _debug=_debug):
+    def IUnknown_QueryInterface(
+        self, this: Any, riid: "_Pointer[GUID]", ppvObj: c_void_p, _debug=_debug
+    ) -> int:
         # XXX This is probably too slow.
         # riid[0].hashcode() alone takes 33 us!
         iid = riid[0]
