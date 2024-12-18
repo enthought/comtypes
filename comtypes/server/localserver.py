@@ -1,10 +1,16 @@
-import sys
-from ctypes import *
-import comtypes
-from comtypes.hresult import *
-from comtypes.server import IClassFactory
 import logging
 import queue
+import sys
+from ctypes import byref, c_ulong, c_void_p, oledll
+from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence, Type
+
+import comtypes
+from comtypes import hresult
+from comtypes.server import IClassFactory
+
+if TYPE_CHECKING:
+    from ctypes import _Pointer
+
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -16,31 +22,31 @@ REGCLS_SUSPENDED = 4  # register it as suspended, will be activated
 REGCLS_SURROGATE = 8  # must be used when a surrogate process
 
 
-def run(classes):
+def run(classes: Sequence[Type[comtypes.COMObject]]) -> None:
     classobjects = [ClassFactory(cls) for cls in classes]
     comtypes.COMObject.__run_localserver__(classobjects)
 
 
 class ClassFactory(comtypes.COMObject):
     _com_interfaces_ = [IClassFactory]
-    _locks = 0
-    _queue = None
-    regcls = REGCLS_MULTIPLEUSE
+    _locks: int = 0
+    _queue: Optional[queue.Queue] = None
+    regcls: int = REGCLS_MULTIPLEUSE
 
-    def __init__(self, cls, *args, **kw):
+    def __init__(self, cls: Type[comtypes.COMObject], *args, **kw) -> None:
         super(ClassFactory, self).__init__()
         self._cls = cls
         self._register_class()
         self._args = args
         self._kw = kw
 
-    def IUnknown_AddRef(self, this):
+    def IUnknown_AddRef(self, this: Any) -> int:
         return 2
 
-    def IUnknown_Release(self, this):
+    def IUnknown_Release(self, this: Any) -> int:
         return 1
 
-    def _register_class(self):
+    def _register_class(self) -> None:
         regcls = getattr(self._cls, "_regcls_", self.regcls)
         cookie = c_ulong()
         ptr = self._com_pointers_[comtypes.IUnknown._iid_]
@@ -55,19 +61,25 @@ class ClassFactory(comtypes.COMObject):
         )
         self.cookie = cookie
 
-    def _revoke_class(self):
+    def _revoke_class(self) -> None:
         oledll.ole32.CoRevokeClassObject(self.cookie)
 
-    def CreateInstance(self, this, punkOuter, riid, ppv):
+    def CreateInstance(
+        self,
+        this: Any,
+        punkOuter: Optional[Type["_Pointer[comtypes.IUnknown]"]],
+        riid: "_Pointer[comtypes.GUID]",
+        ppv: c_void_p,
+    ) -> int:
         _debug("ClassFactory.CreateInstance(%s)", riid[0])
         obj = self._cls(*self._args, **self._kw)
         result = obj.IUnknown_QueryInterface(None, riid, ppv)
         _debug("CreateInstance() -> %s", result)
         return result
 
-    def LockServer(self, this, fLock):
+    def LockServer(self, this: Any, fLock: bool) -> Literal[0]:
         if fLock:
             comtypes.COMObject.__server__.Lock()
         else:
             comtypes.COMObject.__server__.Unlock()
-        return S_OK
+        return hresult.S_OK

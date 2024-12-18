@@ -1,12 +1,11 @@
 import ctypes
-from comtypes import COMObject, GUID
-from comtypes.server import IClassFactory
-from comtypes.hresult import *
-
-import sys
 import logging
+import sys
 import winreg
+from typing import Any, Literal, Optional, Type
 
+from comtypes import GUID, COMObject, IUnknown, hresult
+from comtypes.server import IClassFactory
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -18,29 +17,35 @@ _critical = logger.critical
 class ClassFactory(COMObject):
     _com_interfaces_ = [IClassFactory]
 
-    def __init__(self, cls):
+    def __init__(self, cls: Type[COMObject]) -> None:
         super(ClassFactory, self).__init__()
         self._cls = cls
 
-    def IClassFactory_CreateInstance(self, this, punkOuter, riid, ppv):
+    def IClassFactory_CreateInstance(
+        self,
+        this: Any,
+        punkOuter: Optional[Type["ctypes._Pointer[IUnknown]"]],
+        riid: "ctypes._Pointer[GUID]",
+        ppv: ctypes.c_void_p,
+    ) -> int:
         _debug("ClassFactory.CreateInstance(%s)", riid[0])
         result = self._cls().IUnknown_QueryInterface(None, riid, ppv)
         _debug("CreateInstance() -> %s", result)
         return result
 
-    def IClassFactory_LockServer(self, this, fLock):
+    def IClassFactory_LockServer(self, this: Any, fLock: bool) -> Literal[0]:
         if fLock:
             COMObject.__server__.Lock()
         else:
             COMObject.__server__.Unlock()
-        return S_OK
+        return hresult.S_OK
 
 
 # will be set by py2exe boot script 'from outside'
 _clsid_to_class = {}
 
 
-def inproc_find_class(clsid):
+def inproc_find_class(clsid: GUID) -> Type[COMObject]:
     if _clsid_to_class:
         return _clsid_to_class[clsid]
 
@@ -70,7 +75,7 @@ def inproc_find_class(clsid):
 _logging_configured = False
 
 
-def _setup_logging(clsid):
+def _setup_logging(clsid: GUID) -> None:
     """Read from the registry, and configure the logging module.
 
     Currently, the handler (NTDebugHandler) is hardcoded.
@@ -109,7 +114,7 @@ def _setup_logging(clsid):
         logging.getLogger(name).setLevel(level)
 
 
-def DllGetClassObject(rclsid, riid, ppv):
+def DllGetClassObject(rclsid: int, riid: int, ppv: int) -> int:
     COMObject.__run_inprocserver__()
 
     iid = GUID.from_address(riid)
@@ -127,7 +132,7 @@ def DllGetClassObject(rclsid, riid, ppv):
 
         cls = inproc_find_class(clsid)
         if not cls:
-            return CLASS_E_CLASSNOTAVAILABLE
+            return hresult.CLASS_E_CLASSNOTAVAILABLE
 
         result = ClassFactory(cls).IUnknown_QueryInterface(
             None, ctypes.pointer(iid), ctypes.c_void_p(ppv)
@@ -136,12 +141,12 @@ def DllGetClassObject(rclsid, riid, ppv):
         return result
     except Exception:
         _critical("DllGetClassObject", exc_info=True)
-        return E_FAIL
+        return hresult.E_FAIL
 
 
-def DllCanUnloadNow():
+def DllCanUnloadNow() -> Literal[1]:  # S_FALSE
     COMObject.__run_inprocserver__()
     result = COMObject.__server__.DllCanUnloadNow()
     # To avoid a memory leak when PyInitialize()/PyUninitialize() are
     # called several times, we refuse to unload the dll.
-    return S_FALSE
+    return hresult.S_FALSE
