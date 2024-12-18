@@ -1,12 +1,11 @@
 import ctypes
-from comtypes import COMObject, GUID
-from comtypes.server import IClassFactory
-from comtypes.hresult import *
-
-import sys
 import logging
+import sys
 import winreg
 
+from comtypes import GUID, COMObject
+from comtypes.hresult import *
+from comtypes.server import IClassFactory
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
