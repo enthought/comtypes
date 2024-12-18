@@ -1,7 +1,7 @@
 import logging
 import queue
 import sys
-from ctypes import *
+from ctypes import byref, c_ulong, c_void_p, oledll
 from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence, Type
 
 import comtypes
