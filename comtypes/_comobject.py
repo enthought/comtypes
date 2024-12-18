@@ -471,7 +471,7 @@ class COMObject(object):
             self.__prepare_comobject()
         return self
 
-    def __prepare_comobject(self):
+    def __prepare_comobject(self) -> None:
         # When a CoClass instance is created, COM pointers to all
         # interfaces are created.  Also, the CoClass must be kept alive as
         # until the COM reference count drops to zero, even if no Python
