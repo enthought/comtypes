@@ -55,7 +55,7 @@ ACTIVEOBJECT_WEAK = 0x1
 oleaut32 = ctypes.oledll.oleaut32
 
 
-def RegisterActiveObject(comobj, weak=True):
+def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
     punk = comobj._com_pointers_[comtypes.IUnknown._iid_]
     clsid = comobj._reg_clsid_
     if weak:
