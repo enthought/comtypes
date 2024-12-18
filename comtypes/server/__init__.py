@@ -2,18 +2,19 @@ import ctypes
 
 import comtypes
 import comtypes.client
+from comtypes import IUnknown
 
 
 ################################################################
 # Interfaces
-class IClassFactory(comtypes.IUnknown):
+class IClassFactory(IUnknown):
     _iid_ = comtypes.GUID("{00000001-0000-0000-C000-000000000046}")
     _methods_ = [
         comtypes.STDMETHOD(
             comtypes.HRESULT,
             "CreateInstance",
             [
-                ctypes.POINTER(comtypes.IUnknown),
+                ctypes.POINTER(IUnknown),
                 ctypes.POINTER(comtypes.GUID),
                 ctypes.POINTER(ctypes.c_void_p),
             ],
@@ -27,7 +28,7 @@ class IClassFactory(comtypes.IUnknown):
                 raise ValueError("interface and dynamic are mutually exclusive")
             realInterface = comtypes.automation.IDispatch
         elif interface is None:
-            realInterface = comtypes.IUnknown
+            realInterface = IUnknown
         else:
             realInterface = interface
         obj = ctypes.POINTER(realInterface)()
@@ -56,7 +57,7 @@ oleaut32 = ctypes.oledll.oleaut32
 
 
 def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
-    punk = comobj._com_pointers_[comtypes.IUnknown._iid_]
+    punk = comobj._com_pointers_[IUnknown._iid_]
     clsid = comobj._reg_clsid_
     if weak:
         flags = ACTIVEOBJECT_WEAK
