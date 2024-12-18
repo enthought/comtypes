@@ -2,6 +2,7 @@ import ctypes
 import logging
 import sys
 import winreg
+from typing import Literal
 
 from comtypes import GUID, COMObject
 from comtypes.hresult import *
@@ -138,7 +139,7 @@ def DllGetClassObject(rclsid, riid, ppv):
         return E_FAIL
 
 
-def DllCanUnloadNow():
+def DllCanUnloadNow() -> Literal[1]:  # S_FALSE
     COMObject.__run_inprocserver__()
     result = COMObject.__server__.DllCanUnloadNow()
     # To avoid a memory leak when PyInitialize()/PyUninitialize() are
