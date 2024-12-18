@@ -42,7 +42,7 @@ class ClassFactory(comtypes.COMObject):
     def IUnknown_Release(self, this: Any) -> int:
         return 1
 
-    def _register_class(self):
+    def _register_class(self) -> None:
         regcls = getattr(self._cls, "_regcls_", self.regcls)
         cookie = c_ulong()
         ptr = self._com_pointers_[comtypes.IUnknown._iid_]
