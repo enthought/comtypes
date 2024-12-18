@@ -2,7 +2,7 @@ import logging
 import queue
 import sys
 from ctypes import *
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Type
+from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence, Type
 
 import comtypes
 from comtypes.hresult import *
@@ -77,7 +77,7 @@ class ClassFactory(comtypes.COMObject):
         _debug("CreateInstance() -> %s", result)
         return result
 
-    def LockServer(self, this, fLock):
+    def LockServer(self, this: Any, fLock: bool) -> Literal[0]:
         if fLock:
             comtypes.COMObject.__server__.Lock()
         else:
