@@ -2,7 +2,7 @@ import ctypes
 import logging
 import sys
 import winreg
-from typing import Literal
+from typing import Literal, Type
 
 from comtypes import GUID, COMObject
 from comtypes.hresult import *
@@ -40,7 +40,7 @@ class ClassFactory(COMObject):
 _clsid_to_class = {}
 
 
-def inproc_find_class(clsid):
+def inproc_find_class(clsid: GUID) -> Type[COMObject]:
     if _clsid_to_class:
         return _clsid_to_class[clsid]
 
