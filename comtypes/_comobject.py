@@ -26,6 +26,7 @@ from typing import (
     Sequence,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 
@@ -452,6 +453,9 @@ class InprocServer(object):
         return S_OK
 
 
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
+
+
 class COMObject(object):
     _com_interfaces_: ClassVar[List[Type[IUnknown]]]
     _instances_: ClassVar[Dict["COMObject", None]] = {}
@@ -715,7 +719,7 @@ class COMObject(object):
         _debug("%r.QueryInterface(%s) -> E_NOINTERFACE", self, iid)
         return E_NOINTERFACE
 
-    def QueryInterface(self, interface):
+    def QueryInterface(self, interface: Type[_T_IUnknown]) -> _T_IUnknown:
         "Query the object for an interface pointer"
         # This method is NOT the implementation of
         # IUnknown::QueryInterface, instead it is supposed to be
