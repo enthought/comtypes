@@ -26,6 +26,7 @@ from typing import (
     Sequence,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 
@@ -49,7 +50,7 @@ if TYPE_CHECKING:
     from ctypes import _FuncPointer, _Pointer
 
     from comtypes import hints  # type: ignore
-    from comtypes._memberspec import _ParamFlagType
+    from comtypes._memberspec import _ArgSpecElmType, _ParamFlagType
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -452,6 +453,9 @@ class InprocServer(object):
         return S_OK
 
 
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
+
+
 class COMObject(object):
     _com_interfaces_: ClassVar[List[Type[IUnknown]]]
     _instances_: ClassVar[Dict["COMObject", None]] = {}
@@ -471,7 +475,7 @@ class COMObject(object):
             self.__prepare_comobject()
         return self
 
-    def __prepare_comobject(self):
+    def __prepare_comobject(self) -> None:
         # When a CoClass instance is created, COM pointers to all
         # interfaces are created.  Also, the CoClass must be kept alive as
         # until the COM reference count drops to zero, even if no Python
@@ -512,10 +516,10 @@ class COMObject(object):
         for itf in interfaces[::-1]:
             self.__make_interface_pointer(itf)
 
-    def __make_interface_pointer(self, itf):
-        methods = []  # method implementations
-        fields = []  # (name, prototype) for virtual function table
-        iids = []  # interface identifiers.
+    def __make_interface_pointer(self, itf: Type[IUnknown]) -> None:
+        methods: List[Callable[..., Any]] = []  # method implementations
+        fields: List[Tuple[str, Type["_FuncPointer"]]] = []  # virtual function table
+        iids: List[GUID] = []  # interface identifiers.
         # iterate over interface inheritance in reverse order to build the
         # virtual function table, and leave out the 'object' base class.
         finder = self._get_method_finder_(itf)
@@ -593,24 +597,29 @@ class COMObject(object):
                         )  # DISPATCH_PROPERTYPUT
                         # Add DISPATCH_PROPERTYPUTREF also?
 
-    def __make_dispentry(self, finder, interface, mthname, idlflags, argspec, invkind):
-        # We build a _dispmap_ entry now that maps invkind and
-        # dispid to implementations that the finder finds;
-        # IDispatch_Invoke will later call it.
+    def __make_dispentry(
+        self,
+        finder: _MethodFinder,
+        interface: Type[IUnknown],
+        mthname: str,
+        idlflags: Tuple[Union[str, int], ...],
+        argspec: Tuple["_ArgSpecElmType", ...],
+        invkind: int,
+    ) -> None:
+        # We build a _dispmap_ entry now that maps invkind and dispid to
+        # implementations that the finder finds; IDispatch_Invoke will later call it.
         paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec]
         # XXX can the dispid be at a different index?  Check codegenerator.
         dispid = idlflags[0]
         impl = finder.get_impl(interface, mthname, paramflags, idlflags)
-        self._dispimpl_[(dispid, invkind)] = impl
-        # invkind is really a set of flags; we allow both
-        # DISPATCH_METHOD and DISPATCH_PROPERTYGET (win32com uses
-        # this, maybe other languages too?)
+        self._dispimpl_[(dispid, invkind)] = impl  # type: ignore
+        # invkind is really a set of flags; we allow both DISPATCH_METHOD and
+        # DISPATCH_PROPERTYGET (win32com uses this, maybe other languages too?)
         if invkind in (1, 2):
-            self._dispimpl_[(dispid, 3)] = impl
+            self._dispimpl_[(dispid, 3)] = impl  # type: ignore
 
-    def _get_method_finder_(self, itf):
-        # This method can be overridden to customize how methods are
-        # found.
+    def _get_method_finder_(self, itf: Type[IUnknown]) -> _MethodFinder:
+        # This method can be overridden to customize how methods are found.
         return _MethodFinder(self)
 
     ################################################################
@@ -618,7 +627,7 @@ class COMObject(object):
     __server__: Union[None, InprocServer, LocalServer] = None
 
     @staticmethod
-    def __run_inprocserver__():
+    def __run_inprocserver__() -> None:
         if COMObject.__server__ is None:
             COMObject.__server__ = InprocServer()
         elif isinstance(COMObject.__server__, InprocServer):
@@ -627,7 +636,9 @@ class COMObject(object):
             raise RuntimeError("Wrong server type")
 
     @staticmethod
-    def __run_localserver__(classobjects):
+    def __run_localserver__(
+        classobjects: Sequence["hints.localserver.ClassFactory"],
+    ) -> None:
         assert COMObject.__server__ is None
         # XXX Decide whether we are in STA or MTA
         server = COMObject.__server__ = LocalServer()
@@ -635,14 +646,14 @@ class COMObject(object):
         COMObject.__server__ = None
 
     @staticmethod
-    def __keep__(obj):
+    def __keep__(obj: "COMObject") -> None:
         COMObject._instances_[obj] = None
         _debug("%d active COM objects: Added   %r", len(COMObject._instances_), obj)
         if COMObject.__server__:
             COMObject.__server__.Lock()
 
     @staticmethod
-    def __unkeep__(obj):
+    def __unkeep__(obj: "COMObject") -> None:
         try:
             del COMObject._instances_[obj]
         except AttributeError:
@@ -659,22 +670,28 @@ class COMObject(object):
     #########################################################
     # IUnknown methods implementations
     def IUnknown_AddRef(
-        self, this, __InterlockedIncrement=_InterlockedIncrement, _debug=_debug
-    ):
+        self,
+        this: Any,
+        __InterlockedIncrement: Callable[[c_long], int] = _InterlockedIncrement,
+        _debug=_debug,
+    ) -> int:
         result = __InterlockedIncrement(self._refcnt)
         if result == 1:
             self.__keep__(self)
         _debug("%r.AddRef() -> %s", self, result)
         return result
 
-    def _final_release_(self):
+    def _final_release_(self) -> None:
         """This method may be overridden in subclasses
         to free allocated resources or so."""
         pass
 
     def IUnknown_Release(
-        self, this, __InterlockedDecrement=_InterlockedDecrement, _debug=_debug
-    ):
+        self,
+        this: Any,
+        __InterlockedDecrement: Callable[[c_long], int] = _InterlockedDecrement,
+        _debug=_debug,
+    ) -> int:
         # If this is called at COM shutdown, _InterlockedDecrement()
         # must still be available, although module level variables may
         # have been deleted already - so we supply it as default
@@ -688,7 +705,9 @@ class COMObject(object):
             self._com_pointers_ = {}
         return result
 
-    def IUnknown_QueryInterface(self, this, riid, ppvObj, _debug=_debug):
+    def IUnknown_QueryInterface(
+        self, this: Any, riid: "_Pointer[GUID]", ppvObj: c_void_p, _debug=_debug
+    ) -> int:
         # XXX This is probably too slow.
         # riid[0].hashcode() alone takes 33 us!
         iid = riid[0]
@@ -700,7 +719,7 @@ class COMObject(object):
         _debug("%r.QueryInterface(%s) -> E_NOINTERFACE", self, iid)
         return E_NOINTERFACE
 
-    def QueryInterface(self, interface):
+    def QueryInterface(self, interface: Type[_T_IUnknown]) -> _T_IUnknown:
         "Query the object for an interface pointer"
         # This method is NOT the implementation of
         # IUnknown::QueryInterface, instead it is supposed to be
@@ -874,7 +893,7 @@ class COMObject(object):
 
     ################################################################
     # IPersist interface
-    def IPersist_GetClassID(self):
+    def IPersist_GetClassID(self) -> GUID:
         return self._reg_clsid_
 
 
