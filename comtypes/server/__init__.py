@@ -1,5 +1,5 @@
 import ctypes
-from ctypes import HRESULT
+from ctypes import HRESULT, POINTER
 
 import comtypes
 import comtypes.client
@@ -14,11 +14,7 @@ class IClassFactory(IUnknown):
         STDMETHOD(
             HRESULT,
             "CreateInstance",
-            [
-                ctypes.POINTER(IUnknown),
-                ctypes.POINTER(GUID),
-                ctypes.POINTER(ctypes.c_void_p),
-            ],
+            [POINTER(IUnknown), POINTER(GUID), POINTER(ctypes.c_void_p)],
         ),
         STDMETHOD(HRESULT, "LockServer", [ctypes.c_int]),
     ]
@@ -32,7 +28,7 @@ class IClassFactory(IUnknown):
             realInterface = IUnknown
         else:
             realInterface = interface
-        obj = ctypes.POINTER(realInterface)()
+        obj = POINTER(realInterface)()
         self.__com_CreateInstance(punkouter, realInterface._iid_, ctypes.byref(obj))
         if dynamic:
             return comtypes.client.dynamic.Dispatch(obj)
