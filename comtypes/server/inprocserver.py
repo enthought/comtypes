@@ -2,9 +2,9 @@ import ctypes
 import logging
 import sys
 import winreg
-from typing import Any, Literal, Type
+from typing import Any, Literal, Optional, Type
 
-from comtypes import GUID, COMObject
+from comtypes import GUID, COMObject, IUnknown
 from comtypes.hresult import *
 from comtypes.server import IClassFactory
 
@@ -22,7 +22,13 @@ class ClassFactory(COMObject):
         super(ClassFactory, self).__init__()
         self._cls = cls
 
-    def IClassFactory_CreateInstance(self, this, punkOuter, riid, ppv):
+    def IClassFactory_CreateInstance(
+        self,
+        this: Any,
+        punkOuter: Optional[Type["ctypes._Pointer[IUnknown]"]],
+        riid: "ctypes._Pointer[GUID]",
+        ppv: ctypes.c_void_p,
+    ) -> int:
         _debug("ClassFactory.CreateInstance(%s)", riid[0])
         result = self._cls().IUnknown_QueryInterface(None, riid, ppv)
         _debug("CreateInstance() -> %s", result)
