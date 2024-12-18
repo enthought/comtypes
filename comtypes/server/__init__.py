@@ -69,5 +69,5 @@ def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
     return handle.value
 
 
-def RevokeActiveObject(handle):
+def RevokeActiveObject(handle: int) -> None:
     oleaut32.RevokeActiveObject(handle, None)
