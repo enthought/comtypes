@@ -1,5 +1,5 @@
 import ctypes
-from ctypes import HRESULT, POINTER
+from ctypes import HRESULT, POINTER, byref
 
 import comtypes
 import comtypes.client
@@ -29,7 +29,7 @@ class IClassFactory(IUnknown):
         else:
             realInterface = interface
         obj = POINTER(realInterface)()
-        self.__com_CreateInstance(punkouter, realInterface._iid_, ctypes.byref(obj))
+        self.__com_CreateInstance(punkouter, realInterface._iid_, byref(obj))
         if dynamic:
             return comtypes.client.dynamic.Dispatch(obj)
         elif interface is None:
@@ -61,9 +61,7 @@ def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
     else:
         flags = ACTIVEOBJECT_STRONG
     handle = ctypes.c_ulong()
-    oleaut32.RegisterActiveObject(
-        punk, ctypes.byref(clsid), flags, ctypes.byref(handle)
-    )
+    oleaut32.RegisterActiveObject(punk, byref(clsid), flags, byref(handle))
     return handle.value
 
 
