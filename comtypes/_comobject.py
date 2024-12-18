@@ -21,10 +21,12 @@ from typing import (
     Callable,
     ClassVar,
     Dict,
+    List,
     Optional,
     Sequence,
     Tuple,
     Type,
+    Union,
 )
 
 from comtypes import GUID, IPersist, IUnknown, ReturnHRESULT, instancemethod
@@ -44,7 +46,7 @@ from comtypes.hresult import (
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 
 if TYPE_CHECKING:
-    from ctypes import _FuncPointer
+    from ctypes import _FuncPointer, _Pointer
 
     from comtypes import hints  # type: ignore
     from comtypes._memberspec import _ParamFlagType
@@ -255,18 +257,24 @@ def hack(
 
 
 class _MethodFinder(object):
-    def __init__(self, inst):
+    def __init__(self, inst: "COMObject") -> None:
         self.inst = inst
         # map lower case names to names with correct spelling.
         self.names = dict([(n.lower(), n) for n in dir(inst)])
 
-    def get_impl(self, interface, mthname, paramflags, idlflags):
+    def get_impl(
+        self,
+        interface: Type[IUnknown],
+        mthname: str,
+        paramflags: Optional[Tuple["_ParamFlagType", ...]],
+        idlflags: Tuple[Union[str, int], ...],
+    ) -> Callable[..., Any]:
         mth = self.find_impl(interface, mthname, paramflags, idlflags)
         if mth is None:
             return _do_implement(interface.__name__, mthname)
         return hack(self.inst, mth, paramflags, interface, mthname)
 
-    def find_method(self, fq_name, mthname):
+    def find_method(self, fq_name: str, mthname: str) -> Callable[..., Any]:
         # Try to find a method, first with the fully qualified name
         # ('IUnknown_QueryInterface'), if that fails try the simple
         # name ('QueryInterface')
@@ -276,7 +284,13 @@ class _MethodFinder(object):
             pass
         return getattr(self.inst, mthname)
 
-    def find_impl(self, interface, mthname, paramflags, idlflags):
+    def find_impl(
+        self,
+        interface: Type[IUnknown],
+        mthname: str,
+        paramflags: Optional[Tuple["_ParamFlagType", ...]],
+        idlflags: Tuple[Union[str, int], ...],
+    ) -> Optional[Callable[..., Any]]:
         fq_name = f"{interface.__name__}_{mthname}"
         if interface._case_insensitive_:
             # simple name, like 'QueryInterface'
@@ -302,7 +316,7 @@ class _MethodFinder(object):
         _debug("%r: %s.%s not implemented", self.inst, interface.__name__, mthname)
         return None
 
-    def setter(self, propname):
+    def setter(self, propname: str) -> Callable[[Any], Any]:
         #
         def set(self, value):
             try:
@@ -314,7 +328,7 @@ class _MethodFinder(object):
 
         return instancemethod(set, self.inst, type(self.inst))
 
-    def getter(self, propname):
+    def getter(self, propname: str) -> Callable[[], Any]:
         def get(self):
             try:
                 return getattr(self, propname)
@@ -439,9 +453,13 @@ class InprocServer(object):
 
 
 class COMObject(object):
+    _com_interfaces_: ClassVar[List[Type[IUnknown]]]
     _instances_: ClassVar[Dict["COMObject", None]] = {}
     _reg_clsid_: ClassVar[GUID]
+    _reg_typelib_: ClassVar[Tuple[str, int, int]]
     __typelib: "hints.ITypeLib"
+    _com_pointers_: Dict[GUID, "_Pointer[_Pointer[Structure]]"]
+    _dispimpl_: Dict[Tuple[int, int], Callable[..., Any]]
 
     def __new__(cls, *args, **kw):
         self = super(COMObject, cls).__new__(cls)
@@ -597,7 +615,7 @@ class COMObject(object):
 
     ################################################################
     # LocalServer / InprocServer stuff
-    __server__ = None
+    __server__: Union[None, InprocServer, LocalServer] = None
 
     @staticmethod
     def __run_inprocserver__():
