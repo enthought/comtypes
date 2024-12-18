@@ -2,11 +2,15 @@ import logging
 import queue
 import sys
 from ctypes import *
-from typing import Any, Optional, Sequence, Type
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Type
 
 import comtypes
 from comtypes.hresult import *
 from comtypes.server import IClassFactory
+
+if TYPE_CHECKING:
+    from ctypes import _Pointer
+
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -60,7 +64,13 @@ class ClassFactory(comtypes.COMObject):
     def _revoke_class(self) -> None:
         oledll.ole32.CoRevokeClassObject(self.cookie)
 
-    def CreateInstance(self, this, punkOuter, riid, ppv):
+    def CreateInstance(
+        self,
+        this: Any,
+        punkOuter: Optional[Type["_Pointer[comtypes.IUnknown]"]],
+        riid: "_Pointer[comtypes.GUID]",
+        ppv: c_void_p,
+    ) -> int:
         _debug("ClassFactory.CreateInstance(%s)", riid[0])
         obj = self._cls(*self._args, **self._kw)
         result = obj.IUnknown_QueryInterface(None, riid, ppv)
