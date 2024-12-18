@@ -666,8 +666,11 @@ class COMObject(object):
     #########################################################
     # IUnknown methods implementations
     def IUnknown_AddRef(
-        self, this, __InterlockedIncrement=_InterlockedIncrement, _debug=_debug
-    ):
+        self,
+        this: Any,
+        __InterlockedIncrement: Callable[[c_long], int] = _InterlockedIncrement,
+        _debug=_debug,
+    ) -> int:
         result = __InterlockedIncrement(self._refcnt)
         if result == 1:
             self.__keep__(self)
