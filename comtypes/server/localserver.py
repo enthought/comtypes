@@ -2,7 +2,7 @@ import logging
 import queue
 import sys
 from ctypes import *
-from typing import Optional, Sequence, Type
+from typing import Any, Optional, Sequence, Type
 
 import comtypes
 from comtypes.hresult import *
@@ -36,7 +36,7 @@ class ClassFactory(comtypes.COMObject):
         self._args = args
         self._kw = kw
 
-    def IUnknown_AddRef(self, this):
+    def IUnknown_AddRef(self, this: Any) -> int:
         return 2
 
     def IUnknown_Release(self, this):
