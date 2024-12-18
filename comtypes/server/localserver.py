@@ -1,10 +1,11 @@
+import logging
+import queue
 import sys
 from ctypes import *
+
 import comtypes
 from comtypes.hresult import *
 from comtypes.server import IClassFactory
-import logging
-import queue
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
