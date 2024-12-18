@@ -1,4 +1,7 @@
-import comtypes.client, ctypes
+import ctypes
+
+import comtypes
+import comtypes.client
 
 
 ################################################################
