@@ -109,7 +109,7 @@ def _setup_logging(clsid):
         logging.getLogger(name).setLevel(level)
 
 
-def DllGetClassObject(rclsid, riid, ppv):
+def DllGetClassObject(rclsid: int, riid: int, ppv: int) -> int:
     COMObject.__run_inprocserver__()
 
     iid = GUID.from_address(riid)
