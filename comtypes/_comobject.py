@@ -677,7 +677,7 @@ class COMObject(object):
         _debug("%r.AddRef() -> %s", self, result)
         return result
 
-    def _final_release_(self):
+    def _final_release_(self) -> None:
         """This method may be overridden in subclasses
         to free allocated resources or so."""
         pass
