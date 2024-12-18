@@ -2,7 +2,7 @@ import ctypes
 
 import comtypes
 import comtypes.client
-from comtypes import GUID, IUnknown
+from comtypes import GUID, STDMETHOD, IUnknown
 
 
 ################################################################
@@ -10,7 +10,7 @@ from comtypes import GUID, IUnknown
 class IClassFactory(IUnknown):
     _iid_ = GUID("{00000001-0000-0000-C000-000000000046}")
     _methods_ = [
-        comtypes.STDMETHOD(
+        STDMETHOD(
             comtypes.HRESULT,
             "CreateInstance",
             [
@@ -19,7 +19,7 @@ class IClassFactory(IUnknown):
                 ctypes.POINTER(ctypes.c_void_p),
             ],
         ),
-        comtypes.STDMETHOD(comtypes.HRESULT, "LockServer", [ctypes.c_int]),
+        STDMETHOD(comtypes.HRESULT, "LockServer", [ctypes.c_int]),
     ]
 
     def CreateInstance(self, punkouter=None, interface=None, dynamic=False):
