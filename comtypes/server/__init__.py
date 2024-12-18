@@ -2,20 +2,20 @@ import ctypes
 
 import comtypes
 import comtypes.client
-from comtypes import IUnknown
+from comtypes import GUID, IUnknown
 
 
 ################################################################
 # Interfaces
 class IClassFactory(IUnknown):
-    _iid_ = comtypes.GUID("{00000001-0000-0000-C000-000000000046}")
+    _iid_ = GUID("{00000001-0000-0000-C000-000000000046}")
     _methods_ = [
         comtypes.STDMETHOD(
             comtypes.HRESULT,
             "CreateInstance",
             [
                 ctypes.POINTER(IUnknown),
-                ctypes.POINTER(comtypes.GUID),
+                ctypes.POINTER(GUID),
                 ctypes.POINTER(ctypes.c_void_p),
             ],
         ),
