@@ -57,7 +57,7 @@ class ClassFactory(comtypes.COMObject):
         )
         self.cookie = cookie
 
-    def _revoke_class(self):
+    def _revoke_class(self) -> None:
         oledll.ole32.CoRevokeClassObject(self.cookie)
 
     def CreateInstance(self, this, punkOuter, riid, ppv):
