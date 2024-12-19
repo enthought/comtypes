@@ -808,6 +808,10 @@ class IDispatch(IUnknown):
         ),
     ]
 
+    if TYPE_CHECKING:
+
+        def GetTypeInfoCount(self) -> int: ...
+
     def GetTypeInfo(self, index: int, lcid: int = 0) -> "hints.ITypeInfo":
         """Return type information.  Index 0 specifies typeinfo for IDispatch"""
         import comtypes.typeinfo
