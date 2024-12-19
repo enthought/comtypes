@@ -47,7 +47,7 @@ from comtypes.hresult import (
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
 
 if TYPE_CHECKING:
-    from ctypes import _FuncPointer, _Pointer
+    from ctypes import _CArgObject, _FuncPointer, _Pointer
 
     from comtypes import hints  # type: ignore
     from comtypes._memberspec import _ArgSpecElmType, _ParamFlagType
@@ -706,7 +706,11 @@ class COMObject(object):
         return result
 
     def IUnknown_QueryInterface(
-        self, this: Any, riid: "_Pointer[GUID]", ppvObj: c_void_p, _debug=_debug
+        self,
+        this: Any,
+        riid: "_Pointer[GUID]",
+        ppvObj: Union[c_void_p, "_CArgObject"],
+        _debug=_debug,
     ) -> int:
         # XXX This is probably too slow.
         # riid[0].hashcode() alone takes 33 us!
@@ -733,7 +737,7 @@ class COMObject(object):
         # CopyComPointer(src, dst) calls AddRef!
         result = POINTER(interface)()
         CopyComPointer(ptr, byref(result))
-        return result
+        return result  # type: ignore
 
     ################################################################
     # ISupportErrorInfo::InterfaceSupportsErrorInfo implementation
