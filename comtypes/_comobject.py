@@ -741,7 +741,9 @@ class COMObject(object):
 
     ################################################################
     # ISupportErrorInfo::InterfaceSupportsErrorInfo implementation
-    def ISupportErrorInfo_InterfaceSupportsErrorInfo(self, this, riid):
+    def ISupportErrorInfo_InterfaceSupportsErrorInfo(
+        self, this: Any, riid: "_Pointer[GUID]"
+    ) -> int:
         if riid[0] in self._com_pointers_:
             return S_OK
         return S_FALSE

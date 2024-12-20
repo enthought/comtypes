@@ -90,6 +90,38 @@ class Test_IUnknown_AddRef_IUnknown_Release(ut.TestCase):
             release.assert_called_once_with()
 
 
+class Test_ISupportErrorInfo_InterfaceSupportsErrorInfo(ut.TestCase):
+    def test_s_ok(self):
+        cuia = uiac.CUIAutomation()
+        self.assertEqual(
+            cuia.ISupportErrorInfo_InterfaceSupportsErrorInfo(
+                None, pointer(IUnknown._iid_)
+            ),
+            hresult.S_OK,
+        )
+        self.assertEqual(
+            cuia.ISupportErrorInfo_InterfaceSupportsErrorInfo(
+                None, pointer(uiac.IUIAutomation._iid_)
+            ),
+            hresult.S_OK,
+        )
+
+    def test_s_false(self):
+        cuia = uiac.CUIAutomation()
+        self.assertEqual(
+            cuia.ISupportErrorInfo_InterfaceSupportsErrorInfo(
+                None, pointer(IDispatch._iid_)
+            ),
+            hresult.S_FALSE,
+        )
+        self.assertEqual(
+            cuia.ISupportErrorInfo_InterfaceSupportsErrorInfo(
+                None, pointer(scrrun.IDictionary._iid_)
+            ),
+            hresult.S_FALSE,
+        )
+
+
 class Test_IPersist_GetClassID(ut.TestCase):
     def test(self):
         self.assertEqual(
