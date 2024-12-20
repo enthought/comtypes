@@ -1,16 +1,18 @@
 import ctypes
 import unittest as ut
 from ctypes import POINTER, byref, pointer
+from unittest import mock
 
 import comtypes
 import comtypes.client
-from comtypes import IUnknown, hresult
+from comtypes import COMObject, IUnknown, hresult
 from comtypes.automation import IDispatch
 
 comtypes.client.GetModule("UIAutomationCore.dll")
 comtypes.client.GetModule("scrrun.dll")
 from comtypes.gen import Scripting as scrrun
 from comtypes.gen import UIAutomationClient as uiac
+from comtypes.gen import stdole
 
 
 class Test_QueryInterface(ut.TestCase):
@@ -59,10 +61,12 @@ class Test_IUnknown_QueryInterface(ut.TestCase):
             byref(scrrun.IDictionary._iid_),
             byref(ptr),
         )
+        before_val = ptr.value
         hr = scrrun.Dictionary().IUnknown_QueryInterface(
             None, pointer(scrrun.IDictionary._iid_), ptr
         )
         self.assertEqual(hr, hresult.S_OK)
+        self.assertEqual(ptr.value, before_val)
 
     def test_valid_interface(self):
         dic = POINTER(IDispatch)()
@@ -70,7 +74,68 @@ class Test_IUnknown_QueryInterface(ut.TestCase):
             None, pointer(scrrun.IDictionary._iid_), byref(dic)
         )
         self.assertEqual(hr, hresult.S_OK)
+        self.assertEqual(dic.AddRef(), 2)  # type: ignore
+        self.assertEqual(dic.Release(), 1)  # type: ignore
         self.assertEqual(dic.GetTypeInfoCount(), 1)  # type: ignore
+
+
+class Test_IUnknown_AddRef_IUnknown_Release(ut.TestCase):
+    def test(self):
+        cuia = uiac.CUIAutomation()
+        self.assertEqual(cuia.IUnknown_AddRef(None), 1)
+        self.assertEqual(cuia.IUnknown_AddRef(None), 2)
+        with mock.patch.object(COMObject, "_final_release_") as release:
+            self.assertEqual(cuia.IUnknown_Release(None), 1)
+            release.assert_not_called()
+            self.assertEqual(cuia.IUnknown_Release(None), 0)
+            release.assert_called_once_with()
+
+
+class Test_ISupportErrorInfo_InterfaceSupportsErrorInfo(ut.TestCase):
+    def test_s_ok(self):
+        cuia = uiac.CUIAutomation()
+        self.assertEqual(
+            cuia.ISupportErrorInfo_InterfaceSupportsErrorInfo(
+                None, pointer(IUnknown._iid_)
+            ),
+            hresult.S_OK,
+        )
+        self.assertEqual(
+            cuia.ISupportErrorInfo_InterfaceSupportsErrorInfo(
+                None, pointer(uiac.IUIAutomation._iid_)
+            ),
+            hresult.S_OK,
+        )
+
+    def test_s_false(self):
+        cuia = uiac.CUIAutomation()
+        self.assertEqual(
+            cuia.ISupportErrorInfo_InterfaceSupportsErrorInfo(
+                None, pointer(IDispatch._iid_)
+            ),
+            hresult.S_FALSE,
+        )
+        self.assertEqual(
+            cuia.ISupportErrorInfo_InterfaceSupportsErrorInfo(
+                None, pointer(scrrun.IDictionary._iid_)
+            ),
+            hresult.S_FALSE,
+        )
+
+
+class Test_IProvideClassInfo_GetClassInfo(ut.TestCase):
+    def test(self):
+        tinfo = uiac.CUIAutomation().IProvideClassInfo_GetClassInfo()
+        self.assertEqual(tinfo.GetTypeAttr().guid, uiac.CUIAutomation._reg_clsid_)
+
+
+class Test_IProvideClassInfo2_GetGUID(ut.TestCase):
+    def test(self):
+        # GUIDKIND_DEFAULT_SOURCE_DISP_IID = 1
+        self.assertEqual(
+            stdole.StdFont().IProvideClassInfo2_GetGUID(1),
+            stdole.FontEvents._iid_,
+        )
 
 
 class Test_IPersist_GetClassID(ut.TestCase):
