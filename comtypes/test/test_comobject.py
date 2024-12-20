@@ -1,10 +1,11 @@
 import ctypes
 import unittest as ut
 from ctypes import POINTER, byref, pointer
+from unittest import mock
 
 import comtypes
 import comtypes.client
-from comtypes import IUnknown, hresult
+from comtypes import COMObject, IUnknown, hresult
 from comtypes.automation import IDispatch
 
 comtypes.client.GetModule("UIAutomationCore.dll")
@@ -75,6 +76,18 @@ class Test_IUnknown_QueryInterface(ut.TestCase):
         self.assertEqual(dic.AddRef(), 2)  # type: ignore
         self.assertEqual(dic.Release(), 1)  # type: ignore
         self.assertEqual(dic.GetTypeInfoCount(), 1)  # type: ignore
+
+
+class Test_IUnknown_AddRef_IUnknown_Release(ut.TestCase):
+    def test(self):
+        cuia = uiac.CUIAutomation()
+        self.assertEqual(cuia.IUnknown_AddRef(None), 1)
+        self.assertEqual(cuia.IUnknown_AddRef(None), 2)
+        with mock.patch.object(COMObject, "_final_release_") as release:
+            self.assertEqual(cuia.IUnknown_Release(None), 1)
+            release.assert_not_called()
+            self.assertEqual(cuia.IUnknown_Release(None), 0)
+            release.assert_called_once_with()
 
 
 class Test_IPersist_GetClassID(ut.TestCase):
