@@ -568,7 +568,7 @@ class COMObject(object):
                     self.__make_disppropentry(itf, finder, m)
 
     def __make_dispmthentry(
-        self, itf: Type[IUnknown], finder: _MethodFinder, m: _DispMemberSpec
+        self, itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
     ) -> None:
         _, mthname, idlflags, restype, argspec = m
         if "propget" in idlflags:
@@ -587,7 +587,7 @@ class COMObject(object):
         self.__make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
 
     def __make_disppropentry(
-        self, itf: Type[IUnknown], finder: _MethodFinder, m: _DispMemberSpec
+        self, itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
     ) -> None:
         _, mthname, idlflags, restype, argspec = m
         # DISPPROPERTY have implicit "out"
