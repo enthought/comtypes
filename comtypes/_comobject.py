@@ -566,13 +566,13 @@ class COMObject(object):
                 if what == "DISPMETHOD":
                     if "propget" in idlflags:
                         invkind = 2  # DISPATCH_PROPERTYGET
-                        mthname = "_get_" + mthname
+                        mthname = f"_get_{mthname}"
                     elif "propput" in idlflags:
                         invkind = 4  # DISPATCH_PROPERTYPUT
-                        mthname = "_set_" + mthname
+                        mthname = f"_set_{mthname}"
                     elif "propputref" in idlflags:
                         invkind = 8  # DISPATCH_PROPERTYPUTREF
-                        mthname = "_setref_" + mthname
+                        mthname = f"_setref_{mthname}"
                     else:
                         invkind = 1  # DISPATCH_METHOD
                         if restype:
@@ -585,11 +585,11 @@ class COMObject(object):
                     if restype:
                         argspec += ((["out"], restype, ""),)
                     self.__make_dispentry(
-                        finder, itf, "_get_" + mthname, idlflags, argspec, 2
+                        finder, itf, f"_get_{mthname}", idlflags, argspec, 2
                     )  # DISPATCH_PROPERTYGET
                     if not "readonly" in idlflags:
                         self.__make_dispentry(
-                            finder, itf, "_set_" + mthname, idlflags, argspec, 4
+                            finder, itf, f"_set_{mthname}", idlflags, argspec, 4
                         )  # DISPATCH_PROPERTYPUT
                         # Add DISPATCH_PROPERTYPUTREF also?
 
