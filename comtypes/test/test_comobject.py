@@ -59,10 +59,12 @@ class Test_IUnknown_QueryInterface(ut.TestCase):
             byref(scrrun.IDictionary._iid_),
             byref(ptr),
         )
+        before_val = ptr.value
         hr = scrrun.Dictionary().IUnknown_QueryInterface(
             None, pointer(scrrun.IDictionary._iid_), ptr
         )
         self.assertEqual(hr, hresult.S_OK)
+        self.assertEqual(ptr.value, before_val)
 
     def test_valid_interface(self):
         dic = POINTER(IDispatch)()
@@ -70,6 +72,8 @@ class Test_IUnknown_QueryInterface(ut.TestCase):
             None, pointer(scrrun.IDictionary._iid_), byref(dic)
         )
         self.assertEqual(hr, hresult.S_OK)
+        self.assertEqual(dic.AddRef(), 2)  # type: ignore
+        self.assertEqual(dic.Release(), 1)  # type: ignore
         self.assertEqual(dic.GetTypeInfoCount(), 1)  # type: ignore
 
 
