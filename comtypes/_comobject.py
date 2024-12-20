@@ -585,13 +585,8 @@ class COMObject(object):
                     if restype:
                         argspec += ((["out"], restype, ""),)
                     self.__make_dispentry(
-                        finder,
-                        itf,
-                        "_get_" + mthname,
-                        idlflags,
-                        argspec,
-                        2,  # DISPATCH_PROPERTYGET
-                    )
+                        finder, itf, "_get_" + mthname, idlflags, argspec, 2
+                    )  # DISPATCH_PROPERTYGET
                     if not "readonly" in idlflags:
                         self.__make_dispentry(
                             finder, itf, "_set_" + mthname, idlflags, argspec, 4
