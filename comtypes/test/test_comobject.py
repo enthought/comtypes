@@ -122,6 +122,12 @@ class Test_ISupportErrorInfo_InterfaceSupportsErrorInfo(ut.TestCase):
         )
 
 
+class Test_IProvideClassInfo_GetClassInfo(ut.TestCase):
+    def test(self):
+        tinfo = uiac.CUIAutomation().IProvideClassInfo_GetClassInfo()
+        self.assertEqual(tinfo.GetTypeAttr().guid, uiac.CUIAutomation._reg_clsid_)
+
+
 class Test_IPersist_GetClassID(ut.TestCase):
     def test(self):
         self.assertEqual(

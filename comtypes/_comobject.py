@@ -44,7 +44,7 @@ from comtypes.hresult import (
     S_FALSE,
     S_OK,
 )
-from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
+from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2, ITypeInfo
 
 if TYPE_CHECKING:
     from ctypes import _CArgObject, _FuncPointer, _Pointer
@@ -750,7 +750,7 @@ class COMObject(object):
 
     ################################################################
     # IProvideClassInfo::GetClassInfo implementation
-    def IProvideClassInfo_GetClassInfo(self):
+    def IProvideClassInfo_GetClassInfo(self) -> ITypeInfo:
         try:
             self.__typelib
         except AttributeError:
