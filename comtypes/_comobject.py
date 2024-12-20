@@ -50,7 +50,7 @@ if TYPE_CHECKING:
     from ctypes import _CArgObject, _FuncPointer, _Pointer
 
     from comtypes import hints  # type: ignore
-    from comtypes._memberspec import _ArgSpecElmType, _ParamFlagType
+    from comtypes._memberspec import _ArgSpecElmType, _DispMemberSpec, _ParamFlagType
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -581,17 +581,23 @@ class COMObject(object):
                         finder, itf, mthname, idlflags, argspec, invkind
                     )
                 elif what == "DISPPROPERTY":
-                    # DISPPROPERTY have implicit "out"
-                    if restype:
-                        argspec += ((["out"], restype, ""),)
-                    self.__make_dispentry(
-                        finder, itf, f"_get_{mthname}", idlflags, argspec, 2
-                    )  # DISPATCH_PROPERTYGET
-                    if not "readonly" in idlflags:
-                        self.__make_dispentry(
-                            finder, itf, f"_set_{mthname}", idlflags, argspec, 4
-                        )  # DISPATCH_PROPERTYPUT
-                        # Add DISPATCH_PROPERTYPUTREF also?
+                    self.__make_disppropentry(itf, finder, m)
+
+    def __make_disppropentry(
+        self, itf: Type[IUnknown], finder: _MethodFinder, m: _DispMemberSpec
+    ) -> None:
+        _, mthname, idlflags, restype, argspec = m
+        # DISPPROPERTY have implicit "out"
+        if restype:
+            argspec += ((["out"], restype, ""),)
+        self.__make_dispentry(
+            finder, itf, f"_get_{mthname}", idlflags, argspec, DISPATCH_PROPERTYGET
+        )
+        if not "readonly" in idlflags:
+            self.__make_dispentry(
+                finder, itf, f"_set_{mthname}", idlflags, argspec, DISPATCH_PROPERTYPUT
+            )
+            # Add DISPATCH_PROPERTYPUTREF also?
 
     def __make_dispentry(
         self,
