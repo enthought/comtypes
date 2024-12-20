@@ -50,7 +50,7 @@ if TYPE_CHECKING:
     from ctypes import _CArgObject, _FuncPointer, _Pointer
 
     from comtypes import hints  # type: ignore
-    from comtypes._memberspec import _ArgSpecElmType, _ParamFlagType
+    from comtypes._memberspec import _ArgSpecElmType, _DispMemberSpec, _ParamFlagType
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -539,7 +539,6 @@ class COMObject(object):
         if hasattr(itf, "_disp_methods_"):
             self._dispimpl_ = {}
             for m in itf._disp_methods_:
-                what, mthname, idlflags, restype, argspec = m
                 #################
                 # What we have:
                 #
@@ -563,40 +562,45 @@ class COMObject(object):
                 #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
                 #################
 
-                if what == "DISPMETHOD":
-                    if "propget" in idlflags:
-                        invkind = 2  # DISPATCH_PROPERTYGET
-                        mthname = "_get_" + mthname
-                    elif "propput" in idlflags:
-                        invkind = 4  # DISPATCH_PROPERTYPUT
-                        mthname = "_set_" + mthname
-                    elif "propputref" in idlflags:
-                        invkind = 8  # DISPATCH_PROPERTYPUTREF
-                        mthname = "_setref_" + mthname
-                    else:
-                        invkind = 1  # DISPATCH_METHOD
-                        if restype:
-                            argspec = argspec + ((["out"], restype, ""),)
-                    self.__make_dispentry(
-                        finder, interface, mthname, idlflags, argspec, invkind
-                    )
-                elif what == "DISPPROPERTY":
-                    # DISPPROPERTY have implicit "out"
-                    if restype:
-                        argspec += ((["out"], restype, ""),)
-                    self.__make_dispentry(
-                        finder,
-                        interface,
-                        "_get_" + mthname,
-                        idlflags,
-                        argspec,
-                        2,  # DISPATCH_PROPERTYGET
-                    )
-                    if not "readonly" in idlflags:
-                        self.__make_dispentry(
-                            finder, interface, "_set_" + mthname, idlflags, argspec, 4
-                        )  # DISPATCH_PROPERTYPUT
-                        # Add DISPATCH_PROPERTYPUTREF also?
+                if m.what == "DISPMETHOD":
+                    self.__make_dispmthentry(itf, finder, m)
+                elif m.what == "DISPPROPERTY":
+                    self.__make_disppropentry(itf, finder, m)
+
+    def __make_dispmthentry(
+        self, itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
+    ) -> None:
+        _, mthname, idlflags, restype, argspec = m
+        if "propget" in idlflags:
+            invkind = DISPATCH_PROPERTYGET
+            mthname = f"_get_{mthname}"
+        elif "propput" in idlflags:
+            invkind = DISPATCH_PROPERTYPUT
+            mthname = f"_set_{mthname}"
+        elif "propputref" in idlflags:
+            invkind = DISPATCH_PROPERTYPUTREF
+            mthname = f"_setref_{mthname}"
+        else:
+            invkind = DISPATCH_METHOD
+            if restype:
+                argspec = argspec + ((["out"], restype, ""),)
+        self.__make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
+
+    def __make_disppropentry(
+        self, itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
+    ) -> None:
+        _, mthname, idlflags, restype, argspec = m
+        # DISPPROPERTY have implicit "out"
+        if restype:
+            argspec += ((["out"], restype, ""),)
+        self.__make_dispentry(
+            finder, itf, f"_get_{mthname}", idlflags, argspec, DISPATCH_PROPERTYGET
+        )
+        if not "readonly" in idlflags:
+            self.__make_dispentry(
+                finder, itf, f"_set_{mthname}", idlflags, argspec, DISPATCH_PROPERTYPUT
+            )
+            # Add DISPATCH_PROPERTYPUTREF also?
 
     def __make_dispentry(
         self,
@@ -616,8 +620,8 @@ class COMObject(object):
         self._dispimpl_[(dispid, invkind)] = impl  # type: ignore
         # invkind is really a set of flags; we allow both DISPATCH_METHOD and
         # DISPATCH_PROPERTYGET (win32com uses this, maybe other languages too?)
-        if invkind in (1, 2):
-            self._dispimpl_[(dispid, 3)] = impl  # type: ignore
+        if invkind in (DISPATCH_METHOD, DISPATCH_PROPERTYGET):
+            self._dispimpl_[(dispid, DISPATCH_METHOD | DISPATCH_PROPERTYGET)] = impl
 
     def _get_method_finder_(self, itf: Type[IUnknown]) -> _MethodFinder:
         # This method can be overridden to customize how methods are found.
