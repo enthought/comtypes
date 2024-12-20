@@ -458,6 +458,7 @@ _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
 class COMObject(object):
     _com_interfaces_: ClassVar[List[Type[IUnknown]]]
+    _outgoing_interfaces_: ClassVar[List[Type["hints.IDispatch"]]]
     _instances_: ClassVar[Dict["COMObject", None]] = {}
     _reg_clsid_: ClassVar[GUID]
     _reg_typelib_: ClassVar[Tuple[str, int, int]]
@@ -760,7 +761,7 @@ class COMObject(object):
     ################################################################
     # IProvideClassInfo2::GetGUID implementation
 
-    def IProvideClassInfo2_GetGUID(self, dwGuidKind):
+    def IProvideClassInfo2_GetGUID(self, dwGuidKind: int) -> GUID:
         # GUIDKIND_DEFAULT_SOURCE_DISP_IID = 1
         if dwGuidKind != 1:
             raise WindowsError(E_INVALIDARG)

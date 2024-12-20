@@ -12,6 +12,7 @@ comtypes.client.GetModule("UIAutomationCore.dll")
 comtypes.client.GetModule("scrrun.dll")
 from comtypes.gen import Scripting as scrrun
 from comtypes.gen import UIAutomationClient as uiac
+from comtypes.gen import stdole
 
 
 class Test_QueryInterface(ut.TestCase):
@@ -126,6 +127,15 @@ class Test_IProvideClassInfo_GetClassInfo(ut.TestCase):
     def test(self):
         tinfo = uiac.CUIAutomation().IProvideClassInfo_GetClassInfo()
         self.assertEqual(tinfo.GetTypeAttr().guid, uiac.CUIAutomation._reg_clsid_)
+
+
+class Test_IProvideClassInfo2_GetGUID(ut.TestCase):
+    def test(self):
+        # GUIDKIND_DEFAULT_SOURCE_DISP_IID = 1
+        self.assertEqual(
+            stdole.StdFont().IProvideClassInfo2_GetGUID(1),
+            stdole.FontEvents._iid_,
+        )
 
 
 class Test_IPersist_GetClassID(ut.TestCase):
