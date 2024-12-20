@@ -620,8 +620,8 @@ class COMObject(object):
         self._dispimpl_[(dispid, invkind)] = impl  # type: ignore
         # invkind is really a set of flags; we allow both DISPATCH_METHOD and
         # DISPATCH_PROPERTYGET (win32com uses this, maybe other languages too?)
-        if invkind in (1, 2):
-            self._dispimpl_[(dispid, 3)] = impl  # type: ignore
+        if invkind in (DISPATCH_METHOD, DISPATCH_PROPERTYGET):
+            self._dispimpl_[(dispid, DISPATCH_METHOD | DISPATCH_PROPERTYGET)] = impl
 
     def _get_method_finder_(self, itf: Type[IUnknown]) -> _MethodFinder:
         # This method can be overridden to customize how methods are found.
