@@ -539,7 +539,6 @@ class COMObject(object):
         if hasattr(itf, "_disp_methods_"):
             self._dispimpl_ = {}
             for m in itf._disp_methods_:
-                what, mthname, idlflags, restype, argspec = m
                 #################
                 # What we have:
                 #
@@ -563,25 +562,29 @@ class COMObject(object):
                 #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
                 #################
 
-                if what == "DISPMETHOD":
-                    if "propget" in idlflags:
-                        invkind = 2  # DISPATCH_PROPERTYGET
-                        mthname = f"_get_{mthname}"
-                    elif "propput" in idlflags:
-                        invkind = 4  # DISPATCH_PROPERTYPUT
-                        mthname = f"_set_{mthname}"
-                    elif "propputref" in idlflags:
-                        invkind = 8  # DISPATCH_PROPERTYPUTREF
-                        mthname = f"_setref_{mthname}"
-                    else:
-                        invkind = 1  # DISPATCH_METHOD
-                        if restype:
-                            argspec = argspec + ((["out"], restype, ""),)
-                    self.__make_dispentry(
-                        finder, itf, mthname, idlflags, argspec, invkind
-                    )
-                elif what == "DISPPROPERTY":
+                if m.what == "DISPMETHOD":
+                    self.__make_dispmthentry(itf, finder, m)
+                elif m.what == "DISPPROPERTY":
                     self.__make_disppropentry(itf, finder, m)
+
+    def __make_dispmthentry(
+        self, itf: Type[IUnknown], finder: _MethodFinder, m: _DispMemberSpec
+    ) -> None:
+        _, mthname, idlflags, restype, argspec = m
+        if "propget" in idlflags:
+            invkind = DISPATCH_PROPERTYGET
+            mthname = f"_get_{mthname}"
+        elif "propput" in idlflags:
+            invkind = DISPATCH_PROPERTYPUT
+            mthname = f"_set_{mthname}"
+        elif "propputref" in idlflags:
+            invkind = DISPATCH_PROPERTYPUTREF
+            mthname = f"_setref_{mthname}"
+        else:
+            invkind = DISPATCH_METHOD
+            if restype:
+                argspec = argspec + ((["out"], restype, ""),)
+        self.__make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
 
     def __make_disppropentry(
         self, itf: Type[IUnknown], finder: _MethodFinder, m: _DispMemberSpec
