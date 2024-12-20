@@ -578,7 +578,7 @@ class COMObject(object):
                         if restype:
                             argspec = argspec + ((["out"], restype, ""),)
                     self.__make_dispentry(
-                        finder, interface, mthname, idlflags, argspec, invkind
+                        finder, itf, mthname, idlflags, argspec, invkind
                     )
                 elif what == "DISPPROPERTY":
                     # DISPPROPERTY have implicit "out"
@@ -586,7 +586,7 @@ class COMObject(object):
                         argspec += ((["out"], restype, ""),)
                     self.__make_dispentry(
                         finder,
-                        interface,
+                        itf,
                         "_get_" + mthname,
                         idlflags,
                         argspec,
@@ -594,7 +594,7 @@ class COMObject(object):
                     )
                     if not "readonly" in idlflags:
                         self.__make_dispentry(
-                            finder, interface, "_set_" + mthname, idlflags, argspec, 4
+                            finder, itf, "_set_" + mthname, idlflags, argspec, 4
                         )  # DISPATCH_PROPERTYPUT
                         # Add DISPATCH_PROPERTYPUTREF also?
 
