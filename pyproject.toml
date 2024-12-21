@@ -9,6 +9,7 @@ ignore = ["E402"]
 # production
 "comtypes/_comobject.py" = ["E713", "E722", "F401"]
 "comtypes/_npsupport.py" = ["F401"]
+"comtypes/_vtbl.py" = ["E713", "E722", "F401"]
 "comtypes/connectionpoints.py" = ["F401", "F403", "F405"]
 "comtypes/automation.py" = ["F401", "F403", "F405"]
 "comtypes/errorinfo.py" = ["F403", "F405"]
