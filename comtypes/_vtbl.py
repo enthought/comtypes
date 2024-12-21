@@ -1,20 +1,6 @@
 import logging
-import os
-import queue
-import sys
-from _ctypes import COMError, CopyComPointer
-from ctypes import (
-    POINTER,
-    WINFUNCTYPE,
-    FormatError,
-    Structure,
-    byref,
-    c_long,
-    c_void_p,
-    oledll,
-    pointer,
-    windll,
-)
+from _ctypes import COMError
+from ctypes import WINFUNCTYPE, Structure, c_void_p, pointer
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -23,31 +9,18 @@ from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Tuple,
     Type,
-    TypeVar,
     Union,
 )
 
-from comtypes import GUID, IPersist, IUnknown, ReturnHRESULT, instancemethod
+from comtypes import GUID, IUnknown, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
-from comtypes.errorinfo import ISupportErrorInfo, ReportError, ReportException
-from comtypes.hresult import (
-    DISP_E_BADINDEX,
-    DISP_E_MEMBERNOTFOUND,
-    E_FAIL,
-    E_INVALIDARG,
-    E_NOINTERFACE,
-    E_NOTIMPL,
-    RPC_E_CHANGED_MODE,
-    S_FALSE,
-    S_OK,
-)
-from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2, ITypeInfo
+from comtypes.errorinfo import ReportError, ReportException
+from comtypes.hresult import E_FAIL, E_NOTIMPL, S_OK
 
 if TYPE_CHECKING:
-    from ctypes import _CArgObject, _FuncPointer, _Pointer
+    from ctypes import _FuncPointer, _Pointer
 
     from comtypes import hints  # type: ignore
     from comtypes._memberspec import _ArgSpecElmType, _DispMemberSpec, _ParamFlagType
