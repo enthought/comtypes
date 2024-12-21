@@ -1,11 +1,12 @@
 import logging
 from _ctypes import COMError
-from ctypes import WINFUNCTYPE, Structure, c_void_p, pointer
+from ctypes import WINFUNCTYPE, Structure, c_void_p
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     Dict,
+    Iterator,
     List,
     Optional,
     Sequence,
@@ -20,7 +21,7 @@ from comtypes.errorinfo import ReportError, ReportException
 from comtypes.hresult import E_FAIL, E_NOTIMPL, S_OK
 
 if TYPE_CHECKING:
-    from ctypes import _FuncPointer, _Pointer
+    from ctypes import _FuncPointer
 
     from comtypes import hints  # type: ignore
     from comtypes._memberspec import _ArgSpecElmType, _DispMemberSpec, _ParamFlagType
@@ -354,91 +355,94 @@ def create_vtbl_mapping(
     return (iids, vtbl)
 
 
-class DispImplGenerator(object):
-    def create(self, itf: Type[IUnknown], finder: _MethodFinder) -> None:
-        if hasattr(itf, "_disp_methods_"):
-            self._dispimpl_ = {}
-            for m in itf._disp_methods_:
-                #################
-                # What we have:
-                #
-                # restypes is a ctypes type or None
-                # argspec is seq. of (['in'], paramtype, paramname) tuples (or
-                # lists?)
-                #################
-                # What we need:
-                #
-                # idlflags must contain 'propget', 'propset' and so on:
-                # Must be constructed by converting disptype
-                #
-                # paramflags must be a sequence
-                # of (F_IN|F_OUT|F_RETVAL, paramname[, default-value]) tuples
-                #
-                # comtypes has this function which helps:
-                #    def _encode_idl(names):
-                #        # convert to F_xxx and sum up "in", "out",
-                #        # "retval" values found in _PARAMFLAGS, ignoring
-                #        # other stuff.
-                #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
-                #################
+def create_dispimpl(
+    itf: Type[IUnknown], finder: _MethodFinder
+) -> Dict[Tuple[int, int], Callable[..., Any]]:
+    dispimpl: Dict[Tuple[int, int], Callable[..., Any]] = {}
+    for m in itf._disp_methods_:
+        #################
+        # What we have:
+        #
+        # restypes is a ctypes type or None
+        # argspec is seq. of (['in'], paramtype, paramname) tuples (or
+        # lists?)
+        #################
+        # What we need:
+        #
+        # idlflags must contain 'propget', 'propset' and so on:
+        # Must be constructed by converting disptype
+        #
+        # paramflags must be a sequence
+        # of (F_IN|F_OUT|F_RETVAL, paramname[, default-value]) tuples
+        #
+        # comtypes has this function which helps:
+        #    def _encode_idl(names):
+        #        # convert to F_xxx and sum up "in", "out",
+        #        # "retval" values found in _PARAMFLAGS, ignoring
+        #        # other stuff.
+        #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
+        #################
 
-                if m.what == "DISPMETHOD":
-                    self.__make_dispmthentry(itf, finder, m)
-                elif m.what == "DISPPROPERTY":
-                    self.__make_disppropentry(itf, finder, m)
+        if m.what == "DISPMETHOD":
+            dispimpl.update(_make_dispmthentry(itf, finder, m))
+        elif m.what == "DISPPROPERTY":
+            dispimpl.update(_make_disppropentry(itf, finder, m))
+    return dispimpl
 
-    def __make_dispmthentry(
-        self, itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
-    ) -> None:
-        _, mthname, idlflags, restype, argspec = m
-        if "propget" in idlflags:
-            invkind = DISPATCH_PROPERTYGET
-            mthname = f"_get_{mthname}"
-        elif "propput" in idlflags:
-            invkind = DISPATCH_PROPERTYPUT
-            mthname = f"_set_{mthname}"
-        elif "propputref" in idlflags:
-            invkind = DISPATCH_PROPERTYPUTREF
-            mthname = f"_setref_{mthname}"
-        else:
-            invkind = DISPATCH_METHOD
-            if restype:
-                argspec = argspec + ((["out"], restype, ""),)
-        self.__make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
 
-    def __make_disppropentry(
-        self, itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
-    ) -> None:
-        _, mthname, idlflags, restype, argspec = m
-        # DISPPROPERTY have implicit "out"
+def _make_dispmthentry(
+    itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
+) -> Iterator[Tuple[Tuple[int, int], Callable[..., Any]]]:
+    _, mthname, idlflags, restype, argspec = m
+    if "propget" in idlflags:
+        invkind = DISPATCH_PROPERTYGET
+        mthname = f"_get_{mthname}"
+    elif "propput" in idlflags:
+        invkind = DISPATCH_PROPERTYPUT
+        mthname = f"_set_{mthname}"
+    elif "propputref" in idlflags:
+        invkind = DISPATCH_PROPERTYPUTREF
+        mthname = f"_setref_{mthname}"
+    else:
+        invkind = DISPATCH_METHOD
         if restype:
-            argspec += ((["out"], restype, ""),)
-        self.__make_dispentry(
-            finder, itf, f"_get_{mthname}", idlflags, argspec, DISPATCH_PROPERTYGET
-        )
-        if not "readonly" in idlflags:
-            self.__make_dispentry(
-                finder, itf, f"_set_{mthname}", idlflags, argspec, DISPATCH_PROPERTYPUT
-            )
-            # Add DISPATCH_PROPERTYPUTREF also?
+            argspec = argspec + ((["out"], restype, ""),)
+    yield from _make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
 
-    def __make_dispentry(
-        self,
-        finder: _MethodFinder,
-        interface: Type[IUnknown],
-        mthname: str,
-        idlflags: Tuple[_UnionT[str, int], ...],
-        argspec: Tuple["_ArgSpecElmType", ...],
-        invkind: int,
-    ) -> None:
-        # We build a _dispmap_ entry now that maps invkind and dispid to
-        # implementations that the finder finds; IDispatch_Invoke will later call it.
-        paramflags = [((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec]
-        # XXX can the dispid be at a different index?  Check codegenerator.
-        dispid = idlflags[0]
-        impl = finder.get_impl(interface, mthname, paramflags, idlflags)
-        self._dispimpl_[(dispid, invkind)] = impl  # type: ignore
-        # invkind is really a set of flags; we allow both DISPATCH_METHOD and
-        # DISPATCH_PROPERTYGET (win32com uses this, maybe other languages too?)
-        if invkind in (DISPATCH_METHOD, DISPATCH_PROPERTYGET):
-            self._dispimpl_[(dispid, DISPATCH_METHOD | DISPATCH_PROPERTYGET)] = impl
+
+def _make_disppropentry(
+    itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
+) -> Iterator[Tuple[Tuple[int, int], Callable[..., Any]]]:
+    _, mthname, idlflags, restype, argspec = m
+    # DISPPROPERTY have implicit "out"
+    if restype:
+        argspec += ((["out"], restype, ""),)
+    yield from _make_dispentry(
+        finder, itf, f"_get_{mthname}", idlflags, argspec, DISPATCH_PROPERTYGET
+    )
+    if "readonly" not in idlflags:
+        yield from _make_dispentry(
+            finder, itf, f"_set_{mthname}", idlflags, argspec, DISPATCH_PROPERTYPUT
+        )
+        # Add DISPATCH_PROPERTYPUTREF also?
+
+
+def _make_dispentry(
+    finder: _MethodFinder,
+    interface: Type[IUnknown],
+    mthname: str,
+    idlflags: Tuple[_UnionT[str, int], ...],
+    argspec: Tuple["_ArgSpecElmType", ...],
+    invkind: int,
+) -> Iterator[Tuple[Tuple[int, int], Callable[..., Any]]]:
+    # We build a _dispmap_ entry now that maps invkind and dispid to
+    # implementations that the finder finds; IDispatch_Invoke will later call it.
+    paramflags = tuple(((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec)
+    # XXX can the dispid be at a different index?  Check codegenerator.
+    dispid = idlflags[0]
+    impl = finder.get_impl(interface, mthname, paramflags, idlflags)  # type: ignore
+    yield ((dispid, invkind), impl)  # type: ignore
+    # invkind is really a set of flags; we allow both DISPATCH_METHOD and
+    # DISPATCH_PROPERTYGET (win32com uses this, maybe other languages too?)
+    if invkind in (DISPATCH_METHOD, DISPATCH_PROPERTYGET):
+        yield ((dispid, DISPATCH_METHOD | DISPATCH_PROPERTYGET), impl)  # type: ignore
