@@ -233,7 +233,7 @@ from comtypes._post_coinit.misc import (  # noqa
 
 
 ################################################################
-from comtypes.comobject import COMObject
+from comtypes._comobject import COMObject
 
 # What's a coclass?
 # a POINTER to a coclass is allowed as parameter in a function declaration:
