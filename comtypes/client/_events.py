@@ -130,7 +130,7 @@ def report_errors(func):
     return error_printer
 
 
-from comtypes._comobject import _MethodFinder
+from comtypes.comobject import _MethodFinder
 
 
 class _SinkMethodFinder(_MethodFinder):
