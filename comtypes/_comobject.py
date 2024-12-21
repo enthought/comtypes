@@ -27,8 +27,8 @@ from typing import (
     Tuple,
     Type,
     TypeVar,
-    Union,
 )
+from typing import Union as _UnionT
 
 from comtypes import GUID, IPersist, IUnknown, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
@@ -239,7 +239,7 @@ class COMObject(object):
 
     ################################################################
     # LocalServer / InprocServer stuff
-    __server__: Union[None, InprocServer, LocalServer] = None
+    __server__: _UnionT[None, InprocServer, LocalServer] = None
 
     @staticmethod
     def __run_inprocserver__() -> None:
@@ -324,7 +324,7 @@ class COMObject(object):
         self,
         this: Any,
         riid: "_Pointer[GUID]",
-        ppvObj: Union[c_void_p, "_CArgObject"],
+        ppvObj: _UnionT[c_void_p, "_CArgObject"],
         _debug=_debug,
     ) -> int:
         # XXX This is probably too slow.
