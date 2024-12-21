@@ -81,7 +81,7 @@ def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
 
 
 def catch_errors(
-    obj: "COMObject",
+    obj: "hints.COMObject",
     mth: Callable[..., Any],
     paramflags: Optional[Tuple["_ParamFlagType", ...]],
     interface: Type[IUnknown],
@@ -130,7 +130,7 @@ def catch_errors(
 
 
 def hack(
-    inst: "COMObject",
+    inst: "hints.COMObject",
     mth: Callable[..., Any],
     paramflags: Optional[Tuple["_ParamFlagType", ...]],
     interface: Type[IUnknown],
@@ -231,7 +231,7 @@ def hack(
 
 
 class _MethodFinder(object):
-    def __init__(self, inst: "COMObject") -> None:
+    def __init__(self, inst: "hints.COMObject") -> None:
         self.inst = inst
         # map lower case names to names with correct spelling.
         self.names = dict([(n.lower(), n) for n in dir(inst)])

@@ -24,7 +24,7 @@ else:
     from typing_extensions import Self as Self
 
 import comtypes
-from comtypes import IUnknown as IUnknown, GUID as GUID
+from comtypes import IUnknown as IUnknown, COMObject as COMObject, GUID as GUID
 from comtypes.automation import IDispatch as IDispatch, VARIANT as VARIANT
 from comtypes.server import IClassFactory as IClassFactory
 from comtypes.server import localserver as localserver
