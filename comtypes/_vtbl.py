@@ -5,10 +5,10 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    ClassVar,
     Dict,
     List,
     Optional,
+    Sequence,
     Tuple,
     Type,
 )
@@ -333,35 +333,29 @@ _vtbl_types: Dict[Tuple[Tuple[str, Type["_FuncPointer"]], ...], Type[Structure]]
 ################################################################
 
 
-class COMObject(object):
-    _com_interfaces_: ClassVar[List[Type[IUnknown]]]
-    _outgoing_interfaces_: ClassVar[List[Type["hints.IDispatch"]]]
-    _instances_: ClassVar[Dict["COMObject", None]] = {}
-    _reg_clsid_: ClassVar[GUID]
-    _reg_typelib_: ClassVar[Tuple[str, int, int]]
-    __typelib: "hints.ITypeLib"
-    _com_pointers_: Dict[GUID, "_Pointer[_Pointer[Structure]]"]
-    _dispimpl_: Dict[Tuple[int, int], Callable[..., Any]]
+def create_vtbl_mapping(
+    itf: Type[IUnknown], finder: _MethodFinder
+) -> Tuple[Sequence[GUID], Structure]:
+    methods: List[Callable[..., Any]] = []  # method implementations
+    fields: List[Tuple[str, Type["_FuncPointer"]]] = []  # virtual function table
+    iids: List[GUID] = []  # interface identifiers.
+    # iterate over interface inheritance in reverse order to build the
+    # virtual function table, and leave out the 'object' base class.
+    for interface in itf.__mro__[-2::-1]:
+        iids.append(interface._iid_)
+        for m in interface._methods_:
+            restype, mthname, argtypes, paramflags, idlflags, helptext = m
+            proto = WINFUNCTYPE(restype, c_void_p, *argtypes)
+            fields.append((mthname, proto))
+            mth = finder.get_impl(interface, mthname, paramflags, idlflags)
+            methods.append(proto(mth))
+    Vtbl = _create_vtbl_type(tuple(fields), itf)
+    vtbl = Vtbl(*methods)
+    return (iids, vtbl)
 
-    def __make_interface_pointer(self, itf: Type[IUnknown]) -> None:
-        methods: List[Callable[..., Any]] = []  # method implementations
-        fields: List[Tuple[str, Type["_FuncPointer"]]] = []  # virtual function table
-        iids: List[GUID] = []  # interface identifiers.
-        # iterate over interface inheritance in reverse order to build the
-        # virtual function table, and leave out the 'object' base class.
-        finder = self._get_method_finder_(itf)
-        for interface in itf.__mro__[-2::-1]:
-            iids.append(interface._iid_)
-            for m in interface._methods_:
-                restype, mthname, argtypes, paramflags, idlflags, helptext = m
-                proto = WINFUNCTYPE(restype, c_void_p, *argtypes)
-                fields.append((mthname, proto))
-                mth = finder.get_impl(interface, mthname, paramflags, idlflags)
-                methods.append(proto(mth))
-        Vtbl = _create_vtbl_type(tuple(fields), itf)
-        vtbl = Vtbl(*methods)
-        for iid in iids:
-            self._com_pointers_[iid] = pointer(pointer(vtbl))
+
+class DispImplGenerator(object):
+    def create(self, itf: Type[IUnknown], finder: _MethodFinder) -> None:
         if hasattr(itf, "_disp_methods_"):
             self._dispimpl_ = {}
             for m in itf._disp_methods_:
