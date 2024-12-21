@@ -405,7 +405,7 @@ def _make_dispmthentry(
         mthname = f"_setref_{mthname}"
     else:
         invkind = DISPATCH_METHOD
-        if restype:
+        if restype:  # DISPATCH_METHOD have implicit "out"
             argspec = argspec + ((["out"], restype, ""),)
     yield from _make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
 
