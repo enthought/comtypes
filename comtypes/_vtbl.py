@@ -11,8 +11,8 @@ from typing import (
     Optional,
     Tuple,
     Type,
-    Union,
 )
+from typing import Union as _UnionT
 
 from comtypes import GUID, IUnknown, ReturnHRESULT, instancemethod
 from comtypes._memberspec import _encode_idl
@@ -241,7 +241,7 @@ class _MethodFinder(object):
         interface: Type[IUnknown],
         mthname: str,
         paramflags: Optional[Tuple["_ParamFlagType", ...]],
-        idlflags: Tuple[Union[str, int], ...],
+        idlflags: Tuple[_UnionT[str, int], ...],
     ) -> Callable[..., Any]:
         mth = self.find_impl(interface, mthname, paramflags, idlflags)
         if mth is None:
@@ -263,7 +263,7 @@ class _MethodFinder(object):
         interface: Type[IUnknown],
         mthname: str,
         paramflags: Optional[Tuple["_ParamFlagType", ...]],
-        idlflags: Tuple[Union[str, int], ...],
+        idlflags: Tuple[_UnionT[str, int], ...],
     ) -> Optional[Callable[..., Any]]:
         fq_name = f"{interface.__name__}_{mthname}"
         if interface._case_insensitive_:
@@ -433,7 +433,7 @@ class COMObject(object):
         finder: _MethodFinder,
         interface: Type[IUnknown],
         mthname: str,
-        idlflags: Tuple[Union[str, int], ...],
+        idlflags: Tuple[_UnionT[str, int], ...],
         argspec: Tuple["_ArgSpecElmType", ...],
         invkind: int,
     ) -> None:
