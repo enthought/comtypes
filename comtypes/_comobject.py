@@ -1,11 +1,8 @@
 import logging
-import os
 import queue
-import sys
 from _ctypes import COMError, CopyComPointer
 from ctypes import (
     POINTER,
-    WINFUNCTYPE,
     FormatError,
     Structure,
     byref,
@@ -30,14 +27,12 @@ from typing import (
 )
 from typing import Union as _UnionT
 
-from comtypes import GUID, IPersist, IUnknown, ReturnHRESULT, instancemethod
-from comtypes._memberspec import _encode_idl
+from comtypes import GUID, IPersist, IUnknown
 from comtypes._vtbl import _MethodFinder, create_dispimpl, create_vtbl_mapping
-from comtypes.errorinfo import ISupportErrorInfo, ReportError, ReportException
+from comtypes.errorinfo import ISupportErrorInfo
 from comtypes.hresult import (
     DISP_E_BADINDEX,
     DISP_E_MEMBERNOTFOUND,
-    E_FAIL,
     E_INVALIDARG,
     E_NOINTERFACE,
     E_NOTIMPL,
@@ -48,10 +43,9 @@ from comtypes.hresult import (
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2, ITypeInfo
 
 if TYPE_CHECKING:
-    from ctypes import _CArgObject, _FuncPointer, _Pointer
+    from ctypes import _CArgObject, _Pointer
 
     from comtypes import hints  # type: ignore
-    from comtypes._memberspec import _ArgSpecElmType, _DispMemberSpec, _ParamFlagType
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
