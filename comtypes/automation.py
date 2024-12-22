@@ -2,19 +2,16 @@
 import array
 import datetime
 import decimal
-import sys
+from _ctypes import COMError, CopyComPointer
 from ctypes import *
 from ctypes import Array as _CArrayType
 from ctypes import _Pointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type
 
-from _ctypes import COMError, CopyComPointer
-
 import comtypes
 import comtypes.patcher
 from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData, _safearray
-from comtypes._memberspec import _DispMemberSpec
 from comtypes.hresult import *
 from comtypes.safearray import _midlSAFEARRAY
 
@@ -22,6 +19,7 @@ if TYPE_CHECKING:
     from ctypes import _CArgObject
 
     from comtypes import hints  # type: ignore
+    from comtypes._memberspec import _DispMemberSpec
 else:
     _CArgObject = type(byref(c_int()))
 
@@ -771,7 +769,7 @@ DISPID_COLLECT = -8
 
 
 class IDispatch(IUnknown):
-    _disp_methods_: ClassVar[List[_DispMemberSpec]]
+    _disp_methods_: ClassVar[List["_DispMemberSpec"]]
 
     _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
     _methods_ = [
