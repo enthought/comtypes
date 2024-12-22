@@ -27,19 +27,9 @@ from typing import (
 )
 from typing import Union as _UnionT
 
-from comtypes import GUID, IPersist, IUnknown
+from comtypes import GUID, IPersist, IUnknown, hresult
 from comtypes._vtbl import _MethodFinder, create_dispimpl, create_vtbl_mapping
 from comtypes.errorinfo import ISupportErrorInfo
-from comtypes.hresult import (
-    DISP_E_BADINDEX,
-    DISP_E_MEMBERNOTFOUND,
-    E_INVALIDARG,
-    E_NOINTERFACE,
-    E_NOTIMPL,
-    RPC_E_CHANGED_MODE,
-    S_FALSE,
-    S_OK,
-)
 from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2, ITypeInfo
 
 if TYPE_CHECKING:
@@ -99,15 +89,15 @@ class LocalServer(object):
     def run(self, classobjects: Sequence["hints.localserver.ClassFactory"]) -> None:
         # Use windll instead of oledll so that we don't get an
         # exception on a FAILED hresult:
-        result = windll.ole32.CoInitialize(None)
-        if RPC_E_CHANGED_MODE == result:
+        hr = windll.ole32.CoInitialize(None)
+        if hresult.RPC_E_CHANGED_MODE == hr:
             # we're running in MTA: no message pump needed
             _debug("Server running in MTA")
             self.run_mta()
         else:
             # we're running in STA: need a message pump
             _debug("Server running in STA")
-            if result >= 0:
+            if hr >= 0:
                 # we need a matching CoUninitialize() call for a successful
                 # CoInitialize().
                 windll.ole32.CoUninitialize()
@@ -149,10 +139,10 @@ class InprocServer(object):
 
     def DllCanUnloadNow(self) -> int:
         if self.locks.value:
-            return S_FALSE
+            return hresult.S_FALSE
         if COMObject._instances_:
-            return S_FALSE
-        return S_OK
+            return hresult.S_FALSE
+        return hresult.S_OK
 
 
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
@@ -330,7 +320,7 @@ class COMObject(object):
             _debug("%r.QueryInterface(%s) -> S_OK", self, iid)
             return CopyComPointer(ptr, ppvObj)
         _debug("%r.QueryInterface(%s) -> E_NOINTERFACE", self, iid)
-        return E_NOINTERFACE
+        return hresult.E_NOINTERFACE
 
     def QueryInterface(self, interface: Type[_T_IUnknown]) -> _T_IUnknown:
         "Query the object for an interface pointer"
@@ -341,7 +331,9 @@ class COMObject(object):
         ptr = self._com_pointers_.get(interface._iid_, None)
         if ptr is None:
             raise COMError(
-                E_NOINTERFACE, FormatError(E_NOINTERFACE), (None, None, 0, None, None)
+                hresult.E_NOINTERFACE,
+                FormatError(hresult.E_NOINTERFACE),
+                (None, None, None, 0, None),
             )
         # CopyComPointer(src, dst) calls AddRef!
         result = POINTER(interface)()
@@ -354,8 +346,8 @@ class COMObject(object):
         self, this: Any, riid: "_Pointer[GUID]"
     ) -> int:
         if riid[0] in self._com_pointers_:
-            return S_OK
-        return S_FALSE
+            return hresult.S_OK
+        return hresult.S_FALSE
 
     ################################################################
     # IProvideClassInfo::GetClassInfo implementation
@@ -363,7 +355,7 @@ class COMObject(object):
         try:
             self.__typelib
         except AttributeError:
-            raise WindowsError(E_NOTIMPL)
+            raise WindowsError(hresult.E_NOTIMPL)
         return self.__typelib.GetTypeInfoOfGuid(self._reg_clsid_)
 
     ################################################################
@@ -372,7 +364,7 @@ class COMObject(object):
     def IProvideClassInfo2_GetGUID(self, dwGuidKind: int) -> GUID:
         # GUIDKIND_DEFAULT_SOURCE_DISP_IID = 1
         if dwGuidKind != 1:
-            raise WindowsError(E_INVALIDARG)
+            raise WindowsError(hresult.E_INVALIDARG)
         return self._outgoing_interfaces_[0]._iid_
 
     ################################################################
@@ -394,12 +386,12 @@ class COMObject(object):
 
     def IDispatch_GetTypeInfo(self, this, itinfo, lcid, ptinfo):
         if itinfo != 0:
-            return DISP_E_BADINDEX
+            return hresult.DISP_E_BADINDEX
         try:
             ptinfo[0] = self.__typeinfo
-            return S_OK
+            return hresult.S_OK
         except AttributeError:
-            return E_NOTIMPL
+            return hresult.E_NOTIMPL
 
     def IDispatch_GetIDsOfNames(self, this, riid, rgszNames, cNames, lcid, rgDispId):
         # This call uses windll instead of oledll so that a failed
@@ -408,7 +400,7 @@ class COMObject(object):
         try:
             tinfo = self.__typeinfo
         except AttributeError:
-            return E_NOTIMPL
+            return hresult.E_NOTIMPL
         return windll.oleaut32.DispGetIDsOfNames(tinfo, rgszNames, cNames, rgDispId)
 
     def IDispatch_Invoke(
@@ -434,7 +426,7 @@ class COMObject(object):
                 # better return E_NOTIMPL or DISP_E_MEMBERNOTFOUND?  Some
                 # clients call IDispatch_Invoke with 'known' DISPID_...'
                 # values, without going through GetIDsOfNames first.
-                return DISP_E_MEMBERNOTFOUND
+                return hresult.DISP_E_MEMBERNOTFOUND
             # This call uses windll instead of oledll so that a failed
             # call to DispInvoke will return a HRESULT instead of raising
             # an error.
@@ -455,7 +447,7 @@ class COMObject(object):
             # XXX Hm, wFlags should be considered a SET of flags...
             mth = self._dispimpl_[(dispIdMember, wFlags)]
         except KeyError:
-            return DISP_E_MEMBERNOTFOUND
+            return hresult.DISP_E_MEMBERNOTFOUND
 
         # Unpack the parameters: It would be great if we could use the
         # DispGetParam function - but we cannot since it requires that

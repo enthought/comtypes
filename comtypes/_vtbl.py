@@ -15,10 +15,10 @@ from typing import (
 )
 from typing import Union as _UnionT
 
-from comtypes import GUID, IUnknown, ReturnHRESULT, instancemethod
+import comtypes
+from comtypes import GUID, IUnknown, hresult
 from comtypes._memberspec import _encode_idl
 from comtypes.errorinfo import ReportError, ReportException
-from comtypes.hresult import E_FAIL, E_NOTIMPL, S_OK
 
 if TYPE_CHECKING:
     from ctypes import _FuncPointer
@@ -66,7 +66,7 @@ def winerror(exc: Exception) -> int:
         # Sometimes, a WindowsError instance has no error code.  An access
         # violation raised by ctypes has only text, for example.  In this
         # cases we return a generic error code.
-        return E_FAIL
+        return hresult.E_FAIL
     raise TypeError(
         f"Expected comtypes.COMERROR or WindowsError instance, got {type(exc).__name__}"
     )
@@ -76,7 +76,7 @@ def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
     def _not_implemented(*args):
         """Return E_NOTIMPL because the method is not implemented."""
         _debug("unimplemented method %s_%s called", interface_name, method_name)
-        return E_NOTIMPL
+        return hresult.E_NOTIMPL
 
     return _not_implemented
 
@@ -93,9 +93,9 @@ def catch_errors(
     def call_with_this(*args, **kw):
         try:
             result = mth(*args, **kw)
-        except ReturnHRESULT as err:
-            (hresult, text) = err.args
-            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)
+        except comtypes.ReturnHRESULT as err:
+            (hr, text) = err.args
+            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hr)
         except (COMError, WindowsError) as details:
             _error(
                 "Exception in %s.%s implementation:",
@@ -106,7 +106,7 @@ def catch_errors(
             return HRESULT_FROM_WIN32(winerror(details))
         except E_NotImplemented:
             _warning("Unimplemented method %s.%s called", interface.__name__, mthname)
-            return E_NOTIMPL
+            return hresult.E_NOTIMPL
         except:
             _error(
                 "Exception in %s.%s implementation:",
@@ -114,9 +114,9 @@ def catch_errors(
                 mthname,
                 exc_info=True,
             )
-            return ReportException(E_FAIL, interface._iid_, clsid=clsid)
+            return ReportException(hresult.E_FAIL, interface._iid_, clsid=clsid)
         if result is None:
-            return S_OK
+            return hresult.S_OK
         return result
 
     if paramflags is None:
@@ -185,9 +185,9 @@ def hack(
                     raise ValueError(msg)
                 for i, value in enumerate(result):
                     args[args_out_idx[i]][0] = value
-        except ReturnHRESULT as err:
-            (hresult, text) = err.args
-            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)
+        except comtypes.ReturnHRESULT as err:
+            (hr, text) = err.args
+            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hr)
         except COMError as err:
             (hr, text, details) = err.args
             _error(
@@ -215,7 +215,7 @@ def hack(
             return ReportException(hr, interface._iid_, clsid=clsid)
         except E_NotImplemented:
             _warning("Unimplemented method %s.%s called", interface.__name__, mthname)
-            return E_NOTIMPL
+            return hresult.E_NOTIMPL
         except:
             _error(
                 "Exception in %s.%s implementation:",
@@ -223,8 +223,8 @@ def hack(
                 mthname,
                 exc_info=True,
             )
-            return ReportException(E_FAIL, interface._iid_, clsid=clsid)
-        return S_OK
+            return ReportException(hresult.E_FAIL, interface._iid_, clsid=clsid)
+        return hresult.S_OK
 
     if args_out:
         call_without_this.has_outargs = True
@@ -301,7 +301,7 @@ class _MethodFinder(object):
             except AttributeError:
                 raise E_NotImplemented()
 
-        return instancemethod(set, self.inst, type(self.inst))
+        return comtypes.instancemethod(set, self.inst, type(self.inst))
 
     def getter(self, propname: str) -> Callable[[], Any]:
         def get(self):
@@ -310,7 +310,7 @@ class _MethodFinder(object):
             except AttributeError:
                 raise E_NotImplemented()
 
-        return instancemethod(get, self.inst, type(self.inst))
+        return comtypes.instancemethod(get, self.inst, type(self.inst))
 
 
 def _create_vtbl_type(
@@ -405,7 +405,7 @@ def _make_dispmthentry(
         mthname = f"_setref_{mthname}"
     else:
         invkind = DISPATCH_METHOD
-        if restype:  # DISPATCH_METHOD have implicit "out"
+        if restype:
             argspec = argspec + ((["out"], restype, ""),)
     yield from _make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
 
@@ -423,7 +423,7 @@ def _make_disppropentry(
     if "readonly" not in idlflags:
         yield from _make_dispentry(
             finder, itf, f"_set_{mthname}", idlflags, argspec, DISPATCH_PROPERTYPUT
-        )  # Would an early return be better in this case?
+        )
         # Add DISPATCH_PROPERTYPUTREF also?
 
 

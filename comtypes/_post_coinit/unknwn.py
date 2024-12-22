@@ -3,15 +3,15 @@
 import logging
 import sys
 from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
-from typing import ClassVar, TYPE_CHECKING, TypeVar
-from typing import Optional
-from typing import List, Type
+from typing import TYPE_CHECKING, ClassVar, List, Optional, Type, TypeVar
 
 from comtypes import GUID, _ole32_nohresult, com_interface_registry
-from comtypes._memberspec import ComMemberGenerator, DispMemberGenerator
-from comtypes._memberspec import STDMETHOD, _ComMemberSpec, _DispMemberSpec
+from comtypes._memberspec import STDMETHOD, ComMemberGenerator, DispMemberGenerator
 from comtypes._post_coinit import _cominterface_meta_patcher as _meta_patch
 from comtypes._post_coinit.instancemethod import instancemethod
+
+if TYPE_CHECKING:
+    from comtypes._memberspec import _ComMemberSpec, _DispMemberSpec
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +52,8 @@ class _cominterface_meta(type):
 
     _case_insensitive_: bool
     _iid_: GUID
-    _methods_: List[_ComMemberSpec]
-    _disp_methods_: List[_DispMemberSpec]
+    _methods_: List["_ComMemberSpec"]
+    _disp_methods_: List["_DispMemberSpec"]
 
     # This flag is set to True by the atexit handler which calls
     # CoUninitialize.
@@ -179,7 +179,7 @@ class _cominterface_meta(type):
             d.update(getattr(self, "__map_case__", {}))
             self.__map_case__ = d
 
-    def _make_dispmethods(self, methods: List[_DispMemberSpec]) -> None:
+    def _make_dispmethods(self, methods: List["_DispMemberSpec"]) -> None:
         if self._case_insensitive_:
             self._make_case_insensitive()
         # create dispinterface methods and properties on the interface 'self'
@@ -211,7 +211,7 @@ class _cominterface_meta(type):
                 raise TypeError(f"baseinterface '{itf.__name__}' has no _methods_")
         return result
 
-    def _make_methods(self, methods: List[_ComMemberSpec]) -> None:
+    def _make_methods(self, methods: List["_ComMemberSpec"]) -> None:
         if self._case_insensitive_:
             self._make_case_insensitive()
         # register com interface. we insist on an _iid_ in THIS class!
@@ -277,7 +277,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
             #
             if not type(self)._com_shutting_down:
                 _debug("Release %s", self)
-                self.Release()
+                self.Release()  # type: ignore
 
     def __eq__(self, other):
         if not isinstance(other, _compointer_base):
@@ -337,7 +337,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
                 return table[cls._iid_]
             except KeyError:
                 raise TypeError(f"Interface {cls._iid_} not supported")
-        return value.QueryInterface(cls.__com_interface__)
+        return value.QueryInterface(cls.__com_interface__)  # type: ignore
 
 
 ################################################################
@@ -378,7 +378,7 @@ class IUnknown(_IUnknown_Base, metaclass=_cominterface_meta):
 
     _case_insensitive_: ClassVar[bool] = False
     _iid_: ClassVar[GUID] = GUID("{00000000-0000-0000-C000-000000000046}")
-    _methods_: ClassVar[List[_ComMemberSpec]] = [
+    _methods_: ClassVar[List["_ComMemberSpec"]] = [
         STDMETHOD(HRESULT, "QueryInterface", [POINTER(GUID), POINTER(c_void_p)]),
         STDMETHOD(c_ulong, "AddRef"),
         STDMETHOD(c_ulong, "Release"),

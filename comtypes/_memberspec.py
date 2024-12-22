@@ -1,5 +1,5 @@
 import ctypes
-from typing import Any, NamedTuple
+from typing import Any, Literal, NamedTuple
 from typing import Dict, List, Tuple, Type
 from typing import Optional, Union as _UnionT
 from typing import Callable, Iterator
@@ -92,7 +92,7 @@ class _ComMemberSpec(NamedTuple):
 class _DispMemberSpec(NamedTuple):
     """Specifier for a slot of dispinterface method or property."""
 
-    what: str
+    what: Literal["DISPMETHOD", "DISPPROPERTY"]
     name: str
     idlflags: Tuple[_UnionT[str, int], ...]
     restype: Optional[Type[_CData]]
