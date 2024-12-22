@@ -405,7 +405,7 @@ def _make_dispmthentry(
         mthname = f"_setref_{mthname}"
     else:
         invkind = DISPATCH_METHOD
-        if restype:  # DISPATCH_METHOD have implicit "out"
+        if restype:
             argspec = argspec + ((["out"], restype, ""),)
     yield from _make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
 
@@ -423,7 +423,7 @@ def _make_disppropentry(
     if "readonly" not in idlflags:
         yield from _make_dispentry(
             finder, itf, f"_set_{mthname}", idlflags, argspec, DISPATCH_PROPERTYPUT
-        )  # Would an early return be better in this case?
+        )
         # Add DISPATCH_PROPERTYPUTREF also?
 
 
