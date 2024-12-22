@@ -94,8 +94,8 @@ def catch_errors(
         try:
             result = mth(*args, **kw)
         except ReturnHRESULT as err:
-            (hresult, text) = err.args
-            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)
+            (hr, text) = err.args
+            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hr)
         except (COMError, WindowsError) as details:
             _error(
                 "Exception in %s.%s implementation:",
@@ -186,8 +186,8 @@ def hack(
                 for i, value in enumerate(result):
                     args[args_out_idx[i]][0] = value
         except ReturnHRESULT as err:
-            (hresult, text) = err.args
-            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hresult)
+            (hr, text) = err.args
+            return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hr)
         except COMError as err:
             (hr, text, details) = err.args
             _error(
