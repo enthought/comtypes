@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type
 import comtypes
 import comtypes.patcher
 from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData, _safearray
-from comtypes.hresult import *
+from comtypes import hresult as hresult
 from comtypes.safearray import _midlSAFEARRAY
 
 if TYPE_CHECKING:
@@ -893,7 +893,7 @@ class IDispatch(IUnknown):
             )
         except COMError as err:
             (hr, text, details) = err.args
-            if hr == DISP_E_EXCEPTION:
+            if hr == hresult.DISP_E_EXCEPTION:
                 details = (
                     excepinfo.bstrDescription,
                     excepinfo.bstrSource,
@@ -902,7 +902,7 @@ class IDispatch(IUnknown):
                     excepinfo.scode,
                 )
                 raise COMError(hr, text, details)
-            elif hr == DISP_E_PARAMNOTFOUND:
+            elif hr == hresult.DISP_E_PARAMNOTFOUND:
                 # MSDN says: You get the error DISP_E_PARAMNOTFOUND
                 # when you try to set a property and you have not
                 # initialized the cNamedArgs and rgdispidNamedArgs
@@ -910,7 +910,7 @@ class IDispatch(IUnknown):
                 #
                 # So, this looks like a bug.
                 raise COMError(hr, text, argerr.value)
-            elif hr == DISP_E_TYPEMISMATCH:
+            elif hr == hresult.DISP_E_TYPEMISMATCH:
                 # MSDN: One or more of the arguments could not be
                 # coerced.
                 #
