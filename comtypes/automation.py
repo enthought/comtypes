@@ -892,8 +892,8 @@ class IDispatch(IUnknown):
                 byref(argerr),
             )
         except COMError as err:
-            (hresult, text, details) = err.args
-            if hresult == DISP_E_EXCEPTION:
+            (hr, text, details) = err.args
+            if hr == DISP_E_EXCEPTION:
                 details = (
                     excepinfo.bstrDescription,
                     excepinfo.bstrSource,
@@ -901,24 +901,22 @@ class IDispatch(IUnknown):
                     excepinfo.dwHelpContext,
                     excepinfo.scode,
                 )
-                raise COMError(hresult, text, details)
-            elif hresult == DISP_E_PARAMNOTFOUND:
+                raise COMError(hr, text, details)
+            elif hr == DISP_E_PARAMNOTFOUND:
                 # MSDN says: You get the error DISP_E_PARAMNOTFOUND
                 # when you try to set a property and you have not
                 # initialized the cNamedArgs and rgdispidNamedArgs
                 # elements of your DISPPARAMS structure.
                 #
                 # So, this looks like a bug.
-                raise COMError(hresult, text, argerr.value)
-            elif hresult == DISP_E_TYPEMISMATCH:
+                raise COMError(hr, text, argerr.value)
+            elif hr == DISP_E_TYPEMISMATCH:
                 # MSDN: One or more of the arguments could not be
                 # coerced.
                 #
                 # Hm, should we raise TypeError, or COMError?
                 raise COMError(
-                    hresult,
-                    text,
-                    (f"TypeError: Parameter {argerr.value + 1}", args),
+                    hr, text, (f"TypeError: Parameter {argerr.value + 1}", args)
                 )
             raise
         return result._get_value(dynamic=True)
