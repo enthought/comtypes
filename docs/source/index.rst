@@ -3,7 +3,7 @@ The comtypes package
 ####################
 
 |comtypes| is a *pure Python* COM package based on the ctypes_ ffi
-foreign function library.  **ctypes** is included in Python 2.5 and
+foreign function library.  |ctypes| is included in Python 2.5 and
 later, it is also available for Python 2.4 as separate download.
 
 While the **pywin32** package contains superior client side support
@@ -814,6 +814,8 @@ The |comtypes| project is hosted on github_. Releases can be downloaded from
 the github releases_ section.
 
 .. |comtypes| replace:: **comtypes**
+
+.. |ctypes| replace:: ``ctypes``
 
 .. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
 
