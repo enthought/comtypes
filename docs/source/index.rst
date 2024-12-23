@@ -104,20 +104,17 @@ information is exposed by the COM object), the interface methods and
 properties are available for introspection.  The Python builtin
 ``help`` function can be used to get an overview of them.
 
-``MSScriptControl.ScriptControl`` is the progid of the MS scripting
-engine; this is an interesting COM object that allows to execute
-JScript or VBScript programs.  Here_ is the complete output of these
-commands:
+``Scripting.FileSystemObject`` is the progid of the Microsoft Scripting
+Runtime's FileSystemObject; this COM object provides access to the
+computer's file system, allowing scripts to create, read, update, and
+delete files and folders.
 
 .. sourcecode:: pycon
 
     >>> from comtypes.client import CreateObject
-    >>> engine = CreateObject("MSScriptControl.ScriptControl")
-    >>> help(engine)
-    .....
-    >>>
-
-.. _Here: scriptcontrol.html
+    >>> fso = CreateObject("Scripting.FileSystemObject")
+    >>> help(fso)  # doctest: +ELLIPSIS
+    Help on POINTER(IFileSystem...
 
 
 Calling methods
