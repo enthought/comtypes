@@ -11,12 +11,14 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import sys
+import os
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
 
 # -- General configuration -----------------------------------------------------
 
@@ -25,7 +27,12 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.doctest',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -120,7 +127,7 @@ html_theme = 'default'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = []
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -219,6 +226,39 @@ man_pages = [
 
 # If true, show URL addresses after external links.
 #man_show_urls = False
+
+
+# -- Options for doctest extension ----------------------------------------
+
+# If true, '>>>' blocks in reST files are automatically tested.  Setup code
+# can be added before and cleanup code after these blocks using 'testsetup'
+# and 'testcleanup' directives.  Without these directives, or if the config
+# value is false, only code blocks marked with 'doctest' will be tested.
+doctest_test_doctest_blocks = "true"
+
+# Global setup and cleanup code can be defined using doctest_global_setup
+# and doctest_global_cleanup respectively.  These will be run before and
+# after any tests are executed.
+
+# A string containing Python code that will be run before each test.  Useful
+# for initializing objects or setting up specific conditions.
+doctest_global_setup = """
+global NO_EXCEL
+
+import comtypes.client
+
+
+try:
+    comtypes.client.GetModule(('{00020813-0000-0000-C000-000000000046}',))
+
+    NO_EXCEL = False
+except (ImportError, FileNotFoundError):
+    NO_EXCEL = True
+"""
+
+# A string containing Python code that will be run after each test.  Useful
+# for cleaning up resources or resetting state.
+doctest_global_cleanup = ""
 
 
 # -- Options for Texinfo output -------------------------------------------
