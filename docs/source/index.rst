@@ -139,16 +139,18 @@ COM properties present some challenges.  Properties can be read-write,
 read-only, or write-only.  They may have zero, one, or more arguments;
 arguments may even be optional.
 
-Properties without arguments can be accessed in the usual way.  This
-example demonstrates the ``Visible`` property of Internet Explorer:
+The ``Scripting.Dictionary`` object provides a dictionary-like interface.
+This example demonstrates accessing and modifying the ``CompareMode``
+property, which controls how keys are compared:
 
-.. sourcecode:: pycon
+.. doctest::
 
-    >>> ie = CreateObject("InternetExplorer.Application")
-    >>> print ie.Visible
-    False
-    >>> ie.Visible = True
-    >>>
+    >>> dic = CreateObject("Scripting.Dictionary")
+    >>> dic.CompareMode  # default is 0, BinaryCompare
+    0
+    >>> dic.CompareMode = 1  # TextCompare
+    >>> dic.CompareMode
+    1
 
 
 Properties with arguments (named properties)
@@ -157,17 +159,19 @@ Properties with arguments (named properties)
 Properties with arguments can be accessed using index notation.
 The following example starts Excel, creates a new workbook, and
 accesses the contents of some cells in the ``xlRangeValueDefault``
-format (this code has been tested with Office 2003):
+format (this code has been tested with version 2402 build
+16.0.17328.20670):
 
-.. sourcecode:: pycon
+.. doctest::
+    :skipif: NO_EXCEL
 
-    >>> xl = CreateObject("Excel.Application")
-    >>> xl.Workbooks.Add()
+    >>> xl = CreateObject('Excel.Application')
+    >>> xl.Workbooks.Add()  # doctest: +ELLIPSIS
+    <POINTER(_Workbook) ptr=... at ...>
     >>> from comtypes.gen.Excel import xlRangeValueDefault
-    >>> xl.Range["A1", "C1"].Value[xlRangeValueDefault] = (10,"20",31.4)
-    >>> print xl.Range["A1", "C1"].Value[xlRangeValueDefault]
-    (10, "20", 31.4)
-    >>>
+    >>> xl.Range["A1", "C1"].Value[xlRangeValueDefault] = (10,'20',31.4)
+    >>> xl.Range["A1", "C1"].Value[xlRangeValueDefault]
+    ((10.0, 20.0, 31.4),)
 
 
 Properties with optional arguments
@@ -181,48 +185,58 @@ set this property without the need to pass (or even know) the
 
 Unfortunately, Python does not allow indexing without arguments:
 
-.. sourcecode:: pycon
+.. doctest::
+    :skipif: NO_EXCEL
 
     >>> xl.Range["A1", "C1"].Value[] = (10,"20",31.4)
-      File "<stdin>", line 1
+    Traceback (most recent call last):
+      ...
         xl.Range["A1", "C1"].Value[] = (10,"20",31.4)
                                    ^
     SyntaxError: invalid syntax
-    >>> print xl.Range["A1", "C1"].Value[]
-      File "<stdin>", line 1
-        print xl.Range["A1", "C1"].Value[]
-                                         ^
-    SyntaxError: invalid syntax
-    >>>
+    >>> print(xl.Range["A1", "C1"].Value[])
+    Traceback (most recent call last):
+      ...
+        print(xl.Range["A1", "C1"].Value[])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    SyntaxError: invalid syntax. Perhaps you forgot a comma?
+
 
 So, |comtypes| must provide some ways to access these properties.  To
 *get* a named property without passing any argument, you can *call*
 the property:
 
-.. sourcecode:: pycon
+.. doctest::
+    :skipif: NO_EXCEL
 
-    >>> print xl.Range["A1", "C1"].Value()
-    (10, "20", 31.4)
-    >>>
+    >>> print(xl.Range["A1", "C1"].Value())
+    ((10.0, 20.0, 31.4),)
+
 
 It is also possible to index with an empty slice or empty tuple:
 
-.. sourcecode:: pycon
+.. doctest::
+    :skipif: NO_EXCEL
 
-    >>> print xl.Range["A1", "C1"].Value[:]
-    (10, "20", 31.4)
-    >>> print xl.Range["A1", "C1"].Value[()]
-    (10, "20", 31.4)
-    >>>
+    >>> print(xl.Range["A1", "C1"].Value[:])
+    ((10.0, 20.0, 31.4),)
+    >>> print(xl.Range["A1", "C1"].Value[()])
+    ((10.0, 20.0, 31.4),)
+
 
 To *set* a named property without passing any argument, you can
 also use the empty slice or tuple index trick:
 
-.. sourcecode:: pycon
+.. doctest::
+    :skipif: NO_EXCEL
 
     >>> xl.Range["A1", "C1"].Value[:] = (3, 2, 1)
+    >>> print(xl.Range["A1", "C1"].Value[:])
+    ((3.0, 2.0, 1.0),)
     >>> xl.Range["A1", "C1"].Value[()] = (1, 2, 3)
-    >>>
+    >>> print(xl.Range["A1", "C1"].Value[()])
+    ((1.0, 2.0, 3.0),)
+
 
 .. This is not (yet?) implemented.  Would is be useful?
    Another way is to assing to the tuple in the normal way:
@@ -466,93 +480,68 @@ Examples
 --------
 
 Here is an example which demonstrates how to find and receive events
-from Excel:
+from ``stdole.StdFont``:
 
-.. sourcecode:: pycon
+.. doctest::
 
-    >>> from comtypes.client import CreateObject
-    >>> xl = CreateObject("Excel.Application")
-    >>> xl.Visible = True
-    >>> print xl
-    <POINTER(_Application) ptr=0x29073c at c156c0>
-    >>>
+    >>> font = CreateObject("StdFont")
+    >>> font  # doctest: +ELLIPSIS
+    <POINTER(Font) ptr=... at ...>
+
 
 The ``ShowEvents`` function is a useful helper to get started with the
 events of an object in the interactive Python interpreter.
 
-We call ``ShowEvents`` to connect to the events that Excel fires.
+We call ``ShowEvents`` to connect to the events that ``StdFont`` fires.
 ``ShowEvents`` first lists the events that are present on the
-``_Application`` object:
+``StdFont`` object:
 
-.. sourcecode:: pycon
+.. doctest::
 
-   >>> from comtypes.client import ShowEvents
-   >>> connection = ShowEvents(xl)
-   # event found: AppEvents_WorkbookSync
-   # event found: AppEvents_WindowResize
-   # event found: AppEvents_WindowActivate
-   # event found: AppEvents_WindowDeactivate
-   # event found: AppEvents_SheetSelectionChange
-   # event found: AppEvents_SheetBeforeDoubleClick
-   # event found: AppEvents_SheetBeforeRightClick
-   # event found: AppEvents_SheetActivate
-   # event found: AppEvents_SheetDeactivate
-   # event found: AppEvents_SheetCalculate
-   # event found: AppEvents_SheetChange
-   # event found: AppEvents_NewWorkbook
-   # event found: AppEvents_WorkbookOpen
-   # event found: AppEvents_WorkbookActivate
-   # event found: AppEvents_WorkbookDeactivate
-   # event found: AppEvents_WorkbookBeforeClose
-   # event found: AppEvents_WorkbookBeforeSave
-   # event found: AppEvents_WorkbookBeforePrint
-   # event found: AppEvents_WorkbookNewSheet
-   # event found: AppEvents_WorkbookAddinInstall
-   # event found: AppEvents_WorkbookAddinUninstall
-   # event found: AppEvents_SheetFollowHyperlink
-   # event found: AppEvents_SheetPivotTableUpdate
-   # event found: AppEvents_WorkbookPivotTableCloseConnection
-   # event found: AppEvents_WorkbookPivotTableOpenConnection
-   # event found: AppEvents_WorkbookBeforeXmlImport
-   # event found: AppEvents_WorkbookAfterXmlImport
-   # event found: AppEvents_WorkbookBeforeXmlExport
-   # event found: AppEvents_WorkbookAfterXmlExport
-   >>> print connection
-   <comtypes.client._events._AdviseConnection object at 0x00C16AD0>
-   >>>
+    >>> from comtypes.client import ShowEvents
+    >>> connection = ShowEvents(font)
+    # event found: FontEvents_FontChanged
+    >>> connection  # doctest: +ELLIPSIS
+    <comtypes.client._events._AdviseConnection object at ...>
+
 
 We have assigned the return value of the ``ShowEvents`` call to the
-variable ``connection``, this variable keeps the connection to Excel
+variable ``connection``, this variable keeps the connection to ``StdFont``
 alive and it will print events as they actually occur.
 
-To receive COM events correctly, it is important to run a message
-loop; the ``PumpEvents()`` function will do that for a certain time.
-Here is what happens when we call this function and in the meantime
-interactively open an Excel worksheet.  |comtypes| prints the events
-as they are fired with their parameters:
+.. doctest::
 
-.. sourcecode:: pycon
+    >>> font.Name = 'Arial'
+    Event FontEvents_FontChanged(None, 'Name')
+    >>> font.Italic = True
+    Event FontEvents_FontChanged(None, 'Italic')
 
-   >>> from comtypes.client import PumpEvents
-   >>> PumpEvents(30)
-   Event AppEvents_WorkbookOpen(None, <POINTER(_Workbook) ptr=...>)
-   Event AppEvents_WorkbookActivate(None, <POINTER(_Workbook) ptr=...>)
-   Event AppEvents_WindowActivate(None, <POINTER(Window) ptr=...>, <POINTER(_Workbook) ptr=...>)
-   >>>
 
 The first parameter is always the ``this`` pointer passed as ``None``
 for |comtypes|-internal reasons, other parameters depend on the event.
-To terminate the connection we simply delete the ``connection``
-variable; it may be required to call the Python garbage collector to
-terminate the connection immediately, and we will not receive any
-events from Excel anymore:
 
-.. sourcecode:: pycon
+The ``PumpEvents()`` function will run a message loop for a certain time.
+|comtypes| prints the events as they are fired with their parameters:
 
-   >>> del connection
-   >>> import gc; gc.collect()
-   123
-   >>>
+.. doctest::
+
+    >>> from comtypes.client import PumpEvents
+    >>> PumpEvents(0.01)  # The output will be in the form of "FontEvents_FontChanged(None, 'Name')".
+
+
+To terminate the connection, we call the ``disconnect`` method. It may
+also be necessary to delete the ``connection`` variable and invoke the
+Python garbage collector.  Afterward, no events from ``StdFont`` will
+be received anymore.
+
+.. doctest::
+
+    >>> connection.disconnect()
+    >>> del connection
+    >>> import gc
+    >>> _ = gc.collect()
+    >>> font.Name = 'Sans'  # Expected nothing
+
 
 If we want to process the events in our own code, we use the
 ``GetEvents()`` function in a very similar way.  This function must be
@@ -563,22 +552,22 @@ process.  It is only required to implement methods for those events
 that we want to process, other events are ignored.
 
 The following code defines a class that processes the
-``AppEvents_WorkbookOpen`` event, creates an instance of this class
+``FontEvents_FontChanged`` event, creates an instance of this class
 and passes it as second parameter to the ``GetEvents()`` function:
 
-.. sourcecode:: pycon
+.. doctest::
 
    >>> from comtypes.client import GetEvents
    >>> class EventSink(object):
-   ...     def AppEvents_WorkbookOpen(self, this, workbook):
-   ...         print "WorkbookOpened", workbook
+   ...     def FontEvents_FontChanged(self, this, PropertyName):
+   ...         print("FontChanged", PropertyName)
    ...         # add your code here
    ...
    >>> sink = EventSink()
-   >>> connection = GetEvents(xl, sink)
-   >>> PumpEvents(30)
-   WorkbookOpened <POINTER(_Workbook) ptr=0x291944 at 1853120>
-   >>>
+   >>> connection = GetEvents(font, sink)
+   >>> font.Name = 'Arial'
+   FontChanged Name
+
 
 Note that event handler methods support the same calling convention as
 COM method implementations in |comtypes|.  So the remarks about
@@ -711,21 +700,20 @@ Examples
 Here are several ways to generate the typelib wrapper module for
 Scripting Dictionary with the ``GetModule`` function:
 
-.. sourcecode:: pycon
+.. doctest::
 
-   >>> from comtypes.client import GetModule
-   >>> GetModule('scrrun.dll')  # doctest: +ELLIPSIS
-   <module 'comtypes.gen.Scripting'...>
-   >>> GetModule(('{420B2830-E718-11CF-893D-00A0C9054228}', 1, 0))  # doctest: +ELLIPSIS
-   <module 'comtypes.gen.Scripting'...>
+    >>> from comtypes.client import GetModule
+    >>> GetModule('scrrun.dll')  # doctest: +ELLIPSIS
+    <module 'comtypes.gen.Scripting'...>
+    >>> GetModule(('{420B2830-E718-11CF-893D-00A0C9054228}', 1, 0))  # doctest: +ELLIPSIS
+    <module 'comtypes.gen.Scripting'...>
 
 Members such as the first wrapper module, interface classes,
 coclasses, constants, and enumerations can be referenced from the
 friendly module generated by calling the ``GetModule`` function:
 
-.. sourcecode:: pycon
+.. doctest::
 
-   >>> from comtypes.client import GetModule
     >>> Scripting = GetModule('scrrun.dll')
     >>> Scripting.__wrapper_module__  # the first wrapper module  # doctest: +ELLIPSIS
     <module 'comtypes.gen._420B2830_E718_11CF_893D_00A0C9054228_0_1_0'...>
@@ -740,12 +728,13 @@ friendly module generated by calling the ``GetModule`` function:
     >>> Scripting.CompareMethod.BinaryCompare  # a member of the enumeration     
     <CompareMethod.BinaryCompare: 0>
 
+
 This code snippet could be used to generate the typelib wrapper module
 for Scripting Dictionary automatically when your script is run, and
 would include the module into the exe-file when the script is frozen
 by ``py2exe``:
 
-.. sourcecode:: pycon
+.. doctest::
 
     >>> import sys
     >>> if not hasattr(sys, 'frozen'):  # doctest: +ELLIPSIS
