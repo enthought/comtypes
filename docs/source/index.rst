@@ -14,7 +14,7 @@ The |comtypes| package makes it easy to access and implement both
 custom and dispatch based COM interfaces.
 
 NEW: The beginning of the documentation for implementing COM servers in
-comtypes is here: comtypes_server_
+|comtypes| is here: comtypes_server_
 
 .. contents::
 
@@ -97,7 +97,7 @@ functions (``CreateObject``, ``CoGetObject``, or ``GetActiveObject``)
 exposes methods and properties of the interface (unless ``dynamic``
 is passed to the function).
 
-Since ``comtypes`` uses early binding to COM interfaces (when type
+Since |comtypes| uses early binding to COM interfaces (when type
 information is exposed by the COM object), the interface methods and
 properties are available for introspection.  The Python builtin
 ``help`` function can be used to get an overview of them.
@@ -248,7 +248,7 @@ Python in just the way one would expect.
 can hold a lot of different types - simple ones like integers, floats,
 or strings, also more complicated ones like single dimensional or even
 multidimensional arrays.  The value a ``VARIANT`` contains is
-specified by a *typecode* that comtypes automatically assigns.
+specified by a *typecode* that |comtypes| automatically assigns.
 
 When you pass simple sequences (lists or tuples) as VARIANT
 parameters, the COM server will receive a VARIANT containing a
@@ -336,7 +336,7 @@ NumPy interop
 +++++++++++++
 
 NumPy provides the *de facto* array standard for Python. Though NumPy
-is not required to use comtypes, comtypes provides various options for
+is not required to use |comtypes|, |comtypes| provides various options for
 NumPy interoperability. NumPy version 1.7 or greater is required to access
 all of these features.
 
@@ -381,7 +381,7 @@ SAFEARRAYs on an item-by-item basis.
 NumPy Arrays as Output Arguments
 --------------------------------
 
-By default, comtypes converts SAFEARRAY output arguments to tuples of
+By default, |comtypes| converts SAFEARRAY output arguments to tuples of
 python objects on an item-by-item basis.  When dealing with large
 SAFEARRAYs, this conversion can be costly.  Comtypes provides a the
 ``safearray_as_ndarray`` context manager (from ``comtypes.safearray``)
@@ -420,7 +420,7 @@ based on so-called *connection points*.
 
 Note: For the rules that you should observe when implementing event
 handlers you should read the implementing_COM_methods_ section in the
-comtypes server document.
+|comtypes| server document.
 
 ``GetEvents(source, sink, interface=None)``
     This functions connects an event sink to the COM object
@@ -528,7 +528,7 @@ alive and it will print events as they actually occur.
 To receive COM events correctly, it is important to run a message
 loop; the ``PumpEvents()`` function will do that for a certain time.
 Here is what happens when we call this function and in the meantime
-interactively open an Excel worksheet.  ``comtypes`` prints the events
+interactively open an Excel worksheet.  |comtypes| prints the events
 as they are fired with their parameters:
 
 .. sourcecode:: pycon
@@ -541,7 +541,7 @@ as they are fired with their parameters:
    >>>
 
 The first parameter is always the ``this`` pointer passed as ``None``
-for comtypes-internal reasons, other parameters depend on the event.
+for |comtypes|-internal reasons, other parameters depend on the event.
 To terminate the connection we simply delete the ``connection``
 variable; it may be required to call the Python garbage collector to
 terminate the connection immediately, and we will not receive any
@@ -581,7 +581,7 @@ and passes it as second parameter to the ``GetEvents()`` function:
    >>>
 
 Note that event handler methods support the same calling convention as
-COM method implementations in comtypes.  So the remarks about
+COM method implementations in |comtypes|.  So the remarks about
 implementing_COM_methods_ should be observed.
 
 Typelibraries
@@ -813,13 +813,13 @@ Downloads
 The |comtypes| project is hosted on github_. Releases can be downloaded from
 the github releases_ section.
 
-.. |comtypes| replace:: **comtypes**
+.. |comtypes| replace:: ``comtypes``
 
 .. |ctypes| replace:: ``ctypes``
 
 .. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
 
-.. _ctypes: http://starship.python.net/crew/theller/ctypes
+.. _ctypes: https://docs.python.org/3/library/ctypes.html
 
 .. _`enum.IntFlag`: https://docs.python.org/3/library/enum.html#enum.IntFlag
 
