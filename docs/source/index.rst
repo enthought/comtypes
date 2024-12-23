@@ -6,7 +6,7 @@ The comtypes package
 foreign function library.  |ctypes| is included in Python 2.5 and
 later, it is also available for Python 2.4 as separate download.
 
-While the **pywin32** package contains superior client side support
+While the pywin32_ package contains superior client side support
 for *dispatch based* COM interfaces, it is not possible to access
 *custom* COM interfaces unless they are wrapped in C++-code.
 
@@ -820,6 +820,8 @@ the github releases_ section.
 .. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
 
 .. _ctypes: https://docs.python.org/3/library/ctypes.html
+
+.. _pywin32: https://pypi.org/project/pywin32/
 
 .. _`enum.IntFlag`: https://docs.python.org/3/library/enum.html#enum.IntFlag
 
