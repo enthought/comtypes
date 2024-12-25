@@ -16,7 +16,7 @@ This document describes |comtypes| version 0.5.
 Implementing a simple COM object
 ********************************
 
-To implement a COM server object in comtypes you need to write a type
+To implement a COM server object in |comtypes| you need to write a type
 library describing the coclass, the interface(s) that the object
 implements, and (optional) the event interface that the object
 supports.  Also you have to write a Python module that defines a class
@@ -123,7 +123,7 @@ The meaning of the attributes:
 
     The optional ``_regcls_`` constant is only used for com objects
     that run in their own process, see the MSDN docs for more info.
-    In comtypes, several REGCLS values are defined in the
+    In |comtypes|, several REGCLS values are defined in the
     ``comtyper.server.localserver`` module.
 
 You do not yet implement any methods on the class, because basic
@@ -158,7 +158,7 @@ object.  If everything works well, you can even create an instance of
 your COM object by double clicking the entry, and you will see that
 the object implements quite some interfaces already.
 
-You can also create an instance of the object with comtypes:
+You can also create an instance of the object with |comtypes|:
 
 .. sourcecode:: pycon
 
@@ -318,7 +318,7 @@ More details on COM objects
 
 To be written...
 
-.. |comtypes| replace:: **comtypes**
+.. |comtypes| replace:: ``comtypes``
 
 .. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
 
