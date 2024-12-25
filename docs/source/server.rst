@@ -236,7 +236,7 @@ native Python objects, if possible.  For [out] or [out, retval]
 parameters ctypes pointer instances are passed, you are required to
 put the result value into the pointer(s).
 
-A low level method implementation must return a numerical HRESULT
+A low level method implementation must return a numerical ``HRESULT``
 value, which specifies a success or failure code for the operation.
 The usual ``S_OK`` success code has a value of zero, but for
 convenience you can also return None instead.
@@ -286,13 +286,13 @@ Both implementation strategies have their own advantages and
 disadvantages, so you should choose between them on a case by case
 basis:
 
-Low-level makes it easy to return special HRESULT values in the case
-that your object requires it.
+Low-level makes it easy to return special ``HRESULT`` values in the
+case that your object requires it.
 
 High-level is usually easier to write, and is compatible with the
 normal calling convention that Python also chooses.  However, it is
-more difficult to specify the HRESULT value to return in case you want
-to communicate error codes to the caller.
+more difficult to specify the ``HRESULT`` value to return in case you
+want to communicate error codes to the caller.
 
 Run the object again and test the method
 ++++++++++++++++++++++++++++++++++++++++
