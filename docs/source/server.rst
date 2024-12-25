@@ -213,10 +213,11 @@ would be welcomed).  |comtypes| uses different calling conventions for
 |comtypes| inspects the method for the name of the second parameter,
 just after the ``self`` parameter:
 
-  **If the second parameter is present and is named ``this`` then the
-  low level calling convention is used.  If the second parameter is
-  not present, or is not named ``this``, then the high level calling
-  convention is used.**
+- If the second parameter is present and is named ``this``, then the
+  low level calling convention is used.
+
+- If the second parameter is not present, or is not named ``this``,
+  then the high level calling convention is used.
 
 
 Low level implementation
