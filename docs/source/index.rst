@@ -13,8 +13,6 @@ for *dispatch based* COM interfaces, it is not possible to access
 The |comtypes| package makes it easy to access and implement both
 custom and dispatch based COM interfaces.
 
-NEW: The beginning of the documentation for implementing COM servers in
-|comtypes| is here: comtypes_server_
 
 .. contents::
 
@@ -785,6 +783,12 @@ XXX mention threading issues, message loops
 Other stuff
 +++++++++++
 
+.. toctree::
+    :maxdepth: 1
+
+    server
+
+
 XXX describe logging, gen_dir, wrap, _manage (?)
 
 Links
@@ -802,6 +806,7 @@ Downloads
 The |comtypes| project is hosted on github_. Releases can be downloaded from
 the github releases_ section.
 
+
 .. |comtypes| replace:: ``comtypes``
 
 .. |ctypes| replace:: ``ctypes``
@@ -817,7 +822,5 @@ the github releases_ section.
 .. _github: https://github.com/enthought/comtypes
 
 .. _releases: https://github.com/enthought/comtypes/releases
-
-.. _comtypes_server: server.html
 
 .. _implementing_COM_methods: server.html#implementing-com-methods

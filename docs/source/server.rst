@@ -2,21 +2,15 @@
 COM servers with comtypes
 #########################
 
-|comtypes| is a *pure Python* COM package based on the ctypes_ ffi
-foreign function library.  **ctypes** is included in Python 2.5 and
-later, it is also available for Python 2.4 as separate download.
-
 The |comtypes| package makes it easy to access and implement both
 custom and dispatch based COM interfaces.
-
-This document describes |comtypes| version 0.5.
 
 .. contents::
 
 Implementing a simple COM object
 ********************************
 
-To implement a COM server object in comtypes you need to write a type
+To implement a COM server object in |comtypes| you need to write a type
 library describing the coclass, the interface(s) that the object
 implements, and (optional) the event interface that the object
 supports.  Also you have to write a Python module that defines a class
@@ -30,32 +24,33 @@ Define the COM interface
 Start writing an IDL file.  It is a good idea to define ``dual``
 interfaces, and only use automation compatible data types.
 
-.. sourcecode:: c
+.. sourcecode:: idl
 
-  import "oaidl.idl";
-  import "ocidl.idl";
+    import "oaidl.idl";
+    import "ocidl.idl";
 
-  [
-          uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx),
-          dual,
-          oleautomation
-  ]
-  interface IMyInterface : IDispatch {
-          HRESULT MyMethod([in] INT a, [in] INT b, [out, retval] INT *presult);
-  }
+    [
+            uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx),
+            dual,
+            oleautomation
+    ]
+    interface IMyInterface : IDispatch {
+            HRESULT MyMethod([in] INT a, [in] INT b, [out, retval] INT *presult);
+    }
 
-  [
-  	uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-  ]
-  library MyTypeLib
-  {
-          importlib("stdole2.tlb");
-  	
-          [uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)]
-  		coclass MyObject {
-  		[default] interface IMyInterface;
-          };
-  };
+    [
+      uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+    ]
+    library MyTypeLib
+    {
+            importlib("stdole2.tlb");
+      
+            [uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)]
+        coclass MyObject {
+        [default] interface IMyInterface;
+            };
+    };
+
 
 Please note that you must replace the 'xxxx' placeholders in the
 section above with separate GUIDs that you must generate yourself.
@@ -64,9 +59,9 @@ windows console:
 
 .. sourcecode:: shell
 
-    C:\> python -c "from comtypes import GUID; print GUID.create_new()"
+    C:\> python -c "from comtypes import GUID; print(GUID.create_new())"
     {26F87CEB-603A-4FFE-8865-DB67A9E3A308}
-    C:\> 
+
 
 The IDL file should now be compiled with the Microsoft MIDL compiler to a
 TLB type library file.
@@ -85,24 +80,24 @@ are not in the type library.
 
 .. sourcecode:: python
 
-  import comtypes
-  import comtypes.server.localserver
+    import comtypes
+    import comtypes.server.localserver
+    from comtypes.client import GetModule
 
-  from comtypes.client import GetModule
-  # generate wrapper code for the type library, this needs
-  # to be done only once (but also each time the IDL file changes)
-  GetModule("mytypelib.tlb")
+    # generate wrapper code for the type library, this needs
+    # to be done only once (but also each time the IDL file changes)
+    GetModule('path\\to\\mytypelib.tlb')
 
-  from comtypes.gen.MyTypeLib import MyObject
+    from comtypes.gen.MyTypeLib import MyObject
+    class MyObjectImpl(MyObject):
+        # registry entries
+        _reg_threading_ = "Both"
+        _reg_progid_ = "MyTypeLib.MyObject.1"
+        _reg_novers_progid_ = "MyTypeLib.MyObject"
+        _reg_desc_ = "Simple COM server for testing"
+        _reg_clsctx_ = comtypes.CLSCTX_INPROC_SERVER | comtypes.CLSCTX_LOCAL_SERVER
+        _regcls_ = comtypes.server.localserver.REGCLS_MULTIPLEUSE
 
-  class MyObjectImpl(MyObject):
-      # registry entries
-      _reg_threading_ = "Both"
-      _reg_progid_ = "MyTypeLib.MyObject.1"
-      _reg_novers_progid_ = "MyTypeLib.MyObject"
-      _reg_desc_ = "Simple COM server for testing"
-      _reg_clsctx_ = comtypes.CLSCTX_INPROC_SERVER | comtypes.CLSCTX_LOCAL_SERVER
-      _regcls_ = comtypes.server.localserver.REGCLS_MULTIPLEUSE
 
 The meaning of the attributes:
 
@@ -123,7 +118,7 @@ The meaning of the attributes:
 
     The optional ``_regcls_`` constant is only used for com objects
     that run in their own process, see the MSDN docs for more info.
-    In comtypes, several REGCLS values are defined in the
+    In |comtypes|, several REGCLS values are defined in the
     ``comtyper.server.localserver`` module.
 
 You do not yet implement any methods on the class, because basic
@@ -144,6 +139,7 @@ with the ``MyObjectImpl`` class:
         from comtypes.server.register import UseCommandLine
         UseCommandLine(MyObjectImpl)
 
+
 You should now run your script with a ``/regserver`` command line
 option, this will write information about your object into the Windows
 registry:
@@ -152,32 +148,36 @@ registry:
 
     C:\> python myserver.py /regserver
 
+
 If you have the Microsoft ``OLEVIEW`` utility, you can now open the
 "All Objects" item, and look for the "Simple COM server for testing"
 object.  If everything works well, you can even create an instance of
 your COM object by double clicking the entry, and you will see that
 the object implements quite some interfaces already.
 
-You can also create an instance of the object with comtypes:
+You can also create an instance of the object with |comtypes|:
+
+.. doctest::
+    :skipif: NO_MYTYPELIB
+
+    >>> from comtypes.client import CreateObject
+    >>> x = CreateObject("MyTypelib.MyObject")
+    >>> x  # doctest: +ELLIPSIS
+    <POINTER(IMyInterface) ptr=... at ...>
+
+
+Of course, calling a method does not yet work if it is not implemented
+in the server script.  In such cases, a ``COMError`` is raised with an
+``hresult`` of ``-2147467263`` (``E_NOTIMPL``, ``'0x80004001'`` in
+signed-32bit hex):
 
 .. sourcecode:: pycon
 
-  >>> from comtypes.client import CreateObject
-  >>> x = CreateObject("MyTypelib.MyObject")
-  >>> print x
-  <POINTER(IMyInterface) ptr=0x1216328 at 1216620>
-  >>>
+    >>> x.MyMethod(1, 2)  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+      ...
+    _ctypes.COMError: (-2147467263, ..., (None, None, None, 0, None))
 
-Of course calling a method does not yet work since it is not
-implemented in the server script:
-
-.. sourcecode:: pycon
-
-  >>> x.MyMethod(a, 2)
-  Traceback (most recent call last):
-    File "<stdin>", line 1, in <module>
-  _ctypes.COMError: COMError(0x80004001, 'Nicht implementiert', (None, None, None, 0, None))
-  >>>
 
 Implementing COM methods
 ++++++++++++++++++++++++
@@ -190,6 +190,7 @@ In the IDL file, the method signature is defined like this:
 .. sourcecode:: c
 
     HRESULT MyMethod([in] INT a, [in] INT b, [out, retval] INT *presult);
+
 
 So, this method takes two integers and returns a third one, writing
 the latter into a pointer.
@@ -215,10 +216,11 @@ would be welcomed).  |comtypes| uses different calling conventions for
 |comtypes| inspects the method for the name of the second parameter,
 just after the ``self`` parameter:
 
-  **If the second parameter is present and is named ``this`` then the
-  low level calling convention is used.  If the second parameter is
-  not present, or is not named ``this``, then the high level calling
-  convention is used.**
+- If the second parameter is present and is named ``this``, then the
+  low level calling convention is used.
+
+- If the second parameter is not present, or is not named ``this``,
+  then the high level calling convention is used.
 
 
 Low level implementation
@@ -234,29 +236,28 @@ A low-level method implementation is called with the following arguments:
 
 - any other arguments listed in the IDL method signature.
 
-[in] parameters from the method signature are usually converted to
-native Python objects, if possible.  For [out] or [out, retval]
-parameters ctypes pointer instances are passed, you are required to
-put the result value into the pointer(s).
+``[in]`` parameters from the method signature are usually converted
+to native Python objects, if possible.  For ``[out]`` or
+``[out, retval]`` parameters ctypes pointer instances are passed,
+you are required to put the result value into the pointer(s).
 
-A low level method implementation must return a numerical HRESULT
+A low level method implementation must return a numerical ``HRESULT``
 value, which specifies a success or failure code for the operation.
 The usual ``S_OK`` success code has a value of zero, but for
 convenience you can also return None instead.
 
 So, a sample low-level implementation for ``MyMethod`` for our object
-would be this, assuming we want to return the sum of the two [in]
+would be this, assuming we want to return the sum of the two ``[in]``
 parameters:
 
 .. sourcecode:: python
 
-  ...
-  class MyObjectImpl(MyObject):
-  ...
-      # Note the 'this' second parameter
-      def MyMethod(self, this, a, b, presult):
-          presult[0] = a + b
-          return 0
+    class MyObjectImpl(MyObject):
+        # NOTE: the 'this' second parameter is required
+        def MyMethod(self, this, a, b, presult):
+            presult[0] = a + b
+            return 0
+
 
 High level implementation
 -------------------------
@@ -265,23 +266,24 @@ A high-level method implementation is called with the following parameters:
 
 - the usual ``self`` argument
 
-- the [in] parameters from the IDL method signature.
+- the ``[in]`` parameters from the IDL method signature.
 
-If there is a single [out] or [out, retval] parameter, then the method
-must return the result value; if there are more than one [out] or
-[out, retval] parameters, then a tuple containing the correct number
-must be returned.  If there are no [out] or [out, retval] parameters,
-the return value does not matter and is ignored.
+If there is a single ``[out]`` or ``[out, retval]`` parameter, then
+the method must return the result value; if there are more than one
+``[out]`` or ``[out, retval]`` parameters, then a tuple containing
+the correct number must be returned.  If there are no ``[out]`` or
+``[out, retval]`` parameters, the return value does not matter and
+is ignored.
 
 A sample high-level implementation for ``MyMethod`` is this:
 
 .. sourcecode:: python
 
-  class MyObjectImpl(MyObject):
-  ...
-      # Note: NO second 'this' parameter
-      def MyMethod(self, a, b):
-          return a + b
+    class MyObjectImpl(MyObject):
+        # NOTE: NO second 'this' parameter
+        def MyMethod(self, a, b):
+            return a + b
+
 
 Choosing between low-level or high-level implementation
 -------------------------------------------------------
@@ -290,36 +292,33 @@ Both implementation strategies have their own advantages and
 disadvantages, so you should choose between them on a case by case
 basis:
 
-Low-level makes it easy to return special HRESULT values in the case
-that your object requires it.
+Low-level makes it easy to return special ``HRESULT`` values in the
+case that your object requires it.
 
 High-level is usually easier to write, and is compatible with the
 normal calling convention that Python also chooses.  However, it is
-more difficult to specify the HRESULT value to return in case you want
-to communicate error codes to the caller.
+more difficult to specify the ``HRESULT`` value to return in case you
+want to communicate error codes to the caller.
 
 Run the object again and test the method
 ++++++++++++++++++++++++++++++++++++++++
 
 We can now create the object and test the implemented method:
 
-.. sourcecode:: pycon
+.. doctest::
+    :skipif: NO_MYTYPELIB
 
-  >>> from comtypes.client import CreateObject
-  >>> x = CreateObject("MyTypelib.MyObject")
-  >>> print x
-  <POINTER(IMyInterface) ptr=0x1216328 at 1216620>
-  >>> print x.MyMethod(42, 5)
-  47
-  >>>
+    >>> from comtypes.client import CreateObject
+    >>> myobj = CreateObject("MyTypelib.MyObject")
+    >>> myobj  # doctest: +ELLIPSIS
+    <POINTER(IMyInterface) ptr=... at ...>
+    >>> myobj.MyMethod(42, 5)
+    47
+
 
 More details on COM objects
 ***************************
 
 To be written...
 
-.. |comtypes| replace:: **comtypes**
-
-.. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
-
-.. _ctypes: http://starship.python.net/crew/theller/ctypes
+.. |comtypes| replace:: ``comtypes``
