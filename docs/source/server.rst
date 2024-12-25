@@ -313,7 +313,3 @@ More details on COM objects
 To be written...
 
 .. |comtypes| replace:: ``comtypes``
-
-.. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
-
-.. _ctypes: http://starship.python.net/crew/theller/ctypes
