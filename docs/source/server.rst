@@ -232,10 +232,10 @@ A low-level method implementation is called with the following arguments:
 
 - any other arguments listed in the IDL method signature.
 
-[in] parameters from the method signature are usually converted to
-native Python objects, if possible.  For [out] or [out, retval]
-parameters ctypes pointer instances are passed, you are required to
-put the result value into the pointer(s).
+``[in]`` parameters from the method signature are usually converted
+to native Python objects, if possible.  For ``[out]`` or
+``[out, retval]`` parameters ctypes pointer instances are passed,
+you are required to put the result value into the pointer(s).
 
 A low level method implementation must return a numerical ``HRESULT``
 value, which specifies a success or failure code for the operation.
@@ -243,7 +243,7 @@ The usual ``S_OK`` success code has a value of zero, but for
 convenience you can also return None instead.
 
 So, a sample low-level implementation for ``MyMethod`` for our object
-would be this, assuming we want to return the sum of the two [in]
+would be this, assuming we want to return the sum of the two ``[in]``
 parameters:
 
 .. sourcecode:: python
@@ -262,13 +262,14 @@ A high-level method implementation is called with the following parameters:
 
 - the usual ``self`` argument
 
-- the [in] parameters from the IDL method signature.
+- the ``[in]`` parameters from the IDL method signature.
 
-If there is a single [out] or [out, retval] parameter, then the method
-must return the result value; if there are more than one [out] or
-[out, retval] parameters, then a tuple containing the correct number
-must be returned.  If there are no [out] or [out, retval] parameters,
-the return value does not matter and is ignored.
+If there is a single ``[out]`` or ``[out, retval]`` parameter, then
+the method must return the result value; if there are more than one
+``[out]`` or ``[out, retval]`` parameters, then a tuple containing
+the correct number must be returned.  If there are no ``[out]`` or
+``[out, retval]`` parameters, the return value does not matter and
+is ignored.
 
 A sample high-level implementation for ``MyMethod`` is this:
 
