@@ -139,6 +139,7 @@ with the ``MyObjectImpl`` class:
         from comtypes.server.register import UseCommandLine
         UseCommandLine(MyObjectImpl)
 
+
 You should now run your script with a ``/regserver`` command line
 option, this will write information about your object into the Windows
 registry:
@@ -146,6 +147,7 @@ registry:
 .. sourcecode:: shell
 
     C:\> python myserver.py /regserver
+
 
 If you have the Microsoft ``OLEVIEW`` utility, you can now open the
 "All Objects" item, and look for the "Simple COM server for testing"
@@ -188,6 +190,7 @@ In the IDL file, the method signature is defined like this:
 .. sourcecode:: c
 
     HRESULT MyMethod([in] INT a, [in] INT b, [out, retval] INT *presult);
+
 
 So, this method takes two integers and returns a third one, writing
 the latter into a pointer.
