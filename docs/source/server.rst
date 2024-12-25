@@ -79,24 +79,24 @@ are not in the type library.
 
 .. sourcecode:: python
 
-  import comtypes
-  import comtypes.server.localserver
+    import comtypes
+    import comtypes.server.localserver
+    from comtypes.client import GetModule
 
-  from comtypes.client import GetModule
-  # generate wrapper code for the type library, this needs
-  # to be done only once (but also each time the IDL file changes)
-  GetModule("mytypelib.tlb")
+    # generate wrapper code for the type library, this needs
+    # to be done only once (but also each time the IDL file changes)
+    GetModule('path\\to\\mytypelib.tlb')
 
-  from comtypes.gen.MyTypeLib import MyObject
+    from comtypes.gen.MyTypeLib import MyObject
+    class MyObjectImpl(MyObject):
+        # registry entries
+        _reg_threading_ = "Both"
+        _reg_progid_ = "MyTypeLib.MyObject.1"
+        _reg_novers_progid_ = "MyTypeLib.MyObject"
+        _reg_desc_ = "Simple COM server for testing"
+        _reg_clsctx_ = comtypes.CLSCTX_INPROC_SERVER | comtypes.CLSCTX_LOCAL_SERVER
+        _regcls_ = comtypes.server.localserver.REGCLS_MULTIPLEUSE
 
-  class MyObjectImpl(MyObject):
-      # registry entries
-      _reg_threading_ = "Both"
-      _reg_progid_ = "MyTypeLib.MyObject.1"
-      _reg_novers_progid_ = "MyTypeLib.MyObject"
-      _reg_desc_ = "Simple COM server for testing"
-      _reg_clsctx_ = comtypes.CLSCTX_INPROC_SERVER | comtypes.CLSCTX_LOCAL_SERVER
-      _regcls_ = comtypes.server.localserver.REGCLS_MULTIPLEUSE
 
 The meaning of the attributes:
 
@@ -154,24 +154,27 @@ the object implements quite some interfaces already.
 
 You can also create an instance of the object with |comtypes|:
 
+.. doctest::
+    :skipif: NO_MYTYPELIB
+
+    >>> from comtypes.client import CreateObject
+    >>> x = CreateObject("MyTypelib.MyObject")
+    >>> x  # doctest: +ELLIPSIS
+    <POINTER(IMyInterface) ptr=... at ...>
+
+
+Of course, calling a method does not yet work if it is not implemented
+in the server script.  In such cases, a ``COMError`` is raised with an
+``hresult`` of ``-2147467263`` (``E_NOTIMPL``, ``'0x80004001'`` in
+signed-32bit hex):
+
 .. sourcecode:: pycon
 
-  >>> from comtypes.client import CreateObject
-  >>> x = CreateObject("MyTypelib.MyObject")
-  >>> print x
-  <POINTER(IMyInterface) ptr=0x1216328 at 1216620>
-  >>>
+    >>> x.MyMethod(1, 2)  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+      ...
+    _ctypes.COMError: (-2147467263, ..., (None, None, None, 0, None))
 
-Of course calling a method does not yet work since it is not
-implemented in the server script:
-
-.. sourcecode:: pycon
-
-  >>> x.MyMethod(a, 2)
-  Traceback (most recent call last):
-    File "<stdin>", line 1, in <module>
-  _ctypes.COMError: COMError(0x80004001, 'Nicht implementiert', (None, None, None, 0, None))
-  >>>
 
 Implementing COM methods
 ++++++++++++++++++++++++
@@ -244,13 +247,12 @@ parameters:
 
 .. sourcecode:: python
 
-  ...
-  class MyObjectImpl(MyObject):
-  ...
-      # Note the 'this' second parameter
-      def MyMethod(self, this, a, b, presult):
-          presult[0] = a + b
-          return 0
+    class MyObjectImpl(MyObject):
+        # NOTE: the 'this' second parameter is required
+        def MyMethod(self, this, a, b, presult):
+            presult[0] = a + b
+            return 0
+
 
 High level implementation
 -------------------------
@@ -271,11 +273,11 @@ A sample high-level implementation for ``MyMethod`` is this:
 
 .. sourcecode:: python
 
-  class MyObjectImpl(MyObject):
-  ...
-      # Note: NO second 'this' parameter
-      def MyMethod(self, a, b):
-          return a + b
+    class MyObjectImpl(MyObject):
+        # NOTE: NO second 'this' parameter
+        def MyMethod(self, a, b):
+            return a + b
+
 
 Choosing between low-level or high-level implementation
 -------------------------------------------------------
@@ -297,15 +299,16 @@ Run the object again and test the method
 
 We can now create the object and test the implemented method:
 
-.. sourcecode:: pycon
+.. doctest::
+    :skipif: NO_MYTYPELIB
 
-  >>> from comtypes.client import CreateObject
-  >>> x = CreateObject("MyTypelib.MyObject")
-  >>> print x
-  <POINTER(IMyInterface) ptr=0x1216328 at 1216620>
-  >>> print x.MyMethod(42, 5)
-  47
-  >>>
+    >>> from comtypes.client import CreateObject
+    >>> myobj = CreateObject("MyTypelib.MyObject")
+    >>> myobj  # doctest: +ELLIPSIS
+    <POINTER(IMyInterface) ptr=... at ...>
+    >>> myobj.MyMethod(42, 5)
+    47
+
 
 More details on COM objects
 ***************************

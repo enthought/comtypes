@@ -17,7 +17,8 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+COMTYPES_PKG_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, COMTYPES_PKG_DIR)
 
 
 # -- General configuration -----------------------------------------------------
@@ -250,23 +251,57 @@ doctest_test_doctest_blocks = "true"
 
 # A string containing Python code that will be run before each test.  Useful
 # for initializing objects or setting up specific conditions.
-doctest_global_setup = """
+LIBID_EXCEL = "{00020813-0000-0000-C000-000000000046}"
+
+doctest_global_setup = f"""
 global NO_EXCEL
+global NO_MYTYPELIB
+
+import contextlib
+import os
+import subprocess
 
 import comtypes.client
 
 
 try:
-    comtypes.client.GetModule(('{00020813-0000-0000-C000-000000000046}',))
-
+    comtypes.client.GetModule(('{LIBID_EXCEL}',))
     NO_EXCEL = False
 except (ImportError, FileNotFoundError):
     NO_EXCEL = True
+
+conf_dir = os.path.abspath(os.path.dirname(r'{__file__}'))
+mytypelib_tlb = os.path.join(conf_dir, 'mytypelib.tlb')
+_env = os.environ.copy()
+_env['PYTHONPATH'] = r'{COMTYPES_PKG_DIR}'
+
+try:
+    comtypes.client.GetModule(mytypelib_tlb)
+    with contextlib.chdir(conf_dir):
+        subprocess.run(['python', 'myserver.py', '/regserver'], env=_env)
+    NO_MYTYPELIB = False
+except (ImportError, FileNotFoundError):
+    NO_MYTYPELIB = True
+
 """
 
 # A string containing Python code that will be run after each test.  Useful
 # for cleaning up resources or resetting state.
-doctest_global_cleanup = ""
+doctest_global_cleanup = f"""
+import contextlib
+import os
+import subprocess
+
+
+conf_dir = os.path.abspath(os.path.dirname(r'{__file__}'))
+_env = os.environ.copy()
+_env['PYTHONPATH'] = r'{COMTYPES_PKG_DIR}'
+
+if not NO_MYTYPELIB:
+    with contextlib.chdir(conf_dir):
+        subprocess.run(['python', 'myserver.py', '/unregserver'], env=_env)
+
+"""
 
 
 # -- Options for Texinfo output -------------------------------------------
