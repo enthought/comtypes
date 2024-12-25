@@ -58,9 +58,9 @@ windows console:
 
 .. sourcecode:: shell
 
-    C:\> python -c "from comtypes import GUID; print GUID.create_new()"
+    C:\> python -c "from comtypes import GUID; print(GUID.create_new())"
     {26F87CEB-603A-4FFE-8865-DB67A9E3A308}
-    C:\> 
+
 
 The IDL file should now be compiled with the Microsoft MIDL compiler to a
 TLB type library file.
