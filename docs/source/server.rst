@@ -24,32 +24,33 @@ Define the COM interface
 Start writing an IDL file.  It is a good idea to define ``dual``
 interfaces, and only use automation compatible data types.
 
-.. sourcecode:: c
+.. sourcecode:: idl
 
-  import "oaidl.idl";
-  import "ocidl.idl";
+    import "oaidl.idl";
+    import "ocidl.idl";
 
-  [
-          uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx),
-          dual,
-          oleautomation
-  ]
-  interface IMyInterface : IDispatch {
-          HRESULT MyMethod([in] INT a, [in] INT b, [out, retval] INT *presult);
-  }
+    [
+            uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx),
+            dual,
+            oleautomation
+    ]
+    interface IMyInterface : IDispatch {
+            HRESULT MyMethod([in] INT a, [in] INT b, [out, retval] INT *presult);
+    }
 
-  [
-  	uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-  ]
-  library MyTypeLib
-  {
-          importlib("stdole2.tlb");
-  	
-          [uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)]
-  		coclass MyObject {
-  		[default] interface IMyInterface;
-          };
-  };
+    [
+      uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+    ]
+    library MyTypeLib
+    {
+            importlib("stdole2.tlb");
+      
+            [uuid(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)]
+        coclass MyObject {
+        [default] interface IMyInterface;
+            };
+    };
+
 
 Please note that you must replace the 'xxxx' placeholders in the
 section above with separate GUIDs that you must generate yourself.
