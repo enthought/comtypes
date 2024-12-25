@@ -2,14 +2,8 @@
 COM servers with comtypes
 #########################
 
-|comtypes| is a *pure Python* COM package based on the ctypes_ ffi
-foreign function library.  **ctypes** is included in Python 2.5 and
-later, it is also available for Python 2.4 as separate download.
-
 The |comtypes| package makes it easy to access and implement both
 custom and dispatch based COM interfaces.
-
-This document describes |comtypes| version 0.5.
 
 .. contents::
 
