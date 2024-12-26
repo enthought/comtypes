@@ -1,29 +1,14 @@
-####################
-The comtypes package
-####################
-
-|comtypes| is a *pure Python* COM package based on the ctypes_ ffi
-foreign function library.  |ctypes| is included in Python 2.5 and
-later, it is also available for Python 2.4 as separate download.
-
-While the pywin32_ package contains superior client side support
-for *dispatch based* COM interfaces, it is not possible to access
-*custom* COM interfaces unless they are wrapped in C++-code.
-
-The |comtypes| package makes it easy to access and implement both
-custom and dispatch based COM interfaces.
-
-
-.. contents::
-
+###########################
 The comtypes.client package
-***************************
+###########################
 
 The ``comtypes.client`` package implements the high-level |comtypes|
 functionality.
 
+.. contents::
+
 Creating and accessing COM objects
-++++++++++++++++++++++++++++++++++
+**********************************
 
 ``comtypes.client`` exposes three functions that allow to create or
 access COM objects.
@@ -88,7 +73,7 @@ created by calling the ``GetModule`` function.
 
 
 Using COM objects
-+++++++++++++++++
+*****************
 
 The COM interface pointer that is returned by one of the creation
 functions (``CreateObject``, ``CoGetObject``, or ``GetActiveObject``)
@@ -114,7 +99,7 @@ delete files and folders.
 
 
 Calling methods
----------------
++++++++++++++++
 
 Calling COM methods is straightforward just like with other Python
 objects.  They can be called with positional and named arguments.
@@ -131,7 +116,7 @@ containing the ``HRESULT`` value.
 
 
 Accessing properties
---------------------
+++++++++++++++++++++
 
 COM properties present some challenges.  Properties can be read-write,
 read-only, or write-only.  They may have zero, one, or more arguments;
@@ -152,7 +137,7 @@ property, which controls how keys are compared:
 
 
 Properties with arguments (named properties)
-............................................
+--------------------------------------------
 
 Properties with arguments can be accessed using index notation.
 The following example starts Excel, creates a new workbook, and
@@ -173,7 +158,7 @@ format (this code has been tested with version 2402 build
 
 
 Properties with optional arguments
-..................................
+----------------------------------
 
 If you look into the Excel type library (or the generated
 ``comtypes.gen`` wrapper module) you will find that the parameter for
@@ -243,7 +228,7 @@ also use the empty slice or tuple index trick:
       >>>
 
 The lcid parameter
-------------------
+++++++++++++++++++
 
 Some COM methods or properties have an optional ``lcid`` parameter.
 This parameter is used to specify a langauge identifier.  The
@@ -251,7 +236,7 @@ generated modules always pass 0 (zero) for this parameter.  If this is
 not what you want you have to edit the generated code.
 
 Converting data types
----------------------
++++++++++++++++++++++
 
 |comtypes| usually converts arguments and results between COM and
 Python in just the way one would expect.
@@ -344,87 +329,8 @@ parameters.  This code snippet was contributed by a user:
     print "Done."
 
 
-NumPy interop
-+++++++++++++
-
-NumPy provides the *de facto* array standard for Python. Though NumPy
-is not required to use |comtypes|, |comtypes| provides various options for
-NumPy interoperability. NumPy version 1.7 or greater is required to access
-all of these features.
-
-
-NumPy Arrays as Input Arguments
--------------------------------
-
-NumPy arrays can be passed as ``VARIANT`` arrays arguments. The array is
-converted to a SAFEARRAY according to its type. The type conversion
-is defined by the ``numpy.ctypeslib`` module.  The following table
-shows type conversions that can be performed quickly by (nearly) direct
-conversion of a numpy array to a SAFEARRAY. Arrays with type that do not
-appear in this table, including object arrays, can still be converted to
-SAFEARRAYs on an item-by-item basis.
-
-+------------------------------------------------+---------------+
-| NumPy type                                     | VARIANT type  |
-+================================================+===============+
-| ``int8``                                       | VT_I1         |
-+------------------------------------------------+---------------+
-| ``int16``, ``short``                           | VT_I2         |
-+------------------------------------------------+---------------+
-| ``int32``, ``int``, ``intc``, ``int_``         | VT_I4         |
-+------------------------------------------------+---------------+
-| ``int64``, ``long``, ``longlong``, ``intp``    | VT_I8         |
-+------------------------------------------------+---------------+
-| ``uint8``, ``ubyte``                           | VT_UI1        |
-+------------------------------------------------+---------------+
-| ``uint16``, ``ushort``                         | VT_UI2        |
-+------------------------------------------------+---------------+
-| ``uint32``, ``uint``, ``uintc``                | VT_UI4        |
-+------------------------------------------------+---------------+
-| ``uint64``, ``ulonglong``, ``uintp``           | VT_UI8        |
-+------------------------------------------------+---------------+
-| ``float32``                                    | VT_R4         |
-+------------------------------------------------+---------------+
-| ``float64``, ``float_``                        | VT_R8         |
-+------------------------------------------------+---------------+
-| ``datetime64``                                 | VT_DATE       |
-+------------------------------------------------+---------------+
-
-NumPy Arrays as Output Arguments
---------------------------------
-
-By default, |comtypes| converts SAFEARRAY output arguments to tuples of
-python objects on an item-by-item basis.  When dealing with large
-SAFEARRAYs, this conversion can be costly.  Comtypes provides a the
-``safearray_as_ndarray`` context manager (from ``comtypes.safearray``)
-for modifying this behavior to return a NumPy array. This altered
-behavior is to put an ndarray over a copy of the SAFEARRAY's memory,
-which is faster than calling into python for each item. When this fails,
-a NumPy array can still be created on an item-by-item basis.  The context
-manager is thread-safe, in that usage of the context manager on one
-thread does not affect behavior on other threads.
-
-This is a hypothetical example of using the context manager. The context
-manager can be used around any property or method call to retrieve a
-NumPy array rather than a tuple.
-
-
-.. sourcecode:: python
-
-    """Sample demonstrating use of safearray_as_ndarray context manager """
-
-    from comtypes.safearray import safearray_as_ndarray
-
-    # Hypothetically, this returns a SAFEARRAY as a tuple
-    data1 = some_interface.some_property
-
-    # This will return a NumPy array, and will be faster for basic types.
-    with safearray_as_ndarray:
-        data2 = some_interface.some_property
-
-
 COM events
-++++++++++
+**********
 
 Some COM objects support events, which allows them to notify the user
 of the object when something happens.  The standard COM mechanism is
@@ -475,7 +381,7 @@ handlers you should read the implementing_COM_methods_ section in the
 
 
 Examples
---------
+++++++++
 
 Here is an example which demonstrates how to find and receive events
 from ``stdole.StdFont``:
@@ -572,10 +478,10 @@ COM method implementations in |comtypes|.  So the remarks about
 implementing_COM_methods_ should be observed.
 
 Typelibraries
-+++++++++++++
+*************
 
 Accessing type libraries
-------------------------
+++++++++++++++++++++++++
 
 |comtypes| uses early binding even to custom COM interfaces.  A Python
 class, derived from the ``comtypes.IUnknown`` class must be written.
@@ -693,7 +599,7 @@ from COM typelibraries.
     for large type libraries the code generation can take some time.
 
 Examples
---------
+++++++++
 
 Here are several ways to generate the typelib wrapper module for
 Scripting Dictionary with the ``GetModule`` function:
@@ -744,7 +650,7 @@ by ``py2exe``:
 
 
 Case sensitivity
-----------------
+++++++++++++++++
 
 In principle, COM is a case insensitive technology (probably because
 of Visual Basic).  Type libraries generated from IDL files, however,
@@ -771,56 +677,16 @@ if you want to avoid this, you should edit the generated code and set
 the ``_case_insensitive_`` attribute to ``False``.
 
 
-Threading
-+++++++++
-
-XXX mention single threaded apartments, multi threaded apartments.
-``sys.coinit_flags``, ``CoInitialize``, ``CoUninitialize`` and so on.
-All this is pretty advanced stuff.
-
-XXX mention threading issues, message loops
-
 Other stuff
-+++++++++++
-
-.. toctree::
-    :maxdepth: 1
-
-    server
-
+***********
 
 XXX describe logging, gen_dir, wrap, _manage (?)
-
-Links
-+++++
-
-Yaroslav Kourovtsev has written an article_ titled "Working with custom
-COM interfaces from Python" that describes how to use |comtypes| to
-access a custom COM object.
-
-.. _article:  http://www.codeproject.com/KB/COM/python-comtypes-interop.aspx
-
-Downloads
-*********
-
-The |comtypes| project is hosted on github_. Releases can be downloaded from
-the github releases_ section.
 
 
 .. |comtypes| replace:: ``comtypes``
 
-.. |ctypes| replace:: ``ctypes``
-
 .. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
 
-.. _ctypes: https://docs.python.org/3/library/ctypes.html
-
-.. _pywin32: https://pypi.org/project/pywin32/
-
 .. _`enum.IntFlag`: https://docs.python.org/3/library/enum.html#enum.IntFlag
-
-.. _github: https://github.com/enthought/comtypes
-
-.. _releases: https://github.com/enthought/comtypes/releases
 
 .. _implementing_COM_methods: server.html#implementing-com-methods
