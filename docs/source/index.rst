@@ -31,11 +31,11 @@ Functionalities
 Links
 *****
 
-Yaroslav Kourovtsev has written an article_ titled "Working with custom
-COM interfaces from Python" that describes how to use |comtypes| to
-access a custom COM object.
+Kourovtsev, Yaroslav (2008). `"Working with Custom COM Interfaces from Python" <http://www.codeproject.com/KB/COM/python-comtypes-interop.aspx>`_
 
-.. _article:  http://www.codeproject.com/KB/COM/python-comtypes-interop.aspx
+    This article describes how to use |comtypes| to access a custom
+    COM object.
+
 
 Downloads
 *********
