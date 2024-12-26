@@ -7,7 +7,7 @@ comtypes COM interfaces
 Overview
 ********
 
-To use or implement a COM interface in ``comtypes``, a Python class
+To use or implement a COM interface in |comtypes|, a Python class
 must be created. Normally, it is not necessary to write this class
 manually since ``comtypes.client.GetModule`` creates interfaces from
 type libraries automatically.  However, there may be cases where the
@@ -23,43 +23,44 @@ is not needed any more.
 
 It is possible to take the generated module, move it as a template
 into another location and customize the classes with hand written
-methods (this is how much of the interfaces in the comtypes package
+methods (this is how much of the interfaces in the |comtypes| package
 have been created).
 
-The COM interfaces in ``comtypes`` are abstract classes, they should
+The COM interfaces in |comtypes| are abstract classes, they should
 never be instantiated.
 
 
 Defining COM interfaces
 ***********************
 
-A COM interface in ``comtypes`` is defined by creating a class.  The
+A COM interface in |comtypes| is defined by creating a class.  The
 class must derive from ``comtypes.IUnknown`` or a subclass of
 ``IUnknown``.  The interface class must define the following class
 attributes:
 
- ``_iid_``
+    ``_iid_``
 
-   a ``comtypes.GUID`` instance containing the *interface identifier* of the interface
+        a ``comtypes.GUID`` instance containing the
+        *interface identifier* of the interface
 
- ``_idlflags_``
+    ``_idlflags_``
 
-   (optional) a sequence containing IDL flags for the interface
+        (optional) a sequence containing IDL flags for the interface
 
- ``_case_insensitive_``
+    ``_case_insensitive_``
 
-   (optional) If set to ``True``, this interface supports case
-   insensitive attribute access.
+        (optional) If set to ``True``, this interface supports case
+        insensitive attribute access.
 
- ``_methods_``
+    ``_methods_``
 
-   a sequence describing the methods of this interface.  COM methods
-   of the superclass must not be listed, they are inherited
-   automatically.
+        a sequence describing the methods of this interface.  COM
+        methods of the superclass must not be listed, they are
+        inherited automatically.
 
-   If one or more of the COM methods reference the interface class
-   itself, it is possible to assign the ``_methods_`` attribute
-   *after* the class statement like this::
+    If one or more of the COM methods reference the interface class
+    itself, it is possible to assign the ``_methods_`` attribute
+    *after* the class statement like this::
 
         class ISomeInterface(IUnknown):
             _iid_ = GUID(...)
@@ -82,30 +83,30 @@ information.
 
 ``comtypes.STDMETHOD(restype, methodname, argtypes=())``
 
-  Calling ``STDMETHOD`` allows to specify the type of the COM method
-  return value.  Usually this is a ``comtypes.HRESULT``, but other
-  return types are also possible.  ``methodname`` is the name of the
-  COM method.  ``argtypes`` are the types of arguments that the COM
-  method expects.
+    Calling ``STDMETHOD`` allows to specify the type of the COM method
+    return value.  Usually *restype* is a ``HRESULT``, but other return
+    types are also possible.  *methodname* is the name of the COM
+    method.  *argtypes* are the types of arguments that the COM
+    method expects.
 
 
 ``comtypes.COMMETHOD(idlflags, restype, methodname, *argspec)``
 
-  ``idlflags`` is a list of IDL flags for the method.  Possible values
-  include ``dispid(aNumber)`` and ``helpstring(HelpText)``, as well as
-  ``"propget"`` for a property getter method, or ``"proput"`` for a
-  property setter method.
+    *idlflags* is a list of IDL flags for the method.  Possible values
+    include ``dispid(aNumber)`` and ``helpstring(HelpText)``, as well as
+    ``"propget"`` for a property getter method, or ``"proput"`` for a
+    property setter method.
 
-  ``restype`` and ``methodname`` are the same as above.
+    *restype* and *methodname* are the same as above.
 
-  ``argspec`` is a sequence of tuples, each item describing one
-  argument for the COM method, and must contain several items:
+    *argspec* is a sequence of tuples, each item describing one
+    argument for the COM method, and must contain several items:
 
-    1. a sequence of IDL flags: ``"in"``, ``"out"``, ``"retval"``, ``"lcid"``.
+        1. a sequence of IDL flags: ``"in"``, ``"out"``, ``"retval"``, ``"lcid"``.
 
-    2. type of the argument.
+        2. type of the argument.
 
-    3. argument name.
+        3. argument name.
 
 ..    4. XXX Are there more???
 
@@ -123,7 +124,7 @@ contains one method ``GetClassInfo`` (in addition to the three methods
 inherited from ``IUnknown``).  ``IProvideClassInfo2`` inherits from
 ``IProvideClassInfo`` and adds a ``GetGUID`` method.
 
-This is the IDL definition, slightly simplified (from Microsofts
+This is the IDL definition, slightly simplified (from Microsoft's
 ``OCIDL.IDL``):
 
 ::
@@ -153,7 +154,7 @@ This is the IDL definition, slightly simplified (from Microsofts
                 );
     }
 
-``comtypes`` interface classes:
+|comtypes| interface classes:
 
 ::
 
@@ -180,14 +181,14 @@ This is the IDL definition, slightly simplified (from Microsofts
 Using COM interfaces
 ********************
 
-As said above, comtypes interface classes are never instantiated, also
-they are never used directly.  Instead, one uses instances of
+As said above, |comtypes| interface classes are never instantiated,
+also they are never used directly.  Instead, one uses instances of
 ``POINTER(ISomeInterface)`` to call the methods on a COM object.
 
 The ``IUnknown`` COM interface has ``AddRef()``, ``Release()``, and
 ``QueryInterface()`` methods that you can call.  Since the COM internal
-reference count is handled automatically by comtypes, there is no need
-to call the first two methods.
+reference count is handled automatically by |comtypes|, there is no
+need to call the first two methods.
 
 ``QueryInterface()``, however, is the call that you need to ask a COM
 object for other COM interfaces.  Since IUnknown is the base class of
@@ -217,10 +218,10 @@ Implementing COM interfaces
 
 While the ``IUnknown`` metaclass creates Python methods that you can
 call in client code directly, you have to write code yourself if you
-want to **implement** a COM interface.  One important thing to keep in
-mind is that each COM method implementation with ``comtypes`` receives
-an additional special parameter per convention named ``this``, just
-after the ``self`` standard parameter.
+want to **implement** a COM interface.  One important thing to keep
+in mind is that each COM method implementation with |comtypes|
+receives an additional special parameter per convention named
+*this*, just after the *self* standard parameter.
 
 If you want to implement the ``IProvideClassInfo`` interface described
 above in a Python class you have to write an implementation of the
@@ -252,7 +253,7 @@ This method must accept the following arguments:
 
   1. the standard Python ``self`` parameter.
 
-  2. a special ``this`` parameter, that you can usually ignore.
+  2. a special *this* parameter, that you can usually ignore.
 
   3. All the parameters that are listed in the interface description.
 
@@ -274,10 +275,10 @@ So, to implement the ``GetClassInfo`` method of the
 	    # this method could also be named 'GetClassInfo'.
 	    .....
 
-The ``ppTI`` parameter in this case is an instance of
+The *ppTI* parameter in this case is an instance of
 ``POINTER(POINTER(ITypeInfo))`` which you have to fill out.  So, to
 write a method that actually returns a useful type info pointer for
-the object, you have to fill the contents of the ``ppTI`` pointer like
+the object, you have to fill the contents of the *ppTI* pointer like
 this::
 
         def IProvideClassInfo_GetClassInfo(self, this, ppTI):
@@ -306,14 +307,14 @@ of Visual Basic).  Type libraries generated from IDL files, however,
 do *not* always even preserve the case of identifiers; see for example
 http://support.microsoft.com/kb/220137.
 
-Python (and C/C++) are case sensitive languages, so ``comtypes`` is
+Python (and C/C++) are case sensitive languages, so |comtypes| is
 also case sensitive.  This means that you have to call
 ``obj.QueryInterface(...)``, it will not work to write
 ``obj.queryinterface(...)``.
 
 To work around the problems that you get when the case of identifiers
 in the type library (and in the generated Python module for this
-library) is not the same as in the IDL file, ``comtypes`` allows to
+library) is not the same as in the IDL file, |comtypes| allows to
 have case insensitive attribute access for methods and properties of
 COM interfaces.  This behaviour is enabled by setting the
 ``_case_insensitive_`` attribute of a Python COM interface to
@@ -341,16 +342,16 @@ and returns whatever the COM method returns.
 
 For a COM method described by ``COMMETHOD``, much more information is
 available: the argument names, the direction of data transfer for each
-argument ["in"], ["out"], or ["in", "out"], and whether this method is
-a getter or setter of a property.  In this case, code is generated
-that instantiates containers for "out" parameters inside the method
-call, passes and "in" and "out" parameters to the actual COM method of
-the object, retrives "out" parameters from their container(s) and
-returns them as the result.  If the method has exactly one "out"
-parameter, this is returned. If the method has two or more "out"
-parameters, a tuple of their values is returned.  **Note**: the native
-return value of the method, usually a ``HRESULT``, is *not* returned
-in the presence of "out" parameters.
+argument ``["in"]``, ``["out"]``, or ``["in", "out"]``, and whether
+this method is a getter or setter of a property.  In this case, code
+is generated that instantiates containers for "out" parameters inside
+the method call, passes and ``"in"`` and ``"out"`` parameters to the
+actual COM method of the object, retrives ``"out"`` parameters from
+their container(s) and returns them as the result.  If the method has
+exactly one ``"out"`` parameter, this is returned. If the method has
+two or more ``"out"`` parameters, a tuple of their values is returned.
+**Note**: the native return value of the method, usually a ``HRESULT``,
+is *not* returned in the presence of "out" parameters.
 
 For the ``IProvideClassInfo`` and ``IProvideClassInfo`` COM interfaces
 mentioned above, the metaclass creates methods with these signatures
@@ -397,3 +398,6 @@ When the metaclass finds that the ``GetGUID`` method **already has**
 an implementation, it will not overwrite it.  Instead, it creates an
 interface method with the name ``_GetGUID`` that you can use to get
 the raw functionality.
+
+
+.. |comtypes| replace:: ``comtypes``
