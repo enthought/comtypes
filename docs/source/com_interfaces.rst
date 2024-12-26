@@ -60,11 +60,14 @@ attributes:
 
     If one or more of the COM methods reference the interface class
     itself, it is possible to assign the ``_methods_`` attribute
-    *after* the class statement like this::
+    *after* the class statement like this:
+    
+    .. sourcecode:: python
 
         class ISomeInterface(IUnknown):
             _iid_ = GUID(...)
-        ISomeInterface._methods_ = [.., POINTER(ISomeInterface), .]
+
+        ISomeInterface._methods_ = [...,]
 
 **Note:** All the other attributes ``_iid_``, ``_idlflags_``,
 ``_case_insensitive_`` must be defined when ``_methods_`` is set.
@@ -127,7 +130,7 @@ inherited from ``IUnknown``).  ``IProvideClassInfo2`` inherits from
 This is the IDL definition, slightly simplified (from Microsoft's
 ``OCIDL.IDL``):
 
-::
+.. sourcecode:: idl
 
     [
         object,
@@ -154,9 +157,10 @@ This is the IDL definition, slightly simplified (from Microsoft's
                 );
     }
 
+
 |comtypes| interface classes:
 
-::
+.. sourcecode:: python
 
     from ctypes import *
     from comtypes import IUnknown, GUID, COMMETHOD
@@ -196,18 +200,24 @@ object for other COM interfaces.  Since IUnknown is the base class of
 
 So, assuming you have a ``POINTER(IUnknown)`` instance, you can ask
 for another interface by calling ``QueryInterface`` with the interface
-you want to use.  For example::
+you want to use.  For example:
 
-   # punk is a pointer to an IUnknown interface
-   pci = punk.QueryInterface(IProvideClassInfo)
+.. sourcecode:: python
+
+    # punk is a pointer to an IUnknown interface
+    pci = punk.QueryInterface(IProvideClassInfo)
+
 
 This call will either succeed and return a
 ``POINTER(IProvideClassInfo)`` instance, or it will raise a
 ``comtypes.COMError`` if the interface is not supported.  Assuming the
 call succeeded, you can get the type information of the object by
-calling::
+calling:
 
-   ti = pci.GetClassInfo()
+.. sourcecode:: python
+
+    ti = pci.GetClassInfo()
+
 
 Unless the call fails, it will return a ``POINTER(ITypeInfo)``
 instance.
@@ -225,15 +235,19 @@ receives an additional special parameter per convention named
 
 If you want to implement the ``IProvideClassInfo`` interface described
 above in a Python class you have to write an implementation of the
-``GetClassInfo`` method::
+``GetClassInfo`` method:
+
+.. sourcecode:: python
 
     from comtypes import COMObject
     from comtypes.persist import IProvideClassInfo
 
     class MyCOMObject(COMObject):
         _com_interfaces_ = [
-             ....
-             IProvideClassInfo]
+            ...,
+            IProvideClassInfo,
+        ]
+
 
 Skipping some very important details that are out of context here, the
 interfaces that your COM object implements must be listed in the
@@ -261,36 +275,42 @@ The latter parameters will be instances of types specified in the
 ``_methods_`` description.
 
 So, to implement the ``GetClassInfo`` method of the
-``IProvideClassInfo`` interface, one could write this code::
+``IProvideClassInfo`` interface, one could write this code:
+
+.. sourcecode:: python
 
     from comtypes import COMObject
     from comtypes.persist import IProvideClassInfo
 
     class MyCOMObject(COMObject):
         _com_interfaces_ = [
-             ....
-             IProvideClassInfo]
+            ...,
+            IProvideClassInfo,
+        ]
 
         def IProvideClassInfo_GetClassInfo(self, this, ppTI):
-	    # this method could also be named 'GetClassInfo'.
-	    .....
+	        ...  # this method could also be named 'GetClassInfo'.
+
 
 The *ppTI* parameter in this case is an instance of
 ``POINTER(POINTER(ITypeInfo))`` which you have to fill out.  So, to
 write a method that actually returns a useful type info pointer for
 the object, you have to fill the contents of the *ppTI* pointer like
-this::
+this:
 
-        def IProvideClassInfo_GetClassInfo(self, this, ppTI):
-	    from comtypes.hresult import E_POINTER, S_OK
-	    # First, check for NULL pointer and return error
-	    if not ppTI:
-		return E_POINTER
-	    ti = create_type_info(...) # get the type info somehow
-	    # poke it into the 'out' parameter
-	    ppTI[0] = ti
-	    # and return success
-	    return S_OK
+.. sourcecode:: python
+
+    def IProvideClassInfo_GetClassInfo(self, this, ppTI):
+        from comtypes.hresult import E_POINTER, S_OK
+        # First, check for NULL pointer and return error
+        if not ppTI:
+            return E_POINTER
+        ti = create_type_info(...) # get the type info somehow
+        # poke it into the 'out' parameter
+        ppTI[0] = ti
+        # and return success
+        return S_OK
+
 
 ``E_POINTER`` is an error code that you should return when you
 received an unexpected NULL pointer, ``S_OK`` is the usual success
@@ -356,27 +376,28 @@ is *not* returned in the presence of "out" parameters.
 For the ``IProvideClassInfo`` and ``IProvideClassInfo`` COM interfaces
 mentioned above, the metaclass creates methods with these signatures
 automatically (``__call_com_method()`` is the ``ctypes`` code that
-calls the actual method slot of the COM object)::
+calls the actual method slot of the COM object):
 
+.. sourcecode:: python
 
-    class IProvideClassInfo(IUnknown): ...
-
-	# code for this method generated by the IUnknown metaclass at
-	# runtime
-	#def GetClassInfo(self):
-	#    param = POINTER(ITypeInfo)()
-	#    __call_com_method(byref(param))
-	#    return param[0]
+    class IProvideClassInfo(IUnknown):
+        _iid_ = GUID("{B196B283-BAB4-101A-B69C-00AA00341D07}")
+        # code for this method generated by the IUnknown metaclass at
+        # runtime
+        # def GetClassInfo(self):
+        #     param = POINTER(ITypeInfo)()
+        #     __call_com_method(byref(param))
+        #     return param[0]
 
     class IProvideClassInfo2(IProvideClassInfo):
-        ...
+        _iid_ = GUID("{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}")
+        # code for this method generated by the IUnknown metaclass at
+        # runtime
+        # def GetGUID(self, dwGuidKind):
+        #     param = GUID()
+        #     __call_com_method(dwGuidKind, byref(param))
+        #     return param
 
-	# code for this method generated by the IUnknown metaclass at
-	# runtime
-        #def GetGUID(self, dwGuidKind):
-	#    param = GUID()
-	#    __call_com_method(dwGuidKind, byref(param))
-	#    return param
 
 According to MSDN, the ``IProvideClassInfo2::GetGUID`` method
 *"returns a GUID corresponding to the specified dwGuidKind"*.
@@ -387,12 +408,15 @@ for the default outgoing interface.
 So, it would probably make sense to implement the GetGUID method with
 a default value of 1 for the *dwGuidKind* parameter.  This can be done
 by manually implementing a ``GetGUID`` method for the
-``IProvideClassInfo2`` interface class::
+``IProvideClassInfo2`` interface class:
+
+.. sourcecode:: python
 
     class IProvideClassInfo2(IProvideClassInfo):
-	...
-	def GetGUID(self, dwGuidKind=1):
-	    return self._GetGUID(dwGuidKind)
+        ...
+        def GetGUID(self, dwGuidKind=1):
+            return self._GetGUID(dwGuidKind)
+
 
 When the metaclass finds that the ``GetGUID`` method **already has**
 an implementation, it will not overwrite it.  Instead, it creates an
