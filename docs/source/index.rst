@@ -36,6 +36,11 @@ Kourovtsev, Yaroslav (2008). `"Working with Custom COM Interfaces from Python" <
     This article describes how to use |comtypes| to access a custom
     COM object.
 
+Chen, Alicia (2012). `"Comtypes: How Dropbox learned to stop worrying and love the COM" <https://dropbox.tech/infrastructure/adventures-with-comtypes>`_
+
+    This article describes Dropbox's experience using |comtypes| to
+    interact with COM objects in a Windows application.
+
 
 Downloads
 *********
