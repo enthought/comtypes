@@ -6,10 +6,12 @@ comtypes COM interfaces
 Overview
 --------
 
-To use or implement a COM interface in ``comtypes`` a Python class
-must be created.  Normally is is not needed to write this class
-manually, ``comtypes.client.GetModule`` creates interfaces from type
-libraries automatically.  However, an understanding of the generated
+To use or implement a COM interface in ``comtypes``, a Python class
+must be created. Normally, it is not necessary to write this class
+manually since ``comtypes.client.GetModule`` creates interfaces from
+type libraries automatically.  However, there may be cases where the
+interface is not defined in the available type library, so an
+understanding of creating the interface manually and the generated
 code is certainly useful.
 
 If no type library but only an IDL file is available it is often the
@@ -283,7 +285,7 @@ this::
 	    # and return success
 	    return S_OK
 	    
-``E_POINTER`` ìs an error code that you should return when you
+``E_POINTER`` ï¿½s an error code that you should return when you
 received an unexpected NULL pointer, ``S_OK`` is the usual success
 code for COM methods returning a ``HRESULT``.  For details about the
 semantics that you have to implement for a COM interface method
