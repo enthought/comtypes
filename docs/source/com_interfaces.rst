@@ -1,10 +1,11 @@
+#######################
 comtypes COM interfaces
-=======================
+#######################
 
 .. contents::
 
 Overview
---------
+********
 
 To use or implement a COM interface in ``comtypes``, a Python class
 must be created. Normally, it is not necessary to write this class
@@ -28,8 +29,9 @@ have been created).
 The COM interfaces in ``comtypes`` are abstract classes, they should
 never be instantiated.
 
+
 Defining COM interfaces
------------------------
+***********************
 
 A COM interface in ``comtypes`` is defined by creating a class.  The
 class must derive from ``comtypes.IUnknown`` or a subclass of
@@ -66,8 +68,9 @@ attributes:
 **Note:** All the other attributes ``_iid_``, ``_idlflags_``,
 ``_case_insensitive_`` must be defined when ``_methods_`` is set.
 
+
 The ``_methods_`` list
-......................
+++++++++++++++++++++++
 
 Methods are described in a way that looks somewhat similar to an IDL
 definition of a COM interface.  Methods must be listed in VTable
@@ -111,8 +114,9 @@ and properties that forward the call to the COM methods, there is
 typically no need to write any Python methods for the interface class
 (unless you want to override what the metaclass does).
 
+
 An Example
-----------
+++++++++++
 
 These are two simple COM interfaces. ``IProvideClassInfo`` only
 contains one method ``GetClassInfo`` (in addition to the three methods
@@ -172,8 +176,9 @@ This is the IDL definition, slightly simplified (from Microsofts
                       ( ['out', 'retval'], POINTER(GUID), "pGUID" ))
             ]
 
+
 Using COM interfaces
---------------------
+********************
 
 As said above, comtypes interface classes are never instantiated, also
 they are never used directly.  Instead, one uses instances of
@@ -206,8 +211,9 @@ calling::
 Unless the call fails, it will return a ``POINTER(ITypeInfo)``
 instance.
 
+
 Implementing COM interfaces
----------------------------
+***************************
 
 While the ``IUnknown`` metaclass creates Python methods that you can
 call in client code directly, you have to write code yourself if you
@@ -291,8 +297,9 @@ code for COM methods returning a ``HRESULT``.  For details about the
 semantics that you have to implement for a COM interface method
 consult the MSDN documentation.
 
+
 Case sensitivity
-----------------
+****************
 
 In principle, COM is a case insensitive technology (probably because
 of Visual Basic).  Type libraries generated from IDL files, however,
@@ -318,8 +325,9 @@ to ``True``.  Case insensitive access has a small performance penalty,
 if you want to avoid this, you should edit the generated code and set
 ``_case_insensitive_`` to False.
 
+
 More about the metaclass
-------------------------
+************************
 
 The Python class ``IUnknown``, which is the base interface of *all*
 COM interfaces, uses a metaclass that automatically creates Python
