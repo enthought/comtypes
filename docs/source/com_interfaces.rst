@@ -284,8 +284,8 @@ this::
 	    ppTI[0] = ti
 	    # and return success
 	    return S_OK
-	    
-``E_POINTER`` �s an error code that you should return when you
+
+``E_POINTER`` is an error code that you should return when you
 received an unexpected NULL pointer, ``S_OK`` is the usual success
 code for COM methods returning a ``HRESULT``.  For details about the
 semantics that you have to implement for a COM interface method
