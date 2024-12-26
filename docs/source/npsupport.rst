@@ -1,23 +1,6 @@
-####################
-The comtypes package
-####################
-
-|comtypes| is a *pure Python* COM package based on the ctypes_ ffi
-foreign function library.  |ctypes| is included in Python 2.5 and
-later, it is also available for Python 2.4 as separate download.
-
-While the pywin32_ package contains superior client side support
-for *dispatch based* COM interfaces, it is not possible to access
-*custom* COM interfaces unless they are wrapped in C++-code.
-
-The |comtypes| package makes it easy to access and implement both
-custom and dispatch based COM interfaces.
-
-
-.. contents::
-
+#############
 NumPy interop
-*************
+#############
 
 NumPy provides the *de facto* array standard for Python. Though NumPy
 is not required to use |comtypes|, |comtypes| provides various options for
@@ -25,8 +8,10 @@ NumPy interoperability. NumPy version 1.7 or greater is required to access
 all of these features.
 
 
+.. contents::
+
 NumPy Arrays as Input Arguments
-+++++++++++++++++++++++++++++++
+*******************************
 
 NumPy arrays can be passed as ``VARIANT`` arrays arguments. The array is
 converted to a SAFEARRAY according to its type. The type conversion
@@ -63,7 +48,7 @@ SAFEARRAYs on an item-by-item basis.
 +------------------------------------------------+---------------+
 
 NumPy Arrays as Output Arguments
-++++++++++++++++++++++++++++++++
+********************************
 
 By default, |comtypes| converts SAFEARRAY output arguments to tuples of
 python objects on an item-by-item basis.  When dealing with large
@@ -95,44 +80,4 @@ NumPy array rather than a tuple.
         data2 = some_interface.some_property
 
 
-Threading
-*********
-
-XXX mention single threaded apartments, multi threaded apartments.
-``sys.coinit_flags``, ``CoInitialize``, ``CoUninitialize`` and so on.
-All this is pretty advanced stuff.
-
-XXX mention threading issues, message loops
-
-
-Links
-*****
-
-Yaroslav Kourovtsev has written an article_ titled "Working with custom
-COM interfaces from Python" that describes how to use |comtypes| to
-access a custom COM object.
-
-.. _article:  http://www.codeproject.com/KB/COM/python-comtypes-interop.aspx
-
-Downloads
-*********
-
-The |comtypes| project is hosted on github_. Releases can be downloaded from
-the github releases_ section.
-
-
 .. |comtypes| replace:: ``comtypes``
-
-.. |ctypes| replace:: ``ctypes``
-
-.. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
-
-.. _ctypes: https://docs.python.org/3/library/ctypes.html
-
-.. _pywin32: https://pypi.org/project/pywin32/
-
-.. _`enum.IntFlag`: https://docs.python.org/3/library/enum.html#enum.IntFlag
-
-.. _github: https://github.com/enthought/comtypes
-
-.. _releases: https://github.com/enthought/comtypes/releases
