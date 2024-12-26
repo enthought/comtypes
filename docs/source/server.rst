@@ -87,8 +87,8 @@ are not in the type library.
     # generate wrapper code for the type library, this needs
     # to be done only once (but also each time the IDL file changes)
     GetModule('path\\to\\mytypelib.tlb')
-
     from comtypes.gen.MyTypeLib import MyObject
+
     class MyObjectImpl(MyObject):
         # registry entries
         _reg_threading_ = "Both"

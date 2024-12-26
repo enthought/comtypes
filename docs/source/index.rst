@@ -24,6 +24,7 @@ Functionalities
 
     client
     server
+    com_interfaces
     npsupport
     threading
 
