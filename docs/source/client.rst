@@ -336,9 +336,12 @@ Some COM objects support events, which allows them to notify the user
 of the object when something happens.  The standard COM mechanism is
 based on so-called *connection points*.
 
-Note: For the rules that you should observe when implementing event
-handlers you should read the implementing_COM_methods_ section in the
-|comtypes| server document.
+.. note::
+
+    For the rules that you should observe when implementing event
+    handlers you should read the implementing_COM_methods_ section in
+    the |comtypes| server document.
+
 
 ``GetEvents(source, sink, interface=None)``
     This functions connects an event sink to the COM object
