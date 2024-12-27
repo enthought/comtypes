@@ -1,6 +1,6 @@
-#######################
-comtypes COM interfaces
-#######################
+###########################
+``comtypes`` COM interfaces
+###########################
 
 .. contents::
 
@@ -69,8 +69,10 @@ attributes:
 
         ISomeInterface._methods_ = [...,]
 
-**Note:** All the other attributes ``_iid_``, ``_idlflags_``,
-``_case_insensitive_`` must be defined when ``_methods_`` is set.
+.. note::
+
+    All the other attributes ``_iid_``, ``_idlflags_``,
+    ``_case_insensitive_`` must be defined when ``_methods_`` is set.
 
 
 The ``_methods_`` list
@@ -255,9 +257,11 @@ interfaces that your COM object implements must be listed in the
 implement the methods of all the interfaces by writing a Python method
 for each of them.
 
-**Note**: The ``COMObject`` metaclass provides a default for methods
-that are **not** implemented in Python.  This default method returns
-the standard COM error code ``E_NOTIMPL`` when it is called.
+.. note::
+
+    The ``COMObject`` metaclass provides a default for methods
+    that are **not** implemented in Python.  This default method returns
+    the standard COM error code ``E_NOTIMPL`` when it is called.
 
 To implement the COM method named ``MethodName`` for the interface
 ``ISomeInterface`` you write a Python method either named ``ISomeInterface_MethodName``
@@ -370,8 +374,11 @@ actual COM method of the object, retrives ``"out"`` parameters from
 their container(s) and returns them as the result.  If the method has
 exactly one ``"out"`` parameter, this is returned. If the method has
 two or more ``"out"`` parameters, a tuple of their values is returned.
-**Note**: the native return value of the method, usually a ``HRESULT``,
-is *not* returned in the presence of "out" parameters.
+
+.. note::
+
+    The native return value of the method, usually a ``HRESULT``,
+    is **not** returned in the presence of "out" parameters.
 
 For the ``IProvideClassInfo`` and ``IProvideClassInfo`` COM interfaces
 mentioned above, the metaclass creates methods with these signatures
