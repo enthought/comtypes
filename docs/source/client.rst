@@ -47,8 +47,8 @@ access COM objects.
     Create a named COM object and returns an interface pointer to it.
     For the interpretation of ``displayname`` consult the Microsoft
     documentation for the Windows ``CoGetObject`` function.
-    ``"winmgmts:"``, for example, is the displayname for `WMI
-    monikers`_:
+    ``"winmgmts:"``, for example, is the displayname for
+    `WMI monikers <https://learn.microsoft.com/ja-jp/windows/win32/wmisdk/constructing-a-moniker-string>`_:
 
     .. sourcecode:: python
 
@@ -258,8 +258,12 @@ VT_INT``, or an array a strings with typecode ``VT_ARRAY | VT_BSTR``.
 
 To create these variants you must pass an instance of the Python
 ``array.array`` with the correct Python typecode to the COM method.
-Note that NumPy arrays are also an option here, as is described in
-the following section.
+
+.. note::
+
+    NumPy arrays are also an option, as described in the
+    :doc:`npsupport` document.
+
 
 The mapping of the ``array.array`` typecode to the ``VARIANT``
 typecode is defined in the ``comtypes.automation`` module by a
@@ -339,8 +343,7 @@ based on so-called *connection points*.
 .. note::
 
     For the rules that you should observe when implementing event
-    handlers you should read the implementing_COM_methods_ section in
-    the |comtypes| server document.
+    handlers you should read the :doc:`server` document.
 
 
 ``GetEvents(source, sink, interface=None)``
@@ -476,9 +479,13 @@ and passes it as second parameter to the ``GetEvents()`` function:
    FontChanged Name
 
 
-Note that event handler methods support the same calling convention as
-COM method implementations in |comtypes|.  So the remarks about
-implementing_COM_methods_ should be observed.
+.. note::
+
+    Event handler methods support the same calling convention as COM
+    method implementations in |comtypes|.  So the remarks about the
+    `"Implementing COM methods" section in the server document <server.html#implementing-com-methods>`_
+    should be observed.
+
 
 Typelibraries
 *************
@@ -532,9 +539,9 @@ from COM typelibraries.
     abstracted alias ``__wrapper_module__``, also imports interface
     classes, coclasses, constants, and structures from the wrapper
     module, and defines enumerations from typeinfo of the typelibrary
-    using `enum.IntFlag`_.  The friendly module can be imported
-    easier than the wrapper module because the module name is easier
-    to type and read.
+    using `enum.IntFlag <https://docs.python.org/3/library/enum.html#enum.IntFlag>`_.
+    The friendly module can be imported easier than the wrapper
+    module because the module name is easier to type and read.
 
     For example, the typelibrary for Scripting Runtime has the name
     ``Scripting`` (this is the name specified in the type library
@@ -659,9 +666,3 @@ XXX describe logging, gen_dir, wrap, _manage (?)
 
 
 .. |comtypes| replace:: ``comtypes``
-
-.. _`WMI monikers`: http://www.microsoft.com/technet/scriptcenter/guide/sas_wmi_jgfx.mspx?mfr=true
-
-.. _`enum.IntFlag`: https://docs.python.org/3/library/enum.html#enum.IntFlag
-
-.. _implementing_COM_methods: server.html#implementing-com-methods

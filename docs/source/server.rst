@@ -187,7 +187,7 @@ COM event handlers!
 
 In the IDL file, the method signature is defined like this:
 
-.. sourcecode:: c
+.. sourcecode:: idl
 
     HRESULT MyMethod([in] INT a, [in] INT b, [out, retval] INT *presult);
 

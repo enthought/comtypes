@@ -2,13 +2,15 @@
 The ``comtypes`` package
 ########################
 
-|comtypes| is a *pure Python* COM package based on the ctypes_ ffi
+|comtypes| is a *pure Python* COM package based on the
+`ctypes <https://docs.python.org/3/library/ctypes.html>`_ ffi
 foreign function library.  |ctypes| is included in Python 2.5 and
 later, it is also available for Python 2.4 as separate download.
 
-While the pywin32_ package contains superior client side support
-for *dispatch based* COM interfaces, it is not possible to access
-*custom* COM interfaces unless they are wrapped in C++-code.
+While the `pywin32 <https://pypi.org/project/pywin32/>`_ package
+contains superior client side support for *dispatch based* COM
+interfaces, it is not possible to access *custom* COM interfaces
+unless they are wrapped in C++-code.
 
 The |comtypes| package makes it easy to access and implement both
 custom and dispatch based COM interfaces.
@@ -46,18 +48,22 @@ Chen, Alicia (2012). `"Comtypes: How Dropbox learned to stop worrying and love t
 Downloads
 *********
 
-The |comtypes| project is hosted on github_. Releases can be downloaded from
-the github releases_ section.
+The |comtypes| project is hosted on `GitHub <https://github.com/enthought/comtypes>`_.
+Releases can be downloaded from the `GitHub releases <https://github.com/enthought/comtypes/releases>`_
+section.
+
+
+Installation
+************
+
+|comtypes| is available on `PyPI <https://pypi.org/project/comtypes>`_ and
+can be installed with ``pip``:
+
+.. sourcecode:: shell
+
+    pip install comtypes
 
 
 .. |comtypes| replace:: ``comtypes``
 
 .. |ctypes| replace:: ``ctypes``
-
-.. _ctypes: https://docs.python.org/3/library/ctypes.html
-
-.. _pywin32: https://pypi.org/project/pywin32/
-
-.. _github: https://github.com/enthought/comtypes
-
-.. _releases: https://github.com/enthought/comtypes/releases
