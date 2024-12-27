@@ -13,39 +13,42 @@ Creating and accessing COM objects
 ``comtypes.client`` exposes three functions that allow to create or
 access COM objects.
 
-``CreateObject(progid, clsctx=None, machine=None, interface=None, dynamic=False, pServerInfo=None)``
+.. py:function:: CreateObject(progid, clsctx=None, machine=None, interface=None, dynamic=False, pServerInfo=None)
+
     Create a COM object and return an interface pointer to it.
 
-    ``progid`` specifies which object to create.  It can be a string
+    *progid* specifies which object to create.  It can be a string
     like ``"InternetExplorer.Application"`` or
     ``"{2F7860A2-1473-4D75-827D-6C4E27600CAC}"``, a ``comtypes.GUID``
     instance, or any object with a ``_clsid_`` attribute that must be
     a ``comtypes.GUID`` instance or a GUID string.
 
-    ``clsctx`` specifies how to create the object, any combination of
+    *clsctx* specifies how to create the object, any combination of
     the ``comtypes.CLSCTX_...`` constants can be used.  If nothing is
     passed, ``comtypes.CLSCTX_SERVER`` is used.
 
-    ``machine`` allows to specify that the object should be created on
+    *machine* allows to specify that the object should be created on
     a different machine, it must be a string specifying the computer
     name or IP address.  DCOM must be enabled for this to work.
 
-    ``interface`` specifies the interface class that should be
+    *interface* specifies the interface class that should be
     returned, if not specified |comtypes| will determine a useful
     interface itself and return a pointer to that.
 
-    ``dynamic`` specifies that the generated interface should use
+    *dynamic* specifies that the generated interface should use
     dynamic dispatch. This is only available for automation interfaces
     and does not generate typelib wrapper.
 
-    ``pServerInfo`` that allows you to specify more information about
-    the remote machine than the ``machine`` parameter. It is a pointer
-    to a ``COSERVERINFO``. ``machine`` and ``pServerInfo`` may not be
+    *pServerInfo* that allows you to specify more information about
+    the remote machine than the *machine* parameter. It is a pointer
+    to a ``COSERVERINFO``. *machine* and *pServerInfo* may not be
     simultaneously supplied.  DCOM must be enabled for this to work.
 
-``CoGetObject(displayname, interface=None)``
+
+.. py:function:: CoGetObject(displayname, interface=None)
+
     Create a named COM object and returns an interface pointer to it.
-    For the interpretation of ``displayname`` consult the Microsoft
+    For the interpretation of *displayname* consult the Microsoft
     documentation for the Windows ``CoGetObject`` function.
     ``"winmgmts:"``, for example, is the displayname for
     `WMI monikers <https://learn.microsoft.com/ja-jp/windows/win32/wmisdk/constructing-a-moniker-string>`_:
@@ -57,14 +60,17 @@ access COM objects.
     ``interface`` and ``dynamic`` have the same meaning as in the
     ``CreateObject`` function.
 
-``GetActiveObject(progid, interface=None)``
-    Returns a pointer to an already running object.  ``progid``
+
+.. py:function:: GetActiveObject(progid, interface=None)
+
+    Returns a pointer to an already running object.  *progid*
     specifies the active object from the OLE registration database.
 
     The ``GetActiveObject`` function succeeds when the COM object is
     already running, and has registered itself in the COM running
     object table.  Not all COM objects do this. The arguments are as
     described under ``CreateObject``.
+
 
 All the three functions mentioned above will create the typelib
 wrapper automatically if the object provides type information.  If the
@@ -346,26 +352,29 @@ based on so-called *connection points*.
     handlers you should read the :doc:`server` document.
 
 
-``GetEvents(source, sink, interface=None)``
-    This functions connects an event sink to the COM object
-    ``source``.
+.. py:function:: GetEvents(source, sink, interface=None)
 
-    Events will call methods on the ``sink`` object; the methods must
+    This functions connects an event sink to the COM object
+    *source*.
+
+    Events will call methods on the *sink* object; the methods must
     be named ``interfacename_methodname`` or ``methodname``.  The
     methods will be called with a ``this`` parameter, plus any
     parameters that the event has.
 
-    ``interface`` is the outgoing interface of the ``source`` object;
+    *interface* is the outgoing interface of the *source* object;
     it must be supplied when |comtypes| cannot determine the
-    outgoing interface of ``source``.
+    outgoing interface of *source*.
 
     ``GetEvents`` returns the advise connection; you should keep the
     connection alive as long as you want to receive events.  To break
     the advise connection simply delete it.
 
-``ShowEvents(source, interface=None)``
+
+.. py:function:: ShowEvents(source, interface=None)
+
     This function contructs an event sink and connects it to the
-    ``source`` object for debugging.  The event sink will first print
+    *source* object for debugging.  The event sink will first print
     out all event names that are found in the outgoing interface, and
     will later print out the events with their arguments as they occur.
     ``ShowEvents`` returns a connection object which must be kept
@@ -375,11 +384,13 @@ based on so-called *connection points*.
     To actually receive events you may have to call the ``PumpEvents``
     function so that COM works correctly.
 
-``PumpEvents(timeout)``
+
+.. py:function:: PumpEvents(timeout)
+
     This functions runs for a certain time in a way that is required
     for COM to work correctly.  In a single-theaded apartment it runs
     a windows message loop, in a multithreaded apparment it simply
-    waits.  The ``timeout`` argument may be a floating point number to
+    waits.  The *timeout* argument may be a floating point number to
     indicate a time of less than a second.
 
     Pressing Control-C raises a KeyboardError exception and terminates
@@ -503,7 +514,8 @@ fortunately |comtypes| includes a code generator that does create
 modules containing the Python interface class (and more) automatically
 from COM typelibraries.
 
-``GetModule(tlib)``
+.. py:function:: GetModule(tlib)
+
     This function generates Python wrappers for a COM typelibrary.
     When a COM object exposes its own typeinfo, this function is
     called automatically when the object is created.
@@ -588,7 +600,8 @@ from COM typelibraries.
         + from comtypes.gen.friendlymodule import __wrapper_module__ as mod
         c_int_alias = mod.TheName
 
-``gen_dir``
+.. py:attribute:: gen_dir
+
     This variable determines the directory where the typelib wrappers
     are written to.  If it is ``None``, modules are only generated in
     memory.
