@@ -1,6 +1,6 @@
-###########################
-The comtypes.client package
-###########################
+###############################
+The ``comtypes.client`` package
+###############################
 
 The ``comtypes.client`` package implements the high-level |comtypes|
 functionality.

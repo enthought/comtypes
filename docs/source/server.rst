@@ -1,6 +1,6 @@
-#########################
-COM servers with comtypes
-#########################
+#############################
+COM servers with ``comtypes``
+#############################
 
 The |comtypes| package makes it easy to access and implement both
 custom and dispatch based COM interfaces.

@@ -1,6 +1,6 @@
-####################
-The comtypes package
-####################
+########################
+The ``comtypes`` package
+########################
 
 |comtypes| is a *pure Python* COM package based on the ctypes_ ffi
 foreign function library.  |ctypes| is included in Python 2.5 and
