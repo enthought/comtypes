@@ -92,7 +92,7 @@ The ``IUnknown`` as a Python class
         if ``Release`` is called at the aforementioned timing, it may
         raise an ``OSError``.
 
-        .. doctest::
+        .. sourcecode:: pycon
 
             >>> from comtypes.client import CreateObject, GetModule
             >>> GetModule('UIAutomationCore.dll')  # doctest: +ELLIPSIS
