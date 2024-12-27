@@ -95,7 +95,7 @@ The ``IUnknown`` as a Python class
         .. doctest::
 
             >>> from comtypes.client import CreateObject, GetModule
-            >>> GetModule('UIAutomationCore.dll')
+            >>> GetModule('UIAutomationCore.dll')  # doctest: +ELLIPSIS
             <module 'comtypes.gen.UIAutomationClient' from ...>
             >>> from comtypes.gen.UIAutomationClient import CUIAutomation
             >>> iuia = CreateObject(CUIAutomation)
