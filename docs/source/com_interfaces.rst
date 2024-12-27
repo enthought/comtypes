@@ -35,24 +35,97 @@ Defining COM interfaces
 
 A COM interface in |comtypes| is defined by creating a class.  The
 class must derive from ``comtypes.IUnknown`` or a subclass of
-``IUnknown``.  The interface class must define the following class
-attributes:
+``IUnknown``.
 
-    ``_iid_``
+
+The ``IUnknown`` as a Python class
+++++++++++++++++++++++++++++++++++
+
+.. py:class:: comtypes.IUnknown
+
+    In this package, ``IUnknown`` is defined as a pure Python class,
+    with all its high-level wrapper methods.
+
+    .. py:method:: QueryInterface(interface, iid=None)
+
+        This high-level method wraps the low-level `IUnknown::QueryInterface <https://learn.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-queryinterface(refiid_void)>`_
+        foreign function calls.  This enables a Pythonic way of usage,
+        without worrying about pointers or passing by reference.
+
+        *interface* is a ``IUnknown`` Python class or one of
+        subclasses.  If the COM object implements the interface,
+        then it returns a pointer instance to that interface after
+        incrementing the reference count on it.
+
+        *iid* is the optional interface identifier (IID).  In most
+        cases, the *interface* class attribute is used to identify
+        the interface.  However, passing a ``comtypes.GUID`` instance
+        can be useful in certain low-level processing scenarios.
+
+        The return value is not a ``HRESULT`` value but a pointer to
+        the interface.  If the COM object does **not** implement the
+        interface, a ``ctypes.COMError`` is raised with an ``hresult``
+        of ``-2147467262`` (``E_NOINTERFACE``, ``'0x80004002'`` in
+        signed-32bit hex)
+
+    .. py:method:: Add()
+
+        This wraps the `IUnknown::AddRef <https://learn.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-addref>`_.
+        Increments the reference count for an interface pointer to a
+        COM object and returns the new reference count.
+
+    .. py:method:: Release()
+
+        This wraps the `IUnknown::Release <https://learn.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-release>`_.
+        Decrements the reference count for an interface on a COM
+        object and returns the new reference count.
+
+        In other COM technologies, it is necessary to explicitly
+        release COM pointers that have been created or copied by
+        calling ``Release``. However, in |comtypes|, explicit release
+        is not required because ``Release`` is automatically invoked
+        via ``atexit`` hooks or metaclasses when the Python
+        interpreter exits or when the Python instance is about to be
+        destroyed.
+
+        In fact, explicitly releasing the pointer can cause issues;
+        if ``Release`` is called at the aforementioned timing, it may
+        raise an ``OSError``.
+
+        .. sourcecode:: pycon
+
+            >>> from comtypes.client import CreateObject, GetModule
+            >>> GetModule('UIAutomationCore.dll')  # doctest: +ELLIPSIS
+            <module 'comtypes.gen.UIAutomationClient' from ...>
+            >>> from comtypes.gen.UIAutomationClient import CUIAutomation
+            >>> iuia = CreateObject(CUIAutomation)
+            >>> iuia  # doctest: +ELLIPSIS
+            <POINTER(IUIAutomation) ptr=... at ...>
+            >>> iuia.Release()
+            0
+            >>> del iuia  # doctest: +ELLIPSIS
+            Exception ignored in: <function _compointer_base.__del__ at ...>
+            Traceback (most recent call last):
+              ...
+            OSError: exception: access violation writing ...
+
+    The interface class must define the following class attributes:
+
+    .. py:attribute:: _iid_
 
         a ``comtypes.GUID`` instance containing the
         *interface identifier* of the interface
 
-    ``_idlflags_``
+    .. py:attribute:: _idlflags_
 
         (optional) a sequence containing IDL flags for the interface
 
-    ``_case_insensitive_``
+    .. py:attribute:: _case_insensitive_
 
         (optional) If set to ``True``, this interface supports case
         insensitive attribute access.
 
-    ``_methods_``
+    .. py:attribute:: _methods_
 
         a sequence describing the methods of this interface.  COM
         methods of the superclass must not be listed, they are
@@ -61,7 +134,7 @@ attributes:
     If one or more of the COM methods reference the interface class
     itself, it is possible to assign the ``_methods_`` attribute
     *after* the class statement like this:
-    
+
     .. sourcecode:: python
 
         class ISomeInterface(IUnknown):
@@ -69,14 +142,9 @@ attributes:
 
         ISomeInterface._methods_ = [...,]
 
-.. note::
-
-    All the other attributes ``_iid_``, ``_idlflags_``,
-    ``_case_insensitive_`` must be defined when ``_methods_`` is set.
-
 
 The ``_methods_`` list
-++++++++++++++++++++++
+----------------------
 
 Methods are described in a way that looks somewhat similar to an IDL
 definition of a COM interface.  Methods must be listed in VTable
@@ -86,7 +154,7 @@ There are two functions that create a method definition: ``STDMETHOD``
 is the simple way, and ``COMMETHOD`` allows to specify more
 information.
 
-``comtypes.STDMETHOD(restype, methodname, argtypes=())``
+.. py:function:: comtypes.STDMETHOD(restype, methodname, argtypes=())
 
     Calling ``STDMETHOD`` allows to specify the type of the COM method
     return value.  Usually *restype* is a ``HRESULT``, but other return
@@ -95,7 +163,7 @@ information.
     method expects.
 
 
-``comtypes.COMMETHOD(idlflags, restype, methodname, *argspec)``
+.. py:function:: comtypes.COMMETHOD(idlflags, restype, methodname, *argspec)
 
     *idlflags* is a list of IDL flags for the method.  Possible values
     include ``dispid(aNumber)`` and ``helpstring(HelpText)``, as well as
