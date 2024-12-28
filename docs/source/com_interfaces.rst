@@ -92,8 +92,10 @@ The ``IUnknown`` as a Python class
         if ``Release`` is called at the aforementioned timing, it may
         raise an ``OSError``.
 
-        .. sourcecode:: pycon
+        .. doctest::
 
+            >>> import contextlib
+            >>> import io
             >>> from comtypes.client import CreateObject, GetModule
             >>> GetModule('UIAutomationCore.dll')  # doctest: +ELLIPSIS
             <module 'comtypes.gen.UIAutomationClient' from ...>
@@ -103,7 +105,11 @@ The ``IUnknown`` as a Python class
             <POINTER(IUIAutomation) ptr=... at ...>
             >>> iuia.Release()
             0
-            >>> del iuia  # doctest: +ELLIPSIS
+            >>> stderr = io.StringIO()
+            >>> with contextlib.redirect_stderr(stderr):
+            ...     del iuia
+            ...
+            >>> print(stderr.getvalue()[:-1])  # doctest: +ELLIPSIS
             Exception ignored in: <function _compointer_base.__del__ at ...>
             Traceback (most recent call last):
               ...
