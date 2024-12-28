@@ -101,16 +101,15 @@ The ``IUnknown`` as a Python class
         object and returns the new reference count.
 
         In other COM technologies, it is necessary to explicitly
-        release COM pointers that have been created or copied by
-        calling ``Release``. However, in |comtypes|, explicit release
-        is not required because ``Release`` is automatically invoked
-        via ``atexit`` hooks or metaclasses when the Python
-        interpreter exits or when the Python instance is about to be
-        destroyed.
+        release COM pointers by calling ``Release``.  However, in
+        |comtypes|, that is not required because ``Release`` is
+        automatically invoked via ``atexit`` hooks or metaclasses
+        when the Python interpreter exits or when the Python instance
+        is about to be destroyed.
 
         In fact, explicitly releasing the pointer can cause issues;
         if ``Release`` is called at the aforementioned timing, it may
-        raise an ``OSError``.
+        raise an ``OSError`` and be ignored in ``__del__``.
 
         .. doctest::
 
