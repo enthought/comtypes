@@ -34,7 +34,7 @@ Functionalities
 Links
 *****
 
-Kourovtsev, Yaroslav (2008). `"Working with Custom COM Interfaces from Python" <http://www.codeproject.com/KB/COM/python-comtypes-interop.aspx>`_
+Kourovtsev, Yaroslav (2008). `"Working with Custom COM Interfaces from Python" <https://www.codeproject.com/KB/COM/python-comtypes-interop.aspx>`_
 
     This article describes how to use |comtypes| to access a custom
     COM object.

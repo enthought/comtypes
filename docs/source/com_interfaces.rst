@@ -422,7 +422,8 @@ Case sensitivity
 In principle, COM is a case insensitive technology (probably because
 of Visual Basic).  Type libraries generated from IDL files, however,
 do *not* always even preserve the case of identifiers; see for example
-http://support.microsoft.com/kb/220137.
+http://support.microsoft.com/kb/220137 (This page is broken, see web
+archive `here <https://web.archive.org/web/20100722053900/ttp://support.microsoft.com/kb/220137>`_).
 
 Python (and C/C++) are case sensitive languages, so |comtypes| is
 also case sensitive.  This means that you have to call
