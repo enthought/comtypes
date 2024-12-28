@@ -68,6 +68,26 @@ The ``IUnknown`` as a Python class
         of ``-2147467262`` (``E_NOINTERFACE``, ``'0x80004002'`` in
         signed-32bit hex)
 
+        .. doctest::
+
+            >>> from comtypes.client import CreateObject, GetModule
+            >>> from comtypes import IUnknown
+            >>> from comtypes.automation import IDispatch
+            >>> GetModule('scrrun.dll')  # doctest: +ELLIPSIS
+            <module 'comtypes.gen.Scripting' from ...>
+            >>> from comtypes.gen import Scripting
+            >>> dic = CreateObject(Scripting.Dictionary)
+            >>> dic  # doctest: +ELLIPSIS
+            <POINTER(IDictionary) ptr=... at ...>
+            >>> dic.QueryInterface(IDispatch)  # doctest: +ELLIPSIS
+            <POINTER(IDispatch) ptr=... at ...>
+            >>> dic.QueryInterface(IUnknown)  # doctest: +ELLIPSIS
+            <POINTER(IUnknown) ptr=... at ...>
+            >>> dic.QueryInterface(Scripting.IFileSystem)  # doctest: +ELLIPSIS
+            Traceback (most recent call last):
+              ...
+            _ctypes.COMError: (-2147467262, ..., (None, None, None, 0, None))
+
     .. py:method:: Add()
 
         This wraps the `IUnknown::AddRef <https://learn.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-addref>`_.
