@@ -26,8 +26,14 @@ into another location and customize the classes with hand written
 methods (this is how much of the interfaces in the |comtypes| package
 have been created).
 
-The COM interfaces in |comtypes| are abstract classes, they should
-never be instantiated.
+The COM interfaces in |comtypes| should never be instantiated.  To
+use the methods of a COM object, it is necessary to call them from
+the pointer instance to that interface.
+
+.. note::
+
+    The functions for creating and accessing an interface pointer is
+    described in the :doc:`client` document.
 
 
 Defining COM interfaces
