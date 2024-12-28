@@ -101,25 +101,36 @@ are not in the type library.
 
 The meaning of the attributes:
 
-    ``_reg_threading_`` must be set to "Both", "Free", or "Apartment".
-    It specifies the apartment model in which the server runs.
+    .. py:attribute:: _reg_threading_
 
-    ``_reg_progid_`` and ``_reg_novers_progid`` are optional short
-    names that can later be used to specify your object, instead of
-    the CLSID in type library.  Typically the type library name plus
-    the coclass name plus a version number are combined to form the
-    progid, and the type library name plus the coclass name are
-    combined to form the version independend progid.
+        Must be set to "Both", "Free", or "Apartment".
+        It specifies the apartment model in which the server runs.
 
-    ``_reg_desc_`` is the (optional) name of the coclass.
+    .. py:attribute:: _reg_progid_
+    .. py:attribute:: _reg_novers_progid_
 
-    The ``_reg_clsctx_`` constant specifies in which contexts the com
-    server can operate.
+        (optional) The short names that can later be used to specify
+        your object, instead of the CLSID in type library.  Typically
+        the type library name plus the coclass name plus a version
+        number are combined to form the progid, and the type library
+        name plus the coclass name are combined to form the version
+        independend progid.
 
-    The optional ``_regcls_`` constant is only used for com objects
-    that run in their own process, see the MSDN docs for more info.
-    In |comtypes|, several REGCLS values are defined in the
-    ``comtyper.server.localserver`` module.
+    .. py:attribute:: _reg_desc_
+
+        (optional) The name of the coclass.
+
+    .. py:attribute:: _reg_clsctx_
+
+        The constant specifies in which contexts the COM server can
+        operate.
+
+    .. py:attribute:: _regcls_
+
+        (optional) The constant is only used for com objects that
+        run in their own process, see the MSDN docs for more info.
+        In |comtypes|, several REGCLS values are defined in the
+        ``comtyper.server.localserver`` module.
 
 You do not yet implement any methods on the class, because basic
 functionality is already present.

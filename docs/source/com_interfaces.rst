@@ -26,8 +26,14 @@ into another location and customize the classes with hand written
 methods (this is how much of the interfaces in the |comtypes| package
 have been created).
 
-The COM interfaces in |comtypes| are abstract classes, they should
-never be instantiated.
+The COM interfaces in |comtypes| should never be instantiated.  To
+use the methods of a COM object, it is necessary to call them from
+the pointer instance to that interface.
+
+.. note::
+
+    The functions for creating and accessing an interface pointer is
+    described in the :doc:`client` document.
 
 
 Defining COM interfaces
@@ -68,6 +74,26 @@ The ``IUnknown`` as a Python class
         of ``-2147467262`` (``E_NOINTERFACE``, ``'0x80004002'`` in
         signed-32bit hex)
 
+        .. doctest::
+
+            >>> from comtypes.client import CreateObject, GetModule
+            >>> from comtypes import IUnknown
+            >>> from comtypes.automation import IDispatch
+            >>> GetModule('scrrun.dll')  # doctest: +ELLIPSIS
+            <module 'comtypes.gen.Scripting' from ...>
+            >>> from comtypes.gen import Scripting
+            >>> dic = CreateObject(Scripting.Dictionary)
+            >>> dic  # doctest: +ELLIPSIS
+            <POINTER(IDictionary) ptr=... at ...>
+            >>> dic.QueryInterface(IDispatch)  # doctest: +ELLIPSIS
+            <POINTER(IDispatch) ptr=... at ...>
+            >>> dic.QueryInterface(IUnknown)  # doctest: +ELLIPSIS
+            <POINTER(IUnknown) ptr=... at ...>
+            >>> dic.QueryInterface(Scripting.IFileSystem)  # doctest: +ELLIPSIS
+            Traceback (most recent call last):
+              ...
+            _ctypes.COMError: (-2147467262, ..., (None, None, None, 0, None))
+
     .. py:method:: Add()
 
         This wraps the `IUnknown::AddRef <https://learn.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-addref>`_.
@@ -81,19 +107,20 @@ The ``IUnknown`` as a Python class
         object and returns the new reference count.
 
         In other COM technologies, it is necessary to explicitly
-        release COM pointers that have been created or copied by
-        calling ``Release``. However, in |comtypes|, explicit release
-        is not required because ``Release`` is automatically invoked
-        via ``atexit`` hooks or metaclasses when the Python
-        interpreter exits or when the Python instance is about to be
-        destroyed.
+        release COM pointers by calling ``Release``.  However, in
+        |comtypes|, that is not required because ``Release`` is
+        automatically invoked via ``atexit`` hooks or metaclasses
+        when the Python interpreter exits or when the Python instance
+        is about to be destroyed.
 
         In fact, explicitly releasing the pointer can cause issues;
         if ``Release`` is called at the aforementioned timing, it may
-        raise an ``OSError``.
+        raise an ``OSError`` and be ignored in ``__del__``.
 
-        .. sourcecode:: pycon
+        .. doctest::
 
+            >>> import contextlib
+            >>> import io
             >>> from comtypes.client import CreateObject, GetModule
             >>> GetModule('UIAutomationCore.dll')  # doctest: +ELLIPSIS
             <module 'comtypes.gen.UIAutomationClient' from ...>
@@ -103,7 +130,11 @@ The ``IUnknown`` as a Python class
             <POINTER(IUIAutomation) ptr=... at ...>
             >>> iuia.Release()
             0
-            >>> del iuia  # doctest: +ELLIPSIS
+            >>> stderr = io.StringIO()
+            >>> with contextlib.redirect_stderr(stderr):
+            ...     del iuia
+            ...
+            >>> print(stderr.getvalue()[:-1])  # doctest: +ELLIPSIS
             Exception ignored in: <function _compointer_base.__del__ at ...>
             Traceback (most recent call last):
               ...
@@ -397,7 +428,8 @@ Case sensitivity
 In principle, COM is a case insensitive technology (probably because
 of Visual Basic).  Type libraries generated from IDL files, however,
 do *not* always even preserve the case of identifiers; see for example
-http://support.microsoft.com/kb/220137.
+http://support.microsoft.com/kb/220137 (This page is broken, see web
+archive `here <https://web.archive.org/web/20100722053900/ttp://support.microsoft.com/kb/220137>`_).
 
 Python (and C/C++) are case sensitive languages, so |comtypes| is
 also case sensitive.  This means that you have to call
