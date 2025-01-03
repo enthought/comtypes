@@ -173,6 +173,10 @@ class Test_Registrar_register(ut.TestCase):
         registrar.register(cls)
         cls._register.assert_called_once_with(registrar)
 
+    # The coverage for COM server registration is ensured by the setup
+    # of `test_comserver` and `test_dispinterface`, so no additional tests
+    # are performed here now.
+
 
 class Test_Registrar_unregister(ut.TestCase):
     def test_calls_cls_unregister(self):
@@ -180,6 +184,10 @@ class Test_Registrar_unregister(ut.TestCase):
         registrar = Registrar()
         registrar.unregister(cls)
         cls._unregister.assert_called_once_with(registrar)
+
+    # The coverage for COM server unregistration is ensured by the teardown
+    # of `test_comserver` and `test_dispinterface`, so no additional tests
+    # are performed here now.
 
 
 class Test_get_serverdll(ut.TestCase):
