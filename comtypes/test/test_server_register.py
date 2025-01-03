@@ -13,6 +13,8 @@ from comtypes.server import register
 from comtypes.server.register import Registrar, RegistryEntries, _get_serverdll
 
 HKCR = winreg.HKEY_CLASSES_ROOT
+MULTI_SZ = winreg.REG_MULTI_SZ
+SZ = winreg.REG_SZ
 
 
 class Test_Registrar_nodebug(ut.TestCase):
@@ -67,6 +69,101 @@ class Test_Registrar_nodebug(ut.TestCase):
         self.assertEqual(e.exception.winerror, ERROR_ACCESS_DENIED)
         _winreg.OpenKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}")
         _winreg.DeleteKey.assert_called_once_with(hkey, "Logging")
+
+
+class Test_Registrar_debug(ut.TestCase):
+    @mock.patch.object(register, "winreg")
+    def test_calls_createkey_and_sets_format(self, _winreg):
+        _winreg.HKEY_CLASSES_ROOT = HKCR
+        _winreg.REG_MULTI_SZ = MULTI_SZ
+        _winreg.REG_SZ = SZ
+        hkey = mock.Mock(spec=winreg.HKEYType)
+        _winreg.CreateKey.return_value = hkey
+        levels = ["lv=DEBUG"]
+        format = "FMT"
+        reg_clsid = GUID.create_new()
+        registrar = Registrar()
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+
+        registrar.debug(Cls, levels, format)
+        _winreg.CreateKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}\Logging")
+        self.assertEqual(
+            _winreg.SetValueEx.call_args_list,
+            [
+                mock.call(hkey, "levels", None, MULTI_SZ, levels),
+                mock.call(hkey, "format", None, SZ, format),
+            ],
+        )
+
+    @mock.patch.object(register, "winreg")
+    def test_calls_createkey_and_deletes_format(self, _winreg):
+        _winreg.HKEY_CLASSES_ROOT = HKCR
+        _winreg.REG_MULTI_SZ = MULTI_SZ
+        hkey = mock.Mock(spec=winreg.HKEYType)
+        _winreg.CreateKey.return_value = hkey
+        levels = ["lv=DEBUG"]
+        reg_clsid = GUID.create_new()
+        registrar = Registrar()
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+
+        registrar.debug(Cls, levels, None)
+        _winreg.CreateKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}\Logging")
+        _winreg.SetValueEx.assert_called_once_with(
+            hkey, "levels", None, MULTI_SZ, levels
+        )
+        _winreg.DeleteValue.assert_called_once_with(hkey, "format")
+
+    @mock.patch.object(register, "winreg")
+    def test_calls_createkey_and_ignores_errors_on_deleting(self, _winreg):
+        _winreg.HKEY_CLASSES_ROOT = HKCR
+        _winreg.REG_MULTI_SZ = MULTI_SZ
+        hkey = mock.Mock(spec=winreg.HKEYType)
+        _winreg.CreateKey.return_value = hkey
+        ERROR_FILE_NOT_FOUND = 2
+        err = OSError(ERROR_FILE_NOT_FOUND, "msg", "filename", ERROR_FILE_NOT_FOUND)
+        _winreg.DeleteValue.side_effect = err
+        levels = ["lv=DEBUG"]
+        reg_clsid = GUID.create_new()
+        registrar = Registrar()
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+
+        registrar.debug(Cls, levels, None)
+        _winreg.CreateKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}\Logging")
+        _winreg.SetValueEx.assert_called_once_with(
+            hkey, "levels", None, MULTI_SZ, levels
+        )
+        _winreg.DeleteValue.assert_called_once_with(hkey, "format")
+
+    @mock.patch.object(register, "winreg")
+    def test_calls_createkey_and_not_ignores_errors_on_deleting(self, _winreg):
+        _winreg.HKEY_CLASSES_ROOT = HKCR
+        _winreg.REG_MULTI_SZ = MULTI_SZ
+        hkey = mock.Mock(spec=winreg.HKEYType)
+        _winreg.CreateKey.return_value = hkey
+        ERROR_ACCESS_DENIED = 5
+        err = OSError(ERROR_ACCESS_DENIED, "msg", "filename", ERROR_ACCESS_DENIED)
+        _winreg.DeleteValue.side_effect = err
+        levels = ["lv=DEBUG"]
+        reg_clsid = GUID.create_new()
+        registrar = Registrar()
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+
+        with self.assertRaises(OSError) as e:
+            registrar.debug(Cls, levels, None)
+        self.assertEqual(e.exception.winerror, ERROR_ACCESS_DENIED)
+        _winreg.CreateKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}\Logging")
+        _winreg.SetValueEx.assert_called_once_with(
+            hkey, "levels", None, MULTI_SZ, levels
+        )
+        _winreg.DeleteValue.assert_called_once_with(hkey, "format")
 
 
 class Test_get_serverdll(ut.TestCase):
