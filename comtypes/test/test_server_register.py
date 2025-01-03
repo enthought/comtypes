@@ -166,6 +166,22 @@ class Test_Registrar_debug(ut.TestCase):
         _winreg.DeleteValue.assert_called_once_with(hkey, "format")
 
 
+class Test_Registrar_register(ut.TestCase):
+    def test_calls_cls_register(self):
+        cls = mock.Mock(spec=["_register"])
+        registrar = Registrar()
+        registrar.register(cls)
+        cls._register.assert_called_once_with(registrar)
+
+
+class Test_Registrar_unregister(ut.TestCase):
+    def test_calls_cls_unregister(self):
+        cls = mock.Mock(spec=["_unregister"])
+        registrar = Registrar()
+        registrar.unregister(cls)
+        cls._unregister.assert_called_once_with(registrar)
+
+
 class Test_get_serverdll(ut.TestCase):
     def test_nonfrozen(self):
         self.assertEqual(_ctypes.__file__, _get_serverdll())
