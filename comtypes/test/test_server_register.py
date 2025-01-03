@@ -10,9 +10,63 @@ import comtypes
 import comtypes.server.inprocserver
 from comtypes import GUID
 from comtypes.server import register
-from comtypes.server.register import RegistryEntries, _get_serverdll
+from comtypes.server.register import Registrar, RegistryEntries, _get_serverdll
 
 HKCR = winreg.HKEY_CLASSES_ROOT
+
+
+class Test_Registrar_nodebug(ut.TestCase):
+    @mock.patch.object(register, "winreg")
+    def test_calls_openkey_and_deletekey(self, _winreg):
+        _winreg.HKEY_CLASSES_ROOT = HKCR
+        hkey = mock.Mock(spec=winreg.HKEYType)
+        _winreg.OpenKey.return_value = hkey
+        reg_clsid = GUID.create_new()
+        registrar = Registrar()
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+
+        registrar.nodebug(Cls)
+        _winreg.OpenKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}")
+        _winreg.DeleteKey.assert_called_once_with(hkey, "Logging")
+
+    @mock.patch.object(register, "winreg")
+    def test_ignores_winerror(self, _winreg):
+        _winreg.HKEY_CLASSES_ROOT = HKCR
+        ERROR_FILE_NOT_FOUND = 2
+        err = OSError(ERROR_FILE_NOT_FOUND, "msg", "filename", ERROR_FILE_NOT_FOUND)
+        _winreg.OpenKey.side_effect = err
+        reg_clsid = GUID.create_new()
+        registrar = Registrar()
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+
+        registrar.nodebug(Cls)
+        _winreg.OpenKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}")
+        _winreg.DeleteKey.assert_not_called()
+
+    @mock.patch.object(register, "winreg")
+    def test_not_ignores_winerror(self, _winreg):
+        _winreg.HKEY_CLASSES_ROOT = HKCR
+        hkey = mock.Mock(spec=winreg.HKEYType)
+        _winreg.OpenKey.return_value = hkey
+        ERROR_ACCESS_DENIED = 5
+        err = OSError(ERROR_ACCESS_DENIED, "msg", "filename", ERROR_ACCESS_DENIED)
+        _winreg.OpenKey.return_value = hkey
+        _winreg.DeleteKey.side_effect = err
+        reg_clsid = GUID.create_new()
+        registrar = Registrar()
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+
+        with self.assertRaises(OSError) as e:
+            registrar.nodebug(Cls)
+        self.assertEqual(e.exception.winerror, ERROR_ACCESS_DENIED)
+        _winreg.OpenKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}")
+        _winreg.DeleteKey.assert_called_once_with(hkey, "Logging")
 
 
 class Test_get_serverdll(ut.TestCase):
