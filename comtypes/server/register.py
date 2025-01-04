@@ -310,11 +310,11 @@ class RegistryEntries(object):
                 self._add(HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
                 self._add(HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
 
-        clsctx = getattr(cls, "_reg_clsctx_", 0)
+        clsctx: int = getattr(cls, "_reg_clsctx_", 0)
+        localsvr_ctx = bool(clsctx & comtypes.CLSCTX_LOCAL_SERVER)
+        inprocsvr_ctx = bool(clsctx & comtypes.CLSCTX_INPROC_SERVER)
 
-        if clsctx & comtypes.CLSCTX_LOCAL_SERVER and not hasattr(
-            sys, "frozendllhandle"
-        ):
+        if localsvr_ctx and not hasattr(sys, "frozendllhandle"):
             exe = sys.executable
             if " " in exe:
                 exe = f'"{exe}"'
@@ -332,10 +332,7 @@ class RegistryEntries(object):
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
-        if clsctx & comtypes.CLSCTX_INPROC_SERVER and getattr(sys, "frozen", None) in (
-            None,
-            "dll",
-        ):
+        if inprocsvr_ctx and getattr(sys, "frozen", None) in (None, "dll"):
             self._add(HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", _get_serverdll())
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
