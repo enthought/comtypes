@@ -6,7 +6,7 @@ from comtypes import GUID, COMError
 from comtypes.typeinfo import (
     TKIND_DISPATCH,
     TKIND_INTERFACE,
-    GetModuleFileNameW,
+    GetModuleFileName,
     LoadRegTypeLib,
     LoadTypeLibEx,
     QueryPathOfRegTypeLib,
@@ -94,16 +94,16 @@ class Test(unittest.TestCase):
         self.assertEqual(guid, ti.GetTypeAttr().guid)
 
 
-class Test_GetModuleFileNameW(unittest.TestCase):
+class Test_GetModuleFileName(unittest.TestCase):
     def test_null_handler(self):
-        self.assertEqual(GetModuleFileNameW(None, 260), sys.executable)
+        self.assertEqual(GetModuleFileName(None, 260), sys.executable)
 
     def test_loaded_module_handle(self):
         import _ctypes
 
         dll_path = _ctypes.__file__
         hmodule = ctypes.WinDLL(dll_path)._handle
-        self.assertEqual(GetModuleFileNameW(hmodule, 260), dll_path)
+        self.assertEqual(GetModuleFileName(hmodule, 260), dll_path)
 
 
 if __name__ == "__main__":

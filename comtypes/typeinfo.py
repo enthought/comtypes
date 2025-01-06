@@ -700,15 +700,15 @@ _GetModuleFileNameW.argtypes = HMODULE, LPWSTR, DWORD
 _GetModuleFileNameW.restype = DWORD
 
 
-def GetModuleFileNameW(handle: Optional[int], maxsize: int) -> str:
+def GetModuleFileName(handle: Optional[int], maxsize: int) -> str:
     """Returns the fullpath of the loaded module specified by the handle.
     If the handle is NULL, returns the executable file path of the current process.
 
     https://learn.microsoft.com/ja-jp/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw
     """
     buf = ctypes.create_unicode_buffer(maxsize)
-    length = _GetModuleFileNameW(handle, buf, ctypes.sizeof(buf))
-    return buf[:length]  # type: ignore
+    length = _GetModuleFileNameW(handle, buf, maxsize)
+    return buf.value[:length]
 
 
 ################################################################

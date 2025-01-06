@@ -193,7 +193,7 @@ class Test_get_serverdll(ut.TestCase):
     def test_nonfrozen(self):
         self.assertEqual(_ctypes.__file__, _get_serverdll())
 
-    @mock.patch.object(register, "GetModuleFileNameW")
+    @mock.patch.object(register, "GetModuleFileName")
     @mock.patch.object(register, "sys")
     def test_frozen(self, _sys, GetModuleFileName):
         handle, dll_path = 1234, r"path\to\frozendll"
