@@ -80,4 +80,4 @@ However, if the script implementation does not use `comtypes.client.GetModule` o
 
 ## Documentation
 
-The documentation is currently hosted [here](https://pythonhosted.org/comtypes) on PythonHosted.
+The documentation is currently hosted [here](https://comtypes.readthedocs.io/) on ReadTheDocs.
