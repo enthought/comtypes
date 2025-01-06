@@ -1,15 +1,15 @@
-import os
+import ctypes
+import sys
 import unittest
-from ctypes import POINTER, byref
+
 from comtypes import GUID, COMError
-from comtypes.automation import DISPATCH_METHOD
 from comtypes.typeinfo import (
-    LoadTypeLibEx,
-    LoadRegTypeLib,
-    QueryPathOfRegTypeLib,
-    TKIND_INTERFACE,
     TKIND_DISPATCH,
-    TKIND_ENUM,
+    TKIND_INTERFACE,
+    GetModuleFileNameW,
+    LoadRegTypeLib,
+    LoadTypeLibEx,
+    QueryPathOfRegTypeLib,
 )
 
 
@@ -92,6 +92,18 @@ class Test(unittest.TestCase):
         self.assert_tlibattr_equal(c_tlib, tlib)
         self.assertEqual(c_ti, ti)
         self.assertEqual(guid, ti.GetTypeAttr().guid)
+
+
+class Test_GetModuleFileNameW(unittest.TestCase):
+    def test_null_handler(self):
+        self.assertEqual(GetModuleFileNameW(None, 260), sys.executable)
+
+    def test_loaded_module_handle(self):
+        import _ctypes
+
+        dll_path = _ctypes.__file__
+        hmodule = ctypes.WinDLL(dll_path)._handle
+        self.assertEqual(GetModuleFileNameW(hmodule, 260), dll_path)
 
 
 if __name__ == "__main__":
