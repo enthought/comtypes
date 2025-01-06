@@ -1,5 +1,4 @@
 import _ctypes
-import ctypes
 import os
 import sys
 import unittest as ut
@@ -194,18 +193,16 @@ class Test_get_serverdll(ut.TestCase):
     def test_nonfrozen(self):
         self.assertEqual(_ctypes.__file__, _get_serverdll())
 
-    def test_frozen(self):
-        with mock.patch.object(register, "sys") as _sys:
-            with mock.patch.object(register, "windll") as _windll:
-                handle = 1234
-                _sys.frozendllhandle = handle
-                self.assertEqual(b"\x00" * 260, _get_serverdll())
-                GetModuleFileName = _windll.kernel32.GetModuleFileNameA
-                (((hModule, lpFilename, nSize), _),) = GetModuleFileName.call_args_list
-                self.assertEqual(handle, hModule)
-                buf_type = type(ctypes.create_string_buffer(260))
-                self.assertIsInstance(lpFilename, buf_type)
-                self.assertEqual(260, nSize)
+    @mock.patch.object(register, "GetModuleFileNameW")
+    @mock.patch.object(register, "sys")
+    def test_frozen(self, _sys, GetModuleFileName):
+        handle, dll_path = 1234, r"path\to\frozendll"
+        _sys.frozendllhandle = handle
+        GetModuleFileName.return_value = dll_path
+        self.assertEqual(r"path\to\frozendll", _get_serverdll())
+        (((hmodule, maxsize), _),) = GetModuleFileName.call_args_list
+        self.assertEqual(handle, hmodule)
+        self.assertEqual(260, maxsize)
 
 
 class Test_NonFrozen_RegistryEntries(ut.TestCase):

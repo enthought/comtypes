@@ -48,7 +48,12 @@ import comtypes
 import comtypes.server.inprocserver
 from comtypes.hresult import *
 from comtypes.server import w_getopt
-from comtypes.typeinfo import REGKIND_REGISTER, LoadTypeLibEx, UnRegisterTypeLib
+from comtypes.typeinfo import (
+    REGKIND_REGISTER,
+    LoadTypeLibEx,
+    UnRegisterTypeLib,
+    GetModuleFileNameW,
+)
 
 _debug = logging.getLogger(__name__).debug
 
@@ -220,9 +225,7 @@ def _get_serverdll():
     """Return the pathname of the dll hosting the COM object."""
     handle = getattr(sys, "frozendllhandle", None)
     if handle is not None:
-        buf = ctypes.create_string_buffer(260)
-        windll.kernel32.GetModuleFileNameA(handle, buf, ctypes.sizeof(buf))
-        return buf[:]
+        return GetModuleFileNameW(handle, 260)
     import _ctypes
 
     return _ctypes.__file__
