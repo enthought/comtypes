@@ -1,5 +1,5 @@
 # comtypes version numbers follow semver (http://semver.org/) and PEP 440
-__version__ = "1.4.8"
+__version__ = "1.4.9"
 
 try:
     from _ctypes import COMError  # noqa
