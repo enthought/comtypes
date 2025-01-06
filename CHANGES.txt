@@ -1,6 +1,27 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.9
+--------------
+* Separate patch processing within ``_com_interface_meta`` into a module. By @junkmd.
+* Replace ``Literal`` and ``Protocol`` with runtime-referable symbols. By @junkmd.
+* Refactor from ``%`` string formatting to f-strings in many modules. By @newwingbird.
+* Refactor from ``%`` string formatting to f-strings in ``_post_coinit.unknwn``. By @junkmd.
+* Remove the script entry point in ``comtypes.shelllink``. By @cosmastech.
+* Move the modules that define IDL stuff and ``instancemethod``. By @junkmd.
+* Allow the definition of the ``_midlSAFEARRAY(HRESULT)`` type. By @davidschranz.
+* Split ``server/w_getopt.py`` into production code and test code. By @junkmd.
+* Add docstrings to the module defining the ``GUID`` symbol. By @junkmd.
+* Fix broken unregistration of 64bit type libraries. By @forderud.
+* Replace alias definitions with ``ctypes.wintypes`` imports. By @fmtabler.
+* Revive ``pywin32`` related tests. By @junkmd.
+* Revive comserver related tests. By @junkmd.
+* Separate the part that creates entries from ``server.register.Registrar`` and refactor it. By @junkmd.
+* Add ``Test_Registrar_...``. By @junkmd.
+* Many typing improvements. By @junkmd.
+* Separate ``vtbl`` creation within ``_comobject`` into a module. By @junkmd.
+* Migrate the documentation from PythonHosted to ReadTheDocs. By @junkmd.
+
 Release 1.4.8
 --------------
 * Remove Python 3.7 and add Python 3.13 to the CI pipelines. By @junkmd.
