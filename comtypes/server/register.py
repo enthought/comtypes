@@ -75,8 +75,6 @@ SHDeleteKey = windll.shlwapi.SHDeleteKeyW
 SHDeleteKey.errcheck = _non_zero
 SHDeleteKey.argtypes = ctypes.c_ulong, ctypes.c_wchar_p
 
-Set = set
-
 
 _KEYS = {
     winreg.HKEY_CLASSES_ROOT: "HKCR",
