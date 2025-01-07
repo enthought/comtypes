@@ -69,6 +69,7 @@ def get_winerror(exception: OSError) -> Optional[int]:
 def _non_zero(retval, func, args):
     if retval:
         raise WinError(retval)
+    return retval
 
 
 SHDeleteKey = windll.shlwapi.SHDeleteKeyW
