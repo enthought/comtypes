@@ -444,8 +444,7 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
 
     @mock.patch.object(register, "sys")
     def test_local_frozendllhandle(self, _sys):
-        _sys.mock_add_spec(["frozendllhandle"])
-        _sys.frozendllhandle = 1234
+        _sys.mock_add_spec([])
         reg_clsid = GUID.create_new()
         reg_clsctx = comtypes.CLSCTX_LOCAL_SERVER
 
@@ -454,7 +453,8 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
             _reg_clsctx_ = reg_clsctx
 
         expected = [(HKCR, rf"CLSID\{reg_clsid}", "", "")]
-        self.assertEqual(expected, list(RegistryEntries(Cls, frozen="dll")))
+        entries = RegistryEntries(Cls, frozen="dll", frozendllhandle=1234)
+        self.assertEqual(expected, list(entries))
 
     @mock.patch.object(register, "sys")
     def test_inproc_windows_exe(self, _sys):
@@ -471,8 +471,7 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
 
     @mock.patch.object(register, "sys")
     def test_inproc_dll_frozendllhandle_clsid_to_class(self, _sys):
-        _sys.mock_add_spec(["frozendllhandle"])
-        _sys.frozendllhandle = 1234
+        _sys.mock_add_spec([])
         reg_clsid = GUID.create_new()
         reg_clsctx = comtypes.CLSCTX_INPROC_SERVER
 
@@ -490,10 +489,10 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
 
         with mock.patch.dict(comtypes.server.inprocserver._clsid_to_class):
             comtypes.server.inprocserver._clsid_to_class.update({5678: Cls})
-            self.assertEqual(
-                expected,
-                list(RegistryEntries(Cls, serverdll=serverdll, frozen="dll")),
+            entries = RegistryEntries(
+                Cls, serverdll=serverdll, frozen="dll", frozendllhandle=1234
             )
+            self.assertEqual(expected, list(entries))
 
     @mock.patch.object(register, "sys")
     def test_inproc_dll(self, _sys):

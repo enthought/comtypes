@@ -102,6 +102,7 @@ class Registrar(object):
     def __init__(self) -> None:
         self._serverdll = _get_serverdll()
         self._frozen = getattr(sys, "frozen", None)
+        self._frozendllhandle = getattr(sys, "frozendllhandle", None)
 
     def nodebug(self, cls: Type) -> None:
         """Delete logging entries from the registry."""
@@ -159,7 +160,12 @@ class Registrar(object):
 
     def _register(self, cls: Type, executable: Optional[str] = None) -> None:
         table = sorted(
-            RegistryEntries(cls, serverdll=self._serverdll, frozen=self._frozen)
+            RegistryEntries(
+                cls,
+                serverdll=self._serverdll,
+                frozen=self._frozen,
+                frozendllhandle=self._frozendllhandle,
+            )
         )
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
@@ -198,7 +204,10 @@ class Registrar(object):
         table = [
             t[:2]
             for t in RegistryEntries(
-                cls, serverdll=self._serverdll, frozen=self._frozen
+                cls,
+                serverdll=self._serverdll,
+                frozen=self._frozen,
+                frozendllhandle=self._frozendllhandle,
             )
         ]
         # only unique entries
@@ -241,12 +250,17 @@ def _get_serverdll() -> str:
 
 class RegistryEntries(object):
     def __init__(
-        self, cls, *, serverdll: Optional[str] = None, frozen: Optional[str] = None
+        self,
+        cls,
+        *,
+        serverdll: Optional[str] = None,
+        frozen: Optional[str] = None,
+        frozendllhandle: Optional[int] = None,
     ) -> None:
         self._cls = cls
         self._serverdll = serverdll
         self._frozen = frozen
-        self._frozendllhandle = getattr(sys, "frozendllhandle", None)
+        self._frozendllhandle = frozendllhandle
 
     def _get_full_classname(self, cls: Type) -> str:
         """Return <modulename>.<classname> for 'cls'."""
