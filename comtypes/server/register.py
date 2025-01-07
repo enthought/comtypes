@@ -249,7 +249,7 @@ def _get_serverdll(handle: Optional[int]) -> str:
 class RegistryEntries(object):
     def __init__(
         self,
-        cls,
+        cls: Type,
         *,
         frozen: Optional[str] = None,
         frozendllhandle: Optional[int] = None,
