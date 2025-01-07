@@ -36,18 +36,24 @@ Now, debug the object, and when done delete logging info:
   python mycomobj.py /nodebug
 """
 
+import ctypes
 import logging
 import os
 import sys
 import winreg
-from ctypes import WinError, c_ulong, c_wchar_p, create_string_buffer, sizeof, windll
+from ctypes import WinError, windll
 from typing import Iterator, Tuple
 
 import comtypes
 import comtypes.server.inprocserver
 from comtypes.hresult import *
 from comtypes.server import w_getopt
-from comtypes.typeinfo import REGKIND_REGISTER, LoadTypeLibEx, UnRegisterTypeLib
+from comtypes.typeinfo import (
+    REGKIND_REGISTER,
+    GetModuleFileName,
+    LoadTypeLibEx,
+    UnRegisterTypeLib,
+)
 
 _debug = logging.getLogger(__name__).debug
 
@@ -67,7 +73,7 @@ def _non_zero(retval, func, args):
 
 SHDeleteKey = windll.shlwapi.SHDeleteKeyW
 SHDeleteKey.errcheck = _non_zero
-SHDeleteKey.argtypes = c_ulong, c_wchar_p
+SHDeleteKey.argtypes = ctypes.c_ulong, ctypes.c_wchar_p
 
 Set = set
 
@@ -219,9 +225,7 @@ def _get_serverdll():
     """Return the pathname of the dll hosting the COM object."""
     handle = getattr(sys, "frozendllhandle", None)
     if handle is not None:
-        buf = create_string_buffer(260)
-        windll.kernel32.GetModuleFileNameA(handle, buf, sizeof(buf))
-        return buf[:]
+        return GetModuleFileName(handle, 260)
     import _ctypes
 
     return _ctypes.__file__
