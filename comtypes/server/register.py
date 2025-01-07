@@ -99,6 +99,9 @@ class Registrar(object):
     work.
     """
 
+    def __init__(self) -> None:
+        self._serverdll = _get_serverdll()
+
     def nodebug(self, cls: Type) -> None:
         """Delete logging entries from the registry."""
         clsid = cls._reg_clsid_
@@ -165,9 +168,8 @@ class Registrar(object):
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
             if hasattr(sys, "frozendllhandle"):
-                dll = _get_serverdll()
-                _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", dll)
-                LoadTypeLibEx(dll, REGKIND_REGISTER)
+                _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", self._serverdll)
+                LoadTypeLibEx(self._serverdll, REGKIND_REGISTER)
             else:
                 if executable:
                     path = executable
