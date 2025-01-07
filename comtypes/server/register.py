@@ -246,6 +246,7 @@ class RegistryEntries(object):
         self._cls = cls
         self._serverdll = serverdll
         self._frozen = frozen
+        self._frozendllhandle = getattr(sys, "frozendllhandle", None)
 
     def _get_full_classname(self, cls: Type) -> str:
         """Return <modulename>.<classname> for 'cls'."""
@@ -326,7 +327,7 @@ class RegistryEntries(object):
         localsvr_ctx = bool(clsctx & comtypes.CLSCTX_LOCAL_SERVER)
         inprocsvr_ctx = bool(clsctx & comtypes.CLSCTX_INPROC_SERVER)
 
-        if localsvr_ctx and not hasattr(sys, "frozendllhandle"):
+        if localsvr_ctx and self._frozendllhandle is None:
             exe = sys.executable
             if " " in exe:
                 exe = f'"{exe}"'
@@ -348,7 +349,7 @@ class RegistryEntries(object):
             yield (HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", self._serverdll)
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
-                not hasattr(sys, "frozendllhandle")
+                self._frozendllhandle is None
                 or not comtypes.server.inprocserver._clsid_to_class
             ):
                 yield (
