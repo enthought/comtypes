@@ -176,13 +176,13 @@ class Registrar(object):
 
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
-            if hasattr(sys, "frozendllhandle"):
+            if self._frozendllhandle is not None:
                 _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", self._serverdll)
                 LoadTypeLibEx(self._serverdll, REGKIND_REGISTER)
             else:
                 if executable:
                     path = executable
-                elif hasattr(sys, "frozen"):
+                elif self._frozen is not None:
                     path = sys.executable
                 else:
                     path = cls._typelib_path_
