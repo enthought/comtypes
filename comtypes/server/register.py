@@ -244,7 +244,7 @@ class RegistryEntries(object):
     def _get_pythonpath(self, cls: Type) -> str:
         """Return the filesystem path of the module containing 'cls'."""
         modname = cls.__module__
-        dirname = os.path.dirname(sys.modules[modname].__file__)
+        dirname = os.path.dirname(sys.modules[modname].__file__)  # type: ignore
         return os.path.abspath(dirname)
 
     def __iter__(self) -> Iterator[Tuple[int, str, str, str]]:
@@ -320,7 +320,7 @@ class RegistryEntries(object):
             if not hasattr(sys, "frozen"):
                 if not __debug__:
                     exe = f"{exe} -O"
-                script = os.path.abspath(sys.modules[cls.__module__].__file__)
+                script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
                 if " " in script:
                     script = f'"{script}"'
                 yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
