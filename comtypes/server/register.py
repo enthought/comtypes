@@ -36,6 +36,7 @@ Now, debug the object, and when done delete logging info:
   python mycomobj.py /nodebug
 """
 
+import _ctypes
 import ctypes
 import logging
 import os
@@ -225,8 +226,6 @@ def _get_serverdll() -> str:
     handle = getattr(sys, "frozendllhandle", None)
     if handle is not None:
         return GetModuleFileName(handle, 260)
-    import _ctypes
-
     return _ctypes.__file__
 
 
