@@ -235,6 +235,7 @@ class RegistryEntries(object):
     def __init__(self, cls: Type, *, serverdll: Optional[str] = None) -> None:
         self._cls = cls
         self._serverdll = serverdll
+        self._frozen = getattr(sys, "frozen", None)
 
     def _get_full_classname(self, cls: Type) -> str:
         """Return <modulename>.<classname> for 'cls'."""
@@ -319,7 +320,7 @@ class RegistryEntries(object):
             exe = sys.executable
             if " " in exe:
                 exe = f'"{exe}"'
-            if not hasattr(sys, "frozen"):
+            if self._frozen is None:
                 if not __debug__:
                     exe = f"{exe} -O"
                 script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
@@ -331,7 +332,7 @@ class RegistryEntries(object):
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
-        if inprocsvr_ctx and getattr(sys, "frozen", None) in (None, "dll"):
+        if inprocsvr_ctx and self._frozen in (None, "dll"):
             if self._serverdll is None:
                 raise TypeError("'serverdll' is not specified.")
             yield (HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", self._serverdll)
