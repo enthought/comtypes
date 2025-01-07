@@ -36,13 +36,14 @@ Now, debug the object, and when done delete logging info:
   python mycomobj.py /nodebug
 """
 
+import _ctypes
 import ctypes
 import logging
 import os
 import sys
 import winreg
 from ctypes import WinError, windll
-from typing import Iterator, Tuple
+from typing import Iterator, List, Optional, Tuple, Type, Union
 
 import comtypes
 import comtypes.server.inprocserver
@@ -58,7 +59,7 @@ from comtypes.typeinfo import (
 _debug = logging.getLogger(__name__).debug
 
 
-def get_winerror(exception):
+def get_winerror(exception: OSError) -> Optional[int]:
     try:
         return exception.winerror
     except AttributeError:
@@ -69,13 +70,12 @@ def get_winerror(exception):
 def _non_zero(retval, func, args):
     if retval:
         raise WinError(retval)
+    return retval
 
 
 SHDeleteKey = windll.shlwapi.SHDeleteKeyW
 SHDeleteKey.errcheck = _non_zero
 SHDeleteKey.argtypes = ctypes.c_ulong, ctypes.c_wchar_p
-
-Set = set
 
 
 _KEYS = {
@@ -85,7 +85,7 @@ _KEYS = {
 }
 
 
-def _explain(hkey):
+def _explain(hkey: int) -> Union[str, int]:
     return _KEYS.get(hkey, hkey)
 
 
@@ -99,7 +99,7 @@ class Registrar(object):
     work.
     """
 
-    def nodebug(self, cls):
+    def nodebug(self, cls: Type) -> None:
         """Delete logging entries from the registry."""
         clsid = cls._reg_clsid_
         try:
@@ -113,7 +113,7 @@ class Registrar(object):
             if get_winerror(detail) != 2:
                 raise
 
-    def debug(self, cls, levels, format):
+    def debug(self, cls: Type, levels: List[str], format: Optional[str]) -> None:
         """Write entries in the registry to setup logging for this clsid."""
         # handlers
         # format
@@ -140,7 +140,7 @@ class Registrar(object):
                 if get_winerror(detail) != 2:
                     raise
 
-    def register(self, cls, executable=None):
+    def register(self, cls: Type, executable: Optional[str] = None) -> None:
         """Register the COM server class."""
         # First, we unregister the object with force=True, to force removal
         # of all registry entries, even if we would not write them.
@@ -153,7 +153,7 @@ class Registrar(object):
             self._unregister(cls, force=True)
             self._register(cls, executable)
 
-    def _register(self, cls, executable=None):
+    def _register(self, cls: Type, executable: Optional[str] = None) -> None:
         table = sorted(RegistryEntries(cls))
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
@@ -179,7 +179,7 @@ class Registrar(object):
                 LoadTypeLibEx(path, REGKIND_REGISTER)
         _debug("Done")
 
-    def unregister(self, cls, force=False):
+    def unregister(self, cls: Type, force: bool = False) -> None:
         """Unregister the COM server class."""
         mth = getattr(cls, "_unregister", None)
         if mth is not None:
@@ -187,7 +187,7 @@ class Registrar(object):
         else:
             self._unregister(cls, force=force)
 
-    def _unregister(self, cls, force=False):
+    def _unregister(self, cls: Type, force: bool = False) -> None:
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
         table = [t[:2] for t in RegistryEntries(cls)]
@@ -221,31 +221,29 @@ class Registrar(object):
         _debug("Done")
 
 
-def _get_serverdll():
+def _get_serverdll() -> str:
     """Return the pathname of the dll hosting the COM object."""
     handle = getattr(sys, "frozendllhandle", None)
     if handle is not None:
         return GetModuleFileName(handle, 260)
-    import _ctypes
-
     return _ctypes.__file__
 
 
 class RegistryEntries(object):
-    def __init__(self, cls):
+    def __init__(self, cls: Type) -> None:
         self._cls = cls
 
-    def _get_full_classname(self, cls):
+    def _get_full_classname(self, cls: Type) -> str:
         """Return <modulename>.<classname> for 'cls'."""
         modname = cls.__module__
         if modname == "__main__":
             modname = os.path.splitext(os.path.basename(sys.argv[0]))[0]
         return f"{modname}.{cls.__name__}"
 
-    def _get_pythonpath(self, cls):
+    def _get_pythonpath(self, cls: Type) -> str:
         """Return the filesystem path of the module containing 'cls'."""
         modname = cls.__module__
-        dirname = os.path.dirname(sys.modules[modname].__file__)
+        dirname = os.path.dirname(sys.modules[modname].__file__)  # type: ignore
         return os.path.abspath(dirname)
 
     def __iter__(self) -> Iterator[Tuple[int, str, str, str]]:
@@ -321,7 +319,7 @@ class RegistryEntries(object):
             if not hasattr(sys, "frozen"):
                 if not __debug__:
                     exe = f"{exe} -O"
-                script = os.path.abspath(sys.modules[cls.__module__].__file__)
+                script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
                 if " " in script:
                     script = f'"{script}"'
                 yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
@@ -367,15 +365,15 @@ class RegistryEntries(object):
 ################################################################
 
 
-def register(cls):
+def register(cls: Type) -> None:
     Registrar().register(cls)
 
 
-def unregister(cls):
+def unregister(cls: Type) -> None:
     Registrar().unregister(cls)
 
 
-def UseCommandLine(*classes):
+def UseCommandLine(*classes: Type) -> int:
     usage = f"""Usage: {sys.argv[0]} [-regserver] [-unregserver] [-nodebug] [-f logformat] [-l loggername=level]"""
     opts, args = w_getopt.w_getopt(
         sys.argv[1:], "regserver unregserver embedding l: f: nodebug"
