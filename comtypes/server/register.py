@@ -99,8 +99,10 @@ class Registrar(object):
     work.
     """
 
+    _frozen: Optional[str]
+    _frozendllhandle: Optional[int]
+
     def __init__(self) -> None:
-        self._serverdll = _get_serverdll()
         self._frozen = getattr(sys, "frozen", None)
         self._frozendllhandle = getattr(sys, "frozendllhandle", None)
 
@@ -162,7 +164,6 @@ class Registrar(object):
         table = sorted(
             RegistryEntries(
                 cls,
-                serverdll=self._serverdll,
                 frozen=self._frozen,
                 frozendllhandle=self._frozendllhandle,
             )
@@ -177,8 +178,9 @@ class Registrar(object):
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
             if self._frozendllhandle is not None:
-                _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", self._serverdll)
-                LoadTypeLibEx(self._serverdll, REGKIND_REGISTER)
+                frozen_dll = _get_serverdll(self._frozendllhandle)
+                _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", frozen_dll)
+                LoadTypeLibEx(frozen_dll, REGKIND_REGISTER)
             else:
                 if executable:
                     path = executable
@@ -204,10 +206,7 @@ class Registrar(object):
         table = [
             t[:2]
             for t in RegistryEntries(
-                cls,
-                serverdll=self._serverdll,
-                frozen=self._frozen,
-                frozendllhandle=self._frozendllhandle,
+                cls, frozen=self._frozen, frozendllhandle=self._frozendllhandle
             )
         ]
         # only unique entries
@@ -240,9 +239,8 @@ class Registrar(object):
         _debug("Done")
 
 
-def _get_serverdll() -> str:
+def _get_serverdll(handle: Optional[int]) -> str:
     """Return the pathname of the dll hosting the COM object."""
-    handle = getattr(sys, "frozendllhandle", None)
     if handle is not None:
         return GetModuleFileName(handle, 260)
     return _ctypes.__file__
@@ -253,12 +251,10 @@ class RegistryEntries(object):
         self,
         cls,
         *,
-        serverdll: Optional[str] = None,
         frozen: Optional[str] = None,
         frozendllhandle: Optional[int] = None,
     ) -> None:
         self._cls = cls
-        self._serverdll = serverdll
         self._frozen = frozen
         self._frozendllhandle = frozendllhandle
 
@@ -358,9 +354,12 @@ class RegistryEntries(object):
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
         if inprocsvr_ctx and self._frozen in (None, "dll"):
-            if self._serverdll is None:
-                raise TypeError("'serverdll' is not specified.")
-            yield (HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", self._serverdll)
+            yield (
+                HKCR,
+                rf"CLSID\{reg_clsid}\InprocServer32",
+                "",
+                _get_serverdll(self._frozendllhandle),
+            )
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
                 self._frozendllhandle is None
