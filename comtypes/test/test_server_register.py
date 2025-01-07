@@ -318,26 +318,7 @@ class Test_NonFrozen_RegistryEntries(ut.TestCase):
             _reg_clsid_ = reg_clsid
             _reg_clsctx_ = reg_clsctx
 
-        clsid_sub = rf"CLSID\{reg_clsid}"
-        inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
-        full_classname = f"{__name__}.Cls"
-        expected = [
-            (HKCR, clsid_sub, "", ""),
-            (HKCR, inproc_srv_sub, "", _ctypes.__file__),
-            (HKCR, inproc_srv_sub, "PythonClass", full_classname),
-            (HKCR, inproc_srv_sub, "PythonPath", os.path.dirname(__file__)),
-        ]
-        self.assertEqual(expected, list(RegistryEntries(Cls)))
-
-    def test_dll_specified_inproc_server(self):
-        reg_clsid = GUID.create_new()
-        reg_clsctx = comtypes.CLSCTX_INPROC_SERVER
-
-        class Cls:
-            _reg_clsid_ = reg_clsid
-            _reg_clsctx_ = reg_clsctx
-
-        serverdll = r"\path\to\my\injected.dll"
+        serverdll = r"my\target\server.dll"
         clsid_sub = rf"CLSID\{reg_clsid}"
         inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
         full_classname = f"{__name__}.Cls"
@@ -349,6 +330,18 @@ class Test_NonFrozen_RegistryEntries(ut.TestCase):
         ]
         self.assertEqual(expected, list(RegistryEntries(Cls, serverdll=serverdll)))
 
+    def test_fails_inproc_server(self):
+        reg_clsid = GUID.create_new()
+        reg_clsctx = comtypes.CLSCTX_INPROC_SERVER
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+            _reg_clsctx_ = reg_clsctx
+
+        with self.assertRaises(TypeError) as e:
+            list(RegistryEntries(Cls))
+        self.assertEqual(str(e.exception), "'serverdll' is not specified.")
+
     def test_inproc_server_reg_threading(self):
         reg_clsid = GUID.create_new()
         reg_threading = "Both"
@@ -359,17 +352,18 @@ class Test_NonFrozen_RegistryEntries(ut.TestCase):
             _reg_threading_ = reg_threading
             _reg_clsctx_ = reg_clsctx
 
+        serverdll = r"my\target\server.dll"
         clsid_sub = rf"CLSID\{reg_clsid}"
         inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
         full_classname = f"{__name__}.Cls"
         expected = [
             (HKCR, clsid_sub, "", ""),
-            (HKCR, inproc_srv_sub, "", _ctypes.__file__),
+            (HKCR, inproc_srv_sub, "", serverdll),
             (HKCR, inproc_srv_sub, "PythonClass", full_classname),
             (HKCR, inproc_srv_sub, "PythonPath", os.path.dirname(__file__)),
             (HKCR, inproc_srv_sub, "ThreadingModel", reg_threading),
         ]
-        self.assertEqual(expected, list(RegistryEntries(Cls)))
+        self.assertEqual(expected, list(RegistryEntries(Cls, serverdll=serverdll)))
 
     def test_reg_typelib(self):
         reg_clsid = GUID.create_new()
@@ -405,6 +399,7 @@ class Test_NonFrozen_RegistryEntries(ut.TestCase):
             _reg_desc_ = reg_desc
             _reg_clsctx_ = reg_clsctx
 
+        serverdll = r"my\target\server.dll"
         clsid_sub = rf"CLSID\{reg_clsid}"
         inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
         local_srv_sub = rf"{clsid_sub}\LocalServer32"
@@ -419,13 +414,13 @@ class Test_NonFrozen_RegistryEntries(ut.TestCase):
             (HKCR, rf"{reg_novers_progid}\CurVer", "", reg_progid),
             (HKCR, rf"{reg_novers_progid}\CLSID", "", str(reg_clsid)),
             (HKCR, local_srv_sub, "", f"{sys.executable} {__file__}"),
-            (HKCR, inproc_srv_sub, "", _ctypes.__file__),
+            (HKCR, inproc_srv_sub, "", serverdll),
             (HKCR, inproc_srv_sub, "PythonClass", full_classname),
             (HKCR, inproc_srv_sub, "PythonPath", os.path.dirname(__file__)),
             (HKCR, inproc_srv_sub, "ThreadingModel", reg_threading),
             (HKCR, rf"{clsid_sub}\Typelib", "", libid),
         ]
-        self.assertEqual(expected, list(RegistryEntries(Cls)))
+        self.assertEqual(expected, list(RegistryEntries(Cls, serverdll=serverdll)))
 
 
 class Test_Frozen_RegistryEntries(ut.TestCase):
@@ -477,7 +472,6 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
         expected = [(HKCR, rf"CLSID\{reg_clsid}", "", "")]
         self.assertEqual(expected, list(RegistryEntries(Cls)))
 
-    @mock.patch.object(register, "_get_serverdll", lambda: r"my\target\server.dll")
     @mock.patch.object(register, "sys")
     def test_inproc_dll_frozendllhandle_clsid_to_class(self, _sys):
         _sys.mock_add_spec(["frozen", "frozendllhandle"])
@@ -490,18 +484,18 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
             _reg_clsid_ = reg_clsid
             _reg_clsctx_ = reg_clsctx
 
+        serverdll = r"my\target\server.dll"
         clsid_sub = rf"CLSID\{reg_clsid}"
         inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
         expected = [
             (HKCR, clsid_sub, "", ""),
-            (HKCR, inproc_srv_sub, "", r"my\target\server.dll"),
+            (HKCR, inproc_srv_sub, "", serverdll),
         ]
 
         with mock.patch.dict(comtypes.server.inprocserver._clsid_to_class):
             comtypes.server.inprocserver._clsid_to_class.update({5678: Cls})
-            self.assertEqual(expected, list(RegistryEntries(Cls)))
+            self.assertEqual(expected, list(RegistryEntries(Cls, serverdll=serverdll)))
 
-    @mock.patch.object(register, "_get_serverdll", lambda: r"my\target\server.dll")
     @mock.patch.object(register, "sys")
     def test_inproc_dll(self, _sys):
         _sys.mock_add_spec(["frozen", "modules"])
@@ -514,30 +508,7 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
             _reg_clsid_ = reg_clsid
             _reg_clsctx_ = reg_clsctx
 
-        clsid_sub = rf"CLSID\{reg_clsid}"
-        inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
-        full_classname = f"{__name__}.Cls"
-        expected = [
-            (HKCR, clsid_sub, "", ""),
-            (HKCR, inproc_srv_sub, "", r"my\target\server.dll"),
-            (HKCR, inproc_srv_sub, "PythonClass", full_classname),
-            (HKCR, inproc_srv_sub, "PythonPath", os.path.dirname(__file__)),
-        ]
-        self.assertEqual(expected, list(RegistryEntries(Cls)))
-
-    @mock.patch.object(register, "sys")
-    def test_dll_specified_inproc_server(self, _sys):
-        _sys.mock_add_spec(["frozen", "modules"])
-        _sys.frozen = "dll"
-        _sys.modules = sys.modules
-        reg_clsid = GUID.create_new()
-        reg_clsctx = comtypes.CLSCTX_INPROC_SERVER
-
-        class Cls:
-            _reg_clsid_ = reg_clsid
-            _reg_clsctx_ = reg_clsctx
-
-        serverdll = r"\path\to\my\injected.dll"
+        serverdll = r"my\target\server.dll"
         clsid_sub = rf"CLSID\{reg_clsid}"
         inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
         full_classname = f"{__name__}.Cls"
@@ -549,7 +520,6 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
         ]
         self.assertEqual(expected, list(RegistryEntries(Cls, serverdll=serverdll)))
 
-    @mock.patch.object(register, "_get_serverdll", lambda: r"my\target\server.dll")
     @mock.patch.object(register, "sys")
     def test_inproc_dll_reg_threading(self, _sys):
         _sys.mock_add_spec(["frozen", "modules"])
@@ -564,14 +534,15 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
             _reg_threading_ = reg_threading
             _reg_clsctx_ = reg_clsctx
 
+        serverdll = r"my\target\server.dll"
         clsid_sub = rf"CLSID\{reg_clsid}"
         inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
         full_classname = f"{__name__}.Cls"
         expected = [
             (HKCR, clsid_sub, "", ""),
-            (HKCR, inproc_srv_sub, "", r"my\target\server.dll"),
+            (HKCR, inproc_srv_sub, "", serverdll),
             (HKCR, inproc_srv_sub, "PythonClass", full_classname),
             (HKCR, inproc_srv_sub, "PythonPath", os.path.dirname(__file__)),
             (HKCR, inproc_srv_sub, "ThreadingModel", reg_threading),
         ]
-        self.assertEqual(expected, list(RegistryEntries(Cls)))
+        self.assertEqual(expected, list(RegistryEntries(Cls, serverdll=serverdll)))

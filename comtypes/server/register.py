@@ -157,7 +157,7 @@ class Registrar(object):
             self._register(cls, executable)
 
     def _register(self, cls: Type, executable: Optional[str] = None) -> None:
-        table = sorted(RegistryEntries(cls))
+        table = sorted(RegistryEntries(cls, serverdll=self._serverdll))
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
             _debug("[%s\\%s]", _explain(hkey), subkey)
@@ -192,7 +192,7 @@ class Registrar(object):
     def _unregister(self, cls: Type, force: bool = False) -> None:
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
-        table = [t[:2] for t in RegistryEntries(cls)]
+        table = [t[:2] for t in RegistryEntries(cls, serverdll=self._serverdll)]
         # only unique entries
         table = list(set(table))
         table.sort()
@@ -234,7 +234,7 @@ def _get_serverdll() -> str:
 class RegistryEntries(object):
     def __init__(self, cls: Type, *, serverdll: Optional[str] = None) -> None:
         self._cls = cls
-        self._serverdll = serverdll if serverdll else _get_serverdll()
+        self._serverdll = serverdll
 
     def _get_full_classname(self, cls: Type) -> str:
         """Return <modulename>.<classname> for 'cls'."""
@@ -332,6 +332,8 @@ class RegistryEntries(object):
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
         if inprocsvr_ctx and getattr(sys, "frozen", None) in (None, "dll"):
+            if self._serverdll is None:
+                raise TypeError("'serverdll' is not specified.")
             yield (HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", self._serverdll)
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
