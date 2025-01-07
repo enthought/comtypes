@@ -230,9 +230,9 @@ def _get_serverdll() -> str:
 
 
 class RegistryEntries(object):
-    def __init__(self, cls: Type) -> None:
+    def __init__(self, cls: Type, *, serverdll: Optional[str] = None) -> None:
         self._cls = cls
-        self._serverdll = _get_serverdll()
+        self._serverdll = serverdll if serverdll else _get_serverdll()
 
     def _get_full_classname(self, cls: Type) -> str:
         """Return <modulename>.<classname> for 'cls'."""

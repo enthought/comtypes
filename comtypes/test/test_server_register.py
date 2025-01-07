@@ -329,6 +329,26 @@ class Test_NonFrozen_RegistryEntries(ut.TestCase):
         ]
         self.assertEqual(expected, list(RegistryEntries(Cls)))
 
+    def test_dll_specified_inproc_server(self):
+        reg_clsid = GUID.create_new()
+        reg_clsctx = comtypes.CLSCTX_INPROC_SERVER
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+            _reg_clsctx_ = reg_clsctx
+
+        serverdll = r"\path\to\my\injected.dll"
+        clsid_sub = rf"CLSID\{reg_clsid}"
+        inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
+        full_classname = f"{__name__}.Cls"
+        expected = [
+            (HKCR, clsid_sub, "", ""),
+            (HKCR, inproc_srv_sub, "", serverdll),
+            (HKCR, inproc_srv_sub, "PythonClass", full_classname),
+            (HKCR, inproc_srv_sub, "PythonPath", os.path.dirname(__file__)),
+        ]
+        self.assertEqual(expected, list(RegistryEntries(Cls, serverdll=serverdll)))
+
     def test_inproc_server_reg_threading(self):
         reg_clsid = GUID.create_new()
         reg_threading = "Both"
@@ -504,6 +524,30 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
             (HKCR, inproc_srv_sub, "PythonPath", os.path.dirname(__file__)),
         ]
         self.assertEqual(expected, list(RegistryEntries(Cls)))
+
+    @mock.patch.object(register, "sys")
+    def test_dll_specified_inproc_server(self, _sys):
+        _sys.mock_add_spec(["frozen", "modules"])
+        _sys.frozen = "dll"
+        _sys.modules = sys.modules
+        reg_clsid = GUID.create_new()
+        reg_clsctx = comtypes.CLSCTX_INPROC_SERVER
+
+        class Cls:
+            _reg_clsid_ = reg_clsid
+            _reg_clsctx_ = reg_clsctx
+
+        serverdll = r"\path\to\my\injected.dll"
+        clsid_sub = rf"CLSID\{reg_clsid}"
+        inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
+        full_classname = f"{__name__}.Cls"
+        expected = [
+            (HKCR, clsid_sub, "", ""),
+            (HKCR, inproc_srv_sub, "", serverdll),
+            (HKCR, inproc_srv_sub, "PythonClass", full_classname),
+            (HKCR, inproc_srv_sub, "PythonPath", os.path.dirname(__file__)),
+        ]
+        self.assertEqual(expected, list(RegistryEntries(Cls, serverdll=serverdll)))
 
     @mock.patch.object(register, "_get_serverdll", lambda: r"my\target\server.dll")
     @mock.patch.object(register, "sys")
