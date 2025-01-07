@@ -232,6 +232,7 @@ def _get_serverdll() -> str:
 class RegistryEntries(object):
     def __init__(self, cls: Type) -> None:
         self._cls = cls
+        self._serverdll = _get_serverdll()
 
     def _get_full_classname(self, cls: Type) -> str:
         """Return <modulename>.<classname> for 'cls'."""
@@ -329,7 +330,7 @@ class RegistryEntries(object):
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
         if inprocsvr_ctx and getattr(sys, "frozen", None) in (None, "dll"):
-            yield (HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", _get_serverdll())
+            yield (HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", self._serverdll)
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
                 not hasattr(sys, "frozendllhandle")
