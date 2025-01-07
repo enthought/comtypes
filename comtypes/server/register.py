@@ -101,6 +101,7 @@ class Registrar(object):
 
     def __init__(self) -> None:
         self._serverdll = _get_serverdll()
+        self._frozen = getattr(sys, "frozen", None)
 
     def nodebug(self, cls: Type) -> None:
         """Delete logging entries from the registry."""
@@ -157,7 +158,9 @@ class Registrar(object):
             self._register(cls, executable)
 
     def _register(self, cls: Type, executable: Optional[str] = None) -> None:
-        table = sorted(RegistryEntries(cls, serverdll=self._serverdll))
+        table = sorted(
+            RegistryEntries(cls, serverdll=self._serverdll, frozen=self._frozen)
+        )
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
             _debug("[%s\\%s]", _explain(hkey), subkey)
@@ -192,7 +195,12 @@ class Registrar(object):
     def _unregister(self, cls: Type, force: bool = False) -> None:
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
-        table = [t[:2] for t in RegistryEntries(cls, serverdll=self._serverdll)]
+        table = [
+            t[:2]
+            for t in RegistryEntries(
+                cls, serverdll=self._serverdll, frozen=self._frozen
+            )
+        ]
         # only unique entries
         table = list(set(table))
         table.sort()
@@ -232,10 +240,12 @@ def _get_serverdll() -> str:
 
 
 class RegistryEntries(object):
-    def __init__(self, cls: Type, *, serverdll: Optional[str] = None) -> None:
+    def __init__(
+        self, cls, *, serverdll: Optional[str] = None, frozen: Optional[str] = None
+    ) -> None:
         self._cls = cls
         self._serverdll = serverdll
-        self._frozen = getattr(sys, "frozen", None)
+        self._frozen = frozen
 
     def _get_full_classname(self, cls: Type) -> str:
         """Return <modulename>.<classname> for 'cls'."""
