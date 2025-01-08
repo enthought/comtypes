@@ -99,6 +99,13 @@ class Registrar(object):
     work.
     """
 
+    _frozen: Optional[str]
+    _frozendllhandle: Optional[int]
+
+    def __init__(self) -> None:
+        self._frozen = getattr(sys, "frozen", None)
+        self._frozendllhandle = getattr(sys, "frozendllhandle", None)
+
     def nodebug(self, cls: Type) -> None:
         """Delete logging entries from the registry."""
         clsid = cls._reg_clsid_
@@ -154,7 +161,13 @@ class Registrar(object):
             self._register(cls, executable)
 
     def _register(self, cls: Type, executable: Optional[str] = None) -> None:
-        table = sorted(RegistryEntries(cls))
+        table = sorted(
+            RegistryEntries(
+                cls,
+                frozen=self._frozen,
+                frozendllhandle=self._frozendllhandle,
+            )
+        )
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
             _debug("[%s\\%s]", _explain(hkey), subkey)
@@ -164,14 +177,14 @@ class Registrar(object):
 
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
-            if hasattr(sys, "frozendllhandle"):
-                dll = _get_serverdll()
-                _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", dll)
-                LoadTypeLibEx(dll, REGKIND_REGISTER)
+            if self._frozendllhandle is not None:
+                frozen_dll = _get_serverdll(self._frozendllhandle)
+                _debug("LoadTypeLibEx(%s, REGKIND_REGISTER)", frozen_dll)
+                LoadTypeLibEx(frozen_dll, REGKIND_REGISTER)
             else:
                 if executable:
                     path = executable
-                elif hasattr(sys, "frozen"):
+                elif self._frozen is not None:
                     path = sys.executable
                 else:
                     path = cls._typelib_path_
@@ -190,7 +203,12 @@ class Registrar(object):
     def _unregister(self, cls: Type, force: bool = False) -> None:
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
-        table = [t[:2] for t in RegistryEntries(cls)]
+        table = [
+            t[:2]
+            for t in RegistryEntries(
+                cls, frozen=self._frozen, frozendllhandle=self._frozendllhandle
+            )
+        ]
         # only unique entries
         table = list(set(table))
         table.sort()
@@ -221,17 +239,24 @@ class Registrar(object):
         _debug("Done")
 
 
-def _get_serverdll() -> str:
+def _get_serverdll(handle: Optional[int]) -> str:
     """Return the pathname of the dll hosting the COM object."""
-    handle = getattr(sys, "frozendllhandle", None)
     if handle is not None:
         return GetModuleFileName(handle, 260)
     return _ctypes.__file__
 
 
 class RegistryEntries(object):
-    def __init__(self, cls: Type) -> None:
+    def __init__(
+        self,
+        cls: Type,
+        *,
+        frozen: Optional[str] = None,
+        frozendllhandle: Optional[int] = None,
+    ) -> None:
         self._cls = cls
+        self._frozen = frozen
+        self._frozendllhandle = frozendllhandle
 
     def _get_full_classname(self, cls: Type) -> str:
         """Return <modulename>.<classname> for 'cls'."""
@@ -312,11 +337,11 @@ class RegistryEntries(object):
         localsvr_ctx = bool(clsctx & comtypes.CLSCTX_LOCAL_SERVER)
         inprocsvr_ctx = bool(clsctx & comtypes.CLSCTX_INPROC_SERVER)
 
-        if localsvr_ctx and not hasattr(sys, "frozendllhandle"):
+        if localsvr_ctx and self._frozendllhandle is None:
             exe = sys.executable
             if " " in exe:
                 exe = f'"{exe}"'
-            if not hasattr(sys, "frozen"):
+            if self._frozen is None:
                 if not __debug__:
                     exe = f"{exe} -O"
                 script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
@@ -328,11 +353,16 @@ class RegistryEntries(object):
 
         # Register InprocServer32 only when run from script or from
         # py2exe dll server, not from py2exe exe server.
-        if inprocsvr_ctx and getattr(sys, "frozen", None) in (None, "dll"):
-            yield (HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", _get_serverdll())
+        if inprocsvr_ctx and self._frozen in (None, "dll"):
+            yield (
+                HKCR,
+                rf"CLSID\{reg_clsid}\InprocServer32",
+                "",
+                _get_serverdll(self._frozendllhandle),
+            )
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             if (
-                not hasattr(sys, "frozendllhandle")
+                self._frozendllhandle is None
                 or not comtypes.server.inprocserver._clsid_to_class
             ):
                 yield (
