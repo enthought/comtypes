@@ -1,5 +1,6 @@
 import unittest as ut
-from ctypes import Structure, c_long, c_uint, c_ulong
+from ctypes import POINTER, Structure, WinDLL, byref, c_long, c_uint, c_ulong
+from ctypes.wintypes import BOOL, HWND, LPLONG, UINT
 
 from comtypes.client import CreateObject, GetEvents
 
@@ -58,14 +59,26 @@ class MSG(Structure):
 
 
 def PumpWaitingMessages():
-    from ctypes import byref, windll
+    _user32 = WinDLL("user32")
 
-    user32 = windll.user32
+    _PeekMessageA = _user32.PeekMessageA
+    _PeekMessageA.argtypes = [POINTER(MSG), HWND, UINT, UINT, UINT]
+    _PeekMessageA.restype = BOOL
+
+    _TranslateMessage = _user32.TranslateMessage
+    _TranslateMessage.argtypes = [POINTER(MSG)]
+    _TranslateMessage.restype = BOOL
+
+    LRESULT = LPLONG
+    _DispatchMessageA = _user32.DispatchMessageA
+    _DispatchMessageA.argtypes = [POINTER(MSG)]
+    _DispatchMessageA.restype = LRESULT
+
     msg = MSG()
     PM_REMOVE = 0x0001
-    while user32.PeekMessageA(byref(msg), 0, 0, 0, PM_REMOVE):
-        user32.TranslateMessage(byref(msg))
-        user32.DispatchMessageA(byref(msg))
+    while _PeekMessageA(byref(msg), 0, 0, 0, PM_REMOVE):
+        _TranslateMessage(byref(msg))
+        _DispatchMessageA(byref(msg))
 
 
 class Test(ut.TestCase):
