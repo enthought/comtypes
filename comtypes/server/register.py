@@ -42,7 +42,8 @@ import logging
 import os
 import sys
 import winreg
-from ctypes import WinError, windll
+from ctypes import WinDLL, WinError
+from ctypes.wintypes import HKEY, LONG
 from typing import Iterator, List, Optional, Tuple, Type, Union
 
 import comtypes
@@ -73,9 +74,12 @@ def _non_zero(retval, func, args):
     return retval
 
 
-SHDeleteKey = windll.shlwapi.SHDeleteKeyW
+_shlwapi = WinDLL("shlwapi")
+LSTATUS = LONG
+SHDeleteKey = _shlwapi.SHDeleteKeyW
 SHDeleteKey.errcheck = _non_zero
-SHDeleteKey.argtypes = ctypes.c_ulong, ctypes.c_wchar_p
+SHDeleteKey.argtypes = HKEY, ctypes.c_wchar_p
+SHDeleteKey.restype = LSTATUS
 
 
 _KEYS = {
