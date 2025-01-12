@@ -3,6 +3,7 @@ from copy import copy
 from ctypes import *
 from comtypes.client import GetModule, CreateObject
 from comtypes.patcher import Patch
+from comtypes.GUID import _CoTaskMemFree
 
 # ./urlhist.tlb was downloaded somewhere from the internet (?)
 
@@ -23,8 +24,8 @@ class _(object):
         for n, _ in self._fields_:
             setattr(result, n, getattr(self, n))
         url, title = self.pwcsUrl, self.pwcsTitle
-        windll.ole32.CoTaskMemFree(cast_field(self, "pwcsUrl", c_void_p))
-        windll.ole32.CoTaskMemFree(cast_field(self, "pwcsTitle", c_void_p))
+        _CoTaskMemFree(cast_field(self, "pwcsUrl", c_void_p))
+        _CoTaskMemFree(cast_field(self, "pwcsTitle", c_void_p))
         return result
 
 
