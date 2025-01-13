@@ -37,19 +37,19 @@ Now, debug the object, and when done delete logging info:
 """
 
 import _ctypes
-import ctypes
 import logging
 import os
 import sys
 import winreg
 from ctypes import WinDLL, WinError
-from ctypes.wintypes import HKEY, LONG
+from ctypes.wintypes import HKEY, LONG, LPCWSTR
 from typing import Iterator, List, Optional, Tuple, Type, Union
 
-import comtypes
-import comtypes.server.inprocserver
-from comtypes.hresult import *
-from comtypes.server import w_getopt
+from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
+from comtypes.hresult import TYPE_E_CANTLOADLIBRARY, TYPE_E_REGISTRYACCESS
+from comtypes.server.inprocserver import _clsid_to_class
+from comtypes.server.localserver import run as run_localserver
+from comtypes.server.w_getopt import w_getopt
 from comtypes.typeinfo import (
     REGKIND_REGISTER,
     GetModuleFileName,
@@ -78,7 +78,7 @@ _shlwapi = WinDLL("shlwapi")
 LSTATUS = LONG
 SHDeleteKey = _shlwapi.SHDeleteKeyW
 SHDeleteKey.errcheck = _non_zero
-SHDeleteKey.argtypes = HKEY, ctypes.c_wchar_p
+SHDeleteKey.argtypes = HKEY, LPCWSTR
 SHDeleteKey.restype = LSTATUS
 
 
@@ -338,8 +338,8 @@ class RegistryEntries(object):
                 yield (HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
 
         clsctx: int = getattr(cls, "_reg_clsctx_", 0)
-        localsvr_ctx = bool(clsctx & comtypes.CLSCTX_LOCAL_SERVER)
-        inprocsvr_ctx = bool(clsctx & comtypes.CLSCTX_INPROC_SERVER)
+        localsvr_ctx = bool(clsctx & CLSCTX_LOCAL_SERVER)
+        inprocsvr_ctx = bool(clsctx & CLSCTX_INPROC_SERVER)
 
         if localsvr_ctx and self._frozendllhandle is None:
             exe = sys.executable
@@ -365,10 +365,7 @@ class RegistryEntries(object):
                 _get_serverdll(self._frozendllhandle),
             )
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
-            if (
-                self._frozendllhandle is None
-                or not comtypes.server.inprocserver._clsid_to_class
-            ):
+            if self._frozendllhandle is None or not _clsid_to_class:
                 yield (
                     HKCR,
                     rf"CLSID\{reg_clsid}\InprocServer32",
@@ -409,9 +406,7 @@ def unregister(cls: Type) -> None:
 
 def UseCommandLine(*classes: Type) -> int:
     usage = f"""Usage: {sys.argv[0]} [-regserver] [-unregserver] [-nodebug] [-f logformat] [-l loggername=level]"""
-    opts, args = w_getopt.w_getopt(
-        sys.argv[1:], "regserver unregserver embedding l: f: nodebug"
-    )
+    opts, args = w_getopt(sys.argv[1:], "regserver unregserver embedding l: f: nodebug")
     if not opts:
         sys.stderr.write(usage + "\n")
         return 0  # nothing for us to do
@@ -444,9 +439,7 @@ def UseCommandLine(*classes: Type) -> int:
             Registrar().nodebug(cls)
 
     if runit:
-        import comtypes.server.localserver
-
-        comtypes.server.localserver.run(classes)
+        run_localserver(classes)
 
     return 1  # we have done something
 
