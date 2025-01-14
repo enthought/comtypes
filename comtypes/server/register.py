@@ -310,11 +310,11 @@ def _get_pythonpath(cls: Type) -> str:
     return os.path.abspath(dirname)
 
 
+HKCR = winreg.HKEY_CLASSES_ROOT
+
+
 def _iter_reg_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
-    HKCR = winreg.HKEY_CLASSES_ROOT
-
     # basic entry - names the comobject
-
     reg_desc = getattr(cls, "_reg_desc_", "")
     if not reg_desc:
         # Simple minded algorithm to construct a description from
@@ -353,8 +353,6 @@ def _iter_reg_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
 def _iter_ctx_entries(
     cls: Type, reg_clsid: str, frozen: Optional[str], frozendllhandle: Optional[int]
 ) -> Iterator[_Entry]:
-    HKCR = winreg.HKEY_CLASSES_ROOT
-
     clsctx: int = getattr(cls, "_reg_clsctx_", 0)
     localsvr_ctx = bool(clsctx & CLSCTX_LOCAL_SERVER)
     inprocsvr_ctx = bool(clsctx & CLSCTX_INPROC_SERVER)
