@@ -355,52 +355,65 @@ def _iter_ctx_entries(
     inprocsvr_ctx = bool(clsctx & CLSCTX_INPROC_SERVER)
 
     if localsvr_ctx and frozendllhandle is None:
-        exe = sys.executable
-        if " " in exe:
-            exe = f'"{exe}"'
-        if frozen is None:
-            if not __debug__:
-                exe = f"{exe} -O"
-            script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
-            if " " in script:
-                script = f'"{script}"'
-            yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
-        else:
-            yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
+        yield from _iter_local_ctx_entries(cls, reg_clsid, frozen)
+    if inprocsvr_ctx and frozen in (None, "dll"):
+        yield from _iter_inproc_ctx_entries(cls, reg_clsid, frozendllhandle)
+    yield from _iter_tlib_entries(cls, reg_clsid)
 
+
+def _iter_local_ctx_entries(
+    cls: Type, reg_clsid: str, frozen: Optional[str]
+) -> Iterator[_Entry]:
+    exe = sys.executable
+    exe = f'"{exe}"' if " " in exe else exe
+    if frozen is None:
+        if not __debug__:
+            exe = f"{exe} -O"
+        script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
+        if " " in script:
+            script = f'"{script}"'
+        yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
+    else:
+        yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
+
+
+def _iter_inproc_ctx_entries(
+    cls: Type, reg_clsid: str, frozendllhandle: Optional[int]
+) -> Iterator[_Entry]:
     # Register InprocServer32 only when run from script or from
     # py2exe dll server, not from py2exe exe server.
-    if inprocsvr_ctx and frozen in (None, "dll"):
+    yield (
+        HKCR,
+        rf"CLSID\{reg_clsid}\InprocServer32",
+        "",
+        _get_serverdll(frozendllhandle),
+    )
+    # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
+    if frozendllhandle is None or not _clsid_to_class:
         yield (
             HKCR,
             rf"CLSID\{reg_clsid}\InprocServer32",
-            "",
-            _get_serverdll(frozendllhandle),
+            "PythonClass",
+            _get_full_classname(cls),
         )
-        # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
-        if frozendllhandle is None or not _clsid_to_class:
-            yield (
-                HKCR,
-                rf"CLSID\{reg_clsid}\InprocServer32",
-                "PythonClass",
-                _get_full_classname(cls),
-            )
-            yield (
-                HKCR,
-                rf"CLSID\{reg_clsid}\InprocServer32",
-                "PythonPath",
-                _get_pythonpath(cls),
-            )
+        yield (
+            HKCR,
+            rf"CLSID\{reg_clsid}\InprocServer32",
+            "PythonPath",
+            _get_pythonpath(cls),
+        )
 
-        reg_threading = getattr(cls, "_reg_threading_", None)
-        if reg_threading is not None:
-            yield (
-                HKCR,
-                rf"CLSID\{reg_clsid}\InprocServer32",
-                "ThreadingModel",
-                reg_threading,
-            )
+    reg_threading = getattr(cls, "_reg_threading_", None)
+    if reg_threading is not None:
+        yield (
+            HKCR,
+            rf"CLSID\{reg_clsid}\InprocServer32",
+            "ThreadingModel",
+            reg_threading,
+        )
 
+
+def _iter_tlib_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
     reg_tlib = getattr(cls, "_reg_typelib_", None)
     if reg_tlib is not None:
         yield (HKCR, rf"CLSID\{reg_clsid}\Typelib", "", reg_tlib[0])
