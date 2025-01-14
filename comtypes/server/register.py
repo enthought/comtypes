@@ -317,11 +317,8 @@ def _iter_reg_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
     # basic entry - names the comobject
     reg_desc = getattr(cls, "_reg_desc_", "")
     if not reg_desc:
-        # Simple minded algorithm to construct a description from
-        # the progid:
-        reg_desc = getattr(cls, "_reg_novers_progid_", "") or getattr(
-            cls, "_reg_progid_", ""
-        )
+        # Simple minded algorithm to construct a description from the progid:
+        reg_desc = getattr(cls, "_reg_novers_progid_", getattr(cls, "_reg_progid_", ""))
         if reg_desc:
             reg_desc = reg_desc.replace(".", " ")
     yield (HKCR, f"CLSID\\{reg_clsid}", "", reg_desc)
