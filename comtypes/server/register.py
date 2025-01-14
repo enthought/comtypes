@@ -43,7 +43,7 @@ import sys
 import winreg
 from ctypes import WinDLL, WinError
 from ctypes.wintypes import HKEY, LONG, LPCWSTR
-from typing import Iterator, List, Optional, Tuple, Type, Union
+from typing import Any, Iterator, List, Optional, Tuple, Type, Union
 
 from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
 from comtypes.hresult import TYPE_E_CANTLOADLIBRARY, TYPE_E_REGISTRYACCESS
@@ -275,6 +275,13 @@ class RegistryEntries(object):
     IDL library name of the type library containing the coclass.
     """
 
+    def __new__(cls, typ: Type, **kwargs: Any):
+        if not kwargs:
+            return InterpRegistryEntries.__new__(InterpRegistryEntries, typ)
+        return FrozenRegistryEntries.__new__(FrozenRegistryEntries, typ, **kwargs)
+
+
+class FrozenRegistryEntries(RegistryEntries):
     def __new__(
         cls,
         typ: Type,
@@ -282,7 +289,7 @@ class RegistryEntries(object):
         frozen: Optional[str] = None,
         frozendllhandle: Optional[int] = None,
     ):
-        self = super(RegistryEntries, cls).__new__(cls)
+        self = object.__new__(cls)
         self._cls = typ
         self._frozen = frozen
         self._frozendllhandle = frozendllhandle
@@ -295,6 +302,19 @@ class RegistryEntries(object):
         yield from _iter_ctx_entries(
             self._cls, reg_clsid, self._frozen, self._frozendllhandle
         )
+
+
+class InterpRegistryEntries(RegistryEntries):
+    def __new__(cls, typ: Type):
+        self = object.__new__(cls)
+        self._cls = typ
+        return self
+
+    def __iter__(self) -> Iterator[Tuple[int, str, str, str]]:
+        # that's the only required attribute for registration
+        reg_clsid = str(self._cls._reg_clsid_)
+        yield from _iter_reg_entries(self._cls, reg_clsid)
+        yield from _iter_ctx_entries(self._cls, reg_clsid)
 
 
 def _get_full_classname(cls: Type) -> str:
@@ -350,7 +370,10 @@ def _iter_reg_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
 
 
 def _iter_ctx_entries(
-    cls: Type, reg_clsid: str, frozen: Optional[str], frozendllhandle: Optional[int]
+    cls: Type,
+    reg_clsid: str,
+    frozen: Optional[str] = None,
+    frozendllhandle: Optional[int] = None,
 ) -> Iterator[_Entry]:
     clsctx: int = getattr(cls, "_reg_clsctx_", 0)
     localsvr_ctx = bool(clsctx & CLSCTX_LOCAL_SERVER)
