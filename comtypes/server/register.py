@@ -275,16 +275,18 @@ class RegistryEntries(object):
     IDL library name of the type library containing the coclass.
     """
 
-    def __init__(
-        self,
-        cls: Type,
+    def __new__(
+        cls,
+        typ: Type,
         *,
         frozen: Optional[str] = None,
         frozendllhandle: Optional[int] = None,
-    ) -> None:
-        self._cls = cls
+    ):
+        self = super(RegistryEntries, cls).__new__(cls)
+        self._cls = typ
         self._frozen = frozen
         self._frozendllhandle = frozendllhandle
+        return self
 
     def __iter__(self) -> Iterator[_Entry]:
         # that's the only required attribute for registration
