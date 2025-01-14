@@ -371,11 +371,9 @@ def _iter_ctx_entries(
 def _iter_interp_local_ctx_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
     exe = sys.executable
     exe = f'"{exe}"' if " " in exe else exe
-    if not __debug__:
-        exe = f"{exe} -O"
+    exe = f"{exe} -O" if not __debug__ else exe
     script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
-    if " " in script:
-        script = f'"{script}"'
+    script = f'"{script}"' if " " in script else script
     yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
 
 
