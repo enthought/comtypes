@@ -277,8 +277,8 @@ class RegistryEntries(object):
 
     def __new__(cls, typ: Type, **kwargs: Any):
         if not kwargs:
-            return InterpRegistryEntries.__new__(InterpRegistryEntries, typ)
-        return FrozenRegistryEntries.__new__(FrozenRegistryEntries, typ, **kwargs)
+            return InterpRegistryEntries(typ)
+        return FrozenRegistryEntries(typ, **kwargs)
 
 
 class FrozenRegistryEntries(RegistryEntries):
