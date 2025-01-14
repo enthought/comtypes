@@ -241,11 +241,10 @@ class Registrar(object):
         _debug("Done")
 
 
-def _get_serverdll(handle: Optional[int]) -> str:
+def _get_serverdll(handle: int) -> str:
     """Return the pathname of the dll hosting the COM object."""
-    if handle is not None:
-        return GetModuleFileName(handle, 260)
-    return _ctypes.__file__
+    assert isinstance(handle, int)
+    return GetModuleFileName(handle, 260)
 
 
 class RegistryEntries(abc.ABC):
@@ -295,7 +294,9 @@ class FrozenRegistryEntries(RegistryEntries):
         if localsvr_ctx and self._frozendllhandle is None:
             yield from _iter_frozen_local_ctx_entries(self._cls, reg_clsid)
         if inprocsvr_ctx and self._frozen == "dll":
-            yield from _iter_inproc_ctx_entries(reg_clsid, self._frozendllhandle)
+            assert self._frozendllhandle is not None
+            frozen_dll = _get_serverdll(self._frozendllhandle)
+            yield from _iter_inproc_ctx_entries(reg_clsid, frozen_dll)
             yield from _iter_inproc_threading_model_entries(self._cls, reg_clsid)
         yield from _iter_tlib_entries(self._cls, reg_clsid)
 
@@ -314,7 +315,7 @@ class InterpRegistryEntries(RegistryEntries):
         if localsvr_ctx:
             yield from _iter_interp_local_ctx_entries(self._cls, reg_clsid)
         if inprocsvr_ctx:
-            yield from _iter_inproc_ctx_entries(reg_clsid, None)
+            yield from _iter_inproc_ctx_entries(reg_clsid, _ctypes.__file__)
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
             yield from _iter_inproc_python_entries(self._cls, reg_clsid)
             yield from _iter_inproc_threading_model_entries(self._cls, reg_clsid)
@@ -388,17 +389,10 @@ def _iter_frozen_local_ctx_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry
     yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
 
 
-def _iter_inproc_ctx_entries(
-    reg_clsid: str, frozendllhandle: Optional[int]
-) -> Iterator[_Entry]:
+def _iter_inproc_ctx_entries(reg_clsid: str, dllfile: str) -> Iterator[_Entry]:
     # Register InprocServer32 only when run from script or from
     # py2exe dll server, not from py2exe exe server.
-    yield (
-        HKCR,
-        rf"CLSID\{reg_clsid}\InprocServer32",
-        "",
-        _get_serverdll(frozendllhandle),
-    )
+    yield (HKCR, rf"CLSID\{reg_clsid}\InprocServer32", "", dllfile)
 
 
 def _iter_inproc_python_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:

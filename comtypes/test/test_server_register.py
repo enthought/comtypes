@@ -195,9 +195,6 @@ class Test_Registrar_unregister(ut.TestCase):
 
 
 class Test_get_serverdll(ut.TestCase):
-    def test_nonfrozen(self):
-        self.assertEqual(_ctypes.__file__, _get_serverdll(None))
-
     @mock.patch.object(register, "GetModuleFileName")
     def test_frozen(self, GetModuleFileName):
         handle, dll_path = 1234, r"path\to\frozen.dll"
