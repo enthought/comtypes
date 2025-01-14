@@ -93,6 +93,9 @@ def _explain(hkey: int) -> Union[str, int]:
     return _KEYS.get(hkey, hkey)
 
 
+_Entry = Tuple[int, str, str, str]
+
+
 class Registrar(object):
     """COM class registration.
 
@@ -296,7 +299,7 @@ class RegistryEntries(object):
         dirname = os.path.dirname(sys.modules[modname].__file__)  # type: ignore
         return os.path.abspath(dirname)
 
-    def __iter__(self) -> Iterator[Tuple[int, str, str, str]]:
+    def __iter__(self) -> Iterator[_Entry]:
         cls = self._cls
         HKCR = winreg.HKEY_CLASSES_ROOT
 
