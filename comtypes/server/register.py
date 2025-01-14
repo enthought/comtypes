@@ -355,26 +355,30 @@ def _iter_ctx_entries(
     inprocsvr_ctx = bool(clsctx & CLSCTX_INPROC_SERVER)
 
     if localsvr_ctx and frozendllhandle is None:
-        yield from _iter_local_ctx_entries(cls, reg_clsid, frozen)
+        if frozen is None:
+            yield from _iter_interp_local_ctx_entries(cls, reg_clsid)
+        else:
+            yield from _iter_frozen_local_ctx_entries(cls, reg_clsid)
     if inprocsvr_ctx and frozen in (None, "dll"):
         yield from _iter_inproc_ctx_entries(cls, reg_clsid, frozendllhandle)
     yield from _iter_tlib_entries(cls, reg_clsid)
 
 
-def _iter_local_ctx_entries(
-    cls: Type, reg_clsid: str, frozen: Optional[str]
-) -> Iterator[_Entry]:
+def _iter_interp_local_ctx_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
     exe = sys.executable
     exe = f'"{exe}"' if " " in exe else exe
-    if frozen is None:
-        if not __debug__:
-            exe = f"{exe} -O"
-        script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
-        if " " in script:
-            script = f'"{script}"'
-        yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
-    else:
-        yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
+    if not __debug__:
+        exe = f"{exe} -O"
+    script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
+    if " " in script:
+        script = f'"{script}"'
+    yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
+
+
+def _iter_frozen_local_ctx_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
+    exe = sys.executable
+    exe = f'"{exe}"' if " " in exe else exe
+    yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe}")
 
 
 def _iter_inproc_ctx_entries(
