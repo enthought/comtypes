@@ -37,13 +37,14 @@ Now, debug the object, and when done delete logging info:
 """
 
 import _ctypes
+import abc
 import logging
 import os
 import sys
 import winreg
 from ctypes import WinDLL, WinError
 from ctypes.wintypes import HKEY, LONG, LPCWSTR
-from typing import Any, Iterator, List, Optional, Tuple, Type, Union
+from typing import Iterable, Iterator, List, Optional, Tuple, Type, Union
 
 import comtypes.server.inprocserver  # noqa
 from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
@@ -113,6 +114,11 @@ class Registrar(object):
         self._frozen = getattr(sys, "frozen", None)
         self._frozendllhandle = getattr(sys, "frozendllhandle", None)
 
+    def _generate_reg_entries(self, cls: Type) -> Iterable[_Entry]:
+        if self._frozen is None:
+            return InterpRegistryEntries(cls)
+        return FrozenRegistryEntries(cls, self._frozen, self._frozendllhandle)
+
     def nodebug(self, cls: Type) -> None:
         """Delete logging entries from the registry."""
         clsid = cls._reg_clsid_
@@ -168,13 +174,7 @@ class Registrar(object):
             self._register(cls, executable)
 
     def _register(self, cls: Type, executable: Optional[str] = None) -> None:
-        table = sorted(
-            RegistryEntries(
-                cls,
-                frozen=self._frozen,
-                frozendllhandle=self._frozendllhandle,
-            )
-        )
+        table = sorted(self._generate_reg_entries(cls))
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
             _debug("[%s\\%s]", _explain(hkey), subkey)
@@ -210,12 +210,7 @@ class Registrar(object):
     def _unregister(self, cls: Type, force: bool = False) -> None:
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
-        table = [
-            t[:2]
-            for t in RegistryEntries(
-                cls, frozen=self._frozen, frozendllhandle=self._frozendllhandle
-            )
-        ]
+        table = [t[:2] for t in self._generate_reg_entries(cls)]
         # only unique entries
         table = list(set(table))
         table.sort()
@@ -253,7 +248,7 @@ def _get_serverdll(handle: Optional[int]) -> str:
     return _ctypes.__file__
 
 
-class RegistryEntries(object):
+class RegistryEntries(abc.ABC):
     """Iterator of tuples containing registry entries.
 
     The tuples must be (key, subkey, name, value).
@@ -275,64 +270,55 @@ class RegistryEntries(object):
     IDL library name of the type library containing the coclass.
     """
 
-    def __new__(cls, typ: Type, **kwargs: Any):
-        if not kwargs:
-            return InterpRegistryEntries(typ)
-        return FrozenRegistryEntries(typ, **kwargs)
+    @abc.abstractmethod
+    def __iter__(self) -> Iterator[_Entry]: ...
 
 
 class FrozenRegistryEntries(RegistryEntries):
-    def __new__(
-        cls,
-        typ: Type,
-        *,
+    def __init__(
+        self,
+        cls: Type,
         frozen: str,
         frozendllhandle: Optional[int] = None,
-    ):
-        self = object.__new__(cls)
-        self._cls = typ
+    ) -> None:
+        self._cls = cls
         self._frozen = frozen
         self._frozendllhandle = frozendllhandle
-        return self
 
     def __iter__(self) -> Iterator[_Entry]:
         # that's the only required attribute for registration
         reg_clsid = str(self._cls._reg_clsid_)
         yield from _iter_reg_entries(self._cls, reg_clsid)
-        cls = self._cls
-        clsctx: int = getattr(cls, "_reg_clsctx_", 0)
+        clsctx: int = getattr(self._cls, "_reg_clsctx_", 0)
         localsvr_ctx = bool(clsctx & CLSCTX_LOCAL_SERVER)
         inprocsvr_ctx = bool(clsctx & CLSCTX_INPROC_SERVER)
         if localsvr_ctx and self._frozendllhandle is None:
-            yield from _iter_frozen_local_ctx_entries(cls, reg_clsid)
+            yield from _iter_frozen_local_ctx_entries(self._cls, reg_clsid)
         if inprocsvr_ctx and self._frozen == "dll":
-            yield from _iter_inproc_ctx_entries(cls, reg_clsid, self._frozendllhandle)
-            yield from _iter_inproc_threading_model_entries(cls, reg_clsid)
-        yield from _iter_tlib_entries(cls, reg_clsid)
+            yield from _iter_inproc_ctx_entries(reg_clsid, self._frozendllhandle)
+            yield from _iter_inproc_threading_model_entries(self._cls, reg_clsid)
+        yield from _iter_tlib_entries(self._cls, reg_clsid)
 
 
 class InterpRegistryEntries(RegistryEntries):
-    def __new__(cls, typ: Type):
-        self = object.__new__(cls)
-        self._cls = typ
-        return self
+    def __init__(self, cls: Type) -> None:
+        self._cls = cls
 
-    def __iter__(self) -> Iterator[Tuple[int, str, str, str]]:
+    def __iter__(self) -> Iterator[_Entry]:
         # that's the only required attribute for registration
         reg_clsid = str(self._cls._reg_clsid_)
         yield from _iter_reg_entries(self._cls, reg_clsid)
-        cls = self._cls
-        clsctx: int = getattr(cls, "_reg_clsctx_", 0)
+        clsctx: int = getattr(self._cls, "_reg_clsctx_", 0)
         localsvr_ctx = bool(clsctx & CLSCTX_LOCAL_SERVER)
         inprocsvr_ctx = bool(clsctx & CLSCTX_INPROC_SERVER)
         if localsvr_ctx:
-            yield from _iter_interp_local_ctx_entries(cls, reg_clsid)
+            yield from _iter_interp_local_ctx_entries(self._cls, reg_clsid)
         if inprocsvr_ctx:
-            yield from _iter_inproc_ctx_entries(cls, reg_clsid, None)
+            yield from _iter_inproc_ctx_entries(reg_clsid, None)
             # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
-            yield from _iter_inproc_python_entries(cls, reg_clsid)
-            yield from _iter_inproc_threading_model_entries(cls, reg_clsid)
-        yield from _iter_tlib_entries(cls, reg_clsid)
+            yield from _iter_inproc_python_entries(self._cls, reg_clsid)
+            yield from _iter_inproc_threading_model_entries(self._cls, reg_clsid)
+        yield from _iter_tlib_entries(self._cls, reg_clsid)
 
 
 def _get_full_classname(cls: Type) -> str:
@@ -403,7 +389,7 @@ def _iter_frozen_local_ctx_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry
 
 
 def _iter_inproc_ctx_entries(
-    cls: Type, reg_clsid: str, frozendllhandle: Optional[int]
+    reg_clsid: str, frozendllhandle: Optional[int]
 ) -> Iterator[_Entry]:
     # Register InprocServer32 only when run from script or from
     # py2exe dll server, not from py2exe exe server.
