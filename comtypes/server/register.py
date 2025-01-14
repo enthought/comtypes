@@ -45,9 +45,9 @@ from ctypes import WinDLL, WinError
 from ctypes.wintypes import HKEY, LONG, LPCWSTR
 from typing import Any, Iterator, List, Optional, Tuple, Type, Union
 
+import comtypes.server.inprocserver  # noqa
 from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
 from comtypes.hresult import TYPE_E_CANTLOADLIBRARY, TYPE_E_REGISTRYACCESS
-from comtypes.server.inprocserver import _clsid_to_class
 from comtypes.server.localserver import run as run_localserver
 from comtypes.server.w_getopt import w_getopt
 from comtypes.typeinfo import (
@@ -286,7 +286,7 @@ class FrozenRegistryEntries(RegistryEntries):
         cls,
         typ: Type,
         *,
-        frozen: Optional[str] = None,
+        frozen: str,
         frozendllhandle: Optional[int] = None,
     ):
         self = object.__new__(cls)
@@ -299,9 +299,16 @@ class FrozenRegistryEntries(RegistryEntries):
         # that's the only required attribute for registration
         reg_clsid = str(self._cls._reg_clsid_)
         yield from _iter_reg_entries(self._cls, reg_clsid)
-        yield from _iter_ctx_entries(
-            self._cls, reg_clsid, self._frozen, self._frozendllhandle
-        )
+        cls = self._cls
+        clsctx: int = getattr(cls, "_reg_clsctx_", 0)
+        localsvr_ctx = bool(clsctx & CLSCTX_LOCAL_SERVER)
+        inprocsvr_ctx = bool(clsctx & CLSCTX_INPROC_SERVER)
+        if localsvr_ctx and self._frozendllhandle is None:
+            yield from _iter_frozen_local_ctx_entries(cls, reg_clsid)
+        if inprocsvr_ctx and self._frozen == "dll":
+            yield from _iter_inproc_ctx_entries(cls, reg_clsid, self._frozendllhandle)
+            yield from _iter_inproc_threading_model_entries(cls, reg_clsid)
+        yield from _iter_tlib_entries(cls, reg_clsid)
 
 
 class InterpRegistryEntries(RegistryEntries):
@@ -314,7 +321,18 @@ class InterpRegistryEntries(RegistryEntries):
         # that's the only required attribute for registration
         reg_clsid = str(self._cls._reg_clsid_)
         yield from _iter_reg_entries(self._cls, reg_clsid)
-        yield from _iter_ctx_entries(self._cls, reg_clsid)
+        cls = self._cls
+        clsctx: int = getattr(cls, "_reg_clsctx_", 0)
+        localsvr_ctx = bool(clsctx & CLSCTX_LOCAL_SERVER)
+        inprocsvr_ctx = bool(clsctx & CLSCTX_INPROC_SERVER)
+        if localsvr_ctx:
+            yield from _iter_interp_local_ctx_entries(cls, reg_clsid)
+        if inprocsvr_ctx:
+            yield from _iter_inproc_ctx_entries(cls, reg_clsid, None)
+            # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
+            yield from _iter_inproc_python_entries(cls, reg_clsid)
+            yield from _iter_inproc_threading_model_entries(cls, reg_clsid)
+        yield from _iter_tlib_entries(cls, reg_clsid)
 
 
 def _get_full_classname(cls: Type) -> str:
@@ -367,30 +385,6 @@ def _iter_reg_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
                 yield (HKCR, reg_novers_progid, "", reg_desc)  # 2a
             yield (HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
             yield (HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
-
-
-def _iter_ctx_entries(
-    cls: Type,
-    reg_clsid: str,
-    frozen: Optional[str] = None,
-    frozendllhandle: Optional[int] = None,
-) -> Iterator[_Entry]:
-    clsctx: int = getattr(cls, "_reg_clsctx_", 0)
-    localsvr_ctx = bool(clsctx & CLSCTX_LOCAL_SERVER)
-    inprocsvr_ctx = bool(clsctx & CLSCTX_INPROC_SERVER)
-
-    if localsvr_ctx and frozendllhandle is None:
-        if frozen is None:
-            yield from _iter_interp_local_ctx_entries(cls, reg_clsid)
-        else:
-            yield from _iter_frozen_local_ctx_entries(cls, reg_clsid)
-    if inprocsvr_ctx and frozen in (None, "dll"):
-        yield from _iter_inproc_ctx_entries(cls, reg_clsid, frozendllhandle)
-        # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
-        if frozendllhandle is None or not _clsid_to_class:
-            yield from _iter_inproc_python_entries(cls, reg_clsid)
-        yield from _iter_inproc_threading_model_entries(cls, reg_clsid)
-    yield from _iter_tlib_entries(cls, reg_clsid)
 
 
 def _iter_interp_local_ctx_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:

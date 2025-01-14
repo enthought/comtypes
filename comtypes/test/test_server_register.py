@@ -442,7 +442,7 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
         self.assertEqual(expected, list(RegistryEntries(Cls, frozen="windows_exe")))
 
     @mock.patch.object(register, "_get_serverdll", return_value=SERVERDLL)
-    def test_inproc_dll_nonempty_clsid_to_class(self, get_serverdll):
+    def test_inproc_dll(self, get_serverdll):
         reg_clsid = GUID.create_new()
         reg_clsctx = comtypes.CLSCTX_INPROC_SERVER
 
@@ -457,10 +457,8 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
             (HKCR, inproc_srv_sub, "", self.SERVERDLL),
         ]
 
-        with mock.patch.dict(comtypes.server.inprocserver._clsid_to_class):
-            comtypes.server.inprocserver._clsid_to_class.update({5678: Cls})
-            entries = RegistryEntries(Cls, frozen="dll", frozendllhandle=1234)
-            self.assertEqual(expected, list(entries))
+        entries = RegistryEntries(Cls, frozen="dll", frozendllhandle=1234)
+        self.assertEqual(expected, list(entries))
         get_serverdll.assert_called_once_with(1234)
 
     @mock.patch.object(register, "_get_serverdll", return_value=SERVERDLL)
@@ -476,15 +474,9 @@ class Test_Frozen_RegistryEntries(ut.TestCase):
 
         clsid_sub = rf"CLSID\{reg_clsid}"
         inproc_srv_sub = rf"{clsid_sub}\InprocServer32"
-        full_classname = f"{__name__}.Cls"
         expected = [
             (HKCR, clsid_sub, "", ""),
             (HKCR, inproc_srv_sub, "", self.SERVERDLL),
-            # 'PythonClass' and 'PythonPath' are not required for
-            # frozen inproc servers.  This may be bugs but they do
-            # not affect the server behavior.
-            (HKCR, inproc_srv_sub, "PythonClass", full_classname),
-            (HKCR, inproc_srv_sub, "PythonPath", os.path.dirname(__file__)),
             (HKCR, inproc_srv_sub, "ThreadingModel", reg_threading),
         ]
         self.assertEqual(
