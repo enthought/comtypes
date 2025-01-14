@@ -251,6 +251,27 @@ def _get_serverdll(handle: Optional[int]) -> str:
 
 
 class RegistryEntries(object):
+    """Iterator of tuples containing registry entries.
+
+    The tuples must be (key, subkey, name, value).
+
+    Required entries:
+    =================
+    _reg_clsid_ - a string or GUID instance
+    _reg_clsctx_ - server type(s) to register
+
+    Optional entries:
+    =================
+    _reg_desc_ - a string
+    _reg_progid_ - a string naming the progid, typically 'MyServer.MyObject.1'
+    _reg_novers_progid_ - version independend progid, typically 'MyServer.MyObject'
+    _reg_typelib_ - an tuple (libid, majorversion, minorversion) specifying a typelib.
+    _reg_threading_ - a string specifying the threading model
+
+    Note that the first part of the progid string is typically the
+    IDL library name of the type library containing the coclass.
+    """
+
     def __init__(
         self,
         cls: Type,
@@ -276,26 +297,6 @@ class RegistryEntries(object):
         return os.path.abspath(dirname)
 
     def __iter__(self) -> Iterator[Tuple[int, str, str, str]]:
-        """Return a iterator of tuples containing registry entries.
-
-        The tuples must be (key, subkey, name, value).
-
-        Required entries:
-        =================
-        _reg_clsid_ - a string or GUID instance
-        _reg_clsctx_ - server type(s) to register
-
-        Optional entries:
-        =================
-        _reg_desc_ - a string
-        _reg_progid_ - a string naming the progid, typically 'MyServer.MyObject.1'
-        _reg_novers_progid_ - version independend progid, typically 'MyServer.MyObject'
-        _reg_typelib_ - an tuple (libid, majorversion, minorversion) specifying a typelib.
-        _reg_threading_ - a string specifying the threading model
-
-        Note that the first part of the progid string is typically the
-        IDL library name of the type library containing the coclass.
-        """
         cls = self._cls
         HKCR = winreg.HKEY_CLASSES_ROOT
 
