@@ -361,17 +361,19 @@ def _iter_ctx_entries(
             yield from _iter_frozen_local_ctx_entries(cls, reg_clsid)
     if inprocsvr_ctx and frozen in (None, "dll"):
         yield from _iter_inproc_ctx_entries(cls, reg_clsid, frozendllhandle)
+        # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
+        if frozendllhandle is None or not _clsid_to_class:
+            yield from _iter_inproc_python_entries(cls, reg_clsid)
+        yield from _iter_inproc_threading_model_entries(cls, reg_clsid)
     yield from _iter_tlib_entries(cls, reg_clsid)
 
 
 def _iter_interp_local_ctx_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
     exe = sys.executable
     exe = f'"{exe}"' if " " in exe else exe
-    if not __debug__:
-        exe = f"{exe} -O"
+    exe = f"{exe} -O" if not __debug__ else exe
     script = os.path.abspath(sys.modules[cls.__module__].__file__)  # type: ignore
-    if " " in script:
-        script = f'"{script}"'
+    script = f'"{script}"' if " " in script else script
     yield (HKCR, rf"CLSID\{reg_clsid}\LocalServer32", "", f"{exe} {script}")
 
 
@@ -392,21 +394,25 @@ def _iter_inproc_ctx_entries(
         "",
         _get_serverdll(frozendllhandle),
     )
-    # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
-    if frozendllhandle is None or not _clsid_to_class:
-        yield (
-            HKCR,
-            rf"CLSID\{reg_clsid}\InprocServer32",
-            "PythonClass",
-            _get_full_classname(cls),
-        )
-        yield (
-            HKCR,
-            rf"CLSID\{reg_clsid}\InprocServer32",
-            "PythonPath",
-            _get_pythonpath(cls),
-        )
 
+
+def _iter_inproc_python_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
+    # only for non-frozen inproc servers the PythonPath/PythonClass is needed.
+    yield (
+        HKCR,
+        rf"CLSID\{reg_clsid}\InprocServer32",
+        "PythonClass",
+        _get_full_classname(cls),
+    )
+    yield (
+        HKCR,
+        rf"CLSID\{reg_clsid}\InprocServer32",
+        "PythonPath",
+        _get_pythonpath(cls),
+    )
+
+
+def _iter_inproc_threading_model_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
     reg_threading = getattr(cls, "_reg_threading_", None)
     if reg_threading is not None:
         yield (
