@@ -348,30 +348,30 @@ def _iter_reg_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
         reg_desc = getattr(cls, "_reg_novers_progid_", getattr(cls, "_reg_progid_", ""))
         if reg_desc:
             reg_desc = reg_desc.replace(".", " ")
-    yield (HKCR, f"CLSID\\{reg_clsid}", "", reg_desc)
+    yield (HKCR, rf"CLSID\{reg_clsid}", "", reg_desc)
 
     reg_progid = getattr(cls, "_reg_progid_", None)
     if reg_progid:
         # for ProgIDFromCLSID:
-        yield (HKCR, f"CLSID\\{reg_clsid}\\ProgID", "", reg_progid)  # 1
+        yield (HKCR, rf"CLSID\{reg_clsid}\ProgID", "", reg_progid)  # 1
 
         # for CLSIDFromProgID
         if reg_desc:
             yield (HKCR, reg_progid, "", reg_desc)  # 2
-        yield (HKCR, f"{reg_progid}\\CLSID", "", reg_clsid)  # 3
+        yield (HKCR, rf"{reg_progid}\CLSID", "", reg_clsid)  # 3
 
         reg_novers_progid = getattr(cls, "_reg_novers_progid_", None)
         if reg_novers_progid:
             yield (
                 HKCR,
-                f"CLSID\\{reg_clsid}\\VersionIndependentProgID",  # 1a
+                rf"CLSID\{reg_clsid}\VersionIndependentProgID",  # 1a
                 "",
                 reg_novers_progid,
             )
             if reg_desc:
                 yield (HKCR, reg_novers_progid, "", reg_desc)  # 2a
-            yield (HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
-            yield (HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
+            yield (HKCR, rf"{reg_novers_progid}\CurVer", "", reg_progid)  #
+            yield (HKCR, rf"{reg_novers_progid}\CLSID", "", reg_clsid)  # 3a
 
 
 def _iter_interp_local_ctx_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
