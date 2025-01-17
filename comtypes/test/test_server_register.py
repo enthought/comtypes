@@ -71,8 +71,8 @@ class Test_delete_key(ut.TestCase):
         _sh_deletekey.assert_not_called()
 
 
+@mock.patch.object(register, "winreg")
 class Test_Registrar_nodebug(ut.TestCase):
-    @mock.patch.object(register, "winreg")
     def test_calls_openkey_and_deletekey(self, _winreg):
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.OpenKey.return_value = hkey
@@ -86,7 +86,6 @@ class Test_Registrar_nodebug(ut.TestCase):
         _winreg.OpenKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}")
         _winreg.DeleteKey.assert_called_once_with(hkey, "Logging")
 
-    @mock.patch.object(register, "winreg")
     def test_ignores_winerror(self, _winreg):
         err = OSError(ERROR_FILE_NOT_FOUND, "msg", "filename", ERROR_FILE_NOT_FOUND)
         _winreg.OpenKey.side_effect = err
@@ -100,7 +99,6 @@ class Test_Registrar_nodebug(ut.TestCase):
         _winreg.OpenKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}")
         _winreg.DeleteKey.assert_not_called()
 
-    @mock.patch.object(register, "winreg")
     def test_not_ignores_winerror(self, _winreg):
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.OpenKey.return_value = hkey
