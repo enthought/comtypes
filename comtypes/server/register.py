@@ -221,10 +221,8 @@ class Registrar(object):
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
         table = [t[:2] for t in self._generate_reg_entries(cls)]
-        # only unique entries
-        table = list(set(table))
-        table.sort()
-        table.reverse()
+        # reversed and only unique entries
+        table = reversed(sorted(list(set(table))))
         _debug("Unregister %s", cls)
         for hkey, subkey in table:
             _delete_key(hkey, subkey, force=force)
