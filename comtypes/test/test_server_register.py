@@ -118,8 +118,8 @@ class Test_Registrar_nodebug(ut.TestCase):
         _winreg.DeleteKey.assert_called_once_with(hkey, "Logging")
 
 
+@mock.patch.object(register, "winreg")
 class Test_Registrar_debug(ut.TestCase):
-    @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_sets_format(self, _winreg):
         _winreg.REG_MULTI_SZ = MULTI_SZ
         _winreg.REG_SZ = SZ
@@ -143,7 +143,6 @@ class Test_Registrar_debug(ut.TestCase):
             ],
         )
 
-    @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_deletes_format(self, _winreg):
         _winreg.REG_MULTI_SZ = MULTI_SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
@@ -162,7 +161,6 @@ class Test_Registrar_debug(ut.TestCase):
         )
         _winreg.DeleteValue.assert_called_once_with(hkey, "format")
 
-    @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_ignores_errors_on_deleting(self, _winreg):
         _winreg.REG_MULTI_SZ = MULTI_SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
@@ -183,7 +181,6 @@ class Test_Registrar_debug(ut.TestCase):
         )
         _winreg.DeleteValue.assert_called_once_with(hkey, "format")
 
-    @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_not_ignores_errors_on_deleting(self, _winreg):
         _winreg.REG_MULTI_SZ = MULTI_SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
