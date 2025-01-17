@@ -107,7 +107,7 @@ class Registrar(object):
     work.
     """
 
-    _frozen: Optional[str]
+    _frozen: Union[None, int, str]
     _frozendllhandle: Optional[int]
 
     def __init__(self) -> None:
@@ -277,7 +277,7 @@ class FrozenRegistryEntries(RegistryEntries):
     def __init__(
         self,
         cls: Type,
-        frozen: str,
+        frozen: Union[str, int],
         frozendllhandle: Optional[int] = None,
     ) -> None:
         self._cls = cls
