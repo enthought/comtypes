@@ -97,6 +97,19 @@ def _explain(hkey: int) -> Union[str, int]:
     return _KEYS.get(hkey, hkey)
 
 
+def _delete_key(hkey: int, subkey: str, *, force: bool) -> None:
+    try:
+        if force:
+            _debug("SHDeleteKey %s\\%s", _explain(hkey), subkey)
+            SHDeleteKey(hkey, subkey)
+        else:
+            _debug("DeleteKey %s\\%s", _explain(hkey), subkey)
+            winreg.DeleteKey(hkey, subkey)
+    except WindowsError as detail:
+        if get_winerror(detail) != 2:
+            raise
+
+
 _Entry = Tuple[int, str, str, str]
 
 
@@ -214,16 +227,7 @@ class Registrar(object):
         table.reverse()
         _debug("Unregister %s", cls)
         for hkey, subkey in table:
-            try:
-                if force:
-                    _debug("SHDeleteKey %s\\%s", _explain(hkey), subkey)
-                    SHDeleteKey(hkey, subkey)
-                else:
-                    _debug("DeleteKey %s\\%s", _explain(hkey), subkey)
-                    winreg.DeleteKey(hkey, subkey)
-            except WindowsError as detail:
-                if get_winerror(detail) != 2:
-                    raise
+            _delete_key(hkey, subkey, force=force)
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
             try:
