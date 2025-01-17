@@ -24,7 +24,6 @@ SZ = winreg.REG_SZ
 class Test_Registrar_nodebug(ut.TestCase):
     @mock.patch.object(register, "winreg")
     def test_calls_openkey_and_deletekey(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.OpenKey.return_value = hkey
         reg_clsid = GUID.create_new()
@@ -39,7 +38,6 @@ class Test_Registrar_nodebug(ut.TestCase):
 
     @mock.patch.object(register, "winreg")
     def test_ignores_winerror(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         ERROR_FILE_NOT_FOUND = 2
         err = OSError(ERROR_FILE_NOT_FOUND, "msg", "filename", ERROR_FILE_NOT_FOUND)
         _winreg.OpenKey.side_effect = err
@@ -55,7 +53,6 @@ class Test_Registrar_nodebug(ut.TestCase):
 
     @mock.patch.object(register, "winreg")
     def test_not_ignores_winerror(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.OpenKey.return_value = hkey
         ERROR_ACCESS_DENIED = 5
@@ -78,7 +75,6 @@ class Test_Registrar_nodebug(ut.TestCase):
 class Test_Registrar_debug(ut.TestCase):
     @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_sets_format(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         _winreg.REG_MULTI_SZ = MULTI_SZ
         _winreg.REG_SZ = SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
@@ -103,7 +99,6 @@ class Test_Registrar_debug(ut.TestCase):
 
     @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_deletes_format(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         _winreg.REG_MULTI_SZ = MULTI_SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.CreateKey.return_value = hkey
@@ -123,7 +118,6 @@ class Test_Registrar_debug(ut.TestCase):
 
     @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_ignores_errors_on_deleting(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         _winreg.REG_MULTI_SZ = MULTI_SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.CreateKey.return_value = hkey
@@ -146,7 +140,6 @@ class Test_Registrar_debug(ut.TestCase):
 
     @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_not_ignores_errors_on_deleting(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         _winreg.REG_MULTI_SZ = MULTI_SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.CreateKey.return_value = hkey

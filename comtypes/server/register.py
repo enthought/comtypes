@@ -45,6 +45,9 @@ import winreg
 from ctypes import WinDLL, WinError
 from ctypes.wintypes import HKEY, LONG, LPCWSTR
 from typing import Iterable, Iterator, List, Optional, Tuple, Type, Union
+from winreg import HKEY_CLASSES_ROOT as HKCR
+from winreg import HKEY_CURRENT_USER as HKCU
+from winreg import HKEY_LOCAL_MACHINE as HKLM
 
 import comtypes.server.inprocserver  # noqa
 from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
@@ -84,9 +87,9 @@ SHDeleteKey.restype = LSTATUS
 
 
 _KEYS = {
-    winreg.HKEY_CLASSES_ROOT: "HKCR",
-    winreg.HKEY_LOCAL_MACHINE: "HKLM",
-    winreg.HKEY_CURRENT_USER: "HKCU",
+    HKCR: "HKCR",
+    HKLM: "HKLM",
+    HKCU: "HKCU",
 }
 
 
@@ -123,11 +126,8 @@ class Registrar(object):
         """Delete logging entries from the registry."""
         clsid = cls._reg_clsid_
         try:
-            _debug(
-                'DeleteKey( %s\\CLSID\\%s\\Logging"'
-                % (_explain(winreg.HKEY_CLASSES_ROOT), clsid)
-            )
-            hkey = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}")
+            _debug('DeleteKey( %s\\CLSID\\%s\\Logging"' % (_explain(HKCR), clsid))
+            hkey = winreg.OpenKey(HKCR, rf"CLSID\{clsid}")
             winreg.DeleteKey(hkey, "Logging")
         except WindowsError as detail:
             if get_winerror(detail) != 2:
@@ -138,11 +138,8 @@ class Registrar(object):
         # handlers
         # format
         clsid = cls._reg_clsid_
-        _debug(
-            'CreateKey( %s\\CLSID\\%s\\Logging"'
-            % (_explain(winreg.HKEY_CLASSES_ROOT), clsid)
-        )
-        hkey = winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}\Logging")
+        _debug('CreateKey( %s\\CLSID\\%s\\Logging"' % (_explain(HKCR), clsid))
+        hkey = winreg.CreateKey(HKCR, rf"CLSID\{clsid}\Logging")
         for item in levels:
             name, value = item.split("=")
             v = getattr(logging, value)
@@ -334,9 +331,6 @@ def _get_pythonpath(cls: Type) -> str:
     modname = cls.__module__
     dirname = os.path.dirname(sys.modules[modname].__file__)  # type: ignore
     return os.path.abspath(dirname)
-
-
-HKCR = winreg.HKEY_CLASSES_ROOT
 
 
 def _iter_reg_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
