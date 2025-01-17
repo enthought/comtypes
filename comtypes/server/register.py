@@ -243,7 +243,6 @@ class Registrar(object):
 
 def _get_serverdll(handle: int) -> str:
     """Return the pathname of the dll hosting the COM object."""
-    assert isinstance(handle, int)
     return GetModuleFileName(handle, 260)
 
 
