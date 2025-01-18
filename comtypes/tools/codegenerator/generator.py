@@ -1,31 +1,27 @@
 # Code generator to generate code for everything contained in COM type
 # libraries.
+import io
 import keyword
 import logging
 import os
 import textwrap
-from typing import Any
-from typing import Dict, List, Tuple
-from typing import Sequence
-from typing import Optional, Union as _UnionT
-import io
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Union as _UnionT
 
 import comtypes
 from comtypes import typeinfo
 from comtypes.tools import tlbparser, typedesc
-from comtypes.tools.codegenerator import namespaces
-from comtypes.tools.codegenerator import packing
-from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
+from comtypes.tools.codegenerator import namespaces, packing, typeannotator
+from comtypes.tools.codegenerator.comments import ComInterfaceBodyImplCommentWriter
 from comtypes.tools.codegenerator.helpers import (
-    get_real_type,
     ASSUME_STRINGS,
     ComMethodGenerator,
     DispMethodGenerator,
     DispPropertyGenerator,
     TypeNamer,
+    get_real_type,
 )
-from comtypes.tools.codegenerator import typeannotator
-
+from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
 
 version = comtypes.__version__
 
@@ -829,75 +825,7 @@ class CodeGenerator(object):
 
         print("]", file=self.stream)
         print(file=self.stream)
-        print(
-            "################################################################",
-            file=self.stream,
-        )
-        print(f"# code template for {body.itf.name} implementation", file=self.stream)
-        print(f"# class {body.itf.name}_Impl(object):", file=self.stream)
-
-        methods = {}
-        for m in body.itf.members:
-            if isinstance(m, typedesc.ComMethod):
-                # m.arguments is a sequence of tuples:
-                # (argtype, argname, idlflags, docstring)
-                # Some typelibs have unnamed method parameters!
-                inargs = [a[1] or "<unnamed>" for a in m.arguments if not "out" in a[2]]
-                outargs = [a[1] or "<unnamed>" for a in m.arguments if "out" in a[2]]
-                if "propget" in m.idlflags:
-                    methods.setdefault(m.name, [0, inargs, outargs, m.doc])[0] |= 1
-                elif "propput" in m.idlflags:
-                    methods.setdefault(m.name, [0, inargs[:-1], inargs[-1:], m.doc])[
-                        0
-                    ] |= 2
-                else:
-                    methods[m.name] = [0, inargs, outargs, m.doc]
-
-        for name, (typ, inargs, outargs, doc) in methods.items():
-            if typ == 0:  # method
-                print(
-                    f"#     def {name}({', '.join(['self'] + inargs)}):",
-                    file=self.stream,
-                )
-                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
-                print(f"#         #return {', '.join(outargs)}", file=self.stream)
-            elif typ == 1:  # propget
-                print("#     @property", file=self.stream)
-                print(
-                    f"#     def {name}({', '.join(['self'] + inargs)}):",
-                    file=self.stream,
-                )
-                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
-                print(f"#         #return {', '.join(outargs)}", file=self.stream)
-            elif typ == 2:  # propput
-                print(
-                    f"#     def _set({', '.join(['self'] + inargs + outargs)}):",
-                    file=self.stream,
-                )
-                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
-                print(
-                    f"#     {name} = property(fset = _set, doc = _set.__doc__)",
-                    file=self.stream,
-                )
-            elif typ == 3:  # propget + propput
-                print(
-                    f"#     def _get({', '.join(['self'] + inargs)}):",
-                    file=self.stream,
-                )
-                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
-                print(f"#         #return {', '.join(outargs)}", file=self.stream)
-                print(
-                    f"#     def _set({', '.join(['self'] + inargs + outargs)}):",
-                    file=self.stream,
-                )
-                print(f"#         {(doc or '-no docstring-')!r}", file=self.stream)
-                print(
-                    f"#     {name} = property(_get, _set, doc = _set.__doc__)",
-                    file=self.stream,
-                )
-            else:
-                raise RuntimeError("BUG")
-            print("#", file=self.stream)
+        ComInterfaceBodyImplCommentWriter(self.stream).write(body)
 
     def DispInterface(self, itf: typedesc.DispInterface) -> None:
         self.generate(itf.get_head())
