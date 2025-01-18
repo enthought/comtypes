@@ -1,32 +1,27 @@
 # Code generator to generate code for everything contained in COM type
 # libraries.
+import io
 import keyword
 import logging
 import os
 import textwrap
-from typing import Any
-from typing import Dict, List, Tuple
-from typing import Sequence
-from typing import Optional, Union as _UnionT
-import io
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Union as _UnionT
 
 import comtypes
 from comtypes import typeinfo
 from comtypes.tools import tlbparser, typedesc
-from comtypes.tools.codegenerator import namespaces
-from comtypes.tools.codegenerator import packing
-from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
+from comtypes.tools.codegenerator import namespaces, packing, typeannotator
+from comtypes.tools.codegenerator.comments import ComInterfaceBodyImplCommentWriter
 from comtypes.tools.codegenerator.helpers import (
-    get_real_type,
     ASSUME_STRINGS,
     ComMethodGenerator,
     DispMethodGenerator,
     DispPropertyGenerator,
     TypeNamer,
+    get_real_type,
 )
-from comtypes.tools.codegenerator import typeannotator
-from comtypes.tools.codegenerator.comments import ComInterfaceBodyImplCommentWriter
-
+from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
 
 version = comtypes.__version__
 
