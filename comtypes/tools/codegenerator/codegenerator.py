@@ -11,7 +11,7 @@ from typing import Union as _UnionT
 import comtypes
 from comtypes import typeinfo
 from comtypes.tools import tlbparser, typedesc
-from comtypes.tools.codegenerator import namespaces, packing, typeannotator
+from comtypes.tools.codegenerator import heads, namespaces, packing
 from comtypes.tools.codegenerator.comments import ComInterfaceBodyImplCommentWriter
 from comtypes.tools.codegenerator.helpers import (
     ASSUME_STRINGS,
@@ -284,13 +284,6 @@ class CodeGenerator(object):
         if "datetime.datetime(" in text:
             self.imports.add("datetime")
 
-    def _to_docstring(self, orig: str, depth: int = 1) -> str:
-        # increasing `depth` by one increases indentation by one
-        indent = "    " * depth
-        # some chars are replaced to avoid causing a `SyntaxError`
-        repled = orig.replace("\\", r"\\").replace('"', r"'")
-        return f'{indent}"""{repled}"""'
-
     def ArrayType(self, tp: typedesc.ArrayType) -> None:
         self.generate(get_real_type(tp.typ))
         self.generate(tp.typ)
@@ -343,88 +336,8 @@ class CodeGenerator(object):
             self.more.add(struct)
         if head.struct.location:
             self.last_item_class = False
-            print(f"# {head.struct.location}", file=self.stream)
         basenames = [self._to_type_name(b) for b in head.struct.bases]
-        if basenames:
-            self.imports.add("comtypes", "GUID")
-
-            if not self.last_item_class:
-                print(file=self.stream)
-                print(file=self.stream)
-
-            self.last_item_class = True
-
-            method_names = [
-                m.name for m in head.struct.members if type(m) is typedesc.Method
-            ]
-            print(
-                f"class {head.struct.name}({', '.join(basenames)}):",
-                file=self.stream,
-            )
-            print(
-                "    _iid_ = GUID('{}') # please look up iid and fill in!",
-                file=self.stream,
-            )
-            if "Enum" in method_names:
-                print("    def __iter__(self):", file=self.stream)
-                print("        return self.Enum()", file=self.stream)
-            elif method_names == "Next Skip Reset Clone".split():
-                print("    def __iter__(self):", file=self.stream)
-                print("        return self", file=self.stream)
-                print(file=self.stream)
-                print("    def next(self):", file=self.stream)
-                print("         arr, fetched = self.Next(1)", file=self.stream)
-                print("         if fetched == 0:", file=self.stream)
-                print("             raise StopIteration", file=self.stream)
-                print("         return arr[0]", file=self.stream)
-
-            print(file=self.stream)
-            print(file=self.stream)
-
-        else:
-            methods = [m for m in head.struct.members if type(m) is typedesc.Method]
-
-            if methods:
-                # Hm. We cannot generate code for IUnknown...
-                if not self.last_item_class:
-                    print(file=self.stream)
-
-                self.last_item_class = True
-                print("assert 0, 'cannot generate code for IUnknown'", file=self.stream)
-                print(file=self.stream)
-                print(file=self.stream)
-                print(f"class {head.struct.name}(_com_interface):", file=self.stream)
-                print("    pass", file=self.stream)
-                print(file=self.stream)
-                print(file=self.stream)
-            elif type(head.struct) == typedesc.Structure:
-                if not self.last_item_class:
-                    print(file=self.stream)
-                    print(file=self.stream)
-
-                self.last_item_class = True
-
-                print(f"class {head.struct.name}(Structure):", file=self.stream)
-                if hasattr(head.struct, "_recordinfo_"):
-                    print(
-                        f"    _recordinfo_ = {head.struct._recordinfo_!r}",
-                        file=self.stream,
-                    )
-                else:
-                    print("    pass", file=self.stream)
-                print(file=self.stream)
-                print(file=self.stream)
-            elif type(head.struct) == typedesc.Union:
-                if not self.last_item_class:
-                    print(file=self.stream)
-                    print(file=self.stream)
-
-                self.last_item_class = True
-
-                print(f"class {head.struct.name}(Union):", file=self.stream)
-                print("    pass", file=self.stream)
-                print(file=self.stream)
-                print(file=self.stream)
+        heads.StructureHeadWriter(self.stream).write(head, basenames)
         self.names.add(head.struct.name)
 
     def Structure(self, struct: typedesc.Structure) -> None:
@@ -574,19 +487,7 @@ class CodeGenerator(object):
 
         self.last_item_class = True
 
-        print("class Library(object):", file=self.stream)
-        if lib.doc:
-            print(self._to_docstring(lib.doc), file=self.stream)
-
-        if lib.name:
-            print(f"    name = {lib.name!r}", file=self.stream)
-
-        print(
-            f"    _reg_typelib_ = ({lib.guid!r}, {lib.major!r}, {lib.minor!r})",
-            file=self.stream,
-        )
-        print(file=self.stream)
-        print(file=self.stream)
+        heads.LibraryHeadWriter(self.stream).write(lib)
         self.names.add("Library")
 
     def External(self, ext: typedesc.External) -> None:
@@ -640,24 +541,7 @@ class CodeGenerator(object):
 
         self.last_item_class = True
 
-        print(f"class {coclass.name}(CoClass):", file=self.stream)
-        if coclass.doc:
-            print(self._to_docstring(coclass.doc), file=self.stream)
-        print(f"    _reg_clsid_ = GUID({coclass.clsid!r})", file=self.stream)
-        print(f"    _idlflags_ = {coclass.idlflags}", file=self.stream)
-        if self.filename is not None:
-            print("    _typelib_path_ = typelib_path", file=self.stream)
-        # X print
-        # >> self.stream, "POINTER(%s).__ctypes_from_outparam__ = wrap" % coclass.name
-
-        libid = coclass.tlibattr.guid
-        wMajor, wMinor = coclass.tlibattr.wMajorVerNum, coclass.tlibattr.wMinorVerNum
-        print(
-            f"    _reg_typelib_ = ({str(libid)!r}, {wMajor}, {wMinor})",
-            file=self.stream,
-        )
-        print(file=self.stream)
-        print(file=self.stream)
+        heads.CoClassHeadWriter(self.stream, self.filename).write(coclass)
 
         for itf, _ in coclass.interfaces:
             self.generate(itf.get_head())
@@ -737,16 +621,6 @@ class CodeGenerator(object):
             return self.known_interfaces[item.name] == item.iid
         return False
 
-    def _is_enuminterface(self, itf: typedesc.ComInterface) -> bool:
-        # Check if this is an IEnumXXX interface
-        if not itf.name.startswith("IEnum"):
-            return False
-        member_names = [mth.name for mth in itf.members]
-        for name in ("Next", "Skip", "Reset", "Clone"):
-            if name not in member_names:
-                return False
-        return True
-
     def ComInterfaceHead(self, head: typedesc.ComInterfaceHead) -> None:
         if head.itf.base is None:
             # we don't beed to generate IUnknown
@@ -763,43 +637,7 @@ class CodeGenerator(object):
 
         self.last_item_class = True
 
-        print(f"class {head.itf.name}({basename}):", file=self.stream)
-        if head.itf.doc:
-            print(self._to_docstring(head.itf.doc), file=self.stream)
-
-        print("    _case_insensitive_ = True", file=self.stream)
-        print(f"    _iid_ = GUID({head.itf.iid!r})", file=self.stream)
-        print(f"    _idlflags_ = {head.itf.idlflags}", file=self.stream)
-
-        if self._is_enuminterface(head.itf):
-            print(file=self.stream)
-            print("    def __iter__(self):", file=self.stream)
-            print("        return self", file=self.stream)
-            print(file=self.stream)
-
-            print("    def __next__(self):", file=self.stream)
-            print("        item, fetched = self.Next(1)", file=self.stream)
-            print("        if fetched:", file=self.stream)
-            print("            return item", file=self.stream)
-            print("        raise StopIteration", file=self.stream)
-            print(file=self.stream)
-
-            print("    def __getitem__(self, index):", file=self.stream)
-            print("        self.Reset()", file=self.stream)
-            print("        self.Skip(index)", file=self.stream)
-            print("        item, fetched = self.Next(1)", file=self.stream)
-            print("        if fetched:", file=self.stream)
-            print("            return item", file=self.stream)
-            print("        raise IndexError(index)", file=self.stream)
-
-        annotations = typeannotator.ComInterfaceMembersAnnotator(head.itf).generate()
-        if annotations:
-            print(file=self.stream)
-            print("    if TYPE_CHECKING:  # commembers", file=self.stream)
-            print(annotations, file=self.stream)
-
-        print(file=self.stream)
-        print(file=self.stream)
+        heads.ComInterfaceHeadWriter(self.stream).write(head, basename)
 
     def ComInterfaceBody(self, body: typedesc.ComInterfaceBody) -> None:
         # The base class must be fully generated, including the
@@ -843,22 +681,7 @@ class CodeGenerator(object):
 
         self.last_item_class = True
 
-        print(f"class {head.itf.name}({basename}):", file=self.stream)
-        if head.itf.doc:
-            print(self._to_docstring(head.itf.doc), file=self.stream)
-        print("    _case_insensitive_ = True", file=self.stream)
-        print(f"    _iid_ = GUID({head.itf.iid!r})", file=self.stream)
-        print(f"    _idlflags_ = {head.itf.idlflags}", file=self.stream)
-        print("    _methods_ = []", file=self.stream)
-
-        annotations = typeannotator.DispInterfaceMembersAnnotator(head.itf).generate()
-        if annotations:
-            print(file=self.stream)
-            print("    if TYPE_CHECKING:  # dispmembers", file=self.stream)
-            print(annotations, file=self.stream)
-
-        print(file=self.stream)
-        print(file=self.stream)
+        heads.DispInterfaceHeadWriter(self.stream).write(head, basename)
 
     def DispInterfaceBody(self, body: typedesc.DispInterfaceBody) -> None:
         # make sure we can generate the body
