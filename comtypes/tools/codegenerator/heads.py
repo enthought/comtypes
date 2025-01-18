@@ -46,21 +46,14 @@ class StructureHeadWriter(object):
                 print("             raise StopIteration", file=self.stream)
                 print("         return arr[0]", file=self.stream)
 
-            print(file=self.stream)
-            print(file=self.stream)
-
         else:
             methods = [m for m in head.struct.members if type(m) is typedesc.Method]
 
             if methods:
                 # Hm. We cannot generate code for IUnknown...
                 print("assert 0, 'cannot generate code for IUnknown'", file=self.stream)
-                print(file=self.stream)
-                print(file=self.stream)
                 print(f"class {head.struct.name}(_com_interface):", file=self.stream)
                 print("    pass", file=self.stream)
-                print(file=self.stream)
-                print(file=self.stream)
             elif type(head.struct) == typedesc.Structure:
                 print(f"class {head.struct.name}(Structure):", file=self.stream)
                 if hasattr(head.struct, "_recordinfo_"):
@@ -70,13 +63,9 @@ class StructureHeadWriter(object):
                     )
                 else:
                     print("    pass", file=self.stream)
-                print(file=self.stream)
-                print(file=self.stream)
             elif type(head.struct) == typedesc.Union:
                 print(f"class {head.struct.name}(Union):", file=self.stream)
                 print("    pass", file=self.stream)
-                print(file=self.stream)
-                print(file=self.stream)
 
 
 class LibraryHeadWriter(_ToDocstringMixin):
@@ -103,8 +92,6 @@ class LibraryHeadWriter(_ToDocstringMixin):
             f"    _reg_typelib_ = ({lib.guid!r}, {lib.major!r}, {lib.minor!r})",
             file=self.stream,
         )
-        print(file=self.stream)
-        print(file=self.stream)
 
 
 class CoClassHeadWriter(_ToDocstringMixin):
@@ -129,8 +116,6 @@ class CoClassHeadWriter(_ToDocstringMixin):
             f"    _reg_typelib_ = ({str(libid)!r}, {wMajor}, {wMinor})",
             file=self.stream,
         )
-        print(file=self.stream)
-        print(file=self.stream)
 
 
 class ComInterfaceHeadWriter(_ToDocstringMixin):
@@ -187,9 +172,6 @@ class ComInterfaceHeadWriter(_ToDocstringMixin):
             print("    if TYPE_CHECKING:  # commembers", file=self.stream)
             print(annotations, file=self.stream)
 
-        print(file=self.stream)
-        print(file=self.stream)
-
 
 class DispInterfaceHeadWriter(_ToDocstringMixin):
     def __init__(self, stream: io.StringIO) -> None:
@@ -209,6 +191,3 @@ class DispInterfaceHeadWriter(_ToDocstringMixin):
             print(file=self.stream)
             print("    if TYPE_CHECKING:  # dispmembers", file=self.stream)
             print(annotations, file=self.stream)
-
-        print(file=self.stream)
-        print(file=self.stream)
