@@ -21,7 +21,7 @@ class ComInterfaceBodyImplCommentWriter(object):
                 # m.arguments is a sequence of tuples:
                 # (argtype, argname, idlflags, docstring)
                 # Some typelibs have unnamed method parameters!
-                inargs = [a[1] or "<unnamed>" for a in m.arguments if not "out" in a[2]]
+                inargs = [a[1] or "<unnamed>" for a in m.arguments if "out" not in a[2]]
                 outargs = [a[1] or "<unnamed>" for a in m.arguments if "out" in a[2]]
                 if "propget" in m.idlflags:
                     methods.setdefault(m.name, [0, inargs, outargs, m.doc])[0] |= 1
