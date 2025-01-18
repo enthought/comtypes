@@ -5,13 +5,12 @@ from comtypes.tools import typedesc
 from comtypes.tools.codegenerator import typeannotator
 
 
-class _ToDocstringMixin:
-    def _to_docstring(self, orig: str, depth: int = 1) -> str:
-        # increasing `depth` by one increases indentation by one
-        indent = "    " * depth
-        # some chars are replaced to avoid causing a `SyntaxError`
-        repled = orig.replace("\\", r"\\").replace('"', r"'")
-        return f'{indent}"""{repled}"""'
+def _to_docstring(orig: str, depth: int = 1) -> str:
+    # increasing `depth` by one increases indentation by one
+    indent = "    " * depth
+    # some chars are replaced to avoid causing a `SyntaxError`
+    repled = orig.replace("\\", r"\\").replace('"', r"'")
+    return f'{indent}"""{repled}"""'
 
 
 class StructureHeadWriter(object):
@@ -68,7 +67,7 @@ class StructureHeadWriter(object):
                 print("    pass", file=self.stream)
 
 
-class LibraryHeadWriter(_ToDocstringMixin):
+class LibraryHeadWriter(object):
     def __init__(self, stream: io.StringIO) -> None:
         self.stream = stream
 
@@ -83,7 +82,7 @@ class LibraryHeadWriter(_ToDocstringMixin):
         # 'Library' symbol?
         print("class Library(object):", file=self.stream)
         if lib.doc:
-            print(self._to_docstring(lib.doc), file=self.stream)
+            print(_to_docstring(lib.doc), file=self.stream)
 
         if lib.name:
             print(f"    name = {lib.name!r}", file=self.stream)
@@ -94,7 +93,7 @@ class LibraryHeadWriter(_ToDocstringMixin):
         )
 
 
-class CoClassHeadWriter(_ToDocstringMixin):
+class CoClassHeadWriter(object):
     def __init__(self, stream: io.StringIO, filename: Optional[str]) -> None:
         self.stream = stream
         self.filename = filename
@@ -102,7 +101,7 @@ class CoClassHeadWriter(_ToDocstringMixin):
     def write(self, coclass: typedesc.CoClass) -> None:
         print(f"class {coclass.name}(CoClass):", file=self.stream)
         if coclass.doc:
-            print(self._to_docstring(coclass.doc), file=self.stream)
+            print(_to_docstring(coclass.doc), file=self.stream)
         print(f"    _reg_clsid_ = GUID({coclass.clsid!r})", file=self.stream)
         print(f"    _idlflags_ = {coclass.idlflags}", file=self.stream)
         if self.filename is not None:
@@ -118,7 +117,7 @@ class CoClassHeadWriter(_ToDocstringMixin):
         )
 
 
-class ComInterfaceHeadWriter(_ToDocstringMixin):
+class ComInterfaceHeadWriter(object):
     def __init__(self, stream: io.StringIO) -> None:
         self.stream = stream
 
@@ -139,7 +138,7 @@ class ComInterfaceHeadWriter(_ToDocstringMixin):
 
         print(f"class {head.itf.name}({basename}):", file=self.stream)
         if head.itf.doc:
-            print(self._to_docstring(head.itf.doc), file=self.stream)
+            print(_to_docstring(head.itf.doc), file=self.stream)
 
         print("    _case_insensitive_ = True", file=self.stream)
         print(f"    _iid_ = GUID({head.itf.iid!r})", file=self.stream)
@@ -173,14 +172,14 @@ class ComInterfaceHeadWriter(_ToDocstringMixin):
             print(annotations, file=self.stream)
 
 
-class DispInterfaceHeadWriter(_ToDocstringMixin):
+class DispInterfaceHeadWriter(object):
     def __init__(self, stream: io.StringIO) -> None:
         self.stream = stream
 
     def write(self, head: typedesc.DispInterfaceHead, basename: str) -> None:
         print(f"class {head.itf.name}({basename}):", file=self.stream)
         if head.itf.doc:
-            print(self._to_docstring(head.itf.doc), file=self.stream)
+            print(_to_docstring(head.itf.doc), file=self.stream)
         print("    _case_insensitive_ = True", file=self.stream)
         print(f"    _iid_ = GUID({head.itf.iid!r})", file=self.stream)
         print(f"    _idlflags_ = {head.itf.idlflags}", file=self.stream)
