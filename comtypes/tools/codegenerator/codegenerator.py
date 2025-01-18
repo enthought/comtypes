@@ -124,8 +124,8 @@ class CodeGenerator(object):
                 path = self._make_relative_path(filename, comtypes.gen.__path__[0])
                 self.imports.add("os")
                 definition = (
-                    f"os.path.normpath(\n"
-                    f"    os.path.abspath(os.path.join(os.path.dirname(__file__),\n"
+                    "os.path.normpath(\n"
+                    "    os.path.abspath(os.path.join(os.path.dirname(__file__),\n"
                     f"                                 {path!r})))"
                 )
                 self.declarations.add("typelib_path", definition)
@@ -214,7 +214,7 @@ class CodeGenerator(object):
         print(self._make_dunder_all_part(), file=output)
         print(file=output)
         if tlib_mtime is not None:
-            print("_check_version(%r, %f)" % (version, tlib_mtime), file=output)
+            print(f"_check_version({version!r}, {tlib_mtime:f})", file=output)
         return output.getvalue()
 
     def generate_friendly_code(self, modname: str) -> str:
