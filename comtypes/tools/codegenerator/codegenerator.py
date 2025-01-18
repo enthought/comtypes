@@ -652,7 +652,7 @@ class CodeGenerator(object):
                 if isinstance(m, typedesc.ComMethod):
                     isdual = "dual" in body.itf.idlflags
                     print(ComMethodGenerator(m, isdual).generate(), file=ofi)
-                    self.make_ComMethod(m, isdual)
+                    self.add_ComMth_requirements(m, isdual)
                 else:
                     raise TypeError("what's this?")
 
@@ -690,18 +690,18 @@ class CodeGenerator(object):
             for m in body.itf.members:
                 if isinstance(m, typedesc.DispMethod):
                     print(DispMethodGenerator(m).generate(), file=ofi)
-                    self.make_DispMethod(m)
+                    self.add_DispMth_requirements(m)
                 elif isinstance(m, typedesc.DispProperty):
                     print(DispPropertyGenerator(m).generate(), file=ofi)
-                    self.make_DispProperty(m)
+                    self.add_DispProp_requirements(m)
                 else:
                     raise TypeError(m)
             print("]", file=ofi)
 
     ################################################################
-    # non-toplevel method generators
+    # non-toplevel method requirements
     #
-    def make_ComMethod(self, m: typedesc.ComMethod, isdual: bool) -> None:
+    def add_ComMth_requirements(self, m: typedesc.ComMethod, isdual: bool) -> None:
         self.imports.add("comtypes", "COMMETHOD")
         if isdual:
             self.imports.add("comtypes", "dispid")
@@ -717,7 +717,7 @@ class CodeGenerator(object):
             if default is not None:
                 self.need_VARIANT_imports(default)
 
-    def make_DispMethod(self, m: typedesc.DispMethod) -> None:
+    def add_DispMth_requirements(self, m: typedesc.DispMethod) -> None:
         self.imports.add("comtypes", "DISPMETHOD")
         self.imports.add("comtypes", "dispid")
         if __debug__ and m.doc:
@@ -726,7 +726,7 @@ class CodeGenerator(object):
             if default is not None:
                 self.need_VARIANT_imports(default)
 
-    def make_DispProperty(self, prop: typedesc.DispProperty) -> None:
+    def add_DispProp_requirements(self, prop: typedesc.DispProperty) -> None:
         self.imports.add("comtypes", "DISPPROPERTY")
         self.imports.add("comtypes", "dispid")
         if __debug__ and prop.doc:
