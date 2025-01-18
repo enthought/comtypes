@@ -13,6 +13,7 @@ from comtypes.server.register import (
     FrozenRegistryEntries,
     InterpRegistryEntries,
     Registrar,
+    _delete_key,
     _get_serverdll,
 )
 
@@ -20,11 +21,59 @@ HKCR = winreg.HKEY_CLASSES_ROOT
 MULTI_SZ = winreg.REG_MULTI_SZ
 SZ = winreg.REG_SZ
 
+ERROR_ACCESS_DENIED = 5
+ERROR_FILE_NOT_FOUND = 2
 
+
+@mock.patch.object(register, "SHDeleteKey")
+@mock.patch.object(register, "winreg")
+class Test_delete_key(ut.TestCase):
+    def test_calls_sh_deletekey_if_forced(self, _winreg, _sh_deletekey):
+        _delete_key(123, "subkey", force=True)
+        _winreg.DeleteKey.assert_not_called()
+        _sh_deletekey.assert_called_once_with(123, "subkey")
+
+    def test_calls_winreg_deletekey_if_not_forced(self, _winreg, _sh_deletekey):
+        _delete_key(123, "subkey", force=False)
+        _winreg.DeleteKey.assert_called_once_with(123, "subkey")
+        _sh_deletekey.assert_not_called()
+
+    def test_ignores_error_on_sh_deletekey(self, _winreg, _sh_deletekey):
+        err = OSError(ERROR_FILE_NOT_FOUND, "msg", "filename", ERROR_FILE_NOT_FOUND)
+        _sh_deletekey.side_effect = err
+        _delete_key(123, "subkey", force=True)
+        _winreg.DeleteKey.assert_not_called()
+        _sh_deletekey.assert_called_once_with(123, "subkey")
+
+    def test_ignores_error_on_winreg_deletekey(self, _winreg, _sh_deletekey):
+        err = OSError(ERROR_FILE_NOT_FOUND, "msg", "filename", ERROR_FILE_NOT_FOUND)
+        _winreg.DeleteKey.side_effect = err
+        _delete_key(123, "subkey", force=False)
+        _winreg.DeleteKey.assert_called_once_with(123, "subkey")
+        _sh_deletekey.assert_not_called()
+
+    def test_not_ignores_winerror_on_sh_deletekey(self, _winreg, _sh_deletekey):
+        err = OSError(ERROR_ACCESS_DENIED, "msg", "filename", ERROR_ACCESS_DENIED)
+        _sh_deletekey.side_effect = err
+        with self.assertRaises(OSError) as e:
+            _delete_key(123, "subkey", force=True)
+        self.assertEqual(e.exception.winerror, ERROR_ACCESS_DENIED)
+        _winreg.DeleteKey.assert_not_called()
+        _sh_deletekey.assert_called_once_with(123, "subkey")
+
+    def test_not_ignores_winerror_on_winreg_deletekey(self, _winreg, _sh_deletekey):
+        err = OSError(ERROR_ACCESS_DENIED, "msg", "filename", ERROR_ACCESS_DENIED)
+        _winreg.DeleteKey.side_effect = err
+        with self.assertRaises(OSError) as e:
+            _delete_key(123, "subkey", force=False)
+        self.assertEqual(e.exception.winerror, ERROR_ACCESS_DENIED)
+        _winreg.DeleteKey.assert_called_once_with(123, "subkey")
+        _sh_deletekey.assert_not_called()
+
+
+@mock.patch.object(register, "winreg")
 class Test_Registrar_nodebug(ut.TestCase):
-    @mock.patch.object(register, "winreg")
     def test_calls_openkey_and_deletekey(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.OpenKey.return_value = hkey
         reg_clsid = GUID.create_new()
@@ -37,10 +86,7 @@ class Test_Registrar_nodebug(ut.TestCase):
         _winreg.OpenKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}")
         _winreg.DeleteKey.assert_called_once_with(hkey, "Logging")
 
-    @mock.patch.object(register, "winreg")
     def test_ignores_winerror(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
-        ERROR_FILE_NOT_FOUND = 2
         err = OSError(ERROR_FILE_NOT_FOUND, "msg", "filename", ERROR_FILE_NOT_FOUND)
         _winreg.OpenKey.side_effect = err
         reg_clsid = GUID.create_new()
@@ -53,12 +99,9 @@ class Test_Registrar_nodebug(ut.TestCase):
         _winreg.OpenKey.assert_called_once_with(HKCR, rf"CLSID\{reg_clsid}")
         _winreg.DeleteKey.assert_not_called()
 
-    @mock.patch.object(register, "winreg")
     def test_not_ignores_winerror(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.OpenKey.return_value = hkey
-        ERROR_ACCESS_DENIED = 5
         err = OSError(ERROR_ACCESS_DENIED, "msg", "filename", ERROR_ACCESS_DENIED)
         _winreg.OpenKey.return_value = hkey
         _winreg.DeleteKey.side_effect = err
@@ -75,10 +118,9 @@ class Test_Registrar_nodebug(ut.TestCase):
         _winreg.DeleteKey.assert_called_once_with(hkey, "Logging")
 
 
+@mock.patch.object(register, "winreg")
 class Test_Registrar_debug(ut.TestCase):
-    @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_sets_format(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         _winreg.REG_MULTI_SZ = MULTI_SZ
         _winreg.REG_SZ = SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
@@ -101,9 +143,7 @@ class Test_Registrar_debug(ut.TestCase):
             ],
         )
 
-    @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_deletes_format(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         _winreg.REG_MULTI_SZ = MULTI_SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.CreateKey.return_value = hkey
@@ -121,13 +161,10 @@ class Test_Registrar_debug(ut.TestCase):
         )
         _winreg.DeleteValue.assert_called_once_with(hkey, "format")
 
-    @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_ignores_errors_on_deleting(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         _winreg.REG_MULTI_SZ = MULTI_SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.CreateKey.return_value = hkey
-        ERROR_FILE_NOT_FOUND = 2
         err = OSError(ERROR_FILE_NOT_FOUND, "msg", "filename", ERROR_FILE_NOT_FOUND)
         _winreg.DeleteValue.side_effect = err
         levels = ["lv=DEBUG"]
@@ -144,13 +181,10 @@ class Test_Registrar_debug(ut.TestCase):
         )
         _winreg.DeleteValue.assert_called_once_with(hkey, "format")
 
-    @mock.patch.object(register, "winreg")
     def test_calls_createkey_and_not_ignores_errors_on_deleting(self, _winreg):
-        _winreg.HKEY_CLASSES_ROOT = HKCR
         _winreg.REG_MULTI_SZ = MULTI_SZ
         hkey = mock.Mock(spec=winreg.HKEYType)
         _winreg.CreateKey.return_value = hkey
-        ERROR_ACCESS_DENIED = 5
         err = OSError(ERROR_ACCESS_DENIED, "msg", "filename", ERROR_ACCESS_DENIED)
         _winreg.DeleteValue.side_effect = err
         levels = ["lv=DEBUG"]

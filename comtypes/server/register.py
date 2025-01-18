@@ -45,6 +45,9 @@ import winreg
 from ctypes import WinDLL, WinError
 from ctypes.wintypes import HKEY, LONG, LPCWSTR
 from typing import Iterable, Iterator, List, Optional, Tuple, Type, Union
+from winreg import HKEY_CLASSES_ROOT as HKCR
+from winreg import HKEY_CURRENT_USER as HKCU
+from winreg import HKEY_LOCAL_MACHINE as HKLM
 
 import comtypes.server.inprocserver  # noqa
 from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
@@ -84,14 +87,27 @@ SHDeleteKey.restype = LSTATUS
 
 
 _KEYS = {
-    winreg.HKEY_CLASSES_ROOT: "HKCR",
-    winreg.HKEY_LOCAL_MACHINE: "HKLM",
-    winreg.HKEY_CURRENT_USER: "HKCU",
+    HKCR: "HKCR",
+    HKLM: "HKLM",
+    HKCU: "HKCU",
 }
 
 
 def _explain(hkey: int) -> Union[str, int]:
     return _KEYS.get(hkey, hkey)
+
+
+def _delete_key(hkey: int, subkey: str, *, force: bool) -> None:
+    try:
+        if force:
+            _debug("SHDeleteKey %s\\%s", _explain(hkey), subkey)
+            SHDeleteKey(hkey, subkey)
+        else:
+            _debug("DeleteKey %s\\%s", _explain(hkey), subkey)
+            winreg.DeleteKey(hkey, subkey)
+    except WindowsError as detail:
+        if get_winerror(detail) != 2:
+            raise
 
 
 _Entry = Tuple[int, str, str, str]
@@ -107,7 +123,7 @@ class Registrar(object):
     work.
     """
 
-    _frozen: Optional[str]
+    _frozen: Union[None, int, str]
     _frozendllhandle: Optional[int]
 
     def __init__(self) -> None:
@@ -123,11 +139,8 @@ class Registrar(object):
         """Delete logging entries from the registry."""
         clsid = cls._reg_clsid_
         try:
-            _debug(
-                'DeleteKey( %s\\CLSID\\%s\\Logging"'
-                % (_explain(winreg.HKEY_CLASSES_ROOT), clsid)
-            )
-            hkey = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}")
+            _debug('DeleteKey( %s\\CLSID\\%s\\Logging"' % (_explain(HKCR), clsid))
+            hkey = winreg.OpenKey(HKCR, rf"CLSID\{clsid}")
             winreg.DeleteKey(hkey, "Logging")
         except WindowsError as detail:
             if get_winerror(detail) != 2:
@@ -138,11 +151,8 @@ class Registrar(object):
         # handlers
         # format
         clsid = cls._reg_clsid_
-        _debug(
-            'CreateKey( %s\\CLSID\\%s\\Logging"'
-            % (_explain(winreg.HKEY_CLASSES_ROOT), clsid)
-        )
-        hkey = winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}\Logging")
+        _debug('CreateKey( %s\\CLSID\\%s\\Logging"' % (_explain(HKCR), clsid))
+        hkey = winreg.CreateKey(HKCR, rf"CLSID\{clsid}\Logging")
         for item in levels:
             name, value = item.split("=")
             v = getattr(logging, value)
@@ -211,22 +221,11 @@ class Registrar(object):
         # If force==False, we only remove those entries that we
         # actually would have written.  It seems ATL does the same.
         table = [t[:2] for t in self._generate_reg_entries(cls)]
-        # only unique entries
-        table = list(set(table))
-        table.sort()
-        table.reverse()
+        # reversed and only unique entries
+        table = reversed(sorted(list(set(table))))
         _debug("Unregister %s", cls)
         for hkey, subkey in table:
-            try:
-                if force:
-                    _debug("SHDeleteKey %s\\%s", _explain(hkey), subkey)
-                    SHDeleteKey(hkey, subkey)
-                else:
-                    _debug("DeleteKey %s\\%s", _explain(hkey), subkey)
-                    winreg.DeleteKey(hkey, subkey)
-            except WindowsError as detail:
-                if get_winerror(detail) != 2:
-                    raise
+            _delete_key(hkey, subkey, force=force)
         tlib = getattr(cls, "_reg_typelib_", None)
         if tlib is not None:
             try:
@@ -243,7 +242,6 @@ class Registrar(object):
 
 def _get_serverdll(handle: int) -> str:
     """Return the pathname of the dll hosting the COM object."""
-    assert isinstance(handle, int)
     return GetModuleFileName(handle, 260)
 
 
@@ -277,7 +275,7 @@ class FrozenRegistryEntries(RegistryEntries):
     def __init__(
         self,
         cls: Type,
-        frozen: str,
+        frozen: Union[str, int],
         frozendllhandle: Optional[int] = None,
     ) -> None:
         self._cls = cls
@@ -337,9 +335,6 @@ def _get_pythonpath(cls: Type) -> str:
     return os.path.abspath(dirname)
 
 
-HKCR = winreg.HKEY_CLASSES_ROOT
-
-
 def _iter_reg_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
     # basic entry - names the comobject
     reg_desc = getattr(cls, "_reg_desc_", "")
@@ -348,30 +343,30 @@ def _iter_reg_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
         reg_desc = getattr(cls, "_reg_novers_progid_", getattr(cls, "_reg_progid_", ""))
         if reg_desc:
             reg_desc = reg_desc.replace(".", " ")
-    yield (HKCR, f"CLSID\\{reg_clsid}", "", reg_desc)
+    yield (HKCR, rf"CLSID\{reg_clsid}", "", reg_desc)
 
     reg_progid = getattr(cls, "_reg_progid_", None)
     if reg_progid:
         # for ProgIDFromCLSID:
-        yield (HKCR, f"CLSID\\{reg_clsid}\\ProgID", "", reg_progid)  # 1
+        yield (HKCR, rf"CLSID\{reg_clsid}\ProgID", "", reg_progid)  # 1
 
         # for CLSIDFromProgID
         if reg_desc:
             yield (HKCR, reg_progid, "", reg_desc)  # 2
-        yield (HKCR, f"{reg_progid}\\CLSID", "", reg_clsid)  # 3
+        yield (HKCR, rf"{reg_progid}\CLSID", "", reg_clsid)  # 3
 
         reg_novers_progid = getattr(cls, "_reg_novers_progid_", None)
         if reg_novers_progid:
             yield (
                 HKCR,
-                f"CLSID\\{reg_clsid}\\VersionIndependentProgID",  # 1a
+                rf"CLSID\{reg_clsid}\VersionIndependentProgID",  # 1a
                 "",
                 reg_novers_progid,
             )
             if reg_desc:
                 yield (HKCR, reg_novers_progid, "", reg_desc)  # 2a
-            yield (HKCR, f"{reg_novers_progid}\\CurVer", "", reg_progid)  #
-            yield (HKCR, f"{reg_novers_progid}\\CLSID", "", reg_clsid)  # 3a
+            yield (HKCR, rf"{reg_novers_progid}\CurVer", "", reg_progid)  #
+            yield (HKCR, rf"{reg_novers_progid}\CLSID", "", reg_clsid)  # 3a
 
 
 def _iter_interp_local_ctx_entries(cls: Type, reg_clsid: str) -> Iterator[_Entry]:
