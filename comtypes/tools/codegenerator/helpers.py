@@ -1,10 +1,7 @@
 import keyword
-from typing import Any
-from typing import List, Tuple
-from typing import Iterator
+from typing import Any, Iterator, List, Tuple
 from typing import Union as _UnionT
 
-import comtypes
 from comtypes.tools import typedesc
 from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
 
