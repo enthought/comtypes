@@ -6,6 +6,7 @@ import keyword
 import logging
 import os
 import textwrap
+import warnings
 from typing import Any, Dict, Iterator, List, Literal, Optional, Sequence, Tuple
 from typing import Union as _UnionT
 
@@ -397,13 +398,10 @@ class CodeGenerator(object):
                         print(f"{body.struct.name}._pack_ = {pack}", file=ofi)
             except packing.PackingError as details:
                 # if packing fails, write a warning comment to the output.
-                import warnings
-
-                message = "Structure %s: %s" % (body.struct.name, details)
+                message = f"Structure {body.struct.name}: {details}"
                 warnings.warn(message, UserWarning)
                 with self.adjust_blank("comment") as ofi:
                     print(f"# WARNING: {details}", file=ofi)
-
         if fields:
             if body.struct.bases:
                 assert len(body.struct.bases) == 1
@@ -418,7 +416,7 @@ class CodeGenerator(object):
                 for f in fields:
                     if not f.name:
                         if unnamed_index:
-                            fieldname = "_%d" % unnamed_index
+                            fieldname = f"_{unnamed_index:d}"
                         else:
                             fieldname = "_"
                         unnamed_index += 1
@@ -451,22 +449,27 @@ class CodeGenerator(object):
                     print(msg2, file=ofi)
             elif body.struct.name not in packing.dont_assert_size:
                 with self.adjust_blank("assert") as ofi:
-                    size = body.struct.size // 8
-                    print(
-                        f"assert sizeof({body.struct.name}) == {size}, sizeof({body.struct.name})",
-                        file=ofi,
-                    )
-                    align = body.struct.align // 8
-                    print(
-                        f"assert alignment({body.struct.name}) == {align}, alignment({body.struct.name})",
-                        file=ofi,
-                    )
+                    self._write_structbody_size_assertion(body, ofi)
 
-        if methods:
-            self.imports.add("comtypes", "COMMETHOD")
+        if not methods:
+            return
+        self.imports.add("comtypes", "COMMETHOD")
+        with self.adjust_blank("attribute") as ofi:
+            self._write_structbody_commethods(body, methods, ofi)
 
-            with self.adjust_blank("attribute") as ofi:
-                self._write_structbody_commethods(body, methods, ofi)
+    def _write_structbody_size_assertion(
+        self, body: typedesc.StructureBody, ofi: io.StringIO
+    ) -> None:
+        size = body.struct.size // 8
+        print(
+            f"assert sizeof({body.struct.name}) == {size}, sizeof({body.struct.name})",
+            file=ofi,
+        )
+        align = body.struct.align // 8
+        print(
+            f"assert alignment({body.struct.name}) == {align}, alignment({body.struct.name})",
+            file=ofi,
+        )
 
     def _write_structbody_commethods(
         self,
