@@ -1,7 +1,7 @@
 import contextlib
 import unittest as ut
 
-from ctypes import POINTER, pointer, windll
+from ctypes import HRESULT, POINTER, WinDLL, c_uint32, pointer
 from comtypes import GUID
 import comtypes.client
 
@@ -12,8 +12,18 @@ class Test_IMFAttributes(ut.TestCase):
             comtypes.client.GetModule("msvidctl.dll")
         from comtypes.gen import MSVidCtlLib
 
+        _mfplat = WinDLL("mfplat")
+
+        UINT32 = c_uint32
+        _MFCreateAttributes = _mfplat.MFCreateAttributes
+        _MFCreateAttributes.argtypes = [
+            POINTER(POINTER(MSVidCtlLib.IMFAttributes)),
+            UINT32,
+        ]
+        _MFCreateAttributes.restype = HRESULT
+
         imf_attrs = POINTER(MSVidCtlLib.IMFAttributes)()
-        hres = windll.mfplat.MFCreateAttributes(pointer(imf_attrs), 2)
+        hres = _MFCreateAttributes(pointer(imf_attrs), 2)
         self.assertEqual(hres, 0)
 
         MF_TRANSCODE_ADJUST_PROFILE = GUID("{9c37c21b-060f-487c-a690-80d7f50d1c72}")
