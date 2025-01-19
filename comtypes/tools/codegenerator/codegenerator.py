@@ -460,16 +460,12 @@ class CodeGenerator(object):
     def _write_structbody_size_assertion(
         self, body: typedesc.StructureBody, ofi: io.StringIO
     ) -> None:
+        name = body.struct.name
+        assert body.struct.size is not None
         size = body.struct.size // 8
-        print(
-            f"assert sizeof({body.struct.name}) == {size}, sizeof({body.struct.name})",
-            file=ofi,
-        )
+        print(f"assert sizeof({name}) == {size}, sizeof({name})", file=ofi)
         align = body.struct.align // 8
-        print(
-            f"assert alignment({body.struct.name}) == {align}, alignment({body.struct.name})",
-            file=ofi,
-        )
+        print(f"assert alignment({name}) == {align}, alignment({name})", file=ofi)
 
     def _write_structbody_commethods(
         self,
