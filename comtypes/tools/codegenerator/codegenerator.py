@@ -466,25 +466,33 @@ class CodeGenerator(object):
             self.imports.add("comtypes", "COMMETHOD")
 
             with self.adjust_blank("attribute") as ofi:
-                print(f"{body.struct.name}._methods_ = [", file=ofi)
-                if body.struct.location:
-                    print(f"# {body.struct.location}", file=ofi)
-                for m in methods:
-                    if m.location:
-                        print(f"    # {m.location}", file=ofi)
-                    print(
-                        (
-                            f"    COMMETHOD(\n"
-                            f"        [], \n"
-                            f"        {self._to_type_name(m.returns)},\n"
-                            f"        '{m.name}',\n"
-                        ),
-                        file=ofi,
-                    )
-                    for a in m.iterArgTypes():
-                        print(f"        ([], {self._to_type_name(a)}),\n", file=ofi)
-                        print("    ),", file=ofi)
-                print("]", file=ofi)
+                self._write_structbody_commethods(body, methods, ofi)
+
+    def _write_structbody_commethods(
+        self,
+        body: typedesc.StructureBody,
+        methods: List[typedesc.Method],
+        ofi: io.StringIO,
+    ) -> None:
+        print(f"{body.struct.name}._methods_ = [", file=ofi)
+        if body.struct.location:
+            print(f"# {body.struct.location}", file=ofi)
+        for m in methods:
+            if m.location:
+                print(f"    # {m.location}", file=ofi)
+            print(
+                (
+                    "    COMMETHOD(\n"
+                    "        [],\n"
+                    f"        {self._to_type_name(m.returns)},\n"
+                    f"        '{m.name}',\n"
+                ),
+                file=ofi,
+            )
+            for a in m.iterArgTypes():
+                print(f"        ([], {self._to_type_name(a)}),\n", file=ofi)
+                print("    ),", file=ofi)
+        print("]", file=ofi)
 
     ################################################################
     # top-level typedesc generators
