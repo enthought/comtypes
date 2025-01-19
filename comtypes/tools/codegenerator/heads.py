@@ -53,7 +53,7 @@ class StructureHeadWriter(object):
                 print("assert 0, 'cannot generate code for IUnknown'", file=self.stream)
                 print(f"class {head.struct.name}(_com_interface):", file=self.stream)
                 print("    pass", file=self.stream)
-            elif type(head.struct) == typedesc.Structure:
+            elif type(head.struct) is typedesc.Structure:
                 print(f"class {head.struct.name}(Structure):", file=self.stream)
                 if hasattr(head.struct, "_recordinfo_"):
                     print(
@@ -62,7 +62,7 @@ class StructureHeadWriter(object):
                     )
                 else:
                     print("    pass", file=self.stream)
-            elif type(head.struct) == typedesc.Union:
+            elif type(head.struct) is typedesc.Union:
                 print(f"class {head.struct.name}(Union):", file=self.stream)
                 print("    pass", file=self.stream)
 
