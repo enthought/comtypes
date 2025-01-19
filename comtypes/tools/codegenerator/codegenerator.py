@@ -440,36 +440,33 @@ class CodeGenerator(object):
 
             if body.struct.size is None:
                 with self.adjust_blank("comment") as ofi:
-                    msg1 = "# The size provided by the typelib is incorrect."
-                    msg2 = (
-                        "# The size and alignment check "
-                        f"for {body.struct.name} is skipped."
-                    )
-                    print(msg1, file=ofi)
-                    print(msg2, file=ofi)
+                    self._write_structbody_size_comments(body, ofi)
             elif body.struct.name not in packing.dont_assert_size:
                 with self.adjust_blank("assert") as ofi:
                     self._write_structbody_size_assertion(body, ofi)
 
-        if not methods:
-            return
-        self.imports.add("comtypes", "COMMETHOD")
-        with self.adjust_blank("attribute") as ofi:
-            self._write_structbody_commethods(body, methods, ofi)
+        if methods:
+            self.imports.add("comtypes", "COMMETHOD")
+            with self.adjust_blank("attribute") as ofi:
+                self._write_structbody_commethods(body, methods, ofi)
+
+    def _write_structbody_size_comments(
+        self, body: typedesc.StructureBody, ofi: io.StringIO
+    ) -> None:
+        msg1 = "# The size provided by the typelib is incorrect."
+        msg2 = f"# The size and alignment check for {body.struct.name} is skipped."
+        print(msg1, file=ofi)
+        print(msg2, file=ofi)
 
     def _write_structbody_size_assertion(
         self, body: typedesc.StructureBody, ofi: io.StringIO
     ) -> None:
+        name = body.struct.name
+        assert body.struct.size is not None
         size = body.struct.size // 8
-        print(
-            f"assert sizeof({body.struct.name}) == {size}, sizeof({body.struct.name})",
-            file=ofi,
-        )
+        print(f"assert sizeof({name}) == {size}, sizeof({name})", file=ofi)
         align = body.struct.align // 8
-        print(
-            f"assert alignment({body.struct.name}) == {align}, alignment({body.struct.name})",
-            file=ofi,
-        )
+        print(f"assert alignment({name}) == {align}, alignment({name})", file=ofi)
 
     def _write_structbody_commethods(
         self,
