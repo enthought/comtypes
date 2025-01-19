@@ -399,7 +399,7 @@ class CodeGenerator(object):
                 # if packing fails, write a warning comment to the output.
                 import warnings
 
-                message = "Structure %s: %s" % (body.struct.name, details)
+                message = f"Structure {body.struct.name}: {details}"
                 warnings.warn(message, UserWarning)
                 with self.adjust_blank("comment") as ofi:
                     print(f"# WARNING: {details}", file=ofi)
@@ -418,7 +418,7 @@ class CodeGenerator(object):
                 for f in fields:
                     if not f.name:
                         if unnamed_index:
-                            fieldname = "_%d" % unnamed_index
+                            fieldname = f"_{unnamed_index:d}"
                         else:
                             fieldname = "_"
                         unnamed_index += 1
