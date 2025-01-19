@@ -451,22 +451,27 @@ class CodeGenerator(object):
                     print(msg2, file=ofi)
             elif body.struct.name not in packing.dont_assert_size:
                 with self.adjust_blank("assert") as ofi:
-                    size = body.struct.size // 8
-                    print(
-                        f"assert sizeof({body.struct.name}) == {size}, sizeof({body.struct.name})",
-                        file=ofi,
-                    )
-                    align = body.struct.align // 8
-                    print(
-                        f"assert alignment({body.struct.name}) == {align}, alignment({body.struct.name})",
-                        file=ofi,
-                    )
+                    self._write_structbody_size_assertion(body, ofi)
 
-        if methods:
-            self.imports.add("comtypes", "COMMETHOD")
+        if not methods:
+            return 
+        self.imports.add("comtypes", "COMMETHOD")
+        with self.adjust_blank("attribute") as ofi:
+            self._write_structbody_commethods(body, methods, ofi)
 
-            with self.adjust_blank("attribute") as ofi:
-                self._write_structbody_commethods(body, methods, ofi)
+    def _write_structbody_size_assertion(
+        self, body: typedesc.StructureBody, ofi: io.StringIO
+    ) -> None:
+        size = body.struct.size // 8
+        print(
+            f"assert sizeof({body.struct.name}) == {size}, sizeof({body.struct.name})",
+            file=ofi,
+        )
+        align = body.struct.align // 8
+        print(
+            f"assert alignment({body.struct.name}) == {align}, alignment({body.struct.name})",
+            file=ofi,
+        )
 
     def _write_structbody_commethods(
         self,
