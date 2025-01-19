@@ -317,7 +317,7 @@ class TypeNamer(object):
                 return f"CFUNCTYPE({', '.join(args)})"
         elif isinstance(t, typedesc.CvQualifiedType):
             # const and volatile are ignored
-            return "%s" % self(t.typ)
+            return f"{self(t.typ)}"
         elif isinstance(t, typedesc.FundamentalType):
             return ctypes_names[t.name]
         elif isinstance(t, typedesc.Structure):
@@ -328,7 +328,7 @@ class TypeNamer(object):
             return "c_int"  # enums are integers
         elif isinstance(t, typedesc.EnumValue):
             if keyword.iskeyword(t.name):
-                return t.name + "_"
+                return f"{t.name}_"
             return t.name
         elif isinstance(t, typedesc.External):
             # t.symbol_name - symbol to generate
