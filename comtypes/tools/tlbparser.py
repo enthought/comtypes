@@ -1,13 +1,11 @@
 import os
 import sys
-from typing import Any
-from typing import Dict, List, Optional, Tuple
 from ctypes import alignment, byref, c_void_p, sizeof, windll
+from typing import Any, Dict, List, Optional, Tuple
 
-from comtypes import automation, BSTR, COMError, typeinfo
-from comtypes.tools import typedesc
+from comtypes import BSTR, COMError, automation, typeinfo
 from comtypes.client._code_cache import _get_module_filename
-
+from comtypes.tools import typedesc
 
 # Is the process 64-bit?
 is_64bits = sys.maxsize > 2**32
