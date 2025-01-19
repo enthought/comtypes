@@ -406,17 +406,14 @@ class CodeGenerator(object):
             if body.struct.bases:
                 assert len(body.struct.bases) == 1
                 self.generate(body.struct.bases[0].get_body())
-
             with self.adjust_blank("attribute") as ofi:
                 self._write_structbody_fields(body, fields, ofi)
-
             if body.struct.size is None:
                 with self.adjust_blank("comment") as ofi:
                     self._write_structbody_size_comments(body, ofi)
             elif body.struct.name not in packing.dont_assert_size:
                 with self.adjust_blank("assert") as ofi:
                     self._write_structbody_size_assertion(body, ofi)
-
         if methods:
             self.imports.add("comtypes", "COMMETHOD")
             with self.adjust_blank("attribute") as ofi:
@@ -435,27 +432,16 @@ class CodeGenerator(object):
         unnamed_index = 0
         for f in fields:
             if not f.name:
-                if unnamed_index:
-                    fieldname = f"_{unnamed_index:d}"
-                else:
-                    fieldname = "_"
+                fieldname = "_" if not unnamed_index else f"_{unnamed_index:d}"
                 unnamed_index += 1
-                print(
-                    f"    # Unnamed field renamed to '{fieldname}'",
-                    file=ofi,
-                )
+                print(f"    # Unnamed field renamed to '{fieldname}'", file=ofi)
             else:
                 fieldname = f.name
+            typename = self._to_type_name(f.typ)
             if f.bits is None:
-                print(
-                    f"    ('{fieldname}', {self._to_type_name(f.typ)}),",
-                    file=ofi,
-                )
+                print(f"    ('{fieldname}', {typename}),", file=ofi)
             else:
-                print(
-                    f"    ('{fieldname}', {self._to_type_name(f.typ)}, {f.bits}),",
-                    file=ofi,
-                )
+                print(f"    ('{fieldname}', {typename}, {f.bits}),", file=ofi)
         print("]", file=ofi)
 
     def _write_structbody_size_comments(
