@@ -237,7 +237,7 @@ class Parser(object):
             elif fd.callconv == typeinfo.CC_STDCALL:
                 attributes = "__stdcall__"
             else:
-                raise ValueError("calling convention %d" % fd.callconv)
+                raise ValueError(f"calling convention {fd.callconv:d}")
 
             func = typedesc.Function(func_name, returns, attributes, extern=1)
             if func_doc is not None:
