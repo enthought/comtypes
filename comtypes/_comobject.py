@@ -115,16 +115,16 @@ _DispInvoke.restype = (
 )
 
 
-_ole32_from_windll = WinDLL("ole32")
+_ole32_nohresult = WinDLL("ole32")
 _ole32_from_oledll = OleDLL("ole32")
 
-_CoInitialize = _ole32_from_windll.CoInitialize
+_CoInitialize = _ole32_nohresult.CoInitialize
 _CoInitialize.argtypes = [LPVOID]
 _CoInitialize.restype = (
     LONG  # technically, it is a HRESULT, but we want to avoid the OSError
 )
 
-_CoUninitialize = _ole32_from_windll.CoUninitialize
+_CoUninitialize = _ole32_nohresult.CoUninitialize
 _CoUninitialize.argtypes = []
 _CoUninitialize.restype = None
 
