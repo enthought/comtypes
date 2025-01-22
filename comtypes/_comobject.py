@@ -137,9 +137,9 @@ _CoReleaseServerProcess.argtypes = []
 _CoReleaseServerProcess.restype = ULONG
 
 
-_user32_from_windll = WinDLL("user32")
+_user32 = WinDLL("user32")
 
-_PostQuitMessage = _user32_from_windll.PostQuitMessage
+_PostQuitMessage = _user32.PostQuitMessage
 _PostQuitMessage.argtypes = [INT]
 _PostQuitMessage.restype = None
 
