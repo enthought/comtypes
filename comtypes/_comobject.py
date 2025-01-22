@@ -86,9 +86,9 @@ else:
     _InterlockedIncrement.restype = c_long
     _InterlockedDecrement.restype = c_long
 
-_oleaut32_from_windll = WinDLL("oleaut32")
+_oleaut32 = WinDLL("oleaut32")
 
-_DispGetIDsOfNames = _oleaut32_from_windll.DispGetIDsOfNames
+_DispGetIDsOfNames = _oleaut32.DispGetIDsOfNames
 _DispGetIDsOfNames.argtypes = [
     POINTER(ITypeInfo),
     POINTER(c_wchar_p),
@@ -99,7 +99,7 @@ _DispGetIDsOfNames.restype = (
     LONG  # technically, it is a HRESULT, but we want to avoid the OSError
 )
 
-_DispInvoke = _oleaut32_from_windll.DispInvoke
+_DispInvoke = _oleaut32.DispInvoke
 _DispInvoke.argtypes = [
     LPVOID,
     POINTER(ITypeInfo),
