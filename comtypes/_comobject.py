@@ -116,7 +116,7 @@ _DispInvoke.restype = (
 
 
 _ole32_nohresult = WinDLL("ole32")
-_ole32_from_oledll = OleDLL("ole32")
+_ole32 = OleDLL("ole32")
 
 _CoInitialize = _ole32_nohresult.CoInitialize
 _CoInitialize.argtypes = [LPVOID]
@@ -128,11 +128,11 @@ _CoUninitialize = _ole32_nohresult.CoUninitialize
 _CoUninitialize.argtypes = []
 _CoUninitialize.restype = None
 
-_CoAddRefServerProcess = _ole32_from_oledll.CoAddRefServerProcess
+_CoAddRefServerProcess = _ole32.CoAddRefServerProcess
 _CoAddRefServerProcess.argtypes = []
 _CoAddRefServerProcess.restype = ULONG
 
-_CoReleaseServerProcess = _ole32_from_oledll.CoReleaseServerProcess
+_CoReleaseServerProcess = _ole32.CoReleaseServerProcess
 _CoReleaseServerProcess.argtypes = []
 _CoReleaseServerProcess.restype = ULONG
 
