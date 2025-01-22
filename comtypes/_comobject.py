@@ -54,10 +54,10 @@ DISPATCH_PROPERTYPUTREF = 8
 
 ################################################################
 
-_kernel32_from_windll = WinDLL("kernel32")
+_kernel32 = WinDLL("kernel32")
 try:
-    _InterlockedIncrement = _kernel32_from_windll.InterlockedIncrement
-    _InterlockedDecrement = _kernel32_from_windll.InterlockedDecrement
+    _InterlockedIncrement = _kernel32.InterlockedIncrement
+    _InterlockedDecrement = _kernel32.InterlockedDecrement
 except AttributeError:
     import threading
 
