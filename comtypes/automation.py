@@ -585,15 +585,19 @@ _oleaut32 = OleDLL("oleaut32")
 
 _VariantChangeType = _oleaut32.VariantChangeType
 _VariantChangeType.argtypes = (POINTER(VARIANT), POINTER(VARIANT), c_ushort, VARTYPE)
+_VariantChangeType.restype = HRESULT
 
 _VariantClear = _oleaut32.VariantClear
 _VariantClear.argtypes = (POINTER(VARIANT),)
+_VariantClear.restype = HRESULT
 
 _VariantCopy = _oleaut32.VariantCopy
 _VariantCopy.argtypes = POINTER(VARIANT), POINTER(VARIANT)
+_VariantCopy.restype = HRESULT
 
 _VariantCopyInd = _oleaut32.VariantCopyInd
 _VariantCopyInd.argtypes = POINTER(VARIANT), POINTER(VARIANT)
+_VariantCopyInd.restype = HRESULT
 
 # some commonly used VARIANT instances
 VARIANT.null = VARIANT(None)
