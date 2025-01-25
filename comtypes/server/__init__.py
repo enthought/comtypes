@@ -1,5 +1,6 @@
 import ctypes
-from ctypes import HRESULT, POINTER, byref
+from ctypes import HRESULT, POINTER, OleDLL, byref, c_void_p
+from ctypes.wintypes import DWORD, LPVOID
 from typing import TYPE_CHECKING, Any, Optional, Type
 
 import comtypes
@@ -7,6 +8,7 @@ import comtypes.client
 import comtypes.client.dynamic
 from comtypes import GUID, STDMETHOD, IUnknown
 from comtypes.automation import IDispatch
+from comtypes.GUID import REFCLSID
 
 if TYPE_CHECKING:
     from ctypes import _Pointer
@@ -67,7 +69,23 @@ class IClassFactory(IUnknown):
 ACTIVEOBJECT_STRONG = 0x0
 ACTIVEOBJECT_WEAK = 0x1
 
-oleaut32 = ctypes.oledll.oleaut32
+_oleaut32 = OleDLL("oleaut32")
+
+_RegisterActiveObject = _oleaut32.RegisterActiveObject
+_RegisterActiveObject.argtypes = [
+    c_void_p,
+    REFCLSID,
+    DWORD,
+    POINTER(DWORD),
+]
+_RegisterActiveObject.restype = HRESULT
+
+_RevokeActiveObject = _oleaut32.RevokeActiveObject
+_RevokeActiveObject.argtypes = [
+    DWORD,
+    LPVOID,
+]
+_RevokeActiveObject.restype = HRESULT
 
 
 def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
@@ -78,9 +96,9 @@ def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
     else:
         flags = ACTIVEOBJECT_STRONG
     handle = ctypes.c_ulong()
-    oleaut32.RegisterActiveObject(punk, byref(clsid), flags, byref(handle))
+    _RegisterActiveObject(punk, byref(clsid), flags, byref(handle))
     return handle.value
 
 
 def RevokeActiveObject(handle: int) -> None:
-    oleaut32.RevokeActiveObject(handle, None)
+    _RevokeActiveObject(handle, None)
