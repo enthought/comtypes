@@ -575,6 +575,12 @@ class tagVARIANT(Structure):
 VARIANT = tagVARIANT
 VARIANTARG = VARIANT
 
+_oleaut32_nohresult = WinDLL("oleaut32")
+
+_SysAllocStringLen = _oleaut32_nohresult.SysAllocStringLen
+_SysAllocStringLen.argtypes = c_wchar_p, c_uint
+_SysAllocStringLen.restype = c_void_p
+
 _oleaut32 = OleDLL("oleaut32")
 
 _VariantChangeType = _oleaut32.VariantChangeType
@@ -582,10 +588,6 @@ _VariantChangeType.argtypes = (POINTER(VARIANT), POINTER(VARIANT), c_ushort, VAR
 
 _VariantClear = _oleaut32.VariantClear
 _VariantClear.argtypes = (POINTER(VARIANT),)
-
-_SysAllocStringLen = windll.oleaut32.SysAllocStringLen
-_SysAllocStringLen.argtypes = c_wchar_p, c_uint
-_SysAllocStringLen.restype = c_void_p
 
 _VariantCopy = _oleaut32.VariantCopy
 _VariantCopy.argtypes = POINTER(VARIANT), POINTER(VARIANT)
