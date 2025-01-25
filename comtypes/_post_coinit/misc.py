@@ -1,5 +1,18 @@
-from ctypes import c_ulong, c_ushort, c_void_p, c_wchar_p, HRESULT, Structure
-from ctypes import byref, cast, _Pointer, POINTER, pointer
+from ctypes import (
+    HRESULT,
+    POINTER,
+    OleDLL,
+    Structure,
+    _Pointer,
+    byref,
+    c_ulong,
+    c_ushort,
+    c_void_p,
+    c_wchar_p,
+    cast,
+    pointer,
+)
+from ctypes.wintypes import DWORD, LPCWSTR, LPVOID
 
 # fmt: off
 from typing import (  # noqa
@@ -15,9 +28,7 @@ from typing import (  # noqa
 if TYPE_CHECKING:
     from comtypes import hints as hints  # noqa  # type: ignore
 
-from comtypes import GUID
-from comtypes import CLSCTX_SERVER, CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER
-from comtypes import _ole32, oledll, DWORD
+from comtypes import CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER, CLSCTX_SERVER, GUID
 from comtypes._memberspec import COMMETHOD
 from comtypes._post_coinit.unknwn import IUnknown
 
@@ -98,7 +109,7 @@ def CoGetObject(displayname: str, interface: Optional[Type[IUnknown]]) -> IUnkno
         interface = IUnknown
     punk = POINTER(interface)()
     # Do we need a way to specify the BIND_OPTS parameter?
-    _ole32.CoGetObject(str(displayname), None, byref(interface._iid_), byref(punk))
+    _CoGetObject(str(displayname), None, byref(interface._iid_), byref(punk))
     return punk  # type: ignore
 
 
@@ -134,7 +145,7 @@ def CoCreateInstance(
         interface = IUnknown
     p = POINTER(interface)()
     iid = interface._iid_
-    _ole32.CoCreateInstance(byref(clsid), punkouter, clsctx, byref(iid), byref(p))
+    _CoCreateInstance(byref(clsid), punkouter, clsctx, byref(iid), byref(p))
     return p  # type: ignore
 
 
@@ -178,7 +189,7 @@ def GetActiveObject(
 ) -> IUnknown:
     """Retrieves a pointer to a running object"""
     p = POINTER(IUnknown)()
-    oledll.oleaut32.GetActiveObject(byref(clsid), None, byref(p))
+    _GetActiveObject(byref(clsid), None, byref(p))
     if interface is not None:
         p = p.QueryInterface(interface)  # type: ignore
     return p  # type: ignore
@@ -236,6 +247,16 @@ class _COSERVERINFO(Structure):
         dwReserved2: int
 
 
+_oleaut32 = OleDLL("oleaut32")
+
+REFCLSID = POINTER(GUID)
+_GetActiveObject = _oleaut32.GetActiveObject
+_GetActiveObject.argtypes = [REFCLSID, LPVOID, POINTER(POINTER(IUnknown))]
+_GetActiveObject.restype = HRESULT
+
+
+_ole32 = OleDLL("ole32")
+
 COSERVERINFO = _COSERVERINFO
 _CoGetClassObject = _ole32.CoGetClassObject
 _CoGetClassObject.argtypes = [
@@ -245,6 +266,28 @@ _CoGetClassObject.argtypes = [
     POINTER(GUID),
     POINTER(c_void_p),
 ]
+_CoGetClassObject.restype = HRESULT
+
+_CoCreateInstance = _ole32.CoCreateInstance
+_CoCreateInstance.argtypes = [
+    REFCLSID,
+    POINTER(IUnknown),
+    DWORD,
+    POINTER(GUID),
+    POINTER(LPVOID),
+]
+_CoCreateInstance.restype = HRESULT
+
+_CoCreateInstanceEx = _ole32.CoCreateInstanceEx
+_CoCreateInstanceEx.argtypes = [
+    REFCLSID,
+    POINTER(IUnknown),
+    DWORD,
+    POINTER(COSERVERINFO),
+    DWORD,
+    POINTER(MULTI_QI),
+]
+_CoCreateInstanceEx.restype = HRESULT
 
 
 class tagBIND_OPTS(Structure):
@@ -258,6 +301,9 @@ class tagBIND_OPTS(Structure):
 
 # XXX Add __init__ which sets cbStruct?
 BIND_OPTS = tagBIND_OPTS
+_CoGetObject = _ole32.CoGetObject
+_CoGetObject.argtypes = [LPCWSTR, POINTER(BIND_OPTS), POINTER(GUID), POINTER(LPVOID)]
+_CoGetObject.restype = HRESULT
 
 
 class tagBIND_OPTS2(Structure):
@@ -360,7 +406,5 @@ def CoCreateInstanceEx(
         interface = IUnknown
     multiqi = MULTI_QI()
     multiqi.pIID = pointer(interface._iid_)  # type: ignore
-    _ole32.CoCreateInstanceEx(
-        byref(clsid), None, clsctx, pServerInfo, 1, byref(multiqi)
-    )
+    _CoCreateInstanceEx(byref(clsid), None, clsctx, pServerInfo, 1, byref(multiqi))
     return cast(multiqi.pItf, POINTER(interface))  # type: ignore
