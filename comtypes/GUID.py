@@ -1,8 +1,8 @@
 """comtypes.GUID module"""
 
-from ctypes import oledll, windll
+from ctypes import HRESULT, POINTER, OleDLL, WinDLL
 from ctypes import byref, c_wchar_p, Structure
-from ctypes.wintypes import BYTE, WORD, DWORD
+from ctypes.wintypes import BYTE, LPVOID, WORD, DWORD
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -12,15 +12,6 @@ if TYPE_CHECKING:
 def binary(obj: "GUID") -> bytes:
     return bytes(obj)
 
-
-_ole32 = oledll.ole32
-
-_StringFromCLSID = _ole32.StringFromCLSID
-_CoTaskMemFree = windll.ole32.CoTaskMemFree
-_ProgIDFromCLSID = _ole32.ProgIDFromCLSID
-_CLSIDFromString = _ole32.CLSIDFromString
-_CLSIDFromProgID = _ole32.CLSIDFromProgID
-_CoCreateGuid = _ole32.CoCreateGuid
 
 # Note: Comparing GUID instances by comparing their buffers
 # is slightly faster than using ole32.IsEqualGUID.
@@ -92,6 +83,37 @@ class GUID(Structure):
         _CoCreateGuid(byref(guid))
         return guid
 
+
+REFCLSID = POINTER(GUID)
+LPOLESTR = LPCOLESTR = c_wchar_p
+LPCLSID = POINTER(GUID)
+
+_ole32_nohresult = WinDLL("ole32")
+_ole32 = OleDLL("ole32")
+
+_StringFromCLSID = _ole32.StringFromCLSID
+_StringFromCLSID.argtypes = [REFCLSID, POINTER(LPOLESTR)]
+_StringFromCLSID.restype = HRESULT
+
+_CoTaskMemFree = _ole32_nohresult.CoTaskMemFree
+_CoTaskMemFree.argtypes = [LPVOID]
+_CoTaskMemFree.restype = None
+
+_ProgIDFromCLSID = _ole32.ProgIDFromCLSID
+_ProgIDFromCLSID.argtypes = [REFCLSID, POINTER(LPOLESTR)]
+_ProgIDFromCLSID.restype = HRESULT
+
+_CLSIDFromString = _ole32.CLSIDFromString
+_CLSIDFromString.argtypes = [LPCOLESTR, LPCLSID]
+_CLSIDFromString.restype = HRESULT
+
+_CLSIDFromProgID = _ole32.CLSIDFromProgID
+_CLSIDFromProgID.argtypes = [LPCOLESTR, LPCLSID]
+_CLSIDFromProgID.restype = HRESULT
+
+_CoCreateGuid = _ole32.CoCreateGuid
+_CoCreateGuid.argtypes = [POINTER(GUID)]
+_CoCreateGuid.restype = HRESULT
 
 GUID_null = GUID()
 
