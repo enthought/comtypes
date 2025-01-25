@@ -29,7 +29,7 @@ from typing import (
 )
 from typing import Union as _UnionT
 
-from comtypes import GUID, IPersist, IUnknown, hresult
+from comtypes import GUID, IPersist, IUnknown, _CoUninitialize, hresult
 from comtypes._vtbl import _MethodFinder, create_dispimpl, create_vtbl_mapping
 from comtypes.automation import DISPID, DISPPARAMS, EXCEPINFO, VARIANT
 from comtypes.errorinfo import ISupportErrorInfo
@@ -123,10 +123,6 @@ _CoInitialize.argtypes = [LPVOID]
 _CoInitialize.restype = (
     LONG  # technically, it is a HRESULT, but we want to avoid the OSError
 )
-
-_CoUninitialize = _ole32_nohresult.CoUninitialize
-_CoUninitialize.argtypes = []
-_CoUninitialize.restype = None
 
 _CoAddRefServerProcess = _ole32.CoAddRefServerProcess
 _CoAddRefServerProcess.argtypes = []
