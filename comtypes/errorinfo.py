@@ -1,6 +1,6 @@
 import sys
 from ctypes import *
-from ctypes.wintypes import DWORD
+from ctypes.wintypes import DWORD, ULONG
 from comtypes import IUnknown, HRESULT, COMMETHOD, GUID, BSTR
 from comtypes.hresult import *
 
@@ -45,26 +45,38 @@ class ISupportErrorInfo(IUnknown):
 
 
 ################################################################
-_oleaut32 = oledll.oleaut32
+_oleaut32 = OleDLL("oleaut32")
+
+_CreateErrorInfo = _oleaut32.CreateErrorInfo
+_CreateErrorInfo.argtypes = [POINTER(POINTER(ICreateErrorInfo))]
+_CreateErrorInfo.restype = HRESULT
+
+_GetErrorInfo = _oleaut32.GetErrorInfo
+_GetErrorInfo.argtypes = [ULONG, POINTER(POINTER(IErrorInfo))]
+_GetErrorInfo.restype = HRESULT
+
+_SetErrorInfo = _oleaut32.SetErrorInfo
+_SetErrorInfo.argtypes = [ULONG, POINTER(IErrorInfo)]
+_SetErrorInfo.restype = HRESULT
 
 
 def CreateErrorInfo():
     cei = POINTER(ICreateErrorInfo)()
-    _oleaut32.CreateErrorInfo(byref(cei))
+    _CreateErrorInfo(byref(cei))
     return cei
 
 
 def GetErrorInfo():
     """Get the error information for the current thread."""
     errinfo = POINTER(IErrorInfo)()
-    if S_OK == _oleaut32.GetErrorInfo(0, byref(errinfo)):
+    if S_OK == _GetErrorInfo(0, byref(errinfo)):
         return errinfo
     return None
 
 
 def SetErrorInfo(errinfo):
     """Set error information for the current thread."""
-    return _oleaut32.SetErrorInfo(0, errinfo)
+    return _SetErrorInfo(0, errinfo)
 
 
 def ReportError(
@@ -89,7 +101,7 @@ def ReportError(
             ei.SetSource(
                 progid
             )  # progid for the class or application that created the error
-    _oleaut32.SetErrorInfo(0, ei)
+    _SetErrorInfo(0, ei)
     return hresult
 
 
