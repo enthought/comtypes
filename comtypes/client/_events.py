@@ -5,10 +5,56 @@ import comtypes.hresult
 import comtypes.automation
 import comtypes.typeinfo
 import comtypes.connectionpoints
+from ctypes import POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL, HRESULT
+from ctypes.wintypes import (
+    BOOL,
+    DWORD,
+    HANDLE,
+    LPCSTR,
+    LPVOID,
+    ULONG,
+    LPHANDLE,
+    LPDWORD,
+)
 from comtypes.client._generate import GetModule
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class SECURITY_ATTRIBUTES(Structure):
+    _fields_ = [
+        ("nLength", DWORD),
+        ("lpSecurityDescriptor", LPVOID),
+        ("bInheritHandle", BOOL),
+    ]
+
+
+_ole32 = OleDLL("ole32")
+
+_CoWaitForMultipleHandles = _ole32.CoWaitForMultipleHandles
+_CoWaitForMultipleHandles.argtypes = [DWORD, DWORD, ULONG, LPHANDLE, LPDWORD]
+_CoWaitForMultipleHandles.restype = HRESULT
+
+
+_kernel32 = WinDLL("kernel32")
+
+_CreateEventA = _kernel32.CreateEventA
+_CreateEventA.argtypes = [POINTER(SECURITY_ATTRIBUTES), BOOL, BOOL, LPCSTR]
+_CreateEventA.restype = HANDLE
+
+_SetEvent = _kernel32.SetEvent
+_SetEvent.argtypes = [HANDLE]
+_SetEvent.restype = BOOL
+
+PHANDLER_ROUTINE = WINFUNCTYPE(BOOL, DWORD)
+_SetConsoleCtrlHandler = _kernel32.SetConsoleCtrlHandler
+_SetConsoleCtrlHandler.argtypes = [PHANDLER_ROUTINE, BOOL]
+_SetConsoleCtrlHandler.restype = BOOL
+
+_CloseHandle = _kernel32.CloseHandle
+_CloseHandle.argtypes = [HANDLE]
+_CloseHandle.restype = BOOL
 
 
 class _AdviseConnection(object):
@@ -274,24 +320,22 @@ def PumpEvents(timeout):
     # CoWaitForMultipleHandles calls the Win32 function
     # MsgWaitForMultipleObjects.
 
-    hevt = ctypes.windll.kernel32.CreateEventA(None, True, False, None)
+    hevt = _CreateEventA(None, True, False, None)
     handles = _handles_type(hevt)
     RPC_S_CALLPENDING = -2147417835
 
-    # @ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)
+    # @ctypes.WINFUNCTYPE(BOOL, DWORD)
     def HandlerRoutine(dwCtrlType):
         if dwCtrlType == 0:  # CTRL+C
-            ctypes.windll.kernel32.SetEvent(hevt)
+            _SetEvent(hevt)
             return 1
         return 0
 
-    HandlerRoutine = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)(HandlerRoutine)
-
-    ctypes.windll.kernel32.SetConsoleCtrlHandler(HandlerRoutine, 1)
+    _SetConsoleCtrlHandler(PHANDLER_ROUTINE(HandlerRoutine), 1)
 
     try:
         try:
-            res = ctypes.oledll.ole32.CoWaitForMultipleHandles(
+            res = _CoWaitForMultipleHandles(
                 0,
                 int(timeout * 1000),
                 len(handles),
@@ -304,5 +348,5 @@ def PumpEvents(timeout):
         else:
             raise KeyboardInterrupt
     finally:
-        ctypes.windll.kernel32.CloseHandle(hevt)
-        ctypes.windll.kernel32.SetConsoleCtrlHandler(HandlerRoutine, 0)
+        _CloseHandle(hevt)
+        _SetConsoleCtrlHandler(PHANDLER_ROUTINE(HandlerRoutine), 0)
