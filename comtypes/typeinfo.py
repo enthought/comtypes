@@ -6,7 +6,17 @@
 import ctypes
 import sys
 import weakref
-from ctypes import HRESULT, POINTER, _Pointer, byref, c_int, c_void_p, c_wchar_p
+from ctypes import (
+    HRESULT,
+    POINTER,
+    _Pointer,
+    OleDLL,
+    WinDLL,
+    byref,
+    c_int,
+    c_void_p,
+    c_wchar_p,
+)
 from ctypes.wintypes import (
     DWORD,
     HMODULE,
@@ -64,6 +74,7 @@ PVOID = c_void_p
 ULONG_PTR = ctypes.c_uint64 if is_64_bit else ctypes.c_ulong
 
 LPOLESTR = POINTER(OLECHAR)
+LPCOLESTR = c_wchar_p
 
 ################################################################
 # enums
@@ -597,13 +608,65 @@ IRecordInfo._methods_ = [
 
 ################################################################
 # functions
-_oleaut32 = ctypes.oledll.oleaut32
+_oleaut32 = OleDLL("oleaut32")
+
+_GetRecordInfoFromTypeInfo = _oleaut32.GetRecordInfoFromTypeInfo
+_GetRecordInfoFromTypeInfo.argtypes = [
+    POINTER(ITypeInfo),
+    POINTER(POINTER(IRecordInfo)),
+]
+_GetRecordInfoFromTypeInfo.restype = HRESULT
+
+_GetRecordInfoFromGuids = _oleaut32.GetRecordInfoFromGuids
+_GetRecordInfoFromGuids.argtypes = [
+    POINTER(GUID),
+    ULONG,
+    ULONG,
+    LCID,
+    POINTER(GUID),
+    POINTER(POINTER(IRecordInfo)),
+]
+_GetRecordInfoFromGuids.restype = HRESULT
+
+_LoadRegTypeLib = _oleaut32.LoadRegTypeLib
+_LoadRegTypeLib.argtypes = [POINTER(GUID), WORD, WORD, LCID, POINTER(POINTER(ITypeLib))]
+_LoadRegTypeLib.restype = HRESULT
+
+_LoadTypeLibEx = _oleaut32.LoadTypeLibEx
+_LoadTypeLibEx.argtypes = [LPCOLESTR, REGKIND, POINTER(POINTER(ITypeLib))]
+_LoadTypeLibEx.restype = HRESULT
+
+_LoadTypeLib = _oleaut32.LoadTypeLib
+_LoadTypeLib.argtypes = [LPCOLESTR, POINTER(POINTER(ITypeLib))]
+_LoadTypeLib.restype = HRESULT
+
+_UnRegisterTypeLib = _oleaut32.UnRegisterTypeLib
+_UnRegisterTypeLib.argtypes = [POINTER(GUID), WORD, WORD, LCID, SYSKIND]
+_UnRegisterTypeLib.restype = HRESULT
+
+_RegisterTypeLib = _oleaut32.RegisterTypeLib
+_RegisterTypeLib.argtypes = [POINTER(ITypeLib), LPCOLESTR, LPCOLESTR]
+_RegisterTypeLib.restype = HRESULT
+
+_CreateTypeLib2 = _oleaut32.CreateTypeLib2
+_CreateTypeLib2.argtypes = [SYSKIND, LPCOLESTR, POINTER(POINTER(ICreateTypeLib2))]
+_CreateTypeLib2.restype = HRESULT
+
+_QueryPathOfRegTypeLib = _oleaut32.QueryPathOfRegTypeLib
+_QueryPathOfRegTypeLib.argtypes = [POINTER(GUID), USHORT, USHORT, LCID, POINTER(BSTR)]
+_QueryPathOfRegTypeLib.restype = HRESULT
+
+_kernel32 = WinDLL("kernel32")
+
+_GetModuleFileNameW = _kernel32.GetModuleFileNameW
+_GetModuleFileNameW.argtypes = [HMODULE, LPWSTR, DWORD]
+_GetModuleFileNameW.restype = DWORD
 
 
 def GetRecordInfoFromTypeInfo(tinfo: ITypeInfo) -> IRecordInfo:
     """Return an IRecordInfo pointer to the UDT described in tinfo"""
     ri = POINTER(IRecordInfo)()
-    _oleaut32.GetRecordInfoFromTypeInfo(tinfo, byref(ri))
+    _GetRecordInfoFromTypeInfo(tinfo, byref(ri))
     return ri  # type: ignore
 
 
@@ -611,7 +674,7 @@ def GetRecordInfoFromGuids(
     rGuidTypeLib: str, verMajor: int, verMinor: int, lcid: int, rGuidTypeInfo: str
 ) -> IRecordInfo:
     ri = POINTER(IRecordInfo)()
-    _oleaut32.GetRecordInfoFromGuids(
+    _GetRecordInfoFromGuids(
         byref(GUID(rGuidTypeLib)),
         verMajor,
         verMinor,
@@ -627,33 +690,21 @@ def LoadRegTypeLib(
 ) -> ITypeLib:
     """Load a registered type library"""
     tlib = POINTER(ITypeLib)()
-    _oleaut32.LoadRegTypeLib(
-        byref(GUID(guid)), wMajorVerNum, wMinorVerNum, lcid, byref(tlib)
-    )
+    _LoadRegTypeLib(byref(GUID(guid)), wMajorVerNum, wMinorVerNum, lcid, byref(tlib))
     return tlib  # type: ignore
 
 
-if hasattr(_oleaut32, "LoadTypeLibEx"):
-
-    def LoadTypeLibEx(szFile: str, regkind: int = REGKIND_NONE) -> ITypeLib:
-        """Load, and optionally register a type library file"""
-        ptl = POINTER(ITypeLib)()
-        _oleaut32.LoadTypeLibEx(c_wchar_p(szFile), regkind, byref(ptl))
-        return ptl  # type: ignore
-
-else:
-
-    def LoadTypeLibEx(szFile: str, regkind: int = REGKIND_NONE) -> ITypeLib:
-        """Load, and optionally register a type library file"""
-        ptl = POINTER(ITypeLib)()
-        _oleaut32.LoadTypeLib(c_wchar_p(szFile), byref(ptl))
-        return ptl  # type: ignore
+def LoadTypeLibEx(szFile: str, regkind: int = REGKIND_NONE) -> ITypeLib:
+    """Load, and optionally register a type library file"""
+    ptl = POINTER(ITypeLib)()
+    _LoadTypeLibEx(c_wchar_p(szFile), regkind, byref(ptl))
+    return ptl  # type: ignore
 
 
 def LoadTypeLib(szFile: str) -> ITypeLib:
     """Load and register a type library file"""
     tlib = POINTER(ITypeLib)()
-    _oleaut32.LoadTypeLib(c_wchar_p(szFile), byref(tlib))
+    _LoadTypeLib(c_wchar_p(szFile), byref(tlib))
     return tlib  # type: ignore
 
 
@@ -665,22 +716,20 @@ def UnRegisterTypeLib(
     syskind: int = (SYS_WIN64 if is_64_bit else SYS_WIN32),
 ) -> int:
     """Unregister a registered type library"""
-    return _oleaut32.UnRegisterTypeLib(
-        byref(GUID(libID)), wVerMajor, wVerMinor, lcid, syskind
-    )
+    return _UnRegisterTypeLib(byref(GUID(libID)), wVerMajor, wVerMinor, lcid, syskind)
 
 
 def RegisterTypeLib(
     tlib: ITypeLib, fullpath: str, helpdir: Optional[str] = None
 ) -> int:
     """Register a type library in the registry"""
-    return _oleaut32.RegisterTypeLib(tlib, c_wchar_p(fullpath), c_wchar_p(helpdir))
+    return _RegisterTypeLib(tlib, c_wchar_p(fullpath), c_wchar_p(helpdir))
 
 
 def CreateTypeLib(filename: str, syskind: int = SYS_WIN32) -> ICreateTypeLib2:
     """Return a ICreateTypeLib2 pointer"""
     ctlib = POINTER(ICreateTypeLib2)()
-    _oleaut32.CreateTypeLib2(syskind, c_wchar_p(filename), byref(ctlib))
+    _CreateTypeLib2(syskind, c_wchar_p(filename), byref(ctlib))
     return ctlib  # type: ignore
 
 
@@ -689,15 +738,10 @@ def QueryPathOfRegTypeLib(
 ) -> str:
     """Return the path of a registered type library"""
     pathname = BSTR()
-    _oleaut32.QueryPathOfRegTypeLib(
+    _QueryPathOfRegTypeLib(
         byref(GUID(libid)), wVerMajor, wVerMinor, lcid, byref(pathname)
     )
     return pathname.value.split("\0")[0]
-
-
-_GetModuleFileNameW = ctypes.windll.kernel32.GetModuleFileNameW
-_GetModuleFileNameW.argtypes = HMODULE, LPWSTR, DWORD
-_GetModuleFileNameW.restype = DWORD
 
 
 def GetModuleFileName(handle: Optional[int], maxsize: int) -> str:
