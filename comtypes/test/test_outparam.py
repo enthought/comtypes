@@ -1,23 +1,26 @@
 import unittest
 from ctypes import (
+    HRESULT,
     POINTER,
+    OleDLL,
+    WinDLL,
     byref,
     c_int,
+    c_size_t,
     c_ulong,
     c_void_p,
     c_wchar,
     c_wchar_p,
     cast,
     memmove,
-    oledll,
     sizeof,
-    windll,
     wstring_at,
 )
+from ctypes.wintypes import DWORD, LPVOID
 from unittest.mock import patch
 
 from comtypes import COMMETHOD, GUID, IUnknown
-
+from comtypes.GUID import _CoTaskMemFree
 
 text_type = str
 
@@ -34,8 +37,21 @@ class IMalloc(IUnknown):
     ]
 
 
+_ole32 = OleDLL("ole32")
+
+_CoGetMalloc = _ole32.CoGetMalloc
+_CoGetMalloc.argtypes = [DWORD, POINTER(POINTER(IMalloc))]
+_CoGetMalloc.restype = HRESULT
+
+_ole32_nohresult = WinDLL("ole32")
+
+SIZE_T = c_size_t
+_CoTaskMemAlloc = _ole32_nohresult.CoTaskMemAlloc
+_CoTaskMemAlloc.argtypes = [SIZE_T]
+_CoTaskMemAlloc.restype = LPVOID
+
 malloc = POINTER(IMalloc)()
-oledll.ole32.CoGetMalloc(1, byref(malloc))
+_CoGetMalloc(1, byref(malloc))
 assert bool(malloc)
 
 
@@ -45,14 +61,14 @@ def from_outparm(self):
     result = wstring_at(self)
     if not malloc.DidAlloc(self):
         raise ValueError("memory was NOT allocated by CoTaskMemAlloc")
-    windll.ole32.CoTaskMemFree(self)
+    _CoTaskMemFree(self)
     return result
 
 
 def comstring(text, typ=c_wchar_p):
     text = text_type(text)
     size = (len(text) + 1) * sizeof(c_wchar)
-    mem = windll.ole32.CoTaskMemAlloc(size)
+    mem = _CoTaskMemAlloc(size)
     print("malloc'd 0x%x, %d bytes" % (mem, size))
     ptr = cast(mem, typ)
     memmove(mem, text, size)
