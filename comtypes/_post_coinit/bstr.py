@@ -1,8 +1,13 @@
-from ctypes import _SimpleCData, windll
+from ctypes import _SimpleCData, WinDLL
 from typing import Any, Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
+
+
+_oleaut32 = WinDLL("oleaut32")
+
+_SysFreeString = _oleaut32.SysFreeString
 
 
 class BSTR(_SimpleCData):
@@ -18,9 +23,7 @@ class BSTR(_SimpleCData):
         self._needsfree = True
         return self.value
 
-    def __del__(
-        self, _free: Callable[["BSTR"], Any] = windll.oleaut32.SysFreeString
-    ) -> None:
+    def __del__(self, _free: Callable[["BSTR"], Any] = _SysFreeString) -> None:
         # Free the string if self owns the memory
         # or if instructed by __ctypes_from_outparam__.
         if self._b_base_ is None or self._needsfree:
@@ -35,3 +38,7 @@ class BSTR(_SimpleCData):
         # right thing, it doesn't ensure that SysFreeString is called
         # on destruction.
         return cls(value)
+
+
+_SysFreeString.argtypes = [BSTR]
+_SysFreeString.restype = None
