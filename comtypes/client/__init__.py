@@ -144,13 +144,13 @@ ctypes.POINTER(automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam  #
 # Object creation
 #
 @overload
-def GetActiveObject(progid: _UnionT[str, CoClass, GUID]) -> Any: ...
+def GetActiveObject(progid: _UnionT[str, Type[CoClass], GUID]) -> Any: ...
 @overload
 def GetActiveObject(
-    progid: _UnionT[str, CoClass, GUID], interface: Type[_T_IUnknown]
+    progid: _UnionT[str, Type[CoClass], GUID], interface: Type[_T_IUnknown]
 ) -> _T_IUnknown: ...
 def GetActiveObject(
-    progid: _UnionT[str, CoClass, GUID],
+    progid: _UnionT[str, Type[CoClass], GUID],
     interface: Optional[Type[IUnknown]] = None,
     dynamic: bool = False,
 ) -> Any:
@@ -189,14 +189,14 @@ if TYPE_CHECKING:
 
     @overload
     def GetClassObject(
-        progid: _UnionT[str, CoClass, GUID],
+        progid: _UnionT[str, Type[CoClass], GUID],
         clsctx: Optional[int] = None,
         pServerInfo: Optional[comtypes.COSERVERINFO] = None,
         interface: None = None,
     ) -> hints.IClassFactory: ...
     @overload
     def GetClassObject(
-        progid: _UnionT[str, CoClass, GUID],
+        progid: _UnionT[str, Type[CoClass], GUID],
         clsctx: Optional[int] = None,
         pServerInfo: Optional[comtypes.COSERVERINFO] = None,
         interface: Type[_T_IUnknown] = hints.IClassFactory,
@@ -204,7 +204,7 @@ if TYPE_CHECKING:
 
 
 def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
-    # type: (_UnionT[str, CoClass, GUID], Optional[int], Optional[comtypes.COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
+    # type: (_UnionT[str, Type[CoClass], GUID], Optional[int], Optional[comtypes.COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
     """Create and return the class factory for a COM object.
 
     'clsctx' specifies how to create the object, use the CLSCTX_... constants.
