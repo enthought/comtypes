@@ -1,7 +1,7 @@
 import unittest as ut
+from ctypes import HRESULT, POINTER, OleDLL, byref, c_ubyte, c_ulonglong, pointer
+from ctypes.wintypes import BOOL, HGLOBAL, ULARGE_INTEGER
 
-from ctypes import POINTER, byref, c_bool, c_ubyte, c_ulonglong, oledll, pointer
-import comtypes
 import comtypes.client
 
 comtypes.client.GetModule("portabledeviceapi.dll")
@@ -13,11 +13,23 @@ STREAM_SEEK_SET = 0
 STREAM_SEEK_CUR = 1
 STREAM_SEEK_END = 2
 
+_ole32 = OleDLL("ole32")
+
+_CreateStreamOnHGlobal = _ole32.CreateStreamOnHGlobal
+_CreateStreamOnHGlobal.argtypes = [HGLOBAL, BOOL, POINTER(POINTER(IStream))]
+_CreateStreamOnHGlobal.restype = HRESULT
+
+_shlwapi = OleDLL("shlwapi")
+
+_IStream_Size = _shlwapi.IStream_Size
+_IStream_Size.argtypes = [POINTER(IStream), POINTER(ULARGE_INTEGER)]
+_IStream_Size.restype = HRESULT
+
 
 def _create_stream() -> IStream:
     # Create an IStream
     stream = POINTER(IStream)()  # type: ignore
-    comtypes._ole32.CreateStreamOnHGlobal(None, c_bool(True), byref(stream))
+    _CreateStreamOnHGlobal(None, True, byref(stream))
     return stream  # type: ignore
 
 
@@ -92,7 +104,7 @@ class Test_SetSize(ut.TestCase):
         stream = _create_stream()
         stream.SetSize(42)
         pui = pointer(c_ulonglong())
-        oledll.shlwapi.IStream_Size(stream, pui)
+        _IStream_Size(stream, pui)
         self.assertEqual(pui.contents.value, 42)
 
 
