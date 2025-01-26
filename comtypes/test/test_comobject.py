@@ -3,9 +3,9 @@ import unittest as ut
 from ctypes import POINTER, byref, pointer
 from unittest import mock
 
-import comtypes
 import comtypes.client
-from comtypes import COMObject, IUnknown, hresult
+from comtypes import CLSCTX_SERVER, COMObject, IUnknown, hresult
+from comtypes._post_coinit.misc import _CoCreateInstance
 from comtypes.automation import IDispatch
 
 comtypes.client.GetModule("UIAutomationCore.dll")
@@ -54,10 +54,10 @@ class Test_IUnknown_QueryInterface(ut.TestCase):
 
     def test_valid_pointer(self):
         ptr = ctypes.c_void_p()
-        ctypes.oledll.ole32.CoCreateInstance(
+        _CoCreateInstance(
             byref(scrrun.Dictionary._reg_clsid_),
             None,
-            comtypes.CLSCTX_SERVER,
+            CLSCTX_SERVER,
             byref(scrrun.IDictionary._iid_),
             byref(ptr),
         )
