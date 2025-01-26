@@ -8,9 +8,9 @@ import comtypes.test
 try:
     # pass Word libUUID
     comtypes.client.GetModule(("{00020905-0000-0000-C000-000000000046}",))
-    IMPORT_FAILED = False
+    IMPORT_WORD_FAILED = False
 except (ImportError, OSError):
-    IMPORT_FAILED = True
+    IMPORT_WORD_FAILED = True
 
 
 ################################################################
@@ -24,8 +24,8 @@ except (ImportError, OSError):
 ################################################################
 
 
-@unittest.skipIf(IMPORT_FAILED, "This depends on Word.")
-class Test(unittest.TestCase):
+@unittest.skipIf(IMPORT_WORD_FAILED, "This depends on Word.")
+class Test_Word(unittest.TestCase):
     def setUp(self):
         try:
             comtypes.client.GetActiveObject("Word.Application")
