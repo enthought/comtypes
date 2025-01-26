@@ -56,7 +56,7 @@ jobs:
       - name: install comtypes
         run: |
           pip install --upgrade setuptools
-          python setup.py install
+          python -m pip install .
           pip uninstall comtypes -y
           python test_pip_install.py
 

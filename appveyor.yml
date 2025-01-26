@@ -24,7 +24,7 @@ environment:
 
 test_script:
    - C:\%py%\Scripts\pip.exe install --upgrade setuptools
-   - C:\%py%\python.exe setup.py install
+   - C:\%py%\python.exe -m pip install .
    - C:\%py%\Scripts\pip.exe uninstall comtypes -y
    - C:\%py%\python.exe test_pip_install.py
    - C:\%py%\python.exe -m unittest discover -v -s ./comtypes/test -t comtypes\test
