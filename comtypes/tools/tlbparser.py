@@ -1,6 +1,6 @@
 import os
 import sys
-from ctypes import alignment, byref, c_void_p, sizeof, windll
+from ctypes import alignment, c_void_p, sizeof, windll
 from typing import Any, Dict, List, Optional, Tuple
 
 from comtypes import BSTR, COMError, automation, typeinfo
@@ -739,21 +739,22 @@ def get_tlib_filename(tlib: typeinfo.ITypeLib) -> Optional[str]:
     # seems if the typelib is not registered, there's no way to
     # determine the filename.
     la = tlib.GetLibAttr()
-    name = BSTR()
-    if 0 == windll.oleaut32.QueryPathOfRegTypeLib(
-        byref(la.guid), la.wMajorVerNum, la.wMinorVerNum, 0, byref(name)
-    ):
-        full_filename = name.value.split("\0")[0]
-        if not os.path.isabs(full_filename):
-            # workaround Windows 7 bug in QueryPathOfRegTypeLib returning relative path
-            try:
-                dll = windll.LoadLibrary(full_filename)
-                full_filename = _get_module_filename(dll._handle)
-                del dll
-            except OSError:
-                return None
-        return full_filename
-    return None
+    try:
+        full_filename = typeinfo.QueryPathOfRegTypeLib(
+            str(la.guid), la.wMajorVerNum, la.wMinorVerNum
+        )
+    except OSError:
+        return None
+
+    if not os.path.isabs(full_filename):
+        # workaround Windows 7 bug in QueryPathOfRegTypeLib returning relative path
+        try:
+            dll = windll.LoadLibrary(full_filename)
+            full_filename = _get_module_filename(dll._handle)
+            del dll
+        except OSError:
+            return None
+    return full_filename
 
 
 def _py2exe_hint():
