@@ -5,7 +5,7 @@ import sys
 from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
 from typing import TYPE_CHECKING, ClassVar, List, Optional, Type, TypeVar
 
-from comtypes import GUID, _ole32_nohresult, com_interface_registry
+from comtypes import GUID, _CoUninitialize, com_interface_registry
 from comtypes._memberspec import STDMETHOD, ComMemberGenerator, DispMemberGenerator
 from comtypes._post_coinit import _cominterface_meta_patcher as _meta_patch
 from comtypes._post_coinit.instancemethod import instancemethod
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def _shutdown(
-    func=_ole32_nohresult.CoUninitialize,
+    func=_CoUninitialize,
     _debug=logger.debug,
     _exc_clear=getattr(sys, "exc_clear", lambda: None),
 ):

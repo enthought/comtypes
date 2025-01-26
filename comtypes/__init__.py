@@ -24,8 +24,8 @@ import atexit
 from ctypes import *  # noqa
 from ctypes import HRESULT  # noqa
 from ctypes import _Pointer, _SimpleCData  # noqa
-from ctypes import c_int, c_ulong, oledll, windll
-from ctypes.wintypes import DWORD  # noqa
+from ctypes import c_int, c_ulong, OleDLL, WinDLL
+from ctypes.wintypes import DWORD, LPVOID  # noqa
 import logging
 import sys
 from typing import TYPE_CHECKING
@@ -121,8 +121,18 @@ EOAC_NONE = 0
 
 ################################################################
 # Initialization and shutdown
-_ole32 = oledll.ole32
-_ole32_nohresult = windll.ole32  # use this for functions that don't return a HRESULT
+_ole32 = OleDLL("ole32")
+
+_CoInitializeEx = _ole32.CoInitializeEx
+_CoInitializeEx.argtypes = [LPVOID, DWORD]
+_CoInitializeEx.restype = HRESULT
+
+_ole32_nohresult = WinDLL("ole32")  # use this for functions that don't return a HRESULT
+
+_CoUninitialize = _ole32_nohresult.CoUninitialize
+_CoUninitialize.argtypes = []
+_CoUninitialize.restype = None
+
 
 COINIT_MULTITHREADED = 0x0
 COINIT_APARTMENTTHREADED = 0x2
@@ -138,7 +148,7 @@ def CoInitializeEx(flags=None):
     if flags is None:
         flags = getattr(sys, "coinit_flags", COINIT_APARTMENTTHREADED)
     logger.debug("CoInitializeEx(None, %s)", flags)
-    _ole32.CoInitializeEx(None, flags)
+    _CoInitializeEx(None, flags)
 
 
 # COM is initialized automatically for the thread that imports this
@@ -156,7 +166,7 @@ CoInitializeEx()
 # in which we are using COM
 def CoUninitialize():
     logger.debug("CoUninitialize()")
-    _ole32_nohresult.CoUninitialize()
+    _CoUninitialize()
 
 
 ################################################################
