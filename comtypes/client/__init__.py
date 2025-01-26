@@ -12,17 +12,17 @@ import ctypes
 import logging
 import os
 import sys
-from typing import Any, overload, TypeVar, TYPE_CHECKING
-from typing import Optional, Type, Union as _UnionT
+from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, overload
+from typing import Union as _UnionT
 
 import comtypes
-from comtypes.hresult import *
-from comtypes import automation, CoClass, GUID, IUnknown, typeinfo
 import comtypes.client.dynamic
-from comtypes.client._constants import Constants
-from comtypes.client._events import GetEvents, ShowEvents, PumpEvents
-from comtypes.client._generate import GetModule
+from comtypes import GUID, CoClass, IUnknown, automation, typeinfo
 from comtypes.client._code_cache import _find_gen_dir
+from comtypes.client._constants import Constants
+from comtypes.client._events import GetEvents, PumpEvents, ShowEvents
+from comtypes.client._generate import GetModule
+from comtypes.hresult import *
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
