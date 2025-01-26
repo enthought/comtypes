@@ -736,7 +736,25 @@ def CreateTypeLib(filename: str, syskind: int = SYS_WIN32) -> ICreateTypeLib2:
 def QueryPathOfRegTypeLib(
     libid: str, wVerMajor: int, wVerMinor: int, lcid: int = 0
 ) -> str:
-    """Return the path of a registered type library"""
+    """
+    Retrieve the path of a registered type library.
+
+    This function interacts with the Windows registry to locate the path of a
+    registered type library given its GUID, version, and locale.
+
+    Args:
+        libid (str): The GUID of the type library as a string.
+        wVerMajor (int): The major version of the type library.
+        wVerMinor (int): The minor version of the type library.
+        lcid (int, optional): The locale ID of the type library.
+
+    Returns:
+        str: The path of the registered type library.
+
+    Raises:
+        OSError: If QueryPathOfRegTypeLib fails.
+    """
+
     pathname = BSTR()
     _QueryPathOfRegTypeLib(
         byref(GUID(libid)), wVerMajor, wVerMinor, lcid, byref(pathname)
