@@ -13,24 +13,14 @@ from ctypes import (
     pointer,
 )
 from ctypes.wintypes import DWORD, LPCWSTR, LPVOID
-
-# fmt: off
-from typing import (  # noqa
-    Any, overload, TYPE_CHECKING, TypeVar,
-    # instead of `builtins`. see PEP585
-    Type,
-    # instead of `collections.abc`. see PEP585
-    Callable,
-    # instead of `A | B` and `None | A`. see PEP604
-    Optional,
-)
-# fmt: on
-if TYPE_CHECKING:
-    from comtypes import hints as hints  # noqa  # type: ignore
+from typing import TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar, overload
 
 from comtypes import CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER, CLSCTX_SERVER, GUID
 from comtypes._memberspec import COMMETHOD
 from comtypes._post_coinit.unknwn import IUnknown
+
+if TYPE_CHECKING:
+    from comtypes import hints as hints  # noqa  # type: ignore
 
 
 def _is_object(obj):
