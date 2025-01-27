@@ -1,5 +1,6 @@
-import sys, os
 import logging
+import os
+import sys
 
 logging.basicConfig()
 ##logging.basicConfig(level=logging.DEBUG)
@@ -8,13 +9,14 @@ logging.basicConfig()
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), r"..\..")))
 
 import ctypes
+
 import comtypes
-from comtypes.hresult import *
 import comtypes.client
 import comtypes.errorinfo
 import comtypes.server
 import comtypes.server.connectionpoints
 import comtypes.typeinfo
+from comtypes.hresult import *
 
 ################################################################
 
