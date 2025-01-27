@@ -1,5 +1,6 @@
-import sys, os
 import logging
+import os
+import sys
 
 logging.basicConfig()
 ##logging.basicConfig(level=logging.DEBUG)
@@ -7,14 +8,14 @@ logging.basicConfig()
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), r"..\..")))
 
-import ctypes
 import comtypes
-from comtypes.hresult import *
 import comtypes.client
+import comtypes.connectionpoints
 import comtypes.errorinfo
 import comtypes.server
 import comtypes.server.connectionpoints
 import comtypes.typeinfo
+from comtypes.hresult import S_OK
 
 ################################################################
 
@@ -30,6 +31,7 @@ if not hasattr(sys, "frozen"):
 
 # Import the wrapper
 from comtypes.gen import TestComServerLib
+from comtypes.gen.TestComServerLib import ITestComServer  # noqa
 
 ################################################################
 
@@ -151,7 +153,4 @@ if __name__ == "__main__":
         import traceback
 
         traceback.print_exc()
-        if sys.version_info >= (3, 0):
-            input()
-        else:
-            raw_input()
+        input()
