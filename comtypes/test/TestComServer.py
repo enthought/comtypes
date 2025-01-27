@@ -30,6 +30,7 @@ if not hasattr(sys, "frozen"):
 
 # Import the wrapper
 from comtypes.gen import TestComServerLib
+from comtypes.gen.TestComServerLib import ITestComServer  # noqa
 
 ################################################################
 
