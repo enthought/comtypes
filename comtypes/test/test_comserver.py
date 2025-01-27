@@ -179,11 +179,11 @@ class ActiveObjTest(unittest.TestCase):
             interface=comtypes.test.TestComServer.ITestComServer,
         )
 
-    def test_activeobj_registration(self):
+    def _doit(self, weak: bool):
         comobj = comtypes.test.TestComServer.TestComServer()
         with self.assertRaises(OSError):
             self.get_active_object()
-        handle = comtypes.server.RegisterActiveObject(comobj)
+        handle = comtypes.server.RegisterActiveObject(comobj, weak=weak)
         activeobj = self.get_active_object()
         self.assertEqual(activeobj.MixedInOut(2, 4), (3, 5))
         self.assertEqual(activeobj.AddRef(), 3)
@@ -193,6 +193,12 @@ class ActiveObjTest(unittest.TestCase):
         comtypes.server.RevokeActiveObject(handle)
         with self.assertRaises(OSError):
             self.get_active_object()
+
+    def test_activeobj_weak_registration(self):
+        self._doit(weak=True)
+
+    def test_activeobj_strong_registration(self):
+        self._doit(weak=False)
 
 
 class VariantTest(unittest.TestCase):
