@@ -3,10 +3,11 @@ import unittest
 from ctypes import pointer
 from typing import Any
 
+import comtypes.server
 import comtypes.test.TestComServer
 from comtypes import BSTR
 from comtypes.automation import VARIANT, _midlSAFEARRAY
-from comtypes.client import CreateObject
+from comtypes.client import CreateObject, GetActiveObject
 from comtypes.server.register import register, unregister
 from comtypes.test.find_memleak import find_memleak
 
@@ -169,6 +170,29 @@ class TestLocalServer_win32com(BaseServerTest, unittest.TestCase):
     @unittest.skip("This test make no sense with win32com.")
     def test_mixedinout(self):
         pass
+
+
+class ActiveObjTest(unittest.TestCase):
+    def get_active_object(self) -> comtypes.test.TestComServer.ITestComServer:
+        return GetActiveObject(
+            comtypes.test.TestComServer.TestComServer,
+            interface=comtypes.test.TestComServer.ITestComServer,
+        )
+
+    def test_activeobj_registration(self):
+        comobj = comtypes.test.TestComServer.TestComServer()
+        with self.assertRaises(OSError):
+            self.get_active_object()
+        handle = comtypes.server.RegisterActiveObject(comobj)
+        activeobj = self.get_active_object()
+        self.assertEqual(activeobj.MixedInOut(2, 4), (3, 5))
+        self.assertEqual(activeobj.AddRef(), 3)
+        self.assertEqual(activeobj.Release(), 2)
+        punk = comobj.QueryInterface(comtypes.test.TestComServer.ITestComServer)
+        self.assertEqual(activeobj, punk)
+        comtypes.server.RevokeActiveObject(handle)
+        with self.assertRaises(OSError):
+            self.get_active_object()
 
 
 class VariantTest(unittest.TestCase):
