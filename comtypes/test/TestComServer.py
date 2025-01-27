@@ -151,7 +151,4 @@ if __name__ == "__main__":
         import traceback
 
         traceback.print_exc()
-        if sys.version_info >= (3, 0):
-            input()
-        else:
-            raw_input()
+        input()
