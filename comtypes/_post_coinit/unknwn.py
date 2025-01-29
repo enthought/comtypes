@@ -1,7 +1,6 @@
 # https://learn.microsoft.com/en-us/windows/win32/api/unknwn/
 
 import logging
-import sys
 from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
 from typing import TYPE_CHECKING, ClassVar, List, Optional, Type, TypeVar
 
@@ -19,10 +18,7 @@ logger = logging.getLogger(__name__)
 def _shutdown(
     func=_CoUninitialize,
     _debug=logger.debug,
-    _exc_clear=getattr(sys, "exc_clear", lambda: None),
 ):
-    # Make sure no COM pointers stay in exception frames.
-    _exc_clear()
     # Sometimes, CoUninitialize, running at Python shutdown,
     # raises an exception.  We suppress this when __debug__ is
     # False.
