@@ -1,37 +1,17 @@
-"""comtypes.client - High level client level COM support package."""
-
-################################################################
-#
-# TODO:
-#
-# - refactor some code into modules
-#
-################################################################
-
-import ctypes
 import logging
-import os
-import sys
+from _ctypes import COMError
 from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, overload
 from typing import Union as _UnionT
 
 import comtypes
 import comtypes.client.dynamic
-from comtypes import GUID, CoClass, IUnknown, automation, typeinfo
-from comtypes.client._code_cache import _find_gen_dir
-from comtypes.client._constants import Constants
-from comtypes.client._events import GetEvents, PumpEvents, ShowEvents
+from comtypes import COSERVERINFO, GUID, CoClass, IUnknown, automation, typeinfo
 from comtypes.client._generate import GetModule
 from comtypes.hresult import *
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
 
-gen_dir = _find_gen_dir()
-import comtypes.gen
-
-### for testing
-##gen_dir = None
 
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 logger = logging.getLogger(__name__)
@@ -63,7 +43,7 @@ def GetBestInterface(punk: Any) -> Any:
         try:
             pci = punk.QueryInterface(typeinfo.IProvideClassInfo)
             logger.debug("Does implement IProvideClassInfo")
-        except comtypes.COMError:
+        except COMError:
             # Some COM objects support IProvideClassInfo2, but not IProvideClassInfo.
             # These objects are broken, but we support them anyway.
             logger.debug(
@@ -86,24 +66,24 @@ def GetBestInterface(punk: Any) -> Any:
             index = 0
         href = tinfo.GetRefTypeOfImplType(index)
         tinfo = tinfo.GetRefTypeInfo(href)
-    except comtypes.COMError:
+    except COMError:
         logger.debug("Does NOT implement IProvideClassInfo/IProvideClassInfo2")
         try:
             pdisp = punk.QueryInterface(automation.IDispatch)
-        except comtypes.COMError:
+        except COMError:
             logger.debug("No Dispatch interface: %s", punk)
             return punk
         try:
             tinfo = pdisp.GetTypeInfo(0)
-        except comtypes.COMError:
+        except COMError:
             pdisp = comtypes.client.dynamic.Dispatch(pdisp)
             logger.debug("IDispatch.GetTypeInfo(0) failed: %s" % pdisp)
             return pdisp
     typeattr = tinfo.GetTypeAttr()
     logger.debug("Default interface is %s", typeattr.guid)
     try:
-        punk.QueryInterface(comtypes.IUnknown, typeattr.guid)
-    except comtypes.COMError:
+        punk.QueryInterface(IUnknown, typeattr.guid)
+    except COMError:
         logger.debug("Does not implement default interface, returning dynamic object")
         return comtypes.client.dynamic.Dispatch(punk)
 
@@ -130,13 +110,6 @@ def GetBestInterface(punk: Any) -> Any:
     result = punk.QueryInterface(interface)
     logger.debug("Final result is %s", result)
     return result
-
-
-# backwards compatibility:
-wrap = GetBestInterface
-
-# Should we do this for POINTER(IUnknown) also?
-ctypes.POINTER(automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam  # type: ignore
 
 
 ################################################################
@@ -191,20 +164,20 @@ if TYPE_CHECKING:
     def GetClassObject(
         progid: _UnionT[str, Type[CoClass], GUID],
         clsctx: Optional[int] = None,
-        pServerInfo: Optional[comtypes.COSERVERINFO] = None,
+        pServerInfo: Optional[COSERVERINFO] = None,
         interface: None = None,
     ) -> hints.IClassFactory: ...
     @overload
     def GetClassObject(
         progid: _UnionT[str, Type[CoClass], GUID],
         clsctx: Optional[int] = None,
-        pServerInfo: Optional[comtypes.COSERVERINFO] = None,
+        pServerInfo: Optional[COSERVERINFO] = None,
         interface: Type[_T_IUnknown] = hints.IClassFactory,
     ) -> _T_IUnknown: ...
 
 
 def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
-    # type: (_UnionT[str, Type[CoClass], GUID], Optional[int], Optional[comtypes.COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
+    # type: (_UnionT[str, Type[CoClass], GUID], Optional[int], Optional[COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
     """Create and return the class factory for a COM object.
 
     'clsctx' specifies how to create the object, use the CLSCTX_... constants.
@@ -224,7 +197,7 @@ def CreateObject(
     machine: Optional[str] = None,
     interface: Optional[Type[_T_IUnknown]] = None,
     dynamic: bool = ...,
-    pServerInfo: Optional[comtypes.COSERVERINFO] = None,
+    pServerInfo: Optional[COSERVERINFO] = None,
 ) -> _T_IUnknown: ...
 def CreateObject(
     progid: _UnionT[str, Type[CoClass], GUID],  # which object to create
@@ -232,9 +205,7 @@ def CreateObject(
     machine: Optional[str] = None,  # where to create the object
     interface: Optional[Type[IUnknown]] = None,  # the interface we want
     dynamic: bool = False,  # use dynamic dispatch
-    pServerInfo: Optional[
-        comtypes.COSERVERINFO
-    ] = None,  # server info struct for remoting
+    pServerInfo: Optional[COSERVERINFO] = None,  # server info struct for remoting
 ) -> Any:
     """Create a COM object from 'progid', and try to QueryInterface()
     it to the most useful interface, generating typelib support on
@@ -298,7 +269,7 @@ def CoGetObject(
 ) -> Any: ...
 def CoGetObject(
     displayname: str,
-    interface: Optional[Type[comtypes.IUnknown]] = None,
+    interface: Optional[Type[IUnknown]] = None,
     dynamic: bool = False,
 ) -> Any:
     """Create an object by calling CoGetObject(displayname).
@@ -313,11 +284,3 @@ def CoGetObject(
     if dynamic:
         return comtypes.client.dynamic.Dispatch(punk)
     return _manage(punk, clsid=None, interface=interface)
-
-
-# fmt: off
-__all__ = [
-    "CreateObject", "GetActiveObject", "CoGetObject", "GetEvents",
-    "ShowEvents", "PumpEvents", "GetModule", "GetClassObject",
-]
-# fmt: on
