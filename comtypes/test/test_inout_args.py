@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Tuple, Type
 from unittest.mock import MagicMock
 
 import comtypes
+from comtypes import IUnknown
 from comtypes._memberspec import _fix_inout_args
-from comtypes.client import IUnknown
 
 if TYPE_CHECKING:
     from comtypes._memberspec import _ArgSpecElmType
