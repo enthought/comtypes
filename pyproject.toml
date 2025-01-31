@@ -45,4 +45,4 @@ ignore = ["E402"]
 # Specify the source directory to avoid tracking temporary files created by "test_client_regenerate_modules.py".
 # Without this, coverage track these temporary files, leading to error when trying to generate a report.
 source = ["comtypes"]
-omit = ["comtypes/gen/*"]
+omit = ["comtypes/gen/*", "comtypes/test/*"]
