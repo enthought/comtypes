@@ -9,7 +9,7 @@ from comtypes.client._code_cache import _find_gen_dir
 from comtypes.client._constants import Constants  # noqa
 from comtypes.client._events import GetEvents, PumpEvents, ShowEvents
 from comtypes.client._generate import GetModule
-from comtypes.client.misc import GetBestInterface, _manage, wrap_outparam  # noqa
+from comtypes.client._managing import GetBestInterface, _manage, wrap_outparam  # noqa
 from comtypes.hresult import *  # noqa
 
 gen_dir = _find_gen_dir()
