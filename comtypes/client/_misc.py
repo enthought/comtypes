@@ -82,7 +82,7 @@ def GetBestInterface(punk: Any) -> Any:
     typeattr = tinfo.GetTypeAttr()
     logger.debug("Default interface is %s", typeattr.guid)
     try:
-        punk.QueryInterface(comtypes.IUnknown, typeattr.guid)
+        punk.QueryInterface(IUnknown, typeattr.guid)
     except COMError:
         logger.debug("Does not implement default interface, returning dynamic object")
         return comtypes.client.dynamic.Dispatch(punk)
@@ -271,7 +271,7 @@ def CoGetObject(
 ) -> Any: ...
 def CoGetObject(
     displayname: str,
-    interface: Optional[Type[comtypes.IUnknown]] = None,
+    interface: Optional[Type[IUnknown]] = None,
     dynamic: bool = False,
 ) -> Any:
     """Create an object by calling CoGetObject(displayname).
