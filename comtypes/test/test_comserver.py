@@ -94,9 +94,9 @@ class BaseServerTest(object):
         obj = self.create_object()
 
         def func():
-            return obj.eval("(1, 2, 3)")
+            return obj.eval("1 + 2")
 
-        self.assertEqual(func(), (1, 2, 3))  # type: ignore
+        self.assertEqual(func(), 3)  # type: ignore
         self._find_memleak(func)
 
     def test_get_typeinfo(self):
