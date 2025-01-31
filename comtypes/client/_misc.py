@@ -1,4 +1,5 @@
 import logging
+from _ctypes import COMError
 from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, overload
 from typing import Union as _UnionT
 
@@ -42,7 +43,7 @@ def GetBestInterface(punk: Any) -> Any:
         try:
             pci = punk.QueryInterface(typeinfo.IProvideClassInfo)
             logger.debug("Does implement IProvideClassInfo")
-        except comtypes.COMError:
+        except COMError:
             # Some COM objects support IProvideClassInfo2, but not IProvideClassInfo.
             # These objects are broken, but we support them anyway.
             logger.debug(
@@ -65,16 +66,16 @@ def GetBestInterface(punk: Any) -> Any:
             index = 0
         href = tinfo.GetRefTypeOfImplType(index)
         tinfo = tinfo.GetRefTypeInfo(href)
-    except comtypes.COMError:
+    except COMError:
         logger.debug("Does NOT implement IProvideClassInfo/IProvideClassInfo2")
         try:
             pdisp = punk.QueryInterface(automation.IDispatch)
-        except comtypes.COMError:
+        except COMError:
             logger.debug("No Dispatch interface: %s", punk)
             return punk
         try:
             tinfo = pdisp.GetTypeInfo(0)
-        except comtypes.COMError:
+        except COMError:
             pdisp = comtypes.client.dynamic.Dispatch(pdisp)
             logger.debug("IDispatch.GetTypeInfo(0) failed: %s" % pdisp)
             return pdisp
@@ -82,7 +83,7 @@ def GetBestInterface(punk: Any) -> Any:
     logger.debug("Default interface is %s", typeattr.guid)
     try:
         punk.QueryInterface(comtypes.IUnknown, typeattr.guid)
-    except comtypes.COMError:
+    except COMError:
         logger.debug("Does not implement default interface, returning dynamic object")
         return comtypes.client.dynamic.Dispatch(punk)
 
