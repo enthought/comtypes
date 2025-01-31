@@ -5,7 +5,7 @@ from typing import Union as _UnionT
 
 import comtypes
 import comtypes.client.dynamic
-from comtypes import GUID, CoClass, IUnknown, automation, typeinfo
+from comtypes import COSERVERINFO, GUID, CoClass, IUnknown, automation, typeinfo
 from comtypes.client._generate import GetModule
 from comtypes.hresult import *
 
@@ -164,20 +164,20 @@ if TYPE_CHECKING:
     def GetClassObject(
         progid: _UnionT[str, Type[CoClass], GUID],
         clsctx: Optional[int] = None,
-        pServerInfo: Optional[comtypes.COSERVERINFO] = None,
+        pServerInfo: Optional[COSERVERINFO] = None,
         interface: None = None,
     ) -> hints.IClassFactory: ...
     @overload
     def GetClassObject(
         progid: _UnionT[str, Type[CoClass], GUID],
         clsctx: Optional[int] = None,
-        pServerInfo: Optional[comtypes.COSERVERINFO] = None,
+        pServerInfo: Optional[COSERVERINFO] = None,
         interface: Type[_T_IUnknown] = hints.IClassFactory,
     ) -> _T_IUnknown: ...
 
 
 def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
-    # type: (_UnionT[str, Type[CoClass], GUID], Optional[int], Optional[comtypes.COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
+    # type: (_UnionT[str, Type[CoClass], GUID], Optional[int], Optional[COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
     """Create and return the class factory for a COM object.
 
     'clsctx' specifies how to create the object, use the CLSCTX_... constants.
@@ -197,7 +197,7 @@ def CreateObject(
     machine: Optional[str] = None,
     interface: Optional[Type[_T_IUnknown]] = None,
     dynamic: bool = ...,
-    pServerInfo: Optional[comtypes.COSERVERINFO] = None,
+    pServerInfo: Optional[COSERVERINFO] = None,
 ) -> _T_IUnknown: ...
 def CreateObject(
     progid: _UnionT[str, Type[CoClass], GUID],  # which object to create
@@ -205,9 +205,7 @@ def CreateObject(
     machine: Optional[str] = None,  # where to create the object
     interface: Optional[Type[IUnknown]] = None,  # the interface we want
     dynamic: bool = False,  # use dynamic dispatch
-    pServerInfo: Optional[
-        comtypes.COSERVERINFO
-    ] = None,  # server info struct for remoting
+    pServerInfo: Optional[COSERVERINFO] = None,  # server info struct for remoting
 ) -> Any:
     """Create a COM object from 'progid', and try to QueryInterface()
     it to the most useful interface, generating typelib support on
