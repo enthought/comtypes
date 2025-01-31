@@ -4,7 +4,7 @@ import ctypes
 import logging
 
 from comtypes import automation
-from comtypes.client import dynamic  # noqa
+from comtypes.client import dynamic, lazybind  # noqa
 from comtypes.client._code_cache import _find_gen_dir
 from comtypes.client._constants import Constants  # noqa
 from comtypes.client._events import GetEvents, PumpEvents, ShowEvents
@@ -27,10 +27,10 @@ wrap = GetBestInterface
 # Should we do this for POINTER(IUnknown) also?
 ctypes.POINTER(automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam  # type: ignore
 
+from comtypes.client._activeobj import GetActiveObject
 from comtypes.client._create import (
     CoGetObject,
     CreateObject,
-    GetActiveObject,
     GetClassObject,
 )
 
