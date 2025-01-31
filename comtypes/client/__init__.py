@@ -9,7 +9,7 @@ from comtypes.client._code_cache import _find_gen_dir
 from comtypes.client._constants import Constants  # noqa
 from comtypes.client._events import GetEvents, PumpEvents, ShowEvents
 from comtypes.client._generate import GetModule
-from comtypes.client._misc import GetBestInterface, _manage, wrap_outparam  # noqa
+from comtypes.client.misc import GetBestInterface, _manage, wrap_outparam  # noqa
 from comtypes.hresult import *  # noqa
 
 gen_dir = _find_gen_dir()
@@ -27,7 +27,7 @@ wrap = GetBestInterface
 # Should we do this for POINTER(IUnknown) also?
 ctypes.POINTER(automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam  # type: ignore
 
-from comtypes.client._misc import (
+from comtypes.client.misc import (
     CoGetObject,
     CreateObject,
     GetActiveObject,
