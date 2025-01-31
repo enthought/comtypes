@@ -27,10 +27,10 @@ wrap = GetBestInterface
 # Should we do this for POINTER(IUnknown) also?
 ctypes.POINTER(automation.IDispatch).__ctypes_from_outparam__ = wrap_outparam  # type: ignore
 
+from comtypes.client._activeobj import GetActiveObject
 from comtypes.client._create import (
     CoGetObject,
     CreateObject,
-    GetActiveObject,
     GetClassObject,
 )
 
