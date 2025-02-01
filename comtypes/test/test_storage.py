@@ -1,7 +1,8 @@
 from _ctypes import COMError
-from ctypes import byref, c_ubyte, POINTER
-import contextlib
+from ctypes import HRESULT, OleDLL, byref, c_ubyte, POINTER
+from ctypes.wintypes import DWORD, PWCHAR
 from pathlib import Path
+import contextlib
 import unittest
 
 import comtypes
@@ -29,6 +30,13 @@ STREAM_SEEK_SET = 0
 STG_E_PATHNOTFOUND = -2147287038
 
 
+_ole32 = OleDLL("ole32")
+
+_StgCreateDocfile = _ole32.StgCreateDocfile
+_StgCreateDocfile.argtypes = [PWCHAR, DWORD, DWORD, POINTER(POINTER(IStorage))]
+_StgCreateDocfile.restype = HRESULT
+
+
 class Test_IStorage(unittest.TestCase):
     CREATE_DOC_FLAG = (
         STGM_DIRECT
@@ -44,7 +52,7 @@ class Test_IStorage(unittest.TestCase):
 
     def _create_docfile(self) -> IStorage:
         stg = POINTER(IStorage)()
-        comtypes._ole32.StgCreateDocfile(None, self.CREATE_DOC_FLAG, 0, byref(stg))
+        _StgCreateDocfile(None, self.CREATE_DOC_FLAG, 0, byref(stg))
         return stg  # type: ignore
 
     def test_CreateStream(self):
