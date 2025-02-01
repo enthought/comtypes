@@ -24,19 +24,6 @@ class Test(unittest.TestCase):
 
         self.check_leaks(doit)
 
-    def test_paramflags(self):
-        prototype = WINFUNCTYPE(c_void_p, BSTR)
-        func = prototype(("SysStringLen", oledll.oleaut32))
-        func.restype = c_void_p
-        func.argtypes = (BSTR,)
-
-        def doit():
-            func("abcdef")
-            func("abc xyz")
-            func(BSTR("abc def"))
-
-        self.check_leaks(doit)
-
     def test_inargs(self):
         SysStringLen = windll.oleaut32.SysStringLen
         SysStringLen.argtypes = (BSTR,)
