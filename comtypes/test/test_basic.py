@@ -1,7 +1,8 @@
 ##import ut
 import unittest as ut
-from ctypes import windll, POINTER, byref, HRESULT
+from ctypes import POINTER, byref, HRESULT
 from comtypes import IUnknown, STDMETHOD, GUID
+from comtypes.typeinfo import _CreateTypeLib2, ICreateTypeLib2
 
 # XXX leaks references!
 
@@ -20,8 +21,10 @@ class BasicTest(ut.TestCase):
         POINTER(IUnknown)()
 
     def test_refcounts(self):
-        p = POINTER(IUnknown)()
-        windll.oleaut32.CreateTypeLib2(1, "blabla", byref(p))
+        # Since all COM interfaces derive from IUnknown and have the same reference counting behavior, any interface
+        # — whether ICreateTypeLib2 or otherwise — could be used for this test.
+        p = POINTER(ICreateTypeLib2)()
+        _CreateTypeLib2(1, "blabla", byref(p))
         # initial refcount is 2
         for i in range(2, 10):
             self.assertEqual(p.AddRef(), i)
@@ -29,8 +32,10 @@ class BasicTest(ut.TestCase):
             self.assertEqual(p.Release(), i)
 
     def test_qi(self):
-        p = POINTER(IUnknown)()
-        windll.oleaut32.CreateTypeLib2(1, "blabla", byref(p))
+        # Since all COM interfaces derive from IUnknown and have the same QueryInterface behavior, any interface
+        # — whether ICreateTypeLib2 or otherwise — could be used for this test.
+        p = POINTER(ICreateTypeLib2)()
+        _CreateTypeLib2(1, "blabla", byref(p))
         self.assertEqual(p.AddRef(), 2)
         self.assertEqual(p.Release(), 1)
 
