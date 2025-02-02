@@ -1,7 +1,7 @@
 import unittest
-from comtypes.client import CreateObject
 from ctypes import ArgumentError
 
+from comtypes.client import CreateObject
 from comtypes.test.find_memleak import find_memleak
 
 
