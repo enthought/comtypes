@@ -1,10 +1,9 @@
 import logging
-
 from ctypes import *
-from comtypes.hresult import *
 
 from comtypes import COMObject, IUnknown
 from comtypes.automation import IDispatch, IEnumVARIANT
+from comtypes.hresult import *
 
 logger = logging.getLogger(__name__)
 
