@@ -1,8 +1,9 @@
 import unittest
 from ctypes import POINTER
+
+from comtypes import GUID
 from comtypes.automation import IDispatch
 from comtypes.client import CreateObject
-from comtypes import GUID
 
 ##from test import test_support
 ##from comtypes.unittests import support
