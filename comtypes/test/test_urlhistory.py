@@ -1,9 +1,11 @@
-import unittest, os
+import os
+import unittest
 from copy import copy
 from ctypes import *
-from comtypes.client import GetModule, CreateObject
-from comtypes.patcher import Patch
+
+from comtypes.client import CreateObject, GetModule
 from comtypes.GUID import _CoTaskMemFree
+from comtypes.patcher import Patch
 
 # ./urlhist.tlb was downloaded somewhere from the internet (?)
 
