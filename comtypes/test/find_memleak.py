@@ -1,5 +1,4 @@
 import gc
-import unittest
 from ctypes import *
 from ctypes.wintypes import *
 
