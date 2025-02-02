@@ -3,7 +3,7 @@ import functools
 import importlib
 import inspect
 import unittest
-from ctypes import c_long, c_double, pointer, POINTER
+from ctypes import POINTER, c_double, c_long, pointer
 from decimal import Decimal
 
 import comtypes._npsupport
@@ -11,13 +11,13 @@ from comtypes import IUnknown
 from comtypes._safearray import SafeArrayGetVartype
 from comtypes.automation import (
     BSTR,
+    VARIANT,
+    VARIANT_BOOL,
     VT_BSTR,
     VT_DATE,
     VT_I4,
-    _midlSAFEARRAY,
-    VARIANT,
     VT_VARIANT,
-    VARIANT_BOOL,
+    _midlSAFEARRAY,
 )
 from comtypes.safearray import safearray_as_ndarray
 
