@@ -1,8 +1,9 @@
 ##import ut
 import unittest as ut
-from ctypes import POINTER, byref, HRESULT
-from comtypes import IUnknown, STDMETHOD, GUID
-from comtypes.typeinfo import _CreateTypeLib2, ICreateTypeLib2
+from ctypes import HRESULT, POINTER, byref
+
+from comtypes import GUID, STDMETHOD, IUnknown
+from comtypes.typeinfo import ICreateTypeLib2, _CreateTypeLib2
 
 # XXX leaks references!
 
