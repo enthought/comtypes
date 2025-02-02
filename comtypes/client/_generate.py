@@ -5,13 +5,13 @@ import logging
 import os
 import sys
 import types
-from typing import Any, Tuple, List, Mapping, Optional, Dict, Union as _UnionT
 import winreg
+from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Union as _UnionT
 
-from comtypes import GUID, typeinfo
 import comtypes.client
+from comtypes import GUID, typeinfo
 from comtypes.tools import codegenerator, tlbparser
-
 
 logger = logging.getLogger(__name__)
 
