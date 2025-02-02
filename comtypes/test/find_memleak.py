@@ -1,6 +1,6 @@
 import gc
 from ctypes import POINTER, Structure, WinDLL, WinError, byref, c_size_t, sizeof
-from ctypes.wintypes import *
+from ctypes.wintypes import BOOL, DWORD, HANDLE
 
 ################################################################
 
