@@ -1,5 +1,5 @@
 import gc
-from ctypes import *
+from ctypes import POINTER, Structure, WinDLL, WinError, byref, c_size_t, sizeof
 from ctypes.wintypes import *
 
 ################################################################
