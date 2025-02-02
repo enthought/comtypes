@@ -1,6 +1,8 @@
-import unittest, sys
-from comtypes import IUnknown, GUID
+import sys
+import unittest
 from ctypes import *
+
+from comtypes import GUID, IUnknown
 
 
 def test_main():
