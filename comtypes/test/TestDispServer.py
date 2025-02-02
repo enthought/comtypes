@@ -10,6 +10,7 @@ logging.basicConfig()
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), r"..\..")))
 
 import comtypes
+import comtypes.connectionpoints
 import comtypes.server.connectionpoints
 from comtypes.hresult import S_OK
 
