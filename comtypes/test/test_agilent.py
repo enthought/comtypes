@@ -3,11 +3,12 @@
 # connected, the driver is used in simulation mode.
 
 import unittest
-from comtypes.test import ResourceDenied
-from comtypes.client import CreateObject
+from ctypes import POINTER, c_double
+
 from comtypes import GUID
+from comtypes.client import CreateObject
 from comtypes.safearray import _midlSAFEARRAY
-from ctypes import c_double, POINTER
+from comtypes.test import ResourceDenied
 
 try:
     GUID.from_progid("Agilent546XX.Agilent546XX")
