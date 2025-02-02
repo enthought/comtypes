@@ -2,8 +2,8 @@ import ctypes
 import unittest as ut
 from unittest import mock
 
-from comtypes import automation, COMError, IUnknown
-from comtypes.client import CreateObject, dynamic, GetModule, lazybind
+from comtypes import COMError, IUnknown, automation
+from comtypes.client import CreateObject, GetModule, dynamic, lazybind
 
 
 class Test_Dispatch_Function(ut.TestCase):
