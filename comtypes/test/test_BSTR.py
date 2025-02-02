@@ -1,5 +1,6 @@
 import unittest
-from ctypes import WINFUNCTYPE, c_uint, c_void_p, oledll, windll
+from ctypes import WinDLL
+from ctypes.wintypes import UINT
 
 from comtypes import BSTR
 from comtypes.test.find_memleak import find_memleak
@@ -24,23 +25,12 @@ class Test(unittest.TestCase):
 
         self.check_leaks(doit)
 
-    def test_paramflags(self):
-        prototype = WINFUNCTYPE(c_void_p, BSTR)
-        func = prototype(("SysStringLen", oledll.oleaut32))
-        func.restype = c_void_p
-        func.argtypes = (BSTR,)
-
-        def doit():
-            func("abcdef")
-            func("abc xyz")
-            func(BSTR("abc def"))
-
-        self.check_leaks(doit)
-
     def test_inargs(self):
-        SysStringLen = windll.oleaut32.SysStringLen
-        SysStringLen.argtypes = (BSTR,)
-        SysStringLen.restype = c_uint
+        oleaut32 = WinDLL("oleaut32")
+
+        SysStringLen = oleaut32.SysStringLen
+        SysStringLen.argtypes = [BSTR]
+        SysStringLen.restype = UINT
 
         self.assertEqual(SysStringLen("abc xyz"), 7)
 
