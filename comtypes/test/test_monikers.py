@@ -1,9 +1,9 @@
 from _ctypes import COMError
-from ctypes import byref, POINTER
+from ctypes import HRESULT, OleDLL, byref, POINTER, c_wchar_p
+from ctypes.wintypes import DWORD
 import contextlib
 import unittest
 
-import comtypes
 from comtypes.client import GetModule, CreateObject
 from comtypes import hresult, GUID
 
@@ -15,25 +15,40 @@ from comtypes.gen.MSVidCtlLib import IBindCtx, IMoniker, IRunningObjectTable
 
 MKSYS_ITEMMONIKER = 4
 ROTFLAGS_ALLOWANYCLIENT = 1
+LPOLESTR = LPCOLESTR = c_wchar_p
+
+_ole32 = OleDLL("ole32")
+
+_CreateItemMoniker = _ole32.CreateItemMoniker
+_CreateItemMoniker.argtypes = [LPCOLESTR, LPCOLESTR, POINTER(POINTER(IMoniker))]
+_CreateItemMoniker.restype = HRESULT
+
+_CreateBindCtx = _ole32.CreateBindCtx
+_CreateBindCtx.argtypes = [DWORD, POINTER(POINTER(IBindCtx))]
+_CreateBindCtx.restype = HRESULT
+
+_GetRunningObjectTable = _ole32.GetRunningObjectTable
+_GetRunningObjectTable.argtypes = [DWORD, POINTER(POINTER(IRunningObjectTable))]
+_GetRunningObjectTable.restype = HRESULT
 
 
 def _create_item_moniker(delim: str, item: str) -> IMoniker:
     mon = POINTER(IMoniker)()
-    comtypes._ole32.CreateItemMoniker(delim, item, byref(mon))
+    _CreateItemMoniker(delim, item, byref(mon))
     return mon  # type: ignore
 
 
 def _create_bctx() -> IBindCtx:
     bctx = POINTER(IBindCtx)()
     # The first parameter is reserved and must be 0.
-    comtypes._ole32.CreateBindCtx(0, byref(bctx))
+    _CreateBindCtx(0, byref(bctx))
     return bctx  # type: ignore
 
 
 def _create_rot() -> IRunningObjectTable:
     rot = POINTER(IRunningObjectTable)()
     # The first parameter is reserved and must be 0.
-    comtypes._ole32.GetRunningObjectTable(0, byref(rot))
+    _GetRunningObjectTable(0, byref(rot))
     return rot  # type: ignore
 
 
