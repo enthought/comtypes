@@ -4,8 +4,8 @@ Test for the ``comtypes.clear_cache`` module.
 
 import contextlib
 import runpy
-from unittest.mock import patch, call
 from unittest import TestCase
+from unittest.mock import call, patch
 
 from comtypes.client import _find_gen_dir
 
