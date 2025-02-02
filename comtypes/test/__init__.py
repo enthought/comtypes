@@ -119,8 +119,8 @@ def usage():
 
 def test_with_refcounts(runner, verbosity, testcase):
     """Run testcase several times, tracking reference counts."""
-    import gc
     import ctypes
+    import gc
 
     ptc = ctypes._pointer_type_cache.copy()
     cfc = ctypes._c_functype_cache.copy()
