@@ -5,7 +5,12 @@ comtypes.gen package and returns a directory where generated code can
 be written to.
 """
 
-import ctypes, logging, os, sys, tempfile, types
+import ctypes
+import logging
+import os
+import sys
+import tempfile
+import types
 from ctypes import wintypes
 
 logger = logging.getLogger(__name__)
