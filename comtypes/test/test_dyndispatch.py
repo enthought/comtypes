@@ -1,4 +1,5 @@
 import unittest
+
 from comtypes.automation import IDispatch
 from comtypes.client import CreateObject, GetModule
 from comtypes.client.lazybind import Dispatch
