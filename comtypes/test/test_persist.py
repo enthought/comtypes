@@ -1,10 +1,8 @@
-from pathlib import Path
 import tempfile
 import unittest as ut
+from pathlib import Path
 
-from comtypes import CoCreateInstance, GUID, IPersist
-from comtypes import persist
-
+from comtypes import GUID, CoCreateInstance, IPersist, persist
 
 CLSID_ShellLink = GUID("{00021401-0000-0000-C000-000000000046}")
 

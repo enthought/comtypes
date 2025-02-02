@@ -1,19 +1,17 @@
-from _ctypes import COMError
-from ctypes import HRESULT, OleDLL, byref, c_ubyte, POINTER
-from ctypes.wintypes import DWORD, PWCHAR
-from pathlib import Path
 import contextlib
 import unittest
+from _ctypes import COMError
+from ctypes import HRESULT, POINTER, OleDLL, byref, c_ubyte
+from ctypes.wintypes import DWORD, PWCHAR
+from pathlib import Path
 
 import comtypes
 import comtypes.client
-
 
 with contextlib.redirect_stdout(None):  # supress warnings
     mod = comtypes.client.GetModule("msvidctl.dll")
 
 from comtypes.gen.MSVidCtlLib import IStorage
-
 
 STATFLAG_DEFAULT = 0
 STGC_DEFAULT = 0

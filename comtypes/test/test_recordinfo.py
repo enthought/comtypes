@@ -1,10 +1,10 @@
 # coding: utf-8
 
 import unittest
+from ctypes import byref, pointer, sizeof
 
 from comtypes import typeinfo
 from comtypes.client import GetModule
-from ctypes import byref, pointer, sizeof
 
 ComtypesCppTestSrvLib_GUID = "{07D2AEE5-1DF8-4D2C-953A-554ADFD25F99}"
 

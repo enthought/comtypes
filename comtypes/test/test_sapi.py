@@ -2,7 +2,10 @@
 # ../gen/_C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_0
 # http://thread.gmane.org/gmane.comp.python.ctypes.user/1485
 
-import os, unittest, tempfile
+import os
+import tempfile
+import unittest
+
 from comtypes.client import CreateObject
 
 

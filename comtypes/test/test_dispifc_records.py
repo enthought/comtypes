@@ -1,10 +1,10 @@
 # coding: utf-8
 
 import unittest
+from ctypes import byref, pointer
 
 from comtypes import CLSCTX_LOCAL_SERVER
 from comtypes.client import CreateObject, GetModule
-from ctypes import byref, pointer
 
 ComtypesCppTestSrvLib_GUID = "{07D2AEE5-1DF8-4D2C-953A-554ADFD25F99}"
 

@@ -1,11 +1,11 @@
 import contextlib
-from ctypes import POINTER, byref
 import os
 import sys
 import unittest as ut
+from ctypes import POINTER, byref
 
 import comtypes.client
-from comtypes import COSERVERINFO, CLSCTX_INPROC_SERVER
+from comtypes import CLSCTX_INPROC_SERVER, COSERVERINFO
 
 # create the typelib wrapper and import it
 comtypes.client.GetModule("scrrun.dll")

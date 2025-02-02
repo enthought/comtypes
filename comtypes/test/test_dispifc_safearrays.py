@@ -1,7 +1,7 @@
 # coding: utf-8
 
-from ctypes import byref, c_double, pointer
 import unittest
+from ctypes import byref, c_double, pointer
 
 import comtypes
 import comtypes.safearray

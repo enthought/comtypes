@@ -7,7 +7,6 @@ import comtypes.client
 comtypes.client.GetModule("portabledeviceapi.dll")
 from comtypes.gen.PortableDeviceApiLib import IStream
 
-
 STGC_DEFAULT = 0
 STREAM_SEEK_SET = 0
 STREAM_SEEK_CUR = 1

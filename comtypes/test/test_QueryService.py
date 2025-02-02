@@ -1,5 +1,6 @@
 import unittest
 from ctypes import POINTER
+
 import comtypes
 from comtypes.client import CreateObject, GetModule
 

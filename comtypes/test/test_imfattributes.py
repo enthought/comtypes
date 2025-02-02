@@ -1,9 +1,9 @@
 import contextlib
 import unittest as ut
-
 from ctypes import HRESULT, POINTER, WinDLL, c_uint32, pointer
-from comtypes import GUID
+
 import comtypes.client
+from comtypes import GUID
 
 
 class Test_IMFAttributes(ut.TestCase):

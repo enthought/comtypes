@@ -293,9 +293,10 @@ def run_test(rep, msg, func=None, previous={}, results={}):
 
 
 def check_perf(rep=20000):
-    from ctypes import c_int, byref
-    from comtypes.automation import VARIANT
+    from ctypes import byref, c_int
+
     import comtypes.automation
+    from comtypes.automation import VARIANT
 
     print(comtypes.automation)
     variable = c_int()

@@ -1,12 +1,12 @@
 import contextlib
 import importlib
-from pathlib import Path
 import shutil
 import sys
 import tempfile
 import types
-from typing import Iterator
 import unittest as ut
+from pathlib import Path
+from typing import Iterator
 from unittest import mock
 
 import comtypes

@@ -4,14 +4,13 @@ import os
 import sys
 import tempfile
 import types
-from typing import Iterator
 import unittest
+from typing import Iterator
 from unittest import mock
 
 import comtypes
 import comtypes.client
 import comtypes.gen
-
 
 IMGBASE = os.path.splitext(os.path.basename(sys.executable))[0]
 

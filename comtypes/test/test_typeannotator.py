@@ -5,11 +5,10 @@ from comtypes.tools.codegenerator import typeannotator
 from comtypes.tools.tlbparser import (
     BSTR_type,
     HRESULT_type,
-    VARIANT_type,
     VARIANT_BOOL_type,
+    VARIANT_type,
     void_type,
 )
-
 
 iunknown_type = typedesc.ComInterface(
     "IUnknown", None, "{00000000-0000-0000-C000-000000000046}", ["hidden"], None

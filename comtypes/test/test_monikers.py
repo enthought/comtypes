@@ -1,17 +1,16 @@
-from _ctypes import COMError
-from ctypes import HRESULT, OleDLL, byref, POINTER, c_wchar_p
-from ctypes.wintypes import DWORD
 import contextlib
 import unittest
+from _ctypes import COMError
+from ctypes import HRESULT, POINTER, OleDLL, byref, c_wchar_p
+from ctypes.wintypes import DWORD
 
-from comtypes.client import GetModule, CreateObject
-from comtypes import hresult, GUID
+from comtypes import GUID, hresult
+from comtypes.client import CreateObject, GetModule
 
 with contextlib.redirect_stdout(None):  # supress warnings
     GetModule("msvidctl.dll")
 from comtypes.gen import MSVidCtlLib as msvidctl
 from comtypes.gen.MSVidCtlLib import IBindCtx, IMoniker, IRunningObjectTable
-
 
 MKSYS_ITEMMONIKER = 4
 ROTFLAGS_ALLOWANYCLIENT = 1

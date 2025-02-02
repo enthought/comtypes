@@ -1,8 +1,8 @@
 import time
 import unittest
 
-from comtypes import COMError
 import comtypes.client
+from comtypes import COMError
 
 try:
     comtypes.client.GetModule(

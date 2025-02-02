@@ -1,9 +1,9 @@
 import contextlib
 import unittest as ut
-
 from ctypes import POINTER
-from comtypes import GUID
+
 import comtypes.client
+from comtypes import GUID
 
 
 class Test_IEnum(ut.TestCase):
