@@ -1,13 +1,13 @@
 # coding: utf-8
 
-from ctypes import c_int, pointer, HRESULT, POINTER
 import unittest
+from ctypes import HRESULT, POINTER, c_int, pointer
 
 import comtypes
 import comtypes.safearray
+import comtypes.typeinfo
 from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
 from comtypes.client import CreateObject, GetModule
-import comtypes.typeinfo
 
 GetModule("UIAutomationCore.dll")
 from comtypes.gen.UIAutomationClient import CUIAutomation, IUIAutomation
@@ -16,8 +16,10 @@ ComtypesCppTestSrvLib_GUID = "{07D2AEE5-1DF8-4D2C-953A-554ADFD25F99}"
 
 try:
     GetModule((ComtypesCppTestSrvLib_GUID, 1, 0, 0))
-    from comtypes.gen.ComtypesCppTestSrvLib import StructRecordParamTest
-    from comtypes.gen.ComtypesCppTestSrvLib import IDispSafearrayParamTest
+    from comtypes.gen.ComtypesCppTestSrvLib import (
+        IDispSafearrayParamTest,
+        StructRecordParamTest,
+    )
 
     IMPORT_FAILED = False
 except (ImportError, OSError):
