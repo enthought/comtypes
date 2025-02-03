@@ -1,10 +1,18 @@
-from collections import Counter
 import textwrap
-from typing import overload
-from typing import Optional, Union as _UnionT
-from typing import Dict, List, Set, Tuple
-from typing import Iterator, Mapping, Sequence
 import warnings
+from collections import Counter
+from typing import (
+    Dict,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    overload,
+)
+from typing import Union as _UnionT
 
 
 class ImportedNamespaces(object):
