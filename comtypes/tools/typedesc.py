@@ -2,11 +2,12 @@
 # in typedesc_base
 
 import ctypes
-from typing import Any, List, Optional, Sequence, Tuple, Union as _UnionT
+from typing import Any, List, Optional, Sequence, Tuple
+from typing import Union as _UnionT
 
 from comtypes import typeinfo
-from comtypes.typeinfo import ITypeLib, TLIBATTR
 from comtypes.tools.typedesc_base import *
+from comtypes.typeinfo import TLIBATTR, ITypeLib
 
 
 class TypeLib(object):
