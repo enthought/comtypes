@@ -1,8 +1,18 @@
 import abc
 import keyword
-from typing import Any, Generic, Protocol, TypeVar
-from typing import Dict, List, Optional, Sequence, Tuple
-from typing import Iterable, Iterator
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Protocol,
+    Sequence,
+    Tuple,
+    TypeVar,
+)
 
 from comtypes.tools import typedesc
 

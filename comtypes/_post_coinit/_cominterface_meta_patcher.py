@@ -4,7 +4,6 @@ from typing import Type
 
 from comtypes import patcher
 
-
 _all_slice = slice(None, None, None)
 
 

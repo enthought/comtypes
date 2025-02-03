@@ -1,6 +1,6 @@
 # typedesc.py - classes representing C type descriptions
-from typing import Any, SupportsInt
-from typing import List, Optional, Tuple, Union as _UnionT
+from typing import Any, List, Optional, SupportsInt, Tuple
+from typing import Union as _UnionT
 
 import comtypes
 

@@ -1,5 +1,4 @@
-from ctypes import pythonapi, py_object
-
+from ctypes import py_object, pythonapi
 
 pythonapi.PyInstanceMethod_New.argtypes = [py_object]
 pythonapi.PyInstanceMethod_New.restype = py_object
