@@ -1,5 +1,5 @@
-from ctypes import _SimpleCData, WinDLL
-from typing import Any, Callable, TYPE_CHECKING
+from ctypes import WinDLL, _SimpleCData
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
