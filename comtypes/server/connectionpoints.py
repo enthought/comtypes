@@ -1,11 +1,11 @@
+import logging
 from ctypes import *
-from comtypes import IUnknown, COMObject, COMError
+
+from comtypes import COMError, COMObject, IUnknown
+from comtypes.automation import IDispatch
+from comtypes.connectionpoints import IConnectionPoint
 from comtypes.hresult import *
 from comtypes.typeinfo import LoadRegTypeLib
-from comtypes.connectionpoints import IConnectionPoint
-from comtypes.automation import IDispatch
-
-import logging
 
 logger = logging.getLogger(__name__)
 

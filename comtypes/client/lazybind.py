@@ -1,16 +1,15 @@
 import comtypes
 import comtypes.automation
-
-from comtypes.automation import IEnumVARIANT
-from comtypes.automation import DISPATCH_METHOD
-from comtypes.automation import DISPATCH_PROPERTYGET
-from comtypes.automation import DISPATCH_PROPERTYPUT
-from comtypes.automation import DISPATCH_PROPERTYPUTREF
-
-from comtypes.automation import DISPID_VALUE
-from comtypes.automation import DISPID_NEWENUM
-
-from comtypes.typeinfo import FUNC_PUREVIRTUAL, FUNC_DISPATCH
+from comtypes.automation import (
+    DISPATCH_METHOD,
+    DISPATCH_PROPERTYGET,
+    DISPATCH_PROPERTYPUT,
+    DISPATCH_PROPERTYPUTREF,
+    DISPID_NEWENUM,
+    DISPID_VALUE,
+    IEnumVARIANT,
+)
+from comtypes.typeinfo import FUNC_DISPATCH, FUNC_PUREVIRTUAL
 
 
 class FuncDesc(object):

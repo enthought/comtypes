@@ -1,10 +1,9 @@
 import ctypes
 from typing import Any, Dict, Optional, Set, Type, TypeVar
 
-from comtypes import automation
+from comtypes import GUID, COMError, IUnknown, _is_object, automation
+from comtypes import hresult as hres
 from comtypes.client import lazybind
-from comtypes import COMError, GUID, IUnknown, hresult as hres, _is_object
-
 
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 # These errors generally mean the property or method exists,

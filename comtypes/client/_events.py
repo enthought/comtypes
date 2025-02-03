@@ -1,23 +1,24 @@
 import ctypes
+import logging
 import traceback
-import comtypes
-import comtypes.hresult
-import comtypes.automation
-import comtypes.typeinfo
-import comtypes.connectionpoints
-from ctypes import POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL, HRESULT
+from ctypes import HRESULT, POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL
 from ctypes.wintypes import (
     BOOL,
     DWORD,
     HANDLE,
     LPCSTR,
+    LPDWORD,
+    LPHANDLE,
     LPVOID,
     ULONG,
-    LPHANDLE,
-    LPDWORD,
 )
+
+import comtypes
+import comtypes.automation
+import comtypes.connectionpoints
+import comtypes.hresult
+import comtypes.typeinfo
 from comtypes.client._generate import GetModule
-import logging
 
 logger = logging.getLogger(__name__)
 
