@@ -1,9 +1,8 @@
 """comtypes.GUID module"""
 
-from ctypes import HRESULT, POINTER, OleDLL, WinDLL
-from ctypes import byref, c_wchar_p, Structure
-from ctypes.wintypes import BYTE, LPVOID, WORD, DWORD
-from typing import Any, TYPE_CHECKING
+from ctypes import HRESULT, POINTER, OleDLL, Structure, WinDLL, byref, c_wchar_p
+from ctypes.wintypes import BYTE, DWORD, LPVOID, WORD
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
