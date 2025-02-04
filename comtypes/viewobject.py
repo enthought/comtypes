@@ -1,10 +1,8 @@
 # XXX need to find out what the share from comtypes.dataobject.
 from ctypes import *
-from ctypes.wintypes import _RECTL, SIZEL, HDC, tagRECT, tagPOINT
+from ctypes.wintypes import _RECTL, HDC, SIZEL, tagPOINT, tagRECT
 
-from comtypes import COMMETHOD
-from comtypes import GUID
-from comtypes import IUnknown
+from comtypes import COMMETHOD, GUID, IUnknown
 
 
 class tagPALETTEENTRY(Structure):
