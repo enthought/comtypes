@@ -15,31 +15,30 @@ except ImportError as e:
     raise ImportError(msg) from e
 
 import atexit
+import logging
+import sys
 
 # HACK: Workaround for projects that depend on this package
 # There should be several projects around the world that depend on this package
 # and indirectly reference the symbols of `ctypes` from `comtypes`.
 # If we remove the wildcard import from `ctypes`, they might break. So it is
 # left in the following line.
-from ctypes import *  # noqa
-from ctypes import HRESULT  # noqa
-from ctypes import _Pointer, _SimpleCData  # noqa
-from ctypes import c_int, c_ulong, OleDLL, WinDLL
-from ctypes.wintypes import DWORD, LPVOID  # noqa
-import logging
-import sys
+from ctypes import *  # noqa  # type: ignore
+from ctypes import HRESULT, OleDLL, WinDLL, _SimpleCData, c_int, c_ulong
+from ctypes.wintypes import DWORD, LPVOID
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ctypes import _CData  # only in `typeshed`, private in runtime
+
     from comtypes import hints as hints  # noqa  # type: ignore
 else:
     _CData = _SimpleCData.__mro__[:-1][-1]
 
-from comtypes.GUID import GUID
 from comtypes import patcher  # noqa
 from comtypes._npsupport import interop as npsupport  # noqa
 from comtypes._tlib_version_checker import _check_version  # noqa
+from comtypes.GUID import GUID
 
 _all_slice = slice(None, None, None)
 

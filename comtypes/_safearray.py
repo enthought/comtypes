@@ -1,9 +1,9 @@
 """SAFEARRAY api functions, data types, and constants."""
 
-from ctypes import c_uint, c_ushort, c_void_p, POINTER, Structure, WinDLL
+from ctypes import POINTER, Structure, WinDLL, c_uint, c_ushort, c_void_p
 from ctypes.wintypes import DWORD, LONG, UINT, USHORT
 
-from comtypes import HRESULT, GUID
+from comtypes import GUID, HRESULT
 
 ################################################################
 # if __debug__:
