@@ -24,15 +24,7 @@ import sys
 # If we remove the wildcard import from `ctypes`, they might break. So it is
 # left in the following line.
 from ctypes import *  # noqa
-from ctypes import (  # noqa
-    HRESULT,  # noqa
-    OleDLL,
-    WinDLL,
-    _Pointer,
-    _SimpleCData,
-    c_int,
-    c_ulong,
-)
+from ctypes import HRESULT, OleDLL, WinDLL, _SimpleCData, c_int, c_ulong
 from ctypes.wintypes import DWORD, LPVOID  # noqa
 from typing import TYPE_CHECKING
 
