@@ -1,5 +1,5 @@
 import ctypes
-from ctypes import WinDLL, byref, WinError
+from ctypes import WinDLL, WinError, byref
 from ctypes.wintypes import MSG
 
 _user32 = WinDLL("user32")
