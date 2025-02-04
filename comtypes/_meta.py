@@ -1,5 +1,6 @@
 # comtypes._meta helper module
 from ctypes import POINTER, c_void_p, cast
+
 import comtypes
 
 ################################################################
