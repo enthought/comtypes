@@ -25,7 +25,7 @@ import sys
 # left in the following line.
 from ctypes import *  # noqa
 from ctypes import HRESULT, OleDLL, WinDLL, _SimpleCData, c_int, c_ulong
-from ctypes.wintypes import DWORD, LPVOID  # noqa
+from ctypes.wintypes import DWORD, LPVOID
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
