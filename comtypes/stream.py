@@ -1,5 +1,5 @@
-from ctypes import Array, c_ubyte, c_ulong, HRESULT, POINTER, pointer
-from typing import Tuple, TYPE_CHECKING
+from ctypes import HRESULT, POINTER, Array, c_ubyte, c_ulong, pointer
+from typing import TYPE_CHECKING, Tuple
 
 from comtypes import COMMETHOD, GUID, IUnknown
 

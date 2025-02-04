@@ -1,13 +1,15 @@
-import threading
 import array
+import threading
+from ctypes import POINTER, Structure, byref, c_long, cast, memmove, pointer, sizeof
 from typing import TYPE_CHECKING
+
 import comtypes
-from ctypes import POINTER, Structure, byref, cast, c_long, memmove, pointer, sizeof
-from comtypes import _safearray, IUnknown, com_interface_registry
+from comtypes import IUnknown, _safearray, com_interface_registry
 from comtypes.patcher import Patch
 
 if TYPE_CHECKING:
     from typing import Type, TypeVar
+
     from comtypes import hints  # type: ignore
 
     _CT = TypeVar("_CT", bound=comtypes._CData)
@@ -73,12 +75,12 @@ def _midlSAFEARRAY(itemtype: "Type[_CT]") -> "Type[hints.LP_SAFEARRAY[_CT]]":
 def _make_safearray_type(itemtype):
     # Create and return a subclass of tagSAFEARRAY
     from comtypes.automation import (
-        _ctype_to_vartype,
+        VT_DISPATCH,
+        VT_HRESULT,
         VT_RECORD,
         VT_UNKNOWN,
         IDispatch,
-        VT_DISPATCH,
-        VT_HRESULT,
+        _ctype_to_vartype,
     )
 
     meta = type(_safearray.tagSAFEARRAY)

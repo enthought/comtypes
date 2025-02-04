@@ -9,9 +9,9 @@ import weakref
 from ctypes import (
     HRESULT,
     POINTER,
-    _Pointer,
     OleDLL,
     WinDLL,
+    _Pointer,
     byref,
     c_int,
     c_void_p,

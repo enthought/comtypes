@@ -1,7 +1,8 @@
 import sys
 from ctypes import *
 from ctypes.wintypes import DWORD, ULONG
-from comtypes import IUnknown, HRESULT, COMMETHOD, GUID, BSTR
+
+from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown
 from comtypes.hresult import *
 
 LPCOLESTR = c_wchar_p
