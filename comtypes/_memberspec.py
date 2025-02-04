@@ -1,12 +1,20 @@
 import ctypes
-from typing import Any, Literal, NamedTuple
-from typing import Dict, List, Tuple, Type
-from typing import Optional, Union as _UnionT
-from typing import Callable, Iterator
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Literal,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Type,
+)
+from typing import Union as _UnionT
 
-from comtypes import _CData
 import comtypes
-
+from comtypes import _CData
 
 _PositionalParamFlagType = Tuple[int, Optional[str]]
 _OptionalParamFlagType = Tuple[int, Optional[str], Any]
