@@ -6,14 +6,15 @@ between different threading appartments.
 
 from ctypes import *
 from ctypes.wintypes import DWORD
+
 from comtypes import (
-    IUnknown,
-    STDMETHOD,
+    CLSCTX_INPROC_SERVER,
     COMMETHOD,
     GUID,
     HRESULT,
+    STDMETHOD,
     CoCreateInstance,
-    CLSCTX_INPROC_SERVER,
+    IUnknown,
 )
 
 
