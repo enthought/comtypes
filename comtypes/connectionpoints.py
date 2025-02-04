@@ -1,6 +1,7 @@
 import sys
 from ctypes import *
-from comtypes import IUnknown, COMMETHOD, GUID, HRESULT, dispid
+
+from comtypes import COMMETHOD, GUID, HRESULT, IUnknown, dispid
 
 _GUID = GUID
 
