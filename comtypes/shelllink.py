@@ -1,11 +1,17 @@
-from ctypes import c_char_p, c_int, c_short, c_wchar_p
-from ctypes import POINTER
-from ctypes import byref, create_string_buffer, create_unicode_buffer
-from ctypes.wintypes import DWORD, WIN32_FIND_DATAA, WIN32_FIND_DATAW, MAX_PATH
-from typing import Tuple, TYPE_CHECKING, Literal
+from ctypes import (
+    POINTER,
+    byref,
+    c_char_p,
+    c_int,
+    c_short,
+    c_wchar_p,
+    create_string_buffer,
+    create_unicode_buffer,
+)
+from ctypes.wintypes import DWORD, MAX_PATH, WIN32_FIND_DATAA, WIN32_FIND_DATAW
+from typing import TYPE_CHECKING, Literal, Tuple
 
-from comtypes import IUnknown, GUID, COMMETHOD, HRESULT, CoClass
-
+from comtypes import COMMETHOD, GUID, HRESULT, CoClass, IUnknown
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
