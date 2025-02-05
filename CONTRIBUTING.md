@@ -86,7 +86,7 @@ Create a new git branch in your local repository, and start coding!
 Tests can be run with `python -m unittest discover -v -s ./comtypes/test -t comtypes\test` command.
 
 When `comtypes.client.GetModule` is called, it parses the COM library, generates `.py` files under `.../comtypes/gen/...`, imports and returns `Python` modules.  
-Those `.py` files act like ”caches”.
+Those `.py` files act like "caches".
 
 If there are some problems with the developing code base, partial or non-executable modules might be created in `.../comtypes/gen/...`.  
 Importing them will cause some error.  
