@@ -3,6 +3,7 @@ requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.ruff.lint]
+extend-select = ["I"]
 ignore = ["E402"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -26,6 +27,10 @@ ignore = ["E402"]
 "comtypes/tools/tlbparser.py" = ["F401"]
 "comtypes/tools/typedesc.py" = ["F403", "F405"]
 "comtypes/tools/typedesc_base.py" = ["F401"]
+# gen directory
+"comtypes/gen/*" = ["E", "F", "I"]
+# stub
+"comtypes/hints.pyi" = ["I"]
 # tests
 "comtypes/test/TestDispServer.py" = ["E401"]
 "comtypes/test/find_memleak.py" = ["E401", "F401", "F403", "F405"]
