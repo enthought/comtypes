@@ -86,13 +86,18 @@ Create a new git branch in your local repository, and start coding!
 Tests can be run with `python -m unittest discover -v -s ./comtypes/test -t comtypes\test` command.
 
 When `comtypes.client.GetModule` is called, it parses the COM library, generates `.py` files under `.../comtypes/gen/...`, imports and returns `Python` modules.  
-Those `.py` files act like ”caches”.
+Those `.py` files act like "caches".
 
 If there are some problems with the developing code base, partial or non-executable modules might be created in `.../comtypes/gen/...`.  
 Importing them will cause some error.  
 If that happens, you should run `python -m comtypes.clear_cache` to clear those caches.  
 The command will delete the entire `.../comtypes/gen` directory.  
 Importing `comtypes.client` will restore the directory and `__init__.py` file.
+
+This project uses [Ruff](https://github.com/astral-sh/ruff/) as its linter and formatter.  
+The CI pipeline will detect any files in pull requests that do not conform to the rules specified in `pyproject.toml`.  
+To ensure a smooth contribution process, we recommend [installing Ruff](https://pypi.org/project/ruff/) and running `ruff check --fix comtypes/.` and `ruff format comtypes/.` before opening a PR or pushing your changes.  
+If any style issues are found, maintainers may ask you to make modifications.
 
 ### Pull requests
 When you have resolved your issue, open a pull request in the `comtypes` repository.  
