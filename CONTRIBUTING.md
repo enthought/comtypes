@@ -94,6 +94,11 @@ If that happens, you should run `python -m comtypes.clear_cache` to clear those 
 The command will delete the entire `.../comtypes/gen` directory.  
 Importing `comtypes.client` will restore the directory and `__init__.py` file.
 
+This project uses [Ruff](https://github.com/astral-sh/ruff/) as its linter and formatter.  
+The CI pipeline will detect any files in pull requests that do not conform to the rules specified in `pyproject.toml`.  
+To ensure a smooth contribution process, we recommend [installing Ruff](https://pypi.org/project/ruff/) and running `ruff check --fix comtypes/.` and `ruff format comtypes/.` before opening a PR or pushing your changes.  
+If any style issues are found, maintainers may ask you to make modifications.
+
 ### Pull requests
 When you have resolved your issue, open a pull request in the `comtypes` repository.  
 Please include the issue number on the PR comment.  
