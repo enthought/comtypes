@@ -15,6 +15,7 @@ from ctypes import (
     c_int,
     c_void_p,
     c_wchar_p,
+    create_unicode_buffer,
 )
 from ctypes.wintypes import (
     DWORD,
@@ -279,8 +280,6 @@ class ITypeLib(IUnknown):
         Returns the name with capitalization found in the type
         library, or None.
         """
-        from ctypes import create_unicode_buffer
-
         namebuf = create_unicode_buffer(name)
         found = BOOL()
         self.__com_IsName(namebuf, lHashVal, byref(found))  # type: ignore
