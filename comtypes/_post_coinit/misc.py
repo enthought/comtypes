@@ -3,7 +3,6 @@ from ctypes import (
     POINTER,
     OleDLL,
     Structure,
-    _Pointer,
     byref,
     c_ulong,
     c_ushort,
@@ -20,6 +19,8 @@ from comtypes._memberspec import COMMETHOD
 from comtypes._post_coinit.unknwn import IUnknown
 
 if TYPE_CHECKING:
+    from ctypes import _Pointer
+
     from comtypes import hints as hints  # noqa  # type: ignore
 
 

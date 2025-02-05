@@ -11,7 +11,6 @@ from ctypes import (
     POINTER,
     OleDLL,
     WinDLL,
-    _Pointer,
     byref,
     c_int,
     c_void_p,
@@ -57,6 +56,8 @@ from comtypes.automation import (
 )
 
 if TYPE_CHECKING:
+    from ctypes import _Pointer
+
     from comtypes import hints  # type: ignore
 
 
