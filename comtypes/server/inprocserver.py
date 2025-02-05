@@ -2,10 +2,13 @@ import ctypes
 import logging
 import sys
 import winreg
-from typing import Any, Literal, Optional, Type
+from typing import TYPE_CHECKING, Any, Literal, Optional, Type
 
 from comtypes import GUID, COMObject, IUnknown, hresult
 from comtypes.server import IClassFactory
+
+if TYPE_CHECKING:
+    from ctypes import _Pointer
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -24,8 +27,8 @@ class ClassFactory(COMObject):
     def IClassFactory_CreateInstance(
         self,
         this: Any,
-        punkOuter: Optional[Type["ctypes._Pointer[IUnknown]"]],
-        riid: "ctypes._Pointer[GUID]",
+        punkOuter: Optional[Type["_Pointer[IUnknown]"]],
+        riid: "_Pointer[GUID]",
         ppv: ctypes.c_void_p,
     ) -> int:
         _debug("ClassFactory.CreateInstance(%s)", riid[0])

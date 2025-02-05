@@ -11,11 +11,11 @@ from ctypes import (
     POINTER,
     OleDLL,
     WinDLL,
-    _Pointer,
     byref,
     c_int,
     c_void_p,
     c_wchar_p,
+    create_unicode_buffer,
 )
 from ctypes.wintypes import (
     DWORD,
@@ -57,6 +57,8 @@ from comtypes.automation import (
 )
 
 if TYPE_CHECKING:
+    from ctypes import _Pointer
+
     from comtypes import hints  # type: ignore
 
 
@@ -278,8 +280,6 @@ class ITypeLib(IUnknown):
         Returns the name with capitalization found in the type
         library, or None.
         """
-        from ctypes import create_unicode_buffer
-
         namebuf = create_unicode_buffer(name)
         found = BOOL()
         self.__com_IsName(namebuf, lHashVal, byref(found))  # type: ignore
@@ -768,7 +768,7 @@ def GetModuleFileName(handle: Optional[int], maxsize: int) -> str:
 
     https://learn.microsoft.com/ja-jp/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw
     """
-    buf = ctypes.create_unicode_buffer(maxsize)
+    buf = create_unicode_buffer(maxsize)
     length = _GetModuleFileNameW(handle, buf, maxsize)
     return buf.value[:length]
 

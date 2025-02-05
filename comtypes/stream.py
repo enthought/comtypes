@@ -1,7 +1,10 @@
-from ctypes import HRESULT, POINTER, Array, c_ubyte, c_ulong, pointer
+from ctypes import HRESULT, POINTER, c_ubyte, c_ulong, pointer
 from typing import TYPE_CHECKING, Tuple
 
 from comtypes import COMMETHOD, GUID, IUnknown
+
+if TYPE_CHECKING:
+    from ctypes import Array as _CArrayType
 
 
 class ISequentialStream(IUnknown):
@@ -38,7 +41,7 @@ class ISequentialStream(IUnknown):
         ),
     ]
 
-    def RemoteRead(self, cb: int) -> Tuple["Array[c_ubyte]", int]:
+    def RemoteRead(self, cb: int) -> Tuple["_CArrayType[c_ubyte]", int]:
         """Reads a specified number of bytes from the stream object into memory
         starting at the current seek pointer.
         """
@@ -51,7 +54,7 @@ class ISequentialStream(IUnknown):
 
     if TYPE_CHECKING:
 
-        def RemoteWrite(self, pv: "Array[c_ubyte]", cb: int) -> int:
+        def RemoteWrite(self, pv: "_CArrayType[c_ubyte]", cb: int) -> int:
             """Writes a specified number of bytes into the stream object starting at
             the current seek pointer.
             """
