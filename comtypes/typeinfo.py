@@ -768,7 +768,7 @@ def GetModuleFileName(handle: Optional[int], maxsize: int) -> str:
 
     https://learn.microsoft.com/ja-jp/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw
     """
-    buf = ctypes.create_unicode_buffer(maxsize)
+    buf = create_unicode_buffer(maxsize)
     length = _GetModuleFileNameW(handle, buf, maxsize)
     return buf.value[:length]
 
