@@ -1,6 +1,25 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.10
+--------------
+* Replace ``GetModuleFileNameA`` with ``GetModuleFileNameW`` to prevent a ``TypeError``. By @junkmd.
+* Refactor ``server.register``. By @junkmd.
+* ``PythonClass`` and ``PythonPath`` are no longer registered in the registry for a frozen server. By @junkmd.
+* Use ``WinDLL``/``OleDLL`` instead of ``windll``/``oledll``. By @moi15moi.
+* In ``tools.tlbparser``, replace ``windll.oleaut32.QueryPathOfRegTypeLib`` with ``typeinfo.QueryPathOfRegTypeLib``. By @moi15moi.
+* Adjust ``QueryPathOfRegTypeLib`` docstring. By @moi15moi.
+* Reserve blank lines in the generated modules. By @junkmd.
+* Refactor ``tools`` subpackage. By @junkmd.
+* Add ``ActiveObjTest`` to ``test_comserver``. By @junkmd.
+* Replace deprecated install command in CI pipelines. By @moi15moi.
+* Remove unused parameters in ``_shutdown``. By @moi15moi.
+* Delete ``preview.bat``. By @moi15moi.
+* Remove unnecessary ``ruff`` lint rules from ``pyproject.toml``. By @moi15moi.
+* Refactor some code from ``client/__init__.py`` into modules. By @junkmd.
+* Remove workarounds for Windows CE in ``find_memleak``. By @junkmd.
+* Format import blocks and add ``extend-select = ["I"]`` to ``[tool.ruff.lint]``. By @junkmd.
+
 Release 1.4.9
 --------------
 * Separate patch processing within ``_com_interface_meta`` into a module. By @junkmd.
