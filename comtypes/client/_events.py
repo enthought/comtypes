@@ -18,6 +18,7 @@ import comtypes
 import comtypes.automation
 import comtypes.connectionpoints
 import comtypes.typeinfo
+from comtypes import COMObject
 from comtypes._comobject import _MethodFinder
 from comtypes.client._generate import GetModule
 
@@ -215,7 +216,7 @@ class _SinkMethodFinder(_MethodFinder):
 
 
 def CreateEventReceiver(interface, handler):
-    class Sink(comtypes.COMObject):
+    class Sink(COMObject):
         _com_interfaces_ = [interface]
 
         def _get_method_finder_(self, itf):
