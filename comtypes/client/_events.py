@@ -1,6 +1,7 @@
 import ctypes
 import logging
 import traceback
+from _ctypes import COMError
 from ctypes import HRESULT, POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL
 from ctypes.wintypes import (
     BOOL,
@@ -16,8 +17,8 @@ from ctypes.wintypes import (
 import comtypes
 import comtypes.automation
 import comtypes.connectionpoints
-import comtypes.hresult
 import comtypes.typeinfo
+from comtypes._comobject import _MethodFinder
 from comtypes.client._generate import GetModule
 
 logger = logging.getLogger(__name__)
@@ -84,7 +85,7 @@ class _AdviseConnection(object):
         try:
             if self.cookie is not None:
                 self.cp.Unadvise(self.cookie)
-        except (comtypes.COMError, WindowsError):
+        except (COMError, WindowsError):
             # Are we sure we want to ignore errors here?
             pass
 
@@ -96,7 +97,7 @@ def FindOutgoingInterface(source):
     try:
         pci = source.QueryInterface(comtypes.typeinfo.IProvideClassInfo2)
         guid = pci.GetGUID(1)
-    except comtypes.COMError:
+    except COMError:
         pass
     else:
         # another try: block needed?
@@ -175,9 +176,6 @@ def report_errors(func):
                 raise
 
     return error_printer
-
-
-from comtypes._comobject import _MethodFinder
 
 
 class _SinkMethodFinder(_MethodFinder):
@@ -285,7 +283,7 @@ def ShowEvents(source, interface=None):
     outgoing interface, and will also print out the events when they
     are fired.
     """
-    return comtypes.client.GetEvents(source, sink=EventDumper(), interface=interface)
+    return GetEvents(source, sink=EventDumper(), interface=interface)
 
 
 # This type is used inside 'PumpEvents', but if we create the type
