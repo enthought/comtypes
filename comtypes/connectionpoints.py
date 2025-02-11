@@ -1,7 +1,15 @@
-import sys
-from ctypes import *
+from ctypes import POINTER, Structure, c_ulong
+from typing import TYPE_CHECKING, Tuple
+from typing import Union as _UnionT
 
-from comtypes import COMMETHOD, GUID, HRESULT, IUnknown, dispid
+from comtypes import COMMETHOD, GUID, HRESULT, IUnknown
+
+if TYPE_CHECKING:
+    from ctypes import _CArgObject, _Pointer
+
+    from comtypes import hints  # noqa  # type: ignore
+
+    REFIID = _UnionT[_Pointer[GUID], _CArgObject]
 
 _GUID = GUID
 
@@ -22,15 +30,34 @@ class IConnectionPointContainer(IUnknown):
     _iid_ = GUID("{B196B284-BAB4-101A-B69C-00AA00341D07}")
     _idlflags_ = []
 
+    if TYPE_CHECKING:
+
+        def EnumConnectionPoints(self) -> "IEnumConnectionPoints": ...
+        def FindConnectionPoint(self, riid: REFIID) -> "IConnectionPoint": ...
+
 
 class IConnectionPoint(IUnknown):
     _iid_ = GUID("{B196B286-BAB4-101A-B69C-00AA00341D07}")
     _idlflags_ = []
 
+    if TYPE_CHECKING:
+
+        def GetConnectionPointContainer(self) -> IConnectionPointContainer: ...
+        def Advise(self, pUnkSink: IUnknown) -> int: ...
+        def Unadvise(self, dwCookie: int) -> hints.Hresult: ...
+        def EnumConnections(self) -> "IEnumConnections": ...
+
 
 class IEnumConnections(IUnknown):
     _iid_ = GUID("{B196B287-BAB4-101A-B69C-00AA00341D07}")
     _idlflags_ = []
+
+    if TYPE_CHECKING:
+
+        def Next(self, cConnections: int) -> Tuple[tagCONNECTDATA, int]: ...
+        def Skip(self, cConnections: int) -> hints.Hresult: ...
+        def Reset(self) -> hints.Hresult: ...
+        def Clone(self) -> "IEnumConnections": ...
 
     def __iter__(self):
         return self
@@ -45,6 +72,13 @@ class IEnumConnections(IUnknown):
 class IEnumConnectionPoints(IUnknown):
     _iid_ = GUID("{B196B285-BAB4-101A-B69C-00AA00341D07}")
     _idlflags_ = []
+
+    if TYPE_CHECKING:
+
+        def Next(self, cConnections: int) -> Tuple[IConnectionPoint, int]: ...
+        def Skip(self, cConnections: int) -> hints.Hresult: ...
+        def Reset(self) -> hints.Hresult: ...
+        def Clone(self) -> "IEnumConnectionPoints": ...
 
     def __iter__(self):
         return self
