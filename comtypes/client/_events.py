@@ -13,12 +13,13 @@ from ctypes.wintypes import (
     LPVOID,
     ULONG,
 )
+from typing import Any, Callable, Optional, Type
 
 import comtypes
 import comtypes.automation
 import comtypes.connectionpoints
 import comtypes.typeinfo
-from comtypes import COMObject
+from comtypes import COMObject, IUnknown
 from comtypes._comobject import _MethodFinder
 from comtypes.client._generate import GetModule
 
@@ -61,20 +62,24 @@ _CloseHandle.restype = BOOL
 
 
 class _AdviseConnection(object):
-    def __init__(self, source, interface, receiver):
+    def __init__(
+        self, source: IUnknown, interface: Type[IUnknown], receiver: COMObject
+    ) -> None:
         self.cp = None
         self.cookie = None
         self.receiver = None
         self._connect(source, interface, receiver)
 
-    def _connect(self, source, interface, receiver):
+    def _connect(
+        self, source: IUnknown, interface: Type[IUnknown], receiver: COMObject
+    ) -> None:
         cpc = source.QueryInterface(comtypes.connectionpoints.IConnectionPointContainer)
         self.cp = cpc.FindConnectionPoint(ctypes.byref(interface._iid_))
         logger.debug("Start advise %s", interface)
         self.cookie = self.cp.Advise(receiver)
         self.receiver = receiver
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         if self.cookie:
             self.cp.Unadvise(self.cookie)
             logger.debug("Unadvised %s", self.cp)
@@ -82,7 +87,7 @@ class _AdviseConnection(object):
             self.cookie = None
             del self.receiver
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             if self.cookie is not None:
                 self.cp.Unadvise(self.cookie)
@@ -91,7 +96,7 @@ class _AdviseConnection(object):
             pass
 
 
-def FindOutgoingInterface(source):
+def FindOutgoingInterface(source: IUnknown) -> Type[IUnknown]:
     """XXX Describe the strategy that is used..."""
     # If the COM object implements IProvideClassInfo2, it is easy to
     # find the default outgoing interface.
@@ -154,7 +159,7 @@ def find_single_connection_interface(source):
     return None
 
 
-def report_errors(func):
+def report_errors(func: Callable[..., Any]) -> Callable[..., Any]:
     # This decorator preserves parts of the decorated function
     # signature, so that the comtypes special-casing for the 'this'
     # parameter still works.
@@ -186,11 +191,11 @@ class _SinkMethodFinder(_MethodFinder):
     event handlers.
     """
 
-    def __init__(self, inst, sink):
+    def __init__(self, inst: COMObject, sink: Any) -> None:
         super(_SinkMethodFinder, self).__init__(inst)
         self.sink = sink
 
-    def find_method(self, fq_name, mthname):
+    def find_method(self, fq_name: str, mthname: str) -> Callable[..., Any]:
         impl = self._find_method(fq_name, mthname)
         # Caller of this method catches AttributeError,
         # so we need to be careful in the following code
@@ -205,7 +210,7 @@ class _SinkMethodFinder(_MethodFinder):
         except AttributeError as details:
             raise RuntimeError(details)
 
-    def _find_method(self, fq_name, mthname):
+    def _find_method(self, fq_name: str, mthname: str) -> Callable[..., Any]:
         try:
             return super(_SinkMethodFinder, self).find_method(fq_name, mthname)
         except AttributeError:
@@ -215,11 +220,11 @@ class _SinkMethodFinder(_MethodFinder):
                 return getattr(self.sink, mthname)
 
 
-def CreateEventReceiver(interface, handler):
+def CreateEventReceiver(interface: Type[IUnknown], handler: Any) -> COMObject:
     class Sink(COMObject):
         _com_interfaces_ = [interface]
 
-        def _get_method_finder_(self, itf):
+        def _get_method_finder_(self, itf: Type[IUnknown]) -> _MethodFinder:
             # Use a special MethodFinder that will first try 'self',
             # then the sink.
             return _SinkMethodFinder(self, handler)
@@ -246,7 +251,9 @@ def CreateEventReceiver(interface, handler):
     return sink
 
 
-def GetEvents(source, sink, interface=None):
+def GetEvents(
+    source: IUnknown, sink: Any, interface: Optional[Type[IUnknown]] = None
+) -> _AdviseConnection:
     """Receive COM events from 'source'.  Events will call methods on
     the 'sink' object.  'interface' is the source interface to use.
     """
@@ -264,7 +271,7 @@ def GetEvents(source, sink, interface=None):
 class EventDumper(object):
     """Universal sink for COM events."""
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Callable[..., Any]:
         "Create event handler methods on demand"
         if name.startswith("__") and name.endswith("__"):
             raise AttributeError(name)
@@ -278,7 +285,9 @@ class EventDumper(object):
         return comtypes.instancemethod(handler, self, EventDumper)
 
 
-def ShowEvents(source, interface=None):
+def ShowEvents(
+    source: IUnknown, interface: Optional[Type[IUnknown]] = None
+) -> _AdviseConnection:
     """Receive COM events from 'source'.  A special event sink will be
     used that first prints the names of events that are found in the
     outgoing interface, and will also print out the events when they
@@ -293,7 +302,7 @@ def ShowEvents(source, interface=None):
 _handles_type = ctypes.c_void_p * 1
 
 
-def PumpEvents(timeout):
+def PumpEvents(timeout: Any) -> None:
     """This following code waits for 'timeout' seconds in the way
     required for COM, internally doing the correct things depending
     on the COM appartment of the current thread.  It is possible to
