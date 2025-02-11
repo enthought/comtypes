@@ -17,7 +17,6 @@ from ctypes.wintypes import (
 import comtypes
 import comtypes.automation
 import comtypes.connectionpoints
-import comtypes.hresult
 import comtypes.typeinfo
 from comtypes.client._generate import GetModule
 
