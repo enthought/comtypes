@@ -1,6 +1,7 @@
 import ctypes
 import logging
 import traceback
+from _ctypes import COMError
 from ctypes import HRESULT, POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL
 from ctypes.wintypes import (
     BOOL,
@@ -84,7 +85,7 @@ class _AdviseConnection(object):
         try:
             if self.cookie is not None:
                 self.cp.Unadvise(self.cookie)
-        except (comtypes.COMError, WindowsError):
+        except (COMError, WindowsError):
             # Are we sure we want to ignore errors here?
             pass
 
@@ -96,7 +97,7 @@ def FindOutgoingInterface(source):
     try:
         pci = source.QueryInterface(comtypes.typeinfo.IProvideClassInfo2)
         guid = pci.GetGUID(1)
-    except comtypes.COMError:
+    except COMError:
         pass
     else:
         # another try: block needed?
