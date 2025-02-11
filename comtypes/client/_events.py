@@ -69,6 +69,7 @@ class _AdviseConnection(object):
     def __init__(
         self, source: IUnknown, interface: Type[IUnknown], receiver: COMObject
     ) -> None:
+        # Pre-initializing attributes to avoid AttributeError after failed connection.
         self.cp = None
         self.cookie = None
         self.receiver = None
