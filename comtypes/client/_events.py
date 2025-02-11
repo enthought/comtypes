@@ -18,6 +18,7 @@ import comtypes
 import comtypes.automation
 import comtypes.connectionpoints
 import comtypes.typeinfo
+from comtypes._comobject import _MethodFinder
 from comtypes.client._generate import GetModule
 
 logger = logging.getLogger(__name__)
@@ -175,9 +176,6 @@ def report_errors(func):
                 raise
 
     return error_printer
-
-
-from comtypes._comobject import _MethodFinder
 
 
 class _SinkMethodFinder(_MethodFinder):
