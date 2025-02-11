@@ -286,7 +286,7 @@ def ShowEvents(source, interface=None):
     outgoing interface, and will also print out the events when they
     are fired.
     """
-    return comtypes.client.GetEvents(source, sink=EventDumper(), interface=interface)
+    return GetEvents(source, sink=EventDumper(), interface=interface)
 
 
 # This type is used inside 'PumpEvents', but if we create the type
