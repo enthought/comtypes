@@ -17,11 +17,11 @@ from typing import Any, Callable, Optional, Type
 
 import comtypes
 import comtypes.automation
-import comtypes.connectionpoints
 import comtypes.typeinfo
 from comtypes import COMObject, IUnknown
 from comtypes._comobject import _MethodFinder
 from comtypes.client._generate import GetModule
+from comtypes.connectionpoints import IConnectionPointContainer
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class _AdviseConnection(object):
     def _connect(
         self, source: IUnknown, interface: Type[IUnknown], receiver: COMObject
     ) -> None:
-        cpc = source.QueryInterface(comtypes.connectionpoints.IConnectionPointContainer)
+        cpc = source.QueryInterface(IConnectionPointContainer)
         self.cp = cpc.FindConnectionPoint(ctypes.byref(interface._iid_))
         logger.debug("Start advise %s", interface)
         self.cookie = self.cp.Advise(receiver)
@@ -140,7 +140,7 @@ def find_single_connection_interface(source):
     # Enumerate the connection interfaces.  If we find a single one,
     # return it, if there are more, we give up since we cannot
     # determine which one to use.
-    cpc = source.QueryInterface(comtypes.connectionpoints.IConnectionPointContainer)
+    cpc = source.QueryInterface(IConnectionPointContainer)
     enum = cpc.EnumConnectionPoints()
     iid = enum.next().GetConnectionInterface()
     try:
