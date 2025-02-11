@@ -21,7 +21,7 @@ import comtypes.typeinfo
 from comtypes import COMObject, IUnknown
 from comtypes._comobject import _MethodFinder
 from comtypes.client._generate import GetModule
-from comtypes.connectionpoints import IConnectionPointContainer
+from comtypes.connectionpoints import IConnectionPoint, IConnectionPointContainer
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,10 @@ _CloseHandle.restype = BOOL
 
 
 class _AdviseConnection(object):
+    cp: Optional[IConnectionPoint]
+    cookie: Optional[int]
+    receiver: Optional[COMObject]
+
     def __init__(
         self, source: IUnknown, interface: Type[IUnknown], receiver: COMObject
     ) -> None:
