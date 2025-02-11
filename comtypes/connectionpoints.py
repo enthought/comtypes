@@ -1,4 +1,4 @@
-from ctypes import *
+from ctypes import POINTER, Structure, c_ulong
 
 from comtypes import COMMETHOD, GUID, HRESULT, IUnknown
 
