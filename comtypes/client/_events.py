@@ -92,6 +92,7 @@ class _AdviseConnection(object):
 
     def disconnect(self) -> None:
         if self.cookie:
+            assert self.cp is not None
             self.cp.Unadvise(self.cookie)
             logger.debug("Unadvised %s", self.cp)
             self.cp = None
@@ -101,6 +102,7 @@ class _AdviseConnection(object):
     def __del__(self) -> None:
         try:
             if self.cookie is not None:
+                assert self.cp is not None
                 self.cp.Unadvise(self.cookie)
         except (COMError, WindowsError):
             # Are we sure we want to ignore errors here?
