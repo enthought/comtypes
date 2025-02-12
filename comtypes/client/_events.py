@@ -84,9 +84,9 @@ class _AdviseConnection(object):
         cpc = source.QueryInterface(IConnectionPointContainer)
         self.cp = cpc.FindConnectionPoint(ctypes.byref(interface._iid_))
         logger.debug("Start advise %s", interface)
-        # Since `IUnknown.from_param`(`_compointer_base.from_param`) can
-        # accept a `COMObject` instance, `IConnectionPoint.Advise` can take
-        # either a COM object or a COM interface pointer.
+        # Since `POINTER(IUnknown).from_param`(`_compointer_base.from_param`)
+        # can accept a `COMObject` instance, `IConnectionPoint.Advise` can
+        # take either a COM object or a COM interface pointer.
         self.cookie = self.cp.Advise(receiver)  # type: ignore
         self.receiver = receiver
 
