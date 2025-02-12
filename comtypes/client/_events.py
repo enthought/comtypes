@@ -14,6 +14,7 @@ from ctypes.wintypes import (
     ULONG,
 )
 from typing import Any, Callable, Optional, Type
+from typing import Union as _UnionT
 
 import comtypes
 import comtypes.automation
@@ -60,14 +61,16 @@ _CloseHandle = _kernel32.CloseHandle
 _CloseHandle.argtypes = [HANDLE]
 _CloseHandle.restype = BOOL
 
+_ReceiverType = _UnionT[COMObject, IUnknown]
+
 
 class _AdviseConnection(object):
     cp: Optional[IConnectionPoint]
     cookie: Optional[int]
-    receiver: Optional[COMObject]
+    receiver: Optional[_ReceiverType]
 
     def __init__(
-        self, source: IUnknown, interface: Type[IUnknown], receiver: COMObject
+        self, source: IUnknown, interface: Type[IUnknown], receiver: _ReceiverType
     ) -> None:
         # Pre-initializing attributes to avoid AttributeError after failed connection.
         self.cp = None
@@ -76,12 +79,15 @@ class _AdviseConnection(object):
         self._connect(source, interface, receiver)
 
     def _connect(
-        self, source: IUnknown, interface: Type[IUnknown], receiver: COMObject
+        self, source: IUnknown, interface: Type[IUnknown], receiver: _ReceiverType
     ) -> None:
         cpc = source.QueryInterface(IConnectionPointContainer)
         self.cp = cpc.FindConnectionPoint(ctypes.byref(interface._iid_))
         logger.debug("Start advise %s", interface)
-        self.cookie = self.cp.Advise(receiver)
+        # Since `IUnknown.from_param`(`_compointer_base.from_param`) can
+        # accept a `COMObject` instance, `IConnectionPoint.Advise` can take
+        # either a COM object or a COM interface pointer.
+        self.cookie = self.cp.Advise(receiver)  # type: ignore
         self.receiver = receiver
 
     def disconnect(self) -> None:
