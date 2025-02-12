@@ -17,10 +17,10 @@ from typing import Any, Callable, Optional, Type
 from typing import Union as _UnionT
 
 import comtypes
-import comtypes.automation
 import comtypes.typeinfo
 from comtypes import COMObject, IUnknown
 from comtypes._comobject import _MethodFinder
+from comtypes.automation import DISPATCH_METHOD, IDispatch
 from comtypes.client._generate import GetModule
 from comtypes.connectionpoints import IConnectionPoint, IConnectionPointContainer
 
@@ -250,9 +250,7 @@ def CreateEventReceiver(interface: Type[IUnknown], handler: Any) -> COMObject:
 
     # Since our Sink object doesn't have typeinfo, it needs a
     # _dispimpl_ dictionary to dispatch events received via Invoke.
-    if issubclass(interface, comtypes.automation.IDispatch) and not hasattr(
-        sink, "_dispimpl_"
-    ):
+    if issubclass(interface, IDispatch) and not hasattr(sink, "_dispimpl_"):
         finder = sink._get_method_finder_(interface)
         dispimpl = sink._dispimpl_ = {}
         for m in interface._methods_:
@@ -263,7 +261,7 @@ def CreateEventReceiver(interface: Type[IUnknown], handler: Any) -> COMObject:
             impl = finder.get_impl(interface, mthname, paramflags, idlflags)
             # XXX Wouldn't work for 'propget', 'propput', 'propputref'
             # methods - are they allowed on event interfaces?
-            dispimpl[(dispid, comtypes.automation.DISPATCH_METHOD)] = impl
+            dispimpl[(dispid, DISPATCH_METHOD)] = impl
 
     return sink
 
