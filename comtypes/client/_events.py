@@ -178,21 +178,25 @@ def report_errors(func: Callable[..., Any]) -> Callable[..., Any]:
     # parameter still works.
     if func.__code__.co_varnames[:2] == ("self", "this"):
 
-        def error_printer(self, this, *args, **kw):
+        def with_this(self, this, *args, **kw):
             try:
                 return func(self, this, *args, **kw)
             except:
                 traceback.print_exc()
                 raise
 
+        error_printer = with_this
+
     else:
 
-        def error_printer(*args, **kw):
+        def without_this(*args, **kw):
             try:
                 return func(*args, **kw)
             except:
                 traceback.print_exc()
                 raise
+
+        error_printer = without_this
 
     return error_printer
 
