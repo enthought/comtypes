@@ -14,12 +14,13 @@ from ctypes.wintypes import (
     ULONG,
 )
 from typing import Any, Callable, Optional, Type
+from typing import Union as _UnionT
 
 import comtypes
-import comtypes.automation
 import comtypes.typeinfo
 from comtypes import COMObject, IUnknown
 from comtypes._comobject import _MethodFinder
+from comtypes.automation import DISPATCH_METHOD, IDispatch
 from comtypes.client._generate import GetModule
 from comtypes.connectionpoints import IConnectionPoint, IConnectionPointContainer
 
@@ -60,14 +61,16 @@ _CloseHandle = _kernel32.CloseHandle
 _CloseHandle.argtypes = [HANDLE]
 _CloseHandle.restype = BOOL
 
+_ReceiverType = _UnionT[COMObject, IUnknown]
+
 
 class _AdviseConnection(object):
     cp: Optional[IConnectionPoint]
     cookie: Optional[int]
-    receiver: Optional[COMObject]
+    receiver: Optional[_ReceiverType]
 
     def __init__(
-        self, source: IUnknown, interface: Type[IUnknown], receiver: COMObject
+        self, source: IUnknown, interface: Type[IUnknown], receiver: _ReceiverType
     ) -> None:
         # Pre-initializing attributes to avoid AttributeError after failed connection.
         self.cp = None
@@ -76,16 +79,20 @@ class _AdviseConnection(object):
         self._connect(source, interface, receiver)
 
     def _connect(
-        self, source: IUnknown, interface: Type[IUnknown], receiver: COMObject
+        self, source: IUnknown, interface: Type[IUnknown], receiver: _ReceiverType
     ) -> None:
         cpc = source.QueryInterface(IConnectionPointContainer)
         self.cp = cpc.FindConnectionPoint(ctypes.byref(interface._iid_))
         logger.debug("Start advise %s", interface)
-        self.cookie = self.cp.Advise(receiver)
+        # Since `POINTER(IUnknown).from_param`(`_compointer_base.from_param`)
+        # can accept a `COMObject` instance, `IConnectionPoint.Advise` can
+        # take either a COM object or a COM interface pointer.
+        self.cookie = self.cp.Advise(receiver)  # type: ignore
         self.receiver = receiver
 
     def disconnect(self) -> None:
         if self.cookie:
+            assert self.cp is not None
             self.cp.Unadvise(self.cookie)
             logger.debug("Unadvised %s", self.cp)
             self.cp = None
@@ -95,6 +102,7 @@ class _AdviseConnection(object):
     def __del__(self) -> None:
         try:
             if self.cookie is not None:
+                assert self.cp is not None
                 self.cp.Unadvise(self.cookie)
         except (COMError, WindowsError):
             # Are we sure we want to ignore errors here?
@@ -170,21 +178,25 @@ def report_errors(func: Callable[..., Any]) -> Callable[..., Any]:
     # parameter still works.
     if func.__code__.co_varnames[:2] == ("self", "this"):
 
-        def error_printer(self, this, *args, **kw):
+        def with_this(self, this, *args, **kw):
             try:
                 return func(self, this, *args, **kw)
             except:
                 traceback.print_exc()
                 raise
 
+        error_printer = with_this
+
     else:
 
-        def error_printer(*args, **kw):
+        def without_this(*args, **kw):
             try:
                 return func(*args, **kw)
             except:
                 traceback.print_exc()
                 raise
+
+        error_printer = without_this
 
     return error_printer
 
@@ -238,9 +250,7 @@ def CreateEventReceiver(interface: Type[IUnknown], handler: Any) -> COMObject:
 
     # Since our Sink object doesn't have typeinfo, it needs a
     # _dispimpl_ dictionary to dispatch events received via Invoke.
-    if issubclass(interface, comtypes.automation.IDispatch) and not hasattr(
-        sink, "_dispimpl_"
-    ):
+    if issubclass(interface, IDispatch) and not hasattr(sink, "_dispimpl_"):
         finder = sink._get_method_finder_(interface)
         dispimpl = sink._dispimpl_ = {}
         for m in interface._methods_:
@@ -251,7 +261,7 @@ def CreateEventReceiver(interface: Type[IUnknown], handler: Any) -> COMObject:
             impl = finder.get_impl(interface, mthname, paramflags, idlflags)
             # XXX Wouldn't work for 'propget', 'propput', 'propputref'
             # methods - are they allowed on event interfaces?
-            dispimpl[(dispid, comtypes.automation.DISPATCH_METHOD)] = impl
+            dispimpl[(dispid, DISPATCH_METHOD)] = impl
 
     return sink
 
