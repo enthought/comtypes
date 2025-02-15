@@ -45,11 +45,12 @@ _debug = logger.debug
 ################################################################
 # COM object implementation
 
-# so we don't have to import comtypes.automation
-DISPATCH_METHOD = 1
-DISPATCH_PROPERTYGET = 2
-DISPATCH_PROPERTYPUT = 4
-DISPATCH_PROPERTYPUTREF = 8
+from comtypes.automation import (  # noqa
+    DISPATCH_METHOD,
+    DISPATCH_PROPERTYGET,
+    DISPATCH_PROPERTYPUT,
+    DISPATCH_PROPERTYPUTREF,
+)
 
 ################################################################
 
