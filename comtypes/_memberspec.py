@@ -33,11 +33,11 @@ PARAMFLAG_FHASDEFAULT = 32
 PARAMFLAG_FHASCUSTDATA = 64
 
 _PARAMFLAGS = {
-    "in": 1,
-    "out": 2,
-    "lcid": 4,
-    "retval": 8,
-    "optional": 16,
+    "in": PARAMFLAG_FIN,
+    "out": PARAMFLAG_FOUT,
+    "lcid": PARAMFLAG_FLCID,
+    "retval": PARAMFLAG_FRETVAL,
+    "optional": PARAMFLAG_FOPT,
 }
 
 
