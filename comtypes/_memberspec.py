@@ -239,8 +239,8 @@ def _fix_inout_args(
         # through the keyword arguments.
         for i, info in enumerate(paramflags):
             direction = info[0]
-            dir_in = direction & 1 == 1
-            dir_out = direction & 2 == 2
+            dir_in = bool(direction & PARAMFLAG_FIN)
+            dir_out = bool(direction & PARAMFLAG_FOUT)
             is_positional = param_index < len(args)
             if not (dir_in or dir_out):
                 # The original code here did not check for this special case and
