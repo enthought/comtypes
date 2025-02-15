@@ -305,13 +305,12 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
     # wrapping the same COM interface.  This could happen because some interfaces
     # are contained in multiple typelibs.
     #
-    # It also allows to pass a CoClass instance to an api
-    # expecting a COM interface.
+    # It also allows to pass a COMObject instance to an api expecting a COM interface.
     @classmethod
     def from_param(cls, value):
         """Convert 'value' into a COM pointer to the interface.
 
-        This method accepts a COM pointer, or a CoClass instance
+        This method accepts a COM pointer, or a COMObject/CoClass instance
         which is QueryInterface()d."""
         if value is None:
             return None
@@ -325,7 +324,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
         # Do we need more checks here?
         if cls._iid_ == getattr(value, "_iid_", None):
             return value
-        # Accept an CoClass instance which exposes the interface required.
+        # Accept an COMObject instance which exposes the interface required.
         try:
             table = value._com_pointers_
         except AttributeError:
