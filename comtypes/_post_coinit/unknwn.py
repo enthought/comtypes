@@ -2,7 +2,7 @@
 
 import logging
 from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
-from typing import TYPE_CHECKING, ClassVar, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Type, TypeVar
 
 from comtypes import GUID, _CoUninitialize, com_interface_registry
 from comtypes._memberspec import STDMETHOD, ComMemberGenerator, DispMemberGenerator
@@ -10,6 +10,10 @@ from comtypes._post_coinit import _cominterface_meta_patcher as _meta_patch
 from comtypes._post_coinit.instancemethod import instancemethod
 
 if TYPE_CHECKING:
+    from typing import Literal
+    from typing import Union as _UnionT
+
+    from comtypes import hints  # type: ignore
     from comtypes._memberspec import _ComMemberSpec, _DispMemberSpec
 
 logger = logging.getLogger(__name__)
@@ -307,7 +311,9 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
     #
     # It also allows to pass a COMObject instance to an api expecting a COM interface.
     @classmethod
-    def from_param(cls, value):
+    def from_param(
+        cls, value: "_UnionT[None, Literal[0], hints.Self, IUnknown, hints.COMObject]"
+    ) -> Any:
         """Convert 'value' into a COM pointer to the interface.
 
         This method accepts a COM pointer, or a COMObject/CoClass instance
@@ -326,7 +332,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
             return value
         # Accept an COMObject instance which exposes the interface required.
         try:
-            table = value._com_pointers_
+            table = value._com_pointers_  # type: ignore
         except AttributeError:
             pass
         else:
@@ -335,7 +341,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
                 return table[cls._iid_]
             except KeyError:
                 raise TypeError(f"Interface {cls._iid_} not supported")
-        return value.QueryInterface(cls.__com_interface__)
+        return value.QueryInterface(cls.__com_interface__)  # type: ignore
 
 
 ################################################################
