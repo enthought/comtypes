@@ -261,6 +261,9 @@ class _compointer_meta(type(c_void_p), _cominterface_meta):
 class _compointer_base(c_void_p, metaclass=_compointer_meta):
     "base class for COM interface pointer classes"
 
+    if TYPE_CHECKING:
+        __com_interface__: ClassVar[Type["IUnknown"]]
+
     def __del__(self, _debug=logger.debug):
         "Release the COM refcount we own."
         if self:
@@ -333,7 +336,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
                 return table[cls._iid_]
             except KeyError:
                 raise TypeError(f"Interface {cls._iid_} not supported")
-        return value.QueryInterface(cls.__com_interface__)  # type: ignore
+        return value.QueryInterface(cls.__com_interface__)
 
 
 ################################################################
