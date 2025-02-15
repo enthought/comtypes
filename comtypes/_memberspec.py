@@ -23,7 +23,6 @@ _PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
 _OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
 _ArgSpecElmType = _UnionT[_PositionalArgSpecElmType, _OptionalArgSpecElmType]
 
-# so we don't have to import comtypes.automation to avoid a circular import.
 DISPATCH_METHOD = 1
 DISPATCH_PROPERTYGET = 2
 DISPATCH_PROPERTYPUT = 4
