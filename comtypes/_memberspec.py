@@ -23,6 +23,14 @@ _PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
 _OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
 _ArgSpecElmType = _UnionT[_PositionalArgSpecElmType, _OptionalArgSpecElmType]
 
+PARAMFLAG_NONE = 0
+PARAMFLAG_FIN = 1
+PARAMFLAG_FOUT = 2
+PARAMFLAG_FLCID = 4
+PARAMFLAG_FRETVAL = 8
+PARAMFLAG_FOPT = 16
+PARAMFLAG_FHASDEFAULT = 32
+PARAMFLAG_FHASCUSTDATA = 64
 
 _PARAMFLAGS = {
     "in": 1,
