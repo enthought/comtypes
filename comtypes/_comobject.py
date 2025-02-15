@@ -45,11 +45,12 @@ _debug = logger.debug
 ################################################################
 # COM object implementation
 
-# so we don't have to import comtypes.automation
-DISPATCH_METHOD = 1
-DISPATCH_PROPERTYGET = 2
-DISPATCH_PROPERTYPUT = 4
-DISPATCH_PROPERTYPUTREF = 8
+from comtypes.automation import (  # noqa
+    DISPATCH_METHOD,
+    DISPATCH_PROPERTYGET,
+    DISPATCH_PROPERTYPUT,
+    DISPATCH_PROPERTYPUTREF,
+)
 
 ################################################################
 
@@ -515,10 +516,7 @@ class COMObject(object):
         #
         params = pDispParams[0]
 
-        if wFlags & (4 | 8):
-            # DISPATCH_PROPERTYPUT
-            # DISPATCH_PROPERTYPUTREF
-            #
+        if wFlags & (DISPATCH_PROPERTYPUT | DISPATCH_PROPERTYPUTREF):
             # How are the parameters unpacked for propertyput
             # operations with additional parameters?  Can propput
             # have additional args?
@@ -529,9 +527,7 @@ class COMObject(object):
             # DISPATCH_PROPERTYPUTREF is specified.
             return mth(this, *args)
 
-        else:
-            # DISPATCH_METHOD
-            # DISPATCH_PROPERTYGET
+        else:  # wFlags & (DISPATCH_METHOD | DISPATCH_PROPERTYGET)
             # the positions of named arguments
             #
             # 2to3 has problems to translate 'range(...)[::-1]'
