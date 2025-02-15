@@ -41,6 +41,9 @@ Hresult: TypeAlias = int
 arguments and with `HRESULT` as its return type in its COM method definition.
 """
 
+LP_LP_Vtbl: TypeAlias = ctypes._Pointer[ctypes._Pointer[ctypes.Structure]]
+"""A pointer to a pointer to a virtual function table."""
+
 _CT = TypeVar("_CT", bound=ctypes._CData)
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 _T_Struct = TypeVar("_T_Struct", bound=ctypes.Structure)

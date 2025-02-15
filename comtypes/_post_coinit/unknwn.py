@@ -2,7 +2,7 @@
 
 import logging
 from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
-from typing import TYPE_CHECKING, ClassVar, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Type, TypeVar
 
 from comtypes import GUID, _CoUninitialize, com_interface_registry
 from comtypes._memberspec import STDMETHOD, ComMemberGenerator, DispMemberGenerator
@@ -10,6 +10,10 @@ from comtypes._post_coinit import _cominterface_meta_patcher as _meta_patch
 from comtypes._post_coinit.instancemethod import instancemethod
 
 if TYPE_CHECKING:
+    from typing import Literal
+    from typing import Union as _UnionT
+
+    from comtypes import hints  # type: ignore
     from comtypes._memberspec import _ComMemberSpec, _DispMemberSpec
 
 logger = logging.getLogger(__name__)
@@ -18,7 +22,7 @@ logger = logging.getLogger(__name__)
 def _shutdown(
     func=_CoUninitialize,
     _debug=logger.debug,
-):
+) -> None:
     # Sometimes, CoUninitialize, running at Python shutdown,
     # raises an exception.  We suppress this when __debug__ is
     # False.
@@ -131,7 +135,7 @@ class _cominterface_meta(type):
 
         return self
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         if name == "_methods_":
             # XXX I'm no longer sure why the code generator generates
             # "_methods_ = []" in the interface definition, and later
@@ -145,11 +149,11 @@ class _cominterface_meta(type):
             self._make_specials()
         type.__setattr__(self, name, value)
 
-    def _make_specials(self):
+    def _make_specials(self) -> None:
         # This call installs methods that forward the Python protocols
         # to COM protocols.
 
-        def has_name(name):
+        def has_name(name: str) -> bool:
             # Determine whether a property or method named 'name'
             # exists
             if self._case_insensitive_:
@@ -164,7 +168,7 @@ class _cominterface_meta(type):
         if has_name("_NewEnum"):
             _meta_patch.iterator(self)
 
-    def _make_case_insensitive(self):
+    def _make_case_insensitive(self) -> None:
         # The __map_case__ dictionary maps lower case names to the
         # names in the original spelling to enable case insensitive
         # method and attribute access.
@@ -197,7 +201,7 @@ class _cominterface_meta(type):
             if self._case_insensitive_:
                 self.__map_case__[name.lower()] = name
 
-    def __get_baseinterface_methodcount(self):
+    def __get_baseinterface_methodcount(self) -> int:
         "Return the number of com methods in the base interfaces"
         result = 0
         for itf in self.mro()[1:-1]:
@@ -261,7 +265,10 @@ class _compointer_meta(type(c_void_p), _cominterface_meta):
 class _compointer_base(c_void_p, metaclass=_compointer_meta):
     "base class for COM interface pointer classes"
 
-    def __del__(self, _debug=logger.debug):
+    if TYPE_CHECKING:
+        __com_interface__: ClassVar[Type["IUnknown"]]
+
+    def __del__(self, _debug=logger.debug) -> None:
         "Release the COM refcount we own."
         if self:
             # comtypes calls CoUninitialize() when the atexit handlers
@@ -275,7 +282,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
                 _debug("Release %s", self)
                 self.Release()  # type: ignore
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, _compointer_base):
             return False
         # get the value property of the c_void_p baseclass, this is the pointer value
@@ -283,18 +290,18 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
             super(_compointer_base, self).value == super(_compointer_base, other).value
         )
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Return the hash value of the pointer."""
         # hash the pointer values
         return hash(super(_compointer_base, self).value)
 
     # redefine the .value property; return the object itself.
-    def __get_value(self):
+    def __get_value(self) -> "hints.Self":
         return self
 
     value = property(__get_value, doc="""Return self.""")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         ptr = super(_compointer_base, self).value
         return f"<{self.__class__.__name__} ptr=0x{ptr or 0:x} at {id(self):x}>"
 
@@ -302,13 +309,14 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
     # wrapping the same COM interface.  This could happen because some interfaces
     # are contained in multiple typelibs.
     #
-    # It also allows to pass a CoClass instance to an api
-    # expecting a COM interface.
+    # It also allows to pass a COMObject instance to an api expecting a COM interface.
     @classmethod
-    def from_param(cls, value):
+    def from_param(
+        cls, value: "_UnionT[None, Literal[0], hints.Self, IUnknown, hints.COMObject]"
+    ) -> Any:
         """Convert 'value' into a COM pointer to the interface.
 
-        This method accepts a COM pointer, or a CoClass instance
+        This method accepts a COM pointer, or a COMObject/CoClass instance
         which is QueryInterface()d."""
         if value is None:
             return None
@@ -322,9 +330,9 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
         # Do we need more checks here?
         if cls._iid_ == getattr(value, "_iid_", None):
             return value
-        # Accept an CoClass instance which exposes the interface required.
+        # Accept an COMObject instance which exposes the interface required.
         try:
-            table = value._com_pointers_
+            table = value._com_pointers_  # type: ignore
         except AttributeError:
             pass
         else:
