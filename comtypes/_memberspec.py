@@ -486,8 +486,8 @@ class ComMemberGenerator(object):
     ) -> Callable[..., Any]:
         """This is a workaround. See `_fix_inout_args` docstring and comments."""
         if m.paramflags:
-            dirflags = [(p[0] & 3) for p in m.paramflags]
-            if 3 in dirflags:
+            dirflags = [(p[0] & (PARAMFLAG_FIN | PARAMFLAG_FOUT)) for p in m.paramflags]
+            if (PARAMFLAG_FIN | PARAMFLAG_FOUT) in dirflags:
                 return _fix_inout_args(func, m.argtypes, m.paramflags)
         return func
 

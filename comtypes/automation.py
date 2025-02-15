@@ -878,7 +878,7 @@ class IDispatch(IUnknown):
         #     objects referred to by rgvarg[ ] or placed in *pVarResult.
         #
         # For comtypes this is handled in DISPPARAMS.__del__ and VARIANT.__del__.
-        _invkind = kw.pop("_invkind", 1)  # DISPATCH_METHOD
+        _invkind = kw.pop("_invkind", DISPATCH_METHOD)
         _lcid = kw.pop("_lcid", 0)
         if kw:
             raise ValueError("named parameters not yet implemented")
