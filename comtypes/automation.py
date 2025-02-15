@@ -30,12 +30,10 @@ SCODE = LONG
 
 VARTYPE = c_ushort
 
-from comtypes._memberspec import (
-    DISPATCH_METHOD,
-    DISPATCH_PROPERTYGET,
-    DISPATCH_PROPERTYPUT,
-    DISPATCH_PROPERTYPUTREF,
-)
+from comtypes._memberspec import DISPATCH_METHOD as DISPATCH_METHOD
+from comtypes._memberspec import DISPATCH_PROPERTYGET as DISPATCH_PROPERTYGET
+from comtypes._memberspec import DISPATCH_PROPERTYPUT as DISPATCH_PROPERTYPUT
+from comtypes._memberspec import DISPATCH_PROPERTYPUTREF as DISPATCH_PROPERTYPUTREF
 
 tagINVOKEKIND = c_int
 INVOKE_FUNC = DISPATCH_METHOD
