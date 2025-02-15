@@ -524,15 +524,15 @@ class DispMemberGenerator(object):
         memid = m.memid
 
         def fget(obj):
-            return obj.Invoke(memid, _invkind=2)  # DISPATCH_PROPERTYGET
+            return obj.Invoke(memid, _invkind=DISPATCH_PROPERTYGET)
 
         if "readonly" in m.idlflags:
             return property(fget)
 
         def fset(obj, value):
-            # Detect whether to use DISPATCH_PROPERTYPUT or
-            # DISPATCH_PROPERTYPUTREF
-            invkind = 8 if comtypes._is_object(value) else 4
+            # Detect whether to use PUT or PUTREF
+            is_ref = comtypes._is_object(value)
+            invkind = DISPATCH_PROPERTYPUTREF if is_ref else DISPATCH_PROPERTYPUT
             return obj.Invoke(memid, value, _invkind=invkind)
 
         return property(fget, fset)
@@ -543,25 +543,19 @@ class DispMemberGenerator(object):
         if "propget" in m.idlflags:
 
             def getfunc(obj, *args, **kw):
-                return obj.Invoke(
-                    memid, _invkind=2, *args, **kw
-                )  # DISPATCH_PROPERTYGET
+                return obj.Invoke(memid, _invkind=DISPATCH_PROPERTYGET, *args, **kw)
 
             return getfunc
         elif "propput" in m.idlflags:
 
             def putfunc(obj, *args, **kw):
-                return obj.Invoke(
-                    memid, _invkind=4, *args, **kw
-                )  # DISPATCH_PROPERTYPUT
+                return obj.Invoke(memid, _invkind=DISPATCH_PROPERTYPUT, *args, **kw)
 
             return putfunc
         elif "propputref" in m.idlflags:
 
             def putreffunc(obj, *args, **kw):
-                return obj.Invoke(
-                    memid, _invkind=8, *args, **kw
-                )  # DISPATCH_PROPERTYPUTREF
+                return obj.Invoke(memid, _invkind=DISPATCH_PROPERTYPUTREF, *args, **kw)
 
             return putreffunc
         # a first attempt to make use of the restype.  Still, support for
@@ -570,7 +564,7 @@ class DispMemberGenerator(object):
             interface = m.restype.__com_interface__  # type: ignore
 
             def comitffunc(obj, *args, **kw):
-                result = obj.Invoke(memid, _invkind=1, *args, **kw)
+                result = obj.Invoke(memid, _invkind=DISPATCH_METHOD, *args, **kw)
                 if result is None:
                     return
                 return result.QueryInterface(interface)
@@ -578,7 +572,7 @@ class DispMemberGenerator(object):
             return comitffunc
 
         def func(obj, *args, **kw):
-            return obj.Invoke(memid, _invkind=1, *args, **kw)  # DISPATCH_METHOD
+            return obj.Invoke(memid, _invkind=DISPATCH_METHOD, *args, **kw)
 
         return func
 
