@@ -5,7 +5,6 @@ from ctypes import (
     POINTER,
     FormatError,
     OleDLL,
-    Structure,
     WinDLL,
     byref,
     c_long,
@@ -210,7 +209,7 @@ class COMObject(object):
     _reg_clsid_: ClassVar[GUID]
     _reg_typelib_: ClassVar[Tuple[str, int, int]]
     __typelib: "hints.ITypeLib"
-    _com_pointers_: Dict[GUID, "_Pointer[_Pointer[Structure]]"]
+    _com_pointers_: Dict[GUID, "hints.LP_LP_Vtbl"]
     _dispimpl_: Dict[Tuple[int, int], Callable[..., Any]]
 
     def __new__(cls, *args, **kw):
