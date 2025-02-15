@@ -205,16 +205,14 @@ VARFLAG_FREPLACEABLE = 2048
 VARFLAG_FIMMEDIATEBIND = 4096
 VARFLAGS = tagVARFLAGS
 
-from comtypes._memberspec import (  # noqa
-    PARAMFLAG_NONE,
-    PARAMFLAG_FIN,
-    PARAMFLAG_FOUT,
-    PARAMFLAG_FLCID,
-    PARAMFLAG_FRETVAL,
-    PARAMFLAG_FOPT,
-    PARAMFLAG_FHASDEFAULT,
-    PARAMFLAG_FHASCUSTDATA,
-)
+from comtypes._memberspec import PARAMFLAG_FHASCUSTDATA as PARAMFLAG_FHASCUSTDATA
+from comtypes._memberspec import PARAMFLAG_FHASDEFAULT as PARAMFLAG_FHASDEFAULT
+from comtypes._memberspec import PARAMFLAG_FIN as PARAMFLAG_FIN
+from comtypes._memberspec import PARAMFLAG_FLCID as PARAMFLAG_FLCID
+from comtypes._memberspec import PARAMFLAG_FOPT as PARAMFLAG_FOPT
+from comtypes._memberspec import PARAMFLAG_FOUT as PARAMFLAG_FOUT
+from comtypes._memberspec import PARAMFLAG_FRETVAL as PARAMFLAG_FRETVAL
+from comtypes._memberspec import PARAMFLAG_NONE as PARAMFLAG_NONE
 
 ################################################################
 # a helper
