@@ -29,6 +29,10 @@ from typing import (
 from typing import Union as _UnionT
 
 from comtypes import GUID, IPersist, IUnknown, _CoUninitialize, hresult
+from comtypes._memberspec import DISPATCH_METHOD as DISPATCH_METHOD
+from comtypes._memberspec import DISPATCH_PROPERTYGET as DISPATCH_PROPERTYGET
+from comtypes._memberspec import DISPATCH_PROPERTYPUT as DISPATCH_PROPERTYPUT
+from comtypes._memberspec import DISPATCH_PROPERTYPUTREF as DISPATCH_PROPERTYPUTREF
 from comtypes._vtbl import _MethodFinder, create_dispimpl, create_vtbl_mapping
 from comtypes.automation import DISPID, DISPPARAMS, EXCEPINFO, VARIANT
 from comtypes.errorinfo import ISupportErrorInfo
@@ -45,12 +49,6 @@ _debug = logger.debug
 ################################################################
 # COM object implementation
 
-from comtypes.automation import (  # noqa
-    DISPATCH_METHOD,
-    DISPATCH_PROPERTYGET,
-    DISPATCH_PROPERTYPUT,
-    DISPATCH_PROPERTYPUTREF,
-)
 
 ################################################################
 

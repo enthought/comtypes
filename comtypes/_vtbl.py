@@ -17,12 +17,12 @@ from typing import Union as _UnionT
 
 import comtypes
 from comtypes import GUID, IUnknown, hresult
-from comtypes._memberspec import _encode_idl
-from comtypes.automation import (
+from comtypes._memberspec import (
     DISPATCH_METHOD,
     DISPATCH_PROPERTYGET,
     DISPATCH_PROPERTYPUT,
     DISPATCH_PROPERTYPUTREF,
+    _encode_idl,
 )
 from comtypes.errorinfo import ReportError, ReportException
 

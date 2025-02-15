@@ -13,6 +13,10 @@ import comtypes
 import comtypes.patcher
 from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData, _safearray
 from comtypes import hresult as hresult
+from comtypes._memberspec import DISPATCH_METHOD as DISPATCH_METHOD
+from comtypes._memberspec import DISPATCH_PROPERTYGET as DISPATCH_PROPERTYGET
+from comtypes._memberspec import DISPATCH_PROPERTYPUT as DISPATCH_PROPERTYPUT
+from comtypes._memberspec import DISPATCH_PROPERTYPUTREF as DISPATCH_PROPERTYPUTREF
 from comtypes.safearray import _midlSAFEARRAY
 
 if TYPE_CHECKING:
@@ -29,11 +33,6 @@ DISPID = LONG
 SCODE = LONG
 
 VARTYPE = c_ushort
-
-from comtypes._memberspec import DISPATCH_METHOD as DISPATCH_METHOD
-from comtypes._memberspec import DISPATCH_PROPERTYGET as DISPATCH_PROPERTYGET
-from comtypes._memberspec import DISPATCH_PROPERTYPUT as DISPATCH_PROPERTYPUT
-from comtypes._memberspec import DISPATCH_PROPERTYPUTREF as DISPATCH_PROPERTYPUTREF
 
 tagINVOKEKIND = c_int
 INVOKE_FUNC = DISPATCH_METHOD
