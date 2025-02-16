@@ -15,9 +15,10 @@ from typing import (
 from typing import Union as _UnionT
 
 import comtypes
-from comtypes import _CData
 
 if TYPE_CHECKING:
+    from ctypes import _CArgObject, _CDataType
+
     from comtypes import hints  # type: ignore
 
 
@@ -54,20 +55,20 @@ _NOTHING = object()
 
 def _unpack_argspec(
     idl: List[str],
-    typ: Type[_CData],
+    typ: Type["_CDataType"],
     name: Optional[str] = None,
     defval: Any = _NOTHING,
-) -> Tuple[List[str], Type[_CData], Optional[str], Any]:
+) -> Tuple[List[str], Type["_CDataType"], Optional[str], Any]:
     return idl, typ, name, defval
 
 
 def _resolve_argspec(
     items: Tuple["hints.ArgSpecElmType", ...],
-) -> Tuple[Tuple["hints.ParamFlagType", ...], Tuple[Type[_CData], ...]]:
+) -> Tuple[Tuple["hints.ParamFlagType", ...], Tuple[Type["_CDataType"], ...]]:
     """Unpacks and converts from argspec to paramflags and argtypes.
 
     - paramflags is a sequence of `(pflags: int, argname: str, | None[, defval: Any])`.
-    - argtypes is a sequence of `type[_CData]`.
+    - argtypes is a sequence of `type[_CDataType]`.
     """
     from comtypes.automation import VARIANT
 
@@ -97,9 +98,9 @@ def _resolve_argspec(
 class _ComMemberSpec(NamedTuple):
     """Specifier for a slot of COM method or property."""
 
-    restype: Optional[Type[_CData]]
+    restype: Optional[Type["_CDataType"]]
     name: str
-    argtypes: Tuple[Type[_CData], ...]
+    argtypes: Tuple[Type["_CDataType"], ...]
     paramflags: Optional[Tuple["hints.ParamFlagType", ...]]
     idlflags: Tuple[_UnionT[str, int], ...]
     doc: Optional[str]
@@ -114,7 +115,7 @@ class _DispMemberSpec(NamedTuple):
     what: Literal["DISPMETHOD", "DISPPROPERTY"]
     name: str
     idlflags: Tuple[_UnionT[str, int], ...]
-    restype: Optional[Type[_CData]]
+    restype: Optional[Type["_CDataType"]]
     argspec: Tuple["hints.ArgSpecElmType", ...]
 
     @property
@@ -215,7 +216,7 @@ _DocType = Optional[str]
 
 def _fix_inout_args(
     func: Callable[..., Any],
-    argtypes: Tuple[Type[_CData], ...],
+    argtypes: Tuple[Type["_CDataType"], ...],
     paramflags: Tuple["hints.ParamFlagType", ...],
 ) -> Callable[..., Any]:
     """This function provides a workaround for a bug in `ctypes`.
@@ -234,7 +235,7 @@ def _fix_inout_args(
     def call_with_inout(self, *args, **kw):
         args = list(args)
         # Indexed by order in the output
-        outargs: Dict[int, _UnionT[_CData, "ctypes._CArgObject"]] = {}
+        outargs: Dict[int, _UnionT["_CDataType", "_CArgObject"]] = {}
         outnum = 0
         param_index = 0
         # Go through all expected arguments and match them to the provided arguments.
@@ -260,7 +261,7 @@ def _fix_inout_args(
                 name = info[1]
                 # [in, out] parameters are passed as pointers,
                 # this is the pointed-to type:
-                atyp: Type[_CData] = getattr(argtypes[i], "_type_")
+                atyp: Type["_CDataType"] = getattr(argtypes[i], "_type_")
 
                 # Get the actual parameter, either as positional or
                 # keyword arg.
