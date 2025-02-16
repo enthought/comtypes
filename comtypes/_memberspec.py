@@ -1,5 +1,6 @@
 import ctypes
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -16,12 +17,9 @@ from typing import Union as _UnionT
 import comtypes
 from comtypes import _CData
 
-_PosParamFlagType = Tuple[int, Optional[str]]
-_OptParamFlagType = Tuple[int, Optional[str], Any]
-_ParamFlagType = _UnionT[_PosParamFlagType, _OptParamFlagType]
-_PosArgSpecElmType = Tuple[List[str], Type[_CData], str]
-_OptArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
-_ArgSpecElmType = _UnionT[_PosArgSpecElmType, _OptArgSpecElmType]
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
+
 
 DISPATCH_METHOD = 1
 DISPATCH_PROPERTYGET = 2
@@ -64,8 +62,8 @@ def _unpack_argspec(
 
 
 def _resolve_argspec(
-    items: Tuple[_ArgSpecElmType, ...],
-) -> Tuple[Tuple[_ParamFlagType, ...], Tuple[Type[_CData], ...]]:
+    items: Tuple["hints.ArgSpecElmType", ...],
+) -> Tuple[Tuple["hints.ParamFlagType", ...], Tuple[Type[_CData], ...]]:
     """Unpacks and converts from argspec to paramflags and argtypes.
 
     - paramflags is a sequence of `(pflags: int, argname: str, | None[, defval: Any])`.
@@ -102,7 +100,7 @@ class _ComMemberSpec(NamedTuple):
     restype: Optional[Type[_CData]]
     name: str
     argtypes: Tuple[Type[_CData], ...]
-    paramflags: Optional[Tuple[_ParamFlagType, ...]]
+    paramflags: Optional[Tuple["hints.ParamFlagType", ...]]
     idlflags: Tuple[_UnionT[str, int], ...]
     doc: Optional[str]
 
@@ -117,7 +115,7 @@ class _DispMemberSpec(NamedTuple):
     name: str
     idlflags: Tuple[_UnionT[str, int], ...]
     restype: Optional[Type[_CData]]
-    argspec: Tuple[_ArgSpecElmType, ...]
+    argspec: Tuple["hints.ArgSpecElmType", ...]
 
     @property
     def memid(self) -> int:
@@ -218,7 +216,7 @@ _DocType = Optional[str]
 def _fix_inout_args(
     func: Callable[..., Any],
     argtypes: Tuple[Type[_CData], ...],
-    paramflags: Tuple[_ParamFlagType, ...],
+    paramflags: Tuple["hints.ParamFlagType", ...],
 ) -> Callable[..., Any]:
     """This function provides a workaround for a bug in `ctypes`.
 

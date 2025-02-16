@@ -8,7 +8,14 @@ from comtypes import IUnknown
 from comtypes._memberspec import _fix_inout_args
 
 if TYPE_CHECKING:
-    from comtypes._memberspec import _ArgSpecElmType
+    from comtypes import hints  # type: ignore
+
+    _ArgSpecType = Tuple[
+        hints.ArgSpecElmType,
+        hints.ArgSpecElmType,
+        hints.ArgSpecElmType,
+        hints.ArgSpecElmType,
+    ]
 
 WSTRING = c_wchar_p
 
@@ -259,7 +266,7 @@ class Test_ArgsKwargsCombinations(ut.TestCase):
 
 
 class PermutedArgspecTestingParams(NamedTuple):
-    argspec: "Tuple[_ArgSpecElmType, _ArgSpecElmType, _ArgSpecElmType, _ArgSpecElmType]"
+    argspec: "_ArgSpecType"
     args: Tuple[Any, Any, Any]
     orig_ret_val: Tuple[Any, Any, Any]
     fixed_ret_val: List[Any]

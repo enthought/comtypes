@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from ctypes import _FuncPointer
 
     from comtypes import hints  # type: ignore
-    from comtypes._memberspec import _ArgSpecElmType, _DispMemberSpec, _ParamFlagType
+    from comtypes._memberspec import _DispMemberSpec
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -81,7 +81,7 @@ def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
 def catch_errors(
     obj: "hints.COMObject",
     mth: Callable[..., Any],
-    paramflags: Optional[Tuple["_ParamFlagType", ...]],
+    paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
     interface: Type[IUnknown],
     mthname: str,
 ) -> Callable[..., Any]:
@@ -130,7 +130,7 @@ def catch_errors(
 def hack(
     inst: "hints.COMObject",
     mth: Callable[..., Any],
-    paramflags: Optional[Tuple["_ParamFlagType", ...]],
+    paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
     interface: Type[IUnknown],
     mthname: str,
 ) -> Callable[..., Any]:
@@ -238,7 +238,7 @@ class _MethodFinder(object):
         self,
         interface: Type[IUnknown],
         mthname: str,
-        paramflags: Optional[Tuple["_ParamFlagType", ...]],
+        paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
         idlflags: Tuple[_UnionT[str, int], ...],
     ) -> Callable[..., Any]:
         mth = self.find_impl(interface, mthname, paramflags, idlflags)
@@ -260,7 +260,7 @@ class _MethodFinder(object):
         self,
         interface: Type[IUnknown],
         mthname: str,
-        paramflags: Optional[Tuple["_ParamFlagType", ...]],
+        paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
         idlflags: Tuple[_UnionT[str, int], ...],
     ) -> Optional[Callable[..., Any]]:
         fq_name = f"{interface.__name__}_{mthname}"
@@ -429,7 +429,7 @@ def _make_dispentry(
     interface: Type[IUnknown],
     mthname: str,
     idlflags: Tuple[_UnionT[str, int], ...],
-    argspec: Tuple["_ArgSpecElmType", ...],
+    argspec: Tuple["hints.ArgSpecElmType", ...],
     invkind: int,
 ) -> Iterator[Tuple[Tuple[int, int], Callable[..., Any]]]:
     # We build a _dispmap_ entry now that maps invkind and dispid to

@@ -3,9 +3,10 @@
 # - utilities for type hints.
 import ctypes
 import sys
+from _ctypes import _CData
 from typing import Any as Any, ClassVar, Generic, NoReturn, Protocol, TypeVar, overload
 from typing import Optional, Union as _UnionT
-from typing import Tuple as Tuple, Type
+from typing import List, Tuple as Tuple, Type
 from typing import Callable, Iterator, Sequence
 
 if sys.version_info >= (3, 9):
@@ -288,3 +289,10 @@ def to_dunder_setitem(
 ) -> Callable[Concatenate[_T_Inst, _P_Set], Any]: ...
 @overload
 def to_dunder_setitem(item: Any) -> Callable[..., NoReturn]: ...
+
+_PosParamFlagType: TypeAlias = Tuple[int, Optional[str]]
+_OptParamFlagType: TypeAlias = Tuple[int, Optional[str], Any]
+ParamFlagType: TypeAlias = _UnionT[_PosParamFlagType, _OptParamFlagType]
+_PosArgSpecElmType: TypeAlias = Tuple[List[str], Type[_CData], str]
+_OptArgSpecElmType: TypeAlias = Tuple[List[str], Type[_CData], str, Any]
+ArgSpecElmType: TypeAlias = _UnionT[_PosArgSpecElmType, _OptArgSpecElmType]
