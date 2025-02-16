@@ -220,7 +220,7 @@ class _cominterface_meta(type):
         except KeyError:
             raise AttributeError("this class must define an _iid_")
         else:
-            com_interface_registry[str(iid)] = self
+            com_interface_registry[str(iid)] = self  # type: ignore
         # create members
         vtbl_offset = self.__get_baseinterface_methodcount()
         member_gen = ComMemberGenerator(self.__name__, vtbl_offset, self._iid_)
