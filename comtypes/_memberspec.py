@@ -16,12 +16,12 @@ from typing import Union as _UnionT
 import comtypes
 from comtypes import _CData
 
-_PositionalParamFlagType = Tuple[int, Optional[str]]
-_OptionalParamFlagType = Tuple[int, Optional[str], Any]
-_ParamFlagType = _UnionT[_PositionalParamFlagType, _OptionalParamFlagType]
-_PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
-_OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
-_ArgSpecElmType = _UnionT[_PositionalArgSpecElmType, _OptionalArgSpecElmType]
+_PosParamFlagType = Tuple[int, Optional[str]]
+_OptParamFlagType = Tuple[int, Optional[str], Any]
+_ParamFlagType = _UnionT[_PosParamFlagType, _OptParamFlagType]
+_PosArgSpecElmType = Tuple[List[str], Type[_CData], str]
+_OptArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
+_ArgSpecElmType = _UnionT[_PosArgSpecElmType, _OptArgSpecElmType]
 
 DISPATCH_METHOD = 1
 DISPATCH_PROPERTYGET = 2
