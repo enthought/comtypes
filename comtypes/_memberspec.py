@@ -23,7 +23,6 @@ _PositionalArgSpecElmType = Tuple[List[str], Type[_CData], str]
 _OptionalArgSpecElmType = Tuple[List[str], Type[_CData], str, Any]
 _ArgSpecElmType = _UnionT[_PositionalArgSpecElmType, _OptionalArgSpecElmType]
 
-# so we don't have to import comtypes.automation to avoid a circular import.
 DISPATCH_METHOD = 1
 DISPATCH_PROPERTYGET = 2
 DISPATCH_PROPERTYPUT = 4
@@ -486,8 +485,8 @@ class ComMemberGenerator(object):
     ) -> Callable[..., Any]:
         """This is a workaround. See `_fix_inout_args` docstring and comments."""
         if m.paramflags:
-            dirflags = [(p[0] & 3) for p in m.paramflags]
-            if 3 in dirflags:
+            dirflags = [(p[0] & (PARAMFLAG_FIN | PARAMFLAG_FOUT)) for p in m.paramflags]
+            if (PARAMFLAG_FIN | PARAMFLAG_FOUT) in dirflags:
                 return _fix_inout_args(func, m.argtypes, m.paramflags)
         return func
 

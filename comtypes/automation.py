@@ -13,6 +13,10 @@ import comtypes
 import comtypes.patcher
 from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData, _safearray
 from comtypes import hresult as hresult
+from comtypes._memberspec import DISPATCH_METHOD as DISPATCH_METHOD
+from comtypes._memberspec import DISPATCH_PROPERTYGET as DISPATCH_PROPERTYGET
+from comtypes._memberspec import DISPATCH_PROPERTYPUT as DISPATCH_PROPERTYPUT
+from comtypes._memberspec import DISPATCH_PROPERTYPUTREF as DISPATCH_PROPERTYPUTREF
 from comtypes.safearray import _midlSAFEARRAY
 
 if TYPE_CHECKING:
@@ -29,11 +33,6 @@ DISPID = LONG
 SCODE = LONG
 
 VARTYPE = c_ushort
-
-DISPATCH_METHOD = 1
-DISPATCH_PROPERTYGET = 2
-DISPATCH_PROPERTYPUT = 4
-DISPATCH_PROPERTYPUTREF = 8
 
 tagINVOKEKIND = c_int
 INVOKE_FUNC = DISPATCH_METHOD
@@ -878,7 +877,7 @@ class IDispatch(IUnknown):
         #     objects referred to by rgvarg[ ] or placed in *pVarResult.
         #
         # For comtypes this is handled in DISPPARAMS.__del__ and VARIANT.__del__.
-        _invkind = kw.pop("_invkind", 1)  # DISPATCH_METHOD
+        _invkind = kw.pop("_invkind", DISPATCH_METHOD)
         _lcid = kw.pop("_lcid", 0)
         if kw:
             raise ValueError("named parameters not yet implemented")
