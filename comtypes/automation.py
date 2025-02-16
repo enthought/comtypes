@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type
 
 import comtypes
 import comtypes.patcher
-from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData, _safearray
+from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _safearray
 from comtypes import hresult as hresult
 from comtypes._memberspec import DISPATCH_METHOD as DISPATCH_METHOD
 from comtypes._memberspec import DISPATCH_PROPERTYGET as DISPATCH_PROPERTYGET
@@ -20,7 +20,7 @@ from comtypes._memberspec import DISPATCH_PROPERTYPUTREF as DISPATCH_PROPERTYPUT
 from comtypes.safearray import _midlSAFEARRAY
 
 if TYPE_CHECKING:
-    from ctypes import _CArgObject
+    from ctypes import _CArgObject, _CDataType
 
     from comtypes import hints  # type: ignore
     from comtypes._memberspec import _DispMemberSpec
@@ -948,7 +948,7 @@ _arraycode_to_vartype = {
     "B": VT_UI1,
 }
 
-_ctype_to_vartype: Dict[Type[_CData], int] = {
+_ctype_to_vartype: Dict[Type["_CDataType"], int] = {
     c_byte: VT_I1,
     c_ubyte: VT_UI1,
     c_short: VT_I2,
@@ -985,7 +985,7 @@ _ctype_to_vartype: Dict[Type[_CData], int] = {
     # POINTER(IDispatch): VT_DISPATCH,
 }
 
-_vartype_to_ctype: Dict[int, Type[_CData]] = {}
+_vartype_to_ctype: Dict[int, Type["_CDataType"]] = {}
 for c, v in _ctype_to_vartype.items():
     _vartype_to_ctype[v] = c
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]

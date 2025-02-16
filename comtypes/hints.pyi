@@ -3,9 +3,10 @@
 # - utilities for type hints.
 import ctypes
 import sys
+from ctypes import _CData, _CDataType
 from typing import Any as Any, ClassVar, Generic, NoReturn, Protocol, TypeVar, overload
 from typing import Optional, Union as _UnionT
-from typing import Tuple as Tuple, Type
+from typing import List, Tuple as Tuple, Type
 from typing import Callable, Iterator, Sequence
 
 if sys.version_info >= (3, 9):
@@ -44,7 +45,7 @@ arguments and with `HRESULT` as its return type in its COM method definition.
 LP_LP_Vtbl: TypeAlias = ctypes._Pointer[ctypes._Pointer[ctypes.Structure]]
 """A pointer to a pointer to a virtual function table."""
 
-_CT = TypeVar("_CT", bound=ctypes._CData)
+_CT = TypeVar("_CT", bound=_CData)
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 _T_Struct = TypeVar("_T_Struct", bound=ctypes.Structure)
 
@@ -288,3 +289,10 @@ def to_dunder_setitem(
 ) -> Callable[Concatenate[_T_Inst, _P_Set], Any]: ...
 @overload
 def to_dunder_setitem(item: Any) -> Callable[..., NoReturn]: ...
+
+_PosParamFlagType: TypeAlias = Tuple[int, Optional[str]]
+_OptParamFlagType: TypeAlias = Tuple[int, Optional[str], Any]
+ParamFlagType: TypeAlias = _UnionT[_PosParamFlagType, _OptParamFlagType]
+_PosArgSpecElmType: TypeAlias = Tuple[List[str], Type[_CDataType], str]
+_OptArgSpecElmType: TypeAlias = Tuple[List[str], Type[_CDataType], str, Any]
+ArgSpecElmType: TypeAlias = _UnionT[_PosArgSpecElmType, _OptArgSpecElmType]
