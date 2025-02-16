@@ -4,7 +4,8 @@ import logging
 from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
 from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Type, TypeVar
 
-from comtypes import GUID, _CoUninitialize, com_interface_registry
+import comtypes
+from comtypes import GUID, _CoUninitialize
 from comtypes._memberspec import STDMETHOD, ComMemberGenerator, DispMemberGenerator
 from comtypes._post_coinit import _cominterface_meta_patcher as _meta_patch
 from comtypes._post_coinit.instancemethod import instancemethod
@@ -220,7 +221,7 @@ class _cominterface_meta(type):
         except KeyError:
             raise AttributeError("this class must define an _iid_")
         else:
-            com_interface_registry[str(iid)] = self  # type: ignore
+            comtypes.com_interface_registry[str(iid)] = self  # type: ignore
         # create members
         vtbl_offset = self.__get_baseinterface_methodcount()
         member_gen = ComMemberGenerator(self.__name__, vtbl_offset, self._iid_)
