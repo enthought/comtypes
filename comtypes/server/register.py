@@ -43,7 +43,7 @@ import os
 import sys
 import winreg
 from ctypes import WinDLL, WinError
-from ctypes.wintypes import HKEY, LONG, LPCWSTR
+from ctypes.wintypes import HKEY, LONG, LPCWSTR, MAX_PATH
 from typing import Iterable, Iterator, List, Optional, Tuple, Type, Union
 from winreg import HKEY_CLASSES_ROOT as HKCR
 from winreg import HKEY_CURRENT_USER as HKCU
@@ -242,7 +242,7 @@ class Registrar(object):
 
 def _get_serverdll(handle: int) -> str:
     """Return the pathname of the dll hosting the COM object."""
-    return GetModuleFileName(handle, 260)
+    return GetModuleFileName(handle, MAX_PATH)
 
 
 class RegistryEntries(abc.ABC):

@@ -1,6 +1,7 @@
 import ctypes
 import sys
 import unittest
+from ctypes.wintypes import MAX_PATH
 
 from comtypes import GUID, COMError
 from comtypes.typeinfo import (
@@ -96,14 +97,14 @@ class Test(unittest.TestCase):
 
 class Test_GetModuleFileName(unittest.TestCase):
     def test_null_handler(self):
-        self.assertEqual(GetModuleFileName(None, 260), sys.executable)
+        self.assertEqual(GetModuleFileName(None, MAX_PATH), sys.executable)
 
     def test_loaded_module_handle(self):
         import _ctypes
 
         dll_path = _ctypes.__file__
         hmodule = ctypes.WinDLL(dll_path)._handle
-        self.assertEqual(GetModuleFileName(hmodule, 260), dll_path)
+        self.assertEqual(GetModuleFileName(hmodule, MAX_PATH), dll_path)
 
 
 if __name__ == "__main__":

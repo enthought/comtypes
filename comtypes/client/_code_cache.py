@@ -12,6 +12,7 @@ import sys
 import tempfile
 import types
 from ctypes import wintypes
+from ctypes.wintypes import MAX_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,6 @@ GetModuleFileName.restype = ctypes.c_ulong
 GetModuleFileName.argtypes = [wintypes.HMODULE, ctypes.c_wchar_p, ctypes.c_ulong]
 
 CSIDL_APPDATA = 26
-MAX_PATH = 260
 
 
 def _create_comtypes_gen_package():
