@@ -135,7 +135,7 @@ def FindOutgoingInterface(source: IUnknown) -> Type[IUnknown]:
     # comtypes.client):
     clsid = source.__dict__.get("__clsid")
     try:
-        interface = comtypes.com_coclass_registry[clsid]._outgoing_interfaces_[0]
+        interface = comtypes.com_coclass_registry[clsid]._outgoing_interfaces_[0]  # type: ignore
     except KeyError:
         pass
     else:

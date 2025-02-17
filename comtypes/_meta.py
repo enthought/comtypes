@@ -61,7 +61,7 @@ class _coclass_meta(type):
         # XXX We should insist that a _reg_clsid_ is present.
         if "_reg_clsid_" in namespace:
             clsid = namespace["_reg_clsid_"]
-            comtypes.com_coclass_registry[str(clsid)] = self
+            comtypes.com_coclass_registry[str(clsid)] = self  # type: ignore
 
         # `_coclass_pointer_meta` is a subclass inherited from `_coclass_meta`.
         # In other words, when the `__new__` method of this metaclass is called, an
