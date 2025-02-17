@@ -3,6 +3,7 @@ import os
 import sys
 import unittest as ut
 import winreg
+from ctypes.wintypes import MAX_PATH
 from unittest import mock
 
 import comtypes
@@ -236,7 +237,7 @@ class Test_get_serverdll(ut.TestCase):
         self.assertEqual(dll_path, _get_serverdll(handle))
         (((hmodule, maxsize), _),) = GetModuleFileName.call_args_list
         self.assertEqual(handle, hmodule)
-        self.assertEqual(260, maxsize)
+        self.assertEqual(MAX_PATH, maxsize)
 
 
 class Test_InterpRegistryEntries(ut.TestCase):
