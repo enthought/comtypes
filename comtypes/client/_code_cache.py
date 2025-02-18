@@ -11,8 +11,7 @@ import os
 import sys
 import tempfile
 import types
-from ctypes import wintypes
-from ctypes.wintypes import MAX_PATH
+from ctypes.wintypes import HMODULE, MAX_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +93,7 @@ SHGetSpecialFolderPath.argtypes = [
     ctypes.c_int,
 ]
 GetModuleFileName.restype = ctypes.c_ulong
-GetModuleFileName.argtypes = [wintypes.HMODULE, ctypes.c_wchar_p, ctypes.c_ulong]
+GetModuleFileName.argtypes = [HMODULE, ctypes.c_wchar_p, ctypes.c_ulong]
 
 CSIDL_APPDATA = 26
 
