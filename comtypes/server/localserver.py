@@ -1,13 +1,6 @@
 import logging
 import queue
-from ctypes import (
-    HRESULT,
-    POINTER,
-    OleDLL,
-    byref,
-    c_ulong,
-    c_void_p,
-)
+from ctypes import HRESULT, POINTER, OleDLL, byref, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPDWORD
 from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence, Type
 
