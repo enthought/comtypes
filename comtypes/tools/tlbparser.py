@@ -4,7 +4,6 @@ from ctypes import alignment, c_void_p, sizeof, windll
 from typing import Any, Dict, List, Optional, Tuple
 
 from comtypes import BSTR, COMError, automation, typeinfo
-from comtypes.client._code_cache import _get_module_filename
 from comtypes.tools import typedesc
 
 # Is the process 64-bit?
@@ -750,6 +749,8 @@ def get_tlib_filename(tlib: typeinfo.ITypeLib) -> Optional[str]:
         # workaround Windows 7 bug in QueryPathOfRegTypeLib returning relative path
         try:
             dll = windll.LoadLibrary(full_filename)
+            from comtypes.client._code_cache import _get_module_filename
+
             full_filename = _get_module_filename(dll._handle)
             del dll
         except OSError:
