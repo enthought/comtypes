@@ -63,7 +63,7 @@ def _find_gen_dir():
 
         elif ftype == "dll":
             # dll created with py2exe
-            path = _get_module_filename(sys.frozendllhandle)
+            path = typeinfo.GetModuleFileName(sys.frozendllhandle, MAX_PATH)
             base = os.path.splitext(os.path.basename(path))[0]
             subdir = rf"comtypes_cache\{base}-{pymaj:d}{pymin:d}"
             basedir = tempfile.gettempdir()
@@ -133,12 +133,6 @@ def _is_writeable(path):
         return False
     # TODO: should we add os.X_OK flag as well? It seems unnecessary on Windows.
     return os.access(path[0], os.W_OK)
-
-
-def _get_module_filename(hmodule):
-    """Call the Windows GetModuleFileName function which determines
-    the path from a module handle."""
-    return typeinfo.GetModuleFileName(hmodule, MAX_PATH)
 
 
 def _get_appdata_dir():
