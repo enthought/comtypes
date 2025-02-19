@@ -3,7 +3,7 @@ import sys
 from ctypes import alignment, c_void_p, sizeof, windll
 from typing import Any, Dict, List, Optional, Tuple
 
-from comtypes import BSTR, COMError, automation, typeinfo
+from comtypes import COMError, automation, typeinfo
 from comtypes.tools import typedesc
 
 # Is the process 64-bit?
