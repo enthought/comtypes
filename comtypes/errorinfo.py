@@ -1,5 +1,5 @@
 import sys
-from ctypes import *
+from ctypes import POINTER, OleDLL, byref, c_wchar_p
 from ctypes.wintypes import DWORD, ULONG
 
 from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown
