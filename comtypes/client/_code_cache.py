@@ -56,7 +56,7 @@ def _find_gen_dir():
         # where generated modules are placed.
         ftype = getattr(sys, "frozen", None)
         pymaj, pymin = sys.version_info[:2]
-        if ftype == None:
+        if ftype is None:
             # Python script
             subdir = rf"Python\Python{pymaj:d}{pymin:d}\comtypes_cache"
             basedir = _get_appdata_dir()
