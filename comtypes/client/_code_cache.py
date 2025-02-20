@@ -86,7 +86,8 @@ def _find_gen_dir():
 
 ################################################################
 
-SHGetSpecialFolderPath = ctypes.OleDLL("shell32.dll").SHGetSpecialFolderPathW
+_shell32 = ctypes.OleDLL("shell32.dll")
+SHGetSpecialFolderPath = _shell32.SHGetSpecialFolderPathW
 SHGetSpecialFolderPath.argtypes = [HWND, LPWSTR, ctypes.c_int, BOOL]
 SHGetSpecialFolderPath.restype = BOOL
 
