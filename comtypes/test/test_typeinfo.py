@@ -106,6 +106,22 @@ class Test_GetModuleFileName(unittest.TestCase):
         hmodule = ctypes.WinDLL(dll_path)._handle
         self.assertEqual(GetModuleFileName(hmodule, MAX_PATH), dll_path)
 
+    def test_invalid_handle(self):
+        with self.assertRaises(OSError) as ce:
+            GetModuleFileName(1, MAX_PATH)
+        ERROR_MOD_NOT_FOUND = 126
+        self.assertEqual(ce.exception.winerror, ERROR_MOD_NOT_FOUND)
+
+    def test_invalid_nsize(self):
+        import _ctypes
+
+        dll_path = _ctypes.__file__
+        hmodule = ctypes.WinDLL(dll_path)._handle
+        with self.assertRaises(OSError) as ce:
+            GetModuleFileName(hmodule, 0)
+        ERROR_INSUFFICIENT_BUFFER = 122
+        self.assertEqual(ce.exception.winerror, ERROR_INSUFFICIENT_BUFFER)
+
 
 if __name__ == "__main__":
     unittest.main()

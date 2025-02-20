@@ -11,7 +11,9 @@ import os
 import sys
 import tempfile
 import types
-from ctypes.wintypes import HMODULE, MAX_PATH
+from ctypes.wintypes import MAX_PATH
+
+from comtypes import typeinfo
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +63,7 @@ def _find_gen_dir():
 
         elif ftype == "dll":
             # dll created with py2exe
-            path = _get_module_filename(sys.frozendllhandle)
+            path = typeinfo.GetModuleFileName(sys.frozendllhandle, MAX_PATH)
             base = os.path.splitext(os.path.basename(path))[0]
             subdir = rf"comtypes_cache\{base}-{pymaj:d}{pymin:d}"
             basedir = tempfile.gettempdir()
@@ -85,15 +87,12 @@ def _find_gen_dir():
 ################################################################
 
 SHGetSpecialFolderPath = ctypes.OleDLL("shell32.dll").SHGetSpecialFolderPathW
-GetModuleFileName = ctypes.WinDLL("kernel32.dll").GetModuleFileNameW
 SHGetSpecialFolderPath.argtypes = [
     ctypes.c_ulong,
     ctypes.c_wchar_p,
     ctypes.c_int,
     ctypes.c_int,
 ]
-GetModuleFileName.restype = ctypes.c_ulong
-GetModuleFileName.argtypes = [HMODULE, ctypes.c_wchar_p, ctypes.c_ulong]
 
 CSIDL_APPDATA = 26
 
@@ -134,15 +133,6 @@ def _is_writeable(path):
         return False
     # TODO: should we add os.X_OK flag as well? It seems unnecessary on Windows.
     return os.access(path[0], os.W_OK)
-
-
-def _get_module_filename(hmodule):
-    """Call the Windows GetModuleFileName function which determines
-    the path from a module handle."""
-    path = ctypes.create_unicode_buffer(MAX_PATH)
-    if GetModuleFileName(hmodule, path, MAX_PATH):
-        return path.value
-    raise ctypes.WinError()
 
 
 def _get_appdata_dir():

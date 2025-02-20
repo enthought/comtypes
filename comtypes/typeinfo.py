@@ -769,6 +769,8 @@ def GetModuleFileName(handle: Optional[int], maxsize: int) -> str:
     """
     buf = create_unicode_buffer(maxsize)
     length = _GetModuleFileNameW(handle, buf, maxsize)
+    if not length:
+        raise ctypes.WinError()
     return buf.value[:length]
 
 
