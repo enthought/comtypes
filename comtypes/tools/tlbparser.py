@@ -760,9 +760,9 @@ def get_tlib_filename(tlib: typeinfo.ITypeLib) -> Optional[str]:
 
 def _py2exe_hint():
     # If the tlbparser is frozen, we need to include these
-    import comtypes.automation
-    import comtypes.persist
-    import comtypes.typeinfo
+    import comtypes.automation  # noqa
+    import comtypes.persist  # noqa
+    import comtypes.typeinfo  # noqa
 
 
 # -eof-
