@@ -11,7 +11,7 @@ import os
 import sys
 import tempfile
 import types
-from ctypes.wintypes import MAX_PATH
+from ctypes.wintypes import BOOL, HWND, LPWSTR, MAX_PATH
 
 from comtypes import typeinfo
 
@@ -56,7 +56,7 @@ def _find_gen_dir():
         # where generated modules are placed.
         ftype = getattr(sys, "frozen", None)
         pymaj, pymin = sys.version_info[:2]
-        if ftype == None:
+        if ftype is None:
             # Python script
             subdir = rf"Python\Python{pymaj:d}{pymin:d}\comtypes_cache"
             basedir = _get_appdata_dir()
@@ -86,13 +86,10 @@ def _find_gen_dir():
 
 ################################################################
 
-SHGetSpecialFolderPath = ctypes.OleDLL("shell32.dll").SHGetSpecialFolderPathW
-SHGetSpecialFolderPath.argtypes = [
-    ctypes.c_ulong,
-    ctypes.c_wchar_p,
-    ctypes.c_int,
-    ctypes.c_int,
-]
+_shell32 = ctypes.OleDLL("shell32.dll")
+SHGetSpecialFolderPath = _shell32.SHGetSpecialFolderPathW
+SHGetSpecialFolderPath.argtypes = [HWND, LPWSTR, ctypes.c_int, BOOL]
+SHGetSpecialFolderPath.restype = BOOL
 
 CSIDL_APPDATA = 26
 
