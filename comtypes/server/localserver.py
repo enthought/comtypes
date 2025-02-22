@@ -5,7 +5,7 @@ from ctypes.wintypes import DWORD, LPDWORD
 from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence, Type
 
 import comtypes
-from comtypes import GUID, hresult
+from comtypes import GUID, COMObject, IUnknown, hresult
 from comtypes.server import IClassFactory
 
 if TYPE_CHECKING:
@@ -33,18 +33,18 @@ _CoRevokeClassObject.argtypes = [DWORD]
 _CoRevokeClassObject.restype = HRESULT
 
 
-def run(classes: Sequence[Type[comtypes.COMObject]]) -> None:
+def run(classes: Sequence[Type[COMObject]]) -> None:
     classobjects = [ClassFactory(cls) for cls in classes]
-    comtypes.COMObject.__run_localserver__(classobjects)
+    COMObject.__run_localserver__(classobjects)
 
 
-class ClassFactory(comtypes.COMObject):
+class ClassFactory(COMObject):
     _com_interfaces_ = [IClassFactory]
     _locks: int = 0
     _queue: Optional[queue.Queue] = None
     regcls: int = REGCLS_MULTIPLEUSE
 
-    def __init__(self, cls: Type[comtypes.COMObject], *args, **kw) -> None:
+    def __init__(self, cls: Type[COMObject], *args, **kw) -> None:
         super(ClassFactory, self).__init__()
         self._cls = cls
         self._register_class()
@@ -60,11 +60,11 @@ class ClassFactory(comtypes.COMObject):
     def _register_class(self) -> None:
         regcls = getattr(self._cls, "_regcls_", self.regcls)
         cookie = c_ulong()
-        ptr = self._com_pointers_[comtypes.IUnknown._iid_]
+        ptr = self._com_pointers_[IUnknown._iid_]
         clsctx = self._cls._reg_clsctx_
         clsctx &= ~comtypes.CLSCTX_INPROC  # reset the inproc flags
         _CoRegisterClassObject(
-            byref(comtypes.GUID(self._cls._reg_clsid_)),
+            byref(GUID(self._cls._reg_clsid_)),
             ptr,
             clsctx,
             regcls,
@@ -78,8 +78,8 @@ class ClassFactory(comtypes.COMObject):
     def CreateInstance(
         self,
         this: Any,
-        punkOuter: Optional[Type["_Pointer[comtypes.IUnknown]"]],
-        riid: "_Pointer[comtypes.GUID]",
+        punkOuter: Optional[Type["_Pointer[IUnknown]"]],
+        riid: "_Pointer[GUID]",
         ppv: c_void_p,
     ) -> int:
         _debug("ClassFactory.CreateInstance(%s)", riid[0])
@@ -90,7 +90,7 @@ class ClassFactory(comtypes.COMObject):
 
     def LockServer(self, this: Any, fLock: bool) -> Literal[0]:
         if fLock:
-            comtypes.COMObject.__server__.Lock()
+            COMObject.__server__.Lock()
         else:
-            comtypes.COMObject.__server__.Unlock()
+            COMObject.__server__.Unlock()
         return hresult.S_OK
