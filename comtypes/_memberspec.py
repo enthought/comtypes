@@ -213,6 +213,7 @@ def COMMETHOD(idlflags, restype, methodname, *argspec) -> _ComMemberSpec:
 
 
 ################################################################
+# workarounds for ctypes functions and parameters
 
 
 def _prepare_parameter(value: Any, atyp: Type["_CDataType"]) -> "_CDataType":
@@ -331,6 +332,9 @@ def _fix_inout_args(
         return rescode
 
     return call_with_inout
+
+
+################################################################
 
 
 _PropFunc = Optional[Callable[..., Any]]
