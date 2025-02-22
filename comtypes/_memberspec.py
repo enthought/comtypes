@@ -17,9 +17,13 @@ from typing import Union as _UnionT
 import comtypes
 
 if TYPE_CHECKING:
+    from _ctypes import _PyCSimpleType
     from ctypes import _CArgObject, _CDataType
 
     from comtypes import hints  # type: ignore
+else:
+    _PyCSimpleType = type(ctypes.c_int)
+    _CArgObject = type(ctypes.byref(ctypes.c_int()))
 
 
 DISPATCH_METHOD = 1
@@ -209,9 +213,26 @@ def COMMETHOD(idlflags, restype, methodname, *argspec) -> _ComMemberSpec:
 
 
 ################################################################
+# workarounds for ctypes functions and parameters
 
-_PropFunc = Optional[Callable[..., Any]]
-_DocType = Optional[str]
+
+def _prepare_parameter(value: Any, atyp: Type["_CDataType"]) -> "_CDataType":
+    # parameter was passed, call `from_param()` to
+    # convert it to a `ctypes` type.
+    if getattr(value, "_type_", None) is atyp:
+        # Array of or pointer to type `atyp` was passed,
+        # pointer to `atyp` expected.
+        v = value
+    elif type(atyp) is _PyCSimpleType:  # type: ignore
+        # The `from_param` method of simple types
+        # (`c_int`, `c_double`, ...) returns a `byref` object which
+        # we cannot use since later it will be wrapped in a pointer.
+        # Simply call the constructor with the argument in that case.
+        v = atyp(value)
+    else:
+        v = atyp.from_param(value)
+        assert not isinstance(v, _CArgObject)  # type: ignore
+    return v
 
 
 def _fix_inout_args(
@@ -229,13 +250,11 @@ def _fix_inout_args(
     #
     # TODO: The workaround should be disabled when a ctypes
     # version is used where the bug is fixed.
-    SIMPLETYPE = type(ctypes.c_int)
-    BYREFTYPE = type(ctypes.byref(ctypes.c_int()))
 
     def call_with_inout(self, *args, **kw):
         args = list(args)
         # Indexed by order in the output
-        outargs: Dict[int, _UnionT["_CDataType", "_CArgObject"]] = {}
+        outargs: Dict[int, "_CDataType"] = {}
         outnum = 0
         param_index = 0
         # Go through all expected arguments and match them to the provided arguments.
@@ -266,29 +285,11 @@ def _fix_inout_args(
                 # Get the actual parameter, either as positional or
                 # keyword arg.
 
-                def prepare_parameter(v):
-                    # parameter was passed, call `from_param()` to
-                    # convert it to a `ctypes` type.
-                    if getattr(v, "_type_", None) is atyp:
-                        # Array of or pointer to type `atyp` was passed,
-                        # pointer to `atyp` expected.
-                        pass
-                    elif type(atyp) is SIMPLETYPE:
-                        # The `from_param` method of simple types
-                        # (`c_int`, `c_double`, ...) returns a `byref` object which
-                        # we cannot use since later it will be wrapped in a pointer.
-                        # Simply call the constructor with the argument in that case.
-                        v = atyp(v)
-                    else:
-                        v = atyp.from_param(v)
-                        assert not isinstance(v, BYREFTYPE)
-                    return v
-
                 if is_positional:
-                    v = prepare_parameter(args[param_index])
+                    v = _prepare_parameter(args[param_index], atyp)
                     args[param_index] = v
                 elif name in kw:
-                    v = prepare_parameter(kw[name])
+                    v = _prepare_parameter(kw[name], atyp)
                     kw[name] = v
                 else:
                     # no parameter was passed, make an empty one of the required type
@@ -331,6 +332,13 @@ def _fix_inout_args(
         return rescode
 
     return call_with_inout
+
+
+################################################################
+
+
+_PropFunc = Optional[Callable[..., Any]]
+_DocType = Optional[str]
 
 
 class PropertyMapping(object):
