@@ -2,7 +2,7 @@ import ctypes
 import logging
 import traceback
 from _ctypes import COMError
-from ctypes import HRESULT, POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL
+from ctypes import HRESULT, POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL, byref
 from ctypes.wintypes import (
     BOOL,
     DWORD,
@@ -82,7 +82,7 @@ class _AdviseConnection(object):
         self, source: IUnknown, interface: Type[IUnknown], receiver: _ReceiverType
     ) -> None:
         cpc = source.QueryInterface(IConnectionPointContainer)
-        self.cp = cpc.FindConnectionPoint(ctypes.byref(interface._iid_))
+        self.cp = cpc.FindConnectionPoint(byref(interface._iid_))
         logger.debug("Start advise %s", interface)
         # Since `POINTER(IUnknown).from_param`(`_compointer_base.from_param`)
         # can accept a `COMObject` instance, `IConnectionPoint.Advise` can
@@ -364,7 +364,7 @@ def PumpEvents(timeout: Any) -> None:
                 int(timeout * 1000),
                 len(handles),
                 handles,
-                ctypes.byref(ctypes.c_ulong()),
+                byref(ctypes.c_ulong()),
             )
         except WindowsError as details:
             if details.winerror != RPC_S_CALLPENDING:  # timeout expired
