@@ -58,7 +58,7 @@ def inproc_find_class(clsid: GUID) -> Type[COMObject]:
     except:
         _debug("NO path to insert")
     else:
-        if not pathdir in sys.path:
+        if pathdir not in sys.path:
             sys.path.insert(0, str(pathdir))
             _debug("insert path %r", pathdir)
         else:
