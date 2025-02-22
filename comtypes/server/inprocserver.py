@@ -1,7 +1,7 @@
-import ctypes
 import logging
 import sys
 import winreg
+from ctypes import c_void_p, pointer
 from typing import TYPE_CHECKING, Any, Literal, Optional, Type
 
 from comtypes import GUID, COMObject, IUnknown, hresult
@@ -29,7 +29,7 @@ class ClassFactory(COMObject):
         this: Any,
         punkOuter: Optional[Type["_Pointer[IUnknown]"]],
         riid: "_Pointer[GUID]",
-        ppv: ctypes.c_void_p,
+        ppv: c_void_p,
     ) -> int:
         _debug("ClassFactory.CreateInstance(%s)", riid[0])
         result = self._cls().IUnknown_QueryInterface(None, riid, ppv)
@@ -37,6 +37,7 @@ class ClassFactory(COMObject):
         return result
 
     def IClassFactory_LockServer(self, this: Any, fLock: bool) -> Literal[0]:
+        assert COMObject.__server__ is not None, "The inprocserver is not running yet"
         if fLock:
             COMObject.__server__.Lock()
         else:
@@ -58,7 +59,7 @@ def inproc_find_class(clsid: GUID) -> Type[COMObject]:
     except:
         _debug("NO path to insert")
     else:
-        if not pathdir in sys.path:
+        if pathdir not in sys.path:
             sys.path.insert(0, str(pathdir))
             _debug("insert path %r", pathdir)
         else:
@@ -138,7 +139,7 @@ def DllGetClassObject(rclsid: int, riid: int, ppv: int) -> int:
             return hresult.CLASS_E_CLASSNOTAVAILABLE
 
         result = ClassFactory(cls).IUnknown_QueryInterface(
-            None, ctypes.pointer(iid), ctypes.c_void_p(ppv)
+            None, pointer(iid), c_void_p(ppv)
         )
         _debug("DllGetClassObject() -> %s", result)
         return result

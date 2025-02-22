@@ -2,7 +2,7 @@ import ctypes
 import logging
 import traceback
 from _ctypes import COMError
-from ctypes import HRESULT, POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL
+from ctypes import HRESULT, POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL, byref
 from ctypes.wintypes import (
     BOOL,
     DWORD,
@@ -17,12 +17,12 @@ from typing import Any, Callable, Optional, Type
 from typing import Union as _UnionT
 
 import comtypes
-import comtypes.typeinfo
 from comtypes import COMObject, IUnknown
 from comtypes._comobject import _MethodFinder
 from comtypes.automation import DISPATCH_METHOD, IDispatch
 from comtypes.client._generate import GetModule
 from comtypes.connectionpoints import IConnectionPoint, IConnectionPointContainer
+from comtypes.typeinfo import IProvideClassInfo2
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class _AdviseConnection(object):
         self, source: IUnknown, interface: Type[IUnknown], receiver: _ReceiverType
     ) -> None:
         cpc = source.QueryInterface(IConnectionPointContainer)
-        self.cp = cpc.FindConnectionPoint(ctypes.byref(interface._iid_))
+        self.cp = cpc.FindConnectionPoint(byref(interface._iid_))
         logger.debug("Start advise %s", interface)
         # Since `POINTER(IUnknown).from_param`(`_compointer_base.from_param`)
         # can accept a `COMObject` instance, `IConnectionPoint.Advise` can
@@ -114,7 +114,7 @@ def FindOutgoingInterface(source: IUnknown) -> Type[IUnknown]:
     # If the COM object implements IProvideClassInfo2, it is easy to
     # find the default outgoing interface.
     try:
-        pci = source.QueryInterface(comtypes.typeinfo.IProvideClassInfo2)
+        pci = source.QueryInterface(IProvideClassInfo2)
         guid = pci.GetGUID(1)
     except COMError:
         pass
@@ -359,12 +359,12 @@ def PumpEvents(timeout: Any) -> None:
 
     try:
         try:
-            res = _CoWaitForMultipleHandles(
+            _CoWaitForMultipleHandles(
                 0,
                 int(timeout * 1000),
                 len(handles),
                 handles,
-                ctypes.byref(ctypes.c_ulong()),
+                byref(ctypes.c_ulong()),
             )
         except WindowsError as details:
             if details.winerror != RPC_S_CALLPENDING:  # timeout expired
