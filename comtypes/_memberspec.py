@@ -218,21 +218,21 @@ _PropFunc = Optional[Callable[..., Any]]
 _DocType = Optional[str]
 
 
-def _prepare_parameter(v, atyp):
+def _prepare_parameter(value: Any, atyp: Type["_CDataType"]):
     # parameter was passed, call `from_param()` to
     # convert it to a `ctypes` type.
-    if getattr(v, "_type_", None) is atyp:
+    if getattr(value, "_type_", None) is atyp:
         # Array of or pointer to type `atyp` was passed,
         # pointer to `atyp` expected.
-        pass
+        v = value
     elif type(atyp) is _PyCSimpleType:
         # The `from_param` method of simple types
         # (`c_int`, `c_double`, ...) returns a `byref` object which
         # we cannot use since later it will be wrapped in a pointer.
         # Simply call the constructor with the argument in that case.
-        v = atyp(v)
+        v = atyp(value)
     else:
-        v = atyp.from_param(v)
+        v = atyp.from_param(value)
         assert not isinstance(v, _CArgObject)
     return v
 
@@ -256,7 +256,7 @@ def _fix_inout_args(
     def call_with_inout(self, *args, **kw):
         args = list(args)
         # Indexed by order in the output
-        outargs: Dict[int, _UnionT["_CDataType", "_CArgObject"]] = {}
+        outargs: Dict[int, "_CDataType"] = {}
         outnum = 0
         param_index = 0
         # Go through all expected arguments and match them to the provided arguments.
