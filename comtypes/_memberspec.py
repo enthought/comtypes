@@ -218,14 +218,14 @@ _PropFunc = Optional[Callable[..., Any]]
 _DocType = Optional[str]
 
 
-def _prepare_parameter(value: Any, atyp: Type["_CDataType"]):
+def _prepare_parameter(value: Any, atyp: Type["_CDataType"]) -> "_CDataType":
     # parameter was passed, call `from_param()` to
     # convert it to a `ctypes` type.
     if getattr(value, "_type_", None) is atyp:
         # Array of or pointer to type `atyp` was passed,
         # pointer to `atyp` expected.
         v = value
-    elif type(atyp) is _PyCSimpleType:
+    elif type(atyp) is _PyCSimpleType:  # type: ignore
         # The `from_param` method of simple types
         # (`c_int`, `c_double`, ...) returns a `byref` object which
         # we cannot use since later it will be wrapped in a pointer.
@@ -233,7 +233,7 @@ def _prepare_parameter(value: Any, atyp: Type["_CDataType"]):
         v = atyp(value)
     else:
         v = atyp.from_param(value)
-        assert not isinstance(v, _CArgObject)
+        assert not isinstance(v, _CArgObject)  # type: ignore
     return v
 
 
