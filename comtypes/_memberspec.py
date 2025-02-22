@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from ctypes import _CArgObject, _CDataType
 
     from comtypes import hints  # type: ignore
+else:
+    _CArgObject = type(ctypes.byref(ctypes.c_int()))
 
 
 DISPATCH_METHOD = 1
@@ -230,7 +232,6 @@ def _fix_inout_args(
     # TODO: The workaround should be disabled when a ctypes
     # version is used where the bug is fixed.
     SIMPLETYPE = type(ctypes.c_int)
-    BYREFTYPE = type(ctypes.byref(ctypes.c_int()))
 
     def call_with_inout(self, *args, **kw):
         args = list(args)
@@ -281,7 +282,7 @@ def _fix_inout_args(
                         v = atyp(v)
                     else:
                         v = atyp.from_param(v)
-                        assert not isinstance(v, BYREFTYPE)
+                        assert not isinstance(v, _CArgObject)
                     return v
 
                 if is_positional:
