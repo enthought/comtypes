@@ -89,6 +89,7 @@ class ClassFactory(COMObject):
         return result
 
     def LockServer(self, this: Any, fLock: bool) -> Literal[0]:
+        assert COMObject.__server__ is not None, "The localserver is not running yet"
         if fLock:
             COMObject.__server__.Lock()
         else:
