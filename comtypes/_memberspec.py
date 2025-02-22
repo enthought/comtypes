@@ -218,6 +218,25 @@ _PropFunc = Optional[Callable[..., Any]]
 _DocType = Optional[str]
 
 
+def _prepare_parameter(v, atyp):
+    # parameter was passed, call `from_param()` to
+    # convert it to a `ctypes` type.
+    if getattr(v, "_type_", None) is atyp:
+        # Array of or pointer to type `atyp` was passed,
+        # pointer to `atyp` expected.
+        pass
+    elif type(atyp) is _PyCSimpleType:
+        # The `from_param` method of simple types
+        # (`c_int`, `c_double`, ...) returns a `byref` object which
+        # we cannot use since later it will be wrapped in a pointer.
+        # Simply call the constructor with the argument in that case.
+        v = atyp(v)
+    else:
+        v = atyp.from_param(v)
+        assert not isinstance(v, _CArgObject)
+    return v
+
+
 def _fix_inout_args(
     func: Callable[..., Any],
     argtypes: Tuple[Type["_CDataType"], ...],
@@ -268,29 +287,11 @@ def _fix_inout_args(
                 # Get the actual parameter, either as positional or
                 # keyword arg.
 
-                def prepare_parameter(v):
-                    # parameter was passed, call `from_param()` to
-                    # convert it to a `ctypes` type.
-                    if getattr(v, "_type_", None) is atyp:
-                        # Array of or pointer to type `atyp` was passed,
-                        # pointer to `atyp` expected.
-                        pass
-                    elif type(atyp) is _PyCSimpleType:
-                        # The `from_param` method of simple types
-                        # (`c_int`, `c_double`, ...) returns a `byref` object which
-                        # we cannot use since later it will be wrapped in a pointer.
-                        # Simply call the constructor with the argument in that case.
-                        v = atyp(v)
-                    else:
-                        v = atyp.from_param(v)
-                        assert not isinstance(v, _CArgObject)
-                    return v
-
                 if is_positional:
-                    v = prepare_parameter(args[param_index])
+                    v = _prepare_parameter(args[param_index], atyp)
                     args[param_index] = v
                 elif name in kw:
-                    v = prepare_parameter(kw[name])
+                    v = _prepare_parameter(kw[name], atyp)
                     kw[name] = v
                 else:
                     # no parameter was passed, make an empty one of the required type
