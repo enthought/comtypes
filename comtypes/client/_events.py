@@ -359,7 +359,7 @@ def PumpEvents(timeout: Any) -> None:
 
     try:
         try:
-            res = _CoWaitForMultipleHandles(
+            _CoWaitForMultipleHandles(
                 0,
                 int(timeout * 1000),
                 len(handles),
