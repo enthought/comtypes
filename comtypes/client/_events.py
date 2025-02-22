@@ -17,12 +17,12 @@ from typing import Any, Callable, Optional, Type
 from typing import Union as _UnionT
 
 import comtypes
-import comtypes.typeinfo
 from comtypes import COMObject, IUnknown
 from comtypes._comobject import _MethodFinder
 from comtypes.automation import DISPATCH_METHOD, IDispatch
 from comtypes.client._generate import GetModule
 from comtypes.connectionpoints import IConnectionPoint, IConnectionPointContainer
+from comtypes.typeinfo import IProvideClassInfo2
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +114,7 @@ def FindOutgoingInterface(source: IUnknown) -> Type[IUnknown]:
     # If the COM object implements IProvideClassInfo2, it is easy to
     # find the default outgoing interface.
     try:
-        pci = source.QueryInterface(comtypes.typeinfo.IProvideClassInfo2)
+        pci = source.QueryInterface(IProvideClassInfo2)
         guid = pci.GetGUID(1)
     except COMError:
         pass
