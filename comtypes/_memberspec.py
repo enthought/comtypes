@@ -17,10 +17,12 @@ from typing import Union as _UnionT
 import comtypes
 
 if TYPE_CHECKING:
+    from _ctypes import _PyCSimpleType
     from ctypes import _CArgObject, _CDataType
 
     from comtypes import hints  # type: ignore
 else:
+    _PyCSimpleType = type(ctypes.c_int)
     _CArgObject = type(ctypes.byref(ctypes.c_int()))
 
 
@@ -231,7 +233,6 @@ def _fix_inout_args(
     #
     # TODO: The workaround should be disabled when a ctypes
     # version is used where the bug is fixed.
-    SIMPLETYPE = type(ctypes.c_int)
 
     def call_with_inout(self, *args, **kw):
         args = list(args)
@@ -274,7 +275,7 @@ def _fix_inout_args(
                         # Array of or pointer to type `atyp` was passed,
                         # pointer to `atyp` expected.
                         pass
-                    elif type(atyp) is SIMPLETYPE:
+                    elif type(atyp) is _PyCSimpleType:
                         # The `from_param` method of simple types
                         # (`c_int`, `c_double`, ...) returns a `byref` object which
                         # we cannot use since later it will be wrapped in a pointer.
