@@ -214,9 +214,6 @@ def COMMETHOD(idlflags, restype, methodname, *argspec) -> _ComMemberSpec:
 
 ################################################################
 
-_PropFunc = Optional[Callable[..., Any]]
-_DocType = Optional[str]
-
 
 def _prepare_parameter(value: Any, atyp: Type["_CDataType"]) -> "_CDataType":
     # parameter was passed, call `from_param()` to
@@ -334,6 +331,10 @@ def _fix_inout_args(
         return rescode
 
     return call_with_inout
+
+
+_PropFunc = Optional[Callable[..., Any]]
+_DocType = Optional[str]
 
 
 class PropertyMapping(object):
