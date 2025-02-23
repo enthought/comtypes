@@ -7,6 +7,7 @@ import comtypes.client
 from comtypes import CLSCTX_SERVER, COMObject, IUnknown, hresult
 from comtypes._post_coinit.misc import _CoCreateInstance
 from comtypes.automation import IDispatch
+from comtypes.typeinfo import GUIDKIND_DEFAULT_SOURCE_DISP_IID
 
 comtypes.client.GetModule("UIAutomationCore.dll")
 comtypes.client.GetModule("scrrun.dll")
@@ -131,11 +132,9 @@ class Test_IProvideClassInfo_GetClassInfo(ut.TestCase):
 
 class Test_IProvideClassInfo2_GetGUID(ut.TestCase):
     def test(self):
-        # GUIDKIND_DEFAULT_SOURCE_DISP_IID = 1
-        self.assertEqual(
-            stdole.StdFont().IProvideClassInfo2_GetGUID(1),
-            stdole.FontEvents._iid_,
-        )
+        obj = stdole.StdFont()
+        actual = obj.IProvideClassInfo2_GetGUID(GUIDKIND_DEFAULT_SOURCE_DISP_IID)
+        self.assertEqual(actual, stdole.FontEvents._iid_)
 
 
 class Test_IPersist_GetClassID(ut.TestCase):

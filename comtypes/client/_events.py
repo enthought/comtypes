@@ -22,7 +22,7 @@ from comtypes._comobject import _MethodFinder
 from comtypes.automation import DISPATCH_METHOD, IDispatch
 from comtypes.client._generate import GetModule
 from comtypes.connectionpoints import IConnectionPoint, IConnectionPointContainer
-from comtypes.typeinfo import IProvideClassInfo2
+from comtypes.typeinfo import GUIDKIND_DEFAULT_SOURCE_DISP_IID, IProvideClassInfo2
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +115,7 @@ def FindOutgoingInterface(source: IUnknown) -> Type[IUnknown]:
     # find the default outgoing interface.
     try:
         pci = source.QueryInterface(IProvideClassInfo2)
-        guid = pci.GetGUID(1)
+        guid = pci.GetGUID(GUIDKIND_DEFAULT_SOURCE_DISP_IID)
     except COMError:
         pass
     else:

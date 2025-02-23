@@ -36,7 +36,12 @@ from comtypes._memberspec import DISPATCH_PROPERTYPUTREF as DISPATCH_PROPERTYPUT
 from comtypes._vtbl import _MethodFinder, create_dispimpl, create_vtbl_mapping
 from comtypes.automation import DISPID, DISPPARAMS, EXCEPINFO, VARIANT
 from comtypes.errorinfo import ISupportErrorInfo
-from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2, ITypeInfo
+from comtypes.typeinfo import (
+    GUIDKIND_DEFAULT_SOURCE_DISP_IID,
+    IProvideClassInfo,
+    IProvideClassInfo2,
+    ITypeInfo,
+)
 
 if TYPE_CHECKING:
     from ctypes import _CArgObject, _Pointer
@@ -415,8 +420,7 @@ class COMObject(object):
     # IProvideClassInfo2::GetGUID implementation
 
     def IProvideClassInfo2_GetGUID(self, dwGuidKind: int) -> GUID:
-        # GUIDKIND_DEFAULT_SOURCE_DISP_IID = 1
-        if dwGuidKind != 1:
+        if dwGuidKind != GUIDKIND_DEFAULT_SOURCE_DISP_IID:
             raise WindowsError(hresult.E_INVALIDARG)
         return self._outgoing_interfaces_[0]._iid_
 
