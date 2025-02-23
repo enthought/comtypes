@@ -17,7 +17,7 @@ from typing import Any, Callable, Optional, Type
 from typing import Union as _UnionT
 
 import comtypes
-from comtypes import COMObject, IUnknown
+from comtypes import COMObject, IUnknown, hresult
 from comtypes._comobject import _MethodFinder
 from comtypes.automation import DISPATCH_METHOD, IDispatch
 from comtypes.client._generate import GetModule
@@ -346,7 +346,6 @@ def PumpEvents(timeout: Any) -> None:
 
     hevt = _CreateEventA(None, True, False, None)
     handles = _handles_type(hevt)
-    RPC_S_CALLPENDING = -2147417835
 
     # @ctypes.WINFUNCTYPE(BOOL, DWORD)
     def HandlerRoutine(dwCtrlType):
@@ -367,7 +366,7 @@ def PumpEvents(timeout: Any) -> None:
                 byref(ctypes.c_ulong()),
             )
         except WindowsError as details:
-            if details.winerror != RPC_S_CALLPENDING:  # timeout expired
+            if details.winerror != hresult.RPC_S_CALLPENDING:  # timeout expired
                 raise
         else:
             raise KeyboardInterrupt
