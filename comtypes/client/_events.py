@@ -258,6 +258,7 @@ def CreateEventReceiver(interface: Type[IUnknown], handler: Any) -> COMObject:
             # Can dispid be at a different index? Should check code generator...
             # ...but hand-written code should also work...
             dispid = idlflags[0]
+            assert isinstance(dispid, comtypes.dispid)
             impl = finder.get_impl(interface, mthname, paramflags, idlflags)
             # XXX Wouldn't work for 'propget', 'propput', 'propputref'
             # methods - are they allowed on event interfaces?
