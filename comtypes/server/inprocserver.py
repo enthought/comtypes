@@ -5,6 +5,7 @@ from ctypes import c_void_p, pointer
 from typing import TYPE_CHECKING, Any, Literal, Optional, Type
 
 from comtypes import GUID, COMObject, IUnknown, hresult
+from comtypes._comobject import InprocServer as _InprocRefCounter
 from comtypes.server import IClassFactory
 
 if TYPE_CHECKING:
@@ -150,6 +151,7 @@ def DllGetClassObject(rclsid: int, riid: int, ppv: int) -> int:
 
 def DllCanUnloadNow() -> Literal[1]:  # S_FALSE
     COMObject.__run_inprocserver__()
+    assert isinstance(COMObject.__server__, _InprocRefCounter)
     result = COMObject.__server__.DllCanUnloadNow()  # noqa
     # To avoid a memory leak when PyInitialize()/PyUninitialize() are
     # called several times, we refuse to unload the dll.
