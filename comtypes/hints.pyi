@@ -16,9 +16,11 @@ else:
 if sys.version_info >= (3, 10):
     from typing import Concatenate, ParamSpec, TypeAlias
     from typing import TypeGuard as TypeGuard
+    from typing import Unpack as Unpack
 else:
     from typing_extensions import Concatenate, ParamSpec, TypeAlias
     from typing_extensions import TypeGuard as TypeGuard
+    from typing_extensions import Unpack as Unpack
 if sys.version_info >= (3, 11):
     from typing import Self as Self
 else:
