@@ -316,6 +316,13 @@ def ShowEvents(
 # garbage for each call.  So we define it here instead.
 _handles_type = ctypes.c_void_p * 1
 
+# The type of control signal received by the handler.
+CTRL_C_EVENT = 0
+CTRL_BREAK_EVENT = 1
+CTRL_CLOSE_EVENT = 2
+CTRL_LOGOFF_EVENT = 5
+CTRL_SHUTDOWN_EVENT = 6
+
 
 def PumpEvents(timeout: Any) -> None:
     """This following code waits for 'timeout' seconds in the way
@@ -349,7 +356,7 @@ def PumpEvents(timeout: Any) -> None:
 
     # @ctypes.WINFUNCTYPE(BOOL, DWORD)
     def HandlerRoutine(dwCtrlType):
-        if dwCtrlType == 0:  # CTRL+C
+        if dwCtrlType == CTRL_C_EVENT:  # CTRL+C
             _SetEvent(hevt)
             return 1
         return 0
