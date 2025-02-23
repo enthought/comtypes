@@ -61,7 +61,7 @@ class ClassFactory(COMObject):
         regcls = getattr(self._cls, "_regcls_", self.regcls)
         cookie = c_ulong()
         ptr = self._com_pointers_[IUnknown._iid_]
-        clsctx = self._cls._reg_clsctx_
+        clsctx = self._cls._reg_clsctx_  # type: ignore
         clsctx &= ~comtypes.CLSCTX_INPROC  # reset the inproc flags
         _CoRegisterClassObject(
             byref(GUID(self._cls._reg_clsid_)),

@@ -1180,6 +1180,10 @@ class IProvideClassInfo(IUnknown):
     ]
 
 
+# Flags used to specify the kind of information requested from an object.
+GUIDKIND_DEFAULT_SOURCE_DISP_IID = 1
+
+
 class IProvideClassInfo2(IProvideClassInfo):
     _iid_ = GUID("{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}")
     if TYPE_CHECKING:

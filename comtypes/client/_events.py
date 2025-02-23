@@ -17,12 +17,12 @@ from typing import Any, Callable, Optional, Type
 from typing import Union as _UnionT
 
 import comtypes
-from comtypes import COMObject, IUnknown
+from comtypes import COMObject, IUnknown, hresult
 from comtypes._comobject import _MethodFinder
 from comtypes.automation import DISPATCH_METHOD, IDispatch
 from comtypes.client._generate import GetModule
 from comtypes.connectionpoints import IConnectionPoint, IConnectionPointContainer
-from comtypes.typeinfo import IProvideClassInfo2
+from comtypes.typeinfo import GUIDKIND_DEFAULT_SOURCE_DISP_IID, IProvideClassInfo2
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +115,7 @@ def FindOutgoingInterface(source: IUnknown) -> Type[IUnknown]:
     # find the default outgoing interface.
     try:
         pci = source.QueryInterface(IProvideClassInfo2)
-        guid = pci.GetGUID(1)
+        guid = pci.GetGUID(GUIDKIND_DEFAULT_SOURCE_DISP_IID)
     except COMError:
         pass
     else:
@@ -316,6 +316,22 @@ def ShowEvents(
 # garbage for each call.  So we define it here instead.
 _handles_type = ctypes.c_void_p * 1
 
+# The type of control signal received by the handler.
+CTRL_C_EVENT = 0
+CTRL_BREAK_EVENT = 1
+CTRL_CLOSE_EVENT = 2
+CTRL_LOGOFF_EVENT = 5
+CTRL_SHUTDOWN_EVENT = 6
+
+# Specifiers for the behavior of the CoWaitForMultipleHandles function.
+# tagCOWAIT_FLAGS = ctypes.c_int
+COWAIT_DEFAULT = 0
+COWAIT_WAITALL = 1
+COWAIT_ALERTABLE = 2
+COWAIT_INPUTAVAILABLE = 4
+COWAIT_DISPATCH_CALLS = 8
+COWAIT_DISPATCH_WINDOW_MESSAGES = 16
+
 
 def PumpEvents(timeout: Any) -> None:
     """This following code waits for 'timeout' seconds in the way
@@ -346,11 +362,10 @@ def PumpEvents(timeout: Any) -> None:
 
     hevt = _CreateEventA(None, True, False, None)
     handles = _handles_type(hevt)
-    RPC_S_CALLPENDING = -2147417835
 
     # @ctypes.WINFUNCTYPE(BOOL, DWORD)
     def HandlerRoutine(dwCtrlType):
-        if dwCtrlType == 0:  # CTRL+C
+        if dwCtrlType == CTRL_C_EVENT:  # CTRL+C
             _SetEvent(hevt)
             return 1
         return 0
@@ -360,14 +375,14 @@ def PumpEvents(timeout: Any) -> None:
     try:
         try:
             _CoWaitForMultipleHandles(
-                0,
+                COWAIT_DEFAULT,
                 int(timeout * 1000),
                 len(handles),
                 handles,
                 byref(ctypes.c_ulong()),
             )
         except WindowsError as details:
-            if details.winerror != RPC_S_CALLPENDING:  # timeout expired
+            if details.winerror != hresult.RPC_S_CALLPENDING:  # timeout expired
                 raise
         else:
             raise KeyboardInterrupt
