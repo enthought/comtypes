@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from ctypes import _FuncPointer
 
     from comtypes import hints  # type: ignore
-    from comtypes._memberspec import _DispMemberSpec
+    from comtypes._memberspec import _ComIdlFlags, _DispIdlFlags, _DispMemberSpec
 
 logger = logging.getLogger(__name__)
 _debug = logger.debug
@@ -239,7 +239,7 @@ class _MethodFinder(object):
         interface: Type[IUnknown],
         mthname: str,
         paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
-        idlflags: Tuple[_UnionT[str, int], ...],
+        idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"],
     ) -> Callable[..., Any]:
         mth = self.find_impl(interface, mthname, paramflags, idlflags)
         if mth is None:
@@ -261,7 +261,7 @@ class _MethodFinder(object):
         interface: Type[IUnknown],
         mthname: str,
         paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
-        idlflags: Tuple[_UnionT[str, int], ...],
+        idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"],
     ) -> Optional[Callable[..., Any]]:
         fq_name = f"{interface.__name__}_{mthname}"
         if interface._case_insensitive_:
@@ -354,8 +354,8 @@ def create_vtbl_mapping(
 
 def create_dispimpl(
     itf: Type[IUnknown], finder: _MethodFinder
-) -> Dict[Tuple[int, int], Callable[..., Any]]:
-    dispimpl: Dict[Tuple[int, int], Callable[..., Any]] = {}
+) -> Dict[Tuple[comtypes.dispid, int], Callable[..., Any]]:
+    dispimpl: Dict[Tuple[comtypes.dispid, int], Callable[..., Any]] = {}
     for m in itf._disp_methods_:
         #################
         # What we have:
@@ -389,7 +389,7 @@ def create_dispimpl(
 
 def _make_dispmthentry(
     itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
-) -> Iterator[Tuple[Tuple[int, int], Callable[..., Any]]]:
+) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
     _, mthname, idlflags, restype, argspec = m
     if "propget" in idlflags:
         invkind = DISPATCH_PROPERTYGET
@@ -409,7 +409,7 @@ def _make_dispmthentry(
 
 def _make_disppropentry(
     itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
-) -> Iterator[Tuple[Tuple[int, int], Callable[..., Any]]]:
+) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
     _, mthname, idlflags, restype, argspec = m
     # DISPPROPERTY have implicit "out"
     if restype:
@@ -428,10 +428,10 @@ def _make_dispentry(
     finder: _MethodFinder,
     interface: Type[IUnknown],
     mthname: str,
-    idlflags: Tuple[_UnionT[str, int], ...],
+    idlflags: "_DispIdlFlags",
     argspec: Tuple["hints.ArgSpecElmType", ...],
     invkind: int,
-) -> Iterator[Tuple[Tuple[int, int], Callable[..., Any]]]:
+) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
     # We build a _dispmap_ entry now that maps invkind and dispid to
     # implementations that the finder finds; IDispatch_Invoke will later call it.
     paramflags = tuple(((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec)

@@ -99,6 +99,15 @@ def _resolve_argspec(
     return tuple(paramflags), tuple(argtypes)
 
 
+if TYPE_CHECKING:
+    _VarFlags = Tuple[str, ...]
+    _VarFlagsWithDispIdHelpstr = Tuple["dispid", "helpstring", hints.Unpack[_VarFlags]]
+    _VarFlagsWithDispId = Tuple["dispid", hints.Unpack[_VarFlags]]
+    _VarFlagsWithHelpstr = Tuple["helpstring", hints.Unpack[_VarFlags]]
+    _DispIdlFlags = _UnionT[_VarFlagsWithDispIdHelpstr, _VarFlagsWithDispId]
+    _ComIdlFlags = _UnionT[_VarFlags, _VarFlagsWithHelpstr]
+
+
 class _ComMemberSpec(NamedTuple):
     """Specifier for a slot of COM method or property."""
 
@@ -106,7 +115,7 @@ class _ComMemberSpec(NamedTuple):
     name: str
     argtypes: Tuple[Type["_CDataType"], ...]
     paramflags: Optional[Tuple["hints.ParamFlagType", ...]]
-    idlflags: Tuple[_UnionT[str, int], ...]
+    idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"]
     doc: Optional[str]
 
     def is_prop(self) -> bool:
@@ -118,7 +127,7 @@ class _DispMemberSpec(NamedTuple):
 
     what: Literal["DISPMETHOD", "DISPPROPERTY"]
     name: str
-    idlflags: Tuple[_UnionT[str, int], ...]
+    idlflags: "_DispIdlFlags"
     restype: Optional[Type["_CDataType"]]
     argspec: Tuple["hints.ArgSpecElmType", ...]
 
