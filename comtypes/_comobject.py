@@ -28,6 +28,7 @@ from typing import (
 )
 from typing import Union as _UnionT
 
+import comtypes
 from comtypes import GUID, IPersist, IUnknown, _CoUninitialize, hresult
 from comtypes._memberspec import DISPATCH_METHOD as DISPATCH_METHOD
 from comtypes._memberspec import DISPATCH_PROPERTYGET as DISPATCH_PROPERTYGET
@@ -214,7 +215,7 @@ class COMObject(object):
     _reg_typelib_: ClassVar[Tuple[str, int, int]]
     __typelib: "hints.ITypeLib"
     _com_pointers_: Dict[GUID, "hints.LP_LP_Vtbl"]
-    _dispimpl_: Dict[Tuple[int, int], Callable[..., Any]]
+    _dispimpl_: Dict[Tuple[comtypes.dispid, int], Callable[..., Any]]
 
     def __new__(cls, *args: Any, **kw: Any) -> "hints.Self":
         self = super(COMObject, cls).__new__(cls)
