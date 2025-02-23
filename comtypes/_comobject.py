@@ -216,15 +216,15 @@ class COMObject(object):
     _com_pointers_: Dict[GUID, "hints.LP_LP_Vtbl"]
     _dispimpl_: Dict[Tuple[int, int], Callable[..., Any]]
 
-    def __new__(cls, *args, **kw):
+    def __new__(cls, *args: Any, **kw: Any) -> "hints.Self":
         self = super(COMObject, cls).__new__(cls)
         if isinstance(self, c_void_p):
             # We build the VTables only for direct instances of
             # CoClass, not for POINTERs to CoClass.
-            return self
+            return self  # type: ignore
         if hasattr(self, "_com_interfaces_"):
             self.__prepare_comobject()
-        return self
+        return self  # type: ignore
 
     def __prepare_comobject(self) -> None:
         # When a CoClass instance is created, COM pointers to all
