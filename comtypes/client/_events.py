@@ -323,6 +323,15 @@ CTRL_CLOSE_EVENT = 2
 CTRL_LOGOFF_EVENT = 5
 CTRL_SHUTDOWN_EVENT = 6
 
+# Specifiers for the behavior of the CoWaitForMultipleHandles function.
+# tagCOWAIT_FLAGS = ctypes.c_int
+COWAIT_DEFAULT = 0
+COWAIT_WAITALL = 1
+COWAIT_ALERTABLE = 2
+COWAIT_INPUTAVAILABLE = 4
+COWAIT_DISPATCH_CALLS = 8
+COWAIT_DISPATCH_WINDOW_MESSAGES = 16
+
 
 def PumpEvents(timeout: Any) -> None:
     """This following code waits for 'timeout' seconds in the way
@@ -366,7 +375,7 @@ def PumpEvents(timeout: Any) -> None:
     try:
         try:
             _CoWaitForMultipleHandles(
-                0,
+                COWAIT_DEFAULT,
                 int(timeout * 1000),
                 len(handles),
                 handles,
