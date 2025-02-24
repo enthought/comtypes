@@ -82,9 +82,9 @@ class Test_ReportException(ut.TestCase):
         for slv, text in [
             # XXX: If the codebase changes, the line where functions or
             # methods are defined will change, meaning this test is brittle.
-            (0, f"{stem} (comtypes.test.test_errorinfo, line 93)"),
-            (1, f"{stem} (comtypes.test.test_errorinfo, line 53)"),
-            (2, f"{stem} (comtypes.test.test_errorinfo, line 57)"),
+            (0, f"{stem} ({__name__}, line 93)"),
+            (1, f"{stem} ({__name__}, line 53)"),
+            (2, f"{stem} ({__name__}, line 57)"),
         ]:
             with self.subTest(text=text):
                 try:
