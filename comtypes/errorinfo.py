@@ -1,9 +1,13 @@
 import sys
 from ctypes import POINTER, OleDLL, byref, c_wchar_p
 from ctypes.wintypes import DWORD, ULONG
+from typing import TYPE_CHECKING
 
 from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown
 from comtypes.hresult import *
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
 
 LPCOLESTR = c_wchar_p
 
@@ -43,6 +47,9 @@ class ISupportErrorInfo(IUnknown):
             [], HRESULT, "InterfaceSupportsErrorInfo", (["in"], POINTER(GUID), "riid")
         )
     ]
+    if TYPE_CHECKING:
+
+        def InterfaceSupportsErrorInfo(self, riid: GUID) -> hints.Hresult: ...
 
 
 ################################################################
