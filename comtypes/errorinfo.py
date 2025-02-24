@@ -83,10 +83,10 @@ _SetErrorInfo.argtypes = [ULONG, POINTER(IErrorInfo)]
 _SetErrorInfo.restype = HRESULT
 
 
-def CreateErrorInfo():
+def CreateErrorInfo() -> ICreateErrorInfo:
     cei = POINTER(ICreateErrorInfo)()
     _CreateErrorInfo(byref(cei))
-    return cei
+    return cei  # type: ignore
 
 
 def GetErrorInfo() -> Optional[IErrorInfo]:
