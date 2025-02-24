@@ -2,6 +2,7 @@ import sys
 from ctypes import POINTER, OleDLL, byref, c_wchar_p
 from ctypes.wintypes import DWORD, ULONG
 from typing import TYPE_CHECKING, Optional
+from typing import Union as _UnionT
 
 from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown
 from comtypes.hresult import DISP_E_EXCEPTION, S_OK
@@ -95,8 +96,13 @@ def SetErrorInfo(errinfo):
 
 
 def ReportError(
-    text, iid, clsid=None, helpfile=None, helpcontext=0, hresult=DISP_E_EXCEPTION
-):
+    text: str,
+    iid: GUID,
+    clsid: _UnionT[None, str, GUID] = None,
+    helpfile: Optional[str] = None,
+    helpcontext: Optional[int] = 0,
+    hresult: int = DISP_E_EXCEPTION,
+) -> int:
     """Report a COM error.  Returns the passed in hresult value."""
     ei = CreateErrorInfo()
     ei.SetDescription(text)
@@ -113,16 +119,20 @@ def ReportError(
         except WindowsError:
             pass
         else:
-            ei.SetSource(
-                progid
-            )  # progid for the class or application that created the error
+            # progid for the class or application that created the error
+            ei.SetSource(progid)
     SetErrorInfo(ei)
     return hresult
 
 
 def ReportException(
-    hresult, iid, clsid=None, helpfile=None, helpcontext=None, stacklevel=None
-):
+    hresult: int,
+    iid: GUID,
+    clsid: _UnionT[None, str, GUID] = None,
+    helpfile: Optional[str] = None,
+    helpcontext: Optional[int] = None,
+    stacklevel: Optional[int] = None,
+) -> int:
     """Report a COM exception.  Returns the passed in hresult value."""
     typ, value, tb = sys.exc_info()
     if stacklevel is not None:
