@@ -109,7 +109,7 @@ def ReportError(
             ei.SetSource(
                 progid
             )  # progid for the class or application that created the error
-    _SetErrorInfo(0, ei)
+    SetErrorInfo(ei)
     return hresult
 
 
