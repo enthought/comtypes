@@ -97,8 +97,10 @@ def GetErrorInfo() -> Optional[IErrorInfo]:
     return None
 
 
-def SetErrorInfo(errinfo):
+def SetErrorInfo(errinfo: _UnionT[IErrorInfo, ICreateErrorInfo]) -> "hints.Hresult":
     """Set error information for the current thread."""
+    # ICreateErrorInfo can QueryInterface with IErrorInfo, so both types are
+    # accepted, thanks to the magic of from_param.
     return _SetErrorInfo(0, errinfo)
 
 
