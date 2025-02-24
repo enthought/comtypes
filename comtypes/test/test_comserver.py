@@ -5,7 +5,7 @@ from typing import Any
 
 import comtypes.server
 import comtypes.test.TestComServer
-from comtypes import BSTR
+from comtypes import BSTR, errorinfo, hresult, shelllink
 from comtypes.automation import VARIANT, _midlSAFEARRAY
 from comtypes.client import CreateObject, GetActiveObject
 from comtypes.server.register import register, unregister
@@ -199,6 +199,26 @@ class ActiveObjTest(unittest.TestCase):
 
     def test_activeobj_strong_registration(self):
         self._doit(weak=False)
+
+
+class SupportErrorInfoTest(unittest.TestCase):
+    def create_object(self):
+        return CreateObject(
+            comtypes.test.TestComServer.TestComServer,
+            interface=comtypes.test.TestComServer.ITestComServer,
+        )
+
+    def test_returns_S_OK(self):
+        psei = self.create_object().QueryInterface(errorinfo.ISupportErrorInfo)
+        iid = comtypes.test.TestComServer.ITestComServer._iid_
+        hr = psei.InterfaceSupportsErrorInfo(iid)
+        self.assertEqual(hr, hresult.S_OK)
+
+    def test_returns_S_FALSE(self):
+        psei = self.create_object().QueryInterface(errorinfo.ISupportErrorInfo)
+        iid = shelllink.IShellLinkW._iid_
+        hr = psei.InterfaceSupportsErrorInfo(iid)
+        self.assertEqual(hr, hresult.S_FALSE)
 
 
 class VariantTest(unittest.TestCase):
