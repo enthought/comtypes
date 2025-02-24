@@ -1,7 +1,7 @@
 import sys
 from ctypes import POINTER, OleDLL, byref, c_wchar_p
 from ctypes.wintypes import DWORD, ULONG
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown
 from comtypes.hresult import DISP_E_EXCEPTION, S_OK
@@ -38,6 +38,13 @@ class IErrorInfo(IUnknown):
             [], HRESULT, "GetHelpContext", (["out"], POINTER(DWORD), "pdwHelpContext")
         ),
     ]
+    if TYPE_CHECKING:
+
+        def GetGUID(self) -> GUID: ...
+        def GetSource(self) -> str: ...
+        def GetDescription(self) -> str: ...
+        def GetHelpFile(self) -> str: ...
+        def GetHelpContext(self) -> int: ...
 
 
 class ISupportErrorInfo(IUnknown):
@@ -74,11 +81,11 @@ def CreateErrorInfo():
     return cei
 
 
-def GetErrorInfo():
+def GetErrorInfo() -> Optional[IErrorInfo]:
     """Get the error information for the current thread."""
     errinfo = POINTER(IErrorInfo)()
     if S_OK == _GetErrorInfo(0, byref(errinfo)):
-        return errinfo
+        return errinfo  # type: ignore
     return None
 
 

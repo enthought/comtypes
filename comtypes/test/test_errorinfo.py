@@ -21,6 +21,7 @@ class Test_GetErrorInfo(ut.TestCase):
         self.assertEqual(errcode, hr)
         pei = errorinfo.GetErrorInfo()
         self.assertIsNotNone(pei)
+        assert pei is not None  # for static type guard
         self.assertEqual(shelllink.IShellLinkW._iid_, pei.GetGUID())
         self.assertEqual("lnkfile", pei.GetSource())
         self.assertEqual(errmsg, pei.GetDescription())
@@ -37,6 +38,7 @@ class Test_GetErrorInfo(ut.TestCase):
         self.assertEqual(hres.DISP_E_EXCEPTION, hr)
         pei = errorinfo.GetErrorInfo()
         self.assertIsNotNone(pei)
+        assert pei is not None  # for static type guard
         self.assertEqual(shelllink.IShellLinkW._iid_, pei.GetGUID())
         self.assertIsNone(pei.GetSource())
         self.assertEqual(errmsg, pei.GetDescription())
@@ -68,6 +70,7 @@ class Test_ReportException(ut.TestCase):
         self.assertEqual(hres.E_UNEXPECTED, hr)
         pei = errorinfo.GetErrorInfo()
         self.assertIsNotNone(pei)
+        assert pei is not None  # for static type guard
         self.assertEqual(shelllink.IShellLinkW._iid_, pei.GetGUID())
         self.assertIsNone(pei.GetSource())
         self.assertEqual("<class 'RuntimeError'>: for testing", pei.GetDescription())
@@ -82,9 +85,9 @@ class Test_ReportException(ut.TestCase):
         for slv, text in [
             # XXX: If the codebase changes, the line where functions or
             # methods are defined will change, meaning this test is brittle.
-            (0, f"{stem} ({__name__}, line 93)"),
-            (1, f"{stem} ({__name__}, line 53)"),
-            (2, f"{stem} ({__name__}, line 57)"),
+            (0, f"{stem} ({__name__}, line 96)"),
+            (1, f"{stem} ({__name__}, line 55)"),
+            (2, f"{stem} ({__name__}, line 59)"),
         ]:
             with self.subTest(text=text):
                 try:
@@ -92,5 +95,6 @@ class Test_ReportException(ut.TestCase):
                 except RuntimeError:
                     errorinfo.ReportException(hres.E_UNEXPECTED, iid, stacklevel=slv)
                 pei = errorinfo.GetErrorInfo()
+                assert pei is not None  # for static type guard
                 self.assertEqual(text, pei.GetDescription())
                 self.assertIsNone(errorinfo.GetErrorInfo())
