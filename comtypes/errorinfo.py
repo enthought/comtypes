@@ -4,7 +4,7 @@ from ctypes.wintypes import DWORD, ULONG
 from typing import TYPE_CHECKING
 
 from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown
-from comtypes.hresult import *
+from comtypes.hresult import DISP_E_EXCEPTION, S_OK
 
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
