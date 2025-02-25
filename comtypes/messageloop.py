@@ -1,6 +1,13 @@
 import ctypes
 from ctypes import WinDLL, WinError, byref
 from ctypes.wintypes import MSG
+from typing import TYPE_CHECKING, List, SupportsIndex
+
+if TYPE_CHECKING:
+    from ctypes import _CArgObject
+    from typing import Any, Callable, Iterable
+
+    _FilterCallable = Callable[["_CArgObject"], Iterable[Any]]  # type: ignore
 
 _user32 = WinDLL("user32")
 
@@ -11,16 +18,16 @@ DispatchMessage = _user32.DispatchMessageA
 
 
 class _MessageLoop(object):
-    def __init__(self):
-        self._filters = []
+    def __init__(self) -> None:
+        self._filters: List["_FilterCallable"] = []
 
-    def insert_filter(self, obj, index=-1):
+    def insert_filter(self, obj: "_FilterCallable", index: SupportsIndex = -1) -> None:
         self._filters.insert(index, obj)
 
-    def remove_filter(self, obj):
+    def remove_filter(self, obj: "_FilterCallable") -> None:
         self._filters.remove(obj)
 
-    def run(self):
+    def run(self) -> None:
         msg = MSG()
         lpmsg = byref(msg)
         while 1:
@@ -33,7 +40,7 @@ class _MessageLoop(object):
                 TranslateMessage(lpmsg)
                 DispatchMessage(lpmsg)
 
-    def filter_message(self, lpmsg):
+    def filter_message(self, lpmsg: "_CArgObject") -> bool:
         return any(list(filter(lpmsg)) for filter in self._filters)
 
 
