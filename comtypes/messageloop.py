@@ -5,12 +5,7 @@ from ctypes.wintypes import MSG
 _user32 = WinDLL("user32")
 
 GetMessage = _user32.GetMessageA
-GetMessage.argtypes = [
-    ctypes.c_void_p,
-    ctypes.c_void_p,
-    ctypes.c_uint,
-    ctypes.c_uint,
-]
+GetMessage.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
 TranslateMessage = _user32.TranslateMessage
 DispatchMessage = _user32.DispatchMessageA
 
