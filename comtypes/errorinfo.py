@@ -84,6 +84,7 @@ _SetErrorInfo.restype = HRESULT
 
 
 def CreateErrorInfo() -> ICreateErrorInfo:
+    """Creates an instance of a generic error object."""
     cei = POINTER(ICreateErrorInfo)()
     _CreateErrorInfo(byref(cei))
     return cei  # type: ignore
