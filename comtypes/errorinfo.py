@@ -84,6 +84,7 @@ _SetErrorInfo.restype = HRESULT
 
 
 def CreateErrorInfo() -> ICreateErrorInfo:
+    """Creates an instance of a generic error object."""
     cei = POINTER(ICreateErrorInfo)()
     _CreateErrorInfo(byref(cei))
     return cei  # type: ignore
@@ -146,7 +147,11 @@ def ReportException(
     typ, value, tb = sys.exc_info()
     if stacklevel is not None:
         for _ in range(stacklevel):
+            if tb is None:
+                raise ValueError("'stacklevel' exceeds the available depth.")
             tb = tb.tb_next
+        if tb is None:
+            raise ValueError("'stacklevel' is specified, but no error information.")
         line = tb.tb_frame.f_lineno
         name = tb.tb_frame.f_globals["__name__"]
         text = f"{typ}: {value} ({name}, line {line:d})"

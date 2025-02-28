@@ -98,3 +98,18 @@ class Test_ReportException(ut.TestCase):
                 assert pei is not None  # for static type guard
                 self.assertEqual(text, pei.GetDescription())
                 self.assertIsNone(errorinfo.GetErrorInfo())
+
+    def test_with_over_stacklevel(self):
+        self.assertIsNone(errorinfo.GetErrorInfo())
+        iid = shelllink.IShellLinkW._iid_
+        try:
+            raise_runtime_error()
+        except RuntimeError:
+            with self.assertRaises(ValueError):
+                errorinfo.ReportException(hres.E_UNEXPECTED, iid, stacklevel=4)
+
+    def test_with_no_error_and_zero_stacklevel(self):
+        self.assertIsNone(errorinfo.GetErrorInfo())
+        iid = shelllink.IShellLinkW._iid_
+        with self.assertRaises(ValueError):
+            errorinfo.ReportException(hres.E_UNEXPECTED, iid, stacklevel=0)
