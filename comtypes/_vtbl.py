@@ -342,10 +342,9 @@ def create_vtbl_mapping(
     for interface in itf.__mro__[-2::-1]:
         iids.append(interface._iid_)
         for m in interface._methods_:
-            restype, mthname, argtypes, paramflags, idlflags, helptext = m
-            proto = WINFUNCTYPE(restype, c_void_p, *argtypes)
-            fields.append((mthname, proto))
-            mth = finder.get_impl(interface, mthname, paramflags, idlflags)
+            proto = WINFUNCTYPE(m.restype, c_void_p, *m.argtypes)
+            fields.append((m.name, proto))
+            mth = finder.get_impl(interface, m.name, m.paramflags, m.idlflags)
             methods.append(proto(mth))
     Vtbl = _create_vtbl_type(tuple(fields), itf)
     vtbl = Vtbl(*methods)
