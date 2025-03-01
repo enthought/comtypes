@@ -389,21 +389,22 @@ def create_dispimpl(
 def _make_dispmthentry(
     itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
 ) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
-    _, mthname, idlflags, restype, argspec = m
-    if "propget" in idlflags:
+    if "propget" in m.idlflags:
         invkind = DISPATCH_PROPERTYGET
-        mthname = f"_get_{mthname}"
-    elif "propput" in idlflags:
+        mthname = f"_get_{m.name}"
+    elif "propput" in m.idlflags:
         invkind = DISPATCH_PROPERTYPUT
-        mthname = f"_set_{mthname}"
-    elif "propputref" in idlflags:
+        mthname = f"_set_{m.name}"
+    elif "propputref" in m.idlflags:
         invkind = DISPATCH_PROPERTYPUTREF
-        mthname = f"_setref_{mthname}"
+        mthname = f"_setref_{m.name}"
     else:
         invkind = DISPATCH_METHOD
-        if restype:
-            argspec = argspec + ((["out"], restype, ""),)
-    yield from _make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
+        if m.restype:
+            argspec = m.argspec + ((["out"], m.restype, ""),)
+        else:
+            argspec = m.argspec
+    yield from _make_dispentry(finder, itf, mthname, m.idlflags, argspec, invkind)
 
 
 def _make_disppropentry(
