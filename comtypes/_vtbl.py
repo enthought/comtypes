@@ -404,6 +404,7 @@ def _make_dispmthentry(
             argspec = m.argspec + ((["out"], m.restype, ""),)
         else:
             argspec = m.argspec
+        mthname = m.name
     yield from _make_dispentry(finder, itf, mthname, m.idlflags, argspec, invkind)
 
 
