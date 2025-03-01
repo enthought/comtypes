@@ -342,10 +342,9 @@ def create_vtbl_mapping(
     for interface in itf.__mro__[-2::-1]:
         iids.append(interface._iid_)
         for m in interface._methods_:
-            restype, mthname, argtypes, paramflags, idlflags, helptext = m
-            proto = WINFUNCTYPE(restype, c_void_p, *argtypes)
-            fields.append((mthname, proto))
-            mth = finder.get_impl(interface, mthname, paramflags, idlflags)
+            proto = WINFUNCTYPE(m.restype, c_void_p, *m.argtypes)
+            fields.append((m.name, proto))
+            mth = finder.get_impl(interface, m.name, m.paramflags, m.idlflags)
             methods.append(proto(mth))
     Vtbl = _create_vtbl_type(tuple(fields), itf)
     vtbl = Vtbl(*methods)
@@ -390,36 +389,39 @@ def create_dispimpl(
 def _make_dispmthentry(
     itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
 ) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
-    _, mthname, idlflags, restype, argspec = m
-    if "propget" in idlflags:
+    if "propget" in m.idlflags:
         invkind = DISPATCH_PROPERTYGET
-        mthname = f"_get_{mthname}"
-    elif "propput" in idlflags:
+        mthname = f"_get_{m.name}"
+    elif "propput" in m.idlflags:
         invkind = DISPATCH_PROPERTYPUT
-        mthname = f"_set_{mthname}"
-    elif "propputref" in idlflags:
+        mthname = f"_set_{m.name}"
+    elif "propputref" in m.idlflags:
         invkind = DISPATCH_PROPERTYPUTREF
-        mthname = f"_setref_{mthname}"
+        mthname = f"_setref_{m.name}"
     else:
         invkind = DISPATCH_METHOD
-        if restype:
-            argspec = argspec + ((["out"], restype, ""),)
-    yield from _make_dispentry(finder, itf, mthname, idlflags, argspec, invkind)
+        if m.restype:
+            argspec = m.argspec + ((["out"], m.restype, ""),)
+        else:
+            argspec = m.argspec
+        mthname = m.name
+    yield from _make_dispentry(finder, itf, mthname, m.idlflags, argspec, invkind)
 
 
 def _make_disppropentry(
     itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
 ) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
-    _, mthname, idlflags, restype, argspec = m
-    # DISPPROPERTY have implicit "out"
-    if restype:
-        argspec += ((["out"], restype, ""),)
+    if m.restype:
+        # DISPPROPERTY have implicit "out"
+        argspec = m.argspec + ((["out"], m.restype, ""),)
+    else:
+        argspec = m.argspec
     yield from _make_dispentry(
-        finder, itf, f"_get_{mthname}", idlflags, argspec, DISPATCH_PROPERTYGET
+        finder, itf, f"_get_{m.name}", m.idlflags, argspec, DISPATCH_PROPERTYGET
     )
-    if "readonly" not in idlflags:
+    if "readonly" not in m.idlflags:
         yield from _make_dispentry(
-            finder, itf, f"_set_{mthname}", idlflags, argspec, DISPATCH_PROPERTYPUT
+            finder, itf, f"_set_{m.name}", m.idlflags, argspec, DISPATCH_PROPERTYPUT
         )
         # Add DISPATCH_PROPERTYPUTREF also?
 

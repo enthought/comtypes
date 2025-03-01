@@ -254,12 +254,11 @@ def CreateEventReceiver(interface: Type[IUnknown], handler: Any) -> COMObject:
         finder = sink._get_method_finder_(interface)
         dispimpl = sink._dispimpl_ = {}
         for m in interface._methods_:
-            restype, mthname, argtypes, paramflags, idlflags, helptext = m
             # Can dispid be at a different index? Should check code generator...
             # ...but hand-written code should also work...
-            dispid = idlflags[0]
+            dispid = m.idlflags[0]
             assert isinstance(dispid, comtypes.dispid)
-            impl = finder.get_impl(interface, mthname, paramflags, idlflags)
+            impl = finder.get_impl(interface, m.name, m.paramflags, m.idlflags)
             # XXX Wouldn't work for 'propget', 'propput', 'propputref'
             # methods - are they allowed on event interfaces?
             dispimpl[(dispid, DISPATCH_METHOD)] = impl
