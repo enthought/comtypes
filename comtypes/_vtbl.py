@@ -410,16 +410,17 @@ def _make_dispmthentry(
 def _make_disppropentry(
     itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
 ) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
-    _, mthname, idlflags, restype, argspec = m
-    # DISPPROPERTY have implicit "out"
-    if restype:
-        argspec += ((["out"], restype, ""),)
+    if m.restype:
+        # DISPPROPERTY have implicit "out"
+        argspec = m.argspec + ((["out"], m.restype, ""),)
+    else:
+        argspec = m.argspec
     yield from _make_dispentry(
-        finder, itf, f"_get_{mthname}", idlflags, argspec, DISPATCH_PROPERTYGET
+        finder, itf, f"_get_{m.name}", m.idlflags, argspec, DISPATCH_PROPERTYGET
     )
-    if "readonly" not in idlflags:
+    if "readonly" not in m.idlflags:
         yield from _make_dispentry(
-            finder, itf, f"_set_{mthname}", idlflags, argspec, DISPATCH_PROPERTYPUT
+            finder, itf, f"_set_{m.name}", m.idlflags, argspec, DISPATCH_PROPERTYPUT
         )
         # Add DISPATCH_PROPERTYPUTREF also?
 
