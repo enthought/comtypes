@@ -1,8 +1,9 @@
+import functools
 import logging
 from _ctypes import COMError
 from ctypes import c_void_p, pointer
 from ctypes.wintypes import DWORD
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Tuple, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Tuple, Type
 from typing import Union as _UnionT
 
 from comtypes import GUID, COMObject, IUnknown
@@ -13,6 +14,7 @@ from comtypes.typeinfo import ITypeInfo, LoadRegTypeLib
 
 if TYPE_CHECKING:
     from ctypes import _Pointer
+    from typing import ClassVar
 
     from comtypes import hints  # type: ignore
 
@@ -79,60 +81,32 @@ class ConnectionPointImpl(COMObject):
             # for better performance, we could cache the dispids.
             dispid = self._typeinfo.GetIDsOfNames(name)[0]
             for key, p in self._connections.items():
-                try:
-                    result = p.Invoke(dispid, *args, **kw)
-                except COMError as details:
-                    if details.hresult == RPC_S_SERVER_UNAVAILABLE:
-                        logger.warning(
-                            "_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
-                            self,
-                            name,
-                            args,
-                            kw,
-                            exc_info=True,
-                        )
-                        try:
-                            del self._connections[key]
-                        except KeyError:
-                            pass  # connection already gone
-                    else:
-                        logger.warning(
-                            "_call_sinks(%s, %s, *%s, **%s)",
-                            self,
-                            name,
-                            args,
-                            kw,
-                            exc_info=True,
-                        )
-                else:
-                    results.append(result)
+                mth = functools.partial(p.Invoke, dispid)  # type: ignore
+                results.extend(self._call_sink(name, key, mth, *args, **kw))
         else:
-            for p in self._connections.values():
-                try:
-                    result = getattr(p, name)(*args, **kw)
-                except COMError as details:
-                    if details.hresult == RPC_S_SERVER_UNAVAILABLE:
-                        logger.warning(
-                            "_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
-                            self,
-                            name,
-                            args,
-                            kw,
-                            exc_info=True,
-                        )
-                        del self._connections[key]
-                    else:
-                        logger.warning(
-                            "_call_sinks(%s, %s, *%s, **%s)",
-                            self,
-                            name,
-                            args,
-                            kw,
-                            exc_info=True,
-                        )
-                else:
-                    results.append(result)
+            for key, p in self._connections.items():
+                mth = getattr(p, name)
+                results.extend(self._call_sink(name, key, mth, *args, **kw))
         return results
+
+    def _call_sink(
+        self, name: str, key: int, mth: Callable[..., Any], *args: Any, **kw: Any
+    ) -> Iterator[Any]:
+        try:
+            result = mth(*args, **kw)
+        except COMError as details:
+            if details.hresult == RPC_S_SERVER_UNAVAILABLE:
+                warn_msg = "_call_sinks(%s, %s, *%s, **%s) failed; removing connection"
+                logger.warning(warn_msg, self, name, args, kw, exc_info=True)
+                try:
+                    del self._connections[key]
+                except KeyError:
+                    pass  # connection already gone
+            else:
+                warn_msg = "_call_sinks(%s, %s, *%s, **%s)"
+                logger.warning(warn_msg, self, name, args, kw, exc_info=True)
+        else:
+            yield result
 
 
 class ConnectableObjectMixin(object):
