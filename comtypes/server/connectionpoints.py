@@ -1,5 +1,5 @@
 import logging
-from ctypes import *
+from ctypes import pointer
 
 from comtypes import COMError, COMObject, IUnknown
 from comtypes.automation import IDispatch
