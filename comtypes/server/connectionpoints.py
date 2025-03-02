@@ -1,8 +1,9 @@
 import logging
+from _ctypes import COMError
 from ctypes import pointer
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Tuple, Type
 
-from comtypes import COMError, COMObject, IUnknown
+from comtypes import COMObject, IUnknown
 from comtypes.automation import IDispatch
 from comtypes.connectionpoints import IConnectionPoint
 from comtypes.hresult import *
