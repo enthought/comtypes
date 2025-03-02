@@ -1,11 +1,12 @@
 import logging
 from ctypes import pointer
+from typing import Type
 
 from comtypes import COMError, COMObject, IUnknown
 from comtypes.automation import IDispatch
 from comtypes.connectionpoints import IConnectionPoint
 from comtypes.hresult import *
-from comtypes.typeinfo import LoadRegTypeLib
+from comtypes.typeinfo import ITypeInfo, LoadRegTypeLib
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,9 @@ class ConnectionPointImpl(COMObject):
 
     _com_interfaces_ = [IConnectionPoint]
 
-    def __init__(self, sink_interface, sink_typeinfo):
+    def __init__(
+        self, sink_interface: Type[IUnknown], sink_typeinfo: ITypeInfo
+    ) -> None:
         super(ConnectionPointImpl, self).__init__()
         self._connections = {}
         self._cookie = 0
@@ -126,7 +129,7 @@ class ConnectableObjectMixin(object):
     integer index into the _outgoing_interfaces_ list.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(ConnectableObjectMixin, self).__init__()
         self.__connections = {}
 
