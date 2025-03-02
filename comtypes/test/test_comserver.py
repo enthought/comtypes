@@ -297,7 +297,10 @@ class TestEvents(unittest.TestCase):
         import comtypes.test.test_comserver
 
         doctest.testmod(
-            comtypes.test.test_comserver, verbose=False, optionflags=doctest.ELLIPSIS
+            comtypes.test.test_comserver,
+            verbose=False,
+            optionflags=doctest.ELLIPSIS,
+            raise_on_error=True,
         )
 
 
