@@ -1,13 +1,20 @@
 import logging
 from _ctypes import COMError
-from ctypes import pointer
-from typing import TYPE_CHECKING, ClassVar, Dict, List, Tuple, Type
+from ctypes import c_void_p, pointer
+from ctypes.wintypes import DWORD
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Tuple, Type
+from typing import Union as _UnionT
 
-from comtypes import COMObject, IUnknown
+from comtypes import GUID, COMObject, IUnknown
 from comtypes.automation import IDispatch
 from comtypes.connectionpoints import IConnectionPoint
 from comtypes.hresult import *
 from comtypes.typeinfo import ITypeInfo, LoadRegTypeLib
+
+if TYPE_CHECKING:
+    from ctypes import _Pointer
+
+    from comtypes import hints  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +38,9 @@ class ConnectionPointImpl(COMObject):
     # per MSDN, all interface methods *must* be implemented, E_NOTIMPL
     # is no allowed return value
 
-    def IConnectionPoint_Advise(self, this, pUnk, pdwCookie):
+    def IConnectionPoint_Advise(
+        self, this: Any, pUnk: IUnknown, pdwCookie: "_Pointer[DWORD]"
+    ) -> "hints.Hresult":
         if not pUnk or not pdwCookie:
             return E_POINTER
         logger.debug("Advise")
@@ -43,7 +52,7 @@ class ConnectionPointImpl(COMObject):
         self._connections[self._cookie] = ptr
         return S_OK
 
-    def IConnectionPoint_Unadvise(self, this, dwCookie):
+    def IConnectionPoint_Unadvise(self, this: Any, dwCookie: int) -> "hints.Hresult":
         logger.debug("Unadvise %s", dwCookie)
         try:
             del self._connections[dwCookie]
@@ -51,13 +60,17 @@ class ConnectionPointImpl(COMObject):
             return CONNECT_E_NOCONNECTION
         return S_OK
 
-    def IConnectionPoint_GetConnectionPointContainer(self, this, ppCPC):
+    def IConnectionPoint_GetConnectionPointContainer(
+        self, this: Any, ppCPC: c_void_p
+    ) -> "hints.Hresult":
         return E_NOTIMPL
 
-    def IConnectionPoint_GetConnectionInterface(self, this, pIID):
+    def IConnectionPoint_GetConnectionInterface(
+        self, this: Any, pIID: "_Pointer[GUID]"
+    ) -> "hints.Hresult":
         return E_NOTIMPL
 
-    def _call_sinks(self, name, *args, **kw):
+    def _call_sinks(self, name: str, *args: Any, **kw: Any) -> List[Any]:
         results = []
         logger.debug("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw)
         # Is it an IDispatch derived interface?  Then, events have to be delivered
@@ -143,13 +156,17 @@ class ConnectableObjectMixin(object):
             typeinfo = tlib.GetTypeInfoOfGuid(itf._iid_)
             self.__connections[itf] = ConnectionPointImpl(itf, typeinfo)
 
-    def IConnectionPointContainer_EnumConnectionPoints(self, this, ppEnum):
+    def IConnectionPointContainer_EnumConnectionPoints(
+        self, this: Any, ppEnum: c_void_p
+    ) -> "hints.Hresult":
         # according to MSDN, E_NOTIMPL is specificially disallowed
         # because, without typeinfo, there's no way for the caller to
         # find out.
         return E_NOTIMPL
 
-    def IConnectionPointContainer_FindConnectionPoint(self, this, refiid, ppcp):
+    def IConnectionPointContainer_FindConnectionPoint(
+        self, this: Any, refiid: "_Pointer[GUID]", ppcp: c_void_p
+    ) -> "hints.Hresult":
         iid = refiid[0]
         logger.debug("FindConnectionPoint %s", iid)
         if not ppcp:
@@ -169,7 +186,9 @@ class ConnectableObjectMixin(object):
         logger.debug("No connectionpoint found")
         return CONNECT_E_NOCONNECTION
 
-    def Fire_Event(self, itf, name, *args, **kw):
+    def Fire_Event(
+        self, itf: _UnionT[int, Type[IDispatch]], name: str, *args: Any, **kw: Any
+    ) -> Any:
         # Fire event 'name' with arguments *args and **kw.
         # Accepts either an interface index or an interface as first argument.
         # Returns a list of results.
