@@ -65,7 +65,7 @@ class ConnectionPointImpl(COMObject):
                 try:
                     result = p.Invoke(dispid, *args, **kw)
                 except COMError as details:
-                    if details.hresult == -2147023174:
+                    if details.hresult == RPC_S_SERVER_UNAVAILABLE:
                         logger.warning(
                             "_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
                             self,
@@ -94,7 +94,7 @@ class ConnectionPointImpl(COMObject):
                 try:
                     result = getattr(p, name)(*args, **kw)
                 except COMError as details:
-                    if details.hresult == -2147023174:
+                    if details.hresult == RPC_S_SERVER_UNAVAILABLE:
                         logger.warning(
                             "_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
                             self,
