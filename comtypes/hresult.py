@@ -82,3 +82,10 @@ def HRESULT_FROM_WIN32(x):
         return x
     # 0x80000000 | FACILITY_WIN32 << 16 | x & 0xFFFF
     return c_long(0x80070000 | (x & 0xFFFF)).value
+
+
+# Win32 error codes are defined as unsigned 32-bit integers. However, to
+# ensure compatibility with COM and other HRESULT-based APIs, Windows converts
+# them into HRESULT values by setting the high bit, ensuring a consistent way
+# to indicate failure across these APIs.
+RPC_S_SERVER_UNAVAILABLE = -2147023174  # 0x800706BA (WIN32: 1722 0x6BA)

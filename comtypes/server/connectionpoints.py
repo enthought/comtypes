@@ -1,11 +1,13 @@
 import logging
-from ctypes import *
+from _ctypes import COMError
+from ctypes import pointer
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Tuple, Type
 
-from comtypes import COMError, COMObject, IUnknown
+from comtypes import COMObject, IUnknown
 from comtypes.automation import IDispatch
 from comtypes.connectionpoints import IConnectionPoint
 from comtypes.hresult import *
-from comtypes.typeinfo import LoadRegTypeLib
+from comtypes.typeinfo import ITypeInfo, LoadRegTypeLib
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +19,11 @@ class ConnectionPointImpl(COMObject):
 
     _com_interfaces_ = [IConnectionPoint]
 
-    def __init__(self, sink_interface, sink_typeinfo):
+    def __init__(
+        self, sink_interface: Type[IUnknown], sink_typeinfo: ITypeInfo
+    ) -> None:
         super(ConnectionPointImpl, self).__init__()
-        self._connections = {}
+        self._connections: Dict[int, IUnknown] = {}
         self._cookie = 0
         self._sink_interface = sink_interface
         self._typeinfo = sink_typeinfo
@@ -65,7 +69,7 @@ class ConnectionPointImpl(COMObject):
                 try:
                     result = p.Invoke(dispid, *args, **kw)
                 except COMError as details:
-                    if details.hresult == -2147023174:
+                    if details.hresult == RPC_S_SERVER_UNAVAILABLE:
                         logger.warning(
                             "_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
                             self,
@@ -94,7 +98,7 @@ class ConnectionPointImpl(COMObject):
                 try:
                     result = getattr(p, name)(*args, **kw)
                 except COMError as details:
-                    if details.hresult == -2147023174:
+                    if details.hresult == RPC_S_SERVER_UNAVAILABLE:
                         logger.warning(
                             "_call_sinks(%s, %s, *%s, **%s) failed; removing connection",
                             self,
@@ -126,9 +130,13 @@ class ConnectableObjectMixin(object):
     integer index into the _outgoing_interfaces_ list.
     """
 
-    def __init__(self):
+    if TYPE_CHECKING:
+        _outgoing_interfaces_: ClassVar[List[Type[IDispatch]]]
+        _reg_typelib_: ClassVar[Tuple[str, int, int]]
+
+    def __init__(self) -> None:
         super(ConnectableObjectMixin, self).__init__()
-        self.__connections = {}
+        self.__connections: Dict[Type[IDispatch], ConnectionPointImpl] = {}
 
         tlib = LoadRegTypeLib(*self._reg_typelib_)
         for itf in self._outgoing_interfaces_:
