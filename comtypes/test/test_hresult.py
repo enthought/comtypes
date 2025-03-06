@@ -13,6 +13,9 @@ class Test_HRESULT_FROM_WIN32(ut.TestCase):
             (ERROR_OUTOFMEMORY, comtypes.hresult.E_OUTOFMEMORY),
             (ERROR_INVALID_PARAMETER, comtypes.hresult.E_INVALIDARG),
             (RPC_S_SERVER_UNAVAILABLE, comtypes.hresult.RPC_S_SERVER_UNAVAILABLE),
+            (0, -2147024896),
+            (1, -2147024895),
+            (-1, -1),
         ]:
             with self.subTest(w32=w32, hr=hr):
                 self.assertEqual(comtypes.hresult.HRESULT_FROM_WIN32(w32), hr)
