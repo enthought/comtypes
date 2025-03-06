@@ -9,6 +9,7 @@ from typing import (
     Literal,
     NamedTuple,
     Optional,
+    Sequence,
     Tuple,
     Type,
 )
@@ -49,8 +50,10 @@ _PARAMFLAGS = {
 }
 
 
-def _encode_idl(names):
-    # sum up all values found in _PARAMFLAGS, ignoring all others.
+def _encode_idl(names: Sequence[str]) -> int:
+    """Sums up 'in', 'out', 'lcid', 'retval' and 'optional' values
+    found in _PARAMFLAGS, ignoring all other PARAMFLAG_... stuff.
+    """
     return sum([_PARAMFLAGS.get(n, 0) for n in names])
 
 
