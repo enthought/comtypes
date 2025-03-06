@@ -337,9 +337,7 @@ def create_vtbl_mapping(
     methods: List[Callable[..., Any]] = []  # method implementations
     fields: List[Tuple[str, Type["_FuncPointer"]]] = []  # virtual function table
     iids: List[GUID] = []  # interface identifiers.
-    # iterate over interface inheritance in reverse order to build the
-    # virtual function table, and leave out the 'object' base class.
-    for interface in itf.__mro__[-2::-1]:
+    for interface in _walk_itf_bases(itf):
         iids.append(interface._iid_)
         for m in interface._methods_:
             proto = WINFUNCTYPE(m.restype, c_void_p, *m.argtypes)
@@ -349,6 +347,13 @@ def create_vtbl_mapping(
     Vtbl = _create_vtbl_type(tuple(fields), itf)
     vtbl = Vtbl(*methods)
     return (iids, vtbl)
+
+
+def _walk_itf_bases(itf: Type[IUnknown]) -> Iterator[Type[IUnknown]]:
+    """Iterates over interface inheritance in reverse order to build the
+    virtual function table, and leave out the 'object' base class.
+    """
+    yield from itf.__mro__[-2::-1]
 
 
 def create_dispimpl(
