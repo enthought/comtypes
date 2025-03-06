@@ -375,13 +375,6 @@ def create_dispimpl(
         #
         # paramflags must be a sequence
         # of (F_IN|F_OUT|F_RETVAL, paramname[, default-value]) tuples
-        #
-        # comtypes has this function which helps:
-        #    def _encode_idl(names):
-        #        # convert to F_xxx and sum up "in", "out",
-        #        # "retval" values found in _PARAMFLAGS, ignoring
-        #        # other stuff.
-        #        return sum([_PARAMFLAGS.get(n, 0) for n in names])
         #################
 
         if m.what == "DISPMETHOD":
