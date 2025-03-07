@@ -2,6 +2,7 @@ import types
 from _ctypes import COMError
 from typing import Type
 
+from comtypes import hresult as hres
 from comtypes import patcher
 
 _all_slice = slice(None, None, None)
@@ -97,7 +98,7 @@ def callable_and_subscriptable(itf: Type) -> None:
                 result = self.Item(*args)
             except COMError as err:
                 (hresult, text, details) = err.args
-                if hresult == -2147352565:  # DISP_E_BADINDEX
+                if hresult == hres.DISP_E_BADINDEX:
                     raise IndexError("invalid index")
                 else:
                     raise
@@ -116,7 +117,7 @@ def callable_and_subscriptable(itf: Type) -> None:
                 self.Item[index] = value
             except COMError as err:
                 (hresult, text, details) = err.args
-                if hresult == -2147352565:  # DISP_E_BADINDEX
+                if hresult == hres.DISP_E_BADINDEX:
                     raise IndexError("invalid index")
                 else:
                     raise
