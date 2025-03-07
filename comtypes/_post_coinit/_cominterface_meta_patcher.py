@@ -97,8 +97,7 @@ def callable_and_subscriptable(itf: Type) -> None:
             try:
                 result = self.Item(*args)
             except COMError as err:
-                (hresult, text, details) = err.args
-                if hresult == hres.DISP_E_BADINDEX:
+                if err.hresult == hres.DISP_E_BADINDEX:
                     raise IndexError("invalid index")
                 else:
                     raise
@@ -116,8 +115,7 @@ def callable_and_subscriptable(itf: Type) -> None:
             try:
                 self.Item[index] = value
             except COMError as err:
-                (hresult, text, details) = err.args
-                if hresult == hres.DISP_E_BADINDEX:
+                if err.hresult == hres.DISP_E_BADINDEX:
                     raise IndexError("invalid index")
                 else:
                     raise
