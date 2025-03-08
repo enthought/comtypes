@@ -62,6 +62,7 @@ RPC_S_CALLPENDING = -2147417835  # 0x80010115
 
 
 def MAKE_HRESULT(sev: int, fac: int, code: int) -> int:
+    """Creates an HRESULT value from its component pieces."""
     # A hresult is SIGNED in comtypes
     return c_long((sev << 31 | fac << 16 | code)).value
 
@@ -74,6 +75,7 @@ FACILITY_WIN32 = 7
 
 
 def HRESULT_FROM_WIN32(x: int) -> int:
+    """Converts a system error code to an HRESULT value."""
     # make signed
     x = c_long(x).value
     if x < 0:
