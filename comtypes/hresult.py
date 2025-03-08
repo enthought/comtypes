@@ -3,6 +3,8 @@
 #
 # Note that the codes should be written in decimal notation!
 
+from ctypes import c_long
+
 S_OK = 0
 S_FALSE = 1
 
@@ -61,8 +63,6 @@ RPC_S_CALLPENDING = -2147417835  # 0x80010115
 
 def MAKE_HRESULT(sev: int, fac: int, code: int) -> int:
     # A hresult is SIGNED in comtypes
-    from ctypes import c_long
-
     return c_long((sev << 31 | fac << 16 | code)).value
 
 
@@ -75,8 +75,6 @@ FACILITY_WIN32 = 7
 
 def HRESULT_FROM_WIN32(x: int) -> int:
     # make signed
-    from ctypes import c_long
-
     x = c_long(x).value
     if x < 0:
         return x
