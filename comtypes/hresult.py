@@ -59,7 +59,7 @@ RPC_S_CALLPENDING = -2147417835  # 0x80010115
 # 'macros' and constants to create your own HRESULT values:
 
 
-def MAKE_HRESULT(sev, fac, code):
+def MAKE_HRESULT(sev: int, fac: int, code: int) -> int:
     # A hresult is SIGNED in comtypes
     from ctypes import c_long
 
@@ -73,7 +73,7 @@ FACILITY_ITF = 4
 FACILITY_WIN32 = 7
 
 
-def HRESULT_FROM_WIN32(x):
+def HRESULT_FROM_WIN32(x: int) -> int:
     # make signed
     from ctypes import c_long
 
