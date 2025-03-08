@@ -3,6 +3,8 @@
 #
 # Note that the codes should be written in decimal notation!
 
+from ctypes import c_long
+
 S_OK = 0
 S_FALSE = 1
 
@@ -59,10 +61,9 @@ RPC_S_CALLPENDING = -2147417835  # 0x80010115
 # 'macros' and constants to create your own HRESULT values:
 
 
-def MAKE_HRESULT(sev, fac, code):
+def MAKE_HRESULT(sev: int, fac: int, code: int) -> int:
+    """Creates an HRESULT value from its component pieces."""
     # A hresult is SIGNED in comtypes
-    from ctypes import c_long
-
     return c_long((sev << 31 | fac << 16 | code)).value
 
 
@@ -73,10 +74,9 @@ FACILITY_ITF = 4
 FACILITY_WIN32 = 7
 
 
-def HRESULT_FROM_WIN32(x):
+def HRESULT_FROM_WIN32(x: int) -> int:
+    """Converts a system error code to an HRESULT value."""
     # make signed
-    from ctypes import c_long
-
     x = c_long(x).value
     if x < 0:
         return x
