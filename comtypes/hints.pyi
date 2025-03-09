@@ -24,7 +24,7 @@ if sys.version_info >= (3, 11):
     from typing import Unpack as Unpack
 else:
     from typing_extensions import Self as Self
-    from typing import Unpack as Unpack
+    from typing_extensions import Unpack as Unpack
 
 import comtypes
 from comtypes import IUnknown as IUnknown, COMObject as COMObject, GUID as GUID
