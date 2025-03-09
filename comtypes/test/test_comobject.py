@@ -4,7 +4,7 @@ from ctypes import POINTER, byref, pointer
 from unittest import mock
 
 import comtypes.client
-from comtypes import CLSCTX_SERVER, COMObject, IUnknown, hresult
+from comtypes import CLSCTX_SERVER, COMObject, IPersist, IUnknown, hresult
 from comtypes._post_coinit.misc import _CoCreateInstance
 from comtypes.automation import IDispatch
 from comtypes.typeinfo import GUIDKIND_DEFAULT_SOURCE_DISP_IID
@@ -143,3 +143,17 @@ class Test_IPersist_GetClassID(ut.TestCase):
             uiac.CUIAutomation().IPersist_GetClassID(),
             uiac.CUIAutomation._reg_clsid_,
         )
+
+
+class Test_Vtbl(ut.TestCase):
+    def test_com_pointers(self):
+        stdpic = stdole.StdPicture()
+        cuia = uiac.CUIAutomation()
+        self.assertIs(
+            type(stdpic._com_pointers_[IPersist._iid_]),
+            type(cuia._com_pointers_[IPersist._iid_]),
+        )
+        self.assertIn(IDispatch._iid_, stdpic._com_pointers_)
+        self.assertNotIn(IDispatch._iid_, cuia._com_pointers_)
+        self.assertIn(stdole.IPictureDisp._iid_, stdpic._com_pointers_)
+        self.assertIn(uiac.IUIAutomation._iid_, cuia._com_pointers_)
