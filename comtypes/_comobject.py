@@ -330,10 +330,10 @@ class COMObject(object):
     def IUnknown_AddRef(
         self,
         this: Any,
-        __InterlockedIncrement: Callable[[c_long], int] = _InterlockedIncrement,
+        _increment: Callable[[c_long], int] = _InterlockedIncrement,
         _debug=_debug,
     ) -> int:
-        result = __InterlockedIncrement(self._refcnt)
+        result = _increment(self._refcnt)
         if result == 1:
             self.__keep__(self)
         _debug("%r.AddRef() -> %s", self, result)
@@ -347,14 +347,14 @@ class COMObject(object):
     def IUnknown_Release(
         self,
         this: Any,
-        __InterlockedDecrement: Callable[[c_long], int] = _InterlockedDecrement,
+        _decrement: Callable[[c_long], int] = _InterlockedDecrement,
         _debug=_debug,
     ) -> int:
         # If this is called at COM shutdown, _InterlockedDecrement()
         # must still be available, although module level variables may
         # have been deleted already - so we supply it as default
         # argument.
-        result = __InterlockedDecrement(self._refcnt)
+        result = _decrement(self._refcnt)
         _debug("%r.Release() -> %s", self, result)
         if result == 0:
             self._final_release_()
