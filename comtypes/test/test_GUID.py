@@ -30,25 +30,24 @@ class Test(unittest.TestCase):
         )
 
     def test_invalid_constructor_arg(self):
-        self.assertRaises(WindowsError, GUID, "abc")
+        with self.assertRaises(WindowsError):
+            GUID("abc")
 
     def test_from_progid(self):
         self.assertEqual(
             GUID.from_progid("Scripting.FileSystemObject"),
             GUID("{0D43FE01-F093-11CF-8940-00A0C9054228}"),
         )
-        self.assertRaises(WindowsError, GUID.from_progid, "abc")
+        with self.assertRaises(WindowsError):
+            GUID.from_progid("abc")
 
     def test_as_progid(self):
         self.assertEqual(
             GUID("{0D43FE01-F093-11CF-8940-00A0C9054228}").as_progid(),
             "Scripting.FileSystemObject",
         )
-        self.assertRaises(
-            WindowsError,
-            lambda guid: guid.as_progid(),
-            GUID("{00000000-0000-0000-C000-000000000046}"),
-        )
+        with self.assertRaises(WindowsError):
+            GUID("{00000000-0000-0000-C000-000000000046}").as_progid()
 
     def test_create_new(self):
         self.assertNotEqual(GUID.create_new(), GUID.create_new())

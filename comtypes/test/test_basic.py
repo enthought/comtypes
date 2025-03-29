@@ -61,7 +61,8 @@ class BasicTest(ut.TestCase):
         self.assertEqual(method_count(IMyInterface), 3)
 
         # assigning _methods_ does not work until we have an _iid_!
-        self.assertRaises(AttributeError, setattr, IMyInterface, "_methods_", [])
+        with self.assertRaises(AttributeError):
+            setattr(IMyInterface, "_methods_", [])
         IMyInterface._iid_ = GUID.create_new()
         IMyInterface._methods_ = []
         self.assertEqual(method_count(IMyInterface), 3)
@@ -96,9 +97,11 @@ class BasicTest(ut.TestCase):
             _iid_ = GUID.create_new()
 
         # We cannot assign _methods_ to IDerived before IBase has it's _methods_:
-        self.assertRaises(TypeError, lambda: setattr(IDerived, "_methods_", []))
+        with self.assertRaises(TypeError):
+            setattr(IDerived, "_methods_", [])
         # Make sure that setting _methods_ failed completely.
-        self.assertRaises(KeyError, lambda: IDerived.__dict__["_methods_"])
+        with self.assertRaises(KeyError):
+            IDerived.__dict__["_methods_"]
         IBase._methods_ = []
         # Now it works:
         IDerived._methods_ = []

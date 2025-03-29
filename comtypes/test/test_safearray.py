@@ -129,7 +129,8 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertEqual(SafeArrayGetVartype(sa), VT_I4)
 
         # TypeError: len() of unsized object
-        self.assertRaises(TypeError, lambda: t.from_param(object()))
+        with self.assertRaises(TypeError):
+            t.from_param(object())
 
     def test_VT_VARIANT(self):
         t = _midlSAFEARRAY(VARIANT)

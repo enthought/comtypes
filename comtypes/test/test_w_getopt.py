@@ -20,10 +20,10 @@ class TestCase(unittest.TestCase):
 
     def test_3(self):
         # Invalid option
-        self.assertRaises(
-            GetoptError, w_getopt, "/TLIB hello.tlb hello.idl".split(), ["tlb:"]
-        )
+        with self.assertRaises(GetoptError):
+            w_getopt("/TLIB hello.tlb hello.idl".split(), ["tlb:"])
 
     def test_4(self):
         # Missing argument
-        self.assertRaises(GetoptError, w_getopt, "/TLB".split(), ["tlb:"])
+        with self.assertRaises(GetoptError):
+            w_getopt("/TLB".split(), ["tlb:"])

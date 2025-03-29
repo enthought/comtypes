@@ -60,7 +60,8 @@ class Test(unittest.TestCase):
 
         # slicing is not (yet?) supported
         cv.Reset()
-        self.assertRaises(ArgumentError, lambda: cv[:])
+        with self.assertRaises(ArgumentError):
+            cv[:]
 
     @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_1(self):
@@ -151,10 +152,12 @@ class TestCollectionInterface(unittest.TestCase):
         self.assertAccessInterface(d)
 
     def test_named_property_no_length(self):
-        self.assertRaises(TypeError, len, self.d.Item)
+        with self.assertRaises(TypeError):
+            len(self.d.Item)
 
     def test_named_property_not_iterable(self):
-        self.assertRaises(TypeError, list, self.d.Item)
+        with self.assertRaises(TypeError):
+            list(self.d.Item)
 
 
 if __name__ == "__main__":
