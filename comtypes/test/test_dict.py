@@ -14,7 +14,8 @@ class Test(unittest.TestCase):
 
         # Count is a normal propget, no propput
         self.assertEqual(d.Count, 0)
-        self.assertRaises(AttributeError, lambda: setattr(d, "Count", -1))
+        with self.assertRaises(AttributeError):
+            setattr(d, "Count", -1)
 
         # HashVal is a 'named' propget, no propput
         ##d.HashVal

@@ -66,10 +66,12 @@ class Test(unittest.TestCase):
         self.assertEqual(d3.Item["baz"], 3.14)
 
     def test_named_property_no_length(self):
-        self.assertRaises(TypeError, len, self.d.Item)
+        with self.assertRaises(TypeError):
+            len(self.d.Item)
 
     def test_named_property_not_iterable(self):
-        self.assertRaises(TypeError, list, self.d.Item)
+        with self.assertRaises(TypeError):
+            list(self.d.Item)
 
     def assertAccessInterface(self, d):
         """Asserts access via indexing and named property"""
