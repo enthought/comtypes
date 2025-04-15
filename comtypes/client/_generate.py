@@ -138,6 +138,20 @@ def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
     # obj is a tlib GUID contain a clsid
     elif isinstance(obj, GUID):
         clsid = str(obj)
+        print(f"The clsid is {clsid}")
+        clsid_key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, "CLSID")
+
+        index = 0
+        while True:
+            try:
+                subkey_name = winreg.EnumKey(clsid_key, index)
+                print(subkey_name)
+                index += 1
+            except OSError:
+                break
+
+        winreg.CloseKey(clsid_key)
+
         # lookup associated typelib in registry
         with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, rf"CLSID\{clsid}\TypeLib") as key:
             libid = winreg.EnumValue(key, 0)[1]
