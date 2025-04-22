@@ -15,8 +15,6 @@ from comtypes.tools import codegenerator, tlbparser
 
 logger = logging.getLogger(__name__)
 
-PATH = os.environ["PATH"].split(os.pathsep)
-
 
 def _my_import(fullname: str) -> types.ModuleType:
     """helper function to import dotted modules"""
