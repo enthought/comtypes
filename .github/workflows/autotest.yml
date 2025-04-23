@@ -33,7 +33,10 @@ jobs:
             pip install 'numpy<2'
             pip install pywin32
           }
-          python -m unittest discover -v -s ./comtypes/test -t comtypes\test
+          pip install coverage[toml]
+          coverage run -m unittest discover -v -s comtypes\test -t comtypes\test
+      - name: Run coverage report
+        run: coverage report
       - name: Unregister the OutProc COM server
         run: |
           cd source/CppTestSrv
