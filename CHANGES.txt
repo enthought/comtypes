@@ -1,6 +1,28 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.11
+--------------
+* Improve ``PARAMFLAG_...`` and ``DISPATCH_...`` constants definitions and imports. By @junkmd.
+* Introduce the ``_CDataType`` alias from typeshed. By @junkmd.
+* Replace ``260`` literals/constant definitions with imports from ``ctypes.wintypes.MAX_PATH``. By @junkmd.
+* Replace ``client._code_cache._get_module_filename`` with ``typeinfo.GetModuleFileName``. By @junkmd.
+* Improve ``client._code_cache.SHGetSpecialFolderPath`` definition. By @junkmd.
+* Add type annotations to many modules. By @junkmd.
+* Add constants to many modules. By @junkmd.
+* Improve import block styles to many modules. By @junkmd.
+* Add ``SupportErrorInfoTest`` to ``test_comserver``. By @junkmd.
+* Add ``test_errorinfo``. By @junkmd.
+* Improve the type safety of ``errorinfo.ReportException``. By @junkmd.
+* Change the method of retrieving the values of each field in ``_...MemberSpec`` from unpacking to dot access. By @junkmd.
+* Split ``server.connectionpoints.ConnectionPointImpl._call_sinks``. By @junkmd.
+* Refactor ``create_vtbl_mapping``, ``create_dispimpl`` and ``_encode_idl``. By @junkmd.
+* Add ``test_hresult``. By @junkmd.
+* Add ``Test_Vtbl`` to ``test_comobject.py``. By @junkmd.
+* Delint ``IUnknown_AddRef`` and ``IUnknown_Release``. By @junkmd.
+* Convert ``assertRaises`` usage to context manager for improved readability. By @junkmd.
+* Remove the unused ``PATH`` variable from ``client/_generate.py``. By @moi15moi.
+
 Release 1.4.10
 --------------
 * Replace ``GetModuleFileNameA`` with ``GetModuleFileNameW`` to prevent a ``TypeError``. By @junkmd.
