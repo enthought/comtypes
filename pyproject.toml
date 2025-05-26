@@ -40,3 +40,15 @@ ignore = ["E402"]
 "comtypes/test/test_subinterface.py" = ["E401", "F401", "F403", "F405"]
 "comtypes/test/test_urlhistory.py" = ["E401", "F401", "F403", "F405", "F841"]
 "comtypes/test/test_variant.py" = ["F401", "F821", "F841"]
+
+[tool.coverage.run]
+# Specify the source directory to avoid tracking temporary files created by "test_client_regenerate_modules.py".
+# Without this, coverage track these temporary files, leading to error when trying to generate a report.
+source = ["comtypes"]
+omit = ["comtypes/gen/*"]
+
+[tool.coverage.report]
+exclude_also = [
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

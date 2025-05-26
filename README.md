@@ -5,6 +5,7 @@
 [![PyPI - License](https://img.shields.io/pypi/l/comtypes)](https://pypi.org/project/comtypes/) [![PyPI - Downloads](https://img.shields.io/pypi/dm/comtypes)](https://pypi.org/project/comtypes/)  
 [![GitHub Repo stars](https://img.shields.io/github/stars/enthought/comtypes?style=social)](https://github.com/enthought/comtypes/stargazers) [![GitHub forks](https://img.shields.io/github/forks/enthought/comtypes?style=social)](https://github.com/enthought/comtypes/network/members) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)  
 [![Tidelift Subscription](https://tidelift.com/badges/package/pypi/comtypes)](https://tidelift.com/subscription/pkg/pypi-comtypes?utm_source=pypi-comtypes&utm_medium=readme)
+[![Coverage](https://img.shields.io/codecov/c/github/enthought/comtypes)](https://app.codecov.io/github/enthought/comtypes)
 
 
 `comtypes` is a lightweight pure Python [COM](https://learn.microsoft.com/en-us/windows/win32/com/component-object-model--com--portal) package based on the [`ctypes`](https://docs.python.org/library/ctypes.html) foreign function interface library.
