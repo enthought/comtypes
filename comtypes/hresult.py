@@ -91,32 +91,33 @@ def HRESULT_FROM_WIN32(x: int) -> int:
 RPC_S_SERVER_UNAVAILABLE = -2147023174  # 0x800706BA (WIN32: 1722 0x6BA)
 
 
-# Don't be overly afraid of `COMError` or `WindowsError`!
+################################################################
+# signed32bithex
+#
+# When using this package, error codes for exceptions like
+# `COMError` or `WindowsError` are base10 integers.
+#
+# However, as shown below, many technical references represent
+# HRESULT values using signed 32-bit hexadecimal notation:
+# https://learn.microsoft.com/en-us/windows/win32/seccrypto/common-hresult-values
+# https://learn.microsoft.com/en-us/windows/win32/learnwin32/error-codes-in-com
+#
 # If you search for the error code using the proper notation,
 # you might be able to find the reference.
+#
+# Don't be overly afraid of `COMError` or `WindowsError`!
 
 
 def signed32bithex_to_int(value: str, /) -> int:
     """Converts a string in signed 32-bit hexadecimal notation to an integer.
 
-    As shown in below, many references represent HRESULT values using
-    signed 32-bit hexadecimal notation:
-    https://learn.microsoft.com/en-us/windows/win32/seccrypto/common-hresult-values
-    https://learn.microsoft.com/en-us/windows/win32/learnwin32/error-codes-in-com
-
-    When using the `comtypes` package, error codes for exceptions like
-    `COMError` or `WindowsError` are returned as integers.
-
-    This function is a utility to bridge this gap.
-
     Examples:
 
-        >>> import comtypes.hresult as hr
-        >>> signed32bithex_to_int('0x00000000') == hr.S_OK
+        >>> signed32bithex_to_int('0x00000000') == 0  # S_OK
         True
-        >>> signed32bithex_to_int('0x00000001') == hr.S_FALSE
+        >>> signed32bithex_to_int('0x00000001') == 1  # S_FALSE
         True
-        >>> signed32bithex_to_int('0x8000FFFF') == hr.E_UNEXPECTED
+        >>> signed32bithex_to_int('0x8000FFFF') == -2147418113  # E_UNEXPECTED
         True
     """
     val = int(value, 16)
@@ -127,16 +128,6 @@ def signed32bithex_to_int(value: str, /) -> int:
 
 def int_to_signed32bithex(value: int, /) -> str:
     """Converts an integer to a string in signed 32-bit hexadecimal notation.
-
-    As shown in below, many references represent HRESULT values using
-    signed 32-bit hexadecimal notation:
-    https://learn.microsoft.com/en-us/windows/win32/seccrypto/common-hresult-values
-    https://learn.microsoft.com/en-us/windows/win32/learnwin32/error-codes-in-com
-
-    When using the `comtypes` package, error codes for exceptions like
-    `COMError` or `WindowsError` are returned as integers.
-
-    This function is a utility to bridge this gap.
 
     Examples:
 
@@ -163,3 +154,6 @@ def int_to_signed32bithex(value: int, /) -> str:
     """
     # it is simpler than using `hex(value & 0xFFFFFFFF)`
     return f"0x{value & 0xFFFFFFFF:08X}"
+
+
+################################################################
