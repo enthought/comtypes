@@ -97,6 +97,17 @@ RPC_S_SERVER_UNAVAILABLE = -2147023174  # 0x800706BA (WIN32: 1722 0x6BA)
 
 
 def signed32bithex_to_int(value: str, /) -> int:
+    """
+    Examples:
+
+        >>> import comtypes.hresult as hr
+        >>> signed32bithex_to_int('0x00000000') == hr.S_OK
+        True
+        >>> signed32bithex_to_int('0x00000001') == hr.S_FALSE
+        True
+        >>> signed32bithex_to_int('0x8000FFFF') == hr.E_UNEXPECTED
+        True
+    """
     val = int(value, 16)
     if val < 0x80000000:
         return val
@@ -104,5 +115,29 @@ def signed32bithex_to_int(value: str, /) -> int:
 
 
 def int_to_signed32bithex(value: int, /) -> str:
+    """
+    Examples:
+
+        >>> import comtypes.hresult as hr
+        >>> int_to_signed32bithex(hr.S_OK)
+        '0x00000000'
+        >>> int_to_signed32bithex(hr.S_FALSE)
+        '0x00000001'
+        >>> int_to_signed32bithex(hr.E_UNEXPECTED)
+        '0x8000FFFF'
+
+        >>> from comtypes import CoCreateInstance
+        >>> from comtypes import shelllink, automation
+        >>> CLSID_ShellLink = shelllink.ShellLink().IPersist_GetClassID()
+        >>> p = CoCreateInstance(CLSID_ShellLink)
+        >>> p.QueryInterface(shelllink.IShellLinkA)  # doctest: +ELLIPSIS
+        <POINTER(IShellLinkA) ptr=0x... at ...>
+        >>> p.QueryInterface(automation.IDispatch)  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+            ...
+        _ctypes.COMError: (-2147467262, ..., (None, None, None, 0, None))
+        >>> int_to_signed32bithex(-2147467262)  # E_NOINTERFACE
+        '0x80004002'
+    """
     # it is simpler than using `hex(value & 0xFFFFFFFF)`
     return f"0x{value & 0xFFFFFFFF:08X}"
