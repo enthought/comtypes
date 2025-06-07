@@ -89,3 +89,71 @@ def HRESULT_FROM_WIN32(x: int) -> int:
 # them into HRESULT values by setting the high bit, ensuring a consistent way
 # to indicate failure across these APIs.
 RPC_S_SERVER_UNAVAILABLE = -2147023174  # 0x800706BA (WIN32: 1722 0x6BA)
+
+
+################################################################
+# signed32bithex
+#
+# When using this package, error codes for exceptions like
+# `COMError` or `WindowsError` are base10 integers.
+#
+# However, as shown below, many technical references represent
+# HRESULT values using signed 32-bit hexadecimal notation:
+# https://learn.microsoft.com/en-us/windows/win32/seccrypto/common-hresult-values
+# https://learn.microsoft.com/en-us/windows/win32/learnwin32/error-codes-in-com
+#
+# If you search for the error code using the proper notation,
+# you might be able to find the reference.
+#
+# Don't be overly afraid of `COMError` or `WindowsError`!
+
+
+def signed32bithex_to_int(value: str, /) -> int:
+    """Converts a string in signed 32-bit hexadecimal notation to an integer.
+
+    Examples:
+
+        >>> signed32bithex_to_int('0x00000000') == 0  # S_OK
+        True
+        >>> signed32bithex_to_int('0x00000001') == 1  # S_FALSE
+        True
+        >>> signed32bithex_to_int('0x8000FFFF') == -2147418113  # E_UNEXPECTED
+        True
+    """
+    val = int(value, 16)
+    if val < 0x80000000:
+        return val
+    return val - 0x100000000
+
+
+def int_to_signed32bithex(value: int, /) -> str:
+    """Converts an integer to a string in signed 32-bit hexadecimal notation.
+
+    Examples:
+
+        >>> import comtypes.hresult as hr
+        >>> int_to_signed32bithex(hr.S_OK)
+        '0x00000000'
+        >>> int_to_signed32bithex(hr.S_FALSE)
+        '0x00000001'
+        >>> int_to_signed32bithex(hr.E_UNEXPECTED)
+        '0x8000FFFF'
+
+        >>> from comtypes import CoCreateInstance
+        >>> from comtypes import shelllink, automation
+        >>> CLSID_ShellLink = shelllink.ShellLink().IPersist_GetClassID()
+        >>> p = CoCreateInstance(CLSID_ShellLink)
+        >>> p.QueryInterface(shelllink.IShellLinkA)  # doctest: +ELLIPSIS
+        <POINTER(IShellLinkA) ptr=0x... at ...>
+        >>> p.QueryInterface(automation.IDispatch)  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+            ...
+        _ctypes.COMError: (-2147467262, ..., (None, None, None, 0, None))
+        >>> int_to_signed32bithex(-2147467262)  # E_NOINTERFACE
+        '0x80004002'
+    """
+    # it is simpler than using `hex(value & 0xFFFFFFFF)`
+    return f"0x{value & 0xFFFFFFFF:08X}"
+
+
+################################################################
