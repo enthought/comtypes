@@ -1,4 +1,6 @@
+import doctest
 import unittest as ut
+from typing import Optional
 
 import comtypes.hresult
 
@@ -46,3 +48,10 @@ class Test_HRESULT_FROM_WIN32(ut.TestCase):
         ]:
             with self.subTest(w32=w32, hr=hr):
                 self.assertEqual(comtypes.hresult.HRESULT_FROM_WIN32(w32), hr)
+
+
+def load_tests(
+    loader: ut.TestLoader, tests: ut.TestSuite, pattern: Optional[str]
+) -> ut.TestSuite:
+    tests.addTests(doctest.DocTestSuite(comtypes.hresult))
+    return tests
