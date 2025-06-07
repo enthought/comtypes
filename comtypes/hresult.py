@@ -89,3 +89,14 @@ def HRESULT_FROM_WIN32(x: int) -> int:
 # them into HRESULT values by setting the high bit, ensuring a consistent way
 # to indicate failure across these APIs.
 RPC_S_SERVER_UNAVAILABLE = -2147023174  # 0x800706BA (WIN32: 1722 0x6BA)
+
+
+def signed32bithex_to_int(value: str, /) -> int:
+    val = int(value, 16)
+    if val < 0x80000000:
+        return val
+    return val - 0x100000000
+
+
+def int_to_signed32bithex(value: int, /) -> str:
+    return f"0x{value & 0xFFFFFFFF:08X}"
