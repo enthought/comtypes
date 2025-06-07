@@ -97,7 +97,18 @@ RPC_S_SERVER_UNAVAILABLE = -2147023174  # 0x800706BA (WIN32: 1722 0x6BA)
 
 
 def signed32bithex_to_int(value: str, /) -> int:
-    """
+    """Converts a string in signed 32-bit hexadecimal notation to an integer.
+
+    As shown in below, many references represent HRESULT values using
+    signed 32-bit hexadecimal notation:
+    https://learn.microsoft.com/en-us/windows/win32/seccrypto/common-hresult-values
+    https://learn.microsoft.com/en-us/windows/win32/learnwin32/error-codes-in-com
+
+    When using the `comtypes` package, error codes for exceptions like
+    `COMError` or `WindowsError` are returned as integers.
+
+    This function is a utility to bridge this gap.
+
     Examples:
 
         >>> import comtypes.hresult as hr
@@ -115,7 +126,18 @@ def signed32bithex_to_int(value: str, /) -> int:
 
 
 def int_to_signed32bithex(value: int, /) -> str:
-    """
+    """Converts an integer to a string in signed 32-bit hexadecimal notation.
+
+    As shown in below, many references represent HRESULT values using
+    signed 32-bit hexadecimal notation:
+    https://learn.microsoft.com/en-us/windows/win32/seccrypto/common-hresult-values
+    https://learn.microsoft.com/en-us/windows/win32/learnwin32/error-codes-in-com
+
+    When using the `comtypes` package, error codes for exceptions like
+    `COMError` or `WindowsError` are returned as integers.
+
+    This function is a utility to bridge this gap.
+
     Examples:
 
         >>> import comtypes.hresult as hr
