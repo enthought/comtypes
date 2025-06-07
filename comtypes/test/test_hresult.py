@@ -49,6 +49,34 @@ class Test_HRESULT_FROM_WIN32(ut.TestCase):
                 self.assertEqual(comtypes.hresult.HRESULT_FROM_WIN32(w32), hr)
 
 
+class Test_signed32bithex_to_int(ut.TestCase):
+    def test(self):
+        for val, expected in [
+            ("0x00000000", comtypes.hresult.S_OK),
+            ("0x00000001", comtypes.hresult.S_FALSE),
+            ("0x8000FFFF", comtypes.hresult.E_UNEXPECTED),
+            ("0x80004002", comtypes.hresult.E_NOINTERFACE),
+            # boundary values
+            ("0x7FFFFFFF", 2147483647),
+            ("0x80000000", -2147483648),
+            ("0xFFFFFFFF", -1),
+        ]:
+            with self.subTest(val=val, expected=expected):
+                self.assertEqual(comtypes.hresult.signed32bithex_to_int(val), expected)
+
+
+class Test_int_to_signed32bithex(ut.TestCase):
+    def test(self):
+        for val, expected in [
+            (comtypes.hresult.S_OK, "0x00000000"),
+            (comtypes.hresult.S_FALSE, "0x00000001"),
+            (comtypes.hresult.E_UNEXPECTED, "0x8000FFFF"),
+            (comtypes.hresult.E_NOINTERFACE, "0x80004002"),
+        ]:
+            with self.subTest(val=val, expected=expected):
+                self.assertEqual(comtypes.hresult.int_to_signed32bithex(val), expected)
+
+
 class DocTest(ut.TestCase):
     def test(self):
         doctest.testmod(
