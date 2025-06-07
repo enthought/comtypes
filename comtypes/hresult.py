@@ -91,6 +91,11 @@ def HRESULT_FROM_WIN32(x: int) -> int:
 RPC_S_SERVER_UNAVAILABLE = -2147023174  # 0x800706BA (WIN32: 1722 0x6BA)
 
 
+# Don't be overly afraid of `COMError` or `WindowsError`!
+# If you search for the error code using the proper notation,
+# you might be able to find the reference.
+
+
 def signed32bithex_to_int(value: str, /) -> int:
     val = int(value, 16)
     if val < 0x80000000:
@@ -99,4 +104,5 @@ def signed32bithex_to_int(value: str, /) -> int:
 
 
 def int_to_signed32bithex(value: int, /) -> str:
+    # it is simpler than using `hex(value & 0xFFFFFFFF)`
     return f"0x{value & 0xFFFFFFFF:08X}"
