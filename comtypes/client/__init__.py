@@ -3,7 +3,7 @@
 import ctypes
 import logging
 
-from comtypes import automation
+from comtypes import RevokeActiveObject, automation  # noqa
 from comtypes.client import dynamic, lazybind  # noqa
 from comtypes.client._activeobj import RegisterActiveObject  # noqa
 from comtypes.client._code_cache import _find_gen_dir
