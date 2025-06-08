@@ -7,7 +7,9 @@ import comtypes.client
 comtypes.client.GetModule("portabledeviceapi.dll")
 from comtypes.gen.PortableDeviceApiLib import IStream
 
+STATFLAG_DEFAULT = 0
 STGC_DEFAULT = 0
+STGTY_STREAM = 2
 STREAM_SEEK_SET = 0
 STREAM_SEEK_CUR = 1
 STREAM_SEEK_END = 2
@@ -123,6 +125,24 @@ class Test_RemoteCopyTo(ut.TestCase):
         dst.RemoteSeek(0, STREAM_SEEK_SET)
         dst_buf, dst_read = dst.RemoteRead(1024)
         self.assertEqual(bytearray(dst_buf)[0:dst_read], test_data)
+
+
+class Test_Stat(ut.TestCase):
+    # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-istream-stat
+    # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ns-objidl-statstg
+    def test_returns_statstg_from_no_modified_stream(self):
+        stream = _create_stream()
+        statstg = stream.Stat(STATFLAG_DEFAULT)
+        self.assertIsNone(statstg.pwcsName)
+        self.assertEqual(statstg.type, STGTY_STREAM)
+        self.assertEqual(statstg.cbSize, 0)
+        mt, ct, at = statstg.mtime, statstg.ctime, statstg.atime
+        self.assertTrue(mt.dwLowDateTime == ct.dwLowDateTime == at.dwLowDateTime)
+        self.assertTrue(mt.dwHighDateTime == ct.dwHighDateTime == at.dwHighDateTime)
+        self.assertEqual(statstg.grfMode, 0)
+        self.assertEqual(statstg.grfLocksSupported, 0)
+        self.assertEqual(statstg.clsid, comtypes.GUID())
+        self.assertEqual(statstg.grfStateBits, 0)
 
 
 class Test_Clone(ut.TestCase):
