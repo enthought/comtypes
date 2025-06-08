@@ -63,17 +63,13 @@ class IClassFactory(IUnknown):
 #         STDMETHOD(HRESULT, "AddConnection", [c_ulong, c_ulong]),
 #         STDMETHOD(HRESULT, "ReleaseConnection", [c_ulong, c_ulong, c_ulong])]
 
-# The following code is untested:
-
-ACTIVEOBJECT_STRONG = 0x0
-ACTIVEOBJECT_WEAK = 0x1
-
 
 def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
+    """Registers a pointer as the active object for its class and returns the handle."""
     punk = comobj._com_pointers_[IUnknown._iid_]
     clsid = comobj._reg_clsid_
     if weak:
-        flags = ACTIVEOBJECT_WEAK
+        flags = comtypes.ACTIVEOBJECT_WEAK
     else:
-        flags = ACTIVEOBJECT_STRONG
+        flags = comtypes.ACTIVEOBJECT_STRONG
     return comtypes.RegisterActiveObject(punk, clsid, flags)

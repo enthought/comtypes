@@ -214,6 +214,8 @@ from comtypes._post_coinit.misc import IPersist, IServiceProvider  # noqa
 
 from comtypes._post_coinit.instancemethod import instancemethod  # noqa
 from comtypes._post_coinit.activeobj import (  # noqa
+    ACTIVEOBJECT_STRONG,
+    ACTIVEOBJECT_WEAK,
     GetActiveObject,
     RegisterActiveObject,
     RevokeActiveObject,

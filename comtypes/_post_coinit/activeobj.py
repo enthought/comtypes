@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
+ACTIVEOBJECT_STRONG = 0x0
+ACTIVEOBJECT_WEAK = 0x1
+
 
 def RegisterActiveObject(
     punk: "_UnionT[IUnknown, hints.LP_LP_Vtbl]", clsid: GUID, flags: int
