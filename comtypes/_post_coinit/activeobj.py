@@ -1,15 +1,22 @@
 from ctypes import HRESULT, POINTER, OleDLL, byref, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPVOID
-from typing import Optional, Type, TypeVar, overload
+from typing import TYPE_CHECKING, Optional, Type, TypeVar, overload
+from typing import Union as _UnionT
 
 from comtypes import GUID
 from comtypes._post_coinit.unknwn import IUnknown
 from comtypes.GUID import REFCLSID
 
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
+
+
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
 
-def RegisterActiveObject(punk, clsid, flags) -> int:
+def RegisterActiveObject(
+    punk: "_UnionT[IUnknown, hints.LP_LP_Vtbl]", clsid: GUID, flags: int
+) -> int:
     """Registers a pointer as the active object for its class and returns the handle."""
     handle = c_ulong()
     _RegisterActiveObject(punk, byref(clsid), flags, byref(handle))
