@@ -213,12 +213,12 @@ from comtypes._post_coinit.misc import IPersist, IServiceProvider  # noqa
 
 
 from comtypes._post_coinit.instancemethod import instancemethod  # noqa
+from comtypes._post_coinit.activeobj import GetActiveObject  # noqa
 from comtypes._post_coinit.misc import (  # noqa
     _is_object,
     CoGetObject,
     CoCreateInstance,
     CoGetClassObject,
-    GetActiveObject,
     MULTI_QI,
     _COAUTHIDENTITY,
     COAUTHIDENTITY,
