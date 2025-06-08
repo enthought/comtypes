@@ -1,4 +1,4 @@
-from ctypes import HRESULT, POINTER, OleDLL, byref
+from ctypes import HRESULT, POINTER, OleDLL, byref, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPVOID
 from typing import Optional, Type, TypeVar, overload
 
@@ -7,6 +7,13 @@ from comtypes._post_coinit.unknwn import IUnknown
 from comtypes.GUID import REFCLSID
 
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
+
+
+def RegisterActiveObject(punk, clsid, flags) -> int:
+    """Registers a pointer as the active object for its class and returns the handle."""
+    handle = c_ulong()
+    _RegisterActiveObject(punk, byref(clsid), flags, byref(handle))
+    return handle.value
 
 
 def RevokeActiveObject(handle: int) -> None:
@@ -30,6 +37,10 @@ def GetActiveObject(
 
 
 _oleaut32 = OleDLL("oleaut32")
+
+_RegisterActiveObject = _oleaut32.RegisterActiveObject
+_RegisterActiveObject.argtypes = [c_void_p, REFCLSID, DWORD, POINTER(DWORD)]
+_RegisterActiveObject.restype = HRESULT
 
 _RevokeActiveObject = _oleaut32.RevokeActiveObject
 _RevokeActiveObject.argtypes = [DWORD, LPVOID]

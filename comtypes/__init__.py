@@ -213,7 +213,11 @@ from comtypes._post_coinit.misc import IPersist, IServiceProvider  # noqa
 
 
 from comtypes._post_coinit.instancemethod import instancemethod  # noqa
-from comtypes._post_coinit.activeobj import GetActiveObject, RevokeActiveObject  # noqa
+from comtypes._post_coinit.activeobj import (  # noqa
+    GetActiveObject,
+    RegisterActiveObject,
+    RevokeActiveObject,
+)
 from comtypes._post_coinit.misc import (  # noqa
     _is_object,
     CoGetObject,
