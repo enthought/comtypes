@@ -8,6 +8,7 @@ comtypes.client.GetModule("portabledeviceapi.dll")
 from comtypes.gen.PortableDeviceApiLib import IStream
 
 STGC_DEFAULT = 0
+STGTY_STREAM = 2
 STREAM_SEEK_SET = 0
 STREAM_SEEK_CUR = 1
 STREAM_SEEK_END = 2
@@ -130,7 +131,7 @@ class Test_Stat(ut.TestCase):
         stream = _create_stream()
         statstg = stream.Stat(STGC_DEFAULT)
         self.assertIsNone(statstg.pwcsName)
-        self.assertEqual(statstg.type, 2)  # STGTY_STREAM
+        self.assertEqual(statstg.type, STGTY_STREAM)
         self.assertEqual(statstg.cbSize, 0)
         mt, ct, at = statstg.mtime, statstg.ctime, statstg.atime
         self.assertTrue(mt.dwLowDateTime == ct.dwLowDateTime == at.dwLowDateTime)
