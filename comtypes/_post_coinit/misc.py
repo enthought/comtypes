@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar, overlo
 from comtypes import CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER, CLSCTX_SERVER, GUID
 from comtypes._memberspec import COMMETHOD
 from comtypes._post_coinit.unknwn import IUnknown
+from comtypes.GUID import REFCLSID
 
 if TYPE_CHECKING:
     from ctypes import _Pointer
@@ -240,7 +241,6 @@ class _COSERVERINFO(Structure):
 
 _oleaut32 = OleDLL("oleaut32")
 
-REFCLSID = POINTER(GUID)
 _GetActiveObject = _oleaut32.GetActiveObject
 _GetActiveObject.argtypes = [REFCLSID, LPVOID, POINTER(POINTER(IUnknown))]
 _GetActiveObject.restype = HRESULT
