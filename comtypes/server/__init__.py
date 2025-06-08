@@ -1,14 +1,13 @@
 import ctypes
-from ctypes import HRESULT, POINTER, OleDLL, byref, c_void_p
-from ctypes.wintypes import DWORD, LPVOID
+from ctypes import HRESULT, POINTER, byref
 from typing import TYPE_CHECKING, Any, Optional, Type
 
 import comtypes
 import comtypes.client
 import comtypes.client.dynamic
 from comtypes import GUID, STDMETHOD, IUnknown
+from comtypes import RevokeActiveObject as RevokeActiveObject
 from comtypes.automation import IDispatch
-from comtypes.GUID import REFCLSID
 
 if TYPE_CHECKING:
     from ctypes import _Pointer
@@ -64,41 +63,10 @@ class IClassFactory(IUnknown):
 #         STDMETHOD(HRESULT, "AddConnection", [c_ulong, c_ulong]),
 #         STDMETHOD(HRESULT, "ReleaseConnection", [c_ulong, c_ulong, c_ulong])]
 
-# The following code is untested:
-
-ACTIVEOBJECT_STRONG = 0x0
-ACTIVEOBJECT_WEAK = 0x1
-
-_oleaut32 = OleDLL("oleaut32")
-
-_RegisterActiveObject = _oleaut32.RegisterActiveObject
-_RegisterActiveObject.argtypes = [
-    c_void_p,
-    REFCLSID,
-    DWORD,
-    POINTER(DWORD),
-]
-_RegisterActiveObject.restype = HRESULT
-
-_RevokeActiveObject = _oleaut32.RevokeActiveObject
-_RevokeActiveObject.argtypes = [
-    DWORD,
-    LPVOID,
-]
-_RevokeActiveObject.restype = HRESULT
-
 
 def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
+    """Registers a pointer as the active object for its class and returns the handle."""
     punk = comobj._com_pointers_[IUnknown._iid_]
     clsid = comobj._reg_clsid_
-    if weak:
-        flags = ACTIVEOBJECT_WEAK
-    else:
-        flags = ACTIVEOBJECT_STRONG
-    handle = ctypes.c_ulong()
-    _RegisterActiveObject(punk, byref(clsid), flags, byref(handle))
-    return handle.value
-
-
-def RevokeActiveObject(handle: int) -> None:
-    _RevokeActiveObject(handle, None)
+    flags = comtypes.ACTIVEOBJECT_WEAK if weak else comtypes.ACTIVEOBJECT_STRONG
+    return comtypes.RegisterActiveObject(punk, clsid, flags)

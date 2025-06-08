@@ -44,3 +44,11 @@ def GetActiveObject(
     if dynamic:
         return comtypes.client.dynamic.Dispatch(obj)
     return _manage(obj, clsid, interface=interface)
+
+
+def RegisterActiveObject(
+    punk: IUnknown, progid: _UnionT[str, Type[CoClass], GUID], weak: bool = True
+) -> int:
+    clsid = GUID.from_progid(progid)
+    flags = comtypes.ACTIVEOBJECT_WEAK if weak else comtypes.ACTIVEOBJECT_STRONG
+    return comtypes.RegisterActiveObject(punk, clsid, flags)

@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar, overlo
 from comtypes import CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER, CLSCTX_SERVER, GUID
 from comtypes._memberspec import COMMETHOD
 from comtypes._post_coinit.unknwn import IUnknown
+from comtypes.GUID import REFCLSID
 
 if TYPE_CHECKING:
     from ctypes import _Pointer
@@ -171,21 +172,6 @@ def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
     return p  # type: ignore
 
 
-@overload
-def GetActiveObject(clsid: GUID, interface: None = None) -> IUnknown: ...
-@overload
-def GetActiveObject(clsid: GUID, interface: Type[_T_IUnknown]) -> _T_IUnknown: ...
-def GetActiveObject(
-    clsid: GUID, interface: Optional[Type[IUnknown]] = None
-) -> IUnknown:
-    """Retrieves a pointer to a running object"""
-    p = POINTER(IUnknown)()
-    _GetActiveObject(byref(clsid), None, byref(p))
-    if interface is not None:
-        p = p.QueryInterface(interface)  # type: ignore
-    return p  # type: ignore
-
-
 class MULTI_QI(Structure):
     _fields_ = [("pIID", POINTER(GUID)), ("pItf", POINTER(c_void_p)), ("hr", HRESULT)]
     if TYPE_CHECKING:
@@ -236,14 +222,6 @@ class _COSERVERINFO(Structure):
         pwszName: Optional[str]
         pAuthInfo: _COAUTHINFO
         dwReserved2: int
-
-
-_oleaut32 = OleDLL("oleaut32")
-
-REFCLSID = POINTER(GUID)
-_GetActiveObject = _oleaut32.GetActiveObject
-_GetActiveObject.argtypes = [REFCLSID, LPVOID, POINTER(POINTER(IUnknown))]
-_GetActiveObject.restype = HRESULT
 
 
 _ole32 = OleDLL("ole32")

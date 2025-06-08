@@ -1,11 +1,12 @@
 import logging
 import queue
-from ctypes import HRESULT, POINTER, OleDLL, byref, c_ulong, c_void_p
+from ctypes import HRESULT, OleDLL, byref, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPDWORD
 from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence, Type
 
 import comtypes
 from comtypes import GUID, COMObject, IUnknown, hresult
+from comtypes.GUID import REFCLSID
 from comtypes.server import IClassFactory
 
 if TYPE_CHECKING:
@@ -23,7 +24,6 @@ REGCLS_SURROGATE = 8  # must be used when a surrogate process
 
 _ole32 = OleDLL("ole32")
 
-REFCLSID = POINTER(GUID)
 _CoRegisterClassObject = _ole32.CoRegisterClassObject
 _CoRegisterClassObject.argtypes = [REFCLSID, c_void_p, DWORD, DWORD, LPDWORD]
 _CoRegisterClassObject.restype = HRESULT
