@@ -125,6 +125,22 @@ class Test_RemoteCopyTo(ut.TestCase):
         self.assertEqual(bytearray(dst_buf)[0:dst_read], test_data)
 
 
+class Test_Stat(ut.TestCase):
+    def test_returns_statstg_from_no_modified_stream(self):
+        stream = _create_stream()
+        statstg = stream.Stat(STGC_DEFAULT)
+        self.assertIsNone(statstg.pwcsName)
+        self.assertEqual(statstg.type, 2)  # STGTY_STREAM
+        self.assertEqual(statstg.cbSize, 0)
+        mt, ct, at = statstg.mtime, statstg.ctime, statstg.atime
+        self.assertTrue(mt.dwLowDateTime == ct.dwLowDateTime == at.dwLowDateTime)
+        self.assertTrue(mt.dwHighDateTime == ct.dwHighDateTime == at.dwHighDateTime)
+        self.assertEqual(statstg.grfMode, 0)
+        self.assertEqual(statstg.grfLocksSupported, 0)
+        self.assertEqual(statstg.clsid, comtypes.GUID())
+        self.assertEqual(statstg.grfStateBits, 0)
+
+
 class Test_Clone(ut.TestCase):
     def test_Clone(self):
         orig = _create_stream()
