@@ -1,12 +1,13 @@
 import ctypes
 from ctypes import HRESULT, POINTER, OleDLL, byref, c_void_p
-from ctypes.wintypes import DWORD, LPVOID
+from ctypes.wintypes import DWORD
 from typing import TYPE_CHECKING, Any, Optional, Type
 
 import comtypes
 import comtypes.client
 import comtypes.client.dynamic
 from comtypes import GUID, STDMETHOD, IUnknown
+from comtypes import RevokeActiveObject as RevokeActiveObject
 from comtypes.automation import IDispatch
 from comtypes.GUID import REFCLSID
 
@@ -80,13 +81,6 @@ _RegisterActiveObject.argtypes = [
 ]
 _RegisterActiveObject.restype = HRESULT
 
-_RevokeActiveObject = _oleaut32.RevokeActiveObject
-_RevokeActiveObject.argtypes = [
-    DWORD,
-    LPVOID,
-]
-_RevokeActiveObject.restype = HRESULT
-
 
 def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
     punk = comobj._com_pointers_[IUnknown._iid_]
@@ -98,7 +92,3 @@ def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
     handle = ctypes.c_ulong()
     _RegisterActiveObject(punk, byref(clsid), flags, byref(handle))
     return handle.value
-
-
-def RevokeActiveObject(handle: int) -> None:
-    _RevokeActiveObject(handle, None)

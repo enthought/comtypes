@@ -1,5 +1,5 @@
 from ctypes import HRESULT, POINTER, OleDLL, byref
-from ctypes.wintypes import LPVOID
+from ctypes.wintypes import DWORD, LPVOID
 from typing import Optional, Type, TypeVar, overload
 
 from comtypes import GUID
@@ -7,6 +7,11 @@ from comtypes._post_coinit.unknwn import IUnknown
 from comtypes.GUID import REFCLSID
 
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
+
+
+def RevokeActiveObject(handle: int) -> None:
+    """Ends a pointer's status as active."""
+    _RevokeActiveObject(handle, None)
 
 
 @overload
@@ -25,6 +30,10 @@ def GetActiveObject(
 
 
 _oleaut32 = OleDLL("oleaut32")
+
+_RevokeActiveObject = _oleaut32.RevokeActiveObject
+_RevokeActiveObject.argtypes = [DWORD, LPVOID]
+_RevokeActiveObject.restype = HRESULT
 
 _GetActiveObject = _oleaut32.GetActiveObject
 _GetActiveObject.argtypes = [REFCLSID, LPVOID, POINTER(POINTER(IUnknown))]
