@@ -7,6 +7,7 @@ import comtypes.client
 comtypes.client.GetModule("portabledeviceapi.dll")
 from comtypes.gen.PortableDeviceApiLib import IStream
 
+STATFLAG_DEFAULT = 0
 STGC_DEFAULT = 0
 STGTY_STREAM = 2
 STREAM_SEEK_SET = 0
@@ -127,9 +128,11 @@ class Test_RemoteCopyTo(ut.TestCase):
 
 
 class Test_Stat(ut.TestCase):
+    # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-istream-stat
+    # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ns-objidl-statstg
     def test_returns_statstg_from_no_modified_stream(self):
         stream = _create_stream()
-        statstg = stream.Stat(STGC_DEFAULT)
+        statstg = stream.Stat(STATFLAG_DEFAULT)
         self.assertIsNone(statstg.pwcsName)
         self.assertEqual(statstg.type, STGTY_STREAM)
         self.assertEqual(statstg.cbSize, 0)
