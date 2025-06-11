@@ -276,7 +276,7 @@ class ComMethodsAnnotator(_MethodsAnnotator[typedesc.ComMethod]):
         return ComMethodAnnotator(m)
 
 
-class ComInterfaceMembersAnnotator(object):
+class ComInterfaceMembersAnnotator:
     def __init__(self, itf: typedesc.ComInterface):
         self.itf = itf
 
@@ -316,7 +316,7 @@ class DispMethodsAnnotator(_MethodsAnnotator[typedesc.DispMethod]):
         return DispMethodAnnotator(m)
 
 
-class DispInterfaceMembersAnnotator(object):
+class DispInterfaceMembersAnnotator:
     def __init__(self, itf: typedesc.DispInterface):
         self.itf = itf
 

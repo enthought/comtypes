@@ -1,4 +1,4 @@
-class Patch(object):
+class Patch:
     """
     Implements a class decorator suitable for patching an existing class with
     a new namespace.
@@ -69,7 +69,7 @@ def no_replace(f):
     return f
 
 
-class ReferenceEmptyClass(object):
+class ReferenceEmptyClass:
     """
     This empty class will serve as a reference for attributes present on
     any class.

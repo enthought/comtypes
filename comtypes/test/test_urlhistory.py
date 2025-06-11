@@ -18,7 +18,7 @@ from comtypes.gen import urlhistLib
 # generated code directly is to monkey-patch the
 # _STATURL.__ctypes_from_outparam__ method like this.
 @Patch(urlhistLib._STATURL)
-class _(object):
+class _:
     def __ctypes_from_outparam__(self):
         from comtypes.util import cast_field
 

@@ -5,7 +5,7 @@ from typing import Union as _UnionT
 import comtypes
 
 
-class Argument(object):
+class Argument:
     "a Parameter in the argument list of a callable (Function, Method, ...)"
 
     def __init__(self, atype, name):
@@ -13,7 +13,7 @@ class Argument(object):
         self.name = name
 
 
-class _HasArgs(object):
+class _HasArgs:
     def __init__(self):
         self.arguments = []
 
@@ -37,7 +37,7 @@ class _HasArgs(object):
 ################
 
 
-class Alias(object):
+class Alias:
     # a C preprocessor alias, like #define A B
     def __init__(self, name, alias, typ=None):
         self.name = name
@@ -45,7 +45,7 @@ class Alias(object):
         self.typ = typ
 
 
-class Macro(object):
+class Macro:
     # a C preprocessor definition with arguments
     def __init__(self, name, args, body):
         # all arguments are strings, args is the literal argument list
@@ -56,7 +56,7 @@ class Macro(object):
         self.body = body
 
 
-class File(object):
+class File:
     def __init__(self, name):
         self.name = name
 
@@ -107,7 +107,7 @@ class Method(_HasArgs):
         self.returns = returns
 
 
-class FundamentalType(object):
+class FundamentalType:
     location = None
 
     def __init__(self, name, size, align):
@@ -117,7 +117,7 @@ class FundamentalType(object):
             self.align = int(align)
 
 
-class PointerType(object):
+class PointerType:
     location = None
 
     def __init__(self, typ, size, align):
@@ -126,7 +126,7 @@ class PointerType(object):
         self.align = int(align)
 
 
-class Typedef(object):
+class Typedef:
     location = None
 
     def __init__(self, name, typ):
@@ -134,7 +134,7 @@ class Typedef(object):
         self.typ = typ
 
 
-class ArrayType(object):
+class ArrayType:
     location = None
 
     def __init__(self, typ: Any, min: int, max: int) -> None:
@@ -143,21 +143,21 @@ class ArrayType(object):
         self.max = max
 
 
-class StructureHead(object):
+class StructureHead:
     location = None
 
     def __init__(self, struct: "_Struct_Union_Base") -> None:
         self.struct = struct
 
 
-class StructureBody(object):
+class StructureBody:
     location = None
 
     def __init__(self, struct: "_Struct_Union_Base") -> None:
         self.struct = struct
 
 
-class _Struct_Union_Base(object):
+class _Struct_Union_Base:
     name: str
     align: int
     members: List[_UnionT["Field", Method, Constructor]]
@@ -223,7 +223,7 @@ class Union(_Struct_Union_Base):
         super(Union, self).__init__()
 
 
-class Field(object):
+class Field:
     def __init__(
         self, name: str, typ: Any, bits: Optional[Any], offset: SupportsInt
     ) -> None:
@@ -233,14 +233,14 @@ class Field(object):
         self.offset = int(offset)
 
 
-class CvQualifiedType(object):
+class CvQualifiedType:
     def __init__(self, typ, const, volatile):
         self.typ = typ
         self.const = const
         self.volatile = volatile
 
 
-class Enumeration(object):
+class Enumeration:
     location = None
 
     def __init__(self, name: str, size: SupportsInt, align: SupportsInt) -> None:
@@ -253,14 +253,14 @@ class Enumeration(object):
         self.values.append(v)
 
 
-class EnumValue(object):
+class EnumValue:
     def __init__(self, name: str, value: int, enumeration: Enumeration) -> None:
         self.name = name
         self.value = value
         self.enumeration = enumeration
 
 
-class Variable(object):
+class Variable:
     location = None
 
     def __init__(self, name, typ, init=None):

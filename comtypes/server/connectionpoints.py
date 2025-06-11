@@ -109,7 +109,7 @@ class ConnectionPointImpl(COMObject):
             yield result
 
 
-class ConnectableObjectMixin(object):
+class ConnectableObjectMixin:
     """Mixin which implements IConnectionPointContainer.
 
     Call Fire_Event(interface, methodname, *args, **kw) to fire an

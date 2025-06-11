@@ -113,7 +113,7 @@ def _delete_key(hkey: int, subkey: str, *, force: bool) -> None:
 _Entry = Tuple[int, str, str, str]
 
 
-class Registrar(object):
+class Registrar:
     """COM class registration.
 
     The COM class can override what this does by implementing

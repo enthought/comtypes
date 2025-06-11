@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 _safearray_type_cache = {}
 
 
-class _SafeArrayAsNdArrayContextManager(object):
+class _SafeArrayAsNdArrayContextManager:
     """Context manager allowing safe arrays to be extracted as ndarrays.
 
     This is thread-safe.
@@ -110,7 +110,7 @@ def _make_safearray_type(itemtype):
             raise TypeError(itemtype)
 
     @Patch(POINTER(sa_type))
-    class _(object):
+    class _:
         # Should explain the ideas how SAFEARRAY is used in comtypes
         _itemtype_ = itemtype  # a ctypes type
         _vartype_ = vartype  # a VARTYPE value: VT_...
@@ -378,7 +378,7 @@ def _make_safearray_type(itemtype):
             return tuple(result)  # for compatibility with pywin32.
 
     @Patch(POINTER(POINTER(sa_type)))
-    class __(object):
+    class __:
         @classmethod
         def from_param(cls, value):
             if isinstance(value, cls._type_):

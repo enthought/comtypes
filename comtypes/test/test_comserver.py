@@ -35,7 +35,7 @@ def tearDownModule():
     unregister(comtypes.test.TestComServer.TestComServer)
 
 
-class BaseServerTest(object):
+class BaseServerTest:
     def create_object(self) -> Any: ...
 
     def _find_memleak(self, func):

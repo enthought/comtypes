@@ -144,7 +144,7 @@ _PostQuitMessage.argtypes = [INT]
 _PostQuitMessage.restype = None
 
 
-class LocalServer(object):
+class LocalServer:
     _queue: Optional[queue.Queue] = None
 
     def run(self, classobjects: Sequence["hints.localserver.ClassFactory"]) -> None:
@@ -186,7 +186,7 @@ class LocalServer(object):
                 _PostQuitMessage(0)
 
 
-class InprocServer(object):
+class InprocServer:
     def __init__(self) -> None:
         self.locks = c_long(0)
 
@@ -207,7 +207,7 @@ class InprocServer(object):
 _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
 
-class COMObject(object):
+class COMObject:
     _com_interfaces_: ClassVar[List[Type[IUnknown]]]
     _outgoing_interfaces_: ClassVar[List[Type["hints.IDispatch"]]]
     _instances_: ClassVar[Dict["COMObject", None]] = {}

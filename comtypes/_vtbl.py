@@ -228,7 +228,7 @@ def hack(
     return call_without_this
 
 
-class _MethodFinder(object):
+class _MethodFinder:
     def __init__(self, inst: "hints.COMObject") -> None:
         self.inst = inst
         # map lower case names to names with correct spelling.

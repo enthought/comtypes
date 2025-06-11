@@ -8,7 +8,7 @@ import comtypes.typeinfo
 raise unittest.SkipTest("This test module cannot run as-is.  Investigate why")
 
 
-class TypeLib(object):
+class TypeLib:
     """This class collects IDL code fragments and eventually writes
     them into a .IDL file.  The compile() method compiles the IDL file
     into a typelibrary and registers it.  A function is also
@@ -64,7 +64,7 @@ class TypeLib(object):
         return tlb_path
 
 
-class Interface(object):
+class Interface:
     def __init__(self, header):
         self.header = header
         self.code = ""
@@ -257,7 +257,7 @@ class MyServer(comtypes.CoClass, ConnectableObjectMixin):
     def test_events(self):
         p = wrap(self.create())
 
-        class Handler(object):
+        class Handler:
             called = 0
 
             def OnSomething(self, this):
@@ -269,7 +269,7 @@ class MyServer(comtypes.CoClass, ConnectableObjectMixin):
         p.DoSomething()
         self.assertEqual(handler.called, 1)
 
-        class Handler(object):
+        class Handler:
             called = 0
 
             def IMyEventInterface_OnSomething(self):
@@ -292,7 +292,7 @@ class MyServer(comtypes.CoClass, ConnectableObjectMixin):
     def test_DoSomethingElse(self):
         p = wrap(self.create())
 
-        class Handler(object):
+        class Handler:
             called = 0
 
             def OnSomethingElse(self):
@@ -305,7 +305,7 @@ class MyServer(comtypes.CoClass, ConnectableObjectMixin):
         p.DoSomethingElse()
         self.assertEqual(handler.called, 1)
 
-        class Handler(object):
+        class Handler:
             called = 0
 
             def OnSomethingElse(self, this, presult):

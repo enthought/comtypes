@@ -211,7 +211,7 @@ def _create_module(modulename: str, code: str) -> types.ModuleType:
     return _my_import(modulename)
 
 
-class ModuleGenerator(object):
+class ModuleGenerator:
     def __init__(self, tlib: typeinfo.ITypeLib, pathname: Optional[str]) -> None:
         self.wrapper_name = codegenerator.name_wrapper_module(tlib)
         self.friendly_name = codegenerator.name_friendly_module(tlib)

@@ -9,7 +9,7 @@ _all_slice = slice(None, None, None)
 
 def case_insensitive(p: Type) -> None:
     @patcher.Patch(p)
-    class CaseInsensitive(object):
+    class CaseInsensitive:
         # case insensitive attributes for COM methods and properties
         def __getattr__(self, name):
             """Implement case insensitive access to methods and properties"""
@@ -34,7 +34,7 @@ def case_insensitive(p: Type) -> None:
 
 def reference_fix(pp: Type) -> None:
     @patcher.Patch(pp)
-    class ReferenceFix(object):
+    class ReferenceFix:
         def __setitem__(self, index, value):
             # We override the __setitem__ method of the
             # POINTER(POINTER(interface)) type, so that the COM
@@ -64,7 +64,7 @@ def reference_fix(pp: Type) -> None:
 
 def sized(itf: Type) -> None:
     @patcher.Patch(itf)
-    class _(object):
+    class _:
         def __len__(self):
             "Return the the 'self.Count' property."
             return self.Count
@@ -72,7 +72,7 @@ def sized(itf: Type) -> None:
 
 def callable_and_subscriptable(itf: Type) -> None:
     @patcher.Patch(itf)
-    class _(object):
+    class _:
         # 'Item' is the 'default' value.  Make it available by
         # calling the instance (Not sure this makes sense, but
         # win32com does this also).
@@ -125,7 +125,7 @@ def callable_and_subscriptable(itf: Type) -> None:
 
 def iterator(itf: Type) -> None:
     @patcher.Patch(itf)
-    class _(object):
+    class _:
         def __iter__(self):
             "Return an iterator over the _NewEnum collection."
             # This method returns a pointer to _some_ _NewEnum interface.

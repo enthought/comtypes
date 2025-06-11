@@ -13,7 +13,7 @@ def _to_docstring(orig: str, depth: int = 1) -> str:
     return f'{indent}"""{repled}"""'
 
 
-class StructureHeadWriter(object):
+class StructureHeadWriter:
     def __init__(self, stream: io.StringIO) -> None:
         self.stream = stream
 
@@ -67,7 +67,7 @@ class StructureHeadWriter(object):
                 print("    pass", file=self.stream)
 
 
-class LibraryHeadWriter(object):
+class LibraryHeadWriter:
     def __init__(self, stream: io.StringIO) -> None:
         self.stream = stream
 
@@ -93,7 +93,7 @@ class LibraryHeadWriter(object):
         )
 
 
-class CoClassHeadWriter(object):
+class CoClassHeadWriter:
     def __init__(self, stream: io.StringIO, filename: Optional[str]) -> None:
         self.stream = stream
         self.filename = filename
@@ -117,7 +117,7 @@ class CoClassHeadWriter(object):
         )
 
 
-class ComInterfaceHeadWriter(object):
+class ComInterfaceHeadWriter:
     def __init__(self, stream: io.StringIO) -> None:
         self.stream = stream
 
@@ -172,7 +172,7 @@ class ComInterfaceHeadWriter(object):
             print(annotations, file=self.stream)
 
 
-class DispInterfaceHeadWriter(object):
+class DispInterfaceHeadWriter:
     def __init__(self, stream: io.StringIO) -> None:
         self.stream = stream
 
