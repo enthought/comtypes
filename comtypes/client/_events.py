@@ -64,7 +64,7 @@ _CloseHandle.restype = BOOL
 _ReceiverType = _UnionT[COMObject, IUnknown]
 
 
-class _AdviseConnection(object):
+class _AdviseConnection:
     cp: Optional[IConnectionPoint]
     cookie: Optional[int]
     receiver: Optional[_ReceiverType]
@@ -283,7 +283,7 @@ def GetEvents(
     return _AdviseConnection(source, interface, rcv)
 
 
-class EventDumper(object):
+class EventDumper:
     """Universal sink for COM events."""
 
     def __getattr__(self, name: str) -> Callable[..., Any]:

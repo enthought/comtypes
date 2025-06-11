@@ -3,7 +3,7 @@ import io
 from comtypes.tools import typedesc
 
 
-class ComInterfaceBodyImplCommentWriter(object):
+class ComInterfaceBodyImplCommentWriter:
     def __init__(self, stream: io.StringIO):
         self.stream = stream
 

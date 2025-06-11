@@ -108,7 +108,7 @@ COMTYPES = {
 ################################################################
 
 
-class Parser(object):
+class Parser:
     tlib: typeinfo.ITypeLib
     items: Dict[str, Any]
 

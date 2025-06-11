@@ -17,7 +17,7 @@ TranslateMessage = _user32.TranslateMessage
 DispatchMessage = _user32.DispatchMessageA
 
 
-class _MessageLoop(object):
+class _MessageLoop:
     def __init__(self) -> None:
         self._filters: List["_FilterCallable"] = []
 

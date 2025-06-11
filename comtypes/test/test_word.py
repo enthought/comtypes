@@ -26,7 +26,7 @@ except (ImportError, OSError):
 ################################################################
 
 
-class _Sink(object):
+class _Sink:
     def __init__(self):
         self.events = []
 

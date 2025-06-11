@@ -59,7 +59,7 @@ class MethodCaller:
             )
 
 
-class _Dispatch(object):
+class _Dispatch:
     """Expose methods and properties via fully dynamic dispatch."""
 
     _comobj: automation.IDispatch
@@ -160,7 +160,7 @@ class _Dispatch(object):
     #     )
 
 
-class _Collection(object):
+class _Collection:
     def __init__(self, enum: automation.IEnumVARIANT):
         self.enum = enum
 

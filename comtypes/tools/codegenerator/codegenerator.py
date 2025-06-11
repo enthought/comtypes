@@ -42,7 +42,7 @@ _InterfaceTypeDesc = _UnionT[
 ]
 
 
-class CodeGenerator(object):
+class CodeGenerator:
     def __init__(self, known_symbols=None, known_interfaces=None) -> None:
         self.stream = io.StringIO()
         self.imports = namespaces.ImportedNamespaces()

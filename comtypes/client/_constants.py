@@ -43,7 +43,7 @@ class _frozen_attr_dict(dict):
         raise TypeError
 
 
-class Constants(object):
+class Constants:
     """This class loads the type library from the supplied object,
     then exposes constants and enumerations in the type library
     as attributes.

@@ -6,7 +6,7 @@ from comtypes.tools import typedesc
 from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
 
 
-class lcid(object):
+class lcid:
     def __repr__(self):
         return "_lcid"
 
@@ -14,7 +14,7 @@ class lcid(object):
 lcid = lcid()
 
 
-class dispid(object):
+class dispid:
     def __init__(self, memid):
         self.memid = memid
 
@@ -22,7 +22,7 @@ class dispid(object):
         return f"dispid({self.memid})"
 
 
-class helpstring(object):
+class helpstring:
     def __init__(self, text):
         self.text = text
 
@@ -100,7 +100,7 @@ def _to_arg_definition(
     return code
 
 
-class ComMethodGenerator(object):
+class ComMethodGenerator:
     def __init__(self, m: typedesc.ComMethod, isdual: bool) -> None:
         self._m = m
         self._isdual = isdual
@@ -208,7 +208,7 @@ class ComMethodGenerator(object):
             yield (type_name, arg_name, idlflags, default)
 
 
-class DispMethodGenerator(object):
+class DispMethodGenerator:
     def __init__(self, m: typedesc.DispMethod) -> None:
         self._m = m
         self.data: List[str] = []
@@ -262,7 +262,7 @@ class DispMethodGenerator(object):
             yield (type_name, arg_name, idlflags, default)
 
 
-class DispPropertyGenerator(object):
+class DispPropertyGenerator:
     def __init__(self, m: typedesc.DispProperty) -> None:
         self._m = m
         self._to_type_name = TypeNamer()
@@ -290,7 +290,7 @@ class DispPropertyGenerator(object):
         return (idlflags, type_name, self._m.name)
 
 
-class TypeNamer(object):
+class TypeNamer:
     def __call__(self, t: Any) -> str:
         # Return a string, containing an expression which can be used
         # to refer to the type. Assumes the 'from ctypes import *'

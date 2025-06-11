@@ -608,7 +608,7 @@ del v
 
 
 @comtypes.patcher.Patch(POINTER(VARIANT))
-class _(object):
+class _:
     # Override the default .from_param classmethod of POINTER(VARIANT).
     # This allows to pass values which can be stored in VARIANTs as
     # function parameters declared as POINTER(VARIANT).  See
