@@ -1,6 +1,62 @@
+[project]
+name = "comtypes"
+description = "Pure Python COM package"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+authors = [
+    { name = "Thomas Heller", email = "theller@python.net" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dynamic = ["version"]
+
+[project.scripts]
+clear_comtypes_cache = "comtypes.clear_cache:main"
+
+[project.urls]
+Source = "https://github.com/enthought/comtypes"
+Download = "https://github.com/enthought/comtypes/releases"
+Issues = "https://github.com/enthought/comtypes/issues"
+
 [build-system]
 requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "comtypes",
+    "comtypes._post_coinit",
+    "comtypes.client",
+    "comtypes.server",
+    "comtypes.tools",
+    "comtypes.tools.codegenerator",
+    "comtypes.test",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "comtypes.__version__" }
+
+[tool.setuptools.package-data]
+"comtypes.test" = [
+    "TestComServer.idl",
+    "TestComServer.tlb",
+    "TestDispServer.idl",
+    "TestDispServer.tlb",
+    "mytypelib.idl",
+    "mylib.idl",
+    "mylib.tlb",
+    "urlhist.tlb",
+    "test_jscript.js",
+]
+"comtypes" = ["hints.pyi"]
 
 [tool.ruff.lint]
 extend-select = ["I"]
