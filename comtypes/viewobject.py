@@ -55,7 +55,7 @@ class tagExtentInfo(Structure):
 
     def __init__(self, *args, **kw):
         self.cb = sizeof(self)
-        super(tagExtentInfo, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
 
     def __repr__(self):
         size = (self.sizelProposed.cx, self.sizelProposed.cy)
