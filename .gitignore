@@ -5,6 +5,7 @@ comtypes/gen/
 !comtypes/gen/__init__.py
 comtypes/tools/__pycache__/*.pyc
 comtypes.egg-info/*
+custom location/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
