@@ -62,7 +62,7 @@ jobs:
           architecture: ${{ matrix.architecture }}
       - name: install comtypes
         run: |
-          pip install --upgrade setuptools
+          pip install --upgrade build
           python -m pip install .
           pip uninstall comtypes -y
           python test_pip_install.py
