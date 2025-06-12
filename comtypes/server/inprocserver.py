@@ -22,7 +22,7 @@ class ClassFactory(COMObject):
     _com_interfaces_ = [IClassFactory]
 
     def __init__(self, cls: Type[COMObject]) -> None:
-        super(ClassFactory, self).__init__()
+        super().__init__()
         self._cls = cls
 
     def IClassFactory_CreateInstance(

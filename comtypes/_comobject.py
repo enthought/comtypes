@@ -218,7 +218,7 @@ class COMObject:
     _dispimpl_: Dict[Tuple[comtypes.dispid, int], Callable[..., Any]]
 
     def __new__(cls, *args: Any, **kw: Any) -> "hints.Self":
-        self = super(COMObject, cls).__new__(cls)
+        self = super().__new__(cls)
         if isinstance(self, c_void_p):
             # We build the VTables only for direct instances of
             # CoClass, not for POINTERs to CoClass.

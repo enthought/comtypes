@@ -266,7 +266,7 @@ class DictPropertyBag(COMObject):
     _com_interfaces_ = [IPropertyBag]
 
     def __init__(self, **kw):
-        super(DictPropertyBag, self).__init__()
+        super().__init__()
         self.values = kw
 
     def Read(self, this, name, pVar, errorlog):

@@ -198,7 +198,7 @@ class Structure(_Struct_Union_Base):
             self.size = int(size)
         else:
             self.size = None
-        super(Structure, self).__init__()
+        super().__init__()
 
 
 class Union(_Struct_Union_Base):
@@ -220,7 +220,7 @@ class Union(_Struct_Union_Base):
             self.size = int(size)
         else:
             self.size = None
-        super(Union, self).__init__()
+        super().__init__()
 
 
 class Field:

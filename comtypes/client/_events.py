@@ -209,7 +209,7 @@ class _SinkMethodFinder(_MethodFinder):
     """
 
     def __init__(self, inst: COMObject, sink: Any) -> None:
-        super(_SinkMethodFinder, self).__init__(inst)
+        super().__init__(inst)
         self.sink = sink
 
     def find_method(self, fq_name: str, mthname: str) -> Callable[..., Any]:
@@ -229,7 +229,7 @@ class _SinkMethodFinder(_MethodFinder):
 
     def _find_method(self, fq_name: str, mthname: str) -> Callable[..., Any]:
         try:
-            return super(_SinkMethodFinder, self).find_method(fq_name, mthname)
+            return super().find_method(fq_name, mthname)
         except AttributeError:
             try:
                 return getattr(self.sink, fq_name)
