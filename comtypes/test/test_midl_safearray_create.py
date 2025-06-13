@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import unittest
 from ctypes import HRESULT, POINTER, c_int, pointer
 

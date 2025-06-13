@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # comtypes documentation build configuration file, created by
 # sphinx-quickstart on Mon Apr 07 16:12:34 2014.
