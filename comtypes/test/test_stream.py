@@ -37,7 +37,7 @@ def _create_stream() -> IStream:
 class Test_RemoteWrite(ut.TestCase):
     def test_RemoteWrite(self):
         stream = _create_stream()
-        test_data = "Some data".encode("utf-8")
+        test_data = b"Some data"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
 
         written = stream.RemoteWrite(pv, len(test_data))
@@ -49,7 +49,7 @@ class Test_RemoteWrite(ut.TestCase):
 class Test_RemoteRead(ut.TestCase):
     def test_RemoteRead(self):
         stream = _create_stream()
-        test_data = "Some data".encode("utf-8")
+        test_data = b"Some data"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         stream.RemoteWrite(pv, len(test_data))
 
