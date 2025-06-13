@@ -1,5 +1,3 @@
-# -*- coding: latin-1 -*-
-
 import datetime
 import sys
 import unittest
