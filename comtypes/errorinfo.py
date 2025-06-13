@@ -126,7 +126,7 @@ def ReportError(
             clsid = GUID(clsid)
         try:
             progid = clsid.as_progid()
-        except WindowsError:
+        except OSError:
             pass
         else:
             # progid for the class or application that created the error

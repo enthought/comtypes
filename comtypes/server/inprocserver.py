@@ -92,7 +92,7 @@ def _setup_logging(clsid: GUID) -> None:
 
     try:
         hkey = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Logging" % clsid)
-    except WindowsError:
+    except OSError:
         return
     from comtypes.logutil import NTDebugHandler
 

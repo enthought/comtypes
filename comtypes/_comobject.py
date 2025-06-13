@@ -414,7 +414,7 @@ class COMObject:
         try:
             self.__typelib
         except AttributeError:
-            raise WindowsError(hresult.E_NOTIMPL)
+            raise OSError(hresult.E_NOTIMPL)
         return self.__typelib.GetTypeInfoOfGuid(self._reg_clsid_)
 
     ################################################################
@@ -422,7 +422,7 @@ class COMObject:
 
     def IProvideClassInfo2_GetGUID(self, dwGuidKind: int) -> GUID:
         if dwGuidKind != GUIDKIND_DEFAULT_SOURCE_DISP_IID:
-            raise WindowsError(hresult.E_INVALIDARG)
+            raise OSError(hresult.E_INVALIDARG)
         return self._outgoing_interfaces_[0]._iid_
 
     ################################################################

@@ -27,7 +27,7 @@ def Dispatch(obj):
     if isinstance(obj, ctypes.POINTER(automation.IDispatch)):
         try:
             tinfo = obj.GetTypeInfo(0)
-        except (COMError, WindowsError):
+        except (OSError, COMError):
             return _Dispatch(obj)
         return lazybind.Dispatch(obj, tinfo)
     return obj

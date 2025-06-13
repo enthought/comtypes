@@ -33,7 +33,7 @@ def _shutdown(
     else:
         try:
             func()
-        except WindowsError:
+        except OSError:
             pass
     # Set the flag which means that calling obj.Release() is no longer
     # needed.

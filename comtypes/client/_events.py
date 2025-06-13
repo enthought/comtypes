@@ -104,7 +104,7 @@ class _AdviseConnection:
             if self.cookie is not None:
                 assert self.cp is not None
                 self.cp.Unadvise(self.cookie)
-        except (COMError, WindowsError):
+        except (OSError, COMError):
             # Are we sure we want to ignore errors here?
             pass
 
@@ -381,7 +381,7 @@ def PumpEvents(timeout: Any) -> None:
                 handles,
                 byref(ctypes.c_ulong()),
             )
-        except WindowsError as details:
+        except OSError as details:
             if details.winerror != hresult.RPC_S_CALLPENDING:  # timeout expired
                 raise
         else:
