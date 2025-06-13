@@ -58,7 +58,7 @@ class Test_IStorage(unittest.TestCase):
         filepath = Path(storage.Stat(STATFLAG_DEFAULT).pwcsName)
         self.assertTrue(filepath.exists())
         stream = storage.CreateStream("example", self.CREATE_STM_FLAG, 0, 0)
-        test_data = "Some data".encode("utf-8")
+        test_data = b"Some data"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         stream.RemoteWrite(pv, len(test_data))
         stream.Commit(STGC_DEFAULT)
