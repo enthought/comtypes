@@ -93,7 +93,7 @@ def catch_errors(
         except comtypes.ReturnHRESULT as err:
             (hr, text) = err.args
             return ReportError(text, iid=interface._iid_, clsid=clsid, hresult=hr)
-        except (COMError, WindowsError) as details:
+        except (OSError, COMError) as details:
             _error(
                 "Exception in %s.%s implementation:",
                 interface.__name__,
@@ -201,7 +201,7 @@ def hack(
                 msg = f"{source}: {descr}"
             hr = HRESULT_FROM_WIN32(hr)
             return ReportError(msg, iid=interface._iid_, clsid=clsid, hresult=hr)
-        except WindowsError as details:
+        except OSError as details:
             _error(
                 "Exception in %s.%s implementation:",
                 interface.__name__,

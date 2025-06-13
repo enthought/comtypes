@@ -115,7 +115,7 @@ def _create_comtypes_gen_package():
                 ofi = open(comtypes_init, "w")
                 ofi.write("# comtypes.gen package, directory for generated files.\n")
                 ofi.close()
-        except (OSError, IOError) as details:
+        except OSError as details:
             logger.info("Creating comtypes.gen package failed: %s", details)
             module = sys.modules["comtypes.gen"] = types.ModuleType("comtypes.gen")
             comtypes.gen = module

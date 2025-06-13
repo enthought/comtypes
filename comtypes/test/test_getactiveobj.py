@@ -33,7 +33,7 @@ class Test_Word(unittest.TestCase):
     def setUp(self):
         try:
             comtypes.client.GetActiveObject("Word.Application")
-        except WindowsError:
+        except OSError:
             pass
         else:
             # seems word is running, we cannot test this.

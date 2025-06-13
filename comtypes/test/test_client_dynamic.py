@@ -26,7 +26,7 @@ class Test_Dispatch_Function(ut.TestCase):
 
     def test_returns_dynamic_Dispatch_if_takes_ptrIDispatch_and_raised_winerr(self):
         obj = mock.MagicMock(spec=ctypes.POINTER(automation.IDispatch))
-        obj.GetTypeInfo.side_effect = WindowsError()
+        obj.GetTypeInfo.side_effect = OSError()
         self.assertIsInstance(dynamic.Dispatch(obj), dynamic._Dispatch)
 
     def test_returns_what_is_took_if_takes_other(self):

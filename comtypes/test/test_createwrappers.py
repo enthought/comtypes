@@ -51,7 +51,7 @@ def add_test(fname):
     def test(self):
         try:
             comtypes.typeinfo.LoadTypeLibEx(fname)
-        except WindowsError:
+        except OSError:
             return
         comtypes.client.GetModule(fname)
 

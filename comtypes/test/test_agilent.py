@@ -12,7 +12,7 @@ from comtypes.test import ResourceDenied
 
 try:
     GUID.from_progid("Agilent546XX.Agilent546XX")
-except WindowsError:
+except OSError:
     pass
 
 else:

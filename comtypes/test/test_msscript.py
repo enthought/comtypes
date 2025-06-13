@@ -11,7 +11,7 @@ from comtypes.client import CreateObject
 try:
     GUID.from_progid("MSScriptControl.ScriptControl")
     CreateObject("MSScriptControl.ScriptControl")
-except WindowsError:
+except OSError:
     # doesn't exist on Windows CE or in 64-bit.
     pass
 else:

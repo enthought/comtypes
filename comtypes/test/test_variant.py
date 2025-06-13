@@ -310,7 +310,7 @@ def check_perf(rep=20000):
         import cPickle as pickle
     try:
         previous = pickle.load(open("result.pickle", "rb"))
-    except IOError:
+    except OSError:
         previous = {}
 
     results = {}
