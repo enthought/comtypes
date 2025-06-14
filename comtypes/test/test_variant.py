@@ -290,10 +290,8 @@ def check_perf(rep=20000):
     by_var = byref(variable)
     ptr_var = pointer(variable)
 
-    if sys.version_info >= (3, 0):
-        import pickle
-    else:
-        import cPickle as pickle
+    import pickle
+
     try:
         previous = pickle.load(open("result.pickle", "rb"))
     except OSError:
