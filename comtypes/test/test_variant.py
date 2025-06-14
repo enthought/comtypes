@@ -115,33 +115,19 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(result, values)
 
     def test_pythonobjects(self):
-        if sys.version_info >= (3, 0):
-            objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
-        else:
-            objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
+        objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
         for x in objects:
-            v = VARIANT(x)
-            self.assertEqual(x, v.value)
+            with self.subTest(x=x):
+                v = VARIANT(x)
+                self.assertEqual(x, v.value)
 
     def test_integers(self):
         v = VARIANT()
 
-        int_type = int if sys.version_info >= (3, 0) else (int, long)
-
-        if hasattr(sys, "maxint"):
-            # this test doesn't work in Python 3000
-            v.value = sys.maxsize
-            self.assertEqual(v.value, sys.maxsize)
-            self.assertIsInstance(v.value, int_type)
-
-            v.value += 1
-            self.assertEqual(v.value, sys.maxsize + 1)
-            self.assertIsInstance(v.value, int_type)
-
         v.value = 1
 
         self.assertEqual(v.value, 1)
-        self.assertIsInstance(v.value, int_type)
+        self.assertIsInstance(v.value, int)
 
     def test_datetime(self):
         now = datetime.datetime.now()
@@ -304,10 +290,8 @@ def check_perf(rep=20000):
     by_var = byref(variable)
     ptr_var = pointer(variable)
 
-    if sys.version_info >= (3, 0):
-        import pickle
-    else:
-        import cPickle as pickle
+    import pickle
+
     try:
         previous = pickle.load(open("result.pickle", "rb"))
     except OSError:
