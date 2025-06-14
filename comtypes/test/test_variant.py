@@ -126,22 +126,10 @@ class VariantTestCase(unittest.TestCase):
     def test_integers(self):
         v = VARIANT()
 
-        int_type = int if sys.version_info >= (3, 0) else (int, long)
-
-        if hasattr(sys, "maxint"):
-            # this test doesn't work in Python 3000
-            v.value = sys.maxsize
-            self.assertEqual(v.value, sys.maxsize)
-            self.assertIsInstance(v.value, int_type)
-
-            v.value += 1
-            self.assertEqual(v.value, sys.maxsize + 1)
-            self.assertIsInstance(v.value, int_type)
-
         v.value = 1
 
         self.assertEqual(v.value, 1)
-        self.assertIsInstance(v.value, int_type)
+        self.assertIsInstance(v.value, int)
 
     def test_datetime(self):
         now = datetime.datetime.now()
