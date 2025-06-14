@@ -117,8 +117,9 @@ class VariantTestCase(unittest.TestCase):
     def test_pythonobjects(self):
         objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
         for x in objects:
-            v = VARIANT(x)
-            self.assertEqual(x, v.value)
+            with self.subTest(x=x):
+                v = VARIANT(x)
+                self.assertEqual(x, v.value)
 
     def test_integers(self):
         v = VARIANT()
