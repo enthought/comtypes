@@ -27,7 +27,7 @@ Download = "https://github.com/enthought/comtypes/releases"
 Issues = "https://github.com/enthought/comtypes/issues"
 
 [build-system]
-requires = ["setuptools>=61.2"]
+requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
