@@ -1,6 +1,16 @@
 # XXX need to find out what the share from comtypes.dataobject.
-from ctypes import *
-from ctypes import POINTER, c_int, sizeof
+from ctypes import (
+    HRESULT,
+    POINTER,
+    Structure,
+    alignment,
+    c_int,
+    c_ubyte,
+    c_ulong,
+    c_ushort,
+    c_void_p,
+    sizeof,
+)
 from ctypes.wintypes import _RECTL, HDC, SIZEL, tagPOINT, tagRECT
 
 from comtypes import COMMETHOD, GUID, IUnknown
