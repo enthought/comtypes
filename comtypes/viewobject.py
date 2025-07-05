@@ -1,8 +1,11 @@
 # XXX need to find out what the share from comtypes.dataobject.
 from ctypes import *
+from ctypes import POINTER, c_int, sizeof
 from ctypes.wintypes import _RECTL, HDC, SIZEL, tagPOINT, tagRECT
 
 from comtypes import COMMETHOD, GUID, IUnknown
+
+X64_PYTHON = sizeof(POINTER(c_int)) * 8 == 64
 
 
 class tagPALETTEENTRY(Structure):
@@ -27,7 +30,10 @@ class tagLOGPALETTE(Structure):
     ]
 
 
-assert sizeof(tagLOGPALETTE) == 8, sizeof(tagLOGPALETTE)
+if X64_PYTHON:
+    assert sizeof(tagLOGPALETTE) == 12, sizeof(tagLOGPALETTE)
+else:
+    assert sizeof(tagLOGPALETTE) == 8, sizeof(tagLOGPALETTE)
 assert alignment(tagLOGPALETTE) == 2, alignment(tagLOGPALETTE)
 
 
@@ -42,8 +48,12 @@ class tagDVTARGETDEVICE(Structure):
     ]
 
 
-assert sizeof(tagDVTARGETDEVICE) == 16, sizeof(tagDVTARGETDEVICE)
-assert alignment(tagDVTARGETDEVICE) == 4, alignment(tagDVTARGETDEVICE)
+if X64_PYTHON:
+    assert sizeof(tagDVTARGETDEVICE) == 24, sizeof(tagDVTARGETDEVICE)
+    assert alignment(tagDVTARGETDEVICE) == 8, alignment(tagDVTARGETDEVICE)
+else:
+    assert sizeof(tagDVTARGETDEVICE) == 16, sizeof(tagDVTARGETDEVICE)
+    assert alignment(tagDVTARGETDEVICE) == 4, alignment(tagDVTARGETDEVICE)
 
 
 class tagExtentInfo(Structure):
