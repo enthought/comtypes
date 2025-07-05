@@ -1,8 +1,9 @@
 import unittest
+from ctypes.wintypes import SIZEL
 
 import comtypes.client
 from comtypes import IUnknown
-from comtypes.viewobject import DVASPECT_CONTENT, IAdviseSink, IViewObject
+from comtypes.viewobject import DVASPECT_CONTENT, IAdviseSink, IViewObject, IViewObject2
 
 
 def create_shell_explorer() -> IUnknown:
@@ -26,3 +27,11 @@ class Test_IViewObject(unittest.TestCase):
         cookie = vo.Freeze(DVASPECT_CONTENT, -1, None)
         self.assertIsInstance(cookie, int)
         vo.Unfreeze(cookie)
+
+
+class Test_IViewObject2(unittest.TestCase):
+    def test_GetExtent(self):
+        vo2 = create_shell_explorer().QueryInterface(IViewObject2)
+        size = vo2.GetExtent(DVASPECT_CONTENT, -1, None)
+        self.assertTrue(size)
+        self.assertIsInstance(size, SIZEL)
