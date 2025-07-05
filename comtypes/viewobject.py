@@ -84,6 +84,10 @@ class tagExtentInfo(Structure):
 
 assert sizeof(tagExtentInfo) == 16, sizeof(tagExtentInfo)
 assert alignment(tagExtentInfo) == 4, alignment(tagExtentInfo)
+
+PALETTEENTRY = tagPALETTEENTRY
+LOGPALETTE = tagLOGPALETTE
+DVTARGETDEVICE = tagDVTARGETDEVICE
 DVEXTENTINFO = tagExtentInfo
 
 IAdviseSink = IUnknown  # fake the interface
