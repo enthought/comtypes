@@ -1,3 +1,4 @@
+import contextlib
 import unittest
 from ctypes.wintypes import POINT, RECT, SIZEL
 
@@ -11,13 +12,18 @@ from comtypes.viewobject import (
     IViewObjectEx,
 )
 
+with contextlib.redirect_stdout(None):  # supress warnings
+    comtypes.client.GetModule("mshtml.tlb")
+
+import comtypes.gen.MSHTML as mshtml
+
 
 def create_shell_explorer() -> IUnknown:
     return comtypes.client.CreateObject("Shell.Explorer")
 
 
 def create_html_document() -> IUnknown:
-    return comtypes.client.CreateObject("htmlfile")
+    return comtypes.client.CreateObject(mshtml.HTMLDocument)
 
 
 class Test_IViewObject(unittest.TestCase):
