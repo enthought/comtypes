@@ -41,8 +41,8 @@ class Test_IViewObject(unittest.TestCase):
 
 class Test_IViewObject2(unittest.TestCase):
     def test_GetExtent(self):
-        vo2 = create_shell_explorer().QueryInterface(IViewObject2)
-        size = vo2.GetExtent(DVASPECT_CONTENT, -1, None)
+        vo = create_shell_explorer().QueryInterface(IViewObject2)
+        size = vo.GetExtent(DVASPECT_CONTENT, -1, None)
         self.assertTrue(size)
         self.assertIsInstance(size, SIZEL)
 
