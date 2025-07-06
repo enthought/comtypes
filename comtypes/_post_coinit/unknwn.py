@@ -1,6 +1,7 @@
 # https://learn.microsoft.com/en-us/windows/win32/api/unknwn/
 
 import logging
+import sys
 from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
 from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Type, TypeVar
 
@@ -126,9 +127,12 @@ class _cominterface_meta(type):
             {"__com_interface__": self, "_needs_com_addref_": None},
         )
 
-        from ctypes import _pointer_type_cache  # type: ignore
+        if sys.version_info >= (3, 14):
+            self.__pointer_type__ = p
+        else:
+            from ctypes import _pointer_type_cache  # type: ignore
 
-        _pointer_type_cache[self] = p
+            _pointer_type_cache[self] = p
 
         if self._case_insensitive_:
             _meta_patch.case_insensitive(p)
