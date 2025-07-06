@@ -18,17 +18,13 @@ with contextlib.redirect_stdout(None):  # supress warnings
 import comtypes.gen.MSHTML as mshtml
 
 
-def create_shell_explorer() -> IUnknown:
-    return comtypes.client.CreateObject("Shell.Explorer")
-
-
 def create_html_document() -> IUnknown:
     return comtypes.client.CreateObject(mshtml.HTMLDocument)
 
 
 class Test_IViewObject(unittest.TestCase):
     def test_Advise_GetAdvise(self):
-        vo = create_shell_explorer().QueryInterface(IViewObject)
+        vo = create_html_document().QueryInterface(IViewObject)
         # Test that we can clear any existing advise connection.
         vo.SetAdvise(DVASPECT_CONTENT, 0, None)
         # Verify that no advise connection is present.
@@ -39,7 +35,7 @@ class Test_IViewObject(unittest.TestCase):
         self.assertFalse(sink)  # A NULL com pointer evaluates to False.
 
     def test_Freeze_Unfreeze(self):
-        vo = create_shell_explorer().QueryInterface(IViewObject)
+        vo = create_html_document().QueryInterface(IViewObject)
         cookie = vo.Freeze(DVASPECT_CONTENT, -1, None)
         self.assertIsInstance(cookie, int)
         vo.Unfreeze(cookie)
@@ -47,7 +43,7 @@ class Test_IViewObject(unittest.TestCase):
 
 class Test_IViewObject2(unittest.TestCase):
     def test_GetExtent(self):
-        vo = create_shell_explorer().QueryInterface(IViewObject2)
+        vo = create_html_document().QueryInterface(IViewObject2)
         size = vo.GetExtent(DVASPECT_CONTENT, -1, None)
         self.assertTrue(size)
         self.assertIsInstance(size, SIZEL)
