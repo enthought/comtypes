@@ -182,7 +182,7 @@ class NumpySupportTestCase(unittest.TestCase):
     def test_VT_I4_ndarray(self):
         t = _midlSAFEARRAY(c_long)
 
-        in_arr = numpy.array([11, 22, 33])
+        in_arr = numpy.array([11, 22, 33], dtype=numpy.int32)
         sa = t.from_param(in_arr)
 
         arr = get_ndarray(sa)
