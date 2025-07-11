@@ -30,7 +30,7 @@ jobs:
       - name: unittest comtypes
         run: |
           if ("${{ matrix.support }}" -eq "with 3rd parties") {
-            pip install 'numpy<2'
+            pip install numpy
             pip install pywin32
           }
           pip install coverage[toml]
