@@ -169,6 +169,7 @@ class Interop:
         self.enabled = True
         self.VARIANT_dtype = self._make_variant_dtype()
         self.typecodes = self._check_ctypeslib_typecodes()
+        self.datetime64 = self.numpy.datetime64
         self.com_null_date64 = self.numpy.datetime64("1899-12-30T00:00:00", "ns")
 
 

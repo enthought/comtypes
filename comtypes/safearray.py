@@ -398,13 +398,13 @@ def _make_safearray_type(itemtype):
 def _ndarray_to_variant_array(value):
     """Convert an ndarray to VARIANT_dtype array"""
     # Check that variant arrays are supported
-    if comtypes.npsupport.interop.VARIANT_dtype is None:
+    if comtypes.npsupport.VARIANT_dtype is None:
         msg = "VARIANT ndarrays require NumPy 1.7 or newer."
         raise RuntimeError(msg)
-    numpy = comtypes.npsupport.interop.numpy
+    numpy = comtypes.npsupport.numpy
 
     # special cases
-    if numpy.issubdtype(value.dtype, comtypes.npsupport.interop.datetime64):
+    if numpy.issubdtype(value.dtype, comtypes.npsupport.datetime64):
         return _datetime64_ndarray_to_variant_array(value)
 
     from comtypes.automation import VARIANT
@@ -423,12 +423,12 @@ def _datetime64_ndarray_to_variant_array(value):
     # fractional days.
     from comtypes.automation import VT_DATE
 
-    numpy = comtypes.npsupport.interop.numpy
+    numpy = comtypes.npsupport.numpy
     value = numpy.array(value, "datetime64[ns]")
-    value = value - comtypes.npsupport.interop.com_null_date64
+    value = value - comtypes.npsupport.com_null_date64
     # Convert to days
     value = value / numpy.timedelta64(1, "D")
-    varr = numpy.zeros(value.shape, comtypes.npsupport.interop.VARIANT_dtype, order="F")
+    varr = numpy.zeros(value.shape, comtypes.npsupport.VARIANT_dtype, order="F")
     varr["vt"] = VT_DATE
     varr["_"]["VT_R8"].flat = value.flat
     return varr

@@ -110,10 +110,6 @@ class NumpySupportTestCase(unittest.TestCase):
         self.assertTrue(isinstance(fourth, numpy.ndarray))
         self.assertTrue(isinstance(fifth, tuple))
 
-    @unittest.skip(
-        "Skipping because numpy cannot currently create an array of variants "
-        "because it doesn't recognise the VARIANT_BOOL typecode 'v'."
-    )
     def test_datetime64_ndarray(self):
         comtypes.npsupport.enable()
         dates = numpy.array(
