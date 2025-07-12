@@ -410,7 +410,7 @@ def _ndarray_to_variant_array(value):
     from comtypes.automation import VARIANT
 
     # Empty array
-    varr = numpy.zeros(value.shape, comtypes.npsupport.interop.VARIANT_dtype, order="F")
+    varr = numpy.zeros(value.shape, comtypes.npsupport.VARIANT_dtype, order="F")
     # Convert each value to a variant and put it in the array.
     varr.flat = [VARIANT(v) for v in value.flat]
     return varr
