@@ -143,6 +143,16 @@ class Interop:
             return False
         return isinstance(value, self.numpy.datetime64)
 
+    def can_cast(self, from_, to_, casting=None):
+        """Returns True if cast between data types can occur according to the
+        casting rule.  If from is a scalar or array scalar, also returns
+        True if the scalar value can be cast without overflow or truncation
+        to an integer.
+        """
+        if not self.enabled:
+            return False
+        return self.numpy.can_cast(from_, to_, casting=casting)
+
     @property
     def numpy(self):
         """The numpy package."""
