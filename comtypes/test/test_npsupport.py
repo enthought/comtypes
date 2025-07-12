@@ -3,7 +3,7 @@ import functools
 import importlib
 import inspect
 import unittest
-from ctypes import POINTER, c_double, c_long, pointer
+from ctypes import POINTER, c_double, c_long, c_longlong, pointer
 from decimal import Decimal
 
 import comtypes._npsupport
@@ -16,6 +16,7 @@ from comtypes.automation import (
     VT_BSTR,
     VT_DATE,
     VT_I4,
+    VT_I8,
     VT_VARIANT,
     _midlSAFEARRAY,
 )
@@ -23,13 +24,15 @@ from comtypes.safearray import safearray_as_ndarray
 
 try:
     import numpy
+
+    IMPORT_NUMPY_FAILED = False
 except ImportError:
-    numpy = None
+    IMPORT_NUMPY_FAILED = True
 
 
 def setUpModule():
     """Only run the module if we can import numpy."""
-    if numpy is None:
+    if IMPORT_NUMPY_FAILED:
         raise unittest.SkipTest("Skipping test_npsupport as numpy not installed.")
 
 
@@ -187,6 +190,20 @@ class NumpySupportTestCase(unittest.TestCase):
         self.assertEqual(numpy.dtype(int), arr.dtype)
         self.assertTrue((arr == in_arr).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_I4)
+
+    @enabled_disabled(disabled_error=ValueError)
+    def test_VT_I8_ndarray(self):
+        t = _midlSAFEARRAY(c_longlong)
+
+        in_arr = numpy.array([11, 22, 33], dtype=numpy.int64)
+        sa = t.from_param(in_arr)
+
+        arr = get_ndarray(sa)
+
+        self.assertTrue(isinstance(arr, numpy.ndarray))
+        self.assertEqual(numpy.dtype(int), arr.dtype)
+        self.assertTrue((arr == in_arr).all())
+        self.assertEqual(SafeArrayGetVartype(sa), VT_I8)
 
     @enabled_disabled(disabled_error=ValueError)
     def test_array(self):
