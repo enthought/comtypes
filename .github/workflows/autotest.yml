@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
         architecture: ['x86', 'x64']
         support: ['with 3rd parties', 'without 3rd parties']
     steps:
@@ -20,6 +20,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}
+          allow-prereleases: true
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Build and register the OutProc COM server
@@ -51,7 +52,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-2025, windows-2022]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
         architecture: ['x86', 'x64']
     steps:
       - uses: actions/checkout@v4
@@ -60,6 +61,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}
+          allow-prereleases: true
       - name: install comtypes
         run: |
           pip install --upgrade setuptools
