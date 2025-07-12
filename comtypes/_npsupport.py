@@ -92,27 +92,22 @@ class Interop:
 
         return self.numpy.dtype(tagVARIANT_format)
 
-    def _check_ctypeslib_typecodes(self):
+    def _build_typecodes(self):
         if not self.enabled:
             return {}
         import numpy as np
         from numpy import ctypeslib
 
-        try:
-            from numpy.ctypeslib import _typecodes
-        except ImportError:
-            from numpy.ctypeslib import as_ctypes_type
-
-            dtypes_to_ctypes = {}
-
-            for tp in set(np.sctypeDict.values()):
-                try:
-                    ctype_for = as_ctypes_type(tp)
-                    dtypes_to_ctypes[np.dtype(tp).str] = ctype_for
-                except NotImplementedError:
-                    continue
-            ctypeslib._typecodes = dtypes_to_ctypes
-        return ctypeslib._typecodes
+        typecodes = {}
+        for name in np.sctypeDict:
+            sct = np.sctypeDict[name]
+            try:
+                ct = ctypeslib.as_ctypes_type(sct)  # type: ignore
+                dt = np.dtype(sct)
+                typecodes[dt.str] = ct
+            except NotImplementedError:
+                pass
+        return typecodes
 
     def isndarray(self, value):
         """Check if a value is an ndarray.
@@ -168,7 +163,7 @@ class Interop:
         # if that succeeded we can be enabled
         self.enabled = True
         self.VARIANT_dtype = self._make_variant_dtype()
-        self.typecodes = self._check_ctypeslib_typecodes()
+        self.typecodes = self._build_typecodes()
         self.datetime64 = self.numpy.datetime64
         self.com_null_date64 = self.numpy.datetime64("1899-12-30T00:00:00", "ns")
 
