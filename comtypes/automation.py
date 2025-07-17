@@ -261,12 +261,11 @@ class tagVARIANT(Structure):
                     self.vt = VT_UI4
                     return
             # try VT_I8 next.
-            if value >= 0:
-                u.VT_I8 = value
-                if u.VT_I8 == value:
-                    # did work.
-                    self.vt = VT_I8
-                    return
+            u.VT_I8 = value
+            if u.VT_I8 == value:
+                # did work.
+                self.vt = VT_I8
+                return
             # try VT_UI8 next.
             if value >= 0:
                 u.VT_UI8 = value
