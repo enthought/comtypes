@@ -14,6 +14,7 @@ class Interop:
         self.enabled = False
         self.VARIANT_dtype = None
         self.typecodes = {}
+        self.ctype_to_dtype = {}
         self.datetime64 = None
         self.com_null_date64 = None
 
@@ -92,27 +93,25 @@ class Interop:
 
         return self.numpy.dtype(tagVARIANT_format)
 
-    def _check_ctypeslib_typecodes(self):
+    def _build_typemaps(self):
         if not self.enabled:
-            return {}
+            return {}, {}
         import numpy as np
         from numpy import ctypeslib
 
-        try:
-            from numpy.ctypeslib import _typecodes
-        except ImportError:
-            from numpy.ctypeslib import as_ctypes_type
-
-            dtypes_to_ctypes = {}
-
-            for tp in set(np.sctypeDict.values()):
-                try:
-                    ctype_for = as_ctypes_type(tp)
-                    dtypes_to_ctypes[np.dtype(tp).str] = ctype_for
-                except NotImplementedError:
-                    continue
-            ctypeslib._typecodes = dtypes_to_ctypes
-        return ctypeslib._typecodes
+        typecodes = {}
+        ctype_to_dtype = {}
+        for name in np.sctypeDict:
+            sct = np.sctypeDict[name]
+            try:
+                ct = ctypeslib.as_ctypes_type(sct)  # type: ignore
+                dt = np.dtype(sct)
+                typecodes[dt.str] = ct
+                if ct not in ctype_to_dtype:
+                    ctype_to_dtype[ct] = dt
+            except NotImplementedError:
+                pass
+        return typecodes, ctype_to_dtype
 
     def isndarray(self, value):
         """Check if a value is an ndarray.
@@ -144,6 +143,16 @@ class Interop:
             return False
         return isinstance(value, self.numpy.datetime64)
 
+    def can_cast(self, from_, to_, casting=None):
+        """Returns True if cast between data types can occur according to the
+        casting rule.  If from is a scalar or array scalar, also returns
+        True if the scalar value can be cast without overflow or truncation
+        to an integer.
+        """
+        if not self.enabled:
+            return False
+        return self.numpy.can_cast(from_, to_, casting=casting)
+
     @property
     def numpy(self):
         """The numpy package."""
@@ -168,7 +177,7 @@ class Interop:
         # if that succeeded we can be enabled
         self.enabled = True
         self.VARIANT_dtype = self._make_variant_dtype()
-        self.typecodes = self._check_ctypeslib_typecodes()
+        self.typecodes, self.ctype_to_dtype = self._build_typemaps()
         self.datetime64 = self.numpy.datetime64
         self.com_null_date64 = self.numpy.datetime64("1899-12-30T00:00:00", "ns")
 

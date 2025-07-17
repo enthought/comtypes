@@ -181,11 +181,16 @@ def _make_safearray_type(itemtype):
                 if value.dtype != comtypes.npsupport.VARIANT_dtype:
                     value = _ndarray_to_variant_array(value)
             else:
-                ai = value.__array_interface__
-                if ai["version"] != 3:
-                    raise TypeError("only __array_interface__ version 3 supported")
-                if cls._itemtype_ != comtypes.npsupport.typecodes[ai["typestr"]]:
-                    raise TypeError("Wrong array item type")
+                dt = comtypes.npsupport.ctype_to_dtype.get(cls._itemtype_)
+                if dt is None:
+                    raise TypeError(f"Unsupported item type: {cls._itemtype_}")
+                if value.dtype != dt:
+                    if comtypes.npsupport.can_cast(value.dtype, dt, casting="safe"):
+                        value = value.astype(dt)
+                    else:
+                        raise TypeError(
+                            f"Cannot safely cast numpy array from {value.dtype} to {dt}"
+                        )
 
             # SAFEARRAYs have Fortran order; convert the numpy array if needed
             if not value.flags.f_contiguous:
