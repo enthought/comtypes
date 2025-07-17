@@ -155,6 +155,16 @@ class VariantTestCase(unittest.TestCase):
                 self.assertEqual(v.value, val)
                 self.assertEqual(v.vt, vt)
 
+    def test_out_of_vt_uix_range(self):
+        MIN_VT_I8 = -(2**63)
+        MAX_VT_UI8 = 2**64 - 1
+        for val, vt in [
+            (MIN_VT_I8 - 1, VT_R8),
+            (MAX_VT_UI8 + 1, VT_R8),
+        ]:
+            with self.subTest(val=val, vt=vt), self.assertRaises(TypeError):
+                VARIANT().value = val
+
     def test_datetime(self):
         now = datetime.datetime.now()
 

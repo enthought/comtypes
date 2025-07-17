@@ -273,9 +273,7 @@ class tagVARIANT(Structure):
                     # did work.
                     self.vt = VT_UI8
                     return
-            # VT_R8 is last resort.
-            self.vt = VT_R8
-            u.VT_R8 = float(value)
+            raise TypeError(f"Cannot put {value!r} in VARIANT")
         elif isinstance(value, (float, c_double)):
             self.vt = VT_R8
             self._.VT_R8 = value
