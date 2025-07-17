@@ -245,9 +245,6 @@ class tagVARIANT(Structure):
         elif isinstance(value, bool):
             self.vt = VT_BOOL
             self._.VT_BOOL = value
-        elif isinstance(value, (int, c_int)):
-            self.vt = VT_I4
-            self._.VT_I4 = value
         elif isinstance(value, int):
             u = self._
             # try VT_I4 first.
@@ -264,12 +261,11 @@ class tagVARIANT(Structure):
                     self.vt = VT_UI4
                     return
             # try VT_I8 next.
-            if value >= 0:
-                u.VT_I8 = value
-                if u.VT_I8 == value:
-                    # did work.
-                    self.vt = VT_I8
-                    return
+            u.VT_I8 = value
+            if u.VT_I8 == value:
+                # did work.
+                self.vt = VT_I8
+                return
             # try VT_UI8 next.
             if value >= 0:
                 u.VT_UI8 = value
@@ -277,9 +273,7 @@ class tagVARIANT(Structure):
                     # did work.
                     self.vt = VT_UI8
                     return
-            # VT_R8 is last resort.
-            self.vt = VT_R8
-            u.VT_R8 = float(value)
+            raise TypeError(f"Cannot put {value!r} in VARIANT")
         elif isinstance(value, (float, c_double)):
             self.vt = VT_R8
             self._.VT_R8 = value
@@ -364,6 +358,9 @@ class tagVARIANT(Structure):
         elif isinstance(value, c_uint):
             self.vt = VT_UI4
             self._.VT_UI4 = value
+        elif isinstance(value, c_int):
+            self.vt = VT_I4
+            self._.VT_I4 = value
         elif isinstance(value, c_float):
             self.vt = VT_R4
             self._.VT_R4 = value
