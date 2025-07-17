@@ -185,9 +185,7 @@ def _make_safearray_type(itemtype):
                 if dt is None:
                     raise TypeError(f"Unsupported item type: {cls._itemtype_}")
                 if value.dtype != dt:
-                    if comtypes.npsupport.numpy.can_cast(
-                        value.dtype, dt, casting="safe"
-                    ):
+                    if comtypes.npsupport.can_cast(value.dtype, dt, casting="safe"):
                         value = value.astype(dt)
                     else:
                         raise TypeError(
