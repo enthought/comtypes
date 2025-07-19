@@ -49,7 +49,7 @@ def _calc_offset():
 
     argobj = PyCArgObject.from_address(id(ref))
 
-    if argobj.obj != id(obj) or argobj.p != addressof(obj) or argobj.tag != "P":
+    if argobj.obj != id(obj) or argobj.p != addressof(obj) or argobj.tag != b"P":
         raise RuntimeError("PyCArgObject field definitions incorrect")
 
     return PyCArgObject.p.offset  # offset of the pointer field
