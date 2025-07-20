@@ -6,6 +6,7 @@ from ctypes import (
     POINTER,
     Structure,
     Union,
+    _SimpleCData,
     addressof,
     byref,
     c_byte,
@@ -21,10 +22,13 @@ from ctypes import (
     sizeof,
 )
 from ctypes import Array as _CArrayType
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Type, TypeVar, overload
 
 if TYPE_CHECKING:
     from ctypes import _CArgObject, _CData
+
+_T = TypeVar("_T")
+_CT = TypeVar("_CT", bound="_CData")
 
 
 def _calc_offset():
@@ -110,6 +114,12 @@ def byref_at(
 #
 # cast_field
 #
+@overload
+def cast_field(
+    struct: Structure, fieldname: str, fieldtype: Type[_SimpleCData[_T]]
+) -> _T: ...
+@overload
+def cast_field(struct: Structure, fieldname: str, fieldtype: Type[_CT]) -> _CT: ...
 def cast_field(
     struct,
     fieldname,
