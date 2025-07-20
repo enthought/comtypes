@@ -20,6 +20,11 @@ from ctypes import (
     cast,
     sizeof,
 )
+from ctypes import Array as _CArrayType
+from typing import TYPE_CHECKING, overload
+
+if TYPE_CHECKING:
+    from ctypes import _CArgObject, _CData
 
 
 def _calc_offset():
@@ -76,6 +81,10 @@ def _calc_offset():
 #
 # byref_at
 #
+@overload
+def byref_at(obj: _CArrayType, offset: int) -> "_CArgObject": ...
+@overload
+def byref_at(obj: "_CData", offset: int) -> "_CArgObject": ...
 def byref_at(
     obj,
     offset,
