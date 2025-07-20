@@ -105,12 +105,8 @@ def cast_field(
     struct,
     fieldname,
     fieldtype,
-    offset=0,
     _POINTER=POINTER,
     _byref_at=byref_at,
-    _byref=byref,
-    _divmod=divmod,
-    _sizeof=sizeof,
 ):
     """cast_field(struct, fieldname, fieldtype)
 
