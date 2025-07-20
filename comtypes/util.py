@@ -2,7 +2,24 @@
 and cast_field(struct, fieldname, fieldtype).
 """
 
-from ctypes import *
+from ctypes import (
+    POINTER,
+    Structure,
+    Union,
+    addressof,
+    byref,
+    c_byte,
+    c_char,
+    c_double,
+    c_float,
+    c_int,
+    c_long,
+    c_longlong,
+    c_short,
+    c_void_p,
+    cast,
+    sizeof,
+)
 
 
 def _calc_offset():
