@@ -116,7 +116,7 @@ def byref_at(
 #
 @overload
 def cast_field(
-    struct: Structure, fieldname: str, fieldtype: Type[_SimpleCData[_T]]
+    struct: Structure, fieldname: str, fieldtype: Type["_SimpleCData[_T]"]
 ) -> _T: ...
 @overload
 def cast_field(struct: Structure, fieldname: str, fieldtype: Type[_CT]) -> _CT: ...
