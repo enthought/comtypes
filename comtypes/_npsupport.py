@@ -92,7 +92,7 @@ class Interop:
 
         return self.numpy.dtype(tagVARIANT_format)
 
-    def _check_ctypeslib_typecodes(self):
+    def _build_typecodes(self):
         if not self.enabled:
             return {}
         import numpy as np
@@ -168,7 +168,7 @@ class Interop:
         # if that succeeded we can be enabled
         self.enabled = True
         self.VARIANT_dtype = self._make_variant_dtype()
-        self.typecodes = self._check_ctypeslib_typecodes()
+        self.typecodes = self._build_typecodes()
         self.datetime64 = self.numpy.datetime64
         self.com_null_date64 = self.numpy.datetime64("1899-12-30T00:00:00", "ns")
 
