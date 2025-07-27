@@ -2,6 +2,7 @@
 and cast_field(struct, fieldname, fieldtype).
 """
 
+import sys
 from ctypes import (
     POINTER,
     Structure,
@@ -15,6 +16,7 @@ from ctypes import (
     c_float,
     c_int,
     c_long,
+    c_longdouble,
     c_longlong,
     c_short,
     c_void_p,
@@ -38,17 +40,61 @@ def _calc_offset():
     # The definition of PyCArgObject in C code (that is the type of
     # object that a byref() call returns):
     class PyCArgObject(Structure):
+        if sys.version_info >= (3, 14):
+            # While C compilers automatically determine appropriate
+            # alignment based on field data types, `ctypes` requires
+            # explicit control over memory layout.
+            #
+            # `_pack_ = 8` ensures 8-byte alignment for fields.
+            #
+            # This works on both 32-bit and 64-bit systems:
+            # - On 64-bit systems, this matches the natural alignment
+            #   for pointers.
+            # - On 32-bit systems, this is more strict than necessary
+            #   (4-byte would be enough), but still produces the
+            #   correct memory layout with proper padding.
+            #
+            # With `_pack_`, `ctypes` will automatically add padding
+            # here to ensure proper alignment of the `value` field
+            # after the `tag` and after the `size`.
+            _pack_ = 8
+        else:
+            # No special packing needed for Python 3.13 and earlier
+            # because the default alignment works fine for the legacy
+            # structure.
+            pass
+
         class value(Union):
-            _fields_ = [
-                ("c", c_char),
-                ("h", c_short),
-                ("i", c_int),
-                ("l", c_long),
-                ("q", c_longlong),
-                ("d", c_double),
-                ("f", c_float),
-                ("p", c_void_p),
-            ]
+            if sys.version_info >= (3, 14):
+                # In Python 3.14, the tagPyCArgObject structure was
+                # modified to better support complex types.
+                _fields_ = [
+                    ("c", c_char),
+                    ("b", c_char),
+                    ("h", c_short),
+                    ("i", c_int),
+                    ("l", c_long),
+                    ("q", c_longlong),
+                    ("g", c_longdouble),
+                    ("d", c_double),
+                    ("f", c_float),
+                    ("p", c_void_p),
+                    # arrays for real and imaginary of complex
+                    ("D", c_double * 2),
+                    ("F", c_float * 2),
+                    ("G", c_longdouble * 2),
+                ]
+            else:
+                _fields_ = [
+                    ("c", c_char),
+                    ("h", c_short),
+                    ("i", c_int),
+                    ("l", c_long),
+                    ("q", c_longlong),
+                    ("d", c_double),
+                    ("f", c_float),
+                    ("p", c_void_p),
+                ]
 
         #
         # Thanks to Lenard Lindstrom for this tip:
@@ -66,9 +112,13 @@ def _calc_offset():
         _anonymous_ = ["value"]
 
     # additional checks to make sure that everything works as expected
-
-    if sizeof(PyCArgObject) != type(byref(c_int())).__basicsize__:
-        raise RuntimeError("sizeof(PyCArgObject) invalid")
+    expected_size = type(byref(c_int())).__basicsize__
+    actual_size = sizeof(PyCArgObject)
+    if actual_size != expected_size:
+        raise RuntimeError(
+            f"sizeof(PyCArgObject) mismatch: expected {expected_size}, "
+            f"got {actual_size}."
+        )
 
     obj = c_int()
     ref = byref(obj)
