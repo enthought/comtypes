@@ -40,6 +40,30 @@ def _calc_offset():
     # The definition of PyCArgObject in C code (that is the type of
     # object that a byref() call returns):
     class PyCArgObject(Structure):
+        if sys.version_info >= (3, 14):
+            # While C compilers automatically determine appropriate
+            # alignment based on field data types, `ctypes` requires
+            # explicit control over memory layout.
+            #
+            # `_pack_ = 8` ensures 8-byte alignment for fields.
+            #
+            # This works on both 32-bit and 64-bit systems:
+            # - On 64-bit systems, this matches the natural alignment
+            #   for pointers.
+            # - On 32-bit systems, this is more strict than necessary
+            #   (4-byte would be enough), but still produces the
+            #   correct memory layout with proper padding.
+            #
+            # With `_pack_`, `ctypes` will automatically add padding
+            # here to ensure proper alignment of the `value` field
+            # after the `tag` and after the `size`.
+            _pack_ = 8
+        else:
+            # No special packing needed for Python 3.13 and earlier
+            # because the default alignment works fine for the legacy
+            # structure.
+            pass
+
         class value(Union):
             if sys.version_info >= (3, 14):
                 # In Python 3.14, the tagPyCArgObject structure was
