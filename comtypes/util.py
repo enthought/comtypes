@@ -2,6 +2,7 @@
 and cast_field(struct, fieldname, fieldtype).
 """
 
+import sys
 from ctypes import (
     POINTER,
     Structure,
@@ -15,6 +16,7 @@ from ctypes import (
     c_float,
     c_int,
     c_long,
+    c_longdouble,
     c_longlong,
     c_short,
     c_void_p,
@@ -39,16 +41,36 @@ def _calc_offset():
     # object that a byref() call returns):
     class PyCArgObject(Structure):
         class value(Union):
-            _fields_ = [
-                ("c", c_char),
-                ("h", c_short),
-                ("i", c_int),
-                ("l", c_long),
-                ("q", c_longlong),
-                ("d", c_double),
-                ("f", c_float),
-                ("p", c_void_p),
-            ]
+            if sys.version_info >= (3, 14):
+                # In Python 3.14, the tagPyCArgObject structure was
+                # modified to better support complex types.
+                _fields_ = [
+                    ("c", c_char),
+                    ("b", c_char),
+                    ("h", c_short),
+                    ("i", c_int),
+                    ("l", c_long),
+                    ("q", c_longlong),
+                    ("g", c_longdouble),
+                    ("d", c_double),
+                    ("f", c_float),
+                    ("p", c_void_p),
+                    # arrays for real and imaginary of complex
+                    ("D", c_double * 2),
+                    ("F", c_float * 2),
+                    ("G", c_longdouble * 2),
+                ]
+            else:
+                _fields_ = [
+                    ("c", c_char),
+                    ("h", c_short),
+                    ("i", c_int),
+                    ("l", c_long),
+                    ("q", c_longlong),
+                    ("d", c_double),
+                    ("f", c_float),
+                    ("p", c_void_p),
+                ]
 
         #
         # Thanks to Lenard Lindstrom for this tip:
