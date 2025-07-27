@@ -96,23 +96,17 @@ class Interop:
         if not self.enabled:
             return {}
         import numpy as np
-        from numpy import ctypeslib
+        from numpy.ctypeslib import as_ctypes_type
 
-        try:
-            from numpy.ctypeslib import _typecodes
-        except ImportError:
-            from numpy.ctypeslib import as_ctypes_type
+        dtypes_to_ctypes = {}
 
-            dtypes_to_ctypes = {}
-
-            for tp in set(np.sctypeDict.values()):
-                try:
-                    ctype_for = as_ctypes_type(tp)
-                    dtypes_to_ctypes[np.dtype(tp).str] = ctype_for
-                except NotImplementedError:
-                    continue
-            ctypeslib._typecodes = dtypes_to_ctypes
-        return ctypeslib._typecodes
+        for tp in set(np.sctypeDict.values()):
+            try:
+                ctype_for = as_ctypes_type(tp)
+                dtypes_to_ctypes[np.dtype(tp).str] = ctype_for
+            except NotImplementedError:
+                continue
+        return dtypes_to_ctypes
 
     def isndarray(self, value):
         """Check if a value is an ndarray.
