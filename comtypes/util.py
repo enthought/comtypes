@@ -66,9 +66,13 @@ def _calc_offset():
         _anonymous_ = ["value"]
 
     # additional checks to make sure that everything works as expected
-
-    if sizeof(PyCArgObject) != type(byref(c_int())).__basicsize__:
-        raise RuntimeError("sizeof(PyCArgObject) invalid")
+    expected_size = type(byref(c_int())).__basicsize__
+    actual_size = sizeof(PyCArgObject)
+    if actual_size != expected_size:
+        raise RuntimeError(
+            f"sizeof(PyCArgObject) mismatch: expected {expected_size}, "
+            f"got {actual_size}."
+        )
 
     obj = c_int()
     ref = byref(obj)
