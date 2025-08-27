@@ -1,6 +1,32 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.12
+--------------
+* Add support for coverage. By @moi15moi.
+* CI/CD Improvements for runners and the codecov badge. By @junkmd.
+* Add signed 32-bit hexadecimal converters. By @junkmd.
+* Add ``Test_Stat`` to ``test_stream``. By @junkmd.
+* Add client-side ``RegisterActiveObject``. By @junkmd.
+* Remove useless ``object`` inheritance from every class. By @moi15moi.
+* Modernize ``super()`` calls by removing explicit class and instance arguments. By @moi15moi.
+* Eliminate outdated encoding boilerplates. By @moi15moi.
+* Update byte string creation to use ``b""`` instead of ``str.encode("utf-8")``. By @moi15moi.
+* Introduce ``codecov.yml``. By @moi15moi.
+* Migrate exception catches from older aliases to ``OSError``. By @moi15moi.
+* Remove obsolete Python 2 compatibility code in ``test_variant``. By @junkmd.
+* Skip ``test_eval`` in INPROC server tests due to instability. By @junkmd.
+* Adjust structure sizes and alignments for 64-bit Python in ``viewobject.py``. By @junkmd.
+* Add ``test_viewobject``. By @junkmd.
+* Ensure ``test_npsupport`` passes with ``numpy>=2.0.0`` by explicitly setting ``dtype=numpy.int32``. By @junkmd.
+* Add tests for ``DictPropertyBag`` and type hints for ``IPropertyBag``. By @junkmd.
+* Fix ``numpy`` interoperability and enable ``datetime64`` tests. By @junkmd.
+* Revive and correct integer handling logic for ``VARIANT``s when setting values. By @junkmd.
+* Add tests for ``messageloop``. By @junkmd.
+* Revive ``util`` and add comprehensive tests. By @junkmd.
+* Refactor and enhance ``util`` with explicit imports and typing. By @junkmd.
+* Modernize ``npsupport`` by removing the patch for the ``np._typecodes``. By @junkmd.
+
 Release 1.4.11
 --------------
 * Improve ``PARAMFLAG_...`` and ``DISPATCH_...`` constants definitions and imports. By @junkmd.
