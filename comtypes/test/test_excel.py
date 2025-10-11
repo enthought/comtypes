@@ -125,8 +125,7 @@ PY_VER = "Python {0}.{1}.{2}".format(*sys.version_info[:3])
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
 @unittest.skipIf(
-    sys.version_info[:2] == (3, 8)
-    or sys.version_info[:2] == (3, 9)
+    sys.version_info[:2] == (3, 9)
     or (sys.version_info[:2] == (3, 10) and sys.version_info < (3, 10, 10))
     or (sys.version_info[:2] == (3, 11) and sys.version_info < (3, 11, 2)),
     f"This fails in {PY_VER}. See https://github.com/enthought/comtypes/issues/212",

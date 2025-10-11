@@ -1,4 +1,5 @@
 # comtypes._meta helper module
+import sys
 from ctypes import POINTER, c_void_p, cast
 
 import comtypes
@@ -74,7 +75,7 @@ class _coclass_meta(type):
             # Depending on a version or revision of Python, this may be essential.
             return self
 
-        PTR = _coclass_pointer_meta(
+        p = _coclass_pointer_meta(
             f"POINTER({self.__name__})",
             (self, c_void_p),
             {
@@ -82,9 +83,12 @@ class _coclass_meta(type):
                 "from_param": classmethod(_coclass_from_param),
             },
         )
-        from ctypes import _pointer_type_cache  # type: ignore
+        if sys.version_info >= (3, 14):
+            self.__pointer_type__ = p
+        else:
+            from ctypes import _pointer_type_cache  # type: ignore
 
-        _pointer_type_cache[self] = PTR
+            _pointer_type_cache[self] = p
 
         return self
 
