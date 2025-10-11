@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
         architecture: ['x86', 'x64']
         support: ['with 3rd parties', 'without 3rd parties']
     steps:
@@ -51,7 +51,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-2025, windows-2022]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
         architecture: ['x86', 'x64']
     steps:
       - uses: actions/checkout@v4
