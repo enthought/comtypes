@@ -1,6 +1,13 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.13
+--------------
+* Remove Python 3.8 and add Python 3.14 to the CI pipelines. By @junkmd.
+* Declare the minimum Python version as 3.9. By @junkmd. By @junkmd.
+* Update ``PyCArgObject.value`` for Python 3.14 compatibility. By @junkmd.
+* Add version bridges for the ``__pointer_type__`` attribute protocol. By @junkmd.
+
 Release 1.4.12
 --------------
 * Add support for coverage. By @moi15moi.
