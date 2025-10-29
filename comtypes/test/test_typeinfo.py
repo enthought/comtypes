@@ -101,10 +101,10 @@ class Test_GetModuleFileName(unittest.TestCase):
         sys.prefix == sys.base_prefix,
         "This will fail in a virtual environment.",
     )
-    def test_null_handler(self):
+    def test_null_handler_sys_executable(self):
         self.assertEqual(GetModuleFileName(None, MAX_PATH), sys.executable)
 
-    def test_null_handler2(self):
+    def test_null_handler_sys_base_prefix(self):
         self.assertEqual(
             os.path.commonpath([GetModuleFileName(None, MAX_PATH), sys.base_prefix]),
             sys.base_prefix,
