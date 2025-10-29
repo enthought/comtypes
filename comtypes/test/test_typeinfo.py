@@ -1,4 +1,5 @@
 import ctypes
+import os
 import sys
 import unittest
 from ctypes.wintypes import MAX_PATH
@@ -98,6 +99,12 @@ class Test(unittest.TestCase):
 class Test_GetModuleFileName(unittest.TestCase):
     def test_null_handler(self):
         self.assertEqual(GetModuleFileName(None, MAX_PATH), sys.executable)
+
+    def test_null_handler2(self):
+        self.assertEqual(
+            os.path.commonpath([GetModuleFileName(None, MAX_PATH), sys.base_prefix]),
+            sys.base_prefix,
+        )
 
     def test_loaded_module_handle(self):
         import _ctypes
