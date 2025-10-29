@@ -97,6 +97,10 @@ class Test(unittest.TestCase):
 
 
 class Test_GetModuleFileName(unittest.TestCase):
+    @unittest.skipUnless(
+        sys.prefix == sys.base_prefix,
+        "This will fail in a virtual environment.",
+    )
     def test_null_handler(self):
         self.assertEqual(GetModuleFileName(None, MAX_PATH), sys.executable)
 
