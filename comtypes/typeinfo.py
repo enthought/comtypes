@@ -768,6 +768,10 @@ def GetModuleFileName(handle: Optional[int], maxsize: int) -> str:
     https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getmodulefilenamew
     """
     buf = create_unicode_buffer(maxsize)
+    # In a Python virtual environment on Windows, the Windows API
+    # `GetModuleFileNameW(NULL, ..., ...)` returns the path to the base
+    # `python.exe` (located within `sys.base_prefix`, not same as
+    # `sys.executable`).
     length = _GetModuleFileNameW(handle, buf, maxsize)
     if not length:
         raise ctypes.WinError()
