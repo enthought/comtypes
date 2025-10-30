@@ -1,4 +1,5 @@
 import ctypes
+import os
 import sys
 import unittest
 from ctypes.wintypes import MAX_PATH
@@ -96,8 +97,18 @@ class Test(unittest.TestCase):
 
 
 class Test_GetModuleFileName(unittest.TestCase):
-    def test_null_handler(self):
+    @unittest.skipUnless(
+        sys.prefix == sys.base_prefix,
+        "This will fail in a virtual environment.",
+    )
+    def test_null_handler_sys_executable(self):
         self.assertEqual(GetModuleFileName(None, MAX_PATH), sys.executable)
+
+    def test_null_handler_sys_base_prefix(self):
+        self.assertEqual(
+            os.path.commonpath([GetModuleFileName(None, MAX_PATH), sys.base_prefix]),
+            sys.base_prefix,
+        )
 
     def test_loaded_module_handle(self):
         import _ctypes

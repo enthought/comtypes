@@ -765,9 +765,13 @@ def GetModuleFileName(handle: Optional[int], maxsize: int) -> str:
     """Returns the fullpath of the loaded module specified by the handle.
     If the handle is NULL, returns the executable file path of the current process.
 
-    https://learn.microsoft.com/ja-jp/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw
+    https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getmodulefilenamew
     """
     buf = create_unicode_buffer(maxsize)
+    # In a Python virtual environment on Windows, the Windows API
+    # `GetModuleFileNameW(NULL, ..., ...)` returns the path to the base
+    # `python.exe` (located within `sys.base_prefix`, not same as
+    # `sys.executable`).
     length = _GetModuleFileNameW(handle, buf, maxsize)
     if not length:
         raise ctypes.WinError()
