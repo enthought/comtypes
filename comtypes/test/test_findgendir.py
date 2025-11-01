@@ -5,7 +5,7 @@ import sys
 import tempfile
 import types
 import unittest
-from typing import Iterator
+from collections.abc import Iterator
 from unittest import mock
 
 import comtypes
