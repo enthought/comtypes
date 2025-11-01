@@ -8,7 +8,6 @@ from ctypes import _CData, _CDataType
 from typing import Annotated as Annotated
 from typing import Any as Any
 from typing import ClassVar, Generic, NoReturn, Optional, Protocol, TypeVar, overload
-from typing import Tuple as Tuple
 from typing import Union as _UnionT
 
 if sys.version_info >= (3, 10):

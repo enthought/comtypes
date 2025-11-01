@@ -263,7 +263,7 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
         elif len(outargs) == 1:
             out = outargs[0]
         else:
-            out = "hints.Tuple[" + ", ".join(outargs) + "]"
+            out = "tuple[" + ", ".join(outargs) + "]"
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
         content = f"def {name}({in_}) -> {out}: ..."
         if keyword.iskeyword(name):
