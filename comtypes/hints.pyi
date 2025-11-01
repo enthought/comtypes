@@ -5,15 +5,12 @@ import ctypes
 import sys
 from collections.abc import Callable, Iterator, Sequence
 from ctypes import _CData, _CDataType
+from typing import Annotated as Annotated
 from typing import Any as Any
 from typing import ClassVar, Generic, NoReturn, Optional, Protocol, TypeVar, overload
 from typing import Tuple as Tuple
 from typing import Union as _UnionT
 
-if sys.version_info >= (3, 9):
-    from typing import Annotated as Annotated
-else:
-    from typing_extensions import Annotated as Annotated
 if sys.version_info >= (3, 10):
     from typing import Concatenate, ParamSpec, TypeAlias
     from typing import TypeGuard as TypeGuard
