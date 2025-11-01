@@ -3,16 +3,13 @@
 # - utilities for type hints.
 import ctypes
 import sys
+from collections.abc import Callable, Iterator, Sequence
 from ctypes import _CData, _CDataType
-from typing import Any as Any, ClassVar, Generic, NoReturn, Protocol, TypeVar, overload
-from typing import Optional, Union as _UnionT
-from typing import List, Tuple as Tuple, Type
-from typing import Callable, Iterator, Sequence
+from typing import Annotated as Annotated
+from typing import Any as Any
+from typing import ClassVar, Generic, NoReturn, Optional, Protocol, TypeVar, overload
+from typing import Union as _UnionT
 
-if sys.version_info >= (3, 9):
-    from typing import Annotated as Annotated
-else:
-    from typing_extensions import Annotated as Annotated
 if sys.version_info >= (3, 10):
     from typing import Concatenate, ParamSpec, TypeAlias
     from typing import TypeGuard as TypeGuard
@@ -60,7 +57,7 @@ class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
     @overload
     @classmethod
     def create(
-        cls: Type[LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]]],
+        cls: type[LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]]],
         value: Sequence[_T_IUnknown],
         extra: ctypes._Pointer[GUID] = ...,
     ) -> LP_SAFEARRAY[ctypes._Pointer[_T_IUnknown]]: ...
@@ -108,18 +105,18 @@ class _GetSetNormalProperty(Generic[_T_Inst, _R_Get, _T_SetVal]):
     fset: Callable[[_T_Inst, _T_SetVal], Any]
 
     @overload
-    def __get__(self, instance: None, owner: Type[_T_Inst]) -> Self: ...
+    def __get__(self, instance: None, owner: type[_T_Inst]) -> Self: ...
     @overload
-    def __get__(self, instance: _T_Inst, owner: Optional[Type[_T_Inst]]) -> _R_Get: ...
+    def __get__(self, instance: _T_Inst, owner: Optional[type[_T_Inst]]) -> _R_Get: ...
     def __set__(self, instance: _T_Inst, value: _T_SetVal) -> None: ...
 
 class _GetOnlyNormalProperty(Generic[_T_Inst, _R_Get]):
     fget: Callable[[_T_Inst], Any]
 
     @overload
-    def __get__(self, instance: None, owner: Type[_T_Inst]) -> Self: ...
+    def __get__(self, instance: None, owner: type[_T_Inst]) -> Self: ...
     @overload
-    def __get__(self, instance: _T_Inst, owner: Optional[Type[_T_Inst]]) -> _R_Get: ...
+    def __get__(self, instance: _T_Inst, owner: Optional[type[_T_Inst]]) -> _R_Get: ...
     def __set__(self, instance: _T_Inst, value: Any) -> NoReturn: ...
 
 class _SetOnlyNormalProperty(Generic[_T_Inst, _T_SetVal]):
@@ -127,10 +124,10 @@ class _SetOnlyNormalProperty(Generic[_T_Inst, _T_SetVal]):
     fset: Callable[[_T_Inst, _T_SetVal], Any]
 
     @overload
-    def __get__(self, instance: None, owner: Type[_T_Inst]) -> Self: ...
+    def __get__(self, instance: None, owner: type[_T_Inst]) -> Self: ...
     @overload
     def __get__(
-        self, instance: _T_Inst, owner: Optional[Type[_T_Inst]]
+        self, instance: _T_Inst, owner: Optional[type[_T_Inst]]
     ) -> NoReturn: ...
     def __set__(self, instance: _T_Inst, value: _T_SetVal) -> None: ...
 
@@ -164,10 +161,10 @@ class _GetSetNamedProperty(Generic[_T_Inst, _P_Get, _R_Get, _P_Set]):
     __doc__: Optional[str]
 
     @overload
-    def __get__(self, instance: None, owner: Type[_T_Inst]) -> Self: ...
+    def __get__(self, instance: None, owner: type[_T_Inst]) -> Self: ...
     @overload
     def __get__(
-        self, instance: _T_Inst, owner: Optional[Type[_T_Inst]]
+        self, instance: _T_Inst, owner: Optional[type[_T_Inst]]
     ) -> _GetSetBoundNamedProperty[_T_Inst, _P_Get, _R_Get, _P_Set]: ...
     def __set__(self, instance: _T_Inst, value: Any) -> NoReturn: ...
 
@@ -186,10 +183,10 @@ class _GetOnlyNamedProperty(Generic[_T_Inst, _P_Get, _R_Get]):
     __doc__: Optional[str]
 
     @overload
-    def __get__(self, instance: None, owner: Type[_T_Inst]) -> Self: ...
+    def __get__(self, instance: None, owner: type[_T_Inst]) -> Self: ...
     @overload
     def __get__(
-        self, instance: _T_Inst, owner: Optional[Type[_T_Inst]]
+        self, instance: _T_Inst, owner: Optional[type[_T_Inst]]
     ) -> _GetOnlyBoundNamedProperty[_T_Inst, _P_Get, _R_Get]: ...
     def __set__(self, instance: _T_Inst, value: Any) -> NoReturn: ...
 
@@ -208,10 +205,10 @@ class _SetOnlyNamedProperty(Generic[_T_Inst, _P_Set]):
     __doc__: Optional[str]
 
     @overload
-    def __get__(self, instance: None, owner: Type[_T_Inst]) -> Self: ...
+    def __get__(self, instance: None, owner: type[_T_Inst]) -> Self: ...
     @overload
     def __get__(
-        self, instance: _T_Inst, owner: Optional[Type[_T_Inst]]
+        self, instance: _T_Inst, owner: Optional[type[_T_Inst]]
     ) -> _SetOnlyBoundNamedProperty[_T_Inst, _P_Set]: ...
     def __set__(self, instance: _T_Inst, value: Any) -> NoReturn: ...
 
@@ -234,9 +231,9 @@ def named_property(
 
 class _Descriptor(Protocol[_T_Inst, _R_Get]):
     @overload
-    def __get__(self, instance: None, owner: Type[_T_Inst]) -> Self: ...
+    def __get__(self, instance: None, owner: type[_T_Inst]) -> Self: ...
     @overload
-    def __get__(self, instance: _T_Inst, owner: Optional[Type[_T_Inst]]) -> _R_Get: ...
+    def __get__(self, instance: _T_Inst, owner: Optional[type[_T_Inst]]) -> _R_Get: ...
 
 # `__len__` for objects with `Count`
 @overload
@@ -292,9 +289,9 @@ def to_dunder_setitem(
 @overload
 def to_dunder_setitem(item: Any) -> Callable[..., NoReturn]: ...
 
-_PosParamFlagType: TypeAlias = Tuple[int, Optional[str]]
-_OptParamFlagType: TypeAlias = Tuple[int, Optional[str], Any]
+_PosParamFlagType: TypeAlias = tuple[int, Optional[str]]
+_OptParamFlagType: TypeAlias = tuple[int, Optional[str], Any]
 ParamFlagType: TypeAlias = _UnionT[_PosParamFlagType, _OptParamFlagType]
-_PosArgSpecElmType: TypeAlias = Tuple[List[str], Type[_CDataType], str]
-_OptArgSpecElmType: TypeAlias = Tuple[List[str], Type[_CDataType], str, Any]
+_PosArgSpecElmType: TypeAlias = tuple[list[str], type[_CDataType], str]
+_OptArgSpecElmType: TypeAlias = tuple[list[str], type[_CDataType], str, Any]
 ArgSpecElmType: TypeAlias = _UnionT[_PosArgSpecElmType, _OptArgSpecElmType]
