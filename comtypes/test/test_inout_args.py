@@ -1,6 +1,7 @@
 import unittest as ut
+from collections.abc import Callable
 from ctypes import HRESULT, POINTER, Structure, c_int, c_ulong, c_wchar_p, pointer
-from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Tuple, Type
+from typing import TYPE_CHECKING, Any, NamedTuple
 from unittest.mock import MagicMock
 
 import comtypes
@@ -10,7 +11,7 @@ from comtypes._memberspec import _fix_inout_args
 if TYPE_CHECKING:
     from comtypes import hints  # type: ignore
 
-    _ArgSpecType = Tuple[
+    _ArgSpecType = tuple[
         hints.ArgSpecElmType,
         hints.ArgSpecElmType,
         hints.ArgSpecElmType,
@@ -267,10 +268,10 @@ class Test_ArgsKwargsCombinations(ut.TestCase):
 
 class PermutedArgspecTestingParams(NamedTuple):
     argspec: "_ArgSpecType"
-    args: Tuple[Any, Any, Any]
-    orig_ret_val: Tuple[Any, Any, Any]
-    fixed_ret_val: List[Any]
-    call_args_validators: List[Tuple[Type[Any], Callable[[Any], Any], Any]]
+    args: tuple[Any, Any, Any]
+    orig_ret_val: tuple[Any, Any, Any]
+    fixed_ret_val: list[Any]
+    call_args_validators: list[tuple[type[Any], Callable[[Any], Any], Any]]
 
 
 class Test_ArgspecPermutations(ut.TestCase):
@@ -294,7 +295,7 @@ class Test_ArgspecPermutations(ut.TestCase):
                     self.assertIsInstance(orig, typ)
                     self.assertEqual(f(orig), val)
 
-    def _get_params(self) -> List[PermutedArgspecTestingParams]:
+    def _get_params(self) -> list[PermutedArgspecTestingParams]:
         in_ = MagicMock(spec=POINTER(IUnknown))()
         out = POINTER(IUnknown)()
         inout1 = 5
