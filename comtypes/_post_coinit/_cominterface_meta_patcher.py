@@ -1,13 +1,12 @@
 import types
 from _ctypes import COMError
-from typing import Type
 
 from comtypes import hresult, patcher
 
 _all_slice = slice(None, None, None)
 
 
-def case_insensitive(p: Type) -> None:
+def case_insensitive(p: type) -> None:
     @patcher.Patch(p)
     class CaseInsensitive:
         # case insensitive attributes for COM methods and properties
@@ -32,7 +31,7 @@ def case_insensitive(p: Type) -> None:
             object.__setattr__(self, self.__map_case__.get(name.lower(), name), value)
 
 
-def reference_fix(pp: Type) -> None:
+def reference_fix(pp: type) -> None:
     @patcher.Patch(pp)
     class ReferenceFix:
         def __setitem__(self, index, value):
@@ -62,7 +61,7 @@ def reference_fix(pp: Type) -> None:
             CopyComPointer(value, self)  # type: ignore
 
 
-def sized(itf: Type) -> None:
+def sized(itf: type) -> None:
     @patcher.Patch(itf)
     class _:
         def __len__(self):
@@ -70,7 +69,7 @@ def sized(itf: Type) -> None:
             return self.Count
 
 
-def callable_and_subscriptable(itf: Type) -> None:
+def callable_and_subscriptable(itf: type) -> None:
     @patcher.Patch(itf)
     class _:
         # 'Item' is the 'default' value.  Make it available by
@@ -123,7 +122,7 @@ def callable_and_subscriptable(itf: Type) -> None:
                 raise TypeError(msg)
 
 
-def iterator(itf: Type) -> None:
+def iterator(itf: type) -> None:
     @patcher.Patch(itf)
     class _:
         def __iter__(self):
