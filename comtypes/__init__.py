@@ -26,7 +26,7 @@ import sys
 from ctypes import *  # noqa  # type: ignore
 from ctypes import HRESULT, OleDLL, WinDLL, _SimpleCData, c_int, c_ulong
 from ctypes.wintypes import DWORD, LPVOID
-from typing import TYPE_CHECKING, Dict, Type
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ctypes import _CData  # only in `typeshed`, private in runtime
@@ -172,10 +172,10 @@ def CoUninitialize():
 # global registries.
 
 # allows to find interface classes by guid strings (iid)
-com_interface_registry: Dict[str, Type["IUnknown"]] = {}
+com_interface_registry: dict[str, type["IUnknown"]] = {}
 
 # allows to find coclasses by guid strings (clsid)
-com_coclass_registry: Dict[str, Type["CoClass"]] = {}
+com_coclass_registry: dict[str, type["CoClass"]] = {}
 
 
 ################################################################
