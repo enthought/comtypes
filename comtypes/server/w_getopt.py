@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple
+from collections.abc import Sequence
 
 
 class GetoptError(Exception):
@@ -7,7 +7,7 @@ class GetoptError(Exception):
 
 def w_getopt(
     args: Sequence[str], options: str
-) -> Tuple[Sequence[Tuple[str, str]], Sequence[str]]:
+) -> tuple[Sequence[tuple[str, str]], Sequence[str]]:
     """A getopt for Windows.
 
     Options may start with either '-' or '/', the option names may
