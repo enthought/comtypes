@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from ctypes import (
     HRESULT,
     POINTER,
@@ -12,7 +13,7 @@ from ctypes import (
     pointer,
 )
 from ctypes.wintypes import DWORD, LPCWSTR, LPVOID
-from typing import TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, overload
 
 from comtypes import CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER, CLSCTX_SERVER, GUID
 from comtypes._memberspec import COMMETHOD
@@ -69,7 +70,7 @@ class IServiceProvider(IUnknown):
     # Overridden QueryService to make it nicer to use (passing it an
     # interface and it returns a pointer to that interface)
     def QueryService(
-        self, serviceIID: GUID, interface: Type[_T_IUnknown]
+        self, serviceIID: GUID, interface: type[_T_IUnknown]
     ) -> _T_IUnknown:
         p = POINTER(interface)()
         self._QueryService(byref(serviceIID), byref(interface._iid_), byref(p))
@@ -93,8 +94,8 @@ class IServiceProvider(IUnknown):
 @overload
 def CoGetObject(displayname: str, interface: None) -> IUnknown: ...
 @overload
-def CoGetObject(displayname: str, interface: Type[_T_IUnknown]) -> _T_IUnknown: ...
-def CoGetObject(displayname: str, interface: Optional[Type[IUnknown]]) -> IUnknown:
+def CoGetObject(displayname: str, interface: type[_T_IUnknown]) -> _T_IUnknown: ...
+def CoGetObject(displayname: str, interface: Optional[type[IUnknown]]) -> IUnknown:
     """Convert a displayname to a moniker, then bind and return the object
     identified by the moniker."""
     if interface is None:
@@ -105,7 +106,7 @@ def CoGetObject(displayname: str, interface: Optional[Type[IUnknown]]) -> IUnkno
     return punk  # type: ignore
 
 
-_pUnkOuter = Type["_Pointer[IUnknown]"]
+_pUnkOuter = type["_Pointer[IUnknown]"]
 
 
 @overload
@@ -118,13 +119,13 @@ def CoCreateInstance(
 @overload
 def CoCreateInstance(
     clsid: GUID,
-    interface: Type[_T_IUnknown],
+    interface: type[_T_IUnknown],
     clsctx: Optional[int] = None,
     punkouter: Optional[_pUnkOuter] = None,
 ) -> _T_IUnknown: ...
 def CoCreateInstance(
     clsid: GUID,
-    interface: Optional[Type[IUnknown]] = None,
+    interface: Optional[type[IUnknown]] = None,
     clsctx: Optional[int] = None,
     punkouter: Optional[_pUnkOuter] = None,
 ) -> IUnknown:
@@ -155,7 +156,7 @@ if TYPE_CHECKING:
         clsid: GUID,
         clsctx: Optional[int] = None,
         pServerInfo: "Optional[COSERVERINFO]" = None,
-        interface: Type[_T_IUnknown] = hints.IClassFactory,
+        interface: type[_T_IUnknown] = hints.IClassFactory,
     ) -> _T_IUnknown: ...
 
 
@@ -341,14 +342,14 @@ def CoCreateInstanceEx(
 @overload
 def CoCreateInstanceEx(
     clsid: GUID,
-    interface: Type[_T_IUnknown],
+    interface: type[_T_IUnknown],
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
     pServerInfo: Optional[COSERVERINFO] = None,
 ) -> _T_IUnknown: ...
 def CoCreateInstanceEx(
     clsid: GUID,
-    interface: Optional[Type[IUnknown]] = None,
+    interface: Optional[type[IUnknown]] = None,
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
     pServerInfo: Optional[COSERVERINFO] = None,
