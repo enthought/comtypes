@@ -5,8 +5,8 @@ import sys
 import tempfile
 import types
 import unittest as ut
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
 from unittest import mock
 
 import comtypes

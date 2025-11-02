@@ -2,7 +2,6 @@ import threading
 import time
 import unittest
 from ctypes import WinDLL
-from typing import Tuple
 from unittest.mock import Mock, patch
 
 import comtypes.messageloop
@@ -31,7 +30,7 @@ class RunInThreadTest(unittest.TestCase):
     def setUp(self):
         self.msgloop = _MessageLoop()
 
-    def run_msgloop_in_thread(self) -> Tuple[threading.Thread, int]:
+    def run_msgloop_in_thread(self) -> tuple[threading.Thread, int]:
         """Helper method to run message loop in a separate thread."""
         thread_ids = []
 
