@@ -1,5 +1,5 @@
 # typedesc.py - classes representing C type descriptions
-from typing import Any, List, Optional, SupportsInt, Tuple
+from typing import Any, Optional, SupportsInt
 from typing import Union as _UnionT
 
 import comtypes
@@ -160,11 +160,11 @@ class StructureBody:
 class _Struct_Union_Base:
     name: str
     align: int
-    members: List[_UnionT["Field", Method, Constructor]]
-    bases: List["_Struct_Union_Base"]
+    members: list[_UnionT["Field", Method, Constructor]]
+    bases: list["_Struct_Union_Base"]
     artificial: Optional[Any]
     size: Optional[int]
-    _recordinfo_: Tuple[str, int, int, int, str]
+    _recordinfo_: tuple[str, int, int, int, str]
 
     location = None
 
@@ -184,8 +184,8 @@ class Structure(_Struct_Union_Base):
         self,
         name: str,
         align: SupportsInt,
-        members: List["Field"],
-        bases: List[Any],
+        members: list["Field"],
+        bases: list[Any],
         size: Optional[SupportsInt],
         artificial: Optional[Any] = None,
     ) -> None:
@@ -206,8 +206,8 @@ class Union(_Struct_Union_Base):
         self,
         name: str,
         align: SupportsInt,
-        members: List["Field"],
-        bases: List[Any],
+        members: list["Field"],
+        bases: list[Any],
         size: Optional[SupportsInt],
         artificial: Optional[Any] = None,
     ) -> None:
@@ -247,7 +247,7 @@ class Enumeration:
         self.name = name
         self.size = int(size)
         self.align = int(align)
-        self.values: List[EnumValue] = []
+        self.values: list[EnumValue] = []
 
     def add_value(self, v: "EnumValue") -> None:
         self.values.append(v)
