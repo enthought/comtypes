@@ -1,25 +1,14 @@
 import abc
 import keyword
-from typing import (
-    Any,
-    Dict,
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Protocol,
-    Sequence,
-    Tuple,
-    TypeVar,
-)
+from collections.abc import Iterable, Sequence
+from typing import Any, Generic, Iterator, Optional, Protocol, TypeVar
 
 from comtypes.tools import typedesc
 
 
 class _MethodTypeDesc(Protocol):
-    arguments: List[Tuple[Any, str, List[str], Optional[Any]]]
-    idlflags: List[str]
+    arguments: list[tuple[Any, str, list[str], Optional[Any]]]
+    idlflags: list[str]
     name: str
 
 
@@ -31,7 +20,7 @@ class _MethodAnnotator(abc.ABC, Generic[_T_MTD]):
         self.method = method
 
     @property
-    def inarg_specs(self) -> Sequence[Tuple[Any, str, Optional[Any]]]:
+    def inarg_specs(self) -> Sequence[tuple[Any, str, Optional[Any]]]:
         index = 0
         result = []
         for typ, name, flags, default in self.method.arguments:
@@ -46,20 +35,20 @@ class _MethodAnnotator(abc.ABC, Generic[_T_MTD]):
     def getvalue(self, name: str) -> str: ...
 
 
-_CatMths = Tuple[  # categorized methods
+_CatMths = tuple[  # categorized methods
     str, Optional[_T_MTD], Optional[_T_MTD], Optional[_T_MTD], Optional[_T_MTD]
 ]
 
 
 class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
     def __init__(self) -> None:
-        self.data: List[str] = []
+        self.data: list[str] = []
 
     @abc.abstractmethod
     def to_method_annotator(self, method: _T_MTD) -> _MethodAnnotator[_T_MTD]: ...
 
     def _iter_methods(self, members: Iterable[_T_MTD]) -> Iterator[_CatMths[_T_MTD]]:
-        methods: Dict[str, List[Optional[_T_MTD]]] = {}
+        methods: dict[str, list[Optional[_T_MTD]]] = {}
         MTH = 0
         GET = 1
         PUT = 2
@@ -234,7 +223,7 @@ def _to_outtype(typ: Any) -> str:
 
 
 class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
-    def _iter_outarg_specs(self) -> Iterator[Tuple[Any, str]]:
+    def _iter_outarg_specs(self) -> Iterator[tuple[Any, str]]:
         for typ, name, flags, _ in self.method.arguments:
             if "out" in flags:
                 yield typ, name
@@ -322,9 +311,9 @@ class DispInterfaceMembersAnnotator:
 
     def _categorize_members(
         self,
-    ) -> Tuple[Iterable[typedesc.DispProperty], Iterable[typedesc.DispMethod]]:
-        props: List[typedesc.DispProperty] = []
-        methods: List[typedesc.DispMethod] = []
+    ) -> tuple[Iterable[typedesc.DispProperty], Iterable[typedesc.DispMethod]]:
+        props: list[typedesc.DispProperty] = []
+        methods: list[typedesc.DispMethod] = []
         for mem in self.itf.members:
             if isinstance(mem, typedesc.DispMethod):
                 methods.append(mem)
@@ -334,7 +323,7 @@ class DispInterfaceMembersAnnotator:
 
     def generate(self) -> str:
         props, methods = self._categorize_members()
-        property_lines: List[str] = []
+        property_lines: list[str] = []
         for mem in props:
             out = _to_outtype(mem.typ)
             decorator = "@property  # dispprop"
