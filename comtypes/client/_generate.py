@@ -6,7 +6,8 @@ import os
 import sys
 import types
 import winreg
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from collections.abc import Mapping
+from typing import Any, Optional
 from typing import Union as _UnionT
 
 import comtypes.client
@@ -25,7 +26,7 @@ def _my_import(fullname: str) -> types.ModuleType:
     return importlib.import_module(fullname)
 
 
-def _resolve_filename(tlib_string: str, dirpath: str) -> Tuple[str, bool]:
+def _resolve_filename(tlib_string: str, dirpath: str) -> tuple[str, bool]:
     """Tries to make sense of a type library specified as a string.
 
     Args:
@@ -225,7 +226,7 @@ class ModuleGenerator:
         """Generates wrapper and friendly modules."""
         known_symbols, known_interfaces = _get_known_namespaces()
         codegen = codegenerator.CodeGenerator(known_symbols, known_interfaces)
-        codebases: List[Tuple[str, str]] = []
+        codebases: list[tuple[str, str]] = []
         logger.info("# Generating %s", self.wrapper_name)
         items = list(tlbparser.TypeLibParser(self.tlib).parse().values())
         wrp_code = codegen.generate_wrapper_code(items, filename=self.pathname)
@@ -246,7 +247,7 @@ _ItfIid = str
 
 
 def _get_known_namespaces() -> (
-    Tuple[Mapping[_SymbolName, _ModuleName], Mapping[_ItfName, _ItfIid]]
+    tuple[Mapping[_SymbolName, _ModuleName], Mapping[_ItfName, _ItfIid]]
 ):
     """Returns symbols and interfaces that are already statically defined in `ctypes`
     and `comtypes`.
@@ -260,8 +261,8 @@ def _get_known_namespaces() -> (
         `comtypes` does NOT aim to statically define all COM object interfaces in
         its repository.
     """
-    known_symbols: Dict[_SymbolName, _ModuleName] = {}
-    known_interfaces: Dict[_ItfName, _ItfIid] = {}
+    known_symbols: dict[_SymbolName, _ModuleName] = {}
+    known_interfaces: dict[_ItfName, _ItfIid] = {}
     for mod_name in (
         "comtypes.persist",
         "comtypes.typeinfo",
@@ -273,7 +274,7 @@ def _get_known_namespaces() -> (
     ):
         mod = importlib.import_module(mod_name)
         if hasattr(mod, "__known_symbols__"):
-            names: List[str] = mod.__known_symbols__
+            names: list[str] = mod.__known_symbols__
             for name in names:
                 tgt = getattr(mod, name)
                 if inspect.isclass(tgt) and issubclass(tgt, comtypes.IUnknown):
