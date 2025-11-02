@@ -1,18 +1,8 @@
 import logging
 from _ctypes import COMError
+from collections.abc import Callable, Iterator, Sequence
 from ctypes import WINFUNCTYPE, Structure, c_void_p
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-)
+from typing import TYPE_CHECKING, Any, Optional
 from typing import Union as _UnionT
 
 import comtypes
@@ -81,8 +71,8 @@ def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
 def catch_errors(
     obj: "hints.COMObject",
     mth: Callable[..., Any],
-    paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
-    interface: Type[IUnknown],
+    paramflags: Optional[tuple["hints.ParamFlagType", ...]],
+    interface: type[IUnknown],
     mthname: str,
 ) -> Callable[..., Any]:
     clsid = getattr(obj, "_reg_clsid_", None)
@@ -130,8 +120,8 @@ def catch_errors(
 def hack(
     inst: "hints.COMObject",
     mth: Callable[..., Any],
-    paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
-    interface: Type[IUnknown],
+    paramflags: Optional[tuple["hints.ParamFlagType", ...]],
+    interface: type[IUnknown],
     mthname: str,
 ) -> Callable[..., Any]:
     if paramflags is None:
@@ -236,9 +226,9 @@ class _MethodFinder:
 
     def get_impl(
         self,
-        interface: Type[IUnknown],
+        interface: type[IUnknown],
         mthname: str,
-        paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
+        paramflags: Optional[tuple["hints.ParamFlagType", ...]],
         idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"],
     ) -> Callable[..., Any]:
         mth = self.find_impl(interface, mthname, paramflags, idlflags)
@@ -258,9 +248,9 @@ class _MethodFinder:
 
     def find_impl(
         self,
-        interface: Type[IUnknown],
+        interface: type[IUnknown],
         mthname: str,
-        paramflags: Optional[Tuple["hints.ParamFlagType", ...]],
+        paramflags: Optional[tuple["hints.ParamFlagType", ...]],
         idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"],
     ) -> Optional[Callable[..., Any]]:
         fq_name = f"{interface.__name__}_{mthname}"
@@ -311,8 +301,8 @@ class _MethodFinder:
 
 
 def _create_vtbl_type(
-    fields: Tuple[Tuple[str, Type["_FuncPointer"]], ...], itf: Type[IUnknown]
-) -> Type[Structure]:
+    fields: tuple[tuple[str, type["_FuncPointer"]], ...], itf: type[IUnknown]
+) -> type[Structure]:
     try:
         return _vtbl_types[fields]
     except KeyError:
@@ -326,17 +316,17 @@ def _create_vtbl_type(
 
 
 # Ugh. Another type cache to avoid leaking types.
-_vtbl_types: Dict[Tuple[Tuple[str, Type["_FuncPointer"]], ...], Type[Structure]] = {}
+_vtbl_types: dict[tuple[tuple[str, type["_FuncPointer"]], ...], type[Structure]] = {}
 
 ################################################################
 
 
 def create_vtbl_mapping(
-    itf: Type[IUnknown], finder: _MethodFinder
-) -> Tuple[Sequence[GUID], Structure]:
-    methods: List[Callable[..., Any]] = []  # method implementations
-    fields: List[Tuple[str, Type["_FuncPointer"]]] = []  # virtual function table
-    iids: List[GUID] = []  # interface identifiers.
+    itf: type[IUnknown], finder: _MethodFinder
+) -> tuple[Sequence[GUID], Structure]:
+    methods: list[Callable[..., Any]] = []  # method implementations
+    fields: list[tuple[str, type["_FuncPointer"]]] = []  # virtual function table
+    iids: list[GUID] = []  # interface identifiers.
     for interface in _walk_itf_bases(itf):
         iids.append(interface._iid_)
         for m in interface._methods_:
@@ -349,7 +339,7 @@ def create_vtbl_mapping(
     return (iids, vtbl)
 
 
-def _walk_itf_bases(itf: Type[IUnknown]) -> Iterator[Type[IUnknown]]:
+def _walk_itf_bases(itf: type[IUnknown]) -> Iterator[type[IUnknown]]:
     """Iterates over interface inheritance in reverse order to build the
     virtual function table, and leave out the 'object' base class.
     """
@@ -357,9 +347,9 @@ def _walk_itf_bases(itf: Type[IUnknown]) -> Iterator[Type[IUnknown]]:
 
 
 def create_dispimpl(
-    itf: Type[IUnknown], finder: _MethodFinder
-) -> Dict[Tuple[comtypes.dispid, int], Callable[..., Any]]:
-    dispimpl: Dict[Tuple[comtypes.dispid, int], Callable[..., Any]] = {}
+    itf: type[IUnknown], finder: _MethodFinder
+) -> dict[tuple[comtypes.dispid, int], Callable[..., Any]]:
+    dispimpl: dict[tuple[comtypes.dispid, int], Callable[..., Any]] = {}
     for m in itf._disp_methods_:
         #################
         # What we have:
@@ -385,8 +375,8 @@ def create_dispimpl(
 
 
 def _make_dispmthentry(
-    itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
-) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
+    itf: type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
+) -> Iterator[tuple[tuple[comtypes.dispid, int], Callable[..., Any]]]:
     if "propget" in m.idlflags:
         invkind = DISPATCH_PROPERTYGET
         mthname = f"_get_{m.name}"
@@ -407,8 +397,8 @@ def _make_dispmthentry(
 
 
 def _make_disppropentry(
-    itf: Type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
-) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
+    itf: type[IUnknown], finder: _MethodFinder, m: "_DispMemberSpec"
+) -> Iterator[tuple[tuple[comtypes.dispid, int], Callable[..., Any]]]:
     if m.restype:
         # DISPPROPERTY have implicit "out"
         argspec = m.argspec + ((["out"], m.restype, ""),)
@@ -426,12 +416,12 @@ def _make_disppropentry(
 
 def _make_dispentry(
     finder: _MethodFinder,
-    interface: Type[IUnknown],
+    interface: type[IUnknown],
     mthname: str,
     idlflags: "_DispIdlFlags",
-    argspec: Tuple["hints.ArgSpecElmType", ...],
+    argspec: tuple["hints.ArgSpecElmType", ...],
     invkind: int,
-) -> Iterator[Tuple[Tuple[comtypes.dispid, int], Callable[..., Any]]]:
+) -> Iterator[tuple[tuple[comtypes.dispid, int], Callable[..., Any]]]:
     # We build a _dispmap_ entry now that maps invkind and dispid to
     # implementations that the finder finds; IDispatch_Invoke will later call it.
     paramflags = tuple(((_encode_idl(x[0]), x[1]) + tuple(x[3:])) for x in argspec)

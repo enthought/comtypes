@@ -8,7 +8,7 @@ from comtypes import IUnknown, _safearray, com_interface_registry
 from comtypes.patcher import Patch
 
 if TYPE_CHECKING:
-    from typing import Type, TypeVar
+    from typing import TypeVar
 
     from comtypes import hints  # type: ignore
 
@@ -58,7 +58,7 @@ safearray_as_ndarray = _SafeArrayAsNdArrayContextManager()
 
 ################################################################
 # This is THE PUBLIC function: the gateway to the SAFEARRAY functionality.
-def _midlSAFEARRAY(itemtype: "Type[_CT]") -> "Type[hints.LP_SAFEARRAY[_CT]]":
+def _midlSAFEARRAY(itemtype: "type[_CT]") -> "type[hints.LP_SAFEARRAY[_CT]]":
     """This function mimics the 'SAFEARRAY(aType)' IDL idiom.  It
     returns a subtype of SAFEARRAY, instances will be built with a
     typecode VT_...  corresponding to the aType, which must be one of

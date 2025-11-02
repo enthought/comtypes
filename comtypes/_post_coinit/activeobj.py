@@ -1,6 +1,6 @@
 from ctypes import HRESULT, POINTER, OleDLL, byref, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPVOID
-from typing import TYPE_CHECKING, Optional, Type, TypeVar, overload
+from typing import TYPE_CHECKING, Optional, TypeVar, overload
 from typing import Union as _UnionT
 
 from comtypes import GUID
@@ -34,9 +34,9 @@ def RevokeActiveObject(handle: int) -> None:
 @overload
 def GetActiveObject(clsid: GUID, interface: None = None) -> IUnknown: ...
 @overload
-def GetActiveObject(clsid: GUID, interface: Type[_T_IUnknown]) -> _T_IUnknown: ...
+def GetActiveObject(clsid: GUID, interface: type[_T_IUnknown]) -> _T_IUnknown: ...
 def GetActiveObject(
-    clsid: GUID, interface: Optional[Type[IUnknown]] = None
+    clsid: GUID, interface: Optional[type[IUnknown]] = None
 ) -> IUnknown:
     """Retrieves a pointer to a running object"""
     p = POINTER(IUnknown)()

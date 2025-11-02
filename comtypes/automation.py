@@ -7,7 +7,7 @@ from ctypes import *
 from ctypes import Array as _CArrayType
 from ctypes import _Pointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 import comtypes
 import comtypes.patcher
@@ -771,7 +771,7 @@ DISPID_COLLECT = -8
 
 
 class IDispatch(IUnknown):
-    _disp_methods_: ClassVar[List["_DispMemberSpec"]]
+    _disp_methods_: ClassVar[list["_DispMemberSpec"]]
 
     _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
     _methods_ = [
@@ -819,7 +819,7 @@ class IDispatch(IUnknown):
         result = self._GetTypeInfo(index, lcid)  # type: ignore
         return result.QueryInterface(comtypes.typeinfo.ITypeInfo)
 
-    def GetIDsOfNames(self, *names: str, **kw: Any) -> List[int]:
+    def GetIDsOfNames(self, *names: str, **kw: Any) -> list[int]:
         """Map string names to integer ids."""
         lcid = kw.pop("lcid", 0)
         assert not kw
@@ -945,7 +945,7 @@ _arraycode_to_vartype = {
     "B": VT_UI1,
 }
 
-_ctype_to_vartype: Dict[Type["_CDataType"], int] = {
+_ctype_to_vartype: dict[type["_CDataType"], int] = {
     c_byte: VT_I1,
     c_ubyte: VT_UI1,
     c_short: VT_I2,
@@ -982,7 +982,7 @@ _ctype_to_vartype: Dict[Type["_CDataType"], int] = {
     # POINTER(IDispatch): VT_DISPATCH,
 }
 
-_vartype_to_ctype: Dict[int, Type["_CDataType"]] = {}
+_vartype_to_ctype: dict[int, type["_CDataType"]] = {}
 for c, v in _ctype_to_vartype.items():
     _vartype_to_ctype[v] = c
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]

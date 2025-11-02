@@ -1,5 +1,5 @@
 from ctypes import HRESULT, POINTER, c_ubyte, c_ulong, pointer
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from comtypes import COMMETHOD, GUID, IUnknown
 
@@ -41,7 +41,7 @@ class ISequentialStream(IUnknown):
         ),
     ]
 
-    def RemoteRead(self, cb: int) -> Tuple["_CArrayType[c_ubyte]", int]:
+    def RemoteRead(self, cb: int) -> tuple["_CArrayType[c_ubyte]", int]:
         """Reads a specified number of bytes from the stream object into memory
         starting at the current seek pointer.
         """
