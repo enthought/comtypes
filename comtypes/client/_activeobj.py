@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type, TypeVar, overload
+from typing import Any, Optional, TypeVar, overload
 from typing import Union as _UnionT
 
 import comtypes
@@ -14,14 +14,14 @@ _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 # Object creation
 #
 @overload
-def GetActiveObject(progid: _UnionT[str, Type[CoClass], GUID]) -> Any: ...
+def GetActiveObject(progid: _UnionT[str, type[CoClass], GUID]) -> Any: ...
 @overload
 def GetActiveObject(
-    progid: _UnionT[str, Type[CoClass], GUID], interface: Type[_T_IUnknown]
+    progid: _UnionT[str, type[CoClass], GUID], interface: type[_T_IUnknown]
 ) -> _T_IUnknown: ...
 def GetActiveObject(
-    progid: _UnionT[str, Type[CoClass], GUID],
-    interface: Optional[Type[IUnknown]] = None,
+    progid: _UnionT[str, type[CoClass], GUID],
+    interface: Optional[type[IUnknown]] = None,
     dynamic: bool = False,
 ) -> Any:
     """Return a pointer to a running COM object that has been
@@ -47,7 +47,7 @@ def GetActiveObject(
 
 
 def RegisterActiveObject(
-    punk: IUnknown, progid: _UnionT[str, Type[CoClass], GUID], weak: bool = True
+    punk: IUnknown, progid: _UnionT[str, type[CoClass], GUID], weak: bool = True
 ) -> int:
     clsid = GUID.from_progid(progid)
     flags = comtypes.ACTIVEOBJECT_WEAK if weak else comtypes.ACTIVEOBJECT_STRONG
