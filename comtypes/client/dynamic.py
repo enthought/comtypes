@@ -1,5 +1,5 @@
 import ctypes
-from typing import Any, Dict, Optional, Set, Type, TypeVar
+from typing import Any, Optional, TypeVar
 
 from comtypes import GUID, COMError, IUnknown, _is_object, automation
 from comtypes import hresult as hres
@@ -63,8 +63,8 @@ class _Dispatch:
     """Expose methods and properties via fully dynamic dispatch."""
 
     _comobj: automation.IDispatch
-    _ids: Dict[str, int]
-    _methods: Set[str]
+    _ids: dict[str, int]
+    _methods: set[str]
 
     def __init__(self, comobj: "ctypes._Pointer[automation.IDispatch]"):
         self.__dict__["_comobj"] = comobj
@@ -90,7 +90,7 @@ class _Dispatch:
         return item
 
     def QueryInterface(
-        self, interface: Type[_T_IUnknown], iid: Optional[GUID] = None
+        self, interface: type[_T_IUnknown], iid: Optional[GUID] = None
     ) -> _T_IUnknown:
         """QueryInterface is forwarded to the real com object."""
         return self._comobj.QueryInterface(interface, iid)

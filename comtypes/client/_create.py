@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, overload
 from typing import Union as _UnionT
 
 import comtypes
@@ -23,22 +23,22 @@ if TYPE_CHECKING:
 
     @overload
     def GetClassObject(
-        progid: _UnionT[str, Type[CoClass], GUID],
+        progid: _UnionT[str, type[CoClass], GUID],
         clsctx: Optional[int] = None,
         pServerInfo: Optional[COSERVERINFO] = None,
         interface: None = None,
     ) -> hints.IClassFactory: ...
     @overload
     def GetClassObject(
-        progid: _UnionT[str, Type[CoClass], GUID],
+        progid: _UnionT[str, type[CoClass], GUID],
         clsctx: Optional[int] = None,
         pServerInfo: Optional[COSERVERINFO] = None,
-        interface: Type[_T_IUnknown] = hints.IClassFactory,
+        interface: type[_T_IUnknown] = hints.IClassFactory,
     ) -> _T_IUnknown: ...
 
 
 def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
-    # type: (_UnionT[str, Type[CoClass], GUID], Optional[int], Optional[COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
+    # type: (_UnionT[str, type[CoClass], GUID], Optional[int], Optional[COSERVERINFO], Optional[type[IUnknown]]) -> IUnknown
     """Create and return the class factory for a COM object.
 
     'clsctx' specifies how to create the object, use the CLSCTX_... constants.
@@ -50,21 +50,21 @@ def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
 
 
 @overload
-def CreateObject(progid: _UnionT[str, Type[CoClass], GUID]) -> Any: ...
+def CreateObject(progid: _UnionT[str, type[CoClass], GUID]) -> Any: ...
 @overload
 def CreateObject(
-    progid: _UnionT[str, Type[CoClass], GUID],
+    progid: _UnionT[str, type[CoClass], GUID],
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
-    interface: Optional[Type[_T_IUnknown]] = None,
+    interface: Optional[type[_T_IUnknown]] = None,
     dynamic: bool = ...,
     pServerInfo: Optional[COSERVERINFO] = None,
 ) -> _T_IUnknown: ...
 def CreateObject(
-    progid: _UnionT[str, Type[CoClass], GUID],  # which object to create
+    progid: _UnionT[str, type[CoClass], GUID],  # which object to create
     clsctx: Optional[int] = None,  # how to create the object
     machine: Optional[str] = None,  # where to create the object
-    interface: Optional[Type[IUnknown]] = None,  # the interface we want
+    interface: Optional[type[IUnknown]] = None,  # the interface we want
     dynamic: bool = False,  # use dynamic dispatch
     pServerInfo: Optional[COSERVERINFO] = None,  # server info struct for remoting
 ) -> Any:
@@ -123,14 +123,14 @@ def CreateObject(
 
 
 @overload
-def CoGetObject(displayname: str, interface: Type[_T_IUnknown]) -> _T_IUnknown: ...
+def CoGetObject(displayname: str, interface: type[_T_IUnknown]) -> _T_IUnknown: ...
 @overload
 def CoGetObject(
     displayname: str, interface: None = None, dynamic: bool = False
 ) -> Any: ...
 def CoGetObject(
     displayname: str,
-    interface: Optional[Type[IUnknown]] = None,
+    interface: Optional[type[IUnknown]] = None,
     dynamic: bool = False,
 ) -> Any:
     """Create an object by calling CoGetObject(displayname).

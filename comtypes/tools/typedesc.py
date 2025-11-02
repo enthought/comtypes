@@ -2,7 +2,8 @@
 # in typedesc_base
 
 import ctypes
-from typing import Any, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Any, Optional
 from typing import Union as _UnionT
 
 from comtypes import typeinfo
@@ -45,7 +46,7 @@ class External:
         name: str,
         size: int,
         align: int,
-        docs: Optional[Tuple[str, Optional[str]]] = None,
+        docs: Optional[tuple[str, Optional[str]]] = None,
     ) -> None:
         # the type library containing the symbol
         self.tlib = tlib
@@ -75,7 +76,7 @@ class ComMethod:
         memid: int,
         name: str,
         returns: Any,
-        idlflags: List[str],
+        idlflags: list[str],
         doc: Optional[str],
     ) -> None:
         self.invkind = invkind
@@ -84,10 +85,10 @@ class ComMethod:
         self.idlflags = idlflags
         self.memid = memid
         self.doc = doc
-        self.arguments: List[Tuple[Any, str, List[str], Optional[Any]]] = []
+        self.arguments: list[tuple[Any, str, list[str], Optional[Any]]] = []
 
     def add_argument(
-        self, typ: Any, name: str, idlflags: List[str], default: Optional[Any]
+        self, typ: Any, name: str, idlflags: list[str], default: Optional[Any]
     ) -> None:
         self.arguments.append((typ, name, idlflags, default))
 
@@ -100,7 +101,7 @@ class DispMethod:
         invkind: int,
         name: str,
         returns: Any,
-        idlflags: List[str],
+        idlflags: list[str],
         doc: Optional[str],
     ) -> None:
         self.dispid = dispid
@@ -109,10 +110,10 @@ class DispMethod:
         self.returns = returns
         self.idlflags = idlflags
         self.doc = doc
-        self.arguments: List[Tuple[Any, str, List[str], Optional[Any]]] = []
+        self.arguments: list[tuple[Any, str, list[str], Optional[Any]]] = []
 
     def add_argument(
-        self, typ: Any, name: str, idlflags: List[str], default: Optional[Any]
+        self, typ: Any, name: str, idlflags: list[str], default: Optional[Any]
     ) -> None:
         self.arguments.append((typ, name, idlflags, default))
 
@@ -120,7 +121,7 @@ class DispMethod:
 class DispProperty:
     # dispatchable COM property, parsed from typelib
     def __init__(
-        self, dispid: int, name: str, typ: Any, idlflags: List[str], doc: Optional[Any]
+        self, dispid: int, name: str, typ: Any, idlflags: list[str], doc: Optional[Any]
     ) -> None:
         self.dispid = dispid
         self.name = name
@@ -145,11 +146,11 @@ class DispInterface:
         name: str,
         base: Any,
         iid: str,
-        idlflags: List[str],
+        idlflags: list[str],
         doc: Optional[str],
     ) -> None:
         self.name = name
-        self.members: List[_UnionT[DispMethod, DispProperty]] = []
+        self.members: list[_UnionT[DispMethod, DispProperty]] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
@@ -183,11 +184,11 @@ class ComInterface:
         name: str,
         base: "Optional[ComInterface]",
         iid: str,
-        idlflags: List[str],
+        idlflags: list[str],
         doc: Optional[str],
     ) -> None:
         self.name = name
-        self.members: List[ComMethod] = []
+        self.members: list[ComMethod] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
@@ -214,7 +215,7 @@ class CoClass:
         self,
         name: str,
         clsid: str,
-        idlflags: List[str],
+        idlflags: list[str],
         tlibattr: TLIBATTR,
         doc: Optional[str],
     ) -> None:
@@ -222,7 +223,7 @@ class CoClass:
         self.clsid = clsid
         self.idlflags = idlflags
         self.tlibattr = tlibattr
-        self.interfaces: List[Tuple[_Interface, _ImplTypeFlags]] = []
+        self.interfaces: list[tuple[_Interface, _ImplTypeFlags]] = []
         self.doc = doc
 
     def add_interface(self, itf: _Interface, idlflags: _ImplTypeFlags) -> None:
@@ -234,8 +235,8 @@ _SourceInterfaces = Sequence[_Interface]
 
 
 def groupby_impltypeflags(
-    seq: Sequence[Tuple[_Interface, _ImplTypeFlags]],
-) -> Tuple[_ImplementedInterfaces, _SourceInterfaces]:
+    seq: Sequence[tuple[_Interface, _ImplTypeFlags]],
+) -> tuple[_ImplementedInterfaces, _SourceInterfaces]:
     implemented = []
     sources = []
     for itf, impltypeflags in seq:

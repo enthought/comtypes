@@ -2,7 +2,7 @@ import logging
 import sys
 import winreg
 from ctypes import c_void_p, pointer
-from typing import TYPE_CHECKING, Any, Literal, Optional, Type
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 from comtypes import GUID, COMObject, IUnknown, hresult
 from comtypes._comobject import InprocServer as _InprocRefCounter
@@ -21,14 +21,14 @@ _critical = logger.critical
 class ClassFactory(COMObject):
     _com_interfaces_ = [IClassFactory]
 
-    def __init__(self, cls: Type[COMObject]) -> None:
+    def __init__(self, cls: type[COMObject]) -> None:
         super().__init__()
         self._cls = cls
 
     def IClassFactory_CreateInstance(
         self,
         this: Any,
-        punkOuter: Optional[Type["_Pointer[IUnknown]"]],
+        punkOuter: Optional[type["_Pointer[IUnknown]"]],
         riid: "_Pointer[GUID]",
         ppv: c_void_p,
     ) -> int:
@@ -50,7 +50,7 @@ class ClassFactory(COMObject):
 _clsid_to_class = {}
 
 
-def inproc_find_class(clsid: GUID) -> Type[COMObject]:
+def inproc_find_class(clsid: GUID) -> type[COMObject]:
     if _clsid_to_class:
         return _clsid_to_class[clsid]
 

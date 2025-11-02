@@ -1,6 +1,6 @@
 import logging
 from _ctypes import COMError
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 import comtypes
 import comtypes.client.dynamic
@@ -106,7 +106,7 @@ def GetBestInterface(punk: Any) -> Any:
 
 
 def _manage(
-    obj: Any, clsid: Optional[GUID], interface: Optional[Type[IUnknown]]
+    obj: Any, clsid: Optional[GUID], interface: Optional[type[IUnknown]]
 ) -> Any:
     obj.__dict__["__clsid"] = str(clsid)
     if interface is None:

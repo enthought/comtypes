@@ -1,23 +1,14 @@
 import textwrap
 import warnings
 from collections import Counter
-from typing import (
-    Dict,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    overload,
-)
+from collections.abc import Iterator, Mapping, Sequence
+from typing import Optional, overload
 from typing import Union as _UnionT
 
 
 class ImportedNamespaces:
     def __init__(self) -> None:
-        self.data: Dict[str, Optional[str]] = {}
+        self.data: dict[str, Optional[str]] = {}
 
     @overload
     def add(self, modulename: str, /) -> None: ...
@@ -67,7 +58,7 @@ class ImportedNamespaces:
             from_, import_ = name1, name2
         self.data[import_] = from_
 
-    def __contains__(self, item: _UnionT[str, Tuple[str, str]]) -> bool:
+    def __contains__(self, item: _UnionT[str, tuple[str, str]]) -> bool:
         """Returns item has already added.
 
         Examples:
@@ -93,7 +84,7 @@ class ImportedNamespaces:
             return self.data[import_] == from_
         return False
 
-    def get_symbols(self) -> Set[str]:
+    def get_symbols(self) -> set[str]:
         names = set()
         for key, val in self.data.items():
             if val is None or key == "*":
@@ -114,8 +105,8 @@ class ImportedNamespaces:
         return code
 
     def getvalue(self) -> str:
-        ns: Dict[str, Optional[Set[str]]] = {}
-        lines: List[str] = []
+        ns: dict[str, Optional[set[str]]] = {}
+        lines: list[str] = []
         for key, val in self.data.items():
             if val is None:
                 ns[key] = val
@@ -134,7 +125,7 @@ class ImportedNamespaces:
 
 class DeclaredNamespaces:
     def __init__(self) -> None:
-        self.data: Dict[Tuple[str, str], Optional[str]] = {}
+        self.data: dict[tuple[str, str], Optional[str]] = {}
 
     def add(self, alias: str, definition: str, comment: Optional[str] = None) -> None:
         """Adds a namespace will be declared.
@@ -152,7 +143,7 @@ class DeclaredNamespaces:
         """
         self.data[(alias, definition)] = comment
 
-    def get_symbols(self) -> Set[str]:
+    def get_symbols(self) -> set[str]:
         names = set()
         for alias, _ in self.data.keys():
             names.add(alias)
@@ -170,7 +161,7 @@ class DeclaredNamespaces:
 
 class EnumerationNamespaces:
     def __init__(self) -> None:
-        self.data: Dict[str, List[Tuple[str, int]]] = {}
+        self.data: dict[str, list[tuple[str, int]]] = {}
 
     def add(self, enum_name: str, member_name: str, value: int) -> None:
         """Adds a namespace will be enumeration and its member.
@@ -236,12 +227,12 @@ class EnumerationNamespaces:
     def __bool__(self) -> bool:
         return bool(self.data)
 
-    def get_symbols(self) -> Set[str]:
+    def get_symbols(self) -> set[str]:
         return set(self.data)
 
     def _iter_members(
-        self, members: Sequence[Tuple[str, int]]
-    ) -> Iterator[Tuple[str, bool, int]]:
+        self, members: Sequence[tuple[str, int]]
+    ) -> Iterator[tuple[str, bool, int]]:
         key_counter = Counter(m for m, _ in members)
         decrementee = dict(key_counter)  # shallow copy
         for name, value in members:
@@ -249,7 +240,7 @@ class EnumerationNamespaces:
             # definition, is_dupl, rest_dupl_count
             yield f"{name} = {value}", key_counter[name] > 1, decrementee[name]
 
-    def _iter_items(self) -> Iterator[Tuple[str, Iterator[Tuple[str, bool, int]]]]:
+    def _iter_items(self) -> Iterator[tuple[str, Iterator[tuple[str, bool, int]]]]:
         for name, members in self.data.items():
             yield name, self._iter_members(members)
 

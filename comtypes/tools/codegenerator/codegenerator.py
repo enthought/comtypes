@@ -7,7 +7,8 @@ import logging
 import os
 import textwrap
 import warnings
-from typing import Any, Dict, Iterator, List, Literal, Optional, Sequence, Tuple
+from collections.abc import Iterator, Sequence
+from typing import Any, Literal, Optional
 from typing import Union as _UnionT
 
 import comtypes
@@ -48,7 +49,7 @@ class CodeGenerator:
         self.imports = namespaces.ImportedNamespaces()
         self.declarations = namespaces.DeclaredNamespaces()
         self.enums = namespaces.EnumerationNamespaces()
-        self.unnamed_enum_members: List[Tuple[str, int]] = []
+        self.unnamed_enum_members: list[tuple[str, int]] = []
         self._to_type_name = TypeNamer()
         self.known_symbols = known_symbols or {}
         self.known_interfaces = known_interfaces or {}
@@ -56,7 +57,7 @@ class CodeGenerator:
         self.done = set()  # type descriptions that have been generated
         self.names = set()  # names that have been generated
         self.externals = []  # typelibs imported to generated module
-        self.enum_aliases: Dict[str, str] = {}
+        self.enum_aliases: dict[str, str] = {}
         self.last_item = "attribute"
 
     @contextlib.contextmanager
@@ -373,8 +374,8 @@ class CodeGenerator:
         self.generate(union.get_body())
 
     def StructureBody(self, body: typedesc.StructureBody) -> None:
-        fields: List[typedesc.Field] = []
-        methods: List[typedesc.Method] = []
+        fields: list[typedesc.Field] = []
+        methods: list[typedesc.Method] = []
         for m in body.struct.members:
             if type(m) is typedesc.Field:
                 fields.append(m)
@@ -422,7 +423,7 @@ class CodeGenerator:
     def _write_structbody_fields(
         self,
         body: typedesc.StructureBody,
-        fields: List[typedesc.Field],
+        fields: list[typedesc.Field],
         ofi: io.StringIO,
     ) -> None:
         print(f"{body.struct.name}._fields_ = [", file=ofi)
@@ -465,7 +466,7 @@ class CodeGenerator:
     def _write_structbody_commethods(
         self,
         body: typedesc.StructureBody,
-        methods: List[typedesc.Method],
+        methods: list[typedesc.Method],
         ofi: io.StringIO,
     ) -> None:
         print(f"{body.struct.name}._methods_ = [", file=ofi)

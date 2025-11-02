@@ -2,6 +2,7 @@ import ctypes
 import logging
 import traceback
 from _ctypes import COMError
+from collections.abc import Callable
 from ctypes import HRESULT, POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL, byref
 from ctypes.wintypes import (
     BOOL,
@@ -13,7 +14,7 @@ from ctypes.wintypes import (
     LPVOID,
     ULONG,
 )
-from typing import Any, Callable, Optional, Type
+from typing import Any, Optional
 from typing import Union as _UnionT
 
 import comtypes
@@ -70,7 +71,7 @@ class _AdviseConnection:
     receiver: Optional[_ReceiverType]
 
     def __init__(
-        self, source: IUnknown, interface: Type[IUnknown], receiver: _ReceiverType
+        self, source: IUnknown, interface: type[IUnknown], receiver: _ReceiverType
     ) -> None:
         # Pre-initializing attributes to avoid AttributeError after failed connection.
         self.cp = None
@@ -79,7 +80,7 @@ class _AdviseConnection:
         self._connect(source, interface, receiver)
 
     def _connect(
-        self, source: IUnknown, interface: Type[IUnknown], receiver: _ReceiverType
+        self, source: IUnknown, interface: type[IUnknown], receiver: _ReceiverType
     ) -> None:
         cpc = source.QueryInterface(IConnectionPointContainer)
         self.cp = cpc.FindConnectionPoint(byref(interface._iid_))
@@ -109,7 +110,7 @@ class _AdviseConnection:
             pass
 
 
-def FindOutgoingInterface(source: IUnknown) -> Type[IUnknown]:
+def FindOutgoingInterface(source: IUnknown) -> type[IUnknown]:
     """XXX Describe the strategy that is used..."""
     # If the COM object implements IProvideClassInfo2, it is easy to
     # find the default outgoing interface.
@@ -237,11 +238,11 @@ class _SinkMethodFinder(_MethodFinder):
                 return getattr(self.sink, mthname)
 
 
-def CreateEventReceiver(interface: Type[IUnknown], handler: Any) -> COMObject:
+def CreateEventReceiver(interface: type[IUnknown], handler: Any) -> COMObject:
     class Sink(COMObject):
         _com_interfaces_ = [interface]
 
-        def _get_method_finder_(self, itf: Type[IUnknown]) -> _MethodFinder:
+        def _get_method_finder_(self, itf: type[IUnknown]) -> _MethodFinder:
             # Use a special MethodFinder that will first try 'self',
             # then the sink.
             return _SinkMethodFinder(self, handler)
@@ -267,7 +268,7 @@ def CreateEventReceiver(interface: Type[IUnknown], handler: Any) -> COMObject:
 
 
 def GetEvents(
-    source: IUnknown, sink: Any, interface: Optional[Type[IUnknown]] = None
+    source: IUnknown, sink: Any, interface: Optional[type[IUnknown]] = None
 ) -> _AdviseConnection:
     """Receive COM events from 'source'.  Events will call methods on
     the 'sink' object.  'interface' is the source interface to use.
@@ -301,7 +302,7 @@ class EventDumper:
 
 
 def ShowEvents(
-    source: IUnknown, interface: Optional[Type[IUnknown]] = None
+    source: IUnknown, interface: Optional[type[IUnknown]] = None
 ) -> _AdviseConnection:
     """Receive COM events from 'source'.  A special event sink will be
     used that first prints the names of events that are found in the

@@ -1,6 +1,6 @@
 import ctypes
 from ctypes import HRESULT, POINTER, byref
-from typing import TYPE_CHECKING, Any, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional
 
 import comtypes
 import comtypes.client
@@ -30,8 +30,8 @@ class IClassFactory(IUnknown):
 
     def CreateInstance(
         self,
-        punkouter: Optional[Type["_Pointer[IUnknown]"]] = None,
-        interface: Optional[Type[IUnknown]] = None,
+        punkouter: Optional[type["_Pointer[IUnknown]"]] = None,
+        interface: Optional[type[IUnknown]] = None,
         dynamic: bool = False,
     ) -> Any:
         if dynamic:

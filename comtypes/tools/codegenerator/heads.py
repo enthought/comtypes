@@ -1,5 +1,6 @@
 import io
-from typing import Optional, Sequence
+from collections.abc import Sequence
+from typing import Optional
 
 from comtypes.tools import typedesc
 from comtypes.tools.codegenerator import typeannotator

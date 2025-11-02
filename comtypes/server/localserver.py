@@ -1,8 +1,9 @@
 import logging
 import queue
+from collections.abc import Sequence
 from ctypes import HRESULT, OleDLL, byref, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPDWORD
-from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence, Type
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import comtypes
 from comtypes import GUID, COMObject, IUnknown, hresult
@@ -33,7 +34,7 @@ _CoRevokeClassObject.argtypes = [DWORD]
 _CoRevokeClassObject.restype = HRESULT
 
 
-def run(classes: Sequence[Type[COMObject]]) -> None:
+def run(classes: Sequence[type[COMObject]]) -> None:
     classobjects = [ClassFactory(cls) for cls in classes]
     COMObject.__run_localserver__(classobjects)
 
@@ -44,7 +45,7 @@ class ClassFactory(COMObject):
     _queue: Optional[queue.Queue] = None
     regcls: int = REGCLS_MULTIPLEUSE
 
-    def __init__(self, cls: Type[COMObject], *args, **kw) -> None:
+    def __init__(self, cls: type[COMObject], *args, **kw) -> None:
         super().__init__()
         self._cls = cls
         self._register_class()
@@ -78,7 +79,7 @@ class ClassFactory(COMObject):
     def CreateInstance(
         self,
         this: Any,
-        punkOuter: Optional[Type["_Pointer[IUnknown]"]],
+        punkOuter: Optional[type["_Pointer[IUnknown]"]],
         riid: "_Pointer[GUID]",
         ppv: c_void_p,
     ) -> int:
