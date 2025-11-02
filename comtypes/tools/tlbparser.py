@@ -3,7 +3,7 @@ import sys
 from _ctypes import COMError
 from ctypes import alignment, c_void_p, sizeof, windll
 from ctypes.wintypes import MAX_PATH
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from comtypes import automation, typeinfo
 from comtypes.tools import typedesc
@@ -110,7 +110,7 @@ COMTYPES = {
 
 class Parser:
     tlib: typeinfo.ITypeLib
-    items: Dict[str, Any]
+    items: dict[str, Any]
 
     def make_type(self, tdesc: typeinfo.TYPEDESC, tinfo: typeinfo.ITypeInfo) -> Any:
         if tdesc.vt in COMTYPES:
@@ -286,7 +286,7 @@ class Parser:
 
         assert ta.cVars == 0, "vars on an Interface?"
 
-        members: List[Tuple[int, typedesc.ComMethod]] = []
+        members: list[tuple[int, typedesc.ComMethod]] = []
         for i in range(ta.cFuncs):
             fd = tinfo.GetFuncDesc(i)
             func_name, func_doc = tinfo.GetDocumentation(fd.memid)[:2]
@@ -403,7 +403,7 @@ class Parser:
             itf.add_member(mth)
         return itf
 
-    def inv_kind(self, invkind: int) -> List[str]:
+    def inv_kind(self, invkind: int) -> list[str]:
         NAMES = {
             automation.DISPATCH_METHOD: [],
             automation.DISPATCH_PROPERTYPUT: ["propput"],
@@ -412,7 +412,7 @@ class Parser:
         }
         return NAMES[invkind]
 
-    def func_flags(self, flags: int) -> List[str]:
+    def func_flags(self, flags: int) -> list[str]:
         # map FUNCFLAGS values to idl attributes
         NAMES = {
             typeinfo.FUNCFLAG_FRESTRICTED: "restricted",
@@ -431,7 +431,7 @@ class Parser:
         }
         return [NAMES[bit] for bit in NAMES if bit & flags]
 
-    def param_flags(self, flags: int) -> List[str]:
+    def param_flags(self, flags: int) -> list[str]:
         # map PARAMFLAGS values to idl attributes
         NAMES = {
             typeinfo.PARAMFLAG_FIN: "in",
@@ -444,7 +444,7 @@ class Parser:
         }
         return [NAMES[bit] for bit in NAMES if bit & flags]
 
-    def coclass_type_flags(self, flags: int) -> List[str]:
+    def coclass_type_flags(self, flags: int) -> list[str]:
         # map TYPEFLAGS values to idl attributes
         NAMES = {
             typeinfo.TYPEFLAG_FAPPOBJECT: "appobject",
@@ -468,7 +468,7 @@ class Parser:
             NEGATIVE_NAMES[bit] for bit in NEGATIVE_NAMES if not (bit & flags)
         ]
 
-    def interface_type_flags(self, flags: int) -> List[str]:
+    def interface_type_flags(self, flags: int) -> list[str]:
         # map TYPEFLAGS values to idl attributes
         NAMES = {
             typeinfo.TYPEFLAG_FAPPOBJECT: "appobject",
@@ -492,7 +492,7 @@ class Parser:
             NEGATIVE_NAMES[bit] for bit in NEGATIVE_NAMES if not (bit & flags)
         ]
 
-    def var_flags(self, flags: int) -> List[str]:
+    def var_flags(self, flags: int) -> list[str]:
         NAMES = {
             typeinfo.VARFLAG_FREADONLY: "readonly",
             typeinfo.VARFLAG_FSOURCE: "source",
