@@ -3,7 +3,7 @@
 import logging
 import sys
 from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
-from typing import TYPE_CHECKING, Any, ClassVar, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypeVar
 
 import comtypes
 from comtypes import GUID, _CoUninitialize
@@ -54,8 +54,8 @@ class _cominterface_meta(type):
 
     _case_insensitive_: bool
     _iid_: GUID
-    _methods_: List["_ComMemberSpec"]
-    _disp_methods_: List["_DispMemberSpec"]
+    _methods_: list["_ComMemberSpec"]
+    _disp_methods_: list["_DispMemberSpec"]
 
     # This flag is set to True by the atexit handler which calls
     # CoUninitialize.
@@ -184,7 +184,7 @@ class _cominterface_meta(type):
             d.update(getattr(self, "__map_case__", {}))
             self.__map_case__ = d
 
-    def _make_dispmethods(self, methods: List["_DispMemberSpec"]) -> None:
+    def _make_dispmethods(self, methods: list["_DispMemberSpec"]) -> None:
         if self._case_insensitive_:
             self._make_case_insensitive()
         # create dispinterface methods and properties on the interface 'self'
@@ -216,7 +216,7 @@ class _cominterface_meta(type):
                 raise TypeError(f"baseinterface '{itf.__name__}' has no _methods_")
         return result
 
-    def _make_methods(self, methods: List["_ComMemberSpec"]) -> None:
+    def _make_methods(self, methods: list["_ComMemberSpec"]) -> None:
         if self._case_insensitive_:
             self._make_case_insensitive()
         # register com interface. we insist on an _iid_ in THIS class!
@@ -271,7 +271,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
     "base class for COM interface pointer classes"
 
     if TYPE_CHECKING:
-        __com_interface__: ClassVar[Type["IUnknown"]]
+        __com_interface__: ClassVar[type["IUnknown"]]
 
     def __del__(self, _debug=logger.debug) -> None:
         "Release the COM refcount we own."
@@ -385,7 +385,7 @@ class IUnknown(_IUnknown_Base, metaclass=_cominterface_meta):
 
     _case_insensitive_: ClassVar[bool] = False
     _iid_: ClassVar[GUID] = GUID("{00000000-0000-0000-C000-000000000046}")
-    _methods_: ClassVar[List["_ComMemberSpec"]] = [
+    _methods_: ClassVar[list["_ComMemberSpec"]] = [
         STDMETHOD(HRESULT, "QueryInterface", [POINTER(GUID), POINTER(c_void_p)]),
         STDMETHOD(c_ulong, "AddRef"),
         STDMETHOD(c_ulong, "Release"),
@@ -397,7 +397,7 @@ class IUnknown(_IUnknown_Base, metaclass=_cominterface_meta):
     # And if `isinstance(p, POINTER(T))` is `True`, then `isinstance(p, T)` is also `True`.
     # So returning `T` is not a lie, and good way to know what members the class has.
     def QueryInterface(
-        self, interface: Type[_T_IUnknown], iid: Optional[GUID] = None
+        self, interface: type[_T_IUnknown], iid: Optional[GUID] = None
     ) -> _T_IUnknown:
         """QueryInterface(interface) -> instance"""
         p = POINTER(interface)()
