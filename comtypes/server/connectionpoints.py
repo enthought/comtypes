@@ -1,9 +1,10 @@
 import functools
 import logging
 from _ctypes import COMError
+from collections.abc import Callable, Iterator
 from ctypes import c_void_p, pointer
 from ctypes.wintypes import DWORD
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Tuple, Type
+from typing import TYPE_CHECKING, Any
 from typing import Union as _UnionT
 
 from comtypes import GUID, COMObject, IUnknown
@@ -29,10 +30,10 @@ class ConnectionPointImpl(COMObject):
     _com_interfaces_ = [IConnectionPoint]
 
     def __init__(
-        self, sink_interface: Type[IUnknown], sink_typeinfo: ITypeInfo
+        self, sink_interface: type[IUnknown], sink_typeinfo: ITypeInfo
     ) -> None:
         super().__init__()
-        self._connections: Dict[int, IUnknown] = {}
+        self._connections: dict[int, IUnknown] = {}
         self._cookie = 0
         self._sink_interface = sink_interface
         self._typeinfo = sink_typeinfo
@@ -72,7 +73,7 @@ class ConnectionPointImpl(COMObject):
     ) -> "hints.Hresult":
         return E_NOTIMPL
 
-    def _call_sinks(self, name: str, *args: Any, **kw: Any) -> List[Any]:
+    def _call_sinks(self, name: str, *args: Any, **kw: Any) -> list[Any]:
         results = []
         logger.debug("_call_sinks(%s, %s, *%s, **%s)", self, name, args, kw)
         # Is it an IDispatch derived interface?  Then, events have to be delivered
@@ -118,12 +119,12 @@ class ConnectableObjectMixin:
     """
 
     if TYPE_CHECKING:
-        _outgoing_interfaces_: ClassVar[List[Type[IDispatch]]]
-        _reg_typelib_: ClassVar[Tuple[str, int, int]]
+        _outgoing_interfaces_: ClassVar[list[type[IDispatch]]]
+        _reg_typelib_: ClassVar[tuple[str, int, int]]
 
     def __init__(self) -> None:
         super().__init__()
-        self.__connections: Dict[Type[IDispatch], ConnectionPointImpl] = {}
+        self.__connections: dict[type[IDispatch], ConnectionPointImpl] = {}
 
         tlib = LoadRegTypeLib(*self._reg_typelib_)
         for itf in self._outgoing_interfaces_:
@@ -161,7 +162,7 @@ class ConnectableObjectMixin:
         return CONNECT_E_NOCONNECTION
 
     def Fire_Event(
-        self, itf: _UnionT[int, Type[IDispatch]], name: str, *args: Any, **kw: Any
+        self, itf: _UnionT[int, type[IDispatch]], name: str, *args: Any, **kw: Any
     ) -> Any:
         # Fire event 'name' with arguments *args and **kw.
         # Accepts either an interface index or an interface as first argument.
