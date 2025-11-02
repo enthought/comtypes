@@ -9,7 +9,7 @@ from ctypes import (
     create_unicode_buffer,
 )
 from ctypes.wintypes import DWORD, MAX_PATH, WIN32_FIND_DATAA, WIN32_FIND_DATAW
-from typing import TYPE_CHECKING, Literal, Tuple
+from typing import TYPE_CHECKING, Literal
 
 from comtypes import COMMETHOD, GUID, HRESULT, CoClass, IUnknown
 
@@ -175,7 +175,7 @@ class IShellLinkA(IUnknown):
         self.__com_GetArguments(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetIconLocation(self) -> Tuple[bytes, int]:
+    def GetIconLocation(self) -> tuple[bytes, int]:
         iIcon = c_int()
         buf = create_string_buffer(MAX_PATH)
         self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))  # type: ignore
@@ -310,7 +310,7 @@ class IShellLinkW(IUnknown):
         self.__com_GetArguments(buf, 1024)  # type: ignore
         return buf.value
 
-    def GetIconLocation(self) -> Tuple[str, int]:
+    def GetIconLocation(self) -> tuple[str, int]:
         iIcon = c_int()
         buf = create_unicode_buffer(MAX_PATH)
         self.__com_GetIconLocation(buf, MAX_PATH, byref(iIcon))  # type: ignore
