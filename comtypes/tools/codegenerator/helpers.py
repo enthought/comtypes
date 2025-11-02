@@ -1,5 +1,6 @@
 import keyword
-from typing import Any, Iterator, List, Tuple
+from collections.abc import Iterator
+from typing import Any
 from typing import Union as _UnionT
 
 from comtypes.tools import typedesc
@@ -73,7 +74,7 @@ _IdlFlagType = _UnionT[str, dispid, helpstring]
 def _to_arg_definition(
     type_name: str,
     arg_name: str,
-    idlflags: List[str],
+    idlflags: list[str],
     default: _DefValType,
 ) -> str:
     if default is not None:
@@ -104,7 +105,7 @@ class ComMethodGenerator:
     def __init__(self, m: typedesc.ComMethod, isdual: bool) -> None:
         self._m = m
         self._isdual = isdual
-        self.data: List[str] = []
+        self.data: list[str] = []
         self._to_type_name = TypeNamer()
 
     def generate(self) -> str:
@@ -114,8 +115,8 @@ class ComMethodGenerator:
             self._make_withargs()
         return "\n".join(self.data)
 
-    def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
-        idlflags: List[_IdlFlagType] = []
+    def _get_common_elms(self) -> tuple[list[_IdlFlagType], str, str]:
+        idlflags: list[_IdlFlagType] = []
         if self._isdual:
             idlflags.append(dispid(self._m.memid))
             idlflags.extend(self._m.idlflags)
@@ -152,7 +153,7 @@ class ComMethodGenerator:
         self.data.append(",\n".join(arglist))
         self.data.append("    ),")
 
-    def _iter_args(self) -> Iterator[Tuple[str, str, List[str], _DefValType]]:
+    def _iter_args(self) -> Iterator[tuple[str, str, list[str], _DefValType]]:
         for typ, arg_name, _f, _defval in self._m.arguments:
             ###########################################################
             # IDL files that contain 'open arrays' or 'conformant
@@ -211,7 +212,7 @@ class ComMethodGenerator:
 class DispMethodGenerator:
     def __init__(self, m: typedesc.DispMethod) -> None:
         self._m = m
-        self.data: List[str] = []
+        self.data: list[str] = []
         self._to_type_name = TypeNamer()
 
     def generate(self) -> str:
@@ -221,8 +222,8 @@ class DispMethodGenerator:
             self._make_withargs()
         return "\n".join(self.data)
 
-    def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
-        idlflags: List[_IdlFlagType] = []
+    def _get_common_elms(self) -> tuple[list[_IdlFlagType], str, str]:
+        idlflags: list[_IdlFlagType] = []
         idlflags.append(dispid(self._m.dispid))
         idlflags.extend(self._m.idlflags)
         if __debug__ and self._m.doc:
@@ -256,7 +257,7 @@ class DispMethodGenerator:
         self.data.append(",\n".join(arglist))
         self.data.append("    ),")
 
-    def _iter_args(self) -> Iterator[Tuple[str, str, List[str], _DefValType]]:
+    def _iter_args(self) -> Iterator[tuple[str, str, list[str], _DefValType]]:
         for typ, arg_name, idlflags, default in self._m.arguments:
             type_name = self._to_type_name(typ)
             yield (type_name, arg_name, idlflags, default)
@@ -280,8 +281,8 @@ class DispPropertyGenerator:
             )
         return code
 
-    def _get_common_elms(self) -> Tuple[List[_IdlFlagType], str, str]:
-        idlflags: List[_IdlFlagType] = []
+    def _get_common_elms(self) -> tuple[list[_IdlFlagType], str, str]:
+        idlflags: list[_IdlFlagType] = []
         idlflags.append(dispid(self._m.dispid))
         idlflags.extend(self._m.idlflags)
         if __debug__ and self._m.doc:
@@ -336,7 +337,7 @@ class TypeNamer:
 
     def _inspect_PointerType(
         self, t: typedesc.PointerType, count: int = 0
-    ) -> Tuple[Any, int]:
+    ) -> tuple[Any, int]:
         if ASSUME_STRINGS:
             x = get_real_type(t.typ)
             if isinstance(x, typedesc.FundamentalType):
