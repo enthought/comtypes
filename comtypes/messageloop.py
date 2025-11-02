@@ -1,11 +1,12 @@
 import ctypes
 from ctypes import WinDLL, WinError, byref
 from ctypes.wintypes import MSG
-from typing import TYPE_CHECKING, List, SupportsIndex
+from typing import TYPE_CHECKING, SupportsIndex
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
     from ctypes import _CArgObject
-    from typing import Any, Callable, Iterable
+    from typing import Any
 
     _FilterCallable = Callable[["_CArgObject"], Iterable[Any]]  # type: ignore
 
@@ -19,7 +20,7 @@ DispatchMessage = _user32.DispatchMessageA
 
 class _MessageLoop:
     def __init__(self) -> None:
-        self._filters: List["_FilterCallable"] = []
+        self._filters: list["_FilterCallable"] = []
 
     def insert_filter(self, obj: "_FilterCallable", index: SupportsIndex = -1) -> None:
         self._filters.insert(index, obj)

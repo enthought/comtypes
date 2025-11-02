@@ -1,6 +1,7 @@
 import logging
 import queue
 from _ctypes import COMError, CopyComPointer
+from collections.abc import Callable, Sequence
 from ctypes import (
     POINTER,
     FormatError,
@@ -13,19 +14,7 @@ from ctypes import (
     pointer,
 )
 from ctypes.wintypes import INT, LONG, LPVOID, UINT, ULONG, WORD
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypeVar
 from typing import Union as _UnionT
 
 import comtypes
@@ -208,14 +197,14 @@ _T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
 
 class COMObject:
-    _com_interfaces_: ClassVar[List[Type[IUnknown]]]
-    _outgoing_interfaces_: ClassVar[List[Type["hints.IDispatch"]]]
-    _instances_: ClassVar[Dict["COMObject", None]] = {}
+    _com_interfaces_: ClassVar[list[type[IUnknown]]]
+    _outgoing_interfaces_: ClassVar[list[type["hints.IDispatch"]]]
+    _instances_: ClassVar[dict["COMObject", None]] = {}
     _reg_clsid_: ClassVar[GUID]
-    _reg_typelib_: ClassVar[Tuple[str, int, int]]
+    _reg_typelib_: ClassVar[tuple[str, int, int]]
     __typelib: "hints.ITypeLib"
-    _com_pointers_: Dict[GUID, "hints.LP_LP_Vtbl"]
-    _dispimpl_: Dict[Tuple[comtypes.dispid, int], Callable[..., Any]]
+    _com_pointers_: dict[GUID, "hints.LP_LP_Vtbl"]
+    _dispimpl_: dict[tuple[comtypes.dispid, int], Callable[..., Any]]
 
     def __new__(cls, *args: Any, **kw: Any) -> "hints.Self":
         self = super().__new__(cls)
@@ -268,7 +257,7 @@ class COMObject:
         for itf in interfaces[::-1]:
             self.__make_interface_pointer(itf)
 
-    def __make_interface_pointer(self, itf: Type[IUnknown]) -> None:
+    def __make_interface_pointer(self, itf: type[IUnknown]) -> None:
         finder = self._get_method_finder_(itf)
         iids, vtbl = create_vtbl_mapping(itf, finder)
         for iid in iids:
@@ -276,7 +265,7 @@ class COMObject:
         if hasattr(itf, "_disp_methods_"):
             self._dispimpl_ = create_dispimpl(itf, finder)
 
-    def _get_method_finder_(self, itf: Type[IUnknown]) -> _MethodFinder:
+    def _get_method_finder_(self, itf: type[IUnknown]) -> _MethodFinder:
         # This method can be overridden to customize how methods are found.
         return _MethodFinder(self)
 
@@ -381,7 +370,7 @@ class COMObject:
         _debug("%r.QueryInterface(%s) -> E_NOINTERFACE", self, iid)
         return hresult.E_NOINTERFACE
 
-    def QueryInterface(self, interface: Type[_T_IUnknown]) -> _T_IUnknown:
+    def QueryInterface(self, interface: type[_T_IUnknown]) -> _T_IUnknown:
         "Query the object for an interface pointer"
         # This method is NOT the implementation of
         # IUnknown::QueryInterface, instead it is supposed to be

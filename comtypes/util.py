@@ -24,7 +24,7 @@ from ctypes import (
     sizeof,
 )
 from ctypes import Array as _CArrayType
-from typing import TYPE_CHECKING, Type, TypeVar, overload
+from typing import TYPE_CHECKING, TypeVar, overload
 
 if TYPE_CHECKING:
     from ctypes import _CArgObject, _CData
@@ -166,10 +166,10 @@ def byref_at(
 #
 @overload
 def cast_field(
-    struct: Structure, fieldname: str, fieldtype: Type["_SimpleCData[_T]"]
+    struct: Structure, fieldname: str, fieldtype: type["_SimpleCData[_T]"]
 ) -> _T: ...
 @overload
-def cast_field(struct: Structure, fieldname: str, fieldtype: Type[_CT]) -> _CT: ...
+def cast_field(struct: Structure, fieldname: str, fieldtype: type[_CT]) -> _CT: ...
 def cast_field(
     struct,
     fieldname,
