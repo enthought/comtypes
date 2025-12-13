@@ -1,7 +1,7 @@
 import abc
 import keyword
-from collections.abc import Iterable, Sequence
-from typing import Any, Generic, Iterator, Optional, Protocol, TypeVar
+from collections.abc import Iterable, Iterator, Sequence
+from typing import Any, Generic, Optional, Protocol, TypeVar
 
 from comtypes.tools import typedesc
 
