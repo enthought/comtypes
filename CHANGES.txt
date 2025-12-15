@@ -1,6 +1,11 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.14
+--------------
+* Replace ``setup.py`` with ``pyproject.toml``. By @moi15moi.
+* Update codebases for PEP585 compliance. By @junkmd.
+
 Release 1.4.13
 --------------
 * Remove Python 3.8 and add Python 3.14 to the CI pipelines. By @junkmd.
