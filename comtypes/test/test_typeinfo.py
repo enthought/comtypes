@@ -4,6 +4,7 @@ import sys
 import unittest
 from ctypes.wintypes import MAX_PATH
 
+import comtypes.hresult
 from comtypes import GUID, COMError
 from comtypes.typeinfo import (
     TKIND_DISPATCH,
@@ -84,8 +85,9 @@ class Test(unittest.TestCase):
                 ti.GetVarDesc(v)
 
         guid_null = GUID()
-        with self.assertRaises(COMError):
+        with self.assertRaises(COMError) as cm:
             tlib.GetTypeInfoOfGuid(guid_null)
+        self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
 
         guid = GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")
         ti = tlib.GetTypeInfoOfGuid(guid)
