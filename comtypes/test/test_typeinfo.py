@@ -107,6 +107,16 @@ class Test(unittest.TestCase):
             ti.GetRefTypeOfImplType(-1)
         self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
 
+    def test_custom_interface_ITypeInfo(self):
+        tlib = LoadTypeLibEx("UIAutomationCore.dll")
+        IID_IUIAutomation = GUID("{30CBE57D-D9D0-452A-AB13-7AC5AC4825EE}")
+        ti = tlib.GetTypeInfoOfGuid(IID_IUIAutomation)
+        ta = ti.GetTypeAttr()
+        self.assertEqual(ta.typekind, TKIND_INTERFACE)
+        with self.assertRaises(COMError) as cm:
+            ti.GetRefTypeOfImplType(-1)
+        self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
+
 
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
