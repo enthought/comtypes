@@ -4,8 +4,7 @@ import sys
 import unittest
 from ctypes.wintypes import MAX_PATH
 
-import comtypes.hresult
-from comtypes import GUID, COMError, typeinfo
+from comtypes import GUID, COMError, hresult, typeinfo
 from comtypes.typeinfo import (
     GetModuleFileName,
     LoadRegTypeLib,
@@ -85,7 +84,7 @@ class Test(unittest.TestCase):
         guid_null = GUID()
         with self.assertRaises(COMError) as cm:
             tlib.GetTypeInfoOfGuid(guid_null)
-        self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
+        self.assertEqual(hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
 
         IID_IFile = GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")
         ti = tlib.GetTypeInfoOfGuid(IID_IFile)
@@ -103,7 +102,7 @@ class Test(unittest.TestCase):
         self.assertEqual(ta.typekind, typeinfo.TKIND_DISPATCH)
         with self.assertRaises(COMError) as cm:
             ti.GetRefTypeOfImplType(-1)
-        self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
+        self.assertEqual(hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
         self.assertFalse(ti.GetTypeAttr().wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
 
     def test_custom_interface_ITypeInfo(self):
@@ -114,7 +113,7 @@ class Test(unittest.TestCase):
         self.assertEqual(ta.typekind, typeinfo.TKIND_INTERFACE)
         with self.assertRaises(COMError) as cm:
             ti.GetRefTypeOfImplType(-1)
-        self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
+        self.assertEqual(hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
         self.assertFalse(ti.GetTypeAttr().wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
 
     def test_dual_interface_ITypeInfo(self):
