@@ -117,6 +117,18 @@ class Test(unittest.TestCase):
             ti.GetRefTypeOfImplType(-1)
         self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
 
+    def test_dual_interface_ITypeInfo(self):
+        tlib = LoadTypeLibEx("scrrun.dll")
+        IID_IDictionary = GUID("{42C642C1-97E1-11CF-978F-00A02463E06F}")
+        ti = tlib.GetTypeInfoOfGuid(IID_IDictionary)
+        ta = ti.GetTypeAttr()
+        self.assertEqual(ta.typekind, TKIND_DISPATCH)
+        refti = ti.GetRefTypeInfo(ti.GetRefTypeOfImplType(-1))
+        refta = refti.GetTypeAttr()
+        self.assertEqual(IID_IDictionary, refti.GetTypeAttr().guid)
+        self.assertEqual(refta.typekind, TKIND_INTERFACE)
+        self.assertEqual(ti, refti.GetRefTypeInfo(refti.GetRefTypeOfImplType(-1)))
+
 
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
