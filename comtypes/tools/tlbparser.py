@@ -624,6 +624,7 @@ class Parser:
             try:
                 # GetRefTypeOfImplType(-1) returns the custom portion
                 # of a dispinterface, if it is dual
+                # See https://learn.microsoft.com/en-us/windows/win32/api/oaidl/nf-oaidl-itypeinfo-getreftypeofimpltype#remarks
                 href = tinfo.GetRefTypeOfImplType(-1)
             except COMError:
                 # no dual interface
