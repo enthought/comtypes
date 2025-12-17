@@ -2,9 +2,10 @@ import ctypes
 import os
 import sys
 import unittest
+from _ctypes import COMError
 from ctypes.wintypes import MAX_PATH
 
-from comtypes import GUID, COMError, hresult, typeinfo
+from comtypes import GUID, hresult, typeinfo
 from comtypes.typeinfo import (
     GetModuleFileName,
     LoadRegTypeLib,
