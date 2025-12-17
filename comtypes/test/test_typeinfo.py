@@ -97,6 +97,16 @@ class Test(unittest.TestCase):
         self.assertEqual(c_ti, ti)
         self.assertEqual(IID_IFile, ti.GetTypeAttr().guid)
 
+    def test_pure_dispatch_ITypeInfo(self):
+        tlib = LoadTypeLibEx("msi.dll")
+        IID_Installer = GUID("{000C1090-0000-0000-C000-000000000046}")
+        ti = tlib.GetTypeInfoOfGuid(IID_Installer)
+        ta = ti.GetTypeAttr()
+        self.assertEqual(ta.typekind, TKIND_DISPATCH)
+        with self.assertRaises(COMError) as cm:
+            ti.GetRefTypeOfImplType(-1)
+        self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
+
 
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
