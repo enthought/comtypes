@@ -5,10 +5,8 @@ import unittest
 from ctypes.wintypes import MAX_PATH
 
 import comtypes.hresult
-from comtypes import GUID, COMError
+from comtypes import GUID, COMError, typeinfo
 from comtypes.typeinfo import (
-    TKIND_DISPATCH,
-    TKIND_INTERFACE,
     GetModuleFileName,
     LoadRegTypeLib,
     LoadTypeLibEx,
@@ -69,7 +67,7 @@ class Test(unittest.TestCase):
             c_tlib, c_index = ti.GetContainingTypeLib()
             self.assert_tlibattr_equal(c_tlib, tlib)
             self.assertEqual(c_index, index)
-            if ta.typekind in (TKIND_INTERFACE, TKIND_DISPATCH):
+            if ta.typekind in (typeinfo.TKIND_INTERFACE, typeinfo.TKIND_DISPATCH):
                 if ta.cImplTypes:
                     href = ti.GetRefTypeOfImplType(0)
                     base = ti.GetRefTypeInfo(href)
@@ -102,31 +100,35 @@ class Test(unittest.TestCase):
         IID_Installer = GUID("{000C1090-0000-0000-C000-000000000046}")
         ti = tlib.GetTypeInfoOfGuid(IID_Installer)
         ta = ti.GetTypeAttr()
-        self.assertEqual(ta.typekind, TKIND_DISPATCH)
+        self.assertEqual(ta.typekind, typeinfo.TKIND_DISPATCH)
         with self.assertRaises(COMError) as cm:
             ti.GetRefTypeOfImplType(-1)
         self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
+        self.assertFalse(ti.GetTypeAttr().wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
 
     def test_custom_interface_ITypeInfo(self):
         tlib = LoadTypeLibEx("UIAutomationCore.dll")
         IID_IUIAutomation = GUID("{30CBE57D-D9D0-452A-AB13-7AC5AC4825EE}")
         ti = tlib.GetTypeInfoOfGuid(IID_IUIAutomation)
         ta = ti.GetTypeAttr()
-        self.assertEqual(ta.typekind, TKIND_INTERFACE)
+        self.assertEqual(ta.typekind, typeinfo.TKIND_INTERFACE)
         with self.assertRaises(COMError) as cm:
             ti.GetRefTypeOfImplType(-1)
         self.assertEqual(comtypes.hresult.TYPE_E_ELEMENTNOTFOUND, cm.exception.hresult)
+        self.assertFalse(ti.GetTypeAttr().wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
 
     def test_dual_interface_ITypeInfo(self):
         tlib = LoadTypeLibEx("scrrun.dll")
         IID_IDictionary = GUID("{42C642C1-97E1-11CF-978F-00A02463E06F}")
         ti = tlib.GetTypeInfoOfGuid(IID_IDictionary)
         ta = ti.GetTypeAttr()
-        self.assertEqual(ta.typekind, TKIND_DISPATCH)
+        self.assertEqual(ta.typekind, typeinfo.TKIND_DISPATCH)
+        self.assertTrue(ta.wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
         refti = ti.GetRefTypeInfo(ti.GetRefTypeOfImplType(-1))
         refta = refti.GetTypeAttr()
         self.assertEqual(IID_IDictionary, refti.GetTypeAttr().guid)
-        self.assertEqual(refta.typekind, TKIND_INTERFACE)
+        self.assertTrue(refta.wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
+        self.assertEqual(refta.typekind, typeinfo.TKIND_INTERFACE)
         self.assertEqual(ti, refti.GetRefTypeInfo(refti.GetRefTypeOfImplType(-1)))
 
 
