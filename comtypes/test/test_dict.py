@@ -3,8 +3,11 @@
 import unittest
 
 from comtypes.automation import VARIANT
-from comtypes.client import CreateObject
+from comtypes.client import CreateObject, GetModule
 from comtypes.client.lazybind import Dispatch
+
+GetModule("scrrun.dll")
+import comtypes.gen.Scripting as scrrun  # noqa
 
 
 class Test(unittest.TestCase):
@@ -31,10 +34,11 @@ class Test(unittest.TestCase):
 
         # CompareMode: propget, propput
         # (Can only be set when dict is empty!)
-        self.assertEqual(d.CompareMode, 0)
-        d.CompareMode = 1
-        self.assertEqual(d.CompareMode, 1)
-        d.CompareMode = 0
+        # Verify that the default is BinaryCompare.
+        self.assertEqual(d.CompareMode, scrrun.BinaryCompare)
+        d.CompareMode = scrrun.TextCompare
+        self.assertEqual(d.CompareMode, scrrun.TextCompare)
+        d.CompareMode = scrrun.BinaryCompare
 
         # Exists(key) -> bool
         self.assertEqual(d.Exists(42), False)
@@ -67,7 +71,7 @@ class Test(unittest.TestCase):
         # part 2, testing propput and propputref
 
         s = CreateObject("Scripting.Dictionary", dynamic=True)
-        s.CompareMode = 42
+        s.CompareMode = scrrun.DatabaseCompare
 
         # This calls propputref, since we assign an Object
         d.Item["object"] = s
@@ -77,14 +81,14 @@ class Test(unittest.TestCase):
         a = d.Item["object"]
 
         self.assertEqual(d.Item["object"], s)
-        self.assertEqual(d.Item["object"].CompareMode, 42)
-        self.assertEqual(d.Item["value"], 42)
+        self.assertEqual(d.Item["object"].CompareMode, scrrun.DatabaseCompare)
+        self.assertEqual(d.Item["value"], scrrun.DatabaseCompare)
 
         # Changing a property of the object
-        s.CompareMode = 5
+        s.CompareMode = scrrun.BinaryCompare
         self.assertEqual(d.Item["object"], s)
-        self.assertEqual(d.Item["object"].CompareMode, 5)
-        self.assertEqual(d.Item["value"], 42)
+        self.assertEqual(d.Item["object"].CompareMode, scrrun.BinaryCompare)
+        self.assertEqual(d.Item["value"], scrrun.DatabaseCompare)
 
         # This also calls propputref since we assign an Object
         d.Item["var"] = VARIANT(s)
