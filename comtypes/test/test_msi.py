@@ -9,11 +9,12 @@ MSI_TLIB = typeinfo.LoadTypeLibEx("msi.dll")
 comtypes.client.GetModule(MSI_TLIB)
 import comtypes.gen.WindowsInstaller as msi
 
-HKCR = 0
+HKCR = 0  # HKEY_CLASSES_ROOT
+HKCU = 1  # HKEY_CURRENT_USER
 
 
 class Test_Installer(ut.TestCase):
-    def test_hkcr_registry_value(self):
+    def test_registry_value_with_root_key_value(self):
         # `WindowsInstaller.Installer` provides access to Windows configuration.
         inst = comtypes.client.CreateObject(
             "WindowsInstaller.Installer", interface=msi.Installer
@@ -31,3 +32,17 @@ class Test_Installer(ut.TestCase):
             progid, _ = winreg.QueryValueEx(key, "")
         # This confirms that the Installer can correctly read system information.
         self.assertEqual(progid, inst.RegistryValue(HKCR, ".txt", ""))
+
+    def test_registry_value_with_root_key(self):
+        inst = comtypes.client.CreateObject(
+            "WindowsInstaller.Installer", interface=msi.Installer
+        )
+        # If the third arg is missing, `Installer.RegistryValue` returns a Boolean
+        # designating whether the key exists.
+        # https://learn.microsoft.com/en-us/windows/win32/msi/installer-registryvalue
+        # The `HKEY_CURRENT_USER\\Control Panel\\Desktop` registry key is a standard
+        # registry key that exists across all versions of the Windows.
+        self.assertTrue(inst.RegistryValue(HKCU, r"Control Panel\Desktop"))
+        # Since a single backslash is reserved as a path separator and cannot be used
+        # in a key name itself. Therefore, such a key exists in no version of Windows.
+        self.assertFalse(inst.RegistryValue(HKCU, "\\"))
