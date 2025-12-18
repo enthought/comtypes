@@ -2,6 +2,7 @@
 
 import unittest
 
+from comtypes import typeinfo
 from comtypes.automation import VARIANT
 from comtypes.client import CreateObject, GetModule
 from comtypes.client.lazybind import Dispatch
@@ -104,6 +105,36 @@ class Test(unittest.TestCase):
         self.assertEqual(d["blah"], "blarg")
         # d(key) -> value
         self.assertEqual(d("blah"), "blarg")
+
+    def test_static(self):
+        d = CreateObject(scrrun.Dictionary, interface=scrrun.IDictionary)
+        # This confirms that the Dictionary is a dual interface.
+        self.assertTrue(
+            d.GetTypeInfo(0).GetTypeAttr().wTypeFlags & typeinfo.TYPEFLAG_FDUAL
+        )
+        # Dual interfaces call COM methods that support named arguments.
+        d.Add("one", 1)
+        d.Add("two", Item=2)
+        d.Add(Key="three", Item=3)
+        d.Add(Item=4, Key="four")
+        d.Item["five"] = 5
+        d["six"] = 6
+        self.assertEqual(d.Count, 6)
+        self.assertEqual(len(d), 6)
+        self.assertEqual(d("six"), 6)
+        self.assertEqual(d.Item("five"), 5)
+        self.assertEqual(d("four"), 4)
+        self.assertEqual(d["three"], 3)
+        self.assertEqual(d.Item["two"], 2)
+        self.assertEqual(d("one"), 1)
+        # NOTE: Named parameters are not yet implemented for the named property.
+        # See https://github.com/enthought/comtypes/issues/371
+        # TODO: After named parameters are supported, this will become a test to
+        # assert the return value.
+        with self.assertRaises(TypeError):
+            d.Item(Key="two")
+        with self.assertRaises(TypeError):
+            d(Key="one")
 
 
 if __name__ == "__main__":
