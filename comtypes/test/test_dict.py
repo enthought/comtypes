@@ -18,6 +18,7 @@ class Test(unittest.TestCase):
             setattr(d, "Count", -1)
 
         # HashVal is a 'named' propget, no propput
+        # HashVal is a 'hidden' member and used internally.
         ##d.HashVal
 
         # Add(Key, Item) -> None
