@@ -19,13 +19,6 @@ class Test_Installer(ut.TestCase):
         inst = comtypes.client.CreateObject(
             "WindowsInstaller.Installer", interface=msi.Installer
         )
-        IID_Installer = msi.Installer._iid_
-        # This confirms that the Installer is a pure dispatch interface.
-        self.assertIsInstance(inst, IDispatch)
-        ti = MSI_TLIB.GetTypeInfoOfGuid(IID_Installer)
-        ta = ti.GetTypeAttr()
-        self.assertEqual(IID_Installer, ta.guid)
-        self.assertFalse(ta.wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
         # Both methods below get the "Programmatic Identifier" used to handle
         # ".txt" files.
         with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, ".txt") as key:
@@ -46,3 +39,25 @@ class Test_Installer(ut.TestCase):
         # Since a single backslash is reserved as a path separator and cannot be used
         # in a key name itself. Therefore, such a key exists in no version of Windows.
         self.assertFalse(inst.RegistryValue(HKCU, "\\"))
+
+    def test_registry_value_with_named_params(self):
+        inst = comtypes.client.CreateObject(
+            "WindowsInstaller.Installer", interface=msi.Installer
+        )
+        IID_Installer = msi.Installer._iid_
+        # This confirms that the Installer is a pure dispatch interface.
+        self.assertIsInstance(inst, IDispatch)
+        ti = MSI_TLIB.GetTypeInfoOfGuid(IID_Installer)
+        ta = ti.GetTypeAttr()
+        self.assertEqual(IID_Installer, ta.guid)
+        self.assertFalse(ta.wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
+        # NOTE: Named parameters are not yet implemented for the dispmethod called
+        # via the `Invoke` method.
+        # See https://github.com/enthought/comtypes/issues/371
+        # As a safeguard until implementation is complete, an error will be raised
+        # if named arguments are passed to prevent invalid calls.
+        # TODO: After named parameters are supported, this will become a test to
+        # assert the return value.
+        ERRMSG = "named parameters not yet implemented"
+        with self.assertRaises(ValueError, msg=ERRMSG):
+            inst.RegistryValue(Root=HKCR, Key=".txt", Value="")
