@@ -1,4 +1,4 @@
-"""Use Scripting.Dictionary to test the lazybind module."""
+"""Use Scripting.Dictionary to test the lazybind and the generated modules."""
 
 import unittest
 
@@ -19,7 +19,7 @@ class Test(unittest.TestCase):
         # Count is a normal propget, no propput
         self.assertEqual(d.Count, 0)
         with self.assertRaises(AttributeError):
-            setattr(d, "Count", -1)
+            d.Count = -1
 
         # HashVal is a 'named' propget, no propput
         # HashVal is a 'hidden' member and used internally.
@@ -108,29 +108,33 @@ class Test(unittest.TestCase):
         # This confirms that the Dictionary is a dual interface.
         ti = d.GetTypeInfo(0)
         self.assertTrue(ti.GetTypeAttr().wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
+        # Count is a normal propget, no propput
+        self.assertEqual(d.Count, 0)
+        with self.assertRaises(AttributeError):
+            d.Count = -1  # type: ignore
         # Dual interfaces call COM methods that support named arguments.
-        d.Add("one", 1)
-        d.Add("two", Item=2)
-        d.Add(Key="three", Item=3)
-        d.Add(Item=4, Key="four")
-        d.Item["five"] = 5
-        d["six"] = 6
-        self.assertEqual(d.Count, 6)
-        self.assertEqual(len(d), 6)
-        self.assertEqual(d("six"), 6)
-        self.assertEqual(d.Item("five"), 5)
-        self.assertEqual(d("four"), 4)
-        self.assertEqual(d["three"], 3)
-        self.assertEqual(d.Item["two"], 2)
-        self.assertEqual(d("one"), 1)
+        d.Add("spam", "foo")
+        d.Add("egg", Item="bar")
+        self.assertEqual(d.Count, 2)
+        d.Add(Key="ham", Item="baz")
+        self.assertEqual(len(d), 3)
+        d.Add(Item="qux", Key="toast")
+        d.Item["beans"] = "quux"
+        d["bacon"] = "corge"
+        self.assertEqual(d("spam"), "foo")
+        self.assertEqual(d.Item["egg"], "bar")
+        self.assertEqual(d["ham"], "baz")
+        self.assertEqual(d("toast"), "qux")
+        self.assertEqual(d.Item("beans"), "quux")
+        self.assertEqual(d("bacon"), "corge")
         # NOTE: Named parameters are not yet implemented for the named property.
         # See https://github.com/enthought/comtypes/issues/371
         # TODO: After named parameters are supported, this will become a test to
         # assert the return value.
         with self.assertRaises(TypeError):
-            d.Item(Key="two")
+            d.Item(Key="spam")
         with self.assertRaises(TypeError):
-            d(Key="one")
+            d(Key="egg")
 
 
 if __name__ == "__main__":
