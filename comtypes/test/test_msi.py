@@ -2,7 +2,7 @@ import unittest as ut
 import winreg
 
 import comtypes.client
-from comtypes import typeinfo
+from comtypes import GUID, typeinfo
 from comtypes.automation import IDispatch
 
 MSI_TLIB = typeinfo.LoadTypeLibEx("msi.dll")
@@ -60,4 +60,36 @@ class Test_Installer(ut.TestCase):
         # assert the return value.
         ERRMSG = "named parameters not yet implemented"
         with self.assertRaises(ValueError, msg=ERRMSG):
-            inst.RegistryValue(Root=HKCR, Key=".txt", Value="")
+            inst.RegistryValue(Root=HKCR, Key=".txt", Value="")  # type: ignore
+        with self.assertRaises(ValueError, msg=ERRMSG):
+            inst.RegistryValue(Value="", Root=HKCR, Key=".txt")  # type: ignore
+        with self.assertRaises(ValueError, msg=ERRMSG):
+            inst.RegistryValue(HKCR, Key=".txt", Value="")  # type: ignore
+        with self.assertRaises(ValueError, msg=ERRMSG):
+            inst.RegistryValue(HKCR, ".txt", Value="")  # type: ignore
+        with self.assertRaises(ValueError, msg=ERRMSG):
+            inst.RegistryValue(Root=HKCU, Key=r"Control Panel\Desktop")  # type: ignore
+        with self.assertRaises(ValueError, msg=ERRMSG):
+            inst.RegistryValue(Key=r"Control Panel\Desktop", Root=HKCR)  # type: ignore
+        with self.assertRaises(ValueError, msg=ERRMSG):
+            inst.RegistryValue(HKCR, Key=r"Control Panel\Desktop")  # type: ignore
+
+    def test_product_state(self):
+        inst = comtypes.client.CreateObject(
+            "WindowsInstaller.Installer", interface=msi.Installer
+        )
+        # There is no product associated with the Null GUID.
+        pdcode = str(GUID())
+        expected = msi.MsiInstallState.msiInstallStateUnknown
+        self.assertEqual(expected, inst.ProductState(pdcode))
+        self.assertEqual(expected, inst.ProductState[pdcode])
+        # The `ProductState` property is a read-only property.
+        # https://learn.microsoft.com/en-us/windows/win32/msi/installer-productstate-property
+        with self.assertRaises(TypeError):
+            inst.ProductState[pdcode] = msi.MsiInstallState.msiInstallStateDefault  # type: ignore
+        # NOTE: Named parameters are not yet implemented for the named property.
+        # See https://github.com/enthought/comtypes/issues/371
+        # TODO: After named parameters are supported, this will become a test to
+        # assert the return value.
+        with self.assertRaises(TypeError):
+            inst.ProductState(Product=pdcode)  # type: ignore
