@@ -48,7 +48,18 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         put_def = typedesc.DispMethod(8, 4, "def", void_type, ["propput"], None)
         put_def.add_argument(VARIANT_type, "arg1", ["in", "optional"], None)
         put_def.add_argument(VARIANT_type, "arg2", ["in"], None)
-        for m in [ham, bacon, get_spam, put_spam, except_, raise_, get_def, put_def]:
+        egg = typedesc.DispMethod(643, 1, "egg", VARIANT_BOOL_type, [], None)
+        for m in [
+            ham,
+            bacon,
+            get_spam,
+            put_spam,
+            except_,
+            raise_,
+            get_def,
+            put_def,
+            egg,
+        ]:
             itf.add_member(m)
         return itf
 
@@ -66,7 +77,8 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        pass  # avoid using a keyword for def raise(self, foo: hints.Incomplete, bar: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _get_def(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _set_def(self, arg1: hints.Incomplete = ..., **kwargs: hints.Any, /) -> hints.Incomplete: ...\n"  # noqa
-            "        pass  # avoid using a keyword for def = hints.named_property('def', _get_def, _set_def)"  # noqa
+            "        pass  # avoid using a keyword for def = hints.named_property('def', _get_def, _set_def)\n"  # noqa
+            "        def egg(self) -> hints.Incomplete: ..."  # noqa
         )
         self.assertEqual(
             expected, typeannotator.DispInterfaceMembersAnnotator(itf).generate()

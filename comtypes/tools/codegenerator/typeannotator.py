@@ -293,14 +293,16 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
                 inargs.append(f"{argname}: hints.Incomplete = ...")
                 has_optional = True
         out = _to_outtype(self.method.returns)
-        in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
         # NOTE: Since named parameters are not yet implemented, all arguments
         # for the dispmethod (called via `Invoke`) are marked as positional-only
         # parameters, introduced in PEP570. See also `automation.IDispatch.Invoke`.
         # See https://github.com/enthought/comtypes/issues/371
         # TODO: After named parameters are supported, the positional-only parameter
         # markers will be removed.
-        content = f"def {name}({in_}, /) -> {out}: ..."
+        if inargs:
+            content = f"def {name}(self, {', '.join(inargs)}, /) -> {out}: ..."
+        else:
+            content = f"def {name}(self) -> {out}: ..."
         if keyword.iskeyword(name):
             content = f"pass  # avoid using a keyword for {content}"
         return content
