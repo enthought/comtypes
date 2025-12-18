@@ -8,7 +8,7 @@ from comtypes.client import CreateObject, GetModule
 from comtypes.client.lazybind import Dispatch
 
 GetModule("scrrun.dll")
-import comtypes.gen.Scripting as scrrun  # noqa
+import comtypes.gen.Scripting as scrrun
 
 
 class Test(unittest.TestCase):
@@ -79,8 +79,6 @@ class Test(unittest.TestCase):
         # This calls propput, since we assign a Value
         d.Item["value"] = s.CompareMode
 
-        a = d.Item["object"]
-
         self.assertEqual(d.Item["object"], s)
         self.assertEqual(d.Item["object"].CompareMode, scrrun.DatabaseCompare)
         self.assertEqual(d.Item["value"], scrrun.DatabaseCompare)
@@ -96,8 +94,7 @@ class Test(unittest.TestCase):
         self.assertEqual(d.Item["var"], s)
 
         # iter(d)
-        keys = [x for x in d]
-        self.assertEqual(d.Keys(), tuple([x for x in d]))
+        self.assertEqual(d.Keys(), tuple(x for x in d))
 
         # d[key] = value
         # d[key] -> value
@@ -109,9 +106,8 @@ class Test(unittest.TestCase):
     def test_static(self):
         d = CreateObject(scrrun.Dictionary, interface=scrrun.IDictionary)
         # This confirms that the Dictionary is a dual interface.
-        self.assertTrue(
-            d.GetTypeInfo(0).GetTypeAttr().wTypeFlags & typeinfo.TYPEFLAG_FDUAL
-        )
+        ti = d.GetTypeInfo(0)
+        self.assertTrue(ti.GetTypeAttr().wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
         # Dual interfaces call COM methods that support named arguments.
         d.Add("one", 1)
         d.Add("two", Item=2)
