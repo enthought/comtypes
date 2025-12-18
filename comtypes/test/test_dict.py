@@ -8,7 +8,7 @@ from comtypes.client.lazybind import Dispatch
 
 
 class Test(unittest.TestCase):
-    def test_dict(self):
+    def test_dynamic(self):
         d = CreateObject("Scripting.Dictionary", dynamic=True)
         self.assertEqual(type(d), Dispatch)
 
@@ -70,7 +70,7 @@ class Test(unittest.TestCase):
 
         # This calls propputref, since we assign an Object
         d.Item["object"] = s
-        # This calls propput, since we assing a Value
+        # This calls propput, since we assign a Value
         d.Item["value"] = s.CompareMode
 
         a = d.Item["object"]
