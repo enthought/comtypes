@@ -31,6 +31,7 @@ class TestCase(unittest.TestCase):
         ss = es.GetSelectionServices(mc)
         # QueryInterface for `IHTMLDocument3` to access `getElementById`.
         element = doc.QueryInterface(mshtml.IHTMLDocument3).getElementById("test")
+        self.assertEqual(element.innerHTML, "Hello")
         # MarkupPointer related tests:
         ms = doc.QueryInterface(mshtml.IMarkupServices)
         p_start = ms.CreateMarkupPointer()
