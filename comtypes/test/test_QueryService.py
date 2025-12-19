@@ -51,6 +51,9 @@ class TestCase(unittest.TestCase):
         self.assertTrue(p_start.IsEqualTo(q_start))
         self.assertTrue(p_end.IsEqualTo(q_end))
         ss.RemoveSegment(seg)
+        # Verify state changes of `p_start` and `p_end`.
+        p_start.MoveToPointer(p_end)
+        self.assertTrue(p_start.IsEqualTo(p_end))
 
 
 if __name__ == "__main__":
