@@ -23,6 +23,8 @@ class TestCase(unittest.TestCase):
         while doc.readyState != "complete":
             time.sleep(0.01)
         sp = doc.QueryInterface(comtypes.IServiceProvider)
+        # This behavior is described in Microsoft documentation:
+        # https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/platform-apis/aa704048(v=vs.85)
         es = sp.QueryService(SID_SHTMLEditServices, mshtml.IHTMLEditServices)
         self.assertIsInstance(es, POINTER(mshtml.IHTMLEditServices))
         mc = doc.QueryInterface(mshtml.IMarkupContainer)
