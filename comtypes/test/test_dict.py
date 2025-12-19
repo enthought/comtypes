@@ -1,23 +1,28 @@
-"""Use Scripting.Dictionary to test the lazybind module."""
+"""Use Scripting.Dictionary to test the lazybind and the generated modules."""
 
 import unittest
 
+from comtypes import typeinfo
 from comtypes.automation import VARIANT
-from comtypes.client import CreateObject
+from comtypes.client import CreateObject, GetModule
 from comtypes.client.lazybind import Dispatch
+
+GetModule("scrrun.dll")
+import comtypes.gen.Scripting as scrrun
 
 
 class Test(unittest.TestCase):
-    def test_dict(self):
+    def test_dynamic(self):
         d = CreateObject("Scripting.Dictionary", dynamic=True)
         self.assertEqual(type(d), Dispatch)
 
         # Count is a normal propget, no propput
         self.assertEqual(d.Count, 0)
         with self.assertRaises(AttributeError):
-            setattr(d, "Count", -1)
+            d.Count = -1
 
         # HashVal is a 'named' propget, no propput
+        # HashVal is a 'hidden' member and used internally.
         ##d.HashVal
 
         # Add(Key, Item) -> None
@@ -30,10 +35,11 @@ class Test(unittest.TestCase):
 
         # CompareMode: propget, propput
         # (Can only be set when dict is empty!)
-        self.assertEqual(d.CompareMode, 0)
-        d.CompareMode = 1
-        self.assertEqual(d.CompareMode, 1)
-        d.CompareMode = 0
+        # Verify that the default is BinaryCompare.
+        self.assertEqual(d.CompareMode, scrrun.BinaryCompare)
+        d.CompareMode = scrrun.TextCompare
+        self.assertEqual(d.CompareMode, scrrun.TextCompare)
+        d.CompareMode = scrrun.BinaryCompare
 
         # Exists(key) -> bool
         self.assertEqual(d.Exists(42), False)
@@ -66,32 +72,29 @@ class Test(unittest.TestCase):
         # part 2, testing propput and propputref
 
         s = CreateObject("Scripting.Dictionary", dynamic=True)
-        s.CompareMode = 42
+        s.CompareMode = scrrun.DatabaseCompare
 
         # This calls propputref, since we assign an Object
         d.Item["object"] = s
-        # This calls propput, since we assing a Value
+        # This calls propput, since we assign a Value
         d.Item["value"] = s.CompareMode
 
-        a = d.Item["object"]
-
         self.assertEqual(d.Item["object"], s)
-        self.assertEqual(d.Item["object"].CompareMode, 42)
-        self.assertEqual(d.Item["value"], 42)
+        self.assertEqual(d.Item["object"].CompareMode, scrrun.DatabaseCompare)
+        self.assertEqual(d.Item["value"], scrrun.DatabaseCompare)
 
         # Changing a property of the object
-        s.CompareMode = 5
+        s.CompareMode = scrrun.BinaryCompare
         self.assertEqual(d.Item["object"], s)
-        self.assertEqual(d.Item["object"].CompareMode, 5)
-        self.assertEqual(d.Item["value"], 42)
+        self.assertEqual(d.Item["object"].CompareMode, scrrun.BinaryCompare)
+        self.assertEqual(d.Item["value"], scrrun.DatabaseCompare)
 
         # This also calls propputref since we assign an Object
         d.Item["var"] = VARIANT(s)
         self.assertEqual(d.Item["var"], s)
 
         # iter(d)
-        keys = [x for x in d]
-        self.assertEqual(d.Keys(), tuple([x for x in d]))
+        self.assertEqual(d.Keys(), tuple(x for x in d))
 
         # d[key] = value
         # d[key] -> value
@@ -99,6 +102,39 @@ class Test(unittest.TestCase):
         self.assertEqual(d["blah"], "blarg")
         # d(key) -> value
         self.assertEqual(d("blah"), "blarg")
+
+    def test_static(self):
+        d = CreateObject(scrrun.Dictionary, interface=scrrun.IDictionary)
+        # This confirms that the Dictionary is a dual interface.
+        ti = d.GetTypeInfo(0)
+        self.assertTrue(ti.GetTypeAttr().wTypeFlags & typeinfo.TYPEFLAG_FDUAL)
+        # Count is a normal propget, no propput
+        self.assertEqual(d.Count, 0)
+        with self.assertRaises(AttributeError):
+            d.Count = -1  # type: ignore
+        # Dual interfaces call COM methods that support named arguments.
+        d.Add("spam", "foo")
+        d.Add("egg", Item="bar")
+        self.assertEqual(d.Count, 2)
+        d.Add(Key="ham", Item="baz")
+        self.assertEqual(len(d), 3)
+        d.Add(Item="qux", Key="toast")
+        d.Item["beans"] = "quux"
+        d["bacon"] = "corge"
+        self.assertEqual(d("spam"), "foo")
+        self.assertEqual(d.Item["egg"], "bar")
+        self.assertEqual(d["ham"], "baz")
+        self.assertEqual(d("toast"), "qux")
+        self.assertEqual(d.Item("beans"), "quux")
+        self.assertEqual(d("bacon"), "corge")
+        # NOTE: Named parameters are not yet implemented for the named property.
+        # See https://github.com/enthought/comtypes/issues/371
+        # TODO: After named parameters are supported, this will become a test to
+        # assert the return value.
+        with self.assertRaises(TypeError):
+            d.Item(Key="spam")
+        with self.assertRaises(TypeError):
+            d(Key="egg")
 
 
 if __name__ == "__main__":
