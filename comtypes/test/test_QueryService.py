@@ -1,30 +1,33 @@
+import contextlib
+import time
 import unittest
 from ctypes import POINTER
 
 import comtypes
+from comtypes import GUID
 from comtypes.client import CreateObject, GetModule
 
-GetModule("oleacc.dll")
-from comtypes.gen.Accessibility import IAccessible
+with contextlib.redirect_stdout(None):  # supress warnings
+    GetModule("mshtml.tlb")
+import comtypes.gen.MSHTML as mshtml
+
+SID_SHTMLEditServices = GUID("{3050F7F9-98B5-11CF-BB82-00AA00BDCE0B}")
 
 
-@unittest.skip(
-    "This IE test is not working.  We need to move it to using some other win32 API."
-)
 class TestCase(unittest.TestCase):
-    def setUp(self):
-        self.ie = CreateObject("InternetExplorer.application")
-
-    def tearDown(self):
-        self.ie.Quit()
-        del self.ie
-
     def test(self):
-        ie = self.ie
-        ie.navigate2("about:blank", 0)
-        sp = ie.Document.Body.QueryInterface(comtypes.IServiceProvider)
-        pacc = sp.QueryService(IAccessible._iid_, IAccessible)
-        self.assertEqual(type(pacc), POINTER(IAccessible))
+        doc = CreateObject(mshtml.HTMLDocument, interface=mshtml.IHTMLDocument2)
+        doc.designMode = "On"
+        doc.write("<html><body><div id='test'>Hello</div></body></html>")
+        doc.close()
+        while doc.readyState != "complete":
+            time.sleep(0.01)
+        sp = doc.QueryInterface(comtypes.IServiceProvider)
+        es = sp.QueryService(SID_SHTMLEditServices, mshtml.IHTMLEditServices)
+        self.assertIsInstance(es, POINTER(mshtml.IHTMLEditServices))
+        mc = doc.QueryInterface(mshtml.IMarkupContainer)
+        ss = es.GetSelectionServices(mc)
+        self.assertIsInstance(ss, POINTER(mshtml.ISelectionServices))
 
 
 if __name__ == "__main__":
