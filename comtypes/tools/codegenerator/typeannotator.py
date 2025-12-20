@@ -277,13 +277,23 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
     def getvalue(self, name: str) -> str:
         inargs = []
         has_optional = False
+        # NOTE: Since named parameters are not yet implemented, all arguments
+        #       for the dispmethod (called via `Invoke`) are marked as
+        #       positional-only parameters, introduced in PEP570.
+        #       See also `automation.IDispatch.Invoke`.
+        #       See https://github.com/enthought/comtypes/issues/371
         for _, argname, default in self.inarg_specs:
             if keyword.iskeyword(argname):
                 inargs = ["*args: hints.Any", "**kwargs: hints.Any"]
                 break
             if default is None:
                 if has_optional:
+                    # Required parameter follows an optional one.
                     # probably propput or propputref
+                    # TODO: After named parameters are supported,
+                    #       the positional-only parameter markers
+                    #       will be removed.
+                    inargs.append("/")
                     # HACK: Something that goes into this conditional branch
                     #       should be a special callback.
                     inargs.append("**kwargs: hints.Any")
@@ -292,15 +302,14 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
             else:
                 inargs.append(f"{argname}: hints.Incomplete = ...")
                 has_optional = True
+        else:
+            # TODO: After named parameters are supported, the positional-only
+            #       parameter markers will be removed.
+            if inargs:
+                inargs.append("/")
         out = _to_outtype(self.method.returns)
-        # NOTE: Since named parameters are not yet implemented, all arguments
-        # for the dispmethod (called via `Invoke`) are marked as positional-only
-        # parameters, introduced in PEP570. See also `automation.IDispatch.Invoke`.
-        # See https://github.com/enthought/comtypes/issues/371
-        # TODO: After named parameters are supported, the positional-only parameter
-        # markers will be removed.
         if inargs:
-            content = f"def {name}(self, {', '.join(inargs)}, /) -> {out}: ..."
+            content = f"def {name}(self, {', '.join(inargs)}) -> {out}: ..."
         else:
             content = f"def {name}(self) -> {out}: ..."
         if keyword.iskeyword(name):
