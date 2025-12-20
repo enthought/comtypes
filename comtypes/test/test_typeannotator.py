@@ -70,13 +70,13 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        def ham(self) -> hints.Incomplete: ...\n"
             "        pass  # @property  # dispprop\n"
             "        pass  # avoid using a keyword for def except(self) -> hints.Incomplete: ...\n"  # noqa
-            "        def bacon(self, *args: hints.Any, **kwargs: hints.Any, /) -> hints.Incomplete: ...\n"  # noqa
+            "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
             "        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
-            "        def _set_spam(self, arg1: hints.Incomplete = ..., **kwargs: hints.Any, /) -> hints.Incomplete: ...\n"  # noqa
+            "        def _set_spam(self, arg1: hints.Incomplete = ..., /, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
             "        spam = hints.named_property('spam', _get_spam, _set_spam)\n"
             "        pass  # avoid using a keyword for def raise(self, foo: hints.Incomplete, bar: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _get_def(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
-            "        def _set_def(self, arg1: hints.Incomplete = ..., **kwargs: hints.Any, /) -> hints.Incomplete: ...\n"  # noqa
+            "        def _set_def(self, arg1: hints.Incomplete = ..., /, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
             "        pass  # avoid using a keyword for def = hints.named_property('def', _get_def, _set_def)\n"  # noqa
             "        def egg(self) -> hints.Incomplete: ..."  # noqa
         )

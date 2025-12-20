@@ -300,7 +300,27 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
         # TODO: After named parameters are supported, the positional-only parameter
         # markers will be removed.
         if inargs:
-            content = f"def {name}(self, {', '.join(inargs)}, /) -> {out}: ..."
+            has_star_args = "*args: hints.Any" in inargs
+            if has_star_args:
+                # Cannot have positional-only marker with *args in this way.
+                # The signature is already a fallback.
+                content = f"def {name}(self, {', '.join(inargs)}) -> {out}: ..."
+            else:
+                # Here, we only need to deal with **kwargs
+                kwargs_arg = "**kwargs: hints.Any"
+                if inargs[-1] == kwargs_arg:
+                    kwargs = inargs.pop()
+                    params = ", ".join(inargs)
+                    if params:
+                        content = (
+                            f"def {name}(self, {params}, /, {kwargs}) -> {out}: ..."
+                        )
+                    else:
+                        # It is unlikely that there are no parameters before `**kwargs`,
+                        # but we are writing this for the sake of completeness.
+                        content = f"def {name}(self, /, {kwargs}) -> {out}: ..."
+                else:
+                    content = f"def {name}(self, {', '.join(inargs)}, /) -> {out}: ..."
         else:
             content = f"def {name}(self) -> {out}: ..."
         if keyword.iskeyword(name):
