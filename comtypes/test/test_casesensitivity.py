@@ -1,32 +1,31 @@
+import contextlib
 import unittest
 
 from comtypes.client import GetModule
 
-iem = GetModule("shdocvw.dll")
+with contextlib.redirect_stdout(None):  # supress warnings
+    GetModule("msvidctl.dll")
+from comtypes.gen import MSVidCtlLib as msvidctl
 
 
 class TestCase(unittest.TestCase):
     def test(self):
-        from comtypes.client import GetModule
-
-        iem = GetModule("shdocvw.dll")
-
         # IDispatch(IUnknown)
-        # IWebBrowser(IDispatch)
-        # IWebBrowserApp(IWebBrowser)
-        # IWebBrowser2(IWebBrowserApp)
+        # IMSVidDevice(IDispatch)
+        # IMSVidInputDevice(IMSVidDevice)
+        # IMSVidPlayback(IMSVidOutputDevice)
 
-        self.assertTrue(issubclass(iem.IWebBrowser2, iem.IWebBrowserApp))
-        self.assertTrue(issubclass(iem.IWebBrowserApp, iem.IWebBrowser))
+        self.assertTrue(issubclass(msvidctl.IMSVidPlayback, msvidctl.IMSVidInputDevice))
+        self.assertTrue(issubclass(msvidctl.IMSVidInputDevice, msvidctl.IMSVidDevice))
 
         # names in the base class __map_case__ must also appear in the
         # subclass.
-        for name in iem.IWebBrowser.__map_case__:
-            self.assertTrue(name in iem.IWebBrowserApp.__map_case__, f"{name} missing")
-            self.assertTrue(name in iem.IWebBrowser2.__map_case__, f"{name} missing")
+        for name in msvidctl.IMSVidDevice.__map_case__:
+            self.assertIn(name, msvidctl.IMSVidInputDevice.__map_case__)
+            self.assertIn(name, msvidctl.IMSVidPlayback.__map_case__)
 
-        for name in iem.IWebBrowserApp.__map_case__:
-            self.assertTrue(name in iem.IWebBrowser2.__map_case__, f"{name} missing")
+        for name in msvidctl.IMSVidInputDevice.__map_case__:
+            self.assertIn(name, msvidctl.IMSVidPlayback.__map_case__)
 
 
 if __name__ == "__main__":
