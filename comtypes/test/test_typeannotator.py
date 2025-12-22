@@ -1,3 +1,4 @@
+import ast
 import unittest
 
 from comtypes.tools import typedesc
@@ -72,17 +73,28 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        pass  # avoid using a keyword for def except(self) -> hints.Incomplete: ...\n"  # noqa
             "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
             "        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
-            "        def _set_spam(self, arg1: hints.Incomplete = ..., /, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
+            "        def _set_spam(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
             "        spam = hints.named_property('spam', _get_spam, _set_spam)\n"
             "        pass  # avoid using a keyword for def raise(self, foo: hints.Incomplete, bar: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _get_def(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
-            "        def _set_def(self, arg1: hints.Incomplete = ..., /, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
+            "        def _set_def(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
             "        pass  # avoid using a keyword for def = hints.named_property('def', _get_def, _set_def)\n"  # noqa
             "        def egg(self) -> hints.Incomplete: ..."  # noqa
         )
         self.assertEqual(
             expected, typeannotator.DispInterfaceMembersAnnotator(itf).generate()
         )
+
+    def test_valid_syntax_dispmethods(self):
+        itf = self._create_typedesc_disp_interface()
+        definition = "\n".join(
+            (
+                "class ISomeInterface(IDispatch):",
+                "    if TYPE_CHECKING:",
+                f"{typeannotator.DispInterfaceMembersAnnotator(itf).generate()}",
+            )
+        )
+        ast.parse(definition, mode="exec")
 
     def _create_typedesc_com_interface(self) -> typedesc.ComInterface:
         guid = "{00000000-0000-0000-0000-000000000000}"
@@ -98,6 +110,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         put_ham = typedesc.ComMethod(
             4, 1610678270, "ham", HRESULT_type, ["propput"], None
         )
+        put_ham.add_argument(VARIANT_type, "arg1", ["in"], None)
         bacon = typedesc.ComMethod(1, 1610678271, "bacon", HRESULT_type, [], None)
         bacon.add_argument(VARIANT_type, "foo", ["in"], None)
         bacon.add_argument(VARIANT_type, "or", ["in"], None)
@@ -107,9 +120,12 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         get_class = typedesc.ComMethod(
             2, 1610678273, "class", HRESULT_type, ["propget"], None
         )
+        get_class.add_argument(VARIANT_type, "arg1", ["in"], None)
         put_class = typedesc.ComMethod(
             4, 1610678273, "class", HRESULT_type, ["propput"], None
         )
+        put_class.add_argument(VARIANT_type, "arg1", ["in", "optional"], None)
+        put_class.add_argument(VARIANT_type, "arg2", ["in"], None)
         pass_ = typedesc.ComMethod(1, 1610678274, "pass", HRESULT_type, [], None)
         pass_.add_argument(VARIANT_type, "foo", ["in"], None)
         pass_.add_argument(VARIANT_type, "bar", ["in", "optional"], None)
@@ -123,16 +139,27 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        def _get_spam(self) -> hints.Hresult: ...\n"
             "        spam = hints.normal_property(_get_spam)\n"
             "        def _get_ham(self) -> hints.Hresult: ...\n"
-            "        def _set_ham(self) -> hints.Hresult: ...\n"
+            "        def _set_ham(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"
             "        ham = hints.normal_property(_get_ham, _set_ham)\n"
             "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Hresult: ...\n"  # noqa
             "        def _get_global(self) -> hints.Hresult: ...\n"
             "        pass  # avoid using a keyword for global = hints.normal_property(_get_global)\n"  # noqa
-            "        def _get_class(self) -> hints.Hresult: ...\n"
-            "        def _set_class(self) -> hints.Hresult: ...\n"
-            "        pass  # avoid using a keyword for class = hints.normal_property(_get_class, _set_class)\n"  # noqa
+            "        def _get_class(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"
+            "        def _set_class(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Hresult: ...\n"  # noqa
+            "        pass  # avoid using a keyword for class = hints.named_property('class', _get_class, _set_class)\n"  # noqa
             "        pass  # avoid using a keyword for def pass(self, foo: hints.Incomplete, bar: hints.Incomplete = ...) -> hints.Hresult: ..."  # noqa
         )
         self.assertEqual(
             expected, typeannotator.ComInterfaceMembersAnnotator(itf).generate()
         )
+
+    def test_valid_syntax_commethods(self):
+        itf = self._create_typedesc_com_interface()
+        definition = "\n".join(
+            (
+                "class ISomeInterface(IUnknown):",
+                "    if TYPE_CHECKING:",
+                f"{typeannotator.ComInterfaceMembersAnnotator(itf).generate()}",
+            )
+        )
+        ast.parse(definition, mode="exec")
