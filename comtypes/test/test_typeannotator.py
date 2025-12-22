@@ -1,3 +1,4 @@
+import ast
 import unittest
 
 from comtypes.tools import typedesc
@@ -84,6 +85,17 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             expected, typeannotator.DispInterfaceMembersAnnotator(itf).generate()
         )
 
+    def test_valid_syntax_dispmethods(self):
+        itf = self._create_typedesc_disp_interface()
+        definition = "\n".join(
+            (
+                "class ISomeInterface(IDispatch):",
+                "    if TYPE_CHECKING:",
+                f"{typeannotator.DispInterfaceMembersAnnotator(itf).generate()}",
+            )
+        )
+        ast.parse(definition, mode="exec")
+
     def _create_typedesc_com_interface(self) -> typedesc.ComInterface:
         guid = "{00000000-0000-0000-0000-000000000000}"
         itf = typedesc.ComInterface(
@@ -136,3 +148,14 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         self.assertEqual(
             expected, typeannotator.ComInterfaceMembersAnnotator(itf).generate()
         )
+
+    def test_valid_syntax_commethods(self):
+        itf = self._create_typedesc_com_interface()
+        definition = "\n".join(
+            (
+                "class ISomeInterface(IUnknown):",
+                "    if TYPE_CHECKING:",
+                f"{typeannotator.ComInterfaceMembersAnnotator(itf).generate()}",
+            )
+        )
+        ast.parse(definition, mode="exec")
