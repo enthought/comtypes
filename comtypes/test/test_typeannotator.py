@@ -110,6 +110,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         put_ham = typedesc.ComMethod(
             4, 1610678270, "ham", HRESULT_type, ["propput"], None
         )
+        put_ham.add_argument(VARIANT_type, "arg1", ["in"], None)
         bacon = typedesc.ComMethod(1, 1610678271, "bacon", HRESULT_type, [], None)
         bacon.add_argument(VARIANT_type, "foo", ["in"], None)
         bacon.add_argument(VARIANT_type, "or", ["in"], None)
@@ -138,7 +139,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        def _get_spam(self) -> hints.Hresult: ...\n"
             "        spam = hints.normal_property(_get_spam)\n"
             "        def _get_ham(self) -> hints.Hresult: ...\n"
-            "        def _set_ham(self) -> hints.Hresult: ...\n"
+            "        def _set_ham(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"
             "        ham = hints.normal_property(_get_ham, _set_ham)\n"
             "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Hresult: ...\n"  # noqa
             "        def _get_global(self) -> hints.Hresult: ...\n"
