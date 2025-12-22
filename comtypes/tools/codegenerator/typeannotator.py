@@ -222,6 +222,11 @@ def _to_outtype(typ: Any) -> str:
     return "hints.Incomplete"
 
 
+def _generate_trailing_params(specs: Sequence[tuple[Any, str, Optional[Any]]]) -> str:
+    params = f"tuple[{', '.join(('hints.Incomplete',) * len(specs))}]"
+    return f"*args: hints.Unpack[{params}]"
+
+
 class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
     def _iter_outarg_specs(self) -> Iterator[tuple[Any, str]]:
         for typ, name, flags, _ in self.method.arguments:
@@ -229,18 +234,22 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
                 yield typ, name
 
     def getvalue(self, name: str) -> str:
+        specs = self.inarg_specs
         inargs = []
         has_optional = False
-        for _, argname, default in self.inarg_specs:
+        for i, (_, argname, default) in enumerate(specs):
             if keyword.iskeyword(argname):
                 inargs = ["*args: hints.Any", "**kwargs: hints.Any"]
                 break
             if default is None:
                 if has_optional:
-                    # probably propput or propputref
+                    # Required parameters are positioned after optional ones.
+                    # This likely indicates a named propput or named propputref
+                    # assignment in the form of `obj.prop[...] = ...`.
                     # HACK: Something that goes into this conditional branch
                     #       should be a special callback.
-                    inargs.append("**kwargs: hints.Any")
+                    inargs.append("/")
+                    inargs.append(_generate_trailing_params(specs[i:]))
                     break
                 inargs.append(f"{argname}: hints.Incomplete")
             else:
@@ -275,6 +284,7 @@ class ComInterfaceMembersAnnotator:
 
 class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
     def getvalue(self, name: str) -> str:
+        specs = self.inarg_specs
         inargs = []
         has_optional = False
         # NOTE: Since named parameters are not yet implemented, all arguments
@@ -282,21 +292,19 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
         #       positional-only parameters, introduced in PEP570.
         #       See also `automation.IDispatch.Invoke`.
         #       See https://github.com/enthought/comtypes/issues/371
-        for _, argname, default in self.inarg_specs:
+        for i, (_, argname, default) in enumerate(specs):
             if keyword.iskeyword(argname):
                 inargs = ["*args: hints.Any", "**kwargs: hints.Any"]
                 break
             if default is None:
                 if has_optional:
-                    # Required parameter follows an optional one.
-                    # probably propput or propputref
-                    # TODO: After named parameters are supported,
-                    #       the positional-only parameter markers
-                    #       will be removed.
+                    # Required parameters are positioned after optional ones.
+                    # This likely indicates a named propput or named propputref
+                    # assignment in the form of `obj.prop[...] = ...`.
                     inargs.append("/")
                     # HACK: Something that goes into this conditional branch
                     #       should be a special callback.
-                    inargs.append("**kwargs: hints.Any")
+                    inargs.append(_generate_trailing_params(specs[i:]))
                     break
                 inargs.append(f"{argname}: hints.Incomplete")
             else:
