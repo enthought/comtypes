@@ -73,11 +73,11 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        pass  # avoid using a keyword for def except(self) -> hints.Incomplete: ...\n"  # noqa
             "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
             "        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
-            "        def _set_spam(self, arg1: hints.Incomplete = ..., /, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
+            "        def _set_spam(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
             "        spam = hints.named_property('spam', _get_spam, _set_spam)\n"
             "        pass  # avoid using a keyword for def raise(self, foo: hints.Incomplete, bar: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _get_def(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
-            "        def _set_def(self, arg1: hints.Incomplete = ..., /, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
+            "        def _set_def(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
             "        pass  # avoid using a keyword for def = hints.named_property('def', _get_def, _set_def)\n"  # noqa
             "        def egg(self) -> hints.Incomplete: ..."  # noqa
         )
@@ -119,9 +119,12 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         get_class = typedesc.ComMethod(
             2, 1610678273, "class", HRESULT_type, ["propget"], None
         )
+        get_class.add_argument(VARIANT_type, "arg1", ["in"], None)
         put_class = typedesc.ComMethod(
             4, 1610678273, "class", HRESULT_type, ["propput"], None
         )
+        put_class.add_argument(VARIANT_type, "arg1", ["in", "optional"], None)
+        put_class.add_argument(VARIANT_type, "arg2", ["in"], None)
         pass_ = typedesc.ComMethod(1, 1610678274, "pass", HRESULT_type, [], None)
         pass_.add_argument(VARIANT_type, "foo", ["in"], None)
         pass_.add_argument(VARIANT_type, "bar", ["in", "optional"], None)
@@ -140,9 +143,9 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Hresult: ...\n"  # noqa
             "        def _get_global(self) -> hints.Hresult: ...\n"
             "        pass  # avoid using a keyword for global = hints.normal_property(_get_global)\n"  # noqa
-            "        def _get_class(self) -> hints.Hresult: ...\n"
-            "        def _set_class(self) -> hints.Hresult: ...\n"
-            "        pass  # avoid using a keyword for class = hints.normal_property(_get_class, _set_class)\n"  # noqa
+            "        def _get_class(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"
+            "        def _set_class(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Hresult: ...\n"  # noqa
+            "        pass  # avoid using a keyword for class = hints.named_property('class', _get_class, _set_class)\n"  # noqa
             "        pass  # avoid using a keyword for def pass(self, foo: hints.Incomplete, bar: hints.Incomplete = ...) -> hints.Hresult: ..."  # noqa
         )
         self.assertEqual(
