@@ -223,6 +223,13 @@ def _to_outtype(typ: Any) -> str:
 
 
 def _generate_trailing_params(specs: Sequence[tuple[Any, str, Optional[Any]]]) -> str:
+    """Generates a type hint for variadic positional arguments.
+
+    This is for cases where required parameters follow optional ones, which is
+    not directly representable in Python's syntax. This pattern typically
+    occurs in COM `propput` or `propputref` methods that take multiple
+    arguments, corresponding to assignments like `obj.prop[a, b] = value`.
+    """
     params = f"tuple[{', '.join(('hints.Incomplete',) * len(specs))}]"
     return f"*args: hints.Unpack[{params}]"
 
