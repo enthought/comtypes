@@ -8,7 +8,7 @@ from comtypes.client import CoGetObject
 # Some methods/properties have "[out] POINTER(VARIANT)" parameters.
 # This test checks that these parameters are returned as strings:
 # that's what VARIANT.__ctypes_from_outparam__ does.
-class Test(ut.TestCase):
+class TestWMI(ut.TestCase):
     def test_wmi(self):
         wmi: "WbemScripting.ISWbemServices" = CoGetObject("winmgmts:")
         disks = wmi.InstancesOf("Win32_LogicalDisk")
@@ -23,7 +23,7 @@ class Test(ut.TestCase):
         # actual typelib is available or not.  XXX
         from comtypes.gen import WbemScripting
 
-        WbemScripting.wbemPrivilegeCreateToken
+        self.assertTrue(hasattr(WbemScripting, "wbemPrivilegeCreateToken"))
 
         for item in disks:
             # obj[index] is forwarded to obj.Item(index)
@@ -58,7 +58,6 @@ class Test(ut.TestCase):
             for prop in item.Properties_:
                 prop: "WbemScripting.ISWbemProperty"
                 self.assertTrue(isinstance(prop.Name, str))
-                prop.Value
                 result[prop.Name] = prop.Value
                 # print "\t", (prop.Name, prop.Value)
             self.assertEqual(len(item.Properties_), item.Properties_.Count)
