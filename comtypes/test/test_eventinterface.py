@@ -4,15 +4,11 @@ from ctypes.wintypes import BOOL, HWND, LPLONG, UINT
 
 from comtypes.client import CreateObject, GetEvents
 
-
-def setUpModule():
-    # The primary goal is to verify how `GetEvents` behaves when the
-    # `interface` argument is explicitly specified versus when it is omitted,
-    # using an object that has multiple outgoing event interfaces.
-    raise ut.SkipTest(
-        "External test dependencies like this seem bad.  Find a different built-in "
-        "win32 API to use."
-    )
+# FIXME: External test dependencies like this seem bad.  Find a different
+# built-in win32 API to use.
+# The primary goal is to verify how `GetEvents` behaves when the
+# `interface` argument is explicitly specified versus when it is omitted,
+# using an object that has multiple outgoing event interfaces.
 
 
 class EventSink:
@@ -93,6 +89,10 @@ class Test(ut.TestCase):
 
         time.sleep(2)
 
+    @ut.skip(
+        "External test dependencies like this seem bad.  Find a different built-in "
+        "win32 API to use."
+    )
     def test_default_eventinterface(self):
         sink = EventSink()
         ie = CreateObject("InternetExplorer.Application")
@@ -121,6 +121,10 @@ class Test(ut.TestCase):
         del ie
         del conn
 
+    @ut.skip(
+        "External test dependencies like this seem bad.  Find a different built-in "
+        "win32 API to use."
+    )
     def test_nondefault_eventinterface(self):
         sink = EventSink()
         ie = CreateObject("InternetExplorer.Application")

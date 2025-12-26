@@ -1,5 +1,6 @@
 import unittest as ut
 
+from comtypes import automation, typeinfo
 from comtypes.client import CoGetObject
 
 
@@ -7,7 +8,7 @@ from comtypes.client import CoGetObject
 # Some methods/properties have "[out] POINTER(VARIANT)" parameters.
 # This test checks that these parameters are returned as strings:
 # that's what VARIANT.__ctypes_from_outparam__ does.
-class Test(ut.TestCase):
+class TestWMI(ut.TestCase):
     def test_wmi(self):
         wmi: "WbemScripting.ISWbemServices" = CoGetObject("winmgmts:")
         disks = wmi.InstancesOf("Win32_LogicalDisk")
@@ -22,11 +23,10 @@ class Test(ut.TestCase):
         # actual typelib is available or not.  XXX
         from comtypes.gen import WbemScripting
 
-        WbemScripting.wbemPrivilegeCreateToken
+        self.assertTrue(hasattr(WbemScripting, "wbemPrivilegeCreateToken"))
 
         for item in disks:
             # obj[index] is forwarded to obj.Item(index)
-            # .Value is a property with "[out] POINTER(VARIANT)" parameter.
             item: "WbemScripting.ISWbemObject"
             a = item.Properties_["Caption"].Value
             b = item.Properties_.Item("Caption").Value
@@ -36,11 +36,28 @@ class Test(ut.TestCase):
             self.assertTrue(isinstance(a, str))
             self.assertTrue(isinstance(b, str))
             self.assertTrue(isinstance(c, str))
+            # Verify parameter types from the interface type.
+            dispti = item.Properties_["Caption"].GetTypeInfo(0)
+            # GetRefTypeOfImplType(-1) returns the custom portion
+            # of a dispinterface, if it is dual
+            # See https://learn.microsoft.com/en-us/windows/win32/api/oaidl/nf-oaidl-itypeinfo-getreftypeofimpltype#remarks
+            dualti = dispti.GetRefTypeInfo(dispti.GetRefTypeOfImplType(-1))
+            # .Value is a property with "[out] POINTER(VARIANT)" parameter.
+            fd = dualti.GetFuncDesc(0)
+            names = dualti.GetNames(fd.memid, fd.cParams + 1)
+            self.assertEqual(names, ["Value", "varValue"])
+            edesc = fd.lprgelemdescParam[0]
+            self.assertEqual(
+                edesc._.paramdesc.wParamFlags,
+                typeinfo.PARAMFLAG_FOUT | typeinfo.PARAMFLAG_FRETVAL,
+            )
+            tdesc = edesc.tdesc
+            self.assertEqual(tdesc.vt, automation.VT_PTR)
+            self.assertEqual(tdesc._.lptdesc[0].vt, automation.VT_VARIANT)
             result = {}
             for prop in item.Properties_:
                 prop: "WbemScripting.ISWbemProperty"
                 self.assertTrue(isinstance(prop.Name, str))
-                prop.Value
                 result[prop.Name] = prop.Value
                 # print "\t", (prop.Name, prop.Value)
             self.assertEqual(len(item.Properties_), item.Properties_.Count)
