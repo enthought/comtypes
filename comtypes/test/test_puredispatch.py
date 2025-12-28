@@ -1,3 +1,4 @@
+import re
 import unittest as ut
 import winreg
 
@@ -11,6 +12,8 @@ import comtypes.gen.WindowsInstaller as msi
 
 HKCR = 0  # HKEY_CLASSES_ROOT
 HKCU = 1  # HKEY_CURRENT_USER
+
+NAMED_PARAM_ERRMSG = "named parameters not yet implemented"
 
 
 class Test_Installer(ut.TestCase):
@@ -58,20 +61,20 @@ class Test_Installer(ut.TestCase):
         # if named arguments are passed to prevent invalid calls.
         # TODO: After named parameters are supported, this will become a test to
         # assert the return value.
-        ERRMSG = "named parameters not yet implemented"
-        with self.assertRaises(ValueError, msg=ERRMSG):
+        PTN = re.compile(rf"^{re.escape(NAMED_PARAM_ERRMSG)}$")
+        with self.assertRaisesRegex(ValueError, PTN):
             inst.RegistryValue(Root=HKCR, Key=".txt", Value="")  # type: ignore
-        with self.assertRaises(ValueError, msg=ERRMSG):
+        with self.assertRaisesRegex(ValueError, PTN):
             inst.RegistryValue(Value="", Root=HKCR, Key=".txt")  # type: ignore
-        with self.assertRaises(ValueError, msg=ERRMSG):
+        with self.assertRaisesRegex(ValueError, PTN):
             inst.RegistryValue(HKCR, Key=".txt", Value="")  # type: ignore
-        with self.assertRaises(ValueError, msg=ERRMSG):
+        with self.assertRaisesRegex(ValueError, PTN):
             inst.RegistryValue(HKCR, ".txt", Value="")  # type: ignore
-        with self.assertRaises(ValueError, msg=ERRMSG):
+        with self.assertRaisesRegex(ValueError, PTN):
             inst.RegistryValue(Root=HKCU, Key=r"Control Panel\Desktop")  # type: ignore
-        with self.assertRaises(ValueError, msg=ERRMSG):
+        with self.assertRaisesRegex(ValueError, PTN):
             inst.RegistryValue(Key=r"Control Panel\Desktop", Root=HKCR)  # type: ignore
-        with self.assertRaises(ValueError, msg=ERRMSG):
+        with self.assertRaisesRegex(ValueError, PTN):
             inst.RegistryValue(HKCR, Key=r"Control Panel\Desktop")  # type: ignore
 
     def test_product_state(self):
