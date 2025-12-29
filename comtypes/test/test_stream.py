@@ -1,6 +1,15 @@
 import unittest as ut
-from ctypes import HRESULT, POINTER, OleDLL, byref, c_ubyte, c_ulonglong, pointer
-from ctypes.wintypes import BOOL, HGLOBAL, ULARGE_INTEGER
+from ctypes import (
+    HRESULT,
+    POINTER,
+    OleDLL,
+    WinDLL,
+    byref,
+    c_ubyte,
+    c_ulonglong,
+    pointer,
+)
+from ctypes.wintypes import BOOL, HGLOBAL, LONG, ULARGE_INTEGER
 
 import comtypes.client
 
@@ -159,6 +168,19 @@ class Test_Clone(ut.TestCase):
         new_stm = orig.Clone()
         buf, read = new_stm.RemoteRead(1024)
         self.assertEqual(bytearray(buf)[0:read], test_data)
+
+
+_oleaut32 = WinDLL("oleaut32")
+
+_OleLoadPicture = _oleaut32.OleLoadPicture
+_OleLoadPicture.argtypes = (
+    POINTER(IStream),  # lpstm
+    LONG,  # lSize
+    BOOL,  # fSave
+    POINTER(comtypes.GUID),  # riid
+    POINTER(POINTER(comtypes.IUnknown)),  # ppvObj
+)
+_OleLoadPicture.restype = HRESULT
 
 
 class Test_Picture(ut.TestCase):
