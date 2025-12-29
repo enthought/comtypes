@@ -502,6 +502,57 @@ def create_24bit_pixel_data(
     return bmp_header + info_header + pixel_data
 
 
+@contextlib.contextmanager
+def create_image_rendering_dc(
+    hwnd: int,
+    width: int,
+    height: int,
+    usage: int = DIB_RGB_COLORS,
+    hsection: int = 0,
+    dwoffset: int = 0,
+) -> Iterator[tuple[int, c_void_p, BITMAPINFO, int]]:
+    """Context manager to create a device context for off-screen image rendering.
+
+    This sets up a memory device context (DC) with a DIB section, allowing
+    GDI operations to render into a memory buffer.
+
+    Args:
+        hwnd: Handle to the window (0 for desktop).
+        width: Width of the image buffer.
+        height: Height of the image buffer.
+        usage: The type of DIB. Default is DIB_RGB_COLORS (0).
+        hsection: A handle to a file-mapping object. If NULL (0), the system
+                  allocates memory for the DIB.
+        dwoffset: The offset from the beginning of the file-mapping object
+                  specified by `hsection` to where the DIB bitmap begins.
+
+    Yields:
+        A tuple containing:
+            - mem_dc: The handle to the memory device context.
+            - bits: Pointer to the pixel data of the DIB section.
+            - bmi: The structure describing the DIB section.
+            - hbm: The handle to the created DIB section bitmap.
+    """
+    # Get a screen DC to use as a reference for creating a compatible DC
+    with get_dc(hwnd) as screen_dc, create_compatible_dc(screen_dc) as mem_dc:
+        bits = c_void_p()
+        bmi = create_24bitmap_info(width, height)
+        try:
+            hbm = _CreateDIBSection(
+                mem_dc,
+                byref(bmi),
+                usage,
+                byref(bits),
+                hsection,
+                dwoffset,
+            )
+            assert hbm, "Failed to create DIB section."
+            with select_object(mem_dc, hbm):
+                yield mem_dc, bits, bmi, hbm
+        finally:
+            _DeleteObject(hbm)
+
+
 class Test_Picture(ut.TestCase):
     def test_ole_load_picture(self):
         width, height = 1, 1
@@ -532,47 +583,29 @@ class Test_Picture(ut.TestCase):
         # This is the data that will be directly copied into the DIB section's memory.
         blue_pixel_data = b"\xff\x00\x00"  # Blue (0, 0, 255)
         width, height = 1, 1
-        with get_dc(0) as screen_dc:
-            with create_compatible_dc(screen_dc) as mem_dc:
-                bits = c_void_p()
-                bmi = create_24bitmap_info(width, height)
-                try:
-                    hbm = _CreateDIBSection(
-                        mem_dc,
-                        byref(bmi),
-                        DIB_RGB_COLORS,
-                        byref(bits),
-                        0,
-                        0,
-                    )
-                    assert hbm, "Failed to create DIB section."
-                    with select_object(mem_dc, hbm):
-                        # Copy the raw pixel data into the DIB section's memory
-                        ctypes.memmove(bits, blue_pixel_data, len(blue_pixel_data))
-                        # Populate PICTDESC with the HBITMAP from DIB section
-                        pdesc = PICTDESC()
-                        pdesc.cbSizeofstruct = ctypes.sizeof(PICTDESC)
-                        pdesc.picType = PICTYPE_BITMAP
-                        pdesc.u.bmp.hbitmap = hbm
-                        pdesc.u.bmp.hpal = 0  # No palette for 24bpp
-                        # Create IPicture using _OleCreatePictureIndirect
-                        pic: stdole.IPicture = POINTER(stdole.IPicture)()  # type: ignore
-                        hr = _OleCreatePictureIndirect(
-                            byref(pdesc),
-                            byref(stdole.IPicture._iid_),
-                            True,  # fOwn: If True, the picture object owns the GDI handle.
-                            byref(pic),
-                        )
-                        self.assertEqual(hr, hresult.S_OK)
-                        self.assertEqual(pic.Type, PICTYPE_BITMAP)
-                        dststm = _create_stream(delete_on_release=True)
-                        pic.SaveAsFile(dststm, True)
-                        dststm.RemoteSeek(0, STREAM_SEEK_SET)
-                        buf, read = dststm.RemoteRead(
-                            dststm.Stat(STATFLAG_DEFAULT).cbSize
-                        )
-                finally:
-                    _DeleteObject(hbm)
+        with create_image_rendering_dc(0, width, height) as (_, bits, _, hbm):
+            # Copy the raw pixel data into the DIB section's memory
+            ctypes.memmove(bits, blue_pixel_data, len(blue_pixel_data))
+            # Populate PICTDESC with the HBITMAP from DIB section
+            pdesc = PICTDESC()
+            pdesc.cbSizeofstruct = ctypes.sizeof(PICTDESC)
+            pdesc.picType = PICTYPE_BITMAP
+            pdesc.u.bmp.hbitmap = hbm
+            pdesc.u.bmp.hpal = 0  # No palette for 24bpp
+            # Create IPicture using _OleCreatePictureIndirect
+            pic: stdole.IPicture = POINTER(stdole.IPicture)()  # type: ignore
+            hr = _OleCreatePictureIndirect(
+                byref(pdesc),
+                byref(stdole.IPicture._iid_),
+                True,  # fOwn: If True, the picture object owns the GDI handle.
+                byref(pic),
+            )
+            self.assertEqual(hr, hresult.S_OK)
+            self.assertEqual(pic.Type, PICTYPE_BITMAP)
+            dststm = _create_stream(delete_on_release=True)
+            pic.SaveAsFile(dststm, True)
+            dststm.RemoteSeek(0, STREAM_SEEK_SET)
+            buf, read = dststm.RemoteRead(dststm.Stat(STATFLAG_DEFAULT).cbSize)
         # Save picture to the stream
         self.assertEqual(
             bytes(buf)[:read],
