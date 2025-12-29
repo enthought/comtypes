@@ -1,6 +1,8 @@
+import contextlib
 import ctypes
 import struct
 import unittest as ut
+from collections.abc import Iterator
 from ctypes import (
     HRESULT,
     POINTER,
@@ -247,6 +249,18 @@ GMEM_ZEROINIT = 0x0040
 BI_RGB = 0  # No compression
 
 
+@contextlib.contextmanager
+def get_dc(hwnd: int) -> Iterator[int]:
+    """Context manager to get and release a device context (DC)."""
+    dc = _GetDC(hwnd)
+    assert dc, "Failed to get device context."
+    try:
+        yield dc
+    finally:
+        # Release the device context
+        _ReleaseDC(hwnd, dc)
+
+
 def create_pixel_data(
     red: int,
     green: int,
@@ -297,13 +311,10 @@ def create_pixel_data(
 
 class Test_Picture(ut.TestCase):
     def test_ole_load_picture(self):
-        try:
-            dc = _GetDC(0)
-            # Get the horizontal and vertical DPI
+        # Get a handle to the desktop window's device context
+        with get_dc(0) as dc:
             dpi_x = _GetDeviceCaps(dc, LOGPIXELSX)
             dpi_y = _GetDeviceCaps(dc, LOGPIXELSY)
-        finally:
-            _ReleaseDC(0, dc)
         data = create_pixel_data(255, 0, 0, dpi_x, dpi_y, 1, 1)
         handle = _GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, len(data))
         assert handle, "Failed to GlobalAlloc"
