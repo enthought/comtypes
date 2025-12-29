@@ -225,6 +225,10 @@ _DeleteObject = _gdi32.DeleteObject
 _DeleteObject.argtypes = (HGDIOBJ,)
 _DeleteObject.restype = BOOL
 
+_GdiFlush = _gdi32.GdiFlush
+_GdiFlush.argtypes = []
+_GdiFlush.restype = BOOL
+
 
 class BITMAPINFOHEADER(Structure):
     _fields_ = [
@@ -606,6 +610,9 @@ class Test_Picture(ut.TestCase):
                 -pic.Height,  # negative for top-down rendering in memory
                 None,
             )
+            # Flush GDI operations to ensure all drawing commands are executed
+            # and memory is updated before reading.
+            _GdiFlush()
             # Read the pixel data directly from the bits pointer.
             gdi_data = ctypes.string_at(bits, bmi.bmiHeader.biSizeImage)
         # BGR, 1x1 pixel, green (0, 255, 0), in Windows GDI.
