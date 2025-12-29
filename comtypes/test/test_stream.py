@@ -411,6 +411,17 @@ def global_lock(handle: int) -> Iterator[int]:
 
 
 @contextlib.contextmanager
+def create_compatible_dc(hdc: int) -> Iterator[int]:
+    """Context manager to create and delete a compatible device context."""
+    mem_dc = _CreateCompatibleDC(hdc)
+    assert mem_dc, "Failed to create compatible memory DC."
+    try:
+        yield mem_dc
+    finally:
+        _DeleteDC(mem_dc)
+
+
+@contextlib.contextmanager
 def select_object(hdc: int, obj: int) -> Iterator[int]:
     """Context manager to select a GDI object into a device context and restore
     the original.
@@ -522,9 +533,7 @@ class Test_Picture(ut.TestCase):
         blue_pixel_data = b"\xff\x00\x00"  # Blue (0, 0, 255)
         width, height = 1, 1
         with get_dc(0) as screen_dc:
-            try:
-                mem_dc = _CreateCompatibleDC(screen_dc)
-                assert mem_dc, "Failed to create compatible memory DC."
+            with create_compatible_dc(screen_dc) as mem_dc:
                 bits = c_void_p()
                 bmi = create_24bitmap_info(width, height)
                 try:
@@ -564,8 +573,6 @@ class Test_Picture(ut.TestCase):
                         )
                 finally:
                     _DeleteObject(hbm)
-            finally:
-                _DeleteDC(mem_dc)
         # Save picture to the stream
         self.assertEqual(
             bytes(buf)[:read],
