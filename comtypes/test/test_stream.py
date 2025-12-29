@@ -1,3 +1,4 @@
+import ctypes
 import struct
 import unittest as ut
 from ctypes import (
@@ -6,19 +7,33 @@ from ctypes import (
     OleDLL,
     WinDLL,
     byref,
+    c_size_t,
     c_ubyte,
     c_ulonglong,
     pointer,
 )
-from ctypes.wintypes import BOOL, HGLOBAL, LONG, ULARGE_INTEGER
+from ctypes.wintypes import (
+    BOOL,
+    HDC,
+    HGLOBAL,
+    HWND,
+    INT,
+    LONG,
+    LPVOID,
+    UINT,
+    ULARGE_INTEGER,
+)
 
 import comtypes.client
+from comtypes import hresult
 
 comtypes.client.GetModule("portabledeviceapi.dll")
 # The stdole module is generated automatically during the portabledeviceapi
 # module generation.
 import comtypes.gen.stdole as stdole
 from comtypes.gen.PortableDeviceApiLib import IStream
+
+SIZE_T = c_size_t
 
 STATFLAG_DEFAULT = 0
 STGC_DEFAULT = 0
@@ -171,6 +186,40 @@ class Test_Clone(ut.TestCase):
         self.assertEqual(bytearray(buf)[0:read], test_data)
 
 
+_user32 = WinDLL("user32")
+
+_GetDC = _user32.GetDC
+_GetDC.argtypes = (HWND,)
+_GetDC.restype = HDC
+
+_ReleaseDC = _user32.ReleaseDC
+_ReleaseDC.argtypes = (HWND, HDC)
+_ReleaseDC.restype = INT
+
+_gdi32 = WinDLL("gdi32")
+
+_GetDeviceCaps = _gdi32.GetDeviceCaps
+_GetDeviceCaps.argtypes = (HDC, INT)
+_GetDeviceCaps.restype = INT
+
+_kernel32 = WinDLL("kernel32")
+
+_GlobalAlloc = _kernel32.GlobalAlloc
+_GlobalAlloc.argtypes = (UINT, SIZE_T)
+_GlobalAlloc.restype = HGLOBAL
+
+_GlobalFree = _kernel32.GlobalFree
+_GlobalFree.argtypes = (HGLOBAL,)
+_GlobalFree.restype = HGLOBAL
+
+_GlobalLock = _kernel32.GlobalLock
+_GlobalLock.argtypes = (HGLOBAL,)
+_GlobalLock.restype = LPVOID
+
+_GlobalUnlock = _kernel32.GlobalUnlock
+_GlobalUnlock.argtypes = (HGLOBAL,)
+_GlobalUnlock.restype = BOOL
+
 _oleaut32 = WinDLL("oleaut32")
 
 _OleLoadPicture = _oleaut32.OleLoadPicture
@@ -183,8 +232,14 @@ _OleLoadPicture.argtypes = (
 )
 _OleLoadPicture.restype = HRESULT
 
+# Constants for GetDeviceCaps
+LOGPIXELSX = 88  # Logical pixels/inch in X
+LOGPIXELSY = 90  # Logical pixels/inch in Y
 
 METERS_PER_INCH = 0.0254
+
+GMEM_FIXED = 0x0000
+GMEM_ZEROINIT = 0x0040
 
 BI_RGB = 0  # No compression
 
@@ -239,7 +294,40 @@ def create_pixel_data(
 
 class Test_Picture(ut.TestCase):
     def test_ole_load_picture(self):
-        stdole.IPicture  # TODO: Add test.
+        try:
+            dc = _GetDC(0)
+            # Get the horizontal and vertical DPI
+            dpi_x = _GetDeviceCaps(dc, LOGPIXELSX)
+            dpi_y = _GetDeviceCaps(dc, LOGPIXELSY)
+        finally:
+            _ReleaseDC(0, dc)
+        data = create_pixel_data(255, 0, 0, dpi_x, dpi_y, 1, 1)
+        handle = _GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, len(data))
+        assert handle, "Failed to GlobalAlloc"
+        try:
+            lp_mem = _GlobalLock(handle)
+            assert lp_mem, "Failed to GlobalLock"
+            try:
+                ctypes.memmove(lp_mem, data, len(data))
+            finally:
+                _GlobalUnlock(lp_mem)
+            pstm = POINTER(IStream)()
+            _CreateStreamOnHGlobal(handle, False, byref(pstm))
+            # Load picture from the stream
+            pic: stdole.IPicture = POINTER(stdole.IPicture)()  # type: ignore
+            hr = _OleLoadPicture(
+                pstm,
+                len(data),  # lSize
+                False,  # fSave
+                byref(stdole.IPicture._iid_),
+                byref(pic),
+            )
+            self.assertEqual(hr, hresult.S_OK)
+            pstm.RemoteSeek(0, STREAM_SEEK_SET)
+            buf, read = pstm.RemoteRead(len(data))
+        finally:
+            _GlobalFree(handle)
+        self.assertEqual(bytes(buf)[:read], data)
 
 
 if __name__ == "__main__":
