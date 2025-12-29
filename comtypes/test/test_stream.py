@@ -201,12 +201,6 @@ _ReleaseDC = _user32.ReleaseDC
 _ReleaseDC.argtypes = (HWND, HDC)
 _ReleaseDC.restype = INT
 
-_gdi32 = WinDLL("gdi32")
-
-_GetDeviceCaps = _gdi32.GetDeviceCaps
-_GetDeviceCaps.argtypes = (HDC, INT)
-_GetDeviceCaps.restype = INT
-
 _kernel32 = WinDLL("kernel32")
 
 _GlobalAlloc = _kernel32.GlobalAlloc
@@ -239,12 +233,6 @@ _OleLoadPicture.restype = HRESULT
 
 # Constants for the type of a picture object
 PICTYPE_BITMAP = 1
-
-# Constants for GetDeviceCaps
-LOGPIXELSX = 88  # Logical pixels/inch in X
-LOGPIXELSY = 90  # Logical pixels/inch in Y
-
-METERS_PER_INCH = 0.0254
 
 GMEM_FIXED = 0x0000
 GMEM_ZEROINIT = 0x0040
@@ -286,34 +274,28 @@ def global_lock(handle: int) -> Iterator[int]:
         _GlobalUnlock(handle)
 
 
-def get_screen_dpi() -> tuple[int, int]:
-    """Gets the screen DPI using GDI functions."""
-    # Get a handle to the desktop window's device context
-    with get_dc(0) as dc:
-        # Get the horizontal and vertical DPI
-        dpi_x = _GetDeviceCaps(dc, LOGPIXELSX)
-        dpi_y = _GetDeviceCaps(dc, LOGPIXELSY)
-    return dpi_x, dpi_y
-
-
-def create_pixel_data(
+def create_24bit_pixel_data(
     red: int,
     green: int,
     blue: int,
-    dpi_x: int,
-    dpi_y: int,
     width: int,
     height: int,
 ) -> bytes:
-    # Generates width x height pixel 32-bit BGRA BMP binary data.
+    # Generates width x height pixel 24-bit BGR BMP binary data with 0 DPI.
     SIZEOF_BITMAPFILEHEADER = 14
     SIZEOF_BITMAPINFOHEADER = 40
     pixel_data = b""
     for _ in range(height):
-        # Each row is padded to a 4-byte boundary. For 32bpp, no padding is needed.
+        # Each row is padded to a 4-byte boundary.
+        # For 24bpp, each pixel is 3 bytes (BGR).
+        # Row size without padding: width * 3 bytes
+        row_size = width * 3
+        # Calculate padding bytes (to make row_size a multiple of 4)
+        padding_bytes = (4 - (row_size % 4)) % 4
         for _ in range(width):
-            # B, G, R, Alpha (fully opaque)
-            pixel_data += struct.pack(b"BBBB", blue, green, red, 0xFF)
+            # B, G, R
+            pixel_data += struct.pack(b"BBB", blue, green, red)
+        pixel_data += b"\x00" * padding_bytes
     BITMAP_DATA_OFFSET = SIZEOF_BITMAPFILEHEADER + SIZEOF_BITMAPINFOHEADER
     file_size = BITMAP_DATA_OFFSET + len(pixel_data)
     bmp_header = struct.pack(
@@ -324,20 +306,22 @@ def create_pixel_data(
         0,  # Reserved2
         BITMAP_DATA_OFFSET,  # Offset to pixel data
     )
-    # Calculate pixels_per_meter based on the provided DPI
-    pixels_per_meter_x = int(dpi_x / METERS_PER_INCH)
-    pixels_per_meter_y = int(dpi_y / METERS_PER_INCH)
     info_header = struct.pack(
         b"<IiiHHIIiiII",
         SIZEOF_BITMAPINFOHEADER,  # Size of BITMAPINFOHEADER
         width,  # Image width
         height,  # Image height
         1,  # Planes
-        32,  # Bits per pixel (for BGRA)
+        24,  # Bits per pixel (for BGR)
         BI_RGB,  # Compression
         len(pixel_data),  # Size of image data
-        pixels_per_meter_x,  # X pixels per meter
-        pixels_per_meter_y,  # Y pixels per meter
+        # Set to 0 DPI (0 px/m) is focusing on pixel data integrity;
+        # this ensures environment-independent results and not reliably preserve resolution metadata.
+        0,  # X pixels per meter (0 DPI)
+        0,  # Y pixels per meter (0 DPI)
+        # Setting biClrUsed and biClrImportant to 0 signifies that the bitmap
+        # uses the maximum number of colors for the given bit depth (2^24) and
+        # that all pixels are essential for rendering.
         0,  # Colors used
         0,  # Colors important
     )
@@ -346,8 +330,7 @@ def create_pixel_data(
 
 class Test_Picture(ut.TestCase):
     def test_ole_load_picture(self):
-        dpi_x, dpi_y = get_screen_dpi()
-        data = create_pixel_data(255, 0, 0, dpi_x, dpi_y, 1, 1)
+        data = create_24bit_pixel_data(255, 0, 0, 1, 1)  # 1x1 pixel red picture
         # Allocate global memory with `GMEM_FIXED` (fixed-size) and
         # `GMEM_ZEROINIT` (initialize to zero) and copy BMP data.
         with global_alloc(GMEM_FIXED | GMEM_ZEROINIT, len(data)) as handle:
