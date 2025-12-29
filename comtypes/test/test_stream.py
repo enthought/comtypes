@@ -1,3 +1,4 @@
+import struct
 import unittest as ut
 from ctypes import (
     HRESULT,
@@ -181,6 +182,59 @@ _OleLoadPicture.argtypes = (
     POINTER(POINTER(comtypes.IUnknown)),  # ppvObj
 )
 _OleLoadPicture.restype = HRESULT
+
+
+METERS_PER_INCH = 0.0254
+
+BI_RGB = 0  # No compression
+
+
+def create_pixel_data(
+    red: int,
+    green: int,
+    blue: int,
+    dpi_x: int,
+    dpi_y: int,
+    width: int,
+    height: int,
+) -> bytes:
+    # Generates width x height pixel 32-bit BGRA BMP binary data.
+    SIZEOF_BITMAPFILEHEADER = 14
+    SIZEOF_BITMAPINFOHEADER = 40
+    pixel_data = b""
+    for _ in range(height):
+        # Each row is padded to a 4-byte boundary. For 32bpp, no padding is needed.
+        for _ in range(width):
+            # B, G, R, Alpha (fully opaque)
+            pixel_data += struct.pack(b"BBBB", blue, green, red, 0xFF)
+    BITMAP_DATA_OFFSET = SIZEOF_BITMAPFILEHEADER + SIZEOF_BITMAPINFOHEADER
+    file_size = BITMAP_DATA_OFFSET + len(pixel_data)
+    bmp_header = struct.pack(
+        b"<2sIHHI",
+        b"BM",  # File type signature "BM"
+        file_size,  # Total file size
+        0,  # Reserved1
+        0,  # Reserved2
+        BITMAP_DATA_OFFSET,  # Offset to pixel data
+    )
+    # Calculate pixels_per_meter based on the provided DPI
+    pixels_per_meter_x = int(dpi_x / METERS_PER_INCH)
+    pixels_per_meter_y = int(dpi_y / METERS_PER_INCH)
+    info_header = struct.pack(
+        b"<IiiHHIIiiII",
+        SIZEOF_BITMAPINFOHEADER,  # Size of BITMAPINFOHEADER
+        width,  # Image width
+        height,  # Image height
+        1,  # Planes
+        32,  # Bits per pixel (for BGRA)
+        BI_RGB,  # Compression
+        len(pixel_data),  # Size of image data
+        pixels_per_meter_x,  # X pixels per meter
+        pixels_per_meter_y,  # Y pixels per meter
+        0,  # Colors used
+        0,  # Colors important
+    )
+    return bmp_header + info_header + pixel_data
 
 
 class Test_Picture(ut.TestCase):
