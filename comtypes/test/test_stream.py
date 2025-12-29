@@ -7,16 +7,21 @@ from ctypes import (
     HRESULT,
     POINTER,
     OleDLL,
+    Structure,
     WinDLL,
     byref,
     c_size_t,
     c_ubyte,
     c_ulonglong,
+    c_void_p,
     pointer,
 )
 from ctypes.wintypes import (
     BOOL,
+    DWORD,
+    HANDLE,
     HDC,
+    HGDIOBJ,
     HGLOBAL,
     HWND,
     INT,
@@ -24,6 +29,7 @@ from ctypes.wintypes import (
     LPVOID,
     UINT,
     ULARGE_INTEGER,
+    WORD,
 )
 from typing import Optional
 
@@ -201,6 +207,59 @@ _ReleaseDC = _user32.ReleaseDC
 _ReleaseDC.argtypes = (HWND, HDC)
 _ReleaseDC.restype = INT
 
+_gdi32 = WinDLL("gdi32")
+
+_CreateCompatibleDC = _gdi32.CreateCompatibleDC
+_CreateCompatibleDC.argtypes = (HDC,)
+_CreateCompatibleDC.restype = HDC
+
+_DeleteDC = _gdi32.DeleteDC
+_DeleteDC.argtypes = (HDC,)
+_DeleteDC.restype = BOOL
+
+_SelectObject = _gdi32.SelectObject
+_SelectObject.argtypes = (HDC, HGDIOBJ)
+_SelectObject.restype = HGDIOBJ
+
+_DeleteObject = _gdi32.DeleteObject
+_DeleteObject.argtypes = (HGDIOBJ,)
+_DeleteObject.restype = BOOL
+
+
+class BITMAPINFOHEADER(Structure):
+    _fields_ = [
+        ("biSize", DWORD),
+        ("biWidth", LONG),
+        ("biHeight", LONG),
+        ("biPlanes", WORD),
+        ("biBitCount", WORD),
+        ("biCompression", DWORD),
+        ("biSizeImage", DWORD),
+        ("biXPelsPerMeter", LONG),
+        ("biYPelsPerMeter", LONG),
+        ("biClrUsed", DWORD),
+        ("biClrImportant", DWORD),
+    ]
+
+
+class BITMAPINFO(Structure):
+    _fields_ = [
+        ("bmiHeader", BITMAPINFOHEADER),
+        ("bmiColors", DWORD * 1),  # Placeholder for color table, not used for 32bpp
+    ]
+
+
+_CreateDIBSection = _gdi32.CreateDIBSection
+_CreateDIBSection.argtypes = (
+    HDC,
+    POINTER(BITMAPINFO),
+    UINT,  # DIB_RGB_COLORS
+    POINTER(c_void_p),  # lplpBits
+    HANDLE,  # hSection
+    DWORD,  # dwOffset
+)
+_CreateDIBSection.restype = HGDIOBJ
+
 _kernel32 = WinDLL("kernel32")
 
 _GlobalAlloc = _kernel32.GlobalAlloc
@@ -231,6 +290,82 @@ _OleLoadPicture.argtypes = (
 )
 _OleLoadPicture.restype = HRESULT
 
+
+class _PICTDESC_BMP(Structure):
+    _fields_ = [
+        ("hbitmap", HGDIOBJ),
+        ("hpal", DWORD),  # COLORREF is DWORD
+    ]
+
+
+class _PICTDESC_WMF(Structure):
+    _fields_ = [
+        ("hmetafile", HGDIOBJ),  # HMETAFILE
+        ("xExt", INT),
+        ("yExt", INT),
+    ]
+
+
+class _PICTDESC_EMF(Structure):
+    _fields_ = [
+        ("hemf", HGDIOBJ),  # HENHMETAFILE
+    ]
+
+
+class _PICTDESC_ICON(Structure):
+    _fields_ = [
+        ("hicon", HGDIOBJ),  # HICON
+    ]
+
+
+class _PICTDESC_CUR(Structure):
+    _fields_ = [
+        ("hcur", HGDIOBJ),  # HCURSOR
+    ]
+
+
+class _PICTDESC_DISP(Structure):
+    _fields_ = [
+        ("lpPicDisp", c_void_p),  # LPPICTUREDISP
+    ]
+
+
+class _PICTDESC_SIZE(Structure):
+    _fields_ = [
+        ("cx", c_size_t),
+        ("cy", c_size_t),
+    ]
+
+
+class PICTDESC_UNION(ctypes.Union):
+    _fields_ = [
+        ("bmp", _PICTDESC_BMP),
+        ("wmf", _PICTDESC_WMF),
+        ("emf", _PICTDESC_EMF),
+        ("icon", _PICTDESC_ICON),
+        ("cur", _PICTDESC_CUR),
+        ("disp", _PICTDESC_DISP),
+        ("size", _PICTDESC_SIZE),
+    ]
+
+
+class PICTDESC(Structure):
+    _fields_ = [
+        ("cbSizeofstruct", UINT),
+        ("picType", UINT),
+        ("u", PICTDESC_UNION),
+    ]
+
+
+_OleCreatePictureIndirect = _oleaut32.OleCreatePictureIndirect
+_OleCreatePictureIndirect.argtypes = [
+    POINTER(PICTDESC),  # lpPictDesc
+    POINTER(comtypes.GUID),  # riid
+    BOOL,  # fOwn
+    POINTER(POINTER(comtypes.IUnknown)),  # ppvObj
+]
+_OleCreatePictureIndirect.restype = HRESULT
+
 # Constants for the type of a picture object
 PICTYPE_BITMAP = 1
 
@@ -238,6 +373,7 @@ GMEM_FIXED = 0x0000
 GMEM_ZEROINIT = 0x0040
 
 BI_RGB = 0  # No compression
+DIB_RGB_COLORS = 0
 
 
 @contextlib.contextmanager
@@ -272,6 +408,20 @@ def global_lock(handle: int) -> Iterator[int]:
         yield lp_mem
     finally:
         _GlobalUnlock(handle)
+
+
+def create_24bitmap_info(width: int, height: int) -> BITMAPINFO:
+    """Creates a BITMAPINFO structure for a 24bpp BGR DIB section."""
+    bmi = BITMAPINFO()
+    bmi.bmiHeader.biSize = ctypes.sizeof(BITMAPINFOHEADER)
+    bmi.bmiHeader.biWidth = width
+    bmi.bmiHeader.biHeight = height  # positive for bottom-up DIB
+    bmi.bmiHeader.biPlanes = 1
+    bmi.bmiHeader.biBitCount = 24
+    bmi.bmiHeader.biCompression = BI_RGB
+    # width*height pixels * 3 bytes/pixel (BGR)
+    bmi.bmiHeader.biSizeImage = width * height * 3
+    return bmi
 
 
 def create_24bit_pixel_data(
@@ -352,6 +502,70 @@ class Test_Picture(ut.TestCase):
             pstm.RemoteSeek(0, STREAM_SEEK_SET)
             buf, read = pstm.RemoteRead(len(data))
         self.assertEqual(bytes(buf)[:read], data)
+
+    def test_save_created_bitmap_picture(self):
+        # BGR, 1x1 pixel, blue (0, 0, 255), in Windows GDI.
+        # This is the data that will be directly copied into the DIB section's memory.
+        blue_pixel_data = b"\xff\x00\x00"  # Blue (0, 0, 255)
+        width, height = 1, 1
+        try:
+            screen_dc = _GetDC(0)
+            assert screen_dc, "Failed to get device context."
+            try:
+                mem_dc = _CreateCompatibleDC(screen_dc)
+                assert mem_dc, "Failed to create compatible memory DC."
+                bits = c_void_p()
+                bmi = create_24bitmap_info(width, height)
+                try:
+                    hbm = _CreateDIBSection(
+                        mem_dc,
+                        byref(bmi),
+                        DIB_RGB_COLORS,
+                        byref(bits),
+                        0,
+                        0,
+                    )
+                    assert hbm, "Failed to create DIB section."
+                    try:
+                        old_obj = _SelectObject(mem_dc, hbm)
+                        assert old_obj, "Failed to select object into DC."
+                        # Copy the raw pixel data into the DIB section's memory
+                        ctypes.memmove(bits, blue_pixel_data, len(blue_pixel_data))
+                        # Populate PICTDESC with the HBITMAP from DIB section
+                        pdesc = PICTDESC()
+                        pdesc.cbSizeofstruct = ctypes.sizeof(PICTDESC)
+                        pdesc.picType = PICTYPE_BITMAP
+                        pdesc.u.bmp.hbitmap = hbm
+                        pdesc.u.bmp.hpal = 0  # No palette for 24bpp
+                        # Create IPicture using _OleCreatePictureIndirect
+                        pic: stdole.IPicture = POINTER(stdole.IPicture)()  # type: ignore
+                        hr = _OleCreatePictureIndirect(
+                            byref(pdesc),
+                            byref(stdole.IPicture._iid_),
+                            True,  # fOwn: If True, the picture object owns the GDI handle.
+                            byref(pic),
+                        )
+                        self.assertEqual(hr, hresult.S_OK)
+                        self.assertEqual(pic.Type, PICTYPE_BITMAP)
+                        dststm = _create_stream(delete_on_release=True)
+                        pic.SaveAsFile(dststm, True)
+                        dststm.RemoteSeek(0, STREAM_SEEK_SET)
+                        buf, read = dststm.RemoteRead(
+                            dststm.Stat(STATFLAG_DEFAULT).cbSize
+                        )
+                    finally:
+                        _SelectObject(mem_dc, old_obj)
+                finally:
+                    _DeleteObject(hbm)
+            finally:
+                _DeleteDC(mem_dc)
+        finally:
+            _ReleaseDC(0, screen_dc)
+        # Save picture to the stream
+        self.assertEqual(
+            bytes(buf)[:read],
+            create_24bit_pixel_data(0, 0, 255, width, height),
+        )
 
 
 if __name__ == "__main__":
