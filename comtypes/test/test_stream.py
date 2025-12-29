@@ -508,9 +508,7 @@ class Test_Picture(ut.TestCase):
         # This is the data that will be directly copied into the DIB section's memory.
         blue_pixel_data = b"\xff\x00\x00"  # Blue (0, 0, 255)
         width, height = 1, 1
-        try:
-            screen_dc = _GetDC(0)
-            assert screen_dc, "Failed to get device context."
+        with get_dc(0) as screen_dc:
             try:
                 mem_dc = _CreateCompatibleDC(screen_dc)
                 assert mem_dc, "Failed to create compatible memory DC."
@@ -559,8 +557,6 @@ class Test_Picture(ut.TestCase):
                     _DeleteObject(hbm)
             finally:
                 _DeleteDC(mem_dc)
-        finally:
-            _ReleaseDC(0, screen_dc)
         # Save picture to the stream
         self.assertEqual(
             bytes(buf)[:read],
