@@ -23,6 +23,7 @@ from ctypes.wintypes import (
     UINT,
     ULARGE_INTEGER,
 )
+from typing import Optional
 
 import comtypes.client
 from comtypes import hresult
@@ -55,10 +56,12 @@ _IStream_Size.argtypes = [POINTER(IStream), POINTER(ULARGE_INTEGER)]
 _IStream_Size.restype = HRESULT
 
 
-def _create_stream() -> IStream:
+def _create_stream(
+    handle: Optional[int] = None, delete_on_release: bool = True
+) -> IStream:
     # Create an IStream
     stream = POINTER(IStream)()  # type: ignore
-    _CreateStreamOnHGlobal(None, True, byref(stream))
+    _CreateStreamOnHGlobal(handle, delete_on_release, byref(stream))
     return stream  # type: ignore
 
 
@@ -311,8 +314,7 @@ class Test_Picture(ut.TestCase):
                 ctypes.memmove(lp_mem, data, len(data))
             finally:
                 _GlobalUnlock(lp_mem)
-            pstm = POINTER(IStream)()
-            _CreateStreamOnHGlobal(handle, False, byref(pstm))
+            pstm = _create_stream(handle, delete_on_release=False)
             # Load picture from the stream
             pic: stdole.IPicture = POINTER(stdole.IPicture)()  # type: ignore
             hr = _OleLoadPicture(
