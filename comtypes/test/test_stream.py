@@ -558,7 +558,7 @@ def create_image_rendering_dc(
 
 
 class Test_Picture(ut.TestCase):
-    def test_ole_load_picture(self):
+    def test_load_from_handle_stream(self):
         width, height = 1, 1
         data = create_24bit_pixel_data(255, 0, 0, width, height)  # Red pixel
         # Allocate global memory with `GMEM_FIXED` (fixed-size) and
