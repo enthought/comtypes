@@ -5,6 +5,9 @@ from ctypes.wintypes import BOOL, HGLOBAL, ULARGE_INTEGER
 import comtypes.client
 
 comtypes.client.GetModule("portabledeviceapi.dll")
+# The stdole module is generated automatically during the portabledeviceapi
+# module generation.
+import comtypes.gen.stdole as stdole
 from comtypes.gen.PortableDeviceApiLib import IStream
 
 STATFLAG_DEFAULT = 0
@@ -156,6 +159,11 @@ class Test_Clone(ut.TestCase):
         new_stm = orig.Clone()
         buf, read = new_stm.RemoteRead(1024)
         self.assertEqual(bytearray(buf)[0:read], test_data)
+
+
+class Test_Picture(ut.TestCase):
+    def test_ole_load_picture(self):
+        stdole.IPicture  # TODO: Add test.
 
 
 if __name__ == "__main__":
