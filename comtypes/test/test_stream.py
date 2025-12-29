@@ -237,6 +237,9 @@ _OleLoadPicture.argtypes = (
 )
 _OleLoadPicture.restype = HRESULT
 
+# Constants for the type of a picture object
+PICTYPE_BITMAP = 1
+
 # Constants for GetDeviceCaps
 LOGPIXELSX = 88  # Logical pixels/inch in X
 LOGPIXELSY = 90  # Logical pixels/inch in Y
@@ -361,6 +364,7 @@ class Test_Picture(ut.TestCase):
                 byref(pic),
             )
             self.assertEqual(hr, hresult.S_OK)
+            self.assertEqual(pic.Type, PICTYPE_BITMAP)
             pstm.RemoteSeek(0, STREAM_SEEK_SET)
             buf, read = pstm.RemoteRead(len(data))
         self.assertEqual(bytes(buf)[:read], data)
