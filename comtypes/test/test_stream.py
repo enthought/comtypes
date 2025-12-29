@@ -261,6 +261,28 @@ def get_dc(hwnd: int) -> Iterator[int]:
         _ReleaseDC(hwnd, dc)
 
 
+@contextlib.contextmanager
+def global_alloc(uflags: int, dwbytes: int) -> Iterator[int]:
+    """Context manager to allocate and free a global memory handle."""
+    handle = _GlobalAlloc(uflags, dwbytes)
+    assert handle, "Failed to GlobalAlloc"
+    try:
+        yield handle
+    finally:
+        _GlobalFree(handle)
+
+
+@contextlib.contextmanager
+def global_lock(handle: int) -> Iterator[int]:
+    """Context manager to lock a global memory handle and obtain a pointer."""
+    lp_mem = _GlobalLock(handle)
+    assert lp_mem, "Failed to GlobalLock"
+    try:
+        yield lp_mem
+    finally:
+        _GlobalUnlock(handle)
+
+
 def create_pixel_data(
     red: int,
     green: int,
@@ -316,15 +338,11 @@ class Test_Picture(ut.TestCase):
             dpi_x = _GetDeviceCaps(dc, LOGPIXELSX)
             dpi_y = _GetDeviceCaps(dc, LOGPIXELSY)
         data = create_pixel_data(255, 0, 0, dpi_x, dpi_y, 1, 1)
-        handle = _GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, len(data))
-        assert handle, "Failed to GlobalAlloc"
-        try:
-            lp_mem = _GlobalLock(handle)
-            assert lp_mem, "Failed to GlobalLock"
-            try:
+        # Allocate global memory with `GMEM_FIXED` (fixed-size) and
+        # `GMEM_ZEROINIT` (initialize to zero) and copy BMP data.
+        with global_alloc(GMEM_FIXED | GMEM_ZEROINIT, len(data)) as handle:
+            with global_lock(handle) as lp_mem:
                 ctypes.memmove(lp_mem, data, len(data))
-            finally:
-                _GlobalUnlock(lp_mem)
             pstm = _create_stream(handle, delete_on_release=False)
             # Load picture from the stream
             pic: stdole.IPicture = POINTER(stdole.IPicture)()  # type: ignore
@@ -338,8 +356,6 @@ class Test_Picture(ut.TestCase):
             self.assertEqual(hr, hresult.S_OK)
             pstm.RemoteSeek(0, STREAM_SEEK_SET)
             buf, read = pstm.RemoteRead(len(data))
-        finally:
-            _GlobalFree(handle)
         self.assertEqual(bytes(buf)[:read], data)
 
 
