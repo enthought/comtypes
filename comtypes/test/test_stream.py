@@ -330,7 +330,8 @@ def create_24bit_pixel_data(
 
 class Test_Picture(ut.TestCase):
     def test_ole_load_picture(self):
-        data = create_24bit_pixel_data(255, 0, 0, 1, 1)  # 1x1 pixel red picture
+        width, height = 1, 1
+        data = create_24bit_pixel_data(255, 0, 0, width, height)  # Red pixel
         # Allocate global memory with `GMEM_FIXED` (fixed-size) and
         # `GMEM_ZEROINIT` (initialize to zero) and copy BMP data.
         with global_alloc(GMEM_FIXED | GMEM_ZEROINIT, len(data)) as handle:
