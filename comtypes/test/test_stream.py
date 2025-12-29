@@ -578,6 +578,45 @@ class Test_Picture(ut.TestCase):
             buf, read = pstm.RemoteRead(len(data))
         self.assertEqual(bytes(buf)[:read], data)
 
+    def test_load_from_buffer_stream(self):
+        width, height = 1, 1
+        data = create_24bit_pixel_data(0, 255, 0, width, height)  # Green pixel
+        srcstm = _create_stream(delete_on_release=True)
+        pv = (c_ubyte * len(data)).from_buffer(bytearray(data))
+        srcstm.RemoteWrite(pv, len(data))
+        srcstm.Commit(STGC_DEFAULT)
+        srcstm.RemoteSeek(0, STREAM_SEEK_SET)
+        # Load picture from the stream
+        pic: stdole.IPicture = POINTER(stdole.IPicture)()  # type: ignore
+        hr = _OleLoadPicture(
+            srcstm, len(data), False, byref(stdole.IPicture._iid_), byref(pic)
+        )
+        self.assertEqual(hr, hresult.S_OK)
+        self.assertEqual(pic.Type, PICTYPE_BITMAP)
+        with create_image_rendering_dc(0, width, height) as (mem_dc, bits, bmi, _):
+            pic.Render(
+                mem_dc,
+                0,
+                0,
+                1,
+                1,
+                0,
+                pic.Height,  # start from bottom for bottom-up DIB
+                pic.Width,
+                -pic.Height,  # negative for top-down rendering in memory
+                None,
+            )
+            # Read the pixel data directly from the bits pointer.
+            gdi_data = ctypes.string_at(bits, bmi.bmiHeader.biSizeImage)
+        # BGR, 1x1 pixel, green (0, 255, 0), in Windows GDI.
+        self.assertEqual(gdi_data, b"\x00\xff\x00")
+        # Save picture to the stream
+        dststm = _create_stream(delete_on_release=True)
+        pic.SaveAsFile(dststm, False)
+        dststm.RemoteSeek(0, STREAM_SEEK_SET)
+        buf, read = dststm.RemoteRead(dststm.Stat(STATFLAG_DEFAULT).cbSize)
+        self.assertEqual(bytes(buf)[:read], data)
+
     def test_save_created_bitmap_picture(self):
         # BGR, 1x1 pixel, blue (0, 0, 255), in Windows GDI.
         # This is the data that will be directly copied into the DIB section's memory.
