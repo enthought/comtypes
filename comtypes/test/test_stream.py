@@ -410,6 +410,19 @@ def global_lock(handle: int) -> Iterator[int]:
         _GlobalUnlock(handle)
 
 
+@contextlib.contextmanager
+def select_object(hdc: int, obj: int) -> Iterator[int]:
+    """Context manager to select a GDI object into a device context and restore
+    the original.
+    """
+    old_obj = _SelectObject(hdc, obj)
+    assert old_obj, "Failed to select object into DC."
+    try:
+        yield obj
+    finally:
+        _SelectObject(hdc, old_obj)
+
+
 def create_24bitmap_info(width: int, height: int) -> BITMAPINFO:
     """Creates a BITMAPINFO structure for a 24bpp BGR DIB section."""
     bmi = BITMAPINFO()
@@ -524,9 +537,7 @@ class Test_Picture(ut.TestCase):
                         0,
                     )
                     assert hbm, "Failed to create DIB section."
-                    try:
-                        old_obj = _SelectObject(mem_dc, hbm)
-                        assert old_obj, "Failed to select object into DC."
+                    with select_object(mem_dc, hbm):
                         # Copy the raw pixel data into the DIB section's memory
                         ctypes.memmove(bits, blue_pixel_data, len(blue_pixel_data))
                         # Populate PICTDESC with the HBITMAP from DIB section
@@ -551,8 +562,6 @@ class Test_Picture(ut.TestCase):
                         buf, read = dststm.RemoteRead(
                             dststm.Stat(STATFLAG_DEFAULT).cbSize
                         )
-                    finally:
-                        _SelectObject(mem_dc, old_obj)
                 finally:
                     _DeleteObject(hbm)
             finally:
