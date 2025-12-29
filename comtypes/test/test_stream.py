@@ -283,6 +283,16 @@ def global_lock(handle: int) -> Iterator[int]:
         _GlobalUnlock(handle)
 
 
+def get_screen_dpi() -> tuple[int, int]:
+    """Gets the screen DPI using GDI functions."""
+    # Get a handle to the desktop window's device context
+    with get_dc(0) as dc:
+        # Get the horizontal and vertical DPI
+        dpi_x = _GetDeviceCaps(dc, LOGPIXELSX)
+        dpi_y = _GetDeviceCaps(dc, LOGPIXELSY)
+    return dpi_x, dpi_y
+
+
 def create_pixel_data(
     red: int,
     green: int,
@@ -333,10 +343,7 @@ def create_pixel_data(
 
 class Test_Picture(ut.TestCase):
     def test_ole_load_picture(self):
-        # Get a handle to the desktop window's device context
-        with get_dc(0) as dc:
-            dpi_x = _GetDeviceCaps(dc, LOGPIXELSX)
-            dpi_y = _GetDeviceCaps(dc, LOGPIXELSY)
+        dpi_x, dpi_y = get_screen_dpi()
         data = create_pixel_data(255, 0, 0, dpi_x, dpi_y, 1, 1)
         # Allocate global memory with `GMEM_FIXED` (fixed-size) and
         # `GMEM_ZEROINIT` (initialize to zero) and copy BMP data.
