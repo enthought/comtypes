@@ -270,13 +270,33 @@ class Test_Constants(ut.TestCase):
         self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
 
     def test_enums_in_friendly_mod(self):
-        consts = comtypes.client.Constants("scrrun.dll")
         comtypes.client.GetModule("scrrun.dll")
-        from comtypes.gen import Scripting
+        comtypes.client.GetModule("msi.dll")
+        from comtypes.gen import Scripting, WindowsInstaller
 
-        for e in Scripting.StandardStreamTypes:
-            self.assertIn(e.name, consts.StandardStreamTypes)
-            self.assertEqual(consts.StandardStreamTypes[e.name], e.value)
+        for enumtype, fadic in [
+            (
+                # StandardStreamTypes in scrrun.dll contains only 0, 1, 2
+                Scripting.StandardStreamTypes,
+                comtypes.client.Constants("scrrun.dll").StandardStreamTypes,
+            ),
+            (
+                # MsiInstallState in msi.dll contains negative values.
+                WindowsInstaller.MsiInstallState,
+                comtypes.client.Constants("msi.dll").MsiInstallState,
+            ),
+        ]:
+            for member in enumtype:
+                with self.subTest(enumtype=enumtype, member=member):
+                    self.assertIn(member.name, fadic)
+                    self.assertEqual(fadic[member.name], member.value)
+            for member_name, member_value in fadic.items():
+                with self.subTest(
+                    enumtype=enumtype,
+                    member_name=member_name,
+                    member_value=member_value,
+                ):
+                    self.assertEqual(member_value, getattr(enumtype, member_name))
 
     def test_returns_other_than_enum_members(self):
         obj = comtypes.client.CreateObject("SAPI.SpVoice")
