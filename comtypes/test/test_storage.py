@@ -1,4 +1,3 @@
-import contextlib
 import unittest
 from _ctypes import COMError
 from ctypes import HRESULT, POINTER, OleDLL, byref, c_ubyte
@@ -8,10 +7,8 @@ from pathlib import Path
 import comtypes
 import comtypes.client
 
-with contextlib.redirect_stdout(None):  # supress warnings
-    mod = comtypes.client.GetModule("msvidctl.dll")
-
-from comtypes.gen.MSVidCtlLib import IStorage
+comtypes.client.GetModule("portabledeviceapi.dll")
+from comtypes.gen.PortableDeviceApiLib import IStorage
 
 STATFLAG_DEFAULT = 0
 STGC_DEFAULT = 0
