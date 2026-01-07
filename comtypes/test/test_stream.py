@@ -281,6 +281,22 @@ class Test_LockRegion_UnlockRegion(ut.TestCase):
             self.assertEqual(tmpfile.read_bytes(), b"\x00\x00\x00\x00\x00ABCDE")
 
 
+# TODO: If there is a standard Windows `IStream` implementation that supports
+#       `Revert`, it should be used for testing.
+#       https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-istream-revert
+#
+# - For memory-based streams (created by `CreateStreamOnHGlobal`),
+#   `IStream::Revert` has no effect because the object "is not transacted"
+#   per the specification. All writes are committed immediately to the
+#   underlying HGLOBAL.
+#   https://learn.microsoft.com/en-us/windows/win32/api/combaseapi/nf-combaseapi-createstreamonhglobal
+#
+# - `IStream::Revert` is not implemented for the standard Compound File
+#   (Structured Storage) implementation. According to official documentation,
+#   `Revert` has no effect on these streams.
+#   https://learn.microsoft.com/en-us/windows/win32/api/objidl/nn-objidl-istream#methods
+
+
 _user32 = WinDLL("user32")
 
 _GetDC = _user32.GetDC
