@@ -1,7 +1,10 @@
 import contextlib
 import ctypes
+import os
 import struct
+import tempfile
 import unittest as ut
+from _ctypes import COMError
 from collections.abc import Iterator
 from ctypes import (
     HRESULT,
@@ -26,11 +29,13 @@ from ctypes.wintypes import (
     HWND,
     INT,
     LONG,
+    LPCWSTR,
     LPVOID,
     UINT,
     ULARGE_INTEGER,
     WORD,
 )
+from pathlib import Path
 from typing import Optional
 
 import comtypes.client
@@ -46,10 +51,23 @@ SIZE_T = c_size_t
 
 STATFLAG_DEFAULT = 0
 STGC_DEFAULT = 0
+
+EACCES = 13  # Permission denied
+
 STGTY_STREAM = 2
 STREAM_SEEK_SET = 0
 STREAM_SEEK_CUR = 1
 STREAM_SEEK_END = 2
+
+STGM_CREATE = 0x00001000
+STGM_READWRITE = 0x00000002
+STGM_SHARE_DENY_NONE = 0x00000040
+
+STG_E_INVALIDFUNCTION = -2147287039  # 0x80030001
+
+LOCK_EXCLUSIVE = 2
+
+FILE_ATTRIBUTE_NORMAL = 0x80
 
 _ole32 = OleDLL("ole32")
 
@@ -63,8 +81,19 @@ _IStream_Size = _shlwapi.IStream_Size
 _IStream_Size.argtypes = [POINTER(IStream), POINTER(ULARGE_INTEGER)]
 _IStream_Size.restype = HRESULT
 
+_SHCreateStreamOnFileEx = _shlwapi.SHCreateStreamOnFileEx
+_SHCreateStreamOnFileEx.argtypes = [
+    LPCWSTR,  # pszFile
+    DWORD,  # grfMode
+    DWORD,  # dwAttributes
+    BOOL,  # fCreate
+    POINTER(IStream),  # pstmTemplate
+    POINTER(POINTER(IStream)),  # ppstm
+]
+_SHCreateStreamOnFileEx.restype = HRESULT
 
-def _create_stream(
+
+def _create_stream_on_hglobal(
     handle: Optional[int] = None, delete_on_release: bool = True
 ) -> IStream:
     # Create an IStream
@@ -73,9 +102,17 @@ def _create_stream(
     return stream  # type: ignore
 
 
+def _create_stream_on_file(
+    filepath: Path, mode: int, attr: int, create: bool
+) -> IStream:
+    stream = POINTER(IStream)()  # type: ignore
+    _SHCreateStreamOnFileEx(str(filepath), mode, attr, create, None, byref(stream))
+    return stream  # type: ignore
+
+
 class Test_RemoteWrite(ut.TestCase):
     def test_RemoteWrite(self):
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         test_data = b"Some data"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
 
@@ -87,7 +124,7 @@ class Test_RemoteWrite(ut.TestCase):
 
 class Test_RemoteRead(ut.TestCase):
     def test_RemoteRead(self):
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         test_data = b"Some data"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         stream.RemoteWrite(pv, len(test_data))
@@ -108,7 +145,7 @@ class Test_RemoteRead(ut.TestCase):
 
 class Test_RemoteSeek(ut.TestCase):
     def _create_sample_stream(self) -> IStream:
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         test_data = b"spam egg bacon ham"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         stream.RemoteWrite(pv, len(test_data))
@@ -141,7 +178,7 @@ class Test_RemoteSeek(ut.TestCase):
 
 class Test_SetSize(ut.TestCase):
     def test_SetSize(self):
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         stream.SetSize(42)
         pui = pointer(c_ulonglong())
         _IStream_Size(stream, pui)
@@ -150,8 +187,8 @@ class Test_SetSize(ut.TestCase):
 
 class Test_RemoteCopyTo(ut.TestCase):
     def test_RemoteCopyTo(self):
-        src = _create_stream()
-        dst = _create_stream()
+        src = _create_stream_on_hglobal()
+        dst = _create_stream_on_hglobal()
         test_data = b"parrot"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         src_written = src.RemoteWrite(pv, len(test_data))
@@ -170,7 +207,7 @@ class Test_Stat(ut.TestCase):
     # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-istream-stat
     # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ns-objidl-statstg
     def test_returns_statstg_from_no_modified_stream(self):
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         statstg = stream.Stat(STATFLAG_DEFAULT)
         self.assertIsNone(statstg.pwcsName)
         self.assertEqual(statstg.type, STGTY_STREAM)
@@ -186,7 +223,7 @@ class Test_Stat(ut.TestCase):
 
 class Test_Clone(ut.TestCase):
     def test_Clone(self):
-        orig = _create_stream()
+        orig = _create_stream_on_hglobal()
         test_data = b"spam egg bacon ham"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         orig.RemoteWrite(pv, len(test_data))
@@ -195,6 +232,69 @@ class Test_Clone(ut.TestCase):
         new_stm = orig.Clone()
         buf, read = new_stm.RemoteRead(1024)
         self.assertEqual(bytearray(buf)[0:read], test_data)
+
+
+class Test_LockRegion_UnlockRegion(ut.TestCase):
+    def test_cannot_lock_memory_based_stream(self):
+        stm = _create_stream_on_hglobal()
+        # For memory-backed streams, `LockRegion` and `UnlockRegion` are
+        # typically not supported and will return `STG_E_INVALIDFUNCTION`.
+        with self.assertRaises(COMError) as cm:
+            stm.LockRegion(0, 5, LOCK_EXCLUSIVE)
+        self.assertEqual(cm.exception.hresult, STG_E_INVALIDFUNCTION)
+        with self.assertRaises(COMError) as cm:
+            stm.UnlockRegion(0, 5, LOCK_EXCLUSIVE)
+        self.assertEqual(cm.exception.hresult, STG_E_INVALIDFUNCTION)
+
+    def test_can_lock_file_based_stream(self):
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            tmpfile = tmpdir / "lock_test.txt"
+            # Create a file-backed stream to enable `LockRegion` support.
+            # This implementation maps directly to OS-level file locking,
+            # which is not available for memory-based streams.
+            stm = _create_stream_on_file(
+                tmpfile,
+                STGM_READWRITE | STGM_SHARE_DENY_NONE | STGM_CREATE,
+                FILE_ATTRIBUTE_NORMAL,
+                True,
+            )
+            stm.SetSize(10)  # Allocate file space
+            stm.LockRegion(0, 5, LOCK_EXCLUSIVE)  # Lock the first 5 bytes (0-4)
+            # Open a separate file descriptor to simulate concurrent access
+            fd = os.open(tmpfile, os.O_RDWR)
+            # Writing to the LOCKED region must fail with EACCES
+            os.lseek(fd, 0, os.SEEK_SET)
+            with self.assertRaises(OSError) as cm:
+                os.write(fd, b"ABCDE")
+            self.assertEqual(cm.exception.errno, EACCES)
+            # Writing to the UNLOCKED region (offset 5+) must succeed
+            os.lseek(fd, 5, os.SEEK_SET)
+            os.write(fd, b"ABCDE")
+            # Cleanup: Close descriptors and release the lock
+            os.close(fd)
+            stm.UnlockRegion(0, 5, LOCK_EXCLUSIVE)
+            buf, read = stm.RemoteRead(stm.Stat(STATFLAG_DEFAULT).cbSize)
+            # Verify that COM stream content reflects the successful out-of-lock write
+            self.assertEqual(bytearray(buf)[0:read], b"\x00\x00\x00\x00\x00ABCDE")
+            # Verify that the actual file content on disk matches the expected data
+            self.assertEqual(tmpfile.read_bytes(), b"\x00\x00\x00\x00\x00ABCDE")
+
+
+# TODO: If there is a standard Windows `IStream` implementation that supports
+#       `Revert`, it should be used for testing.
+#       https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-istream-revert
+#
+# - For memory-based streams (created by `CreateStreamOnHGlobal`),
+#   `IStream::Revert` has no effect because the object "is not transacted"
+#   per the specification. All writes are committed immediately to the
+#   underlying HGLOBAL.
+#   https://learn.microsoft.com/en-us/windows/win32/api/combaseapi/nf-combaseapi-createstreamonhglobal
+#
+# - `IStream::Revert` is not implemented for the standard Compound File
+#   (Structured Storage) implementation. According to official documentation,
+#   `Revert` has no effect on these streams.
+#   https://learn.microsoft.com/en-us/windows/win32/api/objidl/nn-objidl-istream#methods
 
 
 _user32 = WinDLL("user32")
@@ -566,7 +666,7 @@ class Test_Picture(ut.TestCase):
         with global_alloc(GMEM_FIXED | GMEM_ZEROINIT, len(data)) as handle:
             with global_lock(handle) as lp_mem:
                 ctypes.memmove(lp_mem, data, len(data))
-            pstm = _create_stream(handle, delete_on_release=False)
+            pstm = _create_stream_on_hglobal(handle, delete_on_release=False)
             # Load picture from the stream
             pic: stdole.IPicture = POINTER(stdole.IPicture)()  # type: ignore
             hr = _OleLoadPicture(
@@ -585,7 +685,7 @@ class Test_Picture(ut.TestCase):
     def test_load_from_buffer_stream(self):
         width, height = 1, 1
         data = create_24bit_pixel_data(0, 255, 0, width, height)  # Green pixel
-        srcstm = _create_stream(delete_on_release=True)
+        srcstm = _create_stream_on_hglobal(delete_on_release=True)
         pv = (c_ubyte * len(data)).from_buffer(bytearray(data))
         srcstm.RemoteWrite(pv, len(data))
         srcstm.Commit(STGC_DEFAULT)
@@ -618,7 +718,7 @@ class Test_Picture(ut.TestCase):
         # BGR, 1x1 pixel, green (0, 255, 0), in Windows GDI.
         self.assertEqual(gdi_data, b"\x00\xff\x00")
         # Save picture to the stream
-        dststm = _create_stream(delete_on_release=True)
+        dststm = _create_stream_on_hglobal(delete_on_release=True)
         pic.SaveAsFile(dststm, False)
         dststm.RemoteSeek(0, STREAM_SEEK_SET)
         buf, read = dststm.RemoteRead(dststm.Stat(STATFLAG_DEFAULT).cbSize)
@@ -648,7 +748,7 @@ class Test_Picture(ut.TestCase):
             )
             self.assertEqual(hr, hresult.S_OK)
             self.assertEqual(pic.Type, PICTYPE_BITMAP)
-            dststm = _create_stream(delete_on_release=True)
+            dststm = _create_stream_on_hglobal(delete_on_release=True)
             pic.SaveAsFile(dststm, True)
             dststm.RemoteSeek(0, STREAM_SEEK_SET)
             buf, read = dststm.RemoteRead(dststm.Stat(STATFLAG_DEFAULT).cbSize)
