@@ -66,6 +66,14 @@ class Test_IStorage(unittest.TestCase):
         del storage
         self.assertFalse(filepath.exists())
 
+    # TODO: Auto-generated methods based on type info are remote-side and hard
+    #       to call from the client.
+    #       If a proper invocation method or workaround is found, testing
+    #       becomes possible.
+    #       See: https://github.com/enthought/comtypes/issues/607
+    # def test_RemoteOpenStream(self):
+    #     pass
+
     def test_CreateStorage(self):
         parent = self._create_docfile()
         child = parent.CreateStorage("child", self.CREATE_STG_FLAG, 0, 0)
@@ -109,6 +117,14 @@ class Test_IStorage(unittest.TestCase):
         with self.assertRaises(COMError) as ctx:
             foo.OpenStorage("bar", None, self.OPEN_STG_FLAG, None, 0)
         self.assertEqual(ctx.exception.hresult, STG_E_PATHNOTFOUND)
+
+    # TODO: Auto-generated methods based on type info are remote-side and hard
+    #       to call from the client.
+    #       If a proper invocation method or workaround is found, testing
+    #       becomes possible.
+    #       See: https://github.com/enthought/comtypes/issues/607
+    # def test_RemoteEnumElements(self):
+    #     pass
 
     def test_DestroyElement(self):
         storage = self._create_docfile()
