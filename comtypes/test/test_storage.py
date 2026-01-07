@@ -1,14 +1,18 @@
+import tempfile
 import unittest
 from _ctypes import COMError
 from ctypes import HRESULT, POINTER, OleDLL, byref, c_ubyte
 from ctypes.wintypes import DWORD, PWCHAR
 from pathlib import Path
+from typing import Optional
 
 import comtypes
 import comtypes.client
 
 comtypes.client.GetModule("portabledeviceapi.dll")
-from comtypes.gen.PortableDeviceApiLib import IStorage
+from comtypes.gen.PortableDeviceApiLib import IStorage, tagSTATSTG
+
+STGTY_STORAGE = 1
 
 STATFLAG_DEFAULT = 0
 STGC_DEFAULT = 0
@@ -23,7 +27,7 @@ STGMOVE_MOVE = 0
 STREAM_SEEK_SET = 0
 
 STG_E_PATHNOTFOUND = -2147287038
-
+STG_E_INVALIDFLAG = -2147286785
 
 _ole32 = OleDLL("ole32")
 
@@ -39,13 +43,16 @@ class Test_IStorage(unittest.TestCase):
     CREATE_TESTDOC = STGM_DIRECT | STGM_CREATE | RW_EXCLUSIVE
     CREATE_TEMP_TESTDOC = CREATE_TESTDOC | STGM_DELETEONRELEASE
 
-    def _create_docfile(self, mode: int) -> IStorage:
+    def _create_docfile(self, mode: int, name: Optional[str] = None) -> IStorage:
         stg = POINTER(IStorage)()
-        _StgCreateDocfile(None, mode, 0, byref(stg))
+        _StgCreateDocfile(name, mode, 0, byref(stg))
         return stg  # type: ignore
 
     def test_CreateStream(self):
         storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        # When created with `StgCreateDocfile(NULL, ...)`, `pwcsName` is a
+        # temporary filename. The file really exists on disk because Windows
+        # creates an actual temporary file for the compound storage.
         filepath = Path(storage.Stat(STATFLAG_DEFAULT).pwcsName)
         self.assertTrue(filepath.exists())
         stream = storage.CreateStream("example", self.RW_EXCLUSIVE_CREATE, 0, 0)
@@ -151,3 +158,30 @@ class Test_IStorage(unittest.TestCase):
         # Re-set CLSID to CLSID_NULL and verify it is correctly set.
         storage.SetClass(comtypes.GUID())
         self.assertEqual(storage.Stat(STATFLAG_DEFAULT).clsid, comtypes.GUID())
+
+    def test_Stat(self):
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            tmpfile = tmpdir / "test_docfile.cfs"
+            self.assertFalse(tmpfile.exists())
+            # When created with `StgCreateDocfile(filepath_string, ...)`, the
+            # compound file is created at that location.
+            storage = self._create_docfile(
+                name=str(tmpfile), mode=self.CREATE_TEMP_TESTDOC
+            )
+            self.assertTrue(tmpfile.exists())
+            with self.assertRaises(COMError) as cm:
+                storage.Stat(0xFFFFFFFF)  # Invalid flag
+            self.assertEqual(cm.exception.hresult, STG_E_INVALIDFLAG)
+            stat = storage.Stat(STATFLAG_DEFAULT)
+            self.assertIsInstance(stat, tagSTATSTG)
+            del storage  # Release the storage to prevent 'cannot access the file ...'
+        self.assertEqual(stat.type, STGTY_STORAGE)
+        # Due to header overhead and file system allocation, the size may be
+        # greater than 0 bytes.
+        self.assertGreaterEqual(stat.cbSize, 0)
+        # `grfMode` should reflect the access mode flags from creation.
+        self.assertEqual(stat.grfMode, self.RW_EXCLUSIVE | STGM_DIRECT)
+        self.assertEqual(stat.grfLocksSupported, 0)
+        self.assertEqual(stat.clsid, comtypes.GUID())  # CLSID_NULL for new creation.
+        self.assertEqual(stat.grfStateBits, 0)
