@@ -100,9 +100,9 @@ class Test_IStorage(unittest.TestCase):
         src_stg.MoveElementTo("foo", dst_stg, "bar", STGMOVE_MOVE)
         opened_stg = dst_stg.OpenStorage("bar", None, self.RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual("bar", opened_stg.Stat(STATFLAG_DEFAULT).pwcsName)
-        with self.assertRaises(COMError) as ctx:
+        with self.assertRaises(COMError) as cm:
             src_stg.OpenStorage("foo", None, self.RW_EXCLUSIVE_TX, None, 0)
-        self.assertEqual(ctx.exception.hresult, STG_E_PATHNOTFOUND)
+        self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
     def test_Revert(self):
         storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
@@ -111,9 +111,9 @@ class Test_IStorage(unittest.TestCase):
         bar = foo.OpenStorage("bar", None, self.RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual("bar", bar.Stat(STATFLAG_DEFAULT).pwcsName)
         foo.Revert()
-        with self.assertRaises(COMError) as ctx:
+        with self.assertRaises(COMError) as cm:
             foo.OpenStorage("bar", None, self.RW_EXCLUSIVE_TX, None, 0)
-        self.assertEqual(ctx.exception.hresult, STG_E_PATHNOTFOUND)
+        self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
     # TODO: Auto-generated methods based on type info are remote-side and hard
     #       to call from the client.
@@ -127,9 +127,9 @@ class Test_IStorage(unittest.TestCase):
         storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
         storage.CreateStorage("example", self.RW_EXCLUSIVE_TX, 0, 0)
         storage.DestroyElement("example")
-        with self.assertRaises(COMError) as ctx:
+        with self.assertRaises(COMError) as cm:
             storage.OpenStorage("example", None, self.RW_EXCLUSIVE_TX, None, 0)
-        self.assertEqual(ctx.exception.hresult, STG_E_PATHNOTFOUND)
+        self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
     def test_RenameElement(self):
         storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
@@ -137,9 +137,9 @@ class Test_IStorage(unittest.TestCase):
         storage.RenameElement("example", "sample")
         sample = storage.OpenStorage("sample", None, self.RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual("sample", sample.Stat(STATFLAG_DEFAULT).pwcsName)
-        with self.assertRaises(COMError) as ctx:
+        with self.assertRaises(COMError) as cm:
             storage.OpenStorage("example", None, self.RW_EXCLUSIVE_TX, None, 0)
-        self.assertEqual(ctx.exception.hresult, STG_E_PATHNOTFOUND)
+        self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
     def test_SetClass(self):
         storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
