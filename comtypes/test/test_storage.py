@@ -140,3 +140,14 @@ class Test_IStorage(unittest.TestCase):
         with self.assertRaises(COMError) as ctx:
             storage.OpenStorage("example", None, self.RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(ctx.exception.hresult, STG_E_PATHNOTFOUND)
+
+    def test_SetClass(self):
+        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        # Initial value is CLSID_NULL.
+        self.assertEqual(storage.Stat(STATFLAG_DEFAULT).clsid, comtypes.GUID())
+        new_clsid = comtypes.GUID.create_new()
+        storage.SetClass(new_clsid)
+        self.assertEqual(storage.Stat(STATFLAG_DEFAULT).clsid, new_clsid)
+        # Re-set CLSID to CLSID_NULL and verify it is correctly set.
+        storage.SetClass(comtypes.GUID())
+        self.assertEqual(storage.Stat(STATFLAG_DEFAULT).clsid, comtypes.GUID())
