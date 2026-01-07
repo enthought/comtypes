@@ -93,7 +93,7 @@ _SHCreateStreamOnFileEx.argtypes = [
 _SHCreateStreamOnFileEx.restype = HRESULT
 
 
-def _create_stream(
+def _create_stream_on_hglobal(
     handle: Optional[int] = None, delete_on_release: bool = True
 ) -> IStream:
     # Create an IStream
@@ -112,7 +112,7 @@ def _create_stream_on_file(
 
 class Test_RemoteWrite(ut.TestCase):
     def test_RemoteWrite(self):
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         test_data = b"Some data"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
 
@@ -124,7 +124,7 @@ class Test_RemoteWrite(ut.TestCase):
 
 class Test_RemoteRead(ut.TestCase):
     def test_RemoteRead(self):
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         test_data = b"Some data"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         stream.RemoteWrite(pv, len(test_data))
@@ -145,7 +145,7 @@ class Test_RemoteRead(ut.TestCase):
 
 class Test_RemoteSeek(ut.TestCase):
     def _create_sample_stream(self) -> IStream:
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         test_data = b"spam egg bacon ham"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         stream.RemoteWrite(pv, len(test_data))
@@ -178,7 +178,7 @@ class Test_RemoteSeek(ut.TestCase):
 
 class Test_SetSize(ut.TestCase):
     def test_SetSize(self):
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         stream.SetSize(42)
         pui = pointer(c_ulonglong())
         _IStream_Size(stream, pui)
@@ -187,8 +187,8 @@ class Test_SetSize(ut.TestCase):
 
 class Test_RemoteCopyTo(ut.TestCase):
     def test_RemoteCopyTo(self):
-        src = _create_stream()
-        dst = _create_stream()
+        src = _create_stream_on_hglobal()
+        dst = _create_stream_on_hglobal()
         test_data = b"parrot"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         src_written = src.RemoteWrite(pv, len(test_data))
@@ -207,7 +207,7 @@ class Test_Stat(ut.TestCase):
     # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-istream-stat
     # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ns-objidl-statstg
     def test_returns_statstg_from_no_modified_stream(self):
-        stream = _create_stream()
+        stream = _create_stream_on_hglobal()
         statstg = stream.Stat(STATFLAG_DEFAULT)
         self.assertIsNone(statstg.pwcsName)
         self.assertEqual(statstg.type, STGTY_STREAM)
@@ -223,7 +223,7 @@ class Test_Stat(ut.TestCase):
 
 class Test_Clone(ut.TestCase):
     def test_Clone(self):
-        orig = _create_stream()
+        orig = _create_stream_on_hglobal()
         test_data = b"spam egg bacon ham"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         orig.RemoteWrite(pv, len(test_data))
@@ -236,7 +236,7 @@ class Test_Clone(ut.TestCase):
 
 class Test_LockRegion_UnlockRegion(ut.TestCase):
     def test_cannot_lock_memory_based_stream(self):
-        stm = _create_stream()
+        stm = _create_stream_on_hglobal()
         # For memory-backed streams, `LockRegion` and `UnlockRegion` are
         # typically not supported and will return `STG_E_INVALIDFUNCTION`.
         with self.assertRaises(COMError) as cm:
@@ -666,7 +666,7 @@ class Test_Picture(ut.TestCase):
         with global_alloc(GMEM_FIXED | GMEM_ZEROINIT, len(data)) as handle:
             with global_lock(handle) as lp_mem:
                 ctypes.memmove(lp_mem, data, len(data))
-            pstm = _create_stream(handle, delete_on_release=False)
+            pstm = _create_stream_on_hglobal(handle, delete_on_release=False)
             # Load picture from the stream
             pic: stdole.IPicture = POINTER(stdole.IPicture)()  # type: ignore
             hr = _OleLoadPicture(
@@ -685,7 +685,7 @@ class Test_Picture(ut.TestCase):
     def test_load_from_buffer_stream(self):
         width, height = 1, 1
         data = create_24bit_pixel_data(0, 255, 0, width, height)  # Green pixel
-        srcstm = _create_stream(delete_on_release=True)
+        srcstm = _create_stream_on_hglobal(delete_on_release=True)
         pv = (c_ubyte * len(data)).from_buffer(bytearray(data))
         srcstm.RemoteWrite(pv, len(data))
         srcstm.Commit(STGC_DEFAULT)
@@ -718,7 +718,7 @@ class Test_Picture(ut.TestCase):
         # BGR, 1x1 pixel, green (0, 255, 0), in Windows GDI.
         self.assertEqual(gdi_data, b"\x00\xff\x00")
         # Save picture to the stream
-        dststm = _create_stream(delete_on_release=True)
+        dststm = _create_stream_on_hglobal(delete_on_release=True)
         pic.SaveAsFile(dststm, False)
         dststm.RemoteSeek(0, STREAM_SEEK_SET)
         buf, read = dststm.RemoteRead(dststm.Stat(STATFLAG_DEFAULT).cbSize)
@@ -748,7 +748,7 @@ class Test_Picture(ut.TestCase):
             )
             self.assertEqual(hr, hresult.S_OK)
             self.assertEqual(pic.Type, PICTYPE_BITMAP)
-            dststm = _create_stream(delete_on_release=True)
+            dststm = _create_stream_on_hglobal(delete_on_release=True)
             pic.SaveAsFile(dststm, True)
             dststm.RemoteSeek(0, STREAM_SEEK_SET)
             buf, read = dststm.RemoteRead(dststm.Stat(STATFLAG_DEFAULT).cbSize)
