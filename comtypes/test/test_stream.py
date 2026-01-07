@@ -1,7 +1,10 @@
 import contextlib
 import ctypes
+import os
 import struct
+import tempfile
 import unittest as ut
+from _ctypes import COMError
 from collections.abc import Iterator
 from ctypes import (
     HRESULT,
@@ -26,11 +29,13 @@ from ctypes.wintypes import (
     HWND,
     INT,
     LONG,
+    LPCWSTR,
     LPVOID,
     UINT,
     ULARGE_INTEGER,
     WORD,
 )
+from pathlib import Path
 from typing import Optional
 
 import comtypes.client
@@ -46,10 +51,23 @@ SIZE_T = c_size_t
 
 STATFLAG_DEFAULT = 0
 STGC_DEFAULT = 0
+
+EACCES = 13  # Permission denied
+
 STGTY_STREAM = 2
 STREAM_SEEK_SET = 0
 STREAM_SEEK_CUR = 1
 STREAM_SEEK_END = 2
+
+STGM_CREATE = 0x00001000
+STGM_READWRITE = 0x00000002
+STGM_SHARE_DENY_NONE = 0x00000040
+
+STG_E_INVALIDFUNCTION = -2147287039  # 0x80030001
+
+LOCK_EXCLUSIVE = 2
+
+FILE_ATTRIBUTE_NORMAL = 0x80
 
 _ole32 = OleDLL("ole32")
 
@@ -63,6 +81,17 @@ _IStream_Size = _shlwapi.IStream_Size
 _IStream_Size.argtypes = [POINTER(IStream), POINTER(ULARGE_INTEGER)]
 _IStream_Size.restype = HRESULT
 
+_SHCreateStreamOnFileEx = _shlwapi.SHCreateStreamOnFileEx
+_SHCreateStreamOnFileEx.argtypes = [
+    LPCWSTR,  # pszFile
+    DWORD,  # grfMode
+    DWORD,  # dwAttributes
+    BOOL,  # fCreate
+    POINTER(IStream),  # pstmTemplate
+    POINTER(POINTER(IStream)),  # ppstm
+]
+_SHCreateStreamOnFileEx.restype = HRESULT
+
 
 def _create_stream(
     handle: Optional[int] = None, delete_on_release: bool = True
@@ -70,6 +99,14 @@ def _create_stream(
     # Create an IStream
     stream = POINTER(IStream)()  # type: ignore
     _CreateStreamOnHGlobal(handle, delete_on_release, byref(stream))
+    return stream  # type: ignore
+
+
+def _create_stream_on_file(
+    filepath: Path, mode: int, attr: int, create: bool
+) -> IStream:
+    stream = POINTER(IStream)()  # type: ignore
+    _SHCreateStreamOnFileEx(str(filepath), mode, attr, create, None, byref(stream))
     return stream  # type: ignore
 
 
@@ -195,6 +232,53 @@ class Test_Clone(ut.TestCase):
         new_stm = orig.Clone()
         buf, read = new_stm.RemoteRead(1024)
         self.assertEqual(bytearray(buf)[0:read], test_data)
+
+
+class Test_LockRegion_UnlockRegion(ut.TestCase):
+    def test_cannot_lock_memory_based_stream(self):
+        stm = _create_stream()
+        # For memory-backed streams, `LockRegion` and `UnlockRegion` are
+        # typically not supported and will return `STG_E_INVALIDFUNCTION`.
+        with self.assertRaises(COMError) as cm:
+            stm.LockRegion(0, 5, LOCK_EXCLUSIVE)
+        self.assertEqual(cm.exception.hresult, STG_E_INVALIDFUNCTION)
+        with self.assertRaises(COMError) as cm:
+            stm.UnlockRegion(0, 5, LOCK_EXCLUSIVE)
+        self.assertEqual(cm.exception.hresult, STG_E_INVALIDFUNCTION)
+
+    def test_can_lock_file_based_stream(self):
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            tmpfile = tmpdir / "lock_test.txt"
+            # Create a file-backed stream to enable `LockRegion` support.
+            # This implementation maps directly to OS-level file locking,
+            # which is not available for memory-based streams.
+            stm = _create_stream_on_file(
+                tmpfile,
+                STGM_READWRITE | STGM_SHARE_DENY_NONE | STGM_CREATE,
+                FILE_ATTRIBUTE_NORMAL,
+                True,
+            )
+            stm.SetSize(10)  # Allocate file space
+            stm.LockRegion(0, 5, LOCK_EXCLUSIVE)  # Lock the first 5 bytes (0-4)
+            # Open a separate file descriptor to simulate concurrent access
+            fd = os.open(tmpfile, os.O_RDWR)
+            # Writing to the LOCKED region must fail with EACCES
+            os.lseek(fd, 0, os.SEEK_SET)
+            with self.assertRaises(OSError) as cm:
+                os.write(fd, b"ABCDE")
+            self.assertEqual(cm.exception.errno, EACCES)
+            # Writing to the UNLOCKED region (offset 5+) must succeed
+            os.lseek(fd, 5, os.SEEK_SET)
+            os.write(fd, b"ABCDE")
+            # Cleanup: Close descriptors and release the lock
+            os.close(fd)
+            stm.UnlockRegion(0, 5, LOCK_EXCLUSIVE)
+            buf, read = stm.RemoteRead(stm.Stat(STATFLAG_DEFAULT).cbSize)
+            # Verify that COM stream content reflects the successful out-of-lock write
+            self.assertEqual(bytearray(buf)[0:read], b"\x00\x00\x00\x00\x00ABCDE")
+            # Verify that the actual file content on disk matches the expected data
+            self.assertEqual(tmpfile.read_bytes(), b"\x00\x00\x00\x00\x00ABCDE")
 
 
 _user32 = WinDLL("user32")
