@@ -22,8 +22,6 @@ from unittest.mock import patch
 from comtypes import COMMETHOD, GUID, IUnknown
 from comtypes.GUID import _CoTaskMemFree
 
-text_type = str
-
 
 class IMalloc(IUnknown):
     _iid_ = GUID("{00000002-0000-0000-C000-000000000046}")
@@ -66,7 +64,6 @@ def from_outparm(self):
 
 
 def comstring(text, typ=c_wchar_p):
-    text = text_type(text)
     size = (len(text) + 1) * sizeof(c_wchar)
     mem = _CoTaskMemAlloc(size)
     print("malloc'd 0x%x, %d bytes" % (mem, size))
