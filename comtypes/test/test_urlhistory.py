@@ -4,7 +4,7 @@ from copy import copy
 from ctypes import *
 
 from comtypes.client import CreateObject, GetModule
-from comtypes.GUID import _CoTaskMemFree
+from comtypes.malloc import _CoTaskMemFree
 from comtypes.patcher import Patch
 
 # ./urlhist.tlb was downloaded somewhere from the internet (?)
