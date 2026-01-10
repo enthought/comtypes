@@ -1,27 +1,7 @@
-import logging
-from ctypes import (
-    HRESULT,
-    POINTER,
-    OleDLL,
-    WinDLL,
-    byref,
-    c_int,
-    c_size_t,
-    c_ulong,
-    c_void_p,
-    c_wchar,
-    c_wchar_p,
-    cast,
-    memmove,
-    sizeof,
-    wstring_at,
-)
+from ctypes import HRESULT, POINTER, OleDLL, WinDLL, c_int, c_size_t, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPVOID
 
 from comtypes import COMMETHOD, GUID, IUnknown
-from comtypes.GUID import _CoTaskMemFree
-
-logger = logging.getLogger(__name__)
 
 
 class IMalloc(IUnknown):
@@ -48,30 +28,3 @@ SIZE_T = c_size_t
 _CoTaskMemAlloc = _ole32_nohresult.CoTaskMemAlloc
 _CoTaskMemAlloc.argtypes = [SIZE_T]
 _CoTaskMemAlloc.restype = LPVOID
-
-malloc = POINTER(IMalloc)()
-_CoGetMalloc(1, byref(malloc))
-assert bool(malloc)
-
-
-def from_outparam(self):
-    if not self:
-        return None
-    result = wstring_at(self)
-    # `DidAlloc` method returns;
-    # *  1 (allocated)
-    # *  0 (not allocated)
-    # * -1 (cannot determine or NULL)
-    # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-imalloc-didalloc
-    assert malloc.DidAlloc(self), "memory was NOT allocated by CoTaskMemAlloc"
-    _CoTaskMemFree(self)
-    return result
-
-
-def comstring(text, typ=c_wchar_p):
-    size = (len(text) + 1) * sizeof(c_wchar)
-    mem = _CoTaskMemAlloc(size)
-    logger.debug("malloc'd 0x%x, %d bytes" % (mem, size))
-    ptr = cast(mem, typ)
-    memmove(mem, text, size)
-    return ptr
