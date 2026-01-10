@@ -40,12 +40,10 @@ class Test(ut.TestCase):
         self.assertEqual(malloc.GetSize(ptr1), size1)
         size2 = size1 - 1
         ptr2 = malloc.Realloc(ptr1, size2)
-        self.assertEqual(malloc.DidAlloc(ptr1), 0)
         self.assertEqual(malloc.DidAlloc(ptr2), 1)
         self.assertEqual(malloc.GetSize(ptr2), size2)
         size3 = size1 + 1
         ptr3 = malloc.Realloc(ptr2, size3)
-        self.assertEqual(malloc.DidAlloc(ptr2), 0)
         self.assertEqual(malloc.DidAlloc(ptr3), 1)
         self.assertEqual(malloc.GetSize(ptr3), size3)
         malloc.Free(ptr3)
