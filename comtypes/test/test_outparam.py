@@ -60,8 +60,12 @@ def from_outparm(self):
     if not self:
         return None
     result = wstring_at(self)
-    if not malloc.DidAlloc(self):
-        raise ValueError("memory was NOT allocated by CoTaskMemAlloc")
+    # `DidAlloc` method returns;
+    # *  1 (allocated)
+    # *  0 (not allocated)
+    # * -1 (cannot determine or NULL)
+    # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-imalloc-didalloc
+    assert malloc.DidAlloc(self), "memory was NOT allocated by CoTaskMemAlloc"
     _CoTaskMemFree(self)
     return result
 
