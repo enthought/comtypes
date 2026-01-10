@@ -1,3 +1,4 @@
+import logging
 import unittest
 from ctypes import (
     HRESULT,
@@ -21,6 +22,8 @@ from unittest.mock import patch
 
 from comtypes import COMMETHOD, GUID, IUnknown
 from comtypes.GUID import _CoTaskMemFree
+
+logger = logging.getLogger(__name__)
 
 
 class IMalloc(IUnknown):
@@ -66,7 +69,7 @@ def from_outparm(self):
 def comstring(text, typ=c_wchar_p):
     size = (len(text) + 1) * sizeof(c_wchar)
     mem = _CoTaskMemAlloc(size)
-    print("malloc'd 0x%x, %d bytes" % (mem, size))
+    logger.debug("malloc'd 0x%x, %d bytes" % (mem, size))
     ptr = cast(mem, typ)
     memmove(mem, text, size)
     return ptr
@@ -87,7 +90,9 @@ class Test(unittest.TestCase):
         z = comstring("spam, spam, and spam")
 
         # (x.__ctypes_from_outparam__(), x.__ctypes_from_outparam__())
-        print((x.__ctypes_from_outparam__(), None))  # x.__ctypes_from_outparam__())
+        logger.debug(
+            (x.__ctypes_from_outparam__(), None)
+        )  # x.__ctypes_from_outparam__())
 
         # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
         # print comstring("Hello, World", c_wchar_p).__ctypes_from_outparam__()
