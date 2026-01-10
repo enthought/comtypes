@@ -56,7 +56,7 @@ _CoGetMalloc(1, byref(malloc))
 assert bool(malloc)
 
 
-def from_outparm(self):
+def from_outparam(self):
     if not self:
         return None
     result = wstring_at(self)
@@ -80,7 +80,7 @@ def comstring(text, typ=c_wchar_p):
 
 
 class Test(unittest.TestCase):
-    @patch.object(c_wchar_p, "__ctypes_from_outparam__", from_outparm)
+    @patch.object(c_wchar_p, "__ctypes_from_outparam__", from_outparam)
     def test_c_char(self):
         ptr = c_wchar_p("abc")
         # The normal constructor does not allocate memory using `CoTaskMemAlloc`.
@@ -94,9 +94,9 @@ class Test(unittest.TestCase):
 
         # The `__ctypes_from_outparam__` method is called to convert an output
         # parameter into a Python object. In this test, the custom
-        # `from_outparm` function not only converts the `c_wchar_p` to a Python
-        # string but also frees the associated memory. Therefore, it can only
-        # be called once for each allocated memory block.
+        # `from_outparam` function not only converts the `c_wchar_p` to a
+        # Python string but also frees the associated memory. Therefore, it can
+        # only be called once for each allocated memory block.
         for wchar_ptr, expected in [
             (x, "Hello, World"),
             (y, "foo bar"),
