@@ -1,7 +1,28 @@
 import unittest as ut
-from ctypes import POINTER, byref
+from ctypes import HRESULT, POINTER, OleDLL, byref
+from ctypes.wintypes import DWORD, HANDLE, LPWSTR
+from pathlib import Path
 
+from comtypes import GUID, hresult
+from comtypes.GUID import _CoTaskMemFree
 from comtypes.malloc import IMalloc, _CoGetMalloc
+
+# Constants
+# KNOWNFOLDERID
+# https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid
+FOLDERID_System = GUID("{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}")
+# https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/ne-shlobj_core-known_folder_flag
+KF_FLAG_DEFAULT = 0x00000000
+
+_shell32 = OleDLL("shell32")
+_SHGetKnownFolderPath = _shell32.SHGetKnownFolderPath
+_SHGetKnownFolderPath.argtypes = [
+    POINTER(GUID),  # rfid
+    DWORD,  # dwFlags
+    HANDLE,  # hToken
+    POINTER(LPWSTR),  # ppszPath
+]
+_SHGetKnownFolderPath.restype = HRESULT
 
 
 def _get_malloc() -> IMalloc:
@@ -32,3 +53,19 @@ class Test(ut.TestCase):
         self.assertEqual(malloc.DidAlloc(ptr3), 0)
         malloc.HeapMinimize()
         del ptr3
+
+    def test_SHGetKnownFolderPath(self):
+        ptr = LPWSTR()
+        hr = _SHGetKnownFolderPath(
+            byref(FOLDERID_System), KF_FLAG_DEFAULT, None, byref(ptr)
+        )
+        self.assertEqual(hr, hresult.S_OK)
+        self.assertIsInstance(ptr.value, str)
+        self.assertTrue(Path(ptr.value).exists())  # type: ignore
+        malloc = _get_malloc()
+        self.assertEqual(malloc.DidAlloc(ptr), 1)
+        self.assertGreater(malloc.GetSize(ptr), 0)
+        _CoTaskMemFree(ptr)
+        self.assertEqual(malloc.DidAlloc(ptr), 0)
+        malloc.HeapMinimize()
+        del ptr
