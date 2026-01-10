@@ -89,8 +89,6 @@ class Test(unittest.TestCase):
         # attempt to free invalid memory, potentially leading to a crash.
         self.assertEqual(malloc.DidAlloc(ptr), 0)
 
-        # p = BSTR("foo bar spam")
-
         x = comstring("Hello, World")
         y = comstring("foo bar")
         z = comstring("spam, spam, and spam")
