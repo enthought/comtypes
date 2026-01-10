@@ -83,9 +83,11 @@ class Test(unittest.TestCase):
     # TODO untested changes; this was modified because it had global effects on other tests
     @patch.object(c_wchar_p, "__ctypes_from_outparam__", from_outparm)
     def test_c_char(self):
-        # ptr = c_wchar_p("abc")
-        # self.failUnlessEqual(ptr.__ctypes_from_outparam__(),
-        #                         "abc")
+        ptr = c_wchar_p("abc")
+        # The normal constructor does not allocate memory using `CoTaskMemAlloc`.
+        # Therefore, calling the patched `ptr.__ctypes_from_outparam__()` would
+        # attempt to free invalid memory, potentially leading to a crash.
+        self.assertEqual(malloc.DidAlloc(ptr), 0)
 
         # p = BSTR("foo bar spam")
 
