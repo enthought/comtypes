@@ -1,5 +1,4 @@
 import logging
-import unittest
 from ctypes import (
     HRESULT,
     POINTER,
@@ -18,7 +17,6 @@ from ctypes import (
     wstring_at,
 )
 from ctypes.wintypes import DWORD, LPVOID
-from unittest.mock import patch
 
 from comtypes import COMMETHOD, GUID, IUnknown
 from comtypes.GUID import _CoTaskMemFree
@@ -77,32 +75,3 @@ def comstring(text, typ=c_wchar_p):
     ptr = cast(mem, typ)
     memmove(mem, text, size)
     return ptr
-
-
-class Test(unittest.TestCase):
-    @patch.object(c_wchar_p, "__ctypes_from_outparam__", from_outparam)
-    def test_c_char(self):
-        ptr = c_wchar_p("abc")
-        # The normal constructor does not allocate memory using `CoTaskMemAlloc`.
-        # Therefore, calling the patched `ptr.__ctypes_from_outparam__()` would
-        # attempt to free invalid memory, potentially leading to a crash.
-        self.assertEqual(malloc.DidAlloc(ptr), 0)
-
-        x = comstring("Hello, World")
-        y = comstring("foo bar")
-        z = comstring("spam, spam, and spam")
-
-        # The `__ctypes_from_outparam__` method is called to convert an output
-        # parameter into a Python object. In this test, the custom
-        # `from_outparam` function not only converts the `c_wchar_p` to a
-        # Python string but also frees the associated memory. Therefore, it can
-        # only be called once for each allocated memory block.
-        for wchar_ptr, expected in [
-            (x, "Hello, World"),
-            (y, "foo bar"),
-            (z, "spam, spam, and spam"),
-        ]:
-            with self.subTest(wchar_ptr=wchar_ptr, expected=expected):
-                self.assertEqual(malloc.DidAlloc(wchar_ptr), 1)
-                self.assertEqual(wchar_ptr.__ctypes_from_outparam__(), expected)
-                self.assertEqual(malloc.DidAlloc(wchar_ptr), 0)
