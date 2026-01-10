@@ -80,7 +80,6 @@ def comstring(text, typ=c_wchar_p):
 
 
 class Test(unittest.TestCase):
-    # TODO untested changes; this was modified because it had global effects on other tests
     @patch.object(c_wchar_p, "__ctypes_from_outparam__", from_outparm)
     def test_c_char(self):
         ptr = c_wchar_p("abc")
