@@ -1,5 +1,6 @@
 from ctypes import HRESULT, POINTER, OleDLL, WinDLL, c_int, c_size_t, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPVOID
+from typing import TYPE_CHECKING, Any, Optional
 
 from comtypes import COMMETHOD, GUID, IUnknown
 from comtypes.GUID import _CoTaskMemFree as _CoTaskMemFree
@@ -15,6 +16,14 @@ class IMalloc(IUnknown):
         COMMETHOD([], c_int, "DidAlloc", ([], c_void_p, "pv")),
         COMMETHOD([], None, "HeapMinimize"),  # 25
     ]
+    if TYPE_CHECKING:
+
+        def Alloc(self, cb: int) -> Optional[int]: ...
+        def Realloc(self, pv: Any, cb: int) -> Optional[int]: ...
+        def Free(self, py: Any) -> None: ...
+        def GetSize(self, pv: Any) -> int: ...
+        def DidAlloc(self, pv: Any) -> int: ...
+        def HeapMinimize(self) -> None: ...
 
 
 _ole32 = OleDLL("ole32")
