@@ -4,8 +4,7 @@ from ctypes.wintypes import DWORD, HANDLE, LPWSTR
 from pathlib import Path
 
 from comtypes import GUID, hresult
-from comtypes.GUID import _CoTaskMemFree
-from comtypes.malloc import IMalloc, _CoGetMalloc
+from comtypes.malloc import IMalloc, _CoGetMalloc, _CoTaskMemFree
 
 # Constants
 # KNOWNFOLDERID

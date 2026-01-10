@@ -3,8 +3,7 @@ import unittest
 from ctypes import POINTER, byref, c_wchar, c_wchar_p, cast, memmove, sizeof, wstring_at
 from unittest.mock import patch
 
-from comtypes.GUID import _CoTaskMemFree
-from comtypes.malloc import IMalloc, _CoGetMalloc, _CoTaskMemAlloc
+from comtypes.malloc import IMalloc, _CoGetMalloc, _CoTaskMemAlloc, _CoTaskMemFree
 
 logger = logging.getLogger(__name__)
 

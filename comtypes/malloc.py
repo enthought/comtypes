@@ -2,6 +2,7 @@ from ctypes import HRESULT, POINTER, OleDLL, WinDLL, c_int, c_size_t, c_ulong, c
 from ctypes.wintypes import DWORD, LPVOID
 
 from comtypes import COMMETHOD, GUID, IUnknown
+from comtypes.GUID import _CoTaskMemFree as _CoTaskMemFree
 
 
 class IMalloc(IUnknown):
