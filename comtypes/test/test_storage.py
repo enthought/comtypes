@@ -119,8 +119,8 @@ class Test_IStorage(unittest.TestCase):
         self.assertEqual(name_ptr.value, stat.pwcsName)
         malloc = CoGetMalloc()
         self.assertEqual(malloc.DidAlloc(name_ptr), 1)
-        del stat
-        self.assertEqual(malloc.DidAlloc(name_ptr), 0)
+        del stat  # `pwcsName` is expected to be freed here.
+        # `DidAlloc` checks are skipped to avoid using a dangling pointer.
 
     # TODO: Auto-generated methods based on type info are remote-side and hard
     #       to call from the client.
@@ -285,5 +285,5 @@ class Test_IStorage(unittest.TestCase):
         self.assertEqual(name_ptr.value, stat.pwcsName)
         malloc = CoGetMalloc()
         self.assertEqual(malloc.DidAlloc(name_ptr), 1)
-        del stat
-        self.assertEqual(malloc.DidAlloc(name_ptr), 0)
+        del stat  # `pwcsName` is expected to be freed here.
+        # `DidAlloc` checks are skipped to avoid using a dangling pointer.

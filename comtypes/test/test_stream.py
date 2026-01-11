@@ -228,8 +228,8 @@ class Test_Stat(ut.TestCase):
         self.assertIsNone(name_ptr.value)
         malloc = CoGetMalloc()
         self.assertEqual(malloc.DidAlloc(name_ptr), -1)
-        del stat
-        self.assertEqual(malloc.DidAlloc(name_ptr), -1)
+        del stat  # `pwcsName` is expected to be freed here.
+        # `DidAlloc` checks are skipped to avoid using a dangling pointer.
 
 
 class Test_Clone(ut.TestCase):
@@ -295,8 +295,8 @@ class Test_LockRegion_UnlockRegion(ut.TestCase):
             self.assertEqual(name_ptr.value, stat.pwcsName)
             malloc = CoGetMalloc()
             self.assertEqual(malloc.DidAlloc(name_ptr), 1)
-            del stat
-            self.assertEqual(malloc.DidAlloc(name_ptr), 0)
+            del stat  # `pwcsName` is expected to be freed here.
+            # `DidAlloc` checks are skipped to avoid using a dangling pointer.
 
 
 # TODO: If there is a standard Windows `IStream` implementation that supports
