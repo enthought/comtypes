@@ -209,6 +209,32 @@ class Test_IStorage(unittest.TestCase):
             storage.OpenStorage("example", None, self.RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
+    def test_SetElementTimes(self):
+        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        sub_name = "SubStorageElement"
+        orig_stat = storage.CreateStorage(sub_name, self.CREATE_TESTDOC, 0, 0).Stat(
+            STATFLAG_DEFAULT
+        )
+        storage.SetElementTimes(
+            sub_name,
+            None,  # pctime (creation time)
+            None,  # patime (access time)
+            self.FIXED_TEST_FILETIME,  # pmtime (modification time)
+        )
+        storage.Commit(STGC_DEFAULT)
+        modified_stat = storage.OpenStorage(
+            sub_name, None, self.RW_EXCLUSIVE_TX, None, 0
+        ).Stat(STATFLAG_DEFAULT)
+        self.assertEqual(_compare_filetime(orig_stat.ctime, modified_stat.ctime), 0)
+        self.assertEqual(_compare_filetime(orig_stat.atime, modified_stat.atime), 0)
+        self.assertNotEqual(_compare_filetime(orig_stat.mtime, modified_stat.mtime), 0)
+        self.assertEqual(
+            _compare_filetime(self.FIXED_TEST_FILETIME, modified_stat.mtime), 0
+        )
+        with self.assertRaises(COMError) as cm:
+            storage.SetElementTimes("NonExistent", None, None, self.FIXED_TEST_FILETIME)
+        self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
+
     def test_SetClass(self):
         storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
         # Initial value is CLSID_NULL.
