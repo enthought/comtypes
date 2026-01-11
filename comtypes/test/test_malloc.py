@@ -4,7 +4,7 @@ from ctypes.wintypes import DWORD, HANDLE, LPWSTR
 from pathlib import Path
 
 from comtypes import GUID, hresult
-from comtypes.malloc import IMalloc, _CoGetMalloc, _CoTaskMemFree
+from comtypes.malloc import CoGetMalloc, _CoTaskMemFree
 
 # Constants
 # KNOWNFOLDERID
@@ -24,16 +24,9 @@ _SHGetKnownFolderPath.argtypes = [
 _SHGetKnownFolderPath.restype = HRESULT
 
 
-def _get_malloc() -> IMalloc:
-    malloc = POINTER(IMalloc)()
-    _CoGetMalloc(1, byref(malloc))
-    assert bool(malloc)
-    return malloc  # type: ignore
-
-
 class Test(ut.TestCase):
     def test_Realloc(self):
-        malloc = _get_malloc()
+        malloc = CoGetMalloc()
         size1 = 4
         ptr1 = malloc.Alloc(size1)
         self.assertEqual(malloc.DidAlloc(ptr1), 1)
@@ -59,7 +52,7 @@ class Test(ut.TestCase):
         self.assertEqual(hr, hresult.S_OK)
         self.assertIsInstance(ptr.value, str)
         self.assertTrue(Path(ptr.value).exists())  # type: ignore
-        malloc = _get_malloc()
+        malloc = CoGetMalloc()
         self.assertEqual(malloc.DidAlloc(ptr), 1)
         self.assertGreater(malloc.GetSize(ptr), 0)
         _CoTaskMemFree(ptr)

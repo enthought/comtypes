@@ -1,4 +1,5 @@
-from ctypes import HRESULT, POINTER, OleDLL, WinDLL, c_int, c_size_t, c_ulong, c_void_p
+from ctypes import HRESULT, POINTER, OleDLL, WinDLL, byref, c_int, c_ulong, c_void_p
+from ctypes import c_size_t as SIZE_T
 from ctypes.wintypes import DWORD, LPVOID
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -34,7 +35,19 @@ _CoGetMalloc.restype = HRESULT
 
 _ole32_nohresult = WinDLL("ole32")
 
-SIZE_T = c_size_t
 _CoTaskMemAlloc = _ole32_nohresult.CoTaskMemAlloc
 _CoTaskMemAlloc.argtypes = [SIZE_T]
 _CoTaskMemAlloc.restype = LPVOID
+
+
+def CoGetMalloc(dwMemContext: int = 1) -> IMalloc:
+    """Retrieves a pointer to the default OLE task memory allocator.
+
+    https://learn.microsoft.com/en-us/windows/win32/api/combaseapi/nf-combaseapi-cogetmalloc
+    """
+    malloc = POINTER(IMalloc)()
+    _CoGetMalloc(
+        dwMemContext,  # This parameter must be 1.
+        byref(malloc),
+    )
+    return malloc  # type: ignore

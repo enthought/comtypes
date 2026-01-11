@@ -40,12 +40,13 @@ from typing import Optional
 
 import comtypes.client
 from comtypes import hresult
+from comtypes.malloc import CoGetMalloc
 
 comtypes.client.GetModule("portabledeviceapi.dll")
 # The stdole module is generated automatically during the portabledeviceapi
 # module generation.
 import comtypes.gen.stdole as stdole
-from comtypes.gen.PortableDeviceApiLib import IStream
+from comtypes.gen.PortableDeviceApiLib import WSTRING, IStream, tagSTATSTG
 
 SIZE_T = c_size_t
 
@@ -108,6 +109,10 @@ def _create_stream_on_file(
     stream = POINTER(IStream)()  # type: ignore
     _SHCreateStreamOnFileEx(str(filepath), mode, attr, create, None, byref(stream))
     return stream  # type: ignore
+
+
+def _get_pwcsname(stat: tagSTATSTG) -> WSTRING:
+    return WSTRING.from_address(ctypes.addressof(stat) + tagSTATSTG.pwcsName.offset)
 
 
 class Test_RemoteWrite(ut.TestCase):
@@ -206,19 +211,25 @@ class Test_RemoteCopyTo(ut.TestCase):
 class Test_Stat(ut.TestCase):
     # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-istream-stat
     # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ns-objidl-statstg
-    def test_returns_statstg_from_no_modified_stream(self):
+    def test_returns_stat_from_no_modified_stream(self):
         stream = _create_stream_on_hglobal()
-        statstg = stream.Stat(STATFLAG_DEFAULT)
-        self.assertIsNone(statstg.pwcsName)
-        self.assertEqual(statstg.type, STGTY_STREAM)
-        self.assertEqual(statstg.cbSize, 0)
-        mt, ct, at = statstg.mtime, statstg.ctime, statstg.atime
+        stat = stream.Stat(STATFLAG_DEFAULT)
+        self.assertIsNone(stat.pwcsName)
+        self.assertEqual(stat.type, STGTY_STREAM)
+        self.assertEqual(stat.cbSize, 0)
+        mt, ct, at = stat.mtime, stat.ctime, stat.atime
         self.assertTrue(mt.dwLowDateTime == ct.dwLowDateTime == at.dwLowDateTime)
         self.assertTrue(mt.dwHighDateTime == ct.dwHighDateTime == at.dwHighDateTime)
-        self.assertEqual(statstg.grfMode, 0)
-        self.assertEqual(statstg.grfLocksSupported, 0)
-        self.assertEqual(statstg.clsid, comtypes.GUID())
-        self.assertEqual(statstg.grfStateBits, 0)
+        self.assertEqual(stat.grfMode, 0)
+        self.assertEqual(stat.grfLocksSupported, 0)
+        self.assertEqual(stat.clsid, comtypes.GUID())
+        self.assertEqual(stat.grfStateBits, 0)
+        name_ptr = _get_pwcsname(stat)
+        self.assertIsNone(name_ptr.value)
+        malloc = CoGetMalloc()
+        self.assertEqual(malloc.DidAlloc(name_ptr), -1)
+        del stat  # `pwcsName` is expected to be freed here.
+        # `DidAlloc` checks are skipped to avoid using a dangling pointer.
 
 
 class Test_Clone(ut.TestCase):
@@ -274,11 +285,18 @@ class Test_LockRegion_UnlockRegion(ut.TestCase):
             # Cleanup: Close descriptors and release the lock
             os.close(fd)
             stm.UnlockRegion(0, 5, LOCK_EXCLUSIVE)
-            buf, read = stm.RemoteRead(stm.Stat(STATFLAG_DEFAULT).cbSize)
+            stat = stm.Stat(STATFLAG_DEFAULT)
+            buf, read = stm.RemoteRead(stat.cbSize)
             # Verify that COM stream content reflects the successful out-of-lock write
             self.assertEqual(bytearray(buf)[0:read], b"\x00\x00\x00\x00\x00ABCDE")
             # Verify that the actual file content on disk matches the expected data
             self.assertEqual(tmpfile.read_bytes(), b"\x00\x00\x00\x00\x00ABCDE")
+            name_ptr = _get_pwcsname(stat)
+            self.assertEqual(name_ptr.value, stat.pwcsName)
+            malloc = CoGetMalloc()
+            self.assertEqual(malloc.DidAlloc(name_ptr), 1)
+            del stat  # `pwcsName` is expected to be freed here.
+            # `DidAlloc` checks are skipped to avoid using a dangling pointer.
 
 
 # TODO: If there is a standard Windows `IStream` implementation that supports
