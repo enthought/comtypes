@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from _ctypes import COMError
@@ -175,6 +176,10 @@ class Test_IStorage(unittest.TestCase):
             self.assertEqual(cm.exception.hresult, STG_E_INVALIDFLAG)
             stat = storage.Stat(STATFLAG_DEFAULT)
             self.assertIsInstance(stat, tagSTATSTG)
+            self.assertEqual(
+                os.path.normcase(os.path.normpath(Path(stat.pwcsName))),
+                os.path.normcase(os.path.normpath(tmpfile)),
+            )
             del storage  # Release the storage to prevent 'cannot access the file ...'
         self.assertEqual(stat.type, STGTY_STORAGE)
         # Due to header overhead and file system allocation, the size may be
