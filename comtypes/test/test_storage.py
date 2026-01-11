@@ -10,7 +10,7 @@ from typing import Optional
 
 import comtypes
 import comtypes.client
-from comtypes.malloc import IMalloc, _CoGetMalloc
+from comtypes.malloc import CoGetMalloc
 
 comtypes.client.GetModule("portabledeviceapi.dll")
 from comtypes.gen.PortableDeviceApiLib import WSTRING, IStorage, tagSTATSTG
@@ -75,13 +75,6 @@ def _compare_filetime(ft1: FILETIME, ft2: FILETIME) -> int:
     return _CompareFileTime(byref(ft1), byref(ft2))
 
 
-def _get_malloc() -> IMalloc:
-    malloc = POINTER(IMalloc)()
-    _CoGetMalloc(1, byref(malloc))
-    assert bool(malloc)
-    return malloc  # type: ignore
-
-
 def _get_pwcsname(stat: tagSTATSTG) -> WSTRING:
     return WSTRING.from_address(ctypes.addressof(stat) + tagSTATSTG.pwcsName.offset)
 
@@ -124,7 +117,7 @@ class Test_IStorage(unittest.TestCase):
         self.assertFalse(filepath.exists())
         name_ptr = _get_pwcsname(stat)
         self.assertEqual(name_ptr.value, stat.pwcsName)
-        malloc = _get_malloc()
+        malloc = CoGetMalloc()
         self.assertEqual(malloc.DidAlloc(name_ptr), 1)
         del stat
         self.assertEqual(malloc.DidAlloc(name_ptr), 0)
@@ -290,7 +283,7 @@ class Test_IStorage(unittest.TestCase):
         self.assertEqual(stat.grfStateBits, 0)
         name_ptr = _get_pwcsname(stat)
         self.assertEqual(name_ptr.value, stat.pwcsName)
-        malloc = _get_malloc()
+        malloc = CoGetMalloc()
         self.assertEqual(malloc.DidAlloc(name_ptr), 1)
         del stat
         self.assertEqual(malloc.DidAlloc(name_ptr), 0)

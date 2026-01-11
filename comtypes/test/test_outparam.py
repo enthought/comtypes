@@ -1,15 +1,14 @@
 import logging
 import unittest
-from ctypes import POINTER, byref, c_wchar, c_wchar_p, cast, memmove, sizeof, wstring_at
+from ctypes import c_wchar, c_wchar_p, cast, memmove, sizeof, wstring_at
 from unittest.mock import patch
 
-from comtypes.malloc import IMalloc, _CoGetMalloc, _CoTaskMemAlloc, _CoTaskMemFree
+from comtypes.malloc import CoGetMalloc, _CoTaskMemAlloc, _CoTaskMemFree
 
 logger = logging.getLogger(__name__)
 
 
-malloc = POINTER(IMalloc)()
-_CoGetMalloc(1, byref(malloc))
+malloc = CoGetMalloc()
 assert bool(malloc)
 
 

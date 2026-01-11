@@ -40,7 +40,7 @@ from typing import Optional
 
 import comtypes.client
 from comtypes import hresult
-from comtypes.malloc import IMalloc, _CoGetMalloc
+from comtypes.malloc import CoGetMalloc
 
 comtypes.client.GetModule("portabledeviceapi.dll")
 # The stdole module is generated automatically during the portabledeviceapi
@@ -109,13 +109,6 @@ def _create_stream_on_file(
     stream = POINTER(IStream)()  # type: ignore
     _SHCreateStreamOnFileEx(str(filepath), mode, attr, create, None, byref(stream))
     return stream  # type: ignore
-
-
-def _get_malloc() -> IMalloc:
-    malloc = POINTER(IMalloc)()
-    _CoGetMalloc(1, byref(malloc))
-    assert bool(malloc)
-    return malloc  # type: ignore
 
 
 def _get_pwcsname(stat: tagSTATSTG) -> WSTRING:
@@ -233,7 +226,7 @@ class Test_Stat(ut.TestCase):
         self.assertEqual(stat.grfStateBits, 0)
         name_ptr = _get_pwcsname(stat)
         self.assertIsNone(name_ptr.value)
-        malloc = _get_malloc()
+        malloc = CoGetMalloc()
         self.assertEqual(malloc.DidAlloc(name_ptr), -1)
         del stat
         self.assertEqual(malloc.DidAlloc(name_ptr), -1)
@@ -300,7 +293,7 @@ class Test_LockRegion_UnlockRegion(ut.TestCase):
             self.assertEqual(tmpfile.read_bytes(), b"\x00\x00\x00\x00\x00ABCDE")
             name_ptr = _get_pwcsname(stat)
             self.assertEqual(name_ptr.value, stat.pwcsName)
-            malloc = _get_malloc()
+            malloc = CoGetMalloc()
             self.assertEqual(malloc.DidAlloc(name_ptr), 1)
             del stat
             self.assertEqual(malloc.DidAlloc(name_ptr), 0)
