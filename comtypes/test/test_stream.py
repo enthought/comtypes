@@ -40,12 +40,13 @@ from typing import Optional
 
 import comtypes.client
 from comtypes import hresult
+from comtypes.malloc import IMalloc, _CoGetMalloc
 
 comtypes.client.GetModule("portabledeviceapi.dll")
 # The stdole module is generated automatically during the portabledeviceapi
 # module generation.
 import comtypes.gen.stdole as stdole
-from comtypes.gen.PortableDeviceApiLib import IStream
+from comtypes.gen.PortableDeviceApiLib import WSTRING, IStream, tagSTATSTG
 
 SIZE_T = c_size_t
 
@@ -108,6 +109,17 @@ def _create_stream_on_file(
     stream = POINTER(IStream)()  # type: ignore
     _SHCreateStreamOnFileEx(str(filepath), mode, attr, create, None, byref(stream))
     return stream  # type: ignore
+
+
+def _get_malloc() -> IMalloc:
+    malloc = POINTER(IMalloc)()
+    _CoGetMalloc(1, byref(malloc))
+    assert bool(malloc)
+    return malloc  # type: ignore
+
+
+def _get_pwcsname(stat: tagSTATSTG) -> WSTRING:
+    return WSTRING.from_address(ctypes.addressof(stat) + tagSTATSTG.pwcsName.offset)
 
 
 class Test_RemoteWrite(ut.TestCase):
@@ -219,6 +231,12 @@ class Test_Stat(ut.TestCase):
         self.assertEqual(statstg.grfLocksSupported, 0)
         self.assertEqual(statstg.clsid, comtypes.GUID())
         self.assertEqual(statstg.grfStateBits, 0)
+        name_ptr = _get_pwcsname(statstg)
+        self.assertIsNone(name_ptr.value)
+        malloc = _get_malloc()
+        self.assertEqual(malloc.DidAlloc(name_ptr), -1)
+        del statstg
+        self.assertEqual(malloc.DidAlloc(name_ptr), -1)
 
 
 class Test_Clone(ut.TestCase):
@@ -274,11 +292,18 @@ class Test_LockRegion_UnlockRegion(ut.TestCase):
             # Cleanup: Close descriptors and release the lock
             os.close(fd)
             stm.UnlockRegion(0, 5, LOCK_EXCLUSIVE)
-            buf, read = stm.RemoteRead(stm.Stat(STATFLAG_DEFAULT).cbSize)
+            statstg = stm.Stat(STATFLAG_DEFAULT)
+            buf, read = stm.RemoteRead(statstg.cbSize)
             # Verify that COM stream content reflects the successful out-of-lock write
             self.assertEqual(bytearray(buf)[0:read], b"\x00\x00\x00\x00\x00ABCDE")
             # Verify that the actual file content on disk matches the expected data
             self.assertEqual(tmpfile.read_bytes(), b"\x00\x00\x00\x00\x00ABCDE")
+            name_ptr = _get_pwcsname(statstg)
+            self.assertEqual(name_ptr.value, statstg.pwcsName)
+            malloc = _get_malloc()
+            self.assertEqual(malloc.DidAlloc(name_ptr), 1)
+            del statstg
+            self.assertEqual(malloc.DidAlloc(name_ptr), 0)
 
 
 # TODO: If there is a standard Windows `IStream` implementation that supports

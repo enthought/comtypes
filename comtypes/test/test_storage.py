@@ -1,3 +1,4 @@
+import ctypes
 import os
 import tempfile
 import unittest
@@ -9,9 +10,10 @@ from typing import Optional
 
 import comtypes
 import comtypes.client
+from comtypes.malloc import IMalloc, _CoGetMalloc
 
 comtypes.client.GetModule("portabledeviceapi.dll")
-from comtypes.gen.PortableDeviceApiLib import IStorage, tagSTATSTG
+from comtypes.gen.PortableDeviceApiLib import WSTRING, IStorage, tagSTATSTG
 
 STGTY_STORAGE = 1
 
@@ -37,6 +39,17 @@ _StgCreateDocfile.argtypes = [PWCHAR, DWORD, DWORD, POINTER(POINTER(IStorage))]
 _StgCreateDocfile.restype = HRESULT
 
 
+def _get_malloc() -> IMalloc:
+    malloc = POINTER(IMalloc)()
+    _CoGetMalloc(1, byref(malloc))
+    assert bool(malloc)
+    return malloc  # type: ignore
+
+
+def _get_pwcsname(stat: tagSTATSTG) -> WSTRING:
+    return WSTRING.from_address(ctypes.addressof(stat) + tagSTATSTG.pwcsName.offset)
+
+
 class Test_IStorage(unittest.TestCase):
     RW_EXCLUSIVE = STGM_READWRITE | STGM_SHARE_EXCLUSIVE
     RW_EXCLUSIVE_TX = RW_EXCLUSIVE | STGM_TRANSACTED
@@ -54,7 +67,8 @@ class Test_IStorage(unittest.TestCase):
         # When created with `StgCreateDocfile(NULL, ...)`, `pwcsName` is a
         # temporary filename. The file really exists on disk because Windows
         # creates an actual temporary file for the compound storage.
-        filepath = Path(storage.Stat(STATFLAG_DEFAULT).pwcsName)
+        stat = storage.Stat(STATFLAG_DEFAULT)
+        filepath = Path(stat.pwcsName)
         self.assertTrue(filepath.exists())
         stream = storage.CreateStream("example", self.RW_EXCLUSIVE_CREATE, 0, 0)
         test_data = b"Some data"
@@ -68,6 +82,12 @@ class Test_IStorage(unittest.TestCase):
         self.assertTrue(filepath.exists())
         del storage
         self.assertFalse(filepath.exists())
+        name_ptr = _get_pwcsname(stat)
+        self.assertEqual(name_ptr.value, stat.pwcsName)
+        malloc = _get_malloc()
+        self.assertEqual(malloc.DidAlloc(name_ptr), 1)
+        del stat
+        self.assertEqual(malloc.DidAlloc(name_ptr), 0)
 
     # TODO: Auto-generated methods based on type info are remote-side and hard
     #       to call from the client.
@@ -190,3 +210,9 @@ class Test_IStorage(unittest.TestCase):
         self.assertEqual(stat.grfLocksSupported, 0)
         self.assertEqual(stat.clsid, comtypes.GUID())  # CLSID_NULL for new creation.
         self.assertEqual(stat.grfStateBits, 0)
+        name_ptr = _get_pwcsname(stat)
+        self.assertEqual(name_ptr.value, stat.pwcsName)
+        malloc = _get_malloc()
+        self.assertEqual(malloc.DidAlloc(name_ptr), 1)
+        del stat
+        self.assertEqual(malloc.DidAlloc(name_ptr), 0)
