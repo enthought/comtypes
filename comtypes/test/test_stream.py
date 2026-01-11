@@ -218,24 +218,24 @@ class Test_RemoteCopyTo(ut.TestCase):
 class Test_Stat(ut.TestCase):
     # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-istream-stat
     # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ns-objidl-statstg
-    def test_returns_statstg_from_no_modified_stream(self):
+    def test_returns_stat_from_no_modified_stream(self):
         stream = _create_stream_on_hglobal()
-        statstg = stream.Stat(STATFLAG_DEFAULT)
-        self.assertIsNone(statstg.pwcsName)
-        self.assertEqual(statstg.type, STGTY_STREAM)
-        self.assertEqual(statstg.cbSize, 0)
-        mt, ct, at = statstg.mtime, statstg.ctime, statstg.atime
+        stat = stream.Stat(STATFLAG_DEFAULT)
+        self.assertIsNone(stat.pwcsName)
+        self.assertEqual(stat.type, STGTY_STREAM)
+        self.assertEqual(stat.cbSize, 0)
+        mt, ct, at = stat.mtime, stat.ctime, stat.atime
         self.assertTrue(mt.dwLowDateTime == ct.dwLowDateTime == at.dwLowDateTime)
         self.assertTrue(mt.dwHighDateTime == ct.dwHighDateTime == at.dwHighDateTime)
-        self.assertEqual(statstg.grfMode, 0)
-        self.assertEqual(statstg.grfLocksSupported, 0)
-        self.assertEqual(statstg.clsid, comtypes.GUID())
-        self.assertEqual(statstg.grfStateBits, 0)
-        name_ptr = _get_pwcsname(statstg)
+        self.assertEqual(stat.grfMode, 0)
+        self.assertEqual(stat.grfLocksSupported, 0)
+        self.assertEqual(stat.clsid, comtypes.GUID())
+        self.assertEqual(stat.grfStateBits, 0)
+        name_ptr = _get_pwcsname(stat)
         self.assertIsNone(name_ptr.value)
         malloc = _get_malloc()
         self.assertEqual(malloc.DidAlloc(name_ptr), -1)
-        del statstg
+        del stat
         self.assertEqual(malloc.DidAlloc(name_ptr), -1)
 
 
@@ -292,17 +292,17 @@ class Test_LockRegion_UnlockRegion(ut.TestCase):
             # Cleanup: Close descriptors and release the lock
             os.close(fd)
             stm.UnlockRegion(0, 5, LOCK_EXCLUSIVE)
-            statstg = stm.Stat(STATFLAG_DEFAULT)
-            buf, read = stm.RemoteRead(statstg.cbSize)
+            stat = stm.Stat(STATFLAG_DEFAULT)
+            buf, read = stm.RemoteRead(stat.cbSize)
             # Verify that COM stream content reflects the successful out-of-lock write
             self.assertEqual(bytearray(buf)[0:read], b"\x00\x00\x00\x00\x00ABCDE")
             # Verify that the actual file content on disk matches the expected data
             self.assertEqual(tmpfile.read_bytes(), b"\x00\x00\x00\x00\x00ABCDE")
-            name_ptr = _get_pwcsname(statstg)
-            self.assertEqual(name_ptr.value, statstg.pwcsName)
+            name_ptr = _get_pwcsname(stat)
+            self.assertEqual(name_ptr.value, stat.pwcsName)
             malloc = _get_malloc()
             self.assertEqual(malloc.DidAlloc(name_ptr), 1)
-            del statstg
+            del stat
             self.assertEqual(malloc.DidAlloc(name_ptr), 0)
 
 
