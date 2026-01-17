@@ -30,7 +30,7 @@ class IClassFactory(IUnknown):
 
     def CreateInstance(
         self,
-        punkouter: Optional[type["_Pointer[IUnknown]"]] = None,
+        punkouter: Optional["_Pointer[IUnknown]"] = None,
         interface: Optional[type[IUnknown]] = None,
         dynamic: bool = False,
     ) -> Any:
