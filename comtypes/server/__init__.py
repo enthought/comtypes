@@ -1,6 +1,6 @@
 import ctypes
 from ctypes import HRESULT, POINTER, byref
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, overload
 
 import comtypes
 import comtypes.client
@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from ctypes import _Pointer
 
     from comtypes import hints  # type: ignore
+
+
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
 
 ################################################################
@@ -28,6 +31,20 @@ class IClassFactory(IUnknown):
         STDMETHOD(HRESULT, "LockServer", [ctypes.c_int]),
     ]
 
+    @overload
+    def CreateInstance(
+        self,
+        punkouter: Optional["_Pointer[IUnknown]"] = None,
+        interface: type[_T_IUnknown] = IUnknown,
+        dynamic: Literal[False] = False,
+    ) -> _T_IUnknown: ...
+    @overload
+    def CreateInstance(
+        self,
+        punkouter: Optional["_Pointer[IUnknown]"] = None,
+        interface: None = None,
+        dynamic: Literal[True] = True,
+    ) -> Any: ...
     def CreateInstance(
         self,
         punkouter: Optional["_Pointer[IUnknown]"] = None,
