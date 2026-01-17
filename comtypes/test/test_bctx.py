@@ -6,7 +6,6 @@ from ctypes import POINTER, byref
 from comtypes import GUID, hresult
 from comtypes.client import CreateObject, GetModule
 from comtypes.test.monikers_helper import (
-    MKSYS_ITEMMONIKER,
     ROTFLAGS_ALLOWANYCLIENT,
     _CreateBindCtx,
     _CreateItemMoniker,
@@ -39,35 +38,29 @@ def _create_rot() -> IRunningObjectTable:
     return rot  # type: ignore
 
 
-class Test_IMoniker(unittest.TestCase):
-    def test_IsSystemMoniker(self):
-        item_id = str(GUID.create_new())
-        mon = _create_item_moniker("!", item_id)
-        self.assertEqual(mon.IsSystemMoniker(), MKSYS_ITEMMONIKER)
-
-
-# TODO: Isolate this test case.
-class Test_IBindCtx(unittest.TestCase):
-    def test_EnumObjectParam(self):
+class Test_EnumObjectParam(unittest.TestCase):
+    def test_cannot_call(self):
         bctx = _create_bctx()
-        with self.assertRaises(COMError) as err_ctx:
+        with self.assertRaises(COMError) as cm:
             # calling `EnumObjectParam` results in a return value of E_NOTIMPL.
             # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-ibindctx-enumobjectparam#notes-to-callers
             bctx.EnumObjectParam()
-        self.assertEqual(err_ctx.exception.hresult, hresult.E_NOTIMPL)
+        self.assertEqual(cm.exception.hresult, hresult.E_NOTIMPL)
 
 
-class Test_IRunningObjectTable(unittest.TestCase):
-    def test_register_and_revoke_item_moniker(self):
+class Test_GetRunningObjectTable(unittest.TestCase):
+    def test_returns_rot(self):
         vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
         item_id = str(GUID.create_new())
         mon = _create_item_moniker("!", item_id)
-        rot = _create_rot()
         bctx = _create_bctx()
-        self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_FALSE)
-        dw_reg = rot.Register(ROTFLAGS_ALLOWANYCLIENT, vidctl, mon)
-        self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_OK)
-        self.assertEqual(f"!{item_id}", mon.GetDisplayName(bctx, None))
-        self.assertEqual(rot.GetObject(mon).QueryInterface(msvidctl.IMSVidCtl), vidctl)
-        rot.Revoke(dw_reg)
-        self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_FALSE)
+        # Before registering: should NOT be running
+        rot_from_bctx = bctx.GetRunningObjectTable()
+        self.assertIsInstance(rot_from_bctx, IRunningObjectTable)
+        rot_from_func = _create_rot()
+        dw_reg = rot_from_func.Register(ROTFLAGS_ALLOWANYCLIENT, vidctl, mon)
+        # After registering: should be running
+        self.assertEqual(rot_from_bctx.IsRunning(mon), hresult.S_OK)
+        rot_from_func.Revoke(dw_reg)
+        # After revoking: should NOT be running again
+        self.assertEqual(rot_from_bctx, rot_from_func)

@@ -6,7 +6,7 @@ from ctypes import POINTER, byref
 from comtypes import GUID, hresult
 from comtypes.client import CreateObject, GetModule
 from comtypes.test.monikers_helper import (
-    MKSYS_ITEMMONIKER,
+    MK_E_UNAVAILABLE,
     ROTFLAGS_ALLOWANYCLIENT,
     _CreateBindCtx,
     _CreateItemMoniker,
@@ -39,35 +39,26 @@ def _create_rot() -> IRunningObjectTable:
     return rot  # type: ignore
 
 
-class Test_IMoniker(unittest.TestCase):
-    def test_IsSystemMoniker(self):
-        item_id = str(GUID.create_new())
-        mon = _create_item_moniker("!", item_id)
-        self.assertEqual(mon.IsSystemMoniker(), MKSYS_ITEMMONIKER)
-
-
-class Test_IBindCtx(unittest.TestCase):
-    def test_EnumObjectParam(self):
-        bctx = _create_bctx()
-        with self.assertRaises(COMError) as err_ctx:
-            # calling `EnumObjectParam` results in a return value of E_NOTIMPL.
-            # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-ibindctx-enumobjectparam#notes-to-callers
-            bctx.EnumObjectParam()
-        self.assertEqual(err_ctx.exception.hresult, hresult.E_NOTIMPL)
-
-
-# TODO: Isolate this test case.
-class Test_IRunningObjectTable(unittest.TestCase):
-    def test_register_and_revoke_item_moniker(self):
+class Test_Register_Revoke_GetObject_IsRunning(unittest.TestCase):
+    def test_item(self):
         vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
         item_id = str(GUID.create_new())
         mon = _create_item_moniker("!", item_id)
         rot = _create_rot()
         bctx = _create_bctx()
-        self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_FALSE)
+        # Before registering: should NOT be running
+        with self.assertRaises(COMError) as cm:
+            rot.GetObject(mon)
+        self.assertEqual(cm.exception.hresult, MK_E_UNAVAILABLE)
+        self.assertEqual(rot.IsRunning(mon), hresult.S_FALSE)
+        # After registering: should be running
         dw_reg = rot.Register(ROTFLAGS_ALLOWANYCLIENT, vidctl, mon)
+        self.assertEqual(rot.IsRunning(mon), hresult.S_OK)
         self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_OK)
-        self.assertEqual(f"!{item_id}", mon.GetDisplayName(bctx, None))
         self.assertEqual(rot.GetObject(mon).QueryInterface(msvidctl.IMSVidCtl), vidctl)
         rot.Revoke(dw_reg)
-        self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_FALSE)
+        # After revoking: should NOT be running again
+        self.assertEqual(rot.IsRunning(mon), hresult.S_FALSE)
+        with self.assertRaises(COMError) as cm:
+            rot.GetObject(mon)
+        self.assertEqual(cm.exception.hresult, MK_E_UNAVAILABLE)
