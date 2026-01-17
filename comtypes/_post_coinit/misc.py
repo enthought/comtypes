@@ -160,8 +160,12 @@ if TYPE_CHECKING:
     ) -> _T_IUnknown: ...
 
 
-def CoGetClassObject(clsid, clsctx=None, pServerInfo=None, interface=None):
-    # type: (GUID, Optional[int], Optional[COSERVERINFO], Optional[Type[IUnknown]]) -> IUnknown
+def CoGetClassObject(
+    clsid: GUID,
+    clsctx: Optional[int] = None,
+    pServerInfo: "Optional[COSERVERINFO]" = None,
+    interface: Optional[type[IUnknown]] = None,
+) -> IUnknown:
     if clsctx is None:
         clsctx = CLSCTX_SERVER
     if interface is None:
