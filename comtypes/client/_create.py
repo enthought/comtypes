@@ -19,26 +19,26 @@ logger = logging.getLogger(__name__)
 #
 # Object creation
 #
-if TYPE_CHECKING:
-
-    @overload
-    def GetClassObject(
-        progid: _UnionT[str, type[CoClass], GUID],
-        clsctx: Optional[int] = None,
-        pServerInfo: Optional[COSERVERINFO] = None,
-        interface: None = None,
-    ) -> hints.IClassFactory: ...
-    @overload
-    def GetClassObject(
-        progid: _UnionT[str, type[CoClass], GUID],
-        clsctx: Optional[int] = None,
-        pServerInfo: Optional[COSERVERINFO] = None,
-        interface: type[_T_IUnknown] = hints.IClassFactory,
-    ) -> _T_IUnknown: ...
-
-
-def GetClassObject(progid, clsctx=None, pServerInfo=None, interface=None):
-    # type: (_UnionT[str, type[CoClass], GUID], Optional[int], Optional[COSERVERINFO], Optional[type[IUnknown]]) -> IUnknown
+@overload
+def GetClassObject(
+    progid: _UnionT[str, type[CoClass], GUID],
+    clsctx: Optional[int] = None,
+    pServerInfo: Optional[COSERVERINFO] = None,
+    interface: None = None,
+) -> "hints.IClassFactory": ...
+@overload
+def GetClassObject(
+    progid: _UnionT[str, type[CoClass], GUID],
+    clsctx: Optional[int] = None,
+    pServerInfo: Optional[COSERVERINFO] = None,
+    interface: type[_T_IUnknown] = IUnknown,
+) -> _T_IUnknown: ...
+def GetClassObject(
+    progid: _UnionT[str, type[CoClass], GUID],
+    clsctx: Optional[int] = None,
+    pServerInfo: Optional[COSERVERINFO] = None,
+    interface: Optional[type[IUnknown]] = None,
+) -> IUnknown:
     """Create and return the class factory for a COM object.
 
     'clsctx' specifies how to create the object, use the CLSCTX_... constants.
