@@ -9,7 +9,7 @@ REGDB_E_CLASSNOTREG = -2147221164  # 0x80040154
 
 
 class Test_CreateInstance(ut.TestCase):
-    def test_from_CoGetClassObject(self):
+    def test_returns_specified_interface_type_instance(self):
         class_factory = CoGetClassObject(CLSID_ShellLink)
         self.assertIsInstance(class_factory, IClassFactory)
         shlnk = class_factory.CreateInstance(interface=shelllink.IShellLinkW)
@@ -21,7 +21,10 @@ class Test_CreateInstance(ut.TestCase):
         class_factory = CoGetClassObject(CLSID_ShellLink)
         self.assertIsInstance(class_factory, IClassFactory)
         with self.assertRaises(ValueError):
-            class_factory.CreateInstance(interface=shelllink.IShellLinkW, dynamic=True)
+            class_factory.CreateInstance(  # type: ignore
+                interface=shelllink.IShellLinkW,
+                dynamic=True,  # type: ignore
+            )
 
     def test_raises_class_not_reg_error_if_non_existent_clsid(self):
         # calling `CoGetClassObject` with a non-existent CLSID raises an `OSError`.
