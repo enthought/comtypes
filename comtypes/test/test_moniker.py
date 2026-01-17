@@ -1,34 +1,23 @@
 import contextlib
 import unittest
-from _ctypes import COMError
-from ctypes import HRESULT, POINTER, OleDLL, byref, c_wchar_p
-from ctypes.wintypes import DWORD
+from ctypes import POINTER, byref
 
 from comtypes import GUID, hresult
 from comtypes.client import CreateObject, GetModule
+from comtypes.test.monikers_helper import (
+    MKSYS_ITEMMONIKER,
+    ROTFLAGS_ALLOWANYCLIENT,
+    CLSID_AntiMoniker,
+    CLSID_ItemMoniker,
+    _CreateBindCtx,
+    _CreateItemMoniker,
+    _GetRunningObjectTable,
+)
 
 with contextlib.redirect_stdout(None):  # supress warnings
     GetModule("msvidctl.dll")
 from comtypes.gen import MSVidCtlLib as msvidctl
 from comtypes.gen.MSVidCtlLib import IBindCtx, IMoniker, IRunningObjectTable
-
-MKSYS_ITEMMONIKER = 4
-ROTFLAGS_ALLOWANYCLIENT = 1
-LPOLESTR = LPCOLESTR = c_wchar_p
-
-_ole32 = OleDLL("ole32")
-
-_CreateItemMoniker = _ole32.CreateItemMoniker
-_CreateItemMoniker.argtypes = [LPCOLESTR, LPCOLESTR, POINTER(POINTER(IMoniker))]
-_CreateItemMoniker.restype = HRESULT
-
-_CreateBindCtx = _ole32.CreateBindCtx
-_CreateBindCtx.argtypes = [DWORD, POINTER(POINTER(IBindCtx))]
-_CreateBindCtx.restype = HRESULT
-
-_GetRunningObjectTable = _ole32.GetRunningObjectTable
-_GetRunningObjectTable.argtypes = [DWORD, POINTER(POINTER(IRunningObjectTable))]
-_GetRunningObjectTable.restype = HRESULT
 
 
 def _create_item_moniker(delim: str, item: str) -> IMoniker:
@@ -51,34 +40,29 @@ def _create_rot() -> IRunningObjectTable:
     return rot  # type: ignore
 
 
-class Test_IMoniker(unittest.TestCase):
-    def test_IsSystemMoniker(self):
+class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
+    def test_item(self):
         item_id = str(GUID.create_new())
         mon = _create_item_moniker("!", item_id)
         self.assertEqual(mon.IsSystemMoniker(), MKSYS_ITEMMONIKER)
-
-
-class Test_IBindCtx(unittest.TestCase):
-    def test_EnumObjectParam(self):
         bctx = _create_bctx()
-        with self.assertRaises(COMError) as err_ctx:
-            # calling `EnumObjectParam` results in a return value of E_NOTIMPL.
-            # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-ibindctx-enumobjectparam#notes-to-callers
-            bctx.EnumObjectParam()
-        self.assertEqual(err_ctx.exception.hresult, hresult.E_NOTIMPL)
+        self.assertEqual(mon.GetDisplayName(bctx, None), f"!{item_id}")
+        self.assertEqual(mon.GetClassID(), CLSID_ItemMoniker)
+        self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
 
 
-class Test_IRunningObjectTable(unittest.TestCase):
-    def test_register_and_revoke_item_moniker(self):
+class Test_IsRunning(unittest.TestCase):
+    def test_item(self):
         vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
         item_id = str(GUID.create_new())
         mon = _create_item_moniker("!", item_id)
         rot = _create_rot()
         bctx = _create_bctx()
+        # Before registering: should NOT be running
         self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_FALSE)
         dw_reg = rot.Register(ROTFLAGS_ALLOWANYCLIENT, vidctl, mon)
+        # After registering: should be running
         self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_OK)
-        self.assertEqual(f"!{item_id}", mon.GetDisplayName(bctx, None))
-        self.assertEqual(rot.GetObject(mon).QueryInterface(msvidctl.IMSVidCtl), vidctl)
         rot.Revoke(dw_reg)
+        # After revoking: should NOT be running again
         self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_FALSE)
