@@ -1,6 +1,6 @@
 import unittest as ut
 
-from comtypes import GUID, CoGetClassObject, shelllink
+from comtypes import GUID, CoGetClassObject, IUnknown, shelllink
 from comtypes.server import IClassFactory
 
 CLSID_ShellLink = GUID("{00021401-0000-0000-C000-000000000046}")
@@ -14,6 +14,16 @@ class Test_CreateInstance(ut.TestCase):
         self.assertIsInstance(class_factory, IClassFactory)
         shlnk = class_factory.CreateInstance(interface=shelllink.IShellLinkW)
         self.assertIsInstance(shlnk, shelllink.IShellLinkW)
+        shlnk.SetDescription("sample")
+        self.assertEqual(shlnk.GetDescription(), "sample")
+
+    def test_returns_iunknown_type_instance(self):
+        class_factory = CoGetClassObject(CLSID_ShellLink)
+        self.assertIsInstance(class_factory, IClassFactory)
+        punk = class_factory.CreateInstance()
+        self.assertIsInstance(punk, IUnknown)
+        self.assertNotIsInstance(punk, shelllink.IShellLinkW)
+        shlnk = punk.QueryInterface(shelllink.IShellLinkW)
         shlnk.SetDescription("sample")
         self.assertEqual(shlnk.GetDescription(), "sample")
 
