@@ -1,34 +1,22 @@
 import contextlib
 import unittest
 from _ctypes import COMError
-from ctypes import HRESULT, POINTER, OleDLL, byref, c_wchar_p
-from ctypes.wintypes import DWORD
+from ctypes import POINTER, byref
 
 from comtypes import GUID, hresult
 from comtypes.client import CreateObject, GetModule
+from comtypes.test.monikers_helper import (
+    MKSYS_ITEMMONIKER,
+    ROTFLAGS_ALLOWANYCLIENT,
+    _CreateBindCtx,
+    _CreateItemMoniker,
+    _GetRunningObjectTable,
+)
 
 with contextlib.redirect_stdout(None):  # supress warnings
     GetModule("msvidctl.dll")
 from comtypes.gen import MSVidCtlLib as msvidctl
 from comtypes.gen.MSVidCtlLib import IBindCtx, IMoniker, IRunningObjectTable
-
-MKSYS_ITEMMONIKER = 4
-ROTFLAGS_ALLOWANYCLIENT = 1
-LPOLESTR = LPCOLESTR = c_wchar_p
-
-_ole32 = OleDLL("ole32")
-
-_CreateItemMoniker = _ole32.CreateItemMoniker
-_CreateItemMoniker.argtypes = [LPCOLESTR, LPCOLESTR, POINTER(POINTER(IMoniker))]
-_CreateItemMoniker.restype = HRESULT
-
-_CreateBindCtx = _ole32.CreateBindCtx
-_CreateBindCtx.argtypes = [DWORD, POINTER(POINTER(IBindCtx))]
-_CreateBindCtx.restype = HRESULT
-
-_GetRunningObjectTable = _ole32.GetRunningObjectTable
-_GetRunningObjectTable.argtypes = [DWORD, POINTER(POINTER(IRunningObjectTable))]
-_GetRunningObjectTable.restype = HRESULT
 
 
 def _create_item_moniker(delim: str, item: str) -> IMoniker:
