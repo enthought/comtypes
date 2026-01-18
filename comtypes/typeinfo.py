@@ -31,7 +31,7 @@ from ctypes.wintypes import (
     WCHAR,
     WORD,
 )
-from typing import TYPE_CHECKING, Any, Optional, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, overload
 from typing import Union as _UnionT
 
 from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData
@@ -430,7 +430,12 @@ class ITypeComp(IUnknown):
 
     def Bind(
         self, name: str, flags: int = 0, lHashVal: int = 0
-    ) -> Optional[tuple[str, _UnionT["FUNCDESC", "VARDESC", "ITypeComp"]]]:
+    ) -> _UnionT[
+        tuple[Literal["function"], "FUNCDESC"],
+        tuple[Literal["variable"], "VARDESC"],
+        tuple[Literal["type"], "ITypeComp"],
+        None,
+    ]:
         """Bind to a name"""
         bindptr = BINDPTR()
         desckind = DESCKIND()
@@ -454,9 +459,16 @@ class ITypeComp(IUnknown):
         elif kind == DESCKIND_TYPECOMP:
             return "type", bindptr.lptcomp
         elif kind == DESCKIND_IMPLICITAPPOBJ:
+            # `DESCKIND_IMPLICITAPPOBJ` is rare; mainly for Office Application.
+            # It indicates a global application object (`TYPEFLAG_FAPPOBJECT`).
+            # Few other COM components use this highly specialized flag.
+            # Thus, this path is unlikely to be hit in common scenarios.
             raise NotImplementedError
         elif kind == DESCKIND_NONE:
             raise NameError("Name %s not found" % name)
+        # `DESCKIND_MAX` is an end-of-enumeration marker, not a valid return
+        # from `ITypeComp::Bind` in COM. If returned, it implies a malformed
+        # type library. The current implementation implicitly returns `None`.
 
     def BindType(self, name: str, lHashVal: int = 0) -> tuple[ITypeInfo, "ITypeComp"]:
         """Bind a type, and return both the typeinfo and typecomp for it."""

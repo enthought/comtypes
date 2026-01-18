@@ -165,6 +165,50 @@ class Test(unittest.TestCase):
         self.assertEqual(actual_addr, expected_addr)
 
 
+class Test_ITypeComp_BindType(unittest.TestCase):
+    def test_interface(self):
+        IID_IFile = GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")
+        tlib = LoadTypeLibEx("scrrun.dll")
+        tcomp = tlib.GetTypeComp()
+        ti_file, tc_file = tcomp.BindType("IFile")
+        self.assertEqual(ti_file.GetDocumentation(-1)[0], "IFile")
+        self.assertFalse(tc_file)
+        self.assertEqual(ti_file.GetTypeAttr().guid, IID_IFile)
+
+
+class Test_ITypeComp_Bind(unittest.TestCase):
+    def test_enum(self):
+        tlib = LoadTypeLibEx("stdole2.tlb")
+        tcomp = tlib.GetTypeComp()
+        tristate_kind, tristate_tcomp = tcomp.Bind("OLE_TRISTATE")  # type: ignore
+        self.assertEqual(tristate_kind, "type")
+        self.assertIsInstance(tristate_tcomp, typeinfo.ITypeComp)
+        gray_kind, gray_vd = tristate_tcomp.Bind("Gray")  # type: ignore
+        self.assertEqual(gray_kind, "variable")
+        self.assertIsInstance(gray_vd, typeinfo.tagVARDESC)
+        self.assertEqual(gray_vd.varkind, typeinfo.VAR_CONST)  # type: ignore
+
+    def test_interface(self):
+        tlib = LoadTypeLibEx("stdole2.tlb")
+        IID_Picture = GUID("{7BF80981-BF32-101A-8BBB-00AA00300CAB}")
+        tinfo = tlib.GetTypeInfoOfGuid(IID_Picture)
+        tcomp = tinfo.GetTypeComp()
+        handle_kind, handle_vd = tcomp.Bind("Handle")  # type: ignore
+        self.assertEqual(handle_kind, "variable")
+        self.assertIsInstance(handle_vd, typeinfo.VARDESC)
+        self.assertEqual(handle_vd.varkind, typeinfo.VAR_DISPATCH)  # type: ignore
+        render_kind, render_fd = tcomp.Bind("Render")  # type: ignore
+        self.assertEqual(render_kind, "function")
+        self.assertIsInstance(render_fd, typeinfo.tagFUNCDESC)
+        self.assertEqual(render_fd.funckind, typeinfo.FUNC_DISPATCH)  # type: ignore
+
+    def test_non_existent_name(self):
+        tlib = LoadTypeLibEx("scrrun.dll")
+        tcomp = tlib.GetTypeComp()
+        with self.assertRaises(NameError):
+            tcomp.Bind("NonExistentNameForTest")
+
+
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
         sys.prefix == sys.base_prefix,
