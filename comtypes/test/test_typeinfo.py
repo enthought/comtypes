@@ -176,6 +176,14 @@ class Test_ITypeComp_BindType(unittest.TestCase):
         self.assertEqual(ti_file.GetTypeAttr().guid, IID_IFile)
 
 
+class Test_ITypeComp_Bind(unittest.TestCase):
+    def test_non_existent_name(self):
+        tlib = LoadTypeLibEx("scrrun.dll")
+        tcomp = tlib.GetTypeComp()
+        with self.assertRaises(NameError):
+            tcomp.Bind("NonExistentNameForTest")
+
+
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
         sys.prefix == sys.base_prefix,
