@@ -131,6 +131,25 @@ class Test(unittest.TestCase):
         self.assertEqual(refta.typekind, typeinfo.TKIND_INTERFACE)
         self.assertEqual(ti, refti.GetRefTypeInfo(refti.GetRefTypeOfImplType(-1)))
 
+    def test_module_ITypeInfo(self):
+        # `AddressOfMember` method retrieves the addresses of static functions
+        # or variables defined in a module. We will test this functionality by
+        # using the 'StdFunctions' module within 'stdole2.tlb', which contains
+        # static functions like 'LoadPicture' or 'SavePicture'.
+        tlib = LoadTypeLibEx("stdole2.tlb")
+        stdfuncs_info = tlib.FindName("StdFunctions")
+        self.assertIsNotNone(stdfuncs_info)
+        _, tinfo = stdfuncs_info  # type: ignore
+        memid, *_ = tinfo.GetIDsOfNames("LoadPicture")
+        self.assertEqual(tinfo.GetDocumentation(memid)[0], "LoadPicture")
+        # 'LoadPicture' is the alias used within the type library.
+        dll_name, func_name, _ = tinfo.GetDllEntry(memid, typeinfo.INVOKE_FUNC)
+        _oleaut32 = ctypes.WinDLL(dll_name)
+        load_picture = getattr(_oleaut32, func_name)  # type: ignore
+        expected_addr = ctypes.cast(load_picture, ctypes.c_void_p).value
+        actual_addr = tinfo.AddressOfMember(memid, typeinfo.INVOKE_FUNC)
+        self.assertEqual(actual_addr, expected_addr)
+
 
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
