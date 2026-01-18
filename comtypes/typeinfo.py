@@ -31,7 +31,7 @@ from ctypes.wintypes import (
     WCHAR,
     WORD,
 )
-from typing import TYPE_CHECKING, Any, Optional, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, overload
 from typing import Union as _UnionT
 
 from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData
@@ -430,7 +430,12 @@ class ITypeComp(IUnknown):
 
     def Bind(
         self, name: str, flags: int = 0, lHashVal: int = 0
-    ) -> Optional[tuple[str, _UnionT["FUNCDESC", "VARDESC", "ITypeComp"]]]:
+    ) -> _UnionT[
+        tuple[Literal["function"], "FUNCDESC"],
+        tuple[Literal["variable"], "VARDESC"],
+        tuple[Literal["type"], "ITypeComp"],
+        None,
+    ]:
         """Bind to a name"""
         bindptr = BINDPTR()
         desckind = DESCKIND()
