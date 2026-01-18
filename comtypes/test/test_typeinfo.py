@@ -144,6 +144,9 @@ class Test(unittest.TestCase):
         stdfuncs_info = tlib.FindName("StdFunctions")
         self.assertIsNotNone(stdfuncs_info)
         _, tinfo = stdfuncs_info  # type: ignore
+        tattr = tinfo.GetTypeAttr()
+        self.assertEqual(tattr.cImplTypes, 0)
+        self.assertEqual(tattr.typekind, typeinfo.TKIND_MODULE)
         memid, *_ = tinfo.GetIDsOfNames("LoadPicture")
         self.assertEqual(tinfo.GetDocumentation(memid)[0], "LoadPicture")
         # 'LoadPicture' is the alias used within the type library.
