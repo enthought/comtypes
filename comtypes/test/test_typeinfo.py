@@ -177,6 +177,13 @@ class Test_ITypeComp_BindType(unittest.TestCase):
 
 
 class Test_ITypeComp_Bind(unittest.TestCase):
+    def test_enum(self):
+        tlib = LoadTypeLibEx("stdole2.tlb")
+        tcomp = tlib.GetTypeComp()
+        tristate_kind, tristate_tcomp = tcomp.Bind("OLE_TRISTATE")  # type: ignore
+        self.assertEqual(tristate_kind, "type")
+        self.assertIsInstance(tristate_tcomp, typeinfo.ITypeComp)
+
     def test_non_existent_name(self):
         tlib = LoadTypeLibEx("scrrun.dll")
         tcomp = tlib.GetTypeComp()
