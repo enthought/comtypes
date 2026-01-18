@@ -150,7 +150,14 @@ class Test(unittest.TestCase):
         memid, *_ = tinfo.GetIDsOfNames("LoadPicture")
         self.assertEqual(tinfo.GetDocumentation(memid)[0], "LoadPicture")
         # 'LoadPicture' is the alias used within the type library.
-        dll_name, func_name, _ = tinfo.GetDllEntry(memid, typeinfo.INVOKE_FUNC)
+        # `GetDllEntry` returns the actual exported name from the DLL, which
+        # may be different.
+        dll_name, func_name, ordinal = tinfo.GetDllEntry(memid, typeinfo.INVOKE_FUNC)
+        # For functions exported by name, `GetDllEntry` returns a 3-tuple:
+        # (DLL name, function name, ordinal of 0).
+        self.assertIn("oleaut32.dll", dll_name.lower())  # type: ignore
+        self.assertEqual(func_name, "OleLoadPictureFileEx")
+        self.assertEqual(ordinal, 0)
         _oleaut32 = ctypes.WinDLL(dll_name)
         load_picture = getattr(_oleaut32, func_name)  # type: ignore
         expected_addr = ctypes.cast(load_picture, ctypes.c_void_p).value
