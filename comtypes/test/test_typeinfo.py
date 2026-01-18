@@ -183,6 +183,10 @@ class Test_ITypeComp_Bind(unittest.TestCase):
         tristate_kind, tristate_tcomp = tcomp.Bind("OLE_TRISTATE")  # type: ignore
         self.assertEqual(tristate_kind, "type")
         self.assertIsInstance(tristate_tcomp, typeinfo.ITypeComp)
+        gray_kind, gray_vd = tristate_tcomp.Bind("Gray")  # type: ignore
+        self.assertEqual(gray_kind, "variable")
+        self.assertIsInstance(gray_vd, typeinfo.tagVARDESC)
+        self.assertEqual(gray_vd.varkind, typeinfo.VAR_CONST)  # type: ignore
 
     def test_interface(self):
         tlib = LoadTypeLibEx("stdole2.tlb")
