@@ -165,6 +165,17 @@ class Test(unittest.TestCase):
         self.assertEqual(actual_addr, expected_addr)
 
 
+class Test_ITypeComp_BindType(unittest.TestCase):
+    def test_interface(self):
+        IID_IFile = GUID("{C7C3F5A4-88A3-11D0-ABCB-00A0C90FFFC0}")
+        tlib = LoadTypeLibEx("scrrun.dll")
+        tcomp = tlib.GetTypeComp()
+        ti_file, tc_file = tcomp.BindType("IFile")
+        self.assertEqual(ti_file.GetDocumentation(-1)[0], "IFile")
+        self.assertFalse(tc_file)
+        self.assertEqual(ti_file.GetTypeAttr().guid, IID_IFile)
+
+
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
         sys.prefix == sys.base_prefix,
