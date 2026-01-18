@@ -405,13 +405,11 @@ class ITypeInfo(IUnknown):
         self.__com_GetIDsOfNames(rgsznames, len(names), ids)  # type: ignore
         return ids[:]
 
-    def AddressOfMember(self, memid, invkind):
+    def AddressOfMember(self, memid: int, invkind: int) -> int:
         """Get the address of a function in a dll"""
-        raise RuntimeError("Check Me")
         p = c_void_p()
-        self.__com_AddressOfMember(memid, invkind, byref(p))
-        # XXX Would the default impl return the value of p?
-        return p.value
+        self.__com_AddressOfMember(memid, invkind, byref(p))  # type: ignore
+        return p.value  # type: ignore
 
     def CreateInstance(
         self,

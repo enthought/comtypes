@@ -131,6 +131,39 @@ class Test(unittest.TestCase):
         self.assertEqual(refta.typekind, typeinfo.TKIND_INTERFACE)
         self.assertEqual(ti, refti.GetRefTypeInfo(refti.GetRefTypeOfImplType(-1)))
 
+    def test_module_ITypeInfo(self):
+        # `AddressOfMember` method retrieves the addresses of static functions
+        # or variables defined in a module. We will test this functionality by
+        # using the 'StdFunctions' module within 'stdole2.tlb', which contains
+        # static functions like 'LoadPicture' or 'SavePicture'.
+        # NOTE: The name 'stdole2' refers to OLE 2.0; it is a core Windows
+        #       component that has remained unchanged for decades to ensure
+        #       compatibility, making any future name changes highly improbable.
+        tlib = LoadTypeLibEx("stdole2.tlb")
+        # Same as `tinfo = GetTypeInfoOfGuid(GUID('{91209AC0-60F6-11CF-9C5D-00AA00C1489E}'))`
+        stdfuncs_info = tlib.FindName("StdFunctions")
+        self.assertIsNotNone(stdfuncs_info)
+        _, tinfo = stdfuncs_info  # type: ignore
+        tattr = tinfo.GetTypeAttr()
+        self.assertEqual(tattr.cImplTypes, 0)
+        self.assertEqual(tattr.typekind, typeinfo.TKIND_MODULE)
+        memid, *_ = tinfo.GetIDsOfNames("LoadPicture")
+        self.assertEqual(tinfo.GetDocumentation(memid)[0], "LoadPicture")
+        # 'LoadPicture' is the alias used within the type library.
+        # `GetDllEntry` returns the actual exported name from the DLL, which
+        # may be different.
+        dll_name, func_name, ordinal = tinfo.GetDllEntry(memid, typeinfo.INVOKE_FUNC)
+        # For functions exported by name, `GetDllEntry` returns a 3-tuple:
+        # (DLL name, function name, ordinal of 0).
+        self.assertIn("oleaut32.dll", dll_name.lower())  # type: ignore
+        self.assertEqual(func_name, "OleLoadPictureFileEx")
+        self.assertEqual(ordinal, 0)
+        _oleaut32 = ctypes.WinDLL(dll_name)
+        load_picture = getattr(_oleaut32, func_name)  # type: ignore
+        expected_addr = ctypes.cast(load_picture, ctypes.c_void_p).value
+        actual_addr = tinfo.AddressOfMember(memid, typeinfo.INVOKE_FUNC)
+        self.assertEqual(actual_addr, expected_addr)
+
 
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
