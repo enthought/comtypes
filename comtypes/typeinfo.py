@@ -454,6 +454,10 @@ class ITypeComp(IUnknown):
         elif kind == DESCKIND_TYPECOMP:
             return "type", bindptr.lptcomp
         elif kind == DESCKIND_IMPLICITAPPOBJ:
+            # `DESCKIND_IMPLICITAPPOBJ` is rare; mainly for Office Application.
+            # It indicates a global application object (`TYPEFLAG_FAPPOBJECT`).
+            # Few other COM components use this highly specialized flag.
+            # Thus, this path is unlikely to be hit in common scenarios.
             raise NotImplementedError
         elif kind == DESCKIND_NONE:
             raise NameError("Name %s not found" % name)
