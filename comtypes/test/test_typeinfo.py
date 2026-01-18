@@ -184,6 +184,20 @@ class Test_ITypeComp_Bind(unittest.TestCase):
         self.assertEqual(tristate_kind, "type")
         self.assertIsInstance(tristate_tcomp, typeinfo.ITypeComp)
 
+    def test_interface(self):
+        tlib = LoadTypeLibEx("stdole2.tlb")
+        IID_Picture = GUID("{7BF80981-BF32-101A-8BBB-00AA00300CAB}")
+        tinfo = tlib.GetTypeInfoOfGuid(IID_Picture)
+        tcomp = tinfo.GetTypeComp()
+        handle_kind, handle_vd = tcomp.Bind("Handle")  # type: ignore
+        self.assertEqual(handle_kind, "variable")
+        self.assertIsInstance(handle_vd, typeinfo.VARDESC)
+        self.assertEqual(handle_vd.varkind, typeinfo.VAR_DISPATCH)  # type: ignore
+        render_kind, render_fd = tcomp.Bind("Render")  # type: ignore
+        self.assertEqual(render_kind, "function")
+        self.assertIsInstance(render_fd, typeinfo.tagFUNCDESC)
+        self.assertEqual(render_fd.funckind, typeinfo.FUNC_DISPATCH)  # type: ignore
+
     def test_non_existent_name(self):
         tlib = LoadTypeLibEx("scrrun.dll")
         tcomp = tlib.GetTypeComp()
