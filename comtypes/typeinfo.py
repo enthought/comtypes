@@ -461,6 +461,9 @@ class ITypeComp(IUnknown):
             raise NotImplementedError
         elif kind == DESCKIND_NONE:
             raise NameError("Name %s not found" % name)
+        # `DESCKIND_MAX` is an end-of-enumeration marker, not a valid return
+        # from `ITypeComp::Bind` in COM. If returned, it implies a malformed
+        # type library. The current implementation implicitly returns `None`.
 
     def BindType(self, name: str, lHashVal: int = 0) -> tuple[ITypeInfo, "ITypeComp"]:
         """Bind a type, and return both the typeinfo and typecomp for it."""
