@@ -136,7 +136,11 @@ class Test(unittest.TestCase):
         # or variables defined in a module. We will test this functionality by
         # using the 'StdFunctions' module within 'stdole2.tlb', which contains
         # static functions like 'LoadPicture' or 'SavePicture'.
+        # NOTE: The name 'stdole2' refers to OLE 2.0; it is a core Windows
+        #       component that has remained unchanged for decades to ensure
+        #       compatibility, making any future name changes highly improbable.
         tlib = LoadTypeLibEx("stdole2.tlb")
+        # Same as `tinfo = GetTypeInfoOfGuid(GUID('{91209AC0-60F6-11CF-9C5D-00AA00C1489E}'))`
         stdfuncs_info = tlib.FindName("StdFunctions")
         self.assertIsNotNone(stdfuncs_info)
         _, tinfo = stdfuncs_info  # type: ignore
