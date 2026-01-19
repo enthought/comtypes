@@ -18,6 +18,22 @@ import atexit
 import logging
 import sys
 
+if sys.version_info >= (3, 15):
+    import warnings
+
+    _PYVER = f"{sys.version_info.major}.{sys.version_info.minor}"
+    warnings.warn(
+        (
+            f"You are running 'comtypes' on Python {_PYVER}, where the behavior of "
+            "enum types (such as IntFlag) may differ from Python <= 3.14.\n"
+            f"It is recommended to use a version compatible with Python {_PYVER}.\n"
+            "See: https://github.com/enthought/comtypes/issues/894"
+        ),
+        FutureWarning,
+        stacklevel=2,
+    )
+
+
 # HACK: Workaround for projects that depend on this package
 # There should be several projects around the world that depend on this package
 # and indirectly reference the symbols of `ctypes` from `comtypes`.
