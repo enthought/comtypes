@@ -83,13 +83,13 @@ class Test_Installer(ut.TestCase):
         )
         # There is no product associated with the Null GUID.
         pdcode = str(GUID())
-        expected = msi.MsiInstallState.msiInstallStateUnknown
+        expected = msi.msiInstallStateUnknown
         self.assertEqual(expected, inst.ProductState(pdcode))
         self.assertEqual(expected, inst.ProductState[pdcode])
         # The `ProductState` property is a read-only property.
         # https://learn.microsoft.com/en-us/windows/win32/msi/installer-productstate-property
         with self.assertRaises(TypeError):
-            inst.ProductState[pdcode] = msi.MsiInstallState.msiInstallStateDefault  # type: ignore
+            inst.ProductState[pdcode] = msi.msiInstallStateDefault  # type: ignore
         # NOTE: Named parameters are not yet implemented for the named property.
         # See https://github.com/enthought/comtypes/issues/371
         # TODO: After named parameters are supported, this will become a test to
