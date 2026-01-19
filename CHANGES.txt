@@ -1,6 +1,30 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.15
+--------------
+* Fix ``TYPE_E_ELEMENTNOTFOUND`` HRESULT constant value. By @junkmd.
+* Enhance ``ITypeInfo`` testing in ``test_typeinfo.py``. By @junkmd.
+* Improve type hints for for generated dispmethods and properties. By @junkmd.
+* Enhance tests for generated type hints. By @junkmd.
+* Remove Internet Explorer dependency from ``test_QueryService.py`` and ``test_casesensitivity.py``. By @junkmd.
+* Rename ``test_ie.py`` to ``test_eventinterface.py``. By @junkmd.
+* Fix ``SyntaxError`` in ``DispMethodAnnotator`` signature generation. By @junkmd.
+* Rename ``test_msi.py`` to ``test_puredispatch.py``. By @junkmd.
+* Rename ``test_wmi.py`` to ``test_variant_outparam.py``. By @junkmd.
+* Replace the module-level skip with individual ``@skip`` decorators on the test methods in ``test_eventinterface.py``. By @junkmd.
+* Add tests for ``stdole.IPicture`` creation through ``IStream``. By @junkmd.
+* Improve enum testing in ``test_client.py``. By @junkmd.
+* Revive and enhance ``test_outparam``. By @junkmd.
+* Enhance ``test_stream``. By @junkmd.
+* Enhance ``test_storage``. By @junkmd.
+* Add ``malloc`` module. By @junkmd.
+* Enhance and refactor COM moniker tests. By @junkmd.
+* Refine type hints and enhance tests for ``client.GetClassObject``, ``CoGetClassObject`` and ``IClassFactory``. By @junkmd.
+* Implement ``ITypeInfo.AddressOfMember`` with tests and clarifications. By @junkmd.
+* Enhance ``ITypeComp.Bind`` tests and type hints. By @junkmd.
+* Introduce warnings for Python 3.15 enum compatibility. By @junkmd.
+
 Release 1.4.14
 --------------
 * Replace ``setup.py`` with ``pyproject.toml``. By @moi15moi.
