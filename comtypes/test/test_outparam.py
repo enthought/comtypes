@@ -1,6 +1,14 @@
 import logging
 import unittest
-from ctypes import c_wchar, c_wchar_p, cast, memmove, sizeof, wstring_at
+from ctypes import (
+    c_wchar,
+    c_wchar_p,
+    cast,
+    create_unicode_buffer,
+    memmove,
+    sizeof,
+    wstring_at,
+)
 from unittest.mock import patch
 
 from comtypes.malloc import CoGetMalloc, _CoTaskMemAlloc, _CoTaskMemFree
@@ -38,10 +46,11 @@ def comstring(text, typ=c_wchar_p):
 class Test(unittest.TestCase):
     @patch.object(c_wchar_p, "__ctypes_from_outparam__", from_outparam)
     def test_c_char(self):
-        ptr = c_wchar_p("abc")
-        # The normal constructor does not allocate memory using `CoTaskMemAlloc`.
-        # Therefore, calling the patched `ptr.__ctypes_from_outparam__()` would
-        # attempt to free invalid memory, potentially leading to a crash.
+        # Allocate memory from the Python/C runtime heap.
+        # This ensures the address is valid but "unallocated" from COM.
+        buf = create_unicode_buffer("abc")
+        ptr = cast(buf, c_wchar_p)
+        # Confirm the memory is not managed by the COM task allocator.
         self.assertEqual(malloc.DidAlloc(ptr), 0)
 
         x = comstring("Hello, World")
