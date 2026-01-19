@@ -269,6 +269,18 @@ class Test_Constants(ut.TestCase):
         self.assertEqual(consts.TextCompare, Scripting.TextCompare)
         self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
 
+    PY_3_15_ALPHA_BETA = (
+        sys.version_info.major == 3
+        and sys.version_info.minor == 15
+        and sys.version_info.releaselevel in ("alpha", "beta")
+    )
+    ENUMS_MESSAGE = (
+        "Starting from Python 3.15, negative members in `IntFlag` may "
+        "no longer be evaluated as literals.\nWe need to address this before "
+        "the release. See: https://github.com/enthought/comtypes/issues/894"
+    )
+
+    @ut.skipIf(PY_3_15_ALPHA_BETA, ENUMS_MESSAGE)
     def test_enums_in_friendly_mod(self):
         comtypes.client.GetModule("scrrun.dll")
         comtypes.client.GetModule("msi.dll")
@@ -287,11 +299,16 @@ class Test_Constants(ut.TestCase):
             ),
         ]:
             for member in enumtype:
-                with self.subTest(enumtype=enumtype, member=member):
+                with self.subTest(
+                    msg=self.ENUMS_MESSAGE,
+                    enumtype=enumtype,
+                    member=member,
+                ):
                     self.assertIn(member.name, fadic)
                     self.assertEqual(fadic[member.name], member.value)
             for member_name, member_value in fadic.items():
                 with self.subTest(
+                    msg=self.ENUMS_MESSAGE,
                     enumtype=enumtype,
                     member_name=member_name,
                     member_value=member_value,
