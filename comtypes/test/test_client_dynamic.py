@@ -1,7 +1,7 @@
 import ctypes
 import unittest as ut
 
-from comtypes import IUnknown, automation
+from comtypes import COMError, IUnknown, automation, hresult
 from comtypes.client import CreateObject, GetModule, dynamic, lazybind
 
 
@@ -59,6 +59,10 @@ class Test_dynamic_Dispatch(ut.TestCase):
             d[4]
         with self.assertRaises(AttributeError):
             d.__foo__
+        with self.assertRaises(COMError) as cm:
+            # Access a member that definitely does not exist.
+            _ = d.DefinitelyNonExistentMember
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_UNKNOWNNAME)
 
 
 class Test_lazybind_Dispatch(ut.TestCase):
@@ -85,6 +89,9 @@ class Test_lazybind_Dispatch(ut.TestCase):
         self.assertIsNone(d[4])
         with self.assertRaises(AttributeError):
             d.__foo__
+        with self.assertRaises(NameError):
+            # Access a member that definitely does not exist.
+            _ = d.DefinitelyNonExistentMember
 
 
 if __name__ == "__main__":
