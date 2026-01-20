@@ -30,6 +30,7 @@ class Test_Dispatch_Function(ut.TestCase):
 
 
 HKCU = 1  # HKEY_CURRENT_USER
+msiInstallStateUnknown = -1
 
 
 class Test_dynamic_Dispatch(ut.TestCase):
@@ -75,6 +76,11 @@ class Test_dynamic_Dispatch(ut.TestCase):
         # Access a known property and method
         self.assertIsInstance(installer.Version, str)
         self.assertTrue(installer.RegistryValue(HKCU, r"Control Panel\Desktop"))
+        # Test that calling `ProductState` as a method raises a `COMError`
+        with self.assertRaises(COMError):
+            installer.ProductState(str(GUID()))
+        # Test `ProductState` as an item access
+        self.assertEqual(msiInstallStateUnknown, installer.ProductState[str(GUID())])
 
 
 class Test_lazybind_Dispatch(ut.TestCase):
@@ -116,6 +122,10 @@ class Test_lazybind_Dispatch(ut.TestCase):
         # Access a known property and method
         self.assertIsInstance(installer.Version, str)
         self.assertTrue(installer.RegistryValue(HKCU, r"Control Panel\Desktop"))
+        # Test `ProductState` as a method call
+        self.assertEqual(msiInstallStateUnknown, installer.ProductState(str(GUID())))
+        # Test `ProductState` as an item access
+        self.assertEqual(msiInstallStateUnknown, installer.ProductState[str(GUID())])
 
 
 if __name__ == "__main__":
