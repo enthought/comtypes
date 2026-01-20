@@ -81,6 +81,9 @@ class Test_dynamic_Dispatch(ut.TestCase):
             installer.ProductState(str(GUID()))
         # Test `ProductState` as an item access
         self.assertEqual(msiInstallStateUnknown, installer.ProductState[str(GUID())])
+        # Accessing a non-existent attribute should raise `AttributeError`
+        with self.assertRaises(AttributeError):
+            installer.__foo__
 
 
 class Test_lazybind_Dispatch(ut.TestCase):
@@ -126,6 +129,9 @@ class Test_lazybind_Dispatch(ut.TestCase):
         self.assertEqual(msiInstallStateUnknown, installer.ProductState(str(GUID())))
         # Test `ProductState` as an item access
         self.assertEqual(msiInstallStateUnknown, installer.ProductState[str(GUID())])
+        # Accessing a non-existent attribute should raise `AttributeError`
+        with self.assertRaises(AttributeError):
+            installer.__foo__
 
 
 if __name__ == "__main__":
