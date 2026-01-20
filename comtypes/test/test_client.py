@@ -9,7 +9,8 @@ from comtypes import CLSCTX_INPROC_SERVER, COSERVERINFO
 
 # create the typelib wrapper and import it
 comtypes.client.GetModule("scrrun.dll")
-from comtypes.gen import Scripting
+comtypes.client.GetModule("wbemdisp.tlb")
+from comtypes.gen import Scripting, WbemScripting
 
 
 class Test_GetModule(ut.TestCase):
@@ -223,6 +224,30 @@ class Test_CreateObject(ut.TestCase):
             comtypes.client.CreateObject(
                 "Scripting.Dictionary",
                 interface=Scripting.IDictionary,
+                dynamic=True,  # type: ignore
+            )
+
+
+class Test_CoGetObject(ut.TestCase):
+    def test_returns_interface_pointer(self):
+        wmi = comtypes.client.CoGetObject(
+            "winmgmts:", interface=WbemScripting.ISWbemServices
+        )
+        self.assertIsInstance(wmi, WbemScripting.ISWbemServices)
+        disks = wmi.InstancesOf("Win32_LogicalDisk")
+        self.assertGreaterEqual(len(disks), 0)
+
+    def test_returns_dynamic_dispatch_object(self):
+        wmi = comtypes.client.CoGetObject("winmgmts:", dynamic=True)
+        self.assertIsInstance(wmi, comtypes.client.lazybind.Dispatch)
+        disks = wmi.InstancesOf("Win32_LogicalDisk")
+        self.assertGreaterEqual(disks.Count, 0)
+
+    def test_raises_valueerror_if_takes_dynamic_true_and_interface(self):
+        with self.assertRaises(ValueError):
+            comtypes.client.CoGetObject(
+                "winmgmts:",
+                interface=WbemScripting.ISWbemServices,  # type: ignore
                 dynamic=True,  # type: ignore
             )
 
