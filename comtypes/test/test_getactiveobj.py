@@ -73,12 +73,22 @@ class Test_Word(unittest.TestCase):
 
 class Test_MSVidCtlLib(unittest.TestCase):
     def test_register_and_revoke(self):
+        CLSID_MSVidCtl = msvidctl.MSVidCtl._reg_clsid_
         vidctl = comtypes.client.CreateObject(msvidctl.MSVidCtl)
         with self.assertRaises(WindowsError):
             comtypes.client.GetActiveObject(msvidctl.MSVidCtl)
         handle = comtypes.client.RegisterActiveObject(vidctl, msvidctl.MSVidCtl)
+        with self.assertRaises(ValueError):
+            comtypes.client.GetActiveObject(
+                CLSID_MSVidCtl,
+                interface=msvidctl.IMSVidCtl,
+                dynamic=True,  # type: ignore
+            )
         activeobj = comtypes.client.GetActiveObject(msvidctl.MSVidCtl)
         self.assertEqual(vidctl, activeobj)
+        dynamicobj = comtypes.client.GetActiveObject(CLSID_MSVidCtl, dynamic=True)
+        self.assertIsInstance(dynamicobj, comtypes.client.lazybind.Dispatch)
+        self.assertEqual(hash(vidctl), hash(dynamicobj))
         comtypes.client.RevokeActiveObject(handle)
         with self.assertRaises(WindowsError):
             comtypes.client.GetActiveObject(msvidctl.MSVidCtl)
