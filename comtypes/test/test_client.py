@@ -218,6 +218,14 @@ class Test_CreateObject(ut.TestCase):
         self.assertIsInstance(iuia.GetRootElement(), POINTER(IUIAutomationElement))
         self.assertIsInstance(iuia.GetRootElement(), IUIAutomationElement)
 
+    def test_raises_valueerror_if_takes_dynamic_true_and_interface(self):
+        with self.assertRaises(ValueError):
+            comtypes.client.CreateObject(
+                "Scripting.Dictionary",
+                interface=Scripting.IDictionary,
+                dynamic=True,  # type: ignore
+            )
+
 
 class Test_Constants(ut.TestCase):
     def test_punk(self):
