@@ -1,7 +1,7 @@
 import ctypes
 import unittest as ut
 
-from comtypes import COMError, IUnknown, automation, hresult
+from comtypes import GUID, COMError, IUnknown, automation, hresult, typeinfo
 from comtypes.client import CreateObject, GetModule, dynamic, lazybind
 
 
@@ -27,6 +27,9 @@ class Test_Dispatch_Function(ut.TestCase):
         # Calling `dynamic.Dispatch` on an already dispatched object should
         # return the same instance.
         self.assertIs(disp, dynamic.Dispatch(disp))
+
+
+HKCU = 1  # HKEY_CURRENT_USER
 
 
 class Test_dynamic_Dispatch(ut.TestCase):
@@ -64,6 +67,15 @@ class Test_dynamic_Dispatch(ut.TestCase):
             _ = d.DefinitelyNonExistentMember
         self.assertEqual(cm.exception.hresult, hresult.DISP_E_UNKNOWNNAME)
 
+    def test_installer(self):
+        orig = CreateObject(
+            "WindowsInstaller.Installer", interface=automation.IDispatch
+        )
+        installer = dynamic._Dispatch(orig)
+        # Access a known property and method
+        self.assertIsInstance(installer.Version, str)
+        self.assertTrue(installer.RegistryValue(HKCU, r"Control Panel\Desktop"))
+
 
 class Test_lazybind_Dispatch(ut.TestCase):
     def test_dict(self):
@@ -92,6 +104,18 @@ class Test_lazybind_Dispatch(ut.TestCase):
         with self.assertRaises(NameError):
             # Access a member that definitely does not exist.
             _ = d.DefinitelyNonExistentMember
+
+    def test_installer(self):
+        IID_Installer = GUID("{000C1090-0000-0000-C000-000000000046}")
+        tlib = typeinfo.LoadTypeLibEx("msi.dll")
+        tinfo = tlib.GetTypeInfoOfGuid(IID_Installer)
+        orig = CreateObject(
+            "WindowsInstaller.Installer", interface=automation.IDispatch
+        )
+        installer = lazybind.Dispatch(orig, tinfo)
+        # Access a known property and method
+        self.assertIsInstance(installer.Version, str)
+        self.assertTrue(installer.RegistryValue(HKCU, r"Control Panel\Desktop"))
 
 
 if __name__ == "__main__":
