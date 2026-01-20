@@ -29,7 +29,7 @@ class Test_Dispatch_Function(ut.TestCase):
         self.assertIs(disp, dynamic.Dispatch(disp))
 
 
-class Test_Dispatch_Class(ut.TestCase):
+class Test_dynamic_Dispatch(ut.TestCase):
     # `MethodCaller` and `_Collection` are indirectly covered in this.
     def test_dict(self):
         # The following conditional branches are not covered;
@@ -52,8 +52,37 @@ class Test_Dispatch_Class(ut.TestCase):
         scr_dict = d.QueryInterface(scrrun.IDictionary)
         self.assertIsInstance(scr_dict, scrrun.IDictionary)
         d.Item["qux"] = scr_dict
+        # `dynamic._Dispatch` reflects the underlying COM object's behavior.
+        # For `Scripting.Dictionary`, out-of-bounds index access via `IDispatch`
+        # typically results in a `COMError`, which is wrapped as `IndexError`.
         with self.assertRaises(IndexError):
             d[4]
+        with self.assertRaises(AttributeError):
+            d.__foo__
+
+
+class Test_lazybind_Dispatch(ut.TestCase):
+    def test_dict(self):
+        orig = CreateObject("Scripting.Dictionary", interface=automation.IDispatch)
+        tinfo = orig.GetTypeInfo(0)
+        d = lazybind.Dispatch(orig, tinfo)
+        d.CompareMode = 42
+        d.Item["foo"] = 1
+        d.Item["bar"] = "spam foo"
+        d.Item["baz"] = 3.14
+        self.assertEqual(d.Item["foo"], 1)
+        self.assertEqual([k for k in iter(d)], ["foo", "bar", "baz"])
+        self.assertIsInstance(hash(d), int)
+        # No `_FlagAsMethod` in `lazybind.Dispatch`
+        self.assertIs(type(d._NewEnum()), ctypes.POINTER(IUnknown))
+        scrrun = GetModule("scrrun.dll")
+        scr_dict = d.QueryInterface(scrrun.IDictionary)
+        self.assertIsInstance(scr_dict, scrrun.IDictionary)
+        d.Item["qux"] = scr_dict
+        # `lazybind.Dispatch`, using type information, might return `None` for
+        # non-existent keys when accessed via direct index (`d[4]`),
+        # as it doesn't directly map to the `Item` property's error handling.
+        self.assertIsNone(d[4])
         with self.assertRaises(AttributeError):
             d.__foo__
 
