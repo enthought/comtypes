@@ -445,16 +445,10 @@ class ITypeComp(IUnknown):
         )
         kind = desckind.value
         if kind == DESCKIND_FUNCDESC:
-            fd = bindptr.lpfuncdesc[0]
-            fd.__ref__ = weakref.ref(
-                fd, lambda dead: ti.ReleaseFuncDesc(bindptr.lpfuncdesc)
-            )
+            fd = _deref_with_release(bindptr.lpfuncdesc, ti.ReleaseFuncDesc)
             return "function", fd
         elif kind == DESCKIND_VARDESC:
-            vd = bindptr.lpvardesc[0]
-            vd.__ref__ = weakref.ref(
-                vd, lambda dead: ti.ReleaseVarDesc(bindptr.lpvardesc)
-            )
+            vd = _deref_with_release(bindptr.lpvardesc, ti.ReleaseVarDesc)
             return "variable", vd
         elif kind == DESCKIND_TYPECOMP:
             return "type", bindptr.lptcomp
