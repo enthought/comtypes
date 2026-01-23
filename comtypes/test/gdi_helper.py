@@ -13,6 +13,7 @@ from ctypes.wintypes import (
     UINT,
     WORD,
 )
+from typing import Optional
 
 BI_RGB = 0  # No compression
 DIB_RGB_COLORS = 0
@@ -86,7 +87,7 @@ _CreateDIBSection.restype = HGDIOBJ
 
 
 @contextlib.contextmanager
-def get_dc(hwnd: int) -> Iterator[int]:
+def get_dc(hwnd: Optional[int]) -> Iterator[int]:
     """Context manager to get and release a device context (DC)."""
     dc = _GetDC(hwnd)
     assert dc, "Failed to get device context."
@@ -98,7 +99,7 @@ def get_dc(hwnd: int) -> Iterator[int]:
 
 
 @contextlib.contextmanager
-def create_compatible_dc(hdc: int) -> Iterator[int]:
+def create_compatible_dc(hdc: Optional[int]) -> Iterator[int]:
     """Context manager to create and delete a compatible device context."""
     mem_dc = _CreateCompatibleDC(hdc)
     assert mem_dc, "Failed to create compatible memory DC."
