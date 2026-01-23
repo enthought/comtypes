@@ -110,6 +110,33 @@ def create_compatible_dc(hdc: Optional[int]) -> Iterator[int]:
 
 
 @contextlib.contextmanager
+def create_dib_section(
+    hdc: int, bmi: BITMAPINFO, usage: int, hsection: int, dwoffset: int
+) -> Iterator[tuple[int, int]]:
+    """Context manager to create and manage a DIB section.
+
+    This function creates a device-independent bitmap (DIB) that applications
+    can write to directly. It provides a handle to the DIB and a pointer
+    address to its bitmap bits.
+    """
+    bits = c_void_p()
+    try:
+        hbm = _CreateDIBSection(
+            hdc,
+            byref(bmi),
+            usage,
+            byref(bits),
+            hsection,
+            dwoffset,
+        )
+        assert hbm, "Failed to create DIB section."
+        assert bits.value, "Failed to get the bitmap's bit value."
+        yield hbm, bits.value
+    finally:
+        _DeleteObject(hbm)
+
+
+@contextlib.contextmanager
 def select_object(hdc: int, obj: int) -> Iterator[int]:
     """Context manager to select a GDI object into a device context and restore
     the original.
@@ -144,7 +171,7 @@ def create_image_rendering_dc(
     usage: int = DIB_RGB_COLORS,
     hsection: int = 0,
     dwoffset: int = 0,
-) -> Iterator[tuple[int, c_void_p, BITMAPINFO, int]]:
+) -> Iterator[tuple[int, int, BITMAPINFO, int]]:
     """Context manager to create a device context for off-screen image rendering.
 
     This sets up a memory device context (DC) with a DIB section, allowing
@@ -163,25 +190,13 @@ def create_image_rendering_dc(
     Yields:
         A tuple containing:
             - mem_dc: The handle to the memory device context.
-            - bits: Pointer to the pixel data of the DIB section.
+            - bits: Pointer address to the pixel data of the DIB section.
             - bmi: The structure describing the DIB section.
             - hbm: The handle to the created DIB section bitmap.
     """
     # Get a screen DC to use as a reference for creating a compatible DC
     with get_dc(hwnd) as screen_dc, create_compatible_dc(screen_dc) as mem_dc:
-        bits = c_void_p()
         bmi = create_24bitmap_info(width, height)
-        try:
-            hbm = _CreateDIBSection(
-                mem_dc,
-                byref(bmi),
-                usage,
-                byref(bits),
-                hsection,
-                dwoffset,
-            )
-            assert hbm, "Failed to create DIB section."
+        with create_dib_section(mem_dc, bmi, usage, hsection, dwoffset) as (hbm, bits):
             with select_object(mem_dc, hbm):
                 yield mem_dc, bits, bmi, hbm
-        finally:
-            _DeleteObject(hbm)
