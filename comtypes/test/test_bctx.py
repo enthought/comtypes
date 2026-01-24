@@ -66,6 +66,29 @@ class Test_GetRunningObjectTable(unittest.TestCase):
         self.assertEqual(rot_from_bctx, rot_from_func)
 
 
+class Test_Register_Revoke_Release_ObjectBound(unittest.TestCase):
+    def test_register_and_revoke(self):
+        bctx = _create_bctx()
+        vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
+        # Binds the object to the bind context, ensuring it stays alive during
+        # the binding operation.
+        hr = bctx.RegisterObjectBound(vidctl)
+        self.assertEqual(hr, hresult.S_OK)
+        # At this point, `bctx` holds a reference to `vidctl`.
+        # Unlike `RegisterObjectParam`, there is no public API to retrieve
+        # objects registered via `RegisterObjectBound` from `IBindCtx`.
+        # Therefore, direct testing of `vidctl`'s accessibility via `bctx`
+        # after binding (similar to `GetObjectParam`) is not possible.
+        # Releases the reference to the object previously registered.
+        hr = bctx.RevokeObjectBound(vidctl)
+        self.assertEqual(hr, hresult.S_OK)
+        # `bctx` holds a reference to `vidctl` again.
+        # Releases all object references currently held by the bind context.
+        bctx.RegisterObjectBound(vidctl)
+        hr = bctx.ReleaseBoundObjects()
+        self.assertEqual(hr, hresult.S_OK)
+
+
 class Test_Get_Register_Revoke_ObjectParam(unittest.TestCase):
     def test_get_and_register_and_revoke(self):
         bctx = _create_bctx()
