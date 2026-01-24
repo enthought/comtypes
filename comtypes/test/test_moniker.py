@@ -235,9 +235,7 @@ class Test_RelativePathTo(unittest.TestCase):
                     )
                 ),
                 # Calculate the relative path from the directory of file1 to file2
-                os.path.normcase(
-                    os.path.normpath(file2.relative_to(file1, walk_up=True))
-                ),
+                os.path.normcase(os.path.normpath("..\\..\\dir_b\\file2.txt")),
             )
 
 
