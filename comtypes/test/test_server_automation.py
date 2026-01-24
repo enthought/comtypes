@@ -84,3 +84,19 @@ class TestVARIANTEnumerator(unittest.TestCase):
         item, fetched = enum_variant.Next(1)
         self.assertEqual(fetched, 0)
         self.assertFalse(item)
+
+    def test_Reset(self):
+        enum_variant = self.enumerator.QueryInterface(IEnumVARIANT)
+        # Get some items
+        item, fetched = enum_variant.Next(1)
+        self.assertEqual(item.QueryInterface(scrrun.IDictionary).Item("key1"), "value1")
+        item, fetched = enum_variant.Next(1)
+        self.assertEqual(item.QueryInterface(scrrun.IDictionary).Item("key2"), "value2")
+        # Reset the enumerator
+        hr = enum_variant.Reset()
+        self.assertEqual(hr, hresult.S_OK)
+        # Next should return the first item again
+        item, fetched = enum_variant.Next(1)
+        self.assertEqual(fetched, 1)
+        # Verify the content of the first dictionary
+        self.assertEqual(item.QueryInterface(scrrun.IDictionary).Item("key1"), "value1")
