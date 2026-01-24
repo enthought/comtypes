@@ -4,8 +4,12 @@ from ctypes.wintypes import DWORD
 from comtypes import GUID, IUnknown
 
 # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ne-objidl-mksys
+MKSYS_GENERICCOMPOSITE = 1
+MKSYS_FILEMONIKER = 2
 MKSYS_ITEMMONIKER = 4
 
+CLSID_CompositeMoniker = GUID("{00000309-0000-0000-c000-000000000046}")
+CLSID_FileMoniker = GUID("{00000303-0000-0000-C000-000000000046}")
 CLSID_AntiMoniker = GUID("{00000305-0000-0000-c000-000000000046}")
 CLSID_ItemMoniker = GUID("{00000304-0000-0000-c000-000000000046}")
 
@@ -14,6 +18,18 @@ ROTFLAGS_ALLOWANYCLIENT = 1
 LPOLESTR = LPCOLESTR = c_wchar_p
 
 _ole32 = OleDLL("ole32")
+
+_CreateGenericComposite = _ole32.CreateGenericComposite
+_CreateGenericComposite.argtypes = [
+    POINTER(IUnknown),  # pmkFirst
+    POINTER(IUnknown),  # pmkRest
+    POINTER(POINTER(IUnknown)),  # ppmkComposite
+]
+_CreateGenericComposite.restype = HRESULT
+
+_CreateFileMoniker = _ole32.CreateFileMoniker
+_CreateFileMoniker.argtypes = [LPCOLESTR, POINTER(POINTER(IUnknown))]
+_CreateFileMoniker.restype = HRESULT
 
 _CreateItemMoniker = _ole32.CreateItemMoniker
 _CreateItemMoniker.argtypes = [LPCOLESTR, LPCOLESTR, POINTER(POINTER(IUnknown))]
@@ -28,4 +44,5 @@ _GetRunningObjectTable.argtypes = [DWORD, POINTER(POINTER(IUnknown))]
 _GetRunningObjectTable.restype = HRESULT
 
 # Common COM Errors from Moniker/Binding Context operations
+MK_E_NEEDGENERIC = -2147221022  # 0x800401E2
 MK_E_UNAVAILABLE = -2147221021  # 0x800401E3
