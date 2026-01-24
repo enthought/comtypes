@@ -5,9 +5,11 @@ from comtypes import GUID, IUnknown
 
 # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ne-objidl-mksys
 MKSYS_GENERICCOMPOSITE = 1
+MKSYS_FILEMONIKER = 2
 MKSYS_ITEMMONIKER = 4
 
 CLSID_CompositeMoniker = GUID("{00000309-0000-0000-c000-000000000046}")
+CLSID_FileMoniker = GUID("{00000303-0000-0000-C000-000000000046}")
 CLSID_AntiMoniker = GUID("{00000305-0000-0000-c000-000000000046}")
 CLSID_ItemMoniker = GUID("{00000304-0000-0000-c000-000000000046}")
 

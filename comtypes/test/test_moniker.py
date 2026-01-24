@@ -11,11 +11,13 @@ from comtypes.client import CreateObject, GetModule
 from comtypes.persist import IPersistFile
 from comtypes.test.monikers_helper import (
     MK_E_NEEDGENERIC,
+    MKSYS_FILEMONIKER,
     MKSYS_GENERICCOMPOSITE,
     MKSYS_ITEMMONIKER,
     ROTFLAGS_ALLOWANYCLIENT,
     CLSID_AntiMoniker,
     CLSID_CompositeMoniker,
+    CLSID_FileMoniker,
     CLSID_ItemMoniker,
     _CreateBindCtx,
     _CreateFileMoniker,
@@ -80,6 +82,15 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
         self.assertEqual(mon.GetDisplayName(bctx, None), f"!{item_id1}!{item_id2}")
         self.assertEqual(mon.GetClassID(), CLSID_CompositeMoniker)
         self.assertEqual(mon.Inverse().GetClassID(), CLSID_CompositeMoniker)
+
+    def test_file(self):
+        with tempfile.NamedTemporaryFile() as f:
+            mon = _create_file_moniker(f.name)
+            self.assertEqual(mon.IsSystemMoniker(), MKSYS_FILEMONIKER)
+            bctx = _create_bctx()
+            self.assertEqual(mon.GetDisplayName(bctx, None), f.name)
+            self.assertEqual(mon.GetClassID(), CLSID_FileMoniker)
+            self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
 
     def test_item(self):
         item_id = str(GUID.create_new())
