@@ -1,9 +1,9 @@
 import contextlib
 import unittest
 from _ctypes import COMError
-from ctypes import POINTER, byref
+from ctypes import POINTER, byref, sizeof
 
-from comtypes import GUID, hresult
+from comtypes import GUID, hresult, tagBIND_OPTS2
 from comtypes.client import CreateObject, GetModule
 from comtypes.test.monikers_helper import (
     ROTFLAGS_ALLOWANYCLIENT,
@@ -64,3 +64,33 @@ class Test_GetRunningObjectTable(unittest.TestCase):
         rot_from_func.Revoke(dw_reg)
         # After revoking: should NOT be running again
         self.assertEqual(rot_from_bctx, rot_from_func)
+
+
+class Test_Set_Get_BindOptions(unittest.TestCase):
+    def test_set_get_bind_options(self):
+        bctx = _create_bctx()
+        # Create an instance of `BIND_OPTS2` and set some values.
+        # In comtypes, instances of Structure subclasses like `tagBIND_OPTS2`
+        # can be passed directly as arguments where COM methods expect a
+        # pointer to the structure.
+        hr = bctx.RemoteSetBindOptions(
+            tagBIND_OPTS2(
+                cbStruct=sizeof(tagBIND_OPTS2),
+                grfFlags=0x11223344,
+                grfMode=0x55667788,
+                dwTickCountDeadline=12345,
+            )
+        )
+        self.assertEqual(hr, hresult.S_OK)
+        # Create a new instance for retrieval.
+        # The `cbStruct` field is crucial in COM as it indicates the size of
+        # the structure to the COM component, allowing it to handle different
+        # versions of the structure (for backward and forward compatibility).
+        # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-ibindctx-getbindoptions#notes-to-callers
+        bind_opts = tagBIND_OPTS2(cbStruct=sizeof(tagBIND_OPTS2))
+        ret = bctx.RemoteGetBindOptions(bind_opts)
+        self.assertIsInstance(ret, tagBIND_OPTS2)
+        self.assertEqual(bind_opts.cbStruct, sizeof(tagBIND_OPTS2))
+        self.assertEqual(bind_opts.grfFlags, 0x11223344)
+        self.assertEqual(bind_opts.grfMode, 0x55667788)
+        self.assertEqual(bind_opts.dwTickCountDeadline, 12345)
