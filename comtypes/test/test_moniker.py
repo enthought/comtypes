@@ -61,6 +61,17 @@ class Test_IsEqual(unittest.TestCase):
         self.assertEqual(mon1.IsEqual(mon3), hresult.S_FALSE)
 
 
+class Test_Hash(unittest.TestCase):
+    def test_item(self):
+        item_id = str(GUID.create_new())
+        mon1 = _create_item_moniker("!", item_id)
+        mon2 = _create_item_moniker("!", item_id)  # Should be equal
+        mon3 = _create_item_moniker("!", str(GUID.create_new()))  # Should not be equal
+        self.assertEqual(mon1.Hash(), mon2.Hash())
+        self.assertNotEqual(mon1.Hash(), mon3.Hash())
+        self.assertNotEqual(mon2.Hash(), mon3.Hash())
+
+
 class Test_IsRunning(unittest.TestCase):
     def test_item(self):
         vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
