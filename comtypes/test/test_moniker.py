@@ -1,13 +1,16 @@
 import contextlib
 import unittest
+from _ctypes import COMError
 from ctypes import POINTER, byref
 
 from comtypes import GUID, hresult
 from comtypes.client import CreateObject, GetModule
 from comtypes.test.monikers_helper import (
+    MK_E_NEEDGENERIC,
     MKSYS_ITEMMONIKER,
     ROTFLAGS_ALLOWANYCLIENT,
     CLSID_AntiMoniker,
+    CLSID_CompositeMoniker,
     CLSID_ItemMoniker,
     _CreateBindCtx,
     _CreateItemMoniker,
@@ -49,6 +52,20 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
         self.assertEqual(mon.GetDisplayName(bctx, None), f"!{item_id}")
         self.assertEqual(mon.GetClassID(), CLSID_ItemMoniker)
         self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
+
+
+class Test_ComposeWith(unittest.TestCase):
+    def test_item(self):
+        item_id = str(GUID.create_new())
+        mon = _create_item_moniker("!", item_id)
+        item_mon2 = _create_item_moniker("!", str(GUID.create_new()))
+        self.assertEqual(
+            mon.ComposeWith(item_mon2, False).GetClassID(),
+            CLSID_CompositeMoniker,
+        )
+        with self.assertRaises(COMError) as cm:
+            mon.ComposeWith(item_mon2, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
 
 
 class Test_IsEqual(unittest.TestCase):

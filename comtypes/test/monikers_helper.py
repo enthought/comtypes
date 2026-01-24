@@ -6,6 +6,7 @@ from comtypes import GUID, IUnknown
 # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ne-objidl-mksys
 MKSYS_ITEMMONIKER = 4
 
+CLSID_CompositeMoniker = GUID("{00000309-0000-0000-c000-000000000046}")
 CLSID_AntiMoniker = GUID("{00000305-0000-0000-c000-000000000046}")
 CLSID_ItemMoniker = GUID("{00000304-0000-0000-c000-000000000046}")
 
@@ -28,4 +29,5 @@ _GetRunningObjectTable.argtypes = [DWORD, POINTER(POINTER(IUnknown))]
 _GetRunningObjectTable.restype = HRESULT
 
 # Common COM Errors from Moniker/Binding Context operations
+MK_E_NEEDGENERIC = -2147221022  # 0x800401E2
 MK_E_UNAVAILABLE = -2147221021  # 0x800401E3
