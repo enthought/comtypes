@@ -4,6 +4,7 @@ from ctypes.wintypes import DWORD
 from comtypes import GUID, IUnknown
 
 # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ne-objidl-mksys
+MKSYS_GENERICCOMPOSITE = 1
 MKSYS_ITEMMONIKER = 4
 
 CLSID_CompositeMoniker = GUID("{00000309-0000-0000-c000-000000000046}")

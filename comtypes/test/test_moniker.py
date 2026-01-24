@@ -7,6 +7,7 @@ from comtypes import GUID, hresult
 from comtypes.client import CreateObject, GetModule
 from comtypes.test.monikers_helper import (
     MK_E_NEEDGENERIC,
+    MKSYS_GENERICCOMPOSITE,
     MKSYS_ITEMMONIKER,
     ROTFLAGS_ALLOWANYCLIENT,
     CLSID_AntiMoniker,
@@ -56,6 +57,19 @@ def _create_rot() -> IRunningObjectTable:
 
 
 class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
+    def test_generic_composite(self):
+        item_id1 = str(GUID.create_new())
+        item_id2 = str(GUID.create_new())
+        mon = _create_generic_composite(
+            _create_item_moniker("!", item_id1),
+            _create_item_moniker("!", item_id2),
+        )
+        self.assertEqual(mon.IsSystemMoniker(), MKSYS_GENERICCOMPOSITE)
+        bctx = _create_bctx()
+        self.assertEqual(mon.GetDisplayName(bctx, None), f"!{item_id1}!{item_id2}")
+        self.assertEqual(mon.GetClassID(), CLSID_CompositeMoniker)
+        self.assertEqual(mon.Inverse().GetClassID(), CLSID_CompositeMoniker)
+
     def test_item(self):
         item_id = str(GUID.create_new())
         mon = _create_item_moniker("!", item_id)
