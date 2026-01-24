@@ -1,6 +1,7 @@
 import unittest
 
 import comtypes.client
+import comtypes.hresult as hresult
 from comtypes.automation import IEnumVARIANT
 from comtypes.server.automation import VARIANTEnumerator
 
@@ -60,6 +61,26 @@ class TestVARIANTEnumerator(unittest.TestCase):
         dict3 = item3.QueryInterface(scrrun.IDictionary)
         self.assertEqual(dict3.Item("key3"), "value3")
         # After all items are enumerated, Next should return 0 fetched
+        item, fetched = enum_variant.Next(1)
+        self.assertEqual(fetched, 0)
+        self.assertFalse(item)
+
+    def test_Skip(self):
+        enum_variant = self.enumerator.QueryInterface(IEnumVARIANT)
+        # Explicitly reset the enumerator, though it should be fresh
+        self.assertEqual(enum_variant.Reset(), hresult.S_OK)
+        # Skip zero items, should return S_OK
+        self.assertEqual(enum_variant.Skip(0), hresult.S_OK)
+        # Skip the first item
+        self.assertEqual(enum_variant.Skip(1), hresult.S_OK)
+        # Next should return the second item
+        item, fetched = enum_variant.Next(1)
+        self.assertEqual(fetched, 1)
+        dict2 = item.QueryInterface(scrrun.IDictionary)
+        self.assertEqual(dict2.Item("key2"), "value2")
+        # Skip remaining items (1 items available, but skip 2)
+        self.assertEqual(enum_variant.Skip(2), hresult.S_FALSE)
+        # Next should now return 0 fetched
         item, fetched = enum_variant.Next(1)
         self.assertEqual(fetched, 0)
         self.assertFalse(item)
