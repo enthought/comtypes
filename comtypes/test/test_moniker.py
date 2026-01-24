@@ -154,6 +154,41 @@ class Test_IsRunning(unittest.TestCase):
         self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_FALSE)
 
 
+class Test_CommonPrefixWith(unittest.TestCase):
+    def test_file(self):
+        bctx = _create_bctx()
+        # Create temporary directories and files for realistic File Monikers
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            dir_a = tmpdir / "dir_a"
+            dir_b = tmpdir / "dir_a" / "dir_b"
+            dir_b.mkdir(parents=True)
+            file1 = dir_a / "file1.txt"
+            file2 = dir_b / "file2.txt"
+            file3 = tmpdir / "file3.txt"
+            mon1 = _create_file_moniker(str(file1))  # tmpdir/dir_a/file1.txt
+            mon2 = _create_file_moniker(str(file2))  # tmpdir/dir_a/dir_b/file2.txt
+            mon3 = _create_file_moniker(str(file3))  # tmpdir/file3.txt
+            # Common prefix between mon1 and mon2 (tmpdir/dir_a)
+            self.assertEqual(
+                os.path.normcase(
+                    os.path.normpath(
+                        mon1.CommonPrefixWith(mon2).GetDisplayName(bctx, None)
+                    )
+                ),
+                os.path.normcase(os.path.normpath(dir_a)),
+            )
+            # Common prefix between mon1 and mon3 (tmpdir)
+            self.assertEqual(
+                os.path.normcase(
+                    os.path.normpath(
+                        mon1.CommonPrefixWith(mon3).GetDisplayName(bctx, None)
+                    )
+                ),
+                os.path.normcase(os.path.normpath(tmpdir)),
+            )
+
+
 class Test_Enum(unittest.TestCase):
     def test_generic_composite(self):
         item_id1 = str(GUID.create_new())
