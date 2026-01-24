@@ -26,7 +26,7 @@ class TestVARIANTEnumerator(unittest.TestCase):
         self.items = [dict1, dict2, dict3]
         self.enumerator = VARIANTEnumerator(self.items)
 
-    def test_Next(self):
+    def test_Next_single_item(self):
         enum_variant = self.enumerator.QueryInterface(IEnumVARIANT)
         # Retrieve the first item
         item, fetched = enum_variant.Next(1)
@@ -43,6 +43,23 @@ class TestVARIANTEnumerator(unittest.TestCase):
         dict3 = item.QueryInterface(scrrun.IDictionary)
         self.assertEqual(dict3.Item("key3"), "value3")
         # After all items are enumerated, `Next` should return 0 fetched
+        item, fetched = enum_variant.Next(1)
+        self.assertEqual(fetched, 0)
+        self.assertFalse(item)
+
+    def test_Next_multiple_items(self):
+        enum_variant = self.enumerator.QueryInterface(IEnumVARIANT)
+        # Retrieve all three items at once.
+        # We can now call Next(celt) with celt != 1, the call always returns a
+        # list:
+        item1, item2, item3 = enum_variant.Next(3)
+        dict1 = item1.QueryInterface(scrrun.IDictionary)
+        self.assertEqual(dict1.Item("key1"), "value1")
+        dict2 = item2.QueryInterface(scrrun.IDictionary)
+        self.assertEqual(dict2.Item("key2"), "value2")
+        dict3 = item3.QueryInterface(scrrun.IDictionary)
+        self.assertEqual(dict3.Item("key3"), "value3")
+        # After all items are enumerated, Next should return 0 fetched
         item, fetched = enum_variant.Next(1)
         self.assertEqual(fetched, 0)
         self.assertFalse(item)
