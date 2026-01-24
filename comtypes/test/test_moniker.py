@@ -1,10 +1,14 @@
 import contextlib
+import os
+import tempfile
 import unittest
 from _ctypes import COMError
 from ctypes import POINTER, byref
+from pathlib import Path
 
 from comtypes import GUID, hresult
 from comtypes.client import CreateObject, GetModule
+from comtypes.persist import IPersistFile
 from comtypes.test.monikers_helper import (
     MK_E_NEEDGENERIC,
     MKSYS_GENERICCOMPOSITE,
@@ -14,6 +18,7 @@ from comtypes.test.monikers_helper import (
     CLSID_CompositeMoniker,
     CLSID_ItemMoniker,
     _CreateBindCtx,
+    _CreateFileMoniker,
     _CreateGenericComposite,
     _CreateItemMoniker,
     _GetRunningObjectTable,
@@ -33,6 +38,12 @@ from comtypes.gen.MSVidCtlLib import (
 def _create_generic_composite(mk_first: IMoniker, mk_rest: IMoniker) -> IMoniker:
     mon = POINTER(IMoniker)()
     _CreateGenericComposite(mk_first, mk_rest, byref(mon))
+    return mon  # type: ignore
+
+
+def _create_file_moniker(path: str) -> IMoniker:
+    mon = POINTER(IMoniker)()
+    _CreateFileMoniker(path, byref(mon))
     return mon  # type: ignore
 
 
@@ -142,3 +153,19 @@ class Test_Enum(unittest.TestCase):
         comp_mon = _create_generic_composite(item_mon1, item_mon2)
         enum_moniker = comp_mon.Enum(True)  # True for forward enumeration
         self.assertIsInstance(enum_moniker, IEnumMoniker)
+
+
+class Test_RemoteBindToObject(unittest.TestCase):
+    def test_file(self):
+        bctx = _create_bctx()
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            tmpfile = tmpdir / "tmp.lnk"
+            tmpfile.touch()
+            mon = _create_file_moniker(str(tmpfile))
+            bound_obj = mon.RemoteBindToObject(bctx, None, IPersistFile._iid_)
+            pf = bound_obj.QueryInterface(IPersistFile)
+            self.assertEqual(
+                os.path.normcase(os.path.normpath(tmpfile)),
+                os.path.normcase(os.path.normpath(pf.GetCurFile())),
+            )

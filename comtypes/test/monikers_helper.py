@@ -25,6 +25,10 @@ _CreateGenericComposite.argtypes = [
 ]
 _CreateGenericComposite.restype = HRESULT
 
+_CreateFileMoniker = _ole32.CreateFileMoniker
+_CreateFileMoniker.argtypes = [LPCOLESTR, POINTER(POINTER(IUnknown))]
+_CreateFileMoniker.restype = HRESULT
+
 _CreateItemMoniker = _ole32.CreateItemMoniker
 _CreateItemMoniker.argtypes = [LPCOLESTR, LPCOLESTR, POINTER(POINTER(IUnknown))]
 _CreateItemMoniker.restype = HRESULT
