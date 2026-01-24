@@ -108,3 +108,28 @@ class TestVARIANTEnumerator(unittest.TestCase):
         with self.assertRaises(COMError) as cm:
             enum_variant.Clone()
         self.assertEqual(cm.exception.hresult, hresult.E_NOTIMPL)
+
+    def test_dunder_iter(self):
+        enum_variant = self.enumerator.QueryInterface(IEnumVARIANT)
+        # Ensure the enumerator is reset before iterating
+        enum_variant.Reset()
+        dict1, dict2, dict3 = [
+            i.QueryInterface(scrrun.IDictionary) for i in enum_variant
+        ]
+        self.assertEqual(dict1["key1"], "value1")
+        self.assertEqual(dict2["key2"], "value2")
+        self.assertEqual(dict3["key3"], "value3")
+
+    def test_dunder_getitem(self):
+        enum_variant = self.enumerator.QueryInterface(IEnumVARIANT)
+        enum_variant.Reset()
+        # Directly access items by index
+        dict1 = enum_variant[0].QueryInterface(scrrun.IDictionary)
+        self.assertEqual(dict1["key1"], "value1")
+        dict2 = enum_variant[1].QueryInterface(scrrun.IDictionary)
+        self.assertEqual(dict2["key2"], "value2")
+        dict3 = enum_variant[2].QueryInterface(scrrun.IDictionary)
+        self.assertEqual(dict3["key3"], "value3")
+        # Test index out of bounds
+        with self.assertRaises(IndexError):
+            _ = enum_variant[len(self.items)]
