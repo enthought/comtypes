@@ -1,9 +1,11 @@
 import contextlib
+import ctypes
 import os
 import tempfile
 import unittest
 from _ctypes import COMError
-from ctypes import POINTER, byref
+from ctypes import POINTER, WinDLL, byref
+from ctypes.wintypes import DWORD, LPCWSTR, LPWSTR, MAX_PATH
 from pathlib import Path
 
 from comtypes import GUID, hresult
@@ -35,6 +37,19 @@ from comtypes.gen.MSVidCtlLib import (
     IMoniker,
     IRunningObjectTable,
 )
+
+_kernel32 = WinDLL("kernel32")
+
+_GetLongPathNameW = _kernel32.GetLongPathNameW
+_GetLongPathNameW.argtypes = [LPCWSTR, LPWSTR, DWORD]
+_GetLongPathNameW.restype = DWORD
+
+
+def _get_long_path_name(path: str) -> str:
+    """Converts a path to its long form using GetLongPathNameW."""
+    buffer = ctypes.create_unicode_buffer(MAX_PATH)
+    length = _GetLongPathNameW(path, buffer, MAX_PATH)
+    return buffer.value[:length]
 
 
 def _create_generic_composite(mk_first: IMoniker, mk_rest: IMoniker) -> IMoniker:
@@ -88,7 +103,14 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
             mon = _create_file_moniker(f.name)
             self.assertEqual(mon.IsSystemMoniker(), MKSYS_FILEMONIKER)
             bctx = _create_bctx()
-            self.assertEqual(mon.GetDisplayName(bctx, None), f.name)
+            self.assertEqual(
+                os.path.normcase(
+                    os.path.normpath(
+                        _get_long_path_name(mon.GetDisplayName(bctx, None))
+                    )
+                ),
+                os.path.normcase(os.path.normpath(_get_long_path_name(f.name))),
+            )
             self.assertEqual(mon.GetClassID(), CLSID_FileMoniker)
             self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
 
@@ -242,6 +264,8 @@ class Test_RemoteBindToObject(unittest.TestCase):
             bound_obj = mon.RemoteBindToObject(bctx, None, IPersistFile._iid_)
             pf = bound_obj.QueryInterface(IPersistFile)
             self.assertEqual(
-                os.path.normcase(os.path.normpath(tmpfile)),
-                os.path.normcase(os.path.normpath(pf.GetCurFile())),
+                os.path.normcase(os.path.normpath(_get_long_path_name(str(tmpfile)))),
+                os.path.normcase(
+                    os.path.normpath(_get_long_path_name(pf.GetCurFile()))
+                ),
             )
