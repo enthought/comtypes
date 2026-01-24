@@ -1,4 +1,5 @@
 import unittest
+from _ctypes import COMError
 
 import comtypes.client
 import comtypes.hresult as hresult
@@ -100,3 +101,10 @@ class TestVARIANTEnumerator(unittest.TestCase):
         self.assertEqual(fetched, 1)
         # Verify the content of the first dictionary
         self.assertEqual(item.QueryInterface(scrrun.IDictionary).Item("key1"), "value1")
+
+    def test_Clone(self):
+        enum_variant = self.enumerator.QueryInterface(IEnumVARIANT)
+        # Clone is not implemented in `VARIANTEnumerator`.
+        with self.assertRaises(COMError) as cm:
+            enum_variant.Clone()
+        self.assertEqual(cm.exception.hresult, hresult.E_NOTIMPL)
