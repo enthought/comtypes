@@ -189,6 +189,36 @@ class Test_CommonPrefixWith(unittest.TestCase):
             )
 
 
+class Test_RelativePathTo(unittest.TestCase):
+    def test_file(self):
+        bctx = _create_bctx()
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            dir_a = tmpdir / "dir_a"
+            dir_b = tmpdir / "dir_b"
+            dir_a.mkdir()
+            dir_b.mkdir()
+            file1 = dir_a / "file1.txt"
+            file2 = dir_b / "file2.txt"
+            mon_from = _create_file_moniker(str(file1))  # tmpdir/dir_a/file1.txt
+            mon_to = _create_file_moniker(str(file2))  # tmpdir/dir_b/file2.txt
+            # The COM API returns paths with backslashes on Windows, so we normalize.
+            self.assertEqual(
+                # Check the display name of the relative moniker
+                # The moniker's `RelativePathTo` method calculates the path from
+                # the base of the `mon_from` to the target `mon_to`.
+                os.path.normcase(
+                    os.path.normpath(
+                        mon_from.RelativePathTo(mon_to).GetDisplayName(bctx, None)
+                    )
+                ),
+                # Calculate the relative path from the directory of file1 to file2
+                os.path.normcase(
+                    os.path.normpath(file2.relative_to(file1, walk_up=True))
+                ),
+            )
+
+
 class Test_Enum(unittest.TestCase):
     def test_generic_composite(self):
         item_id1 = str(GUID.create_new())
