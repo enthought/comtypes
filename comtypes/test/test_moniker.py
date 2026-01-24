@@ -13,6 +13,7 @@ from comtypes.test.monikers_helper import (
     CLSID_CompositeMoniker,
     CLSID_ItemMoniker,
     _CreateBindCtx,
+    _CreateGenericComposite,
     _CreateItemMoniker,
     _GetRunningObjectTable,
 )
@@ -20,7 +21,18 @@ from comtypes.test.monikers_helper import (
 with contextlib.redirect_stdout(None):  # supress warnings
     GetModule("msvidctl.dll")
 from comtypes.gen import MSVidCtlLib as msvidctl
-from comtypes.gen.MSVidCtlLib import IBindCtx, IMoniker, IRunningObjectTable
+from comtypes.gen.MSVidCtlLib import (
+    IBindCtx,
+    IEnumMoniker,
+    IMoniker,
+    IRunningObjectTable,
+)
+
+
+def _create_generic_composite(mk_first: IMoniker, mk_rest: IMoniker) -> IMoniker:
+    mon = POINTER(IMoniker)()
+    _CreateGenericComposite(mk_first, mk_rest, byref(mon))
+    return mon  # type: ignore
 
 
 def _create_item_moniker(delim: str, item: str) -> IMoniker:
@@ -104,3 +116,15 @@ class Test_IsRunning(unittest.TestCase):
         rot.Revoke(dw_reg)
         # After revoking: should NOT be running again
         self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_FALSE)
+
+
+class Test_Enum(unittest.TestCase):
+    def test_generic_composite(self):
+        item_id1 = str(GUID.create_new())
+        item_id2 = str(GUID.create_new())
+        item_mon1 = _create_item_moniker("!", item_id1)
+        item_mon2 = _create_item_moniker("!", item_id2)
+        # Create a composite moniker to ensure multiple elements for enumeration
+        comp_mon = _create_generic_composite(item_mon1, item_mon2)
+        enum_moniker = comp_mon.Enum(True)  # True for forward enumeration
+        self.assertIsInstance(enum_moniker, IEnumMoniker)

@@ -16,6 +16,14 @@ LPOLESTR = LPCOLESTR = c_wchar_p
 
 _ole32 = OleDLL("ole32")
 
+_CreateGenericComposite = _ole32.CreateGenericComposite
+_CreateGenericComposite.argtypes = [
+    POINTER(IUnknown),  # pmkFirst
+    POINTER(IUnknown),  # pmkRest
+    POINTER(POINTER(IUnknown)),  # ppmkComposite
+]
+_CreateGenericComposite.restype = HRESULT
+
 _CreateItemMoniker = _ole32.CreateItemMoniker
 _CreateItemMoniker.argtypes = [LPCOLESTR, LPCOLESTR, POINTER(POINTER(IUnknown))]
 _CreateItemMoniker.restype = HRESULT
