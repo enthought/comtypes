@@ -66,6 +66,30 @@ class Test_GetRunningObjectTable(unittest.TestCase):
         self.assertEqual(rot_from_bctx, rot_from_func)
 
 
+class Test_Get_Register_Revoke_ObjectParam(unittest.TestCase):
+    def test_get_and_register_and_revoke(self):
+        bctx = _create_bctx()
+        key = str(GUID.create_new())
+        vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
+        # `GetObjectParam` should fail as it's NOT registered yet
+        with self.assertRaises(COMError) as cm:
+            bctx.GetObjectParam(key)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        # Register object
+        hr = bctx.RegisterObjectParam(key, vidctl)
+        self.assertEqual(hr, hresult.S_OK)
+        # `GetObjectParam` should succeed now
+        ret_obj = bctx.GetObjectParam(key)
+        self.assertEqual(ret_obj.QueryInterface(msvidctl.IMSVidCtl), vidctl)
+        # Revoke object
+        hr = bctx.RevokeObjectParam(key)
+        self.assertEqual(hr, hresult.S_OK)
+        # `GetObjectParam` should fail again after revoke
+        with self.assertRaises(COMError) as cm:
+            bctx.GetObjectParam(key)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+
+
 class Test_Set_Get_BindOptions(unittest.TestCase):
     def test_set_get_bind_options(self):
         bctx = _create_bctx()
