@@ -238,6 +238,14 @@ class Test_CreateTypeLib(unittest.TestCase):
             (libname, docstring, helpctx, helpfile),
         )
 
+    def test_CreateTypeInfo(self):
+        ctlib = CreateTypeLib(str(self.typelib_path))
+        # Create a type info
+        self.assertIsInstance(
+            ctlib.CreateTypeInfo("IMyInterface", typeinfo.TKIND_INTERFACE),
+            typeinfo.ICreateTypeInfo,
+        )
+
 
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
