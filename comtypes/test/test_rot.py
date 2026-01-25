@@ -12,6 +12,11 @@ from comtypes.test.monikers_helper import (
     _CreateItemMoniker,
     _GetRunningObjectTable,
 )
+from comtypes.test.time_structs_helper import (
+    SYSTEMTIME,
+    CompareFileTime,
+    SystemTimeToFileTime,
+)
 
 with contextlib.redirect_stdout(None):  # supress warnings
     GetModule("msvidctl.dll")
@@ -74,3 +79,16 @@ class Test_EnumRunning(unittest.TestCase):
         rot = _create_rot()
         enum_moniker = rot.EnumRunning()
         self.assertIsInstance(enum_moniker, IEnumMoniker)
+
+
+class Test_NoteChangeTime_GetTimeOfLastChange(unittest.TestCase):
+    def test_modified_time(self):
+        vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
+        item_id = str(GUID.create_new())
+        mon = _create_item_moniker("!", item_id)
+        rot = _create_rot()
+        dw_reg = rot.Register(ROTFLAGS_ALLOWANYCLIENT, vidctl, mon)
+        ft = SystemTimeToFileTime(SYSTEMTIME(wYear=2000, wMonth=1, wDay=1))
+        rot.NoteChangeTime(dw_reg, ft)
+        self.assertEqual(CompareFileTime(rot.GetTimeOfLastChange(mon), ft), 0)
+        rot.Revoke(dw_reg)

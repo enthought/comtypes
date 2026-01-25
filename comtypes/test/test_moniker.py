@@ -2,6 +2,7 @@ import contextlib
 import ctypes
 import os
 import tempfile
+import time
 import unittest
 from _ctypes import COMError
 from ctypes import POINTER, WinDLL, byref
@@ -27,6 +28,7 @@ from comtypes.test.monikers_helper import (
     _CreateItemMoniker,
     _GetRunningObjectTable,
 )
+from comtypes.test.time_structs_helper import CompareFileTime
 
 with contextlib.redirect_stdout(None):  # supress warnings
     GetModule("msvidctl.dll")
@@ -174,6 +176,24 @@ class Test_IsRunning(unittest.TestCase):
         rot.Revoke(dw_reg)
         # After revoking: should NOT be running again
         self.assertEqual(mon.IsRunning(bctx, None, None), hresult.S_FALSE)
+
+
+class Test_GetTimeOfLastChange(unittest.TestCase):
+    def test_file(self):
+        bctx = _create_bctx()
+        with tempfile.NamedTemporaryFile() as f:
+            tmpfile = Path(f.name)
+            f.write(b"test data")
+            # Create a File Moniker for the temporary file
+            file_mon = _create_file_moniker(str(tmpfile))
+            # Get initial time of last change for the file
+            initial_ft = file_mon.GetTimeOfLastChange(bctx, None)
+            # Modify the file to change its last write time
+            time.sleep(0.01)  # Ensure a different timestamp
+            os.write(f.fileno(), b"more data")
+            after_change_ft = file_mon.GetTimeOfLastChange(bctx, None)
+            # Verify the time has changed (after_change_ft > initial_ft)
+            self.assertEqual(CompareFileTime(after_change_ft, initial_ft), 1)
 
 
 class Test_CommonPrefixWith(unittest.TestCase):
