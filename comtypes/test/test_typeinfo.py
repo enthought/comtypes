@@ -268,6 +268,31 @@ class Test_CreateTypeLib(unittest.TestCase):
         )
 
 
+class Test_ICreateTypeInfo(unittest.TestCase):
+    def setUp(self):
+        td = tempfile.TemporaryDirectory()
+        self.addCleanup(td.cleanup)
+        self.tmpdir = Path(td.name)
+        self.typelib_path = self.tmpdir / "test.tlb"
+        self.ctlib = CreateTypeLib(str(self.typelib_path))
+
+    def test_Documentaion(self):
+        name = "IMyInterface"
+        docstring = "My test interface"
+        helpctx = 123
+        ctinfo = self.ctlib.CreateTypeInfo(name, typeinfo.TKIND_INTERFACE)
+        ctinfo.SetDocString(docstring)
+        ctinfo.SetHelpContext(helpctx)
+        # `Layout` must be called before `SaveAllChanges`.
+        ctinfo.LayOut()
+        self.ctlib.SaveAllChanges()
+        # Load the typelib and verify the type info
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        _, tinfo = tlib.FindName(name)  # type: ignore
+        doc = tinfo.GetDocumentation(-1)
+        self.assertEqual(doc, (name, docstring, helpctx, None))
+
+
 class Test_GetModuleFileName(unittest.TestCase):
     @unittest.skipUnless(
         sys.prefix == sys.base_prefix,
