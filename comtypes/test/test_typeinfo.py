@@ -1,12 +1,15 @@
 import ctypes
 import os
 import sys
+import tempfile
 import unittest
 from _ctypes import COMError
 from ctypes.wintypes import MAX_PATH
+from pathlib import Path
 
 from comtypes import GUID, hresult, typeinfo
 from comtypes.typeinfo import (
+    CreateTypeLib,
     GetModuleFileName,
     LoadRegTypeLib,
     LoadTypeLibEx,
@@ -207,6 +210,33 @@ class Test_ITypeComp_Bind(unittest.TestCase):
         tcomp = tlib.GetTypeComp()
         with self.assertRaises(NameError):
             tcomp.Bind("NonExistentNameForTest")
+
+
+class Test_CreateTypeLib(unittest.TestCase):
+    def setUp(self):
+        td = tempfile.TemporaryDirectory()
+        self.addCleanup(td.cleanup)
+        self.tmpdir = Path(td.name)
+        self.typelib_path = self.tmpdir / "test.tlb"
+
+    def test_Documentation(self):
+        ctlib = CreateTypeLib(str(self.typelib_path))
+        libname = "MyTestTypeLib"
+        docstring = "This is a test type library docstring."
+        helpctx = 123
+        helpfile = "myhelp.chm"
+        ctlib.SetName(libname)
+        ctlib.SetDocString(docstring)
+        ctlib.SetHelpContext(helpctx)
+        ctlib.SetHelpFileName(helpfile)
+        ctlib.SaveAllChanges()
+        # Verify by loading the created typelib
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        doc = tlib.GetDocumentation(-1)
+        self.assertEqual(
+            doc[:-1] + (Path(doc[-1].strip("\0")).name,),  # type: ignore
+            (libname, docstring, helpctx, helpfile),
+        )
 
 
 class Test_GetModuleFileName(unittest.TestCase):
