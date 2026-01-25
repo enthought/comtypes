@@ -1,14 +1,7 @@
-import sys
 import unittest
-from ctypes import *
+from ctypes import c_void_p
 
-from comtypes import GUID, IUnknown
-
-
-def test_main():
-    from test import test_support
-
-    test_support.run_unittest(Test)
+from comtypes import IUnknown
 
 
 class Test(unittest.TestCase):

@@ -37,35 +37,7 @@ class ResourceDenied(Exception):
     """
 
 
-def is_resource_enabled(resource):
-    """Test whether a resource is enabled.
-
-    If the caller's module is __main__ then automatically return True."""
-    if sys._getframe().f_back.f_globals.get("__name__") == "__main__":
-        return True
-    result = use_resources is not None and (
-        resource in use_resources or "*" in use_resources
-    )
-    if not result:
-        _unavail[resource] = None
-    return result
-
-
 _unavail = {}
-
-
-def requires(resource, msg=None):
-    """Raise ResourceDenied if the specified resource is not available.
-
-    If the caller's module is __main__ then automatically return True."""
-    # see if the caller's module is __main__ - if so, treat as if
-    # the resource was set
-    if sys._getframe().f_back.f_globals.get("__name__") == "__main__":
-        return
-    if not is_resource_enabled(resource):
-        if msg is None:
-            msg = f"Use of the `{resource}` resource not enabled"
-        raise ResourceDenied(msg)
 
 
 def find_package_modules(package, mask):

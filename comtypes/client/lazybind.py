@@ -159,11 +159,7 @@ class Dispatch:
             def caller(*args):
                 return self._comobj._invoke(descr.memid, descr.invkind, 0, *args)
 
-            try:
-                caller.__name__ = name
-            except TypeError:
-                # In Python 2.3, __name__ is readonly
-                pass
+            caller.__name__ = name
             return caller
 
     def __setattr__(self, name, value):
