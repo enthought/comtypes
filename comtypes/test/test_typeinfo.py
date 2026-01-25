@@ -238,6 +238,27 @@ class Test_CreateTypeLib(unittest.TestCase):
             (libname, docstring, helpctx, helpfile),
         )
 
+    def test_LibAttr(self):
+        ctlib = CreateTypeLib(str(self.typelib_path))
+        libid = GUID.create_new()
+        lcid = 1033  # English (United States)
+        LIBFLAG_FRESTRICTED = 0x1
+        major_version = 1
+        minor_version = 2
+        ctlib.SetGuid(libid)
+        ctlib.SetLcid(lcid)
+        ctlib.SetVersion(major_version, minor_version)
+        ctlib.SetLibFlags(LIBFLAG_FRESTRICTED)
+        ctlib.SaveAllChanges()
+        # Verify by loading the created typelib
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        la = tlib.GetLibAttr()
+        self.assertEqual(la.guid, libid)
+        self.assertEqual(la.lcid, lcid)
+        self.assertTrue(la.wLibFlags & LIBFLAG_FRESTRICTED)
+        self.assertEqual(la.wMajorVerNum, major_version)
+        self.assertEqual(la.wMinorVerNum, minor_version)
+
     def test_CreateTypeInfo(self):
         ctlib = CreateTypeLib(str(self.typelib_path))
         # Create a type info
