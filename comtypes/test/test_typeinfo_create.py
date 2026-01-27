@@ -4,7 +4,7 @@ from ctypes import HRESULT, POINTER, Structure, pointer
 from ctypes.wintypes import DWORD, INT, ULONG
 from pathlib import Path
 
-from comtypes import BSTR, COMMETHOD, GUID, automation, typeinfo
+from comtypes import BSTR, COMMETHOD, GUID, IUnknown, automation, typeinfo
 from comtypes.automation import LCID, VARIANT, VARIANTARG
 from comtypes.typeinfo import CreateTypeLib, ITypeLib, LoadTypeLibEx
 
@@ -224,3 +224,62 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         _, tinfo = tlib.FindName(var_name)  # type: ignore
         doc = tinfo.GetDocumentation(var_memid)
         self.assertEqual(doc, (var_name, var_docstring, var_helpctx, None))
+
+    def test_Interface_TYPEATTR(self):
+        # Create the base type info
+        base_name = "IUnknown"
+        base_iid = IUnknown._iid_
+        base_ctinfo = self.ctlib.CreateTypeInfo(base_name, typeinfo.TKIND_INTERFACE)
+        base_ctinfo.SetGuid(base_iid)
+        base_ctinfo.LayOut()
+        # Create the derived type info
+        derived_name = "IMyDerived"
+        derived_iid = GUID.create_new()
+        typeflags = typeinfo.TYPEFLAG_FHIDDEN
+        major_version = 2
+        minor_version = 1
+        alignment = 8
+        derived_ctinfo = self.ctlib.CreateTypeInfo(
+            derived_name, typeinfo.TKIND_INTERFACE
+        )
+        derived_ctinfo.SetGuid(derived_iid)
+        derived_ctinfo.SetTypeFlags(typeflags)
+        derived_ctinfo.SetVersion(major_version, minor_version)
+        derived_ctinfo.SetAlignment(alignment)
+        derived_ctinfo.AddImplType(0, derived_ctinfo.AddRefTypeInfo(base_ctinfo))
+        derived_ctinfo.LayOut()
+        self.ctlib.SaveAllChanges()
+        # Load the typelib and verify the type info's GUID
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        # Get the base type info
+        _, base_tinfo = tlib.FindName(base_name)  # type: ignore
+        base_ta = base_tinfo.GetTypeAttr()
+        self.assertEqual(base_ta.cImplTypes, 0)  # has NO referenced type
+        self.assertEqual(base_ta.guid, base_iid)
+        self.assertEqual(base_ta.wTypeFlags, 0)
+        self.assertEqual(base_ta.cbAlignment, alignment)
+        # Get the derived type info
+        _, derived_tinfo = tlib.FindName(derived_name)  # type: ignore
+        derived_ta = derived_tinfo.GetTypeAttr()
+        self.assertEqual(derived_ta.cImplTypes, 1)  # has a referenced type
+        self.assertEqual(derived_ta.wTypeFlags, typeflags)
+        self.assertEqual(derived_ta.wMajorVerNum, major_version)
+        self.assertEqual(derived_ta.wMinorVerNum, minor_version)
+        self.assertEqual(derived_ta.guid, derived_iid)
+        # Get the referenced type info
+        ref_tinfo = derived_tinfo.GetRefTypeInfo(derived_tinfo.GetRefTypeOfImplType(0))
+        ref_ta = ref_tinfo.GetTypeAttr()
+        self.assertEqual(ref_ta.guid, base_iid)
+
+    def test_Alias_TYPEATTR(self):
+        alias_name = "MyAlias"
+        ctinfo_alias = self.ctlib.CreateTypeInfo(alias_name, typeinfo.TKIND_ALIAS)
+        ctinfo_alias.SetTypeDescAlias(typeinfo.TYPEDESC(vt=automation.VT_INT))
+        ctinfo_alias.LayOut()
+        self.ctlib.SaveAllChanges()
+        # Load the typelib and verify the alias
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        _, tinfo_alias = tlib.FindName(alias_name)
+        typeattr_alias = tinfo_alias.GetTypeAttr()
+        self.assertEqual(typeattr_alias.typekind, typeinfo.TKIND_ALIAS)
+        self.assertEqual(typeattr_alias.tdescAlias.vt, automation.VT_INT)
