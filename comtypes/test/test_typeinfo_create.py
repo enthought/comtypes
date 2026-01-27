@@ -343,3 +343,29 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         self.assertEqual(vd.wVarFlags, typeinfo.VARFLAG_FDEFAULTBIND)
         self.assertEqual(vd.elemdescVar.tdesc.vt, automation.VT_BSTR)
         self.assertEqual(vd._.lpvarValue[0].value, var_value)
+
+    def test_ImplTypeFlags(self):
+        interface_name = "IMyInterface"
+        coclass_name = "MyClass"
+        iid = GUID.create_new()
+        clsid = GUID.create_new()
+        # Define a new interface type which outlines a set of functions a COM
+        # object can implement.
+        itf_ctinfo = self.ctlib.CreateTypeInfo(interface_name, typeinfo.TKIND_INTERFACE)
+        itf_ctinfo.SetGuid(iid)
+        itf_ctinfo.LayOut()
+        # Define a new coclass type which is a concrete implementation of one
+        # or more interfaces.
+        cls_ctinfo = self.ctlib.CreateTypeInfo(coclass_name, typeinfo.TKIND_COCLASS)
+        cls_ctinfo.SetGuid(clsid)
+        hreftype = cls_ctinfo.AddRefTypeInfo(itf_ctinfo)
+        impl_type_index = 0  # Assuming it's the first (and only) implemented interface
+        cls_ctinfo.AddImplType(impl_type_index, hreftype)
+        flags = typeinfo.IMPLTYPEFLAG_FDEFAULT | typeinfo.IMPLTYPEFLAG_FSOURCE
+        cls_ctinfo.SetImplTypeFlags(impl_type_index, flags)
+        cls_ctinfo.LayOut()
+        self.ctlib.SaveAllChanges()
+        # Load the type library
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        _, tinfo = tlib.FindName(coclass_name)  # type: ignore
+        self.assertEqual(tinfo.GetImplTypeFlags(impl_type_index), flags)
