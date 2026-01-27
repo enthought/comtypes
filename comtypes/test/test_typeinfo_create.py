@@ -1,9 +1,68 @@
 import tempfile
 import unittest
+from ctypes import HRESULT, POINTER, Structure
+from ctypes.wintypes import DWORD, INT, ULONG
 from pathlib import Path
 
-from comtypes import GUID, typeinfo
-from comtypes.typeinfo import CreateTypeLib, LoadTypeLibEx
+from comtypes import BSTR, COMMETHOD, GUID, typeinfo
+from comtypes.automation import LCID, VARIANT, VARIANTARG
+from comtypes.typeinfo import CreateTypeLib, ITypeLib, LoadTypeLibEx
+
+
+class tagCUSTDATAITEM(Structure):
+    # https://learn.microsoft.com/en-us/windows/win32/api/oaidl/ns-oaidl-custdataitem
+    _fields_ = [
+        ("guid", GUID),
+        ("varValue", VARIANTARG),
+    ]
+
+
+CUSTDATAITEM = tagCUSTDATAITEM
+
+
+class tagCUSTDATA(Structure):
+    # https://learn.microsoft.com/en-us/windows/win32/api/oaidl/ns-oaidl-custdata
+    _fields_ = [
+        ("cElems", DWORD),
+        ("pCustData", POINTER(CUSTDATAITEM)),
+    ]
+
+
+CUSTDATA = tagCUSTDATA
+
+
+class ITypeLib2(ITypeLib):
+    _iid_ = GUID("{00020411-0000-0000-C000-000000000046}")
+
+    _methods_ = [
+        COMMETHOD(
+            [],
+            HRESULT,
+            "GetCustData",
+            (["in"], POINTER(GUID), "guid"),
+            (["out"], POINTER(VARIANT), "pVarVal"),
+        ),
+        COMMETHOD(
+            [], HRESULT, "GetAllCustData", (["out"], POINTER(CUSTDATA), "pCustData")
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "GetDocumentation2",
+            (["in"], INT, "index"),
+            (["in"], LCID, "lcid"),
+            (["out"], POINTER(BSTR), "pbstrHelpString"),
+            (["out"], POINTER(DWORD), "pdwHelpStringContext"),
+            (["out"], POINTER(BSTR), "pbstrHelpStringDll"),
+        ),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "GetLibStatistics",
+            (["out"], POINTER(ULONG), "pcUniqueNames"),
+            (["out"], POINTER(ULONG), "pcchUniqueNames"),
+        ),
+    ]
 
 
 class Test_CreateTypeLib(unittest.TestCase):
@@ -60,6 +119,27 @@ class Test_CreateTypeLib(unittest.TestCase):
             ctlib.CreateTypeInfo("IMyInterface", typeinfo.TKIND_INTERFACE),
             typeinfo.ICreateTypeInfo,
         )
+
+    def test_GetDocumentation2(self):
+        ctlib = CreateTypeLib(str(self.typelib_path))
+        helpstring = "This is a test type library helpstring."
+        helpctx = 123
+        helpdll = "myhelp.dll"
+        ctlib.SetDocString(helpstring)
+        ctlib.SetHelpStringContext(helpctx)
+        ctlib.SetHelpStringDll(helpdll)
+        ctlib.SaveAllChanges()
+        tlib2 = ctlib.QueryInterface(ITypeLib2)
+        self.assertEqual(tlib2.GetDocumentation2(-1, 0), (helpstring, helpctx, helpdll))
+
+    def test_GetCustData(self):
+        ctlib = CreateTypeLib(str(self.typelib_path))
+        guid = GUID.create_new()
+        val = "Custom Library Data"
+        ctlib.SetCustData(guid, val)
+        ctlib.SaveAllChanges()
+        tlib2 = ctlib.QueryInterface(ITypeLib2)
+        self.assertEqual(tlib2.GetCustData(guid), val)
 
 
 class Test_ICreateTypeInfo(unittest.TestCase):
