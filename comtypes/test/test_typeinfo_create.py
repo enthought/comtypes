@@ -312,3 +312,34 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         self.assertEqual(ta.cFuncs, 1)  # Should have one function
         fd = tinfo.GetFuncDesc(0)
         self.assertEqual(fd.memid, func_memid)
+
+    def test_VARDESC(self):
+        mod_name = "MyModule"
+        var_name = "MyDocVar"
+        var_value = "MyValue"
+        var_memid = 102  # Arbitrary member ID
+        mod_ctinfo = self.ctlib.CreateTypeInfo(mod_name, typeinfo.TKIND_MODULE)
+        vardesc = typeinfo.VARDESC(
+            memid=var_memid,
+            varkind=typeinfo.VAR_CONST,
+            elemdescVar=typeinfo.ELEMDESC(
+                tdesc=typeinfo.TYPEDESC(vt=automation.VT_BSTR)
+            ),
+            wVarFlags=typeinfo.VARFLAG_FDEFAULTBIND,
+        )
+        vardesc._.lpvarValue = pointer(automation.VARIANT(var_value))
+        mod_ctinfo.AddVarDesc(0, vardesc)
+        mod_ctinfo.SetVarName(0, var_name)
+        mod_ctinfo.LayOut()
+        self.ctlib.SaveAllChanges()
+        # Load the typelib
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        _, tinfo = tlib.FindName(var_name)  # type: ignore
+        ta = tinfo.GetTypeAttr()
+        self.assertEqual(ta.cVars, 1)  # Should have one variable
+        vd = tinfo.GetVarDesc(0)
+        self.assertEqual(vd.memid, var_memid)
+        self.assertEqual(vd.varkind, typeinfo.VAR_CONST)
+        self.assertEqual(vd.wVarFlags, typeinfo.VARFLAG_FDEFAULTBIND)
+        self.assertEqual(vd.elemdescVar.tdesc.vt, automation.VT_BSTR)
+        self.assertEqual(vd._.lpvarValue[0].value, var_value)
