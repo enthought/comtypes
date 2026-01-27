@@ -1,10 +1,10 @@
 import tempfile
 import unittest
-from ctypes import HRESULT, POINTER, Structure
+from ctypes import HRESULT, POINTER, Structure, pointer
 from ctypes.wintypes import DWORD, INT, ULONG
 from pathlib import Path
 
-from comtypes import BSTR, COMMETHOD, GUID, typeinfo
+from comtypes import BSTR, COMMETHOD, GUID, automation, typeinfo
 from comtypes.automation import LCID, VARIANT, VARIANTARG
 from comtypes.typeinfo import CreateTypeLib, ITypeLib, LoadTypeLibEx
 
@@ -150,7 +150,7 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         self.typelib_path = self.tmpdir / "test.tlb"
         self.ctlib = CreateTypeLib(str(self.typelib_path))
 
-    def test_Documentaion(self):
+    def test_Type_Documentation(self):
         name = "IMyInterface"
         docstring = "My test interface"
         helpctx = 123
@@ -165,3 +165,62 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         _, tinfo = tlib.FindName(name)  # type: ignore
         doc = tinfo.GetDocumentation(-1)
         self.assertEqual(doc, (name, docstring, helpctx, None))
+
+    def test_Func_Documentation(self):
+        func_name = "MyFunction"
+        func_docstring = "This is my function's docstring."
+        func_helpctx = 999
+        func_memid = 42  # Arbitrary member ID
+        itf_name = "IMyInterface"
+        # Create a new typeinfo for the function test to avoid interference
+        itf_ctinfo = self.ctlib.CreateTypeInfo(itf_name, typeinfo.TKIND_INTERFACE)
+        itf_ctinfo.AddFuncDesc(
+            0,
+            typeinfo.FUNCDESC(
+                memid=func_memid,
+                funckind=typeinfo.FUNC_PUREVIRTUAL,
+                invkind=typeinfo.INVOKE_FUNC,
+                callconv=typeinfo.CC_STDCALL,
+                cParams=0,
+                elemdescFunc=typeinfo.ELEMDESC(
+                    tdesc=typeinfo.TYPEDESC(vt=automation.VT_HRESULT)
+                ),
+            ),
+        )
+        itf_ctinfo.SetFuncAndParamNames(0, func_name)
+        itf_ctinfo.SetFuncDocString(0, func_docstring)
+        itf_ctinfo.SetFuncHelpContext(0, func_helpctx)
+        itf_ctinfo.LayOut()
+        self.ctlib.SaveAllChanges()
+        # Load and verify function documentation
+        tlib_func = LoadTypeLibEx(str(self.typelib_path))
+        _, tinfo_func = tlib_func.FindName(itf_name)  # type: ignore
+        doc = tinfo_func.GetDocumentation(func_memid)
+        self.assertEqual(doc, (func_name, func_docstring, func_helpctx, None))
+
+    def test_Var_Documentation(self):
+        mod_name = "MyModule"
+        var_name = "MyDocVar"
+        var_value = "MyValue"
+        var_docstring = "This is my variable's docstring."
+        var_helpctx = 888
+        var_memid = 102  # Arbitrary member ID
+        mod_ctinfo = self.ctlib.CreateTypeInfo(mod_name, typeinfo.TKIND_MODULE)
+        vardesc = typeinfo.VARDESC(
+            memid=var_memid,
+            varkind=typeinfo.VAR_CONST,
+            elemdescVar=typeinfo.ELEMDESC(
+                tdesc=typeinfo.TYPEDESC(vt=automation.VT_BSTR)
+            ),
+        )
+        vardesc._.lpvarValue = pointer(automation.VARIANT(var_value))
+        mod_ctinfo.AddVarDesc(0, vardesc)
+        mod_ctinfo.SetVarName(0, var_name)
+        mod_ctinfo.SetVarDocString(0, var_docstring)
+        mod_ctinfo.SetVarHelpContext(0, var_helpctx)
+        mod_ctinfo.LayOut()
+        self.ctlib.SaveAllChanges()
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        _, tinfo = tlib.FindName(var_name)  # type: ignore
+        doc = tinfo.GetDocumentation(var_memid)
+        self.assertEqual(doc, (var_name, var_docstring, var_helpctx, None))
