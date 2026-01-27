@@ -369,3 +369,42 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         tlib = LoadTypeLibEx(str(self.typelib_path))
         _, tinfo = tlib.FindName(coclass_name)  # type: ignore
         self.assertEqual(tinfo.GetImplTypeFlags(impl_type_index), flags)
+
+    def test_DllEntry(self):
+        mod_name = "MyModule"
+        func_name = "GetTickCount"
+        dll_name = "kernel32.dll"
+        exported_name = "GetTickCount"  # The exported name in the DLL
+        ctinfo = self.ctlib.CreateTypeInfo(mod_name, typeinfo.TKIND_MODULE)
+        func_memid = 50  # Arbitrary member ID
+        ctinfo.AddFuncDesc(
+            0,
+            typeinfo.FUNCDESC(
+                memid=func_memid,
+                funckind=typeinfo.FUNC_STATIC,  # For DLL entry, usually pure virtual
+                invkind=typeinfo.INVOKE_FUNC,
+                callconv=typeinfo.CC_STDCALL,  # Standard calling convention for WinAPI
+                cParams=0,
+                elemdescFunc=typeinfo.ELEMDESC(
+                    # Return type of GetTickCount (DWORD, which is unsigned int)
+                    tdesc=typeinfo.TYPEDESC(vt=automation.VT_UINT)
+                ),
+            ),
+        )
+        ctinfo.SetFuncAndParamNames(0, func_name)  # Set the function name
+        ctinfo.DefineFuncAsDllEntry(0, dll_name, exported_name)
+        ctinfo.LayOut()
+        self.ctlib.SaveAllChanges()
+        # Load the typelib and verify the DLL entry
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        _, tinfo = tlib.FindName(mod_name)  # type: ignore
+        typeattr = tinfo.GetTypeAttr()
+        self.assertEqual(typeattr.cFuncs, 1)
+        (memid_by_name,) = tinfo.GetIDsOfNames(func_name)
+        self.assertEqual(memid_by_name, func_memid)
+        entry = tinfo.GetDllEntry(memid_by_name, typeinfo.INVOKE_FUNC)
+        # For functions exported by name, ordinal is usually 0
+        self.assertEqual(
+            (entry[0].lower(),) + entry[1:],
+            (dll_name.lower(), exported_name, 0),
+        )
