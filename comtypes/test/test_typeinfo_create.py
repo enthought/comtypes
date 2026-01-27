@@ -283,3 +283,32 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         typeattr_alias = tinfo_alias.GetTypeAttr()
         self.assertEqual(typeattr_alias.typekind, typeinfo.TKIND_ALIAS)
         self.assertEqual(typeattr_alias.tdescAlias.vt, automation.VT_INT)
+
+    def test_FUNCDESC(self):
+        func_name = "MyFunction"
+        itf_name = "IMyInterface"
+        itf_ctinfo = self.ctlib.CreateTypeInfo(itf_name, typeinfo.TKIND_INTERFACE)
+        func_memid = 42  # Arbitrary member ID
+        itf_ctinfo.AddFuncDesc(
+            0,
+            typeinfo.FUNCDESC(
+                memid=func_memid,
+                funckind=typeinfo.FUNC_PUREVIRTUAL,
+                invkind=typeinfo.INVOKE_FUNC,
+                callconv=typeinfo.CC_STDCALL,
+                cParams=0,
+                elemdescFunc=typeinfo.ELEMDESC(
+                    tdesc=typeinfo.TYPEDESC(vt=automation.VT_HRESULT)
+                ),
+            ),
+        )
+        itf_ctinfo.SetFuncAndParamNames(0, func_name)
+        itf_ctinfo.LayOut()
+        self.ctlib.SaveAllChanges()
+        # Load the typelib and verify the function
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        _, tinfo = tlib.FindName(itf_name)  # type: ignore
+        ta = tinfo.GetTypeAttr()
+        self.assertEqual(ta.cFuncs, 1)  # Should have one function
+        fd = tinfo.GetFuncDesc(0)
+        self.assertEqual(fd.memid, func_memid)
