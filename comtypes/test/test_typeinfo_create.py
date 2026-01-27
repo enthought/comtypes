@@ -238,14 +238,12 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         typeflags = typeinfo.TYPEFLAG_FHIDDEN
         major_version = 2
         minor_version = 1
-        alignment = 8
         derived_ctinfo = self.ctlib.CreateTypeInfo(
             derived_name, typeinfo.TKIND_INTERFACE
         )
         derived_ctinfo.SetGuid(derived_iid)
         derived_ctinfo.SetTypeFlags(typeflags)
         derived_ctinfo.SetVersion(major_version, minor_version)
-        derived_ctinfo.SetAlignment(alignment)
         derived_ctinfo.AddImplType(0, derived_ctinfo.AddRefTypeInfo(base_ctinfo))
         derived_ctinfo.LayOut()
         self.ctlib.SaveAllChanges()
@@ -257,7 +255,6 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         self.assertEqual(base_ta.cImplTypes, 0)  # has NO referenced type
         self.assertEqual(base_ta.guid, base_iid)
         self.assertEqual(base_ta.wTypeFlags, 0)
-        self.assertEqual(base_ta.cbAlignment, alignment)
         # Get the derived type info
         _, derived_tinfo = tlib.FindName(derived_name)  # type: ignore
         derived_ta = derived_tinfo.GetTypeAttr()
@@ -270,6 +267,48 @@ class Test_ICreateTypeInfo(unittest.TestCase):
         ref_tinfo = derived_tinfo.GetRefTypeInfo(derived_tinfo.GetRefTypeOfImplType(0))
         ref_ta = ref_tinfo.GetTypeAttr()
         self.assertEqual(ref_ta.guid, base_iid)
+
+    def test_Record_TYPEATTR(self):
+        # Create a record type info
+        record_name = "MyRecord"
+        ctinfo = self.ctlib.CreateTypeInfo(record_name, typeinfo.TKIND_RECORD)
+        target_alignment = 1  # Set alignment to 1
+        ctinfo.SetAlignment(target_alignment)
+        # Add fields: char a; double b;
+        # char a;
+        ctinfo.AddVarDesc(
+            0,
+            typeinfo.VARDESC(
+                memid=0,  # Explicitly set memid
+                varkind=typeinfo.VAR_PERINSTANCE,
+                elemdescVar=typeinfo.ELEMDESC(
+                    tdesc=typeinfo.TYPEDESC(vt=automation.VT_I1)  # char
+                ),
+            ),
+        )
+        ctinfo.SetVarName(0, "a")
+        # double b;
+        ctinfo.AddVarDesc(
+            1,
+            typeinfo.VARDESC(
+                memid=1,  # Explicitly set memid
+                varkind=typeinfo.VAR_PERINSTANCE,
+                elemdescVar=typeinfo.ELEMDESC(
+                    tdesc=typeinfo.TYPEDESC(vt=automation.VT_R8)  # double
+                ),
+            ),
+        )
+        ctinfo.SetVarName(1, "b")
+        ctinfo.LayOut()
+        self.ctlib.SaveAllChanges()
+        # Load the typelib and verify the type info
+        tlib = LoadTypeLibEx(str(self.typelib_path))
+        _, tinfo = tlib.FindName(record_name)  # type: ignore
+        # Get TYPEATTR and verify cbAlignment and cbSizeInstance
+        ta = tinfo.GetTypeAttr()
+        self.assertEqual(ta.cbAlignment, target_alignment)
+        # Expected size: 1 (char) + 8 (double) = 9 bytes with 1-byte alignment
+        self.assertEqual(ta.cbSizeInstance, 9)
 
     def test_Alias_TYPEATTR(self):
         alias_name = "MyAlias"
