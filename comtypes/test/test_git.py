@@ -5,7 +5,7 @@ import tempfile
 import threading
 import unittest as ut
 from collections.abc import Iterator
-from ctypes import POINTER, WinDLL, byref
+from ctypes import HRESULT, POINTER, OleDLL, WinDLL, byref
 from ctypes.wintypes import BOOL, DWORD, HANDLE, HWND, MSG, UINT
 from pathlib import Path
 from queue import Queue
@@ -36,12 +36,28 @@ MsgWaitForMultipleObjects.argtypes = [
     DWORD,  # dwWakeMask
 ]
 
+_ole32 = OleDLL("ole32")
+_CoGetApartmentType = _ole32.CoGetApartmentType
+_CoGetApartmentType.argtypes = [
+    POINTER(DWORD),  # pAptType
+    POINTER(DWORD),  # pAptQualifier
+]
+_CoGetApartmentType.restype = HRESULT
+
 QS_ALLINPUT = 0x04FF  # All message types including SendMessage
 
 PM_REMOVE = 0x0001  # Remove message from queue after Peek
 
+APTTYPE_MAINSTA = 3
+
 DOT_B64_IMG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
 IMG_DATA = base64.b64decode(DOT_B64_IMG)
+
+
+def CoGetApartmentType() -> tuple[int, int]:
+    typ, qf = DWORD(), DWORD()
+    _CoGetApartmentType(typ, qf)
+    return typ.value, qf.value
 
 
 @contextlib.contextmanager
@@ -94,6 +110,8 @@ class Test_ApartmentMarshaling(ut.TestCase):
         # If main thread apartment type were to change to MTA, the test's
         # assertions regarding COM marshaling behavior would no longer hold true.
         pf = comtypes.CoCreateInstance(CLSID_PaintPicture, interface=IPersistFile)
+        # Ensure that this test is executed on the main STA thread.
+        self.assertEqual(CoGetApartmentType()[0], APTTYPE_MAINSTA)
         pf.Load(str(self.imgfile), STGM_READ)
         self.assertEqual(
             os.path.normcase(os.path.normpath(self.imgfile)),
