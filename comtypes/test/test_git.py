@@ -1,14 +1,45 @@
+import base64
 import contextlib
+import tempfile
+import threading
 import unittest as ut
 from collections.abc import Iterator
+from ctypes import POINTER, WinDLL, byref
+from ctypes.wintypes import BOOL, DWORD, HANDLE, HWND, MSG, UINT
+from pathlib import Path
 
-from comtypes import IUnknown
+import comtypes
+from comtypes import GUID, IUnknown
 from comtypes.git import (
     GetInterfaceFromGlobal,
     RegisterInterfaceInGlobal,
     RevokeInterfaceFromGlobal,
 )
-from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
+from comtypes.messageloop import DispatchMessage, TranslateMessage
+from comtypes.persist import STGM_READ, IPersistFile
+
+_user32 = WinDLL("user32")
+
+PeekMessage = _user32.PeekMessageA
+PeekMessage.argtypes = [POINTER(MSG), HWND, UINT, UINT, UINT]
+PeekMessage.restype = BOOL
+
+MsgWaitForMultipleObjects = _user32.MsgWaitForMultipleObjects
+MsgWaitForMultipleObjects.restype = DWORD
+MsgWaitForMultipleObjects.argtypes = [
+    DWORD,  # nCount
+    POINTER(HANDLE),  # pHandles
+    BOOL,  # bWaitAll
+    DWORD,  # dwMilliseconds
+    DWORD,  # dwWakeMask
+]
+
+QS_ALLINPUT = 0x04FF  # All message types including SendMessage
+
+PM_REMOVE = 0x0001  # Remove message from queue after Peek
+
+DOT_B64_IMG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+IMG_DATA = base64.b64decode(DOT_B64_IMG)
 
 
 @contextlib.contextmanager
@@ -20,21 +51,64 @@ def register_in_global(obj: IUnknown) -> Iterator[int]:
         RevokeInterfaceFromGlobal(cookie)
 
 
-class Test(ut.TestCase):
+def pump(event: threading.Event) -> None:
+    # This function ensures preventing deadlocks.
+    msg = MSG()
+    while not event.is_set():
+        MsgWaitForMultipleObjects(0, None, False, 10, QS_ALLINPUT)
+        while PeekMessage(byref(msg), 0, 0, 0, PM_REMOVE):
+            TranslateMessage(byref(msg))
+            DispatchMessage(byref(msg))
+
+
+# `Paint.Picture` is a standard COM object available on most Windows systems.
+# It is an out-of-process, STA-only COM object that implements `IPersistFile`.
+# This makes it suitable for demonstrating object persistence and marshaling
+# across apartment boundaries.
+CLSID_PaintPicture = GUID.from_progid("Paint.Picture")
+
+
+class Test_ApartmentMarshaling(ut.TestCase):
+    def setUp(self):
+        td = tempfile.TemporaryDirectory()
+        self.addCleanup(td.cleanup)
+        self.tmpdir = Path(td.name)
+        self.imgfile = self.tmpdir / "img.png"
+        self.imgfile.write_bytes(IMG_DATA)
+
     def test(self):
-        tlib = CreateTypeLib("foo.bar")  # we don not save it later
-        self.assertEqual((tlib.AddRef(), tlib.Release()), (2, 1))
-        with register_in_global(tlib) as cookie:
+        def work_with_git(ck: int, evt: threading.Event) -> None:
+            comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+            try:
+                obj = GetInterfaceFromGlobal(ck, interface=IPersistFile)
+                obj.GetCurFile()
+            finally:
+                comtypes.CoUninitialize()
+                evt.set()
+
+        # This test assumes that the `Paint.Picture` instance is created within
+        # a Single-Threaded Apartment (STA, `COINIT_APARTMENTTHREADED`), which
+        # is the default for this package.
+        # If main thread apartment type were to change to MTA, the test's
+        # assertions regarding COM marshaling behavior would no longer hold true.
+        pf = comtypes.CoCreateInstance(CLSID_PaintPicture, interface=IPersistFile)
+        pf.Load(str(self.imgfile), STGM_READ)
+        self.assertEqual((pf.AddRef(), pf.Release()), (2, 1))
+        event = threading.Event()
+        with register_in_global(pf) as cookie:
             # When an object is registered to GIT, `AddRef` is called,
             # incrementing its reference count. This ensures the object
             # remains valid as long as it's globally registered in the GIT.
-            self.assertEqual((tlib.AddRef(), tlib.Release()), (3, 2))
-            GetInterfaceFromGlobal(cookie, interface=ICreateTypeLib)
-            GetInterfaceFromGlobal(cookie, interface=ICreateTypeLib)
-            GetInterfaceFromGlobal(cookie)
-            self.assertEqual((tlib.AddRef(), tlib.Release()), (3, 2))
+            self.assertEqual((pf.AddRef(), pf.Release()), (3, 2))
+            thread_with_git = threading.Thread(
+                target=work_with_git, args=(cookie, event)
+            )
+            thread_with_git.start()
+            pump(event)
+            thread_with_git.join()
+            self.assertEqual((pf.AddRef(), pf.Release()), (3, 2))
         # When an object is revoked from the GIT, `Release` is called,
         # decrementing its reference count. This allows the object to be
         # garbage collected if no other references exist, ensuring proper
         # resource management.
-        self.assertEqual((tlib.AddRef(), tlib.Release()), (2, 1))
+        self.assertEqual((pf.AddRef(), pf.Release()), (2, 1))
