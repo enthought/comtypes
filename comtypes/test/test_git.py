@@ -1,5 +1,6 @@
 import base64
 import contextlib
+import os
 import tempfile
 import threading
 import unittest as ut
@@ -7,6 +8,7 @@ from collections.abc import Iterator
 from ctypes import POINTER, WinDLL, byref
 from ctypes.wintypes import BOOL, DWORD, HANDLE, HWND, MSG, UINT
 from pathlib import Path
+from queue import Queue
 
 import comtypes
 from comtypes import GUID, IUnknown
@@ -77,11 +79,11 @@ class Test_ApartmentMarshaling(ut.TestCase):
         self.imgfile.write_bytes(IMG_DATA)
 
     def test(self):
-        def work_with_git(ck: int, evt: threading.Event) -> None:
+        def work_with_git(ck: int, evt: threading.Event, res: Queue) -> None:
             comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
             try:
                 obj = GetInterfaceFromGlobal(ck, interface=IPersistFile)
-                obj.GetCurFile()
+                res.put(obj.GetCurFile())
             finally:
                 comtypes.CoUninitialize()
                 evt.set()
@@ -95,18 +97,22 @@ class Test_ApartmentMarshaling(ut.TestCase):
         pf.Load(str(self.imgfile), STGM_READ)
         self.assertEqual((pf.AddRef(), pf.Release()), (2, 1))
         event = threading.Event()
+        results = Queue(maxsize=1)
         with register_in_global(pf) as cookie:
             # When an object is registered to GIT, `AddRef` is called,
             # incrementing its reference count. This ensures the object
             # remains valid as long as it's globally registered in the GIT.
             self.assertEqual((pf.AddRef(), pf.Release()), (3, 2))
             thread_with_git = threading.Thread(
-                target=work_with_git, args=(cookie, event)
+                target=work_with_git, args=(cookie, event, results)
             )
             thread_with_git.start()
             pump(event)
             thread_with_git.join()
-            self.assertEqual((pf.AddRef(), pf.Release()), (3, 2))
+            self.assertEqual(
+                os.path.normcase(os.path.normpath(self.imgfile)),
+                os.path.normcase(os.path.normpath(results.get())),
+            )
         # When an object is revoked from the GIT, `Release` is called,
         # decrementing its reference count. This allows the object to be
         # garbage collected if no other references exist, ensuring proper
