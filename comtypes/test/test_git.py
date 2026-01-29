@@ -4,6 +4,7 @@ import os
 import tempfile
 import threading
 import unittest as ut
+from _ctypes import COMError
 from collections.abc import Iterator
 from ctypes import HRESULT, POINTER, OleDLL, WinDLL, byref
 from ctypes.wintypes import BOOL, DWORD, HANDLE, HWND, MSG, UINT
@@ -49,6 +50,8 @@ QS_ALLINPUT = 0x04FF  # All message types including SendMessage
 PM_REMOVE = 0x0001  # Remove message from queue after Peek
 
 APTTYPE_MAINSTA = 3
+
+RPC_E_WRONG_THREAD = -2147417842  # 0x8001010E
 
 DOT_B64_IMG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
 IMG_DATA = base64.b64decode(DOT_B64_IMG)
@@ -104,12 +107,14 @@ class Test_ApartmentMarshaling(ut.TestCase):
                 comtypes.CoUninitialize()
                 evt.set()
 
-        def work_without_git(obj: IPersistFile, evt: threading.Event) -> None:
+        def work_without_git(
+            obj: IPersistFile, evt: threading.Event, res: Queue
+        ) -> None:
             comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
             try:
                 obj.GetCurFile()
-            except Exception:
-                pass
+            except COMError as e:
+                res.put(e)
             finally:
                 comtypes.CoUninitialize()
                 evt.set()
@@ -148,12 +153,17 @@ class Test_ApartmentMarshaling(ut.TestCase):
             event.clear()
             self.assertTrue(results.empty())
             thread_without_git = threading.Thread(
-                target=work_without_git, args=(pf, event)
+                target=work_without_git, args=(pf, event, results)
             )
             thread_without_git.start()
             pump(event)
             thread_without_git.join()
-            self.assertTrue(results.empty())
+            err = results.get()
+            # `RPC_E_WRONG_THREAD` occurs because `PaintPicture` is an STA
+            # object created in the main thread, and `work_without_git`
+            # attempts to access it directly from a different thread without
+            # proper marshaling. COM rejects this direct access.
+            self.assertEqual(err.hresult, RPC_E_WRONG_THREAD)
             self.assertEqual((pf.AddRef(), pf.Release()), (3, 2))
         # When an object is revoked from the GIT, `Release` is called,
         # decrementing its reference count. This allows the object to be
