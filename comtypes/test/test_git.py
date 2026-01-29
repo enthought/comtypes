@@ -104,6 +104,16 @@ class Test_ApartmentMarshaling(ut.TestCase):
                 comtypes.CoUninitialize()
                 evt.set()
 
+        def work_without_git(obj: IPersistFile, evt: threading.Event) -> None:
+            comtypes.CoInitializeEx(comtypes.COINIT_MULTITHREADED)
+            try:
+                obj.GetCurFile()
+            except Exception:
+                pass
+            finally:
+                comtypes.CoUninitialize()
+                evt.set()
+
         # This test assumes that the `Paint.Picture` instance is created within
         # a Single-Threaded Apartment (STA, `COINIT_APARTMENTTHREADED`), which
         # is the default for this package.
@@ -135,6 +145,16 @@ class Test_ApartmentMarshaling(ut.TestCase):
                 os.path.normcase(os.path.normpath(self.imgfile)),
                 os.path.normcase(os.path.normpath(results.get())),
             )
+            event.clear()
+            self.assertTrue(results.empty())
+            thread_without_git = threading.Thread(
+                target=work_without_git, args=(pf, event)
+            )
+            thread_without_git.start()
+            pump(event)
+            thread_without_git.join()
+            self.assertTrue(results.empty())
+            self.assertEqual((pf.AddRef(), pf.Release()), (3, 2))
         # When an object is revoked from the GIT, `Release` is called,
         # decrementing its reference count. This allows the object to be
         # garbage collected if no other references exist, ensuring proper
