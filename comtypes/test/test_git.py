@@ -95,6 +95,10 @@ class Test_ApartmentMarshaling(ut.TestCase):
         # assertions regarding COM marshaling behavior would no longer hold true.
         pf = comtypes.CoCreateInstance(CLSID_PaintPicture, interface=IPersistFile)
         pf.Load(str(self.imgfile), STGM_READ)
+        self.assertEqual(
+            os.path.normcase(os.path.normpath(self.imgfile)),
+            os.path.normcase(os.path.normpath(pf.GetCurFile())),
+        )
         self.assertEqual((pf.AddRef(), pf.Release()), (2, 1))
         event = threading.Event()
         results = Queue(maxsize=1)
