@@ -23,10 +23,12 @@ from comtypes.persist import STGM_READ, IPersistFile
 
 _user32 = WinDLL("user32")
 
+# https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-peekmessagea
 PeekMessage = _user32.PeekMessageA
 PeekMessage.argtypes = [POINTER(MSG), HWND, UINT, UINT, UINT]
 PeekMessage.restype = BOOL
 
+# https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-msgwaitformultipleobjects
 MsgWaitForMultipleObjects = _user32.MsgWaitForMultipleObjects
 MsgWaitForMultipleObjects.restype = DWORD
 MsgWaitForMultipleObjects.argtypes = [
@@ -58,6 +60,9 @@ IMG_DATA = base64.b64decode(DOT_B64_IMG)
 
 
 def CoGetApartmentType() -> tuple[int, int]:
+    # https://learn.microsoft.com/en-us/windows/win32/api/combaseapi/nf-combaseapi-cogetapartmenttype
+    # https://learn.microsoft.com/en-us/windows/desktop/api/objidl/ne-objidl-apttype
+    # https://learn.microsoft.com/en-us/windows/desktop/api/objidl/ne-objidl-apttypequalifier
     typ, qf = DWORD(), DWORD()
     _CoGetApartmentType(typ, qf)
     return typ.value, qf.value
