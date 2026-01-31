@@ -1,14 +1,18 @@
 import contextlib
+import time
 import unittest as ut
+from collections.abc import Sequence
 from ctypes import byref
 
 import comtypes.client
 from comtypes import COMObject
 from comtypes.connectionpoints import IConnectionPointContainer
 
+# generating `MSVidCtlLib` also generates `stdole`.
 with contextlib.redirect_stdout(None):  # supress warnings
     comtypes.client.GetModule("msvidctl.dll")
 from comtypes.gen import MSVidCtlLib as msvidctl
+from comtypes.gen import stdole
 
 
 class Test_IConnectionPointContainer(ut.TestCase):
@@ -81,4 +85,44 @@ class Test_IConnectionPoint(ut.TestCase):
         ((punk, ck),) = conns
         self.assertEqual(ck, cookie)
         self.assertEqual(punk, sink)
+        self.cp.Unadvise(cookie)
+
+
+class Test_Sink(ut.TestCase):
+    EVENT_IID = stdole.FontEvents._iid_
+    OUTGOING_ITF = stdole.FontEvents
+
+    def setUp(self):
+        self.impl = comtypes.client.CreateObject(stdole.StdFont, interface=stdole.IFont)
+        self.cpc = self.impl.QueryInterface(IConnectionPointContainer)
+        self.cp = self.cpc.FindConnectionPoint(byref(self.EVENT_IID))
+
+    @classmethod
+    def create_sink_and_log(cls) -> tuple[OUTGOING_ITF, Sequence[str]]:
+        eventlog = []
+
+        class Sink(COMObject):
+            _com_interfaces_ = [cls.OUTGOING_ITF]
+
+            # This method directly handles the event from the COM object.
+            # Its name and signature must match the event definition in the
+            # COM interface.
+            # In a real-world scenario, event utilities in `client` module
+            # would dynamically generate or map these methods.
+            def FontChanged(self, PropertyName: str) -> None:
+                eventlog.append(PropertyName)
+
+        return Sink().QueryInterface(cls.OUTGOING_ITF), eventlog
+
+    def test_sink(self):
+        sink, fired_events = self.create_sink_and_log()
+        cookie = self.cp.Advise(sink)
+        self.assertFalse(fired_events)
+        # Trigger the event by changing a property
+        self.impl.Bold = not self.impl.Bold
+        # We need to ensure the event has a chance to fire.
+        # For testing, we need a small delay (or a COM message pump).
+        time.sleep(0.05)
+        # Assert the event was fired
+        self.assertEqual(fired_events, ["Bold"])
         self.cp.Unadvise(cookie)
