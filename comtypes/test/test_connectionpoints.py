@@ -38,6 +38,7 @@ class Sink(COMObject):
 
 class Test_IConnectionPoint(ut.TestCase):
     EVENT_IID = msvidctl._IMSVidCtlEvents._iid_
+    OUTGOING_ITF = msvidctl._IMSVidCtlEvents
 
     def setUp(self):
         self.impl = comtypes.client.CreateObject(
@@ -63,3 +64,16 @@ class Test_IConnectionPoint(ut.TestCase):
         self.assertEqual(len(list(self.cp.EnumConnections())), 1)
         self.cp.Unadvise(cookie)
         self.assertEqual(len(list(self.cp.EnumConnections())), 0)
+
+    def test_EnumConnections(self):
+        sink = Sink().QueryInterface(self.OUTGOING_ITF)
+        cookie = self.cp.Advise(sink)
+        conns = [
+            (data.pUnk.QueryInterface(self.OUTGOING_ITF), data.dwCookie)
+            for data in self.cp.EnumConnections()
+        ]
+        self.assertEqual(len(conns), 1)
+        ((punk, ck),) = conns
+        self.assertEqual(ck, cookie)
+        self.assertEqual(punk, sink)
+        self.cp.Unadvise(cookie)
