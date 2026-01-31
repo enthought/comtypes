@@ -32,10 +32,6 @@ class Test_IConnectionPointContainer(ut.TestCase):
         self.assertEqual(cp.GetConnectionPointContainer(), self.cpc)
 
 
-class Sink(COMObject):
-    _com_interfaces_ = [msvidctl._IMSVidCtlEvents]
-
-
 class Test_IConnectionPoint(ut.TestCase):
     EVENT_IID = msvidctl._IMSVidCtlEvents._iid_
     OUTGOING_ITF = msvidctl._IMSVidCtlEvents
@@ -47,6 +43,13 @@ class Test_IConnectionPoint(ut.TestCase):
         self.cpc = self.impl.QueryInterface(IConnectionPointContainer)
         self.cp = self.cpc.FindConnectionPoint(byref(self.EVENT_IID))
 
+    @classmethod
+    def create_sink(cls) -> COMObject:
+        class Sink(COMObject):
+            _com_interfaces_ = [cls.OUTGOING_ITF]
+
+        return Sink()
+
     def test_GetConnectionInterface(self):
         self.assertEqual(self.cp.GetConnectionInterface(), self.EVENT_IID)
 
@@ -56,7 +59,7 @@ class Test_IConnectionPoint(ut.TestCase):
     def test_Advise_Unadvise(self):
         # Verify the connection DOES NOT exist.
         self.assertEqual(len(list(self.cp.EnumConnections())), 0)
-        sink = Sink()
+        sink = self.create_sink()
         # Since `POINTER(IUnknown).from_param`(`_compointer_base.from_param`)
         # can accept a `COMObject` instance, `IConnectionPoint.Advise` can
         # take either a COM object or a COM interface pointer.
@@ -68,7 +71,7 @@ class Test_IConnectionPoint(ut.TestCase):
         self.assertEqual(len(list(self.cp.EnumConnections())), 0)
 
     def test_EnumConnections(self):
-        sink = Sink().QueryInterface(self.OUTGOING_ITF)
+        sink = self.create_sink().QueryInterface(self.OUTGOING_ITF)
         cookie = self.cp.Advise(sink)
         conns = [
             (data.pUnk.QueryInterface(self.OUTGOING_ITF), data.dwCookie)
