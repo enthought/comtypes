@@ -3,6 +3,7 @@ import unittest as ut
 from ctypes import byref
 
 import comtypes.client
+from comtypes import COMObject
 from comtypes.connectionpoints import IConnectionPointContainer
 
 with contextlib.redirect_stdout(None):  # supress warnings
@@ -31,6 +32,10 @@ class Test_IConnectionPointContainer(ut.TestCase):
         self.assertEqual(cp.GetConnectionPointContainer(), self.cpc)
 
 
+class Sink(COMObject):
+    _com_interfaces_ = [msvidctl._IMSVidCtlEvents]
+
+
 class Test_IConnectionPoint(ut.TestCase):
     EVENT_IID = msvidctl._IMSVidCtlEvents._iid_
 
@@ -46,3 +51,15 @@ class Test_IConnectionPoint(ut.TestCase):
 
     def test_GetConnectionPointContainer(self):
         self.assertEqual(self.cp.GetConnectionPointContainer(), self.cpc)
+
+    def test_Advise_Unadvise(self):
+        self.assertEqual(len(list(self.cp.EnumConnections())), 0)
+        sink = Sink()
+        # Since `POINTER(IUnknown).from_param`(`_compointer_base.from_param`)
+        # can accept a `COMObject` instance, `IConnectionPoint.Advise` can
+        # take either a COM object or a COM interface pointer.
+        cookie = self.cp.Advise(sink)
+        # Verify the connection exists
+        self.assertEqual(len(list(self.cp.EnumConnections())), 1)
+        self.cp.Unadvise(cookie)
+        self.assertEqual(len(list(self.cp.EnumConnections())), 0)
