@@ -29,3 +29,17 @@ class Test_IConnectionPointContainer(ut.TestCase):
     def test_FindConnectionPoint(self):
         cp = self.cpc.FindConnectionPoint(byref(self.EVENT_IID))
         self.assertEqual(cp.GetConnectionPointContainer(), self.cpc)
+
+
+class Test_IConnectionPoint(ut.TestCase):
+    EVENT_IID = msvidctl._IMSVidCtlEvents._iid_
+
+    def setUp(self):
+        self.impl = comtypes.client.CreateObject(
+            msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl
+        )
+        self.cpc = self.impl.QueryInterface(IConnectionPointContainer)
+        self.cp = self.cpc.FindConnectionPoint(byref(self.EVENT_IID))
+
+    def test_GetConnectionInterface(self):
+        self.assertEqual(self.cp.GetConnectionInterface(), self.EVENT_IID)
