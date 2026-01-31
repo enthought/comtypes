@@ -43,3 +43,6 @@ class Test_IConnectionPoint(ut.TestCase):
 
     def test_GetConnectionInterface(self):
         self.assertEqual(self.cp.GetConnectionInterface(), self.EVENT_IID)
+
+    def test_GetConnectionPointContainer(self):
+        self.assertEqual(self.cp.GetConnectionPointContainer(), self.cpc)
