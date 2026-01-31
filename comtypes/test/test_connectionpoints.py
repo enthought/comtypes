@@ -54,15 +54,17 @@ class Test_IConnectionPoint(ut.TestCase):
         self.assertEqual(self.cp.GetConnectionPointContainer(), self.cpc)
 
     def test_Advise_Unadvise(self):
+        # Verify the connection DOES NOT exist.
         self.assertEqual(len(list(self.cp.EnumConnections())), 0)
         sink = Sink()
         # Since `POINTER(IUnknown).from_param`(`_compointer_base.from_param`)
         # can accept a `COMObject` instance, `IConnectionPoint.Advise` can
         # take either a COM object or a COM interface pointer.
         cookie = self.cp.Advise(sink)
-        # Verify the connection exists
+        # Verify the connection exists.
         self.assertEqual(len(list(self.cp.EnumConnections())), 1)
         self.cp.Unadvise(cookie)
+        # Verify the connection DOES NOT exist again.
         self.assertEqual(len(list(self.cp.EnumConnections())), 0)
 
     def test_EnumConnections(self):
