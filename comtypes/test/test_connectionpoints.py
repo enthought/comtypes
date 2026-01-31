@@ -19,6 +19,13 @@ class Test_IConnectionPointContainer(ut.TestCase):
         )
         self.cpc = self.impl.QueryInterface(IConnectionPointContainer)
 
+    def test_EnumConnectionPoints(self):
+        conn_pts = list(self.cpc.EnumConnectionPoints())
+        self.assertGreater(len(conn_pts), 0)
+        self.assertTrue(
+            all(pt.GetConnectionPointContainer() == self.cpc for pt in conn_pts)
+        )
+
     def test_FindConnectionPoint(self):
         cp = self.cpc.FindConnectionPoint(byref(self.EVENT_IID))
         self.assertEqual(cp.GetConnectionPointContainer(), self.cpc)
