@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from ctypes import byref
 
 import comtypes.client
-from comtypes import COMObject
+from comtypes import COMObject, IUnknown
 from comtypes.connectionpoints import IConnectionPointContainer
 
 # generating `MSVidCtlLib` also generates `stdole`.
@@ -98,7 +98,7 @@ class Test_Sink(ut.TestCase):
         self.cp = self.cpc.FindConnectionPoint(byref(self.EVENT_IID))
 
     @classmethod
-    def create_sink_and_log(cls) -> tuple[OUTGOING_ITF, Sequence[str]]:
+    def create_sink_and_log(cls) -> tuple[IUnknown, Sequence[str]]:
         eventlog = []
 
         class Sink(COMObject):
@@ -112,7 +112,7 @@ class Test_Sink(ut.TestCase):
             def FontChanged(self, PropertyName: str) -> None:
                 eventlog.append(PropertyName)
 
-        return Sink().QueryInterface(cls.OUTGOING_ITF), eventlog
+        return Sink().QueryInterface(IUnknown), eventlog
 
     def test_sink(self):
         sink, fired_events = self.create_sink_and_log()
