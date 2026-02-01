@@ -71,6 +71,7 @@ _GetCurrentProcessId.restype = DWORD
 
 @contextlib.contextmanager
 def create_file_mapping(hfile, security, flprotect, size_high, size_low, name):
+    """Context manager to creates a Windows file mapping object."""
     handle = _CreateFileMappingW(hfile, security, flprotect, size_high, size_low, name)
     try:
         yield handle
@@ -80,6 +81,9 @@ def create_file_mapping(hfile, security, flprotect, size_high, size_low, name):
 
 @contextlib.contextmanager
 def map_view_of_file(handle, access, offset_high, offset_low, size):
+    """Context manager to map a view of a file mapping into the process's
+    address space.
+    """
     p_view = _MapViewOfFile(handle, access, offset_high, offset_low, size)
     try:
         yield p_view
@@ -89,6 +93,7 @@ def map_view_of_file(handle, access, offset_high, offset_low, size):
 
 @contextlib.contextmanager
 def create_event(security, manual, init, name):
+    """Context manager to creates a Windows event object."""
     handle = _CreateEventW(security, manual, init, name)
     try:
         yield handle
@@ -98,6 +103,9 @@ def create_event(security, manual, init, name):
 
 @contextlib.contextmanager
 def capture_debug_strings(ready, *, interval):
+    """Context manager to capture debug strings emitted via `OutputDebugString`.
+    Spawns a listener thread to monitor the debug channels.
+    """
     captured = []
     finished = threading.Event()
     pid = _GetCurrentProcessId()
