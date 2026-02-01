@@ -26,7 +26,7 @@ class Test_deprecated(ut.TestCase):
         self.assertEqual(reason_text, str(cm.warning))
 
 
-_kernel32 = WinDLL("kernel32")
+_kernel32 = WinDLL("kernel32", use_last_error=True)
 
 # https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventw
 _CreateEventW = _kernel32.CreateEventW
@@ -73,6 +73,7 @@ _GetCurrentProcessId.restype = DWORD
 def create_file_mapping(hfile, security, flprotect, size_high, size_low, name):
     """Context manager to creates a Windows file mapping object."""
     handle = _CreateFileMappingW(hfile, security, flprotect, size_high, size_low, name)
+    assert handle, ctypes.FormatError(ctypes.get_last_error())
     try:
         yield handle
     finally:
@@ -85,6 +86,7 @@ def map_view_of_file(handle, access, offset_high, offset_low, size):
     address space.
     """
     p_view = _MapViewOfFile(handle, access, offset_high, offset_low, size)
+    assert p_view, ctypes.FormatError(ctypes.get_last_error())
     try:
         yield p_view
     finally:
@@ -95,6 +97,7 @@ def map_view_of_file(handle, access, offset_high, offset_low, size):
 def create_event(security, manual, init, name):
     """Context manager to creates a Windows event object."""
     handle = _CreateEventW(security, manual, init, name)
+    assert handle, ctypes.FormatError(ctypes.get_last_error())
     try:
         yield handle
     finally:
