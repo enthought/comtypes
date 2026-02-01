@@ -132,6 +132,13 @@ def create_event(
         _CloseHandle(handle)
 
 
+DBWIN_BUFFER_SIZE = 4096  # Longer messages are truncated at the source by the OS
+WAIT_OBJECT_0 = 0x00000000
+PAGE_READWRITE = 0x04
+FILE_MAP_READ = 0x04
+INVALID_HANDLE_VALUE = -1  # Backed by the system paging file instead of a file on disk
+
+
 @contextlib.contextmanager
 def capture_debug_strings(
     ready: threading.Event, *, interval: int
@@ -155,17 +162,26 @@ def capture_debug_strings(
             create_event(None, False, False, "DBWIN_DATA_READY") as h_data_ready,
             # "DBWIN_BUFFER": A shared memory region where `OutputDebugString`
             # writes the debug string data.
-            create_file_mapping(-1, None, 0x04, 0, 4096, "DBWIN_BUFFER") as h_mapping,
+            create_file_mapping(
+                INVALID_HANDLE_VALUE,
+                None,
+                PAGE_READWRITE,
+                0,
+                DBWIN_BUFFER_SIZE,
+                "DBWIN_BUFFER",
+            ) as h_mapping,
             # Map the shared memory region into the listener's address space
             # for reading the debug strings.
-            map_view_of_file(h_mapping, 0x04, 0, 0, 4096) as p_view,
+            map_view_of_file(
+                h_mapping, FILE_MAP_READ, 0, 0, DBWIN_BUFFER_SIZE
+            ) as p_view,
         ):
             ready.set()  # Signal to the main thread that listener is ready.
             # Loop until the main thread signals to finish.
             while not finished.is_set():
                 _SetEvent(h_buffer_ready)  # Signal readiness to `OutputDebugString`.
                 # Wait for `OutputDebugString` to signal that data is ready.
-                if _WaitForSingleObject(h_data_ready, interval) == 0x00000000:
+                if _WaitForSingleObject(h_data_ready, interval) == WAIT_OBJECT_0:
                     # Debug string buffer format: [4 bytes: PID][N bytes: string].
                     # Check if the process ID in the buffer matches the current PID.
                     if ctypes.cast(p_view, POINTER(DWORD)).contents.value == pid:
