@@ -28,34 +28,42 @@ class Test_deprecated(ut.TestCase):
 
 _kernel32 = ctypes.windll.kernel32
 
+# https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventw
 _CreateEventW = _kernel32.CreateEventW
 _CreateEventW.argtypes = [c_void_p, BOOL, BOOL, LPCWSTR]
 _CreateEventW.restype = HANDLE
 
+# https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setevent
 _SetEvent = _kernel32.SetEvent
 _SetEvent.argtypes = [HANDLE]
 _SetEvent.restype = BOOL
 
+# https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject
 _WaitForSingleObject = _kernel32.WaitForSingleObject
 _WaitForSingleObject.argtypes = [HANDLE, DWORD]
 _WaitForSingleObject.restype = DWORD
 
+# https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-createfilemappingw
 _CreateFileMappingW = _kernel32.CreateFileMappingW
 _CreateFileMappingW.argtypes = [HANDLE, c_void_p, DWORD, DWORD, DWORD, LPCWSTR]
 _CreateFileMappingW.restype = HANDLE
 
+# https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-mapviewoffile
 _MapViewOfFile = _kernel32.MapViewOfFile
 _MapViewOfFile.argtypes = [HANDLE, DWORD, DWORD, DWORD, SIZE_T]
 _MapViewOfFile.restype = c_void_p
 
+# https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-unmapviewoffile
 _UnmapViewOfFile = _kernel32.UnmapViewOfFile
 _UnmapViewOfFile.argtypes = [c_void_p]
 _UnmapViewOfFile.restype = BOOL
 
+# https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-closehandle
 _CloseHandle = _kernel32.CloseHandle
 _CloseHandle.argtypes = [HANDLE]
 _CloseHandle.restype = BOOL
 
+# https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocessid
 _GetCurrentProcessId = _kernel32.GetCurrentProcessId
 _GetCurrentProcessId.argtypes = []
 _GetCurrentProcessId.restype = DWORD
