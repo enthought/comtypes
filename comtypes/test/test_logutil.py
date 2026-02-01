@@ -2,10 +2,11 @@ import contextlib
 import ctypes
 import threading
 import unittest as ut
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator
 from ctypes import POINTER, WinDLL, c_void_p
 from ctypes import c_size_t as SIZE_T
 from ctypes.wintypes import BOOL, DWORD, HANDLE, LPCWSTR
+from queue import Queue
 from typing import TYPE_CHECKING, Optional
 from typing import Union as _UnionT
 
@@ -171,23 +172,21 @@ def open_dbwin_debug_channels() -> Iterator[tuple[int, int, int]]:
 
 
 @contextlib.contextmanager
-def capture_debug_strings(
-    ready: threading.Event, *, interval: int
-) -> Iterator[Sequence[bytes]]:
+def capture_debug_strings(ready: threading.Event, *, interval: int) -> Iterator[Queue]:
     """Context manager to capture debug strings emitted via `OutputDebugString`.
     Spawns a listener thread to monitor the debug channels.
     """
-    captured = []
+    captured = Queue()
     finished = threading.Event()
-    pid = _GetCurrentProcessId()
 
-    def _listener() -> None:
+    def _listener(
+        q: Queue, rdy: threading.Event, fin: threading.Event, pid: int
+    ) -> None:
         # Create/open named events and file mapping for interprocess communication.
         # These objects are part of the Windows Debugging API contract.
         with open_dbwin_debug_channels() as (h_buffer_ready, h_data_ready, p_view):
-            ready.set()  # Signal to the main thread that listener is ready.
-            # Loop until the main thread signals to finish.
-            while not finished.is_set():
+            rdy.set()  # Signal to the main thread that listener is ready.
+            while not fin.is_set():  # Loop until the main thread signals to finish.
                 _SetEvent(h_buffer_ready)  # Signal readiness to `OutputDebugString`.
                 # Wait for `OutputDebugString` to signal that data is ready.
                 if _WaitForSingleObject(h_data_ready, interval) == WAIT_OBJECT_0:
@@ -196,9 +195,13 @@ def capture_debug_strings(
                     if ctypes.cast(p_view, POINTER(DWORD)).contents.value == pid:
                         # Extract the null-terminated string, skipping the PID,
                         # and put it into the queue.
-                        captured.append(ctypes.string_at(p_view + 4).strip(b"\x00"))
+                        q.put(ctypes.string_at(p_view + 4).strip(b"\x00"))
 
-    th = threading.Thread(target=_listener, daemon=True)
+    th = threading.Thread(
+        target=_listener,
+        args=(captured, ready, finished, _GetCurrentProcessId()),
+        daemon=True,
+    )
     th.start()
     try:
         yield captured
@@ -214,5 +217,5 @@ class Test_OutputDebugStringW(ut.TestCase):
             ready.wait(timeout=5)  # Wait for the listener to be ready
             OutputDebugStringW("hello world")
             OutputDebugStringW("test message")
-        self.assertEqual(cap[0], b"hello world")
-        self.assertEqual(cap[1], b"test message")
+        self.assertEqual(cap.get(), b"hello world")
+        self.assertEqual(cap.get(), b"test message")
