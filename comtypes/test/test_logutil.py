@@ -6,12 +6,17 @@ from collections.abc import Iterator, Sequence
 from ctypes import POINTER, WinDLL, c_void_p
 from ctypes import c_size_t as SIZE_T
 from ctypes.wintypes import BOOL, DWORD, HANDLE, LPCWSTR
+from typing import TYPE_CHECKING, Optional
+from typing import Union as _UnionT
 
 from comtypes.client._events import SECURITY_ATTRIBUTES
 from comtypes.logutil import (
     _OutputDebugStringW as OutputDebugStringW,
 )
 from comtypes.logutil import deprecated
+
+if TYPE_CHECKING:
+    from ctypes import _CArgObject, _Pointer
 
 
 class Test_deprecated(ut.TestCase):
@@ -79,7 +84,14 @@ _GetCurrentProcessId.restype = DWORD
 
 
 @contextlib.contextmanager
-def create_file_mapping(hfile, security, flprotect, size_high, size_low, name):
+def create_file_mapping(
+    hfile: int,
+    security: _UnionT["_Pointer[SECURITY_ATTRIBUTES]", "_CArgObject", None],
+    flprotect: int,
+    size_high: int,
+    size_low: int,
+    name: Optional[str],
+) -> Iterator[int]:
     """Context manager to creates a Windows file mapping object."""
     handle = _CreateFileMappingW(hfile, security, flprotect, size_high, size_low, name)
     assert handle, ctypes.FormatError(ctypes.get_last_error())
@@ -90,7 +102,9 @@ def create_file_mapping(hfile, security, flprotect, size_high, size_low, name):
 
 
 @contextlib.contextmanager
-def map_view_of_file(handle, access, offset_high, offset_low, size):
+def map_view_of_file(
+    handle: int, access: int, offset_high: int, offset_low: int, size: int
+) -> Iterator[int]:
     """Context manager to map a view of a file mapping into the process's
     address space.
     """
@@ -103,7 +117,12 @@ def map_view_of_file(handle, access, offset_high, offset_low, size):
 
 
 @contextlib.contextmanager
-def create_event(security, manual, init, name):
+def create_event(
+    security: _UnionT["_Pointer[SECURITY_ATTRIBUTES]", "_CArgObject", None],
+    manual: bool,
+    init: bool,
+    name: Optional[str],
+) -> Iterator[int]:
     """Context manager to creates a Windows event object."""
     handle = _CreateEventW(security, manual, init, name)
     assert handle, ctypes.FormatError(ctypes.get_last_error())
