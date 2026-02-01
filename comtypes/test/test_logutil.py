@@ -2,6 +2,7 @@ import contextlib
 import ctypes
 import threading
 import unittest as ut
+from collections.abc import Iterator, Sequence
 from ctypes import POINTER, WinDLL, c_void_p
 from ctypes import c_size_t as SIZE_T
 from ctypes.wintypes import BOOL, DWORD, HANDLE, LPCWSTR
@@ -113,7 +114,9 @@ def create_event(security, manual, init, name):
 
 
 @contextlib.contextmanager
-def capture_debug_strings(ready, *, interval):
+def capture_debug_strings(
+    ready: threading.Event, *, interval: int
+) -> Iterator[Sequence[bytes]]:
     """Context manager to capture debug strings emitted via `OutputDebugString`.
     Spawns a listener thread to monitor the debug channels.
     """
