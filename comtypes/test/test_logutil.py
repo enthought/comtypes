@@ -1,5 +1,6 @@
 import contextlib
 import ctypes
+import logging
 import threading
 import unittest as ut
 from collections.abc import Iterator
@@ -11,10 +12,10 @@ from typing import TYPE_CHECKING, Optional
 from typing import Union as _UnionT
 
 from comtypes.client._events import SECURITY_ATTRIBUTES
+from comtypes.logutil import NTDebugHandler, deprecated
 from comtypes.logutil import (
     _OutputDebugStringW as OutputDebugStringW,
 )
-from comtypes.logutil import deprecated
 
 if TYPE_CHECKING:
     from ctypes import _CArgObject, _Pointer
@@ -219,3 +220,21 @@ class Test_OutputDebugStringW(ut.TestCase):
             OutputDebugStringW("test message")
         self.assertEqual(cap.get(), b"hello world")
         self.assertEqual(cap.get(), b"test message")
+
+
+class Test_NTDebugHandler(ut.TestCase):
+    def test_emit(self):
+        ready = threading.Event()
+        handler = NTDebugHandler()
+        logger = logging.getLogger("test_ntdebug_handler")
+        # Clear existing handlers to prevent interference from other tests
+        logger.handlers = []
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        with capture_debug_strings(ready, interval=100) as cap:
+            ready.wait(timeout=5)  # Wait for the listener to be ready
+            msg = "This is a test message from NTDebugHandler."
+            logger.info(msg)
+        logger.removeHandler(handler)
+        handler.close()
+        self.assertEqual(cap.get(), msg.encode("utf-8") + b"\n")

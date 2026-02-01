@@ -20,14 +20,10 @@ class NTDebugHandler(logging.Handler):
     def emit(
         self,
         record,
-        writeA=_OutputDebugStringA,
         writeW=_OutputDebugStringW,
     ):
         text = self.format(record)
-        if isinstance(text, str):
-            writeA(text + "\n")
-        else:
-            writeW(text + "\n")
+        writeW(text + "\n")
 
 
 logging.NTDebugHandler = NTDebugHandler
