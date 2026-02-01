@@ -2,7 +2,7 @@ import contextlib
 import ctypes
 import threading
 import unittest as ut
-from ctypes import POINTER, c_void_p
+from ctypes import POINTER, WinDLL, c_void_p
 from ctypes import c_size_t as SIZE_T
 from ctypes.wintypes import BOOL, DWORD, HANDLE, LPCWSTR
 
@@ -26,7 +26,7 @@ class Test_deprecated(ut.TestCase):
         self.assertEqual(reason_text, str(cm.warning))
 
 
-_kernel32 = ctypes.windll.kernel32
+_kernel32 = WinDLL("kernel32")
 
 # https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventw
 _CreateEventW = _kernel32.CreateEventW
