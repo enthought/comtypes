@@ -6,6 +6,7 @@ from ctypes import POINTER, WinDLL, c_void_p
 from ctypes import c_size_t as SIZE_T
 from ctypes.wintypes import BOOL, DWORD, HANDLE, LPCWSTR
 
+from comtypes.client._events import SECURITY_ATTRIBUTES
 from comtypes.logutil import (
     _OutputDebugStringW as OutputDebugStringW,
 )
@@ -30,7 +31,7 @@ _kernel32 = WinDLL("kernel32", use_last_error=True)
 
 # https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventw
 _CreateEventW = _kernel32.CreateEventW
-_CreateEventW.argtypes = [c_void_p, BOOL, BOOL, LPCWSTR]
+_CreateEventW.argtypes = [POINTER(SECURITY_ATTRIBUTES), BOOL, BOOL, LPCWSTR]
 _CreateEventW.restype = HANDLE
 
 # https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setevent
@@ -45,7 +46,14 @@ _WaitForSingleObject.restype = DWORD
 
 # https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-createfilemappingw
 _CreateFileMappingW = _kernel32.CreateFileMappingW
-_CreateFileMappingW.argtypes = [HANDLE, c_void_p, DWORD, DWORD, DWORD, LPCWSTR]
+_CreateFileMappingW.argtypes = [
+    HANDLE,
+    POINTER(SECURITY_ATTRIBUTES),
+    DWORD,
+    DWORD,
+    DWORD,
+    LPCWSTR,
+]
 _CreateFileMappingW.restype = HANDLE
 
 # https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-mapviewoffile
