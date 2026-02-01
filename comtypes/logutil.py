@@ -1,5 +1,7 @@
 # logutil.py
+import functools
 import logging
+import warnings
 from ctypes import WinDLL
 from ctypes.wintypes import LPCSTR, LPCWSTR
 
@@ -18,19 +20,28 @@ class NTDebugHandler(logging.Handler):
     def emit(
         self,
         record,
-        writeA=_OutputDebugStringA,
         writeW=_OutputDebugStringW,
     ):
         text = self.format(record)
-        if isinstance(text, str):
-            writeA(text + "\n")
-        else:
-            writeW(text + "\n")
+        writeW(text + "\n")
 
 
 logging.NTDebugHandler = NTDebugHandler
 
 
+def deprecated(reason: str):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            warnings.warn(reason, category=DeprecationWarning, stacklevel=2)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+@deprecated("Deprecated. See https://github.com/enthought/comtypes/issues/920.")
 def setup_logging(*pathnames):
     import configparser
 
