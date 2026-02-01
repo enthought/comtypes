@@ -111,17 +111,33 @@ def capture_debug_strings(ready, *, interval):
     pid = _GetCurrentProcessId()
 
     def _listener() -> None:
+        # Create/open named events and file mapping for interprocess communication.
+        # These objects are part of the Windows Debugging API contract.
         with (
+            # "DBWIN_BUFFER_READY": An event signaled by the listener to indicate
+            # it's ready to receive debug output. `OutputDebugString` waits for this.
             create_event(None, False, False, "DBWIN_BUFFER_READY") as h_buffer_ready,
+            # "DBWIN_DATA_READY": An event signaled by `OutputDebugString` to
+            # indicate new data is written to the shared buffer. Listener waits.
             create_event(None, False, False, "DBWIN_DATA_READY") as h_data_ready,
+            # "DBWIN_BUFFER": A shared memory region where `OutputDebugString`
+            # writes the debug string data.
             create_file_mapping(-1, None, 0x04, 0, 4096, "DBWIN_BUFFER") as h_mapping,
+            # Map the shared memory region into the listener's address space
+            # for reading the debug strings.
             map_view_of_file(h_mapping, 0x04, 0, 0, 4096) as p_view,
         ):
-            ready.set()
+            ready.set()  # Signal to the main thread that listener is ready.
+            # Loop until the main thread signals to finish.
             while not finished.is_set():
-                _SetEvent(h_buffer_ready)
+                _SetEvent(h_buffer_ready)  # Signal readiness to `OutputDebugString`.
+                # Wait for `OutputDebugString` to signal that data is ready.
                 if _WaitForSingleObject(h_data_ready, interval) == 0x00000000:
+                    # Debug string buffer format: [4 bytes: PID][N bytes: string].
+                    # Check if the process ID in the buffer matches the current PID.
                     if ctypes.cast(p_view, POINTER(DWORD)).contents.value == pid:
+                        # Extract the null-terminated string, skipping the PID,
+                        # and put it into the queue.
                         captured.append(ctypes.string_at(p_view + 4).strip(b"\x00"))
 
     th = threading.Thread(target=_listener, daemon=True)
