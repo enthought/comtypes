@@ -140,6 +140,37 @@ INVALID_HANDLE_VALUE = -1  # Backed by the system paging file instead of a file 
 
 
 @contextlib.contextmanager
+def open_dbwin_debug_channels() -> Iterator[tuple[int, int, int]]:
+    """Context manager to open the standard Windows debug output channels
+    (events and shared memory).
+    Yields handles to `DBWIN_BUFFER_READY`, `DBWIN_DATA_READY`, and a pointer
+    to `DBWIN_BUFFER`.
+    """
+    with (
+        # "DBWIN_BUFFER_READY": An event signaled by the listener to indicate
+        # it's ready to receive debug output. `OutputDebugString` waits for this.
+        create_event(None, False, False, "DBWIN_BUFFER_READY") as h_buffer_ready,
+        # "DBWIN_DATA_READY": An event signaled by `OutputDebugString` to
+        # indicate new data is written to the shared buffer. Listener waits.
+        create_event(None, False, False, "DBWIN_DATA_READY") as h_data_ready,
+        # "DBWIN_BUFFER": A shared memory region where `OutputDebugString`
+        # writes the debug string data.
+        create_file_mapping(
+            INVALID_HANDLE_VALUE,
+            None,
+            PAGE_READWRITE,
+            0,
+            DBWIN_BUFFER_SIZE,
+            "DBWIN_BUFFER",
+        ) as h_mapping,
+        # Map the shared memory region into the listener's address space
+        # for reading the debug strings.
+        map_view_of_file(h_mapping, FILE_MAP_READ, 0, 0, DBWIN_BUFFER_SIZE) as p_view,
+    ):
+        yield (h_buffer_ready, h_data_ready, p_view)
+
+
+@contextlib.contextmanager
 def capture_debug_strings(
     ready: threading.Event, *, interval: int
 ) -> Iterator[Sequence[bytes]]:
@@ -153,29 +184,7 @@ def capture_debug_strings(
     def _listener() -> None:
         # Create/open named events and file mapping for interprocess communication.
         # These objects are part of the Windows Debugging API contract.
-        with (
-            # "DBWIN_BUFFER_READY": An event signaled by the listener to indicate
-            # it's ready to receive debug output. `OutputDebugString` waits for this.
-            create_event(None, False, False, "DBWIN_BUFFER_READY") as h_buffer_ready,
-            # "DBWIN_DATA_READY": An event signaled by `OutputDebugString` to
-            # indicate new data is written to the shared buffer. Listener waits.
-            create_event(None, False, False, "DBWIN_DATA_READY") as h_data_ready,
-            # "DBWIN_BUFFER": A shared memory region where `OutputDebugString`
-            # writes the debug string data.
-            create_file_mapping(
-                INVALID_HANDLE_VALUE,
-                None,
-                PAGE_READWRITE,
-                0,
-                DBWIN_BUFFER_SIZE,
-                "DBWIN_BUFFER",
-            ) as h_mapping,
-            # Map the shared memory region into the listener's address space
-            # for reading the debug strings.
-            map_view_of_file(
-                h_mapping, FILE_MAP_READ, 0, 0, DBWIN_BUFFER_SIZE
-            ) as p_view,
-        ):
+        with open_dbwin_debug_channels() as (h_buffer_ready, h_data_ready, p_view):
             ready.set()  # Signal to the main thread that listener is ready.
             # Loop until the main thread signals to finish.
             while not finished.is_set():
