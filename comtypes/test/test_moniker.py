@@ -147,6 +147,17 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
 
 
 class Test_ComposeWith(unittest.TestCase):
+    def test_anti_with_same_type(self):
+        left_mon = _create_anti_moniker()
+        right_mon = _create_anti_moniker()
+        self.assertEqual(
+            left_mon.ComposeWith(right_mon, False).GetClassID(),
+            CLSID_CompositeMoniker,
+        )
+        with self.assertRaises(COMError) as cm:
+            left_mon.ComposeWith(right_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
     def test_item(self):
         item_id = str(GUID.create_new())
         mon = _create_item_moniker("!", item_id)
