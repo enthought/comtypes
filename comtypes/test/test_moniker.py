@@ -181,9 +181,12 @@ class Test_ComposeWith(unittest.TestCase):
             tmpdir = Path(t)
             tmpfile = tmpdir / "tmp.txt"
             file_mon = _create_file_moniker(str(tmpfile))
+            # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-imoniker-composewith#implementation-specific-notes
+            comp_mon = anti_mon.ComposeWith(file_mon, False)
+            self.assertEqual(comp_mon.IsSystemMoniker(), MKSYS_GENERICCOMPOSITE)
+            self.assertEqual(comp_mon.GetClassID(), CLSID_CompositeMoniker)
             self.assertEqual(
-                anti_mon.ComposeWith(file_mon, False).GetClassID(),
-                CLSID_CompositeMoniker,
+                comp_mon.GetDisplayName(_create_bctx(), None), f"\\..{tmpfile}"
             )
             with self.assertRaises(COMError) as cm:
                 anti_mon.ComposeWith(file_mon, True)
