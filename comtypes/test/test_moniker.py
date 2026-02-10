@@ -208,12 +208,15 @@ class Test_ComposeWith(unittest.TestCase):
         self.assertFalse(item_mon.ComposeWith(anti_mon, True))
 
     def test_item_with_same_type(self):
-        item_id = str(GUID.create_new())
-        left_mon = _create_item_moniker("!", item_id)
-        right_mon = _create_item_moniker("!", str(GUID.create_new()))
+        left_id = str(GUID.create_new())
+        left_mon = _create_item_moniker("!", left_id)
+        right_id = str(GUID.create_new())
+        right_mon = _create_item_moniker("!", right_id)
+        comp_mon = left_mon.ComposeWith(right_mon, False)
+        self.assertEqual(comp_mon.IsSystemMoniker(), MKSYS_GENERICCOMPOSITE)
+        self.assertEqual(comp_mon.GetClassID(), CLSID_CompositeMoniker)
         self.assertEqual(
-            left_mon.ComposeWith(right_mon, False).GetClassID(),
-            CLSID_CompositeMoniker,
+            comp_mon.GetDisplayName(_create_bctx(), None), f"!{left_id}!{right_id}"
         )
         with self.assertRaises(COMError) as cm:
             left_mon.ComposeWith(right_mon, True)
