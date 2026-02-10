@@ -15,6 +15,7 @@ from comtypes.persist import IPersistFile
 from comtypes.test.monikers_helper import (
     MK_E_NEEDGENERIC,
     MK_E_NOINVERSE,
+    MK_E_SYNTAX,
     MKSYS_ANTIMONIKER,
     MKSYS_FILEMONIKER,
     MKSYS_GENERICCOMPOSITE,
@@ -147,6 +148,22 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
 
 
 class Test_ComposeWith(unittest.TestCase):
+    def test_file_with_same_type(self):
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            tmpfile = tmpdir / "tmp.txt"
+            left_mon = _create_file_moniker(str(tmpfile))
+            # Composing two distinct absolute file monikers results in error.
+            for right_mon, only_if_not_generic in [
+                (_create_file_moniker(str(tmpfile)), False),
+                (_create_file_moniker(str(tmpfile)), True),
+                (_create_file_moniker(str(tmpdir / "tmp2.txt")), False),
+                (_create_file_moniker(str(tmpdir / "tmp2.txt")), True),
+            ]:
+                with self.assertRaises(COMError) as cm:
+                    left_mon.ComposeWith(right_mon, only_if_not_generic)
+                self.assertEqual(cm.exception.hresult, MK_E_SYNTAX)
+
     def test_anti_with_same_type(self):
         left_mon = _create_anti_moniker()
         right_mon = _create_anti_moniker()
