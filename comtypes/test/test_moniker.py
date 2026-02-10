@@ -160,14 +160,14 @@ class Test_ComposeWith(unittest.TestCase):
 
     def test_item_with_same_type(self):
         item_id = str(GUID.create_new())
-        mon = _create_item_moniker("!", item_id)
-        item_mon2 = _create_item_moniker("!", str(GUID.create_new()))
+        left_mon = _create_item_moniker("!", item_id)
+        right_mon = _create_item_moniker("!", str(GUID.create_new()))
         self.assertEqual(
-            mon.ComposeWith(item_mon2, False).GetClassID(),
+            left_mon.ComposeWith(right_mon, False).GetClassID(),
             CLSID_CompositeMoniker,
         )
         with self.assertRaises(COMError) as cm:
-            mon.ComposeWith(item_mon2, True)
+            left_mon.ComposeWith(right_mon, True)
         self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
 
 
