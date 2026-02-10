@@ -6,6 +6,7 @@ from comtypes import GUID, IUnknown
 # https://learn.microsoft.com/en-us/windows/win32/api/objidl/ne-objidl-mksys
 MKSYS_GENERICCOMPOSITE = 1
 MKSYS_FILEMONIKER = 2
+MKSYS_ANTIMONIKER = 3
 MKSYS_ITEMMONIKER = 4
 
 CLSID_CompositeMoniker = GUID("{00000309-0000-0000-c000-000000000046}")
@@ -31,6 +32,10 @@ _CreateFileMoniker = _ole32.CreateFileMoniker
 _CreateFileMoniker.argtypes = [LPCOLESTR, POINTER(POINTER(IUnknown))]
 _CreateFileMoniker.restype = HRESULT
 
+_CreateAntiMoniker = _ole32.CreateAntiMoniker
+_CreateAntiMoniker.argtypes = [POINTER(POINTER(IUnknown))]
+_CreateAntiMoniker.restype = HRESULT
+
 _CreateItemMoniker = _ole32.CreateItemMoniker
 _CreateItemMoniker.argtypes = [LPCOLESTR, LPCOLESTR, POINTER(POINTER(IUnknown))]
 _CreateItemMoniker.restype = HRESULT
@@ -44,5 +49,6 @@ _GetRunningObjectTable.argtypes = [DWORD, POINTER(POINTER(IUnknown))]
 _GetRunningObjectTable.restype = HRESULT
 
 # Common COM Errors from Moniker/Binding Context operations
+MK_E_NOINVERSE = -2147221012  # 0x800401EC
 MK_E_NEEDGENERIC = -2147221022  # 0x800401E2
 MK_E_UNAVAILABLE = -2147221021  # 0x800401E3

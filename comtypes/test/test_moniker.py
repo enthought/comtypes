@@ -14,6 +14,8 @@ from comtypes.client import CreateObject, GetModule
 from comtypes.persist import IPersistFile
 from comtypes.test.monikers_helper import (
     MK_E_NEEDGENERIC,
+    MK_E_NOINVERSE,
+    MKSYS_ANTIMONIKER,
     MKSYS_FILEMONIKER,
     MKSYS_GENERICCOMPOSITE,
     MKSYS_ITEMMONIKER,
@@ -22,6 +24,7 @@ from comtypes.test.monikers_helper import (
     CLSID_CompositeMoniker,
     CLSID_FileMoniker,
     CLSID_ItemMoniker,
+    _CreateAntiMoniker,
     _CreateBindCtx,
     _CreateFileMoniker,
     _CreateGenericComposite,
@@ -57,6 +60,12 @@ def _get_long_path_name(path: str) -> str:
 def _create_generic_composite(mk_first: IMoniker, mk_rest: IMoniker) -> IMoniker:
     mon = POINTER(IMoniker)()
     _CreateGenericComposite(mk_first, mk_rest, byref(mon))
+    return mon  # type: ignore
+
+
+def _create_anti_moniker() -> IMoniker:
+    mon = POINTER(IMoniker)()
+    _CreateAntiMoniker(byref(mon))
     return mon  # type: ignore
 
 
@@ -115,6 +124,17 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
             )
             self.assertEqual(mon.GetClassID(), CLSID_FileMoniker)
             self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
+
+    def test_anti(self):
+        mon = _create_anti_moniker()
+        self.assertEqual(mon.IsSystemMoniker(), MKSYS_ANTIMONIKER)
+        bctx = _create_bctx()
+        self.assertEqual(mon.GetDisplayName(bctx, None), "\\..")
+        self.assertEqual(mon.GetClassID(), CLSID_AntiMoniker)
+        # Anti-moniker has NO inverse.
+        with self.assertRaises(COMError) as cm:
+            mon.Inverse()
+        self.assertEqual(cm.exception.hresult, MK_E_NOINVERSE)
 
     def test_item(self):
         item_id = str(GUID.create_new())
