@@ -158,7 +158,7 @@ class Test_ComposeWith(unittest.TestCase):
             left_mon.ComposeWith(right_mon, True)
         self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
 
-    def test_item(self):
+    def test_item_with_same_type(self):
         item_id = str(GUID.create_new())
         mon = _create_item_moniker("!", item_id)
         item_mon2 = _create_item_moniker("!", str(GUID.create_new()))
