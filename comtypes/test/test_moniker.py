@@ -174,6 +174,19 @@ class Test_ComposeWith(unittest.TestCase):
             self.assertFalse(file_mon.ComposeWith(anti_mon, False))
             self.assertFalse(file_mon.ComposeWith(anti_mon, True))
 
+    def test_anti_with_item(self):
+        anti_mon = _create_anti_moniker()
+        item_mon = _create_item_moniker("!", str(GUID.create_new()))
+        self.assertEqual(
+            anti_mon.ComposeWith(item_mon, False).GetClassID(),
+            CLSID_CompositeMoniker,
+        )
+        with self.assertRaises(COMError) as cm:
+            anti_mon.ComposeWith(item_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+        self.assertFalse(item_mon.ComposeWith(anti_mon, False))
+        self.assertFalse(item_mon.ComposeWith(anti_mon, True))
+
     def test_item_with_same_type(self):
         item_id = str(GUID.create_new())
         left_mon = _create_item_moniker("!", item_id)
