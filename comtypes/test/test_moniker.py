@@ -14,6 +14,9 @@ from comtypes.client import CreateObject, GetModule
 from comtypes.persist import IPersistFile
 from comtypes.test.monikers_helper import (
     MK_E_NEEDGENERIC,
+    MK_E_NOINVERSE,
+    MK_E_SYNTAX,
+    MKSYS_ANTIMONIKER,
     MKSYS_FILEMONIKER,
     MKSYS_GENERICCOMPOSITE,
     MKSYS_ITEMMONIKER,
@@ -22,6 +25,7 @@ from comtypes.test.monikers_helper import (
     CLSID_CompositeMoniker,
     CLSID_FileMoniker,
     CLSID_ItemMoniker,
+    _CreateAntiMoniker,
     _CreateBindCtx,
     _CreateFileMoniker,
     _CreateGenericComposite,
@@ -57,6 +61,12 @@ def _get_long_path_name(path: str) -> str:
 def _create_generic_composite(mk_first: IMoniker, mk_rest: IMoniker) -> IMoniker:
     mon = POINTER(IMoniker)()
     _CreateGenericComposite(mk_first, mk_rest, byref(mon))
+    return mon  # type: ignore
+
+
+def _create_anti_moniker() -> IMoniker:
+    mon = POINTER(IMoniker)()
+    _CreateAntiMoniker(byref(mon))
     return mon  # type: ignore
 
 
@@ -116,6 +126,17 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
             self.assertEqual(mon.GetClassID(), CLSID_FileMoniker)
             self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
 
+    def test_anti(self):
+        mon = _create_anti_moniker()
+        self.assertEqual(mon.IsSystemMoniker(), MKSYS_ANTIMONIKER)
+        bctx = _create_bctx()
+        self.assertEqual(mon.GetDisplayName(bctx, None), "\\..")
+        self.assertEqual(mon.GetClassID(), CLSID_AntiMoniker)
+        # Anti-moniker has NO inverse.
+        with self.assertRaises(COMError) as cm:
+            mon.Inverse()
+        self.assertEqual(cm.exception.hresult, MK_E_NOINVERSE)
+
     def test_item(self):
         item_id = str(GUID.create_new())
         mon = _create_item_moniker("!", item_id)
@@ -127,16 +148,78 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
 
 
 class Test_ComposeWith(unittest.TestCase):
-    def test_item(self):
-        item_id = str(GUID.create_new())
-        mon = _create_item_moniker("!", item_id)
-        item_mon2 = _create_item_moniker("!", str(GUID.create_new()))
+    def test_file_with_same_type(self):
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            tmpfile = tmpdir / "tmp.txt"
+            left_mon = _create_file_moniker(str(tmpfile))
+            # Composing two distinct absolute file monikers results in error.
+            for right_mon, only_if_not_generic in [
+                (_create_file_moniker(str(tmpfile)), False),
+                (_create_file_moniker(str(tmpfile)), True),
+                (_create_file_moniker(str(tmpdir / "tmp2.txt")), False),
+                (_create_file_moniker(str(tmpdir / "tmp2.txt")), True),
+            ]:
+                with self.assertRaises(COMError) as cm:
+                    left_mon.ComposeWith(right_mon, only_if_not_generic)
+                self.assertEqual(cm.exception.hresult, MK_E_SYNTAX)
+
+    def test_anti_with_same_type(self):
+        left_mon = _create_anti_moniker()
+        right_mon = _create_anti_moniker()
         self.assertEqual(
-            mon.ComposeWith(item_mon2, False).GetClassID(),
+            left_mon.ComposeWith(right_mon, False).GetClassID(),
             CLSID_CompositeMoniker,
         )
         with self.assertRaises(COMError) as cm:
-            mon.ComposeWith(item_mon2, True)
+            left_mon.ComposeWith(right_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
+    def test_anti_with_file(self):
+        anti_mon = _create_anti_moniker()
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            tmpfile = tmpdir / "tmp.txt"
+            file_mon = _create_file_moniker(str(tmpfile))
+            # https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-imoniker-composewith#implementation-specific-notes
+            comp_mon = anti_mon.ComposeWith(file_mon, False)
+            self.assertEqual(comp_mon.IsSystemMoniker(), MKSYS_GENERICCOMPOSITE)
+            self.assertEqual(comp_mon.GetClassID(), CLSID_CompositeMoniker)
+            self.assertEqual(
+                comp_mon.GetDisplayName(_create_bctx(), None), f"\\..{tmpfile}"
+            )
+            with self.assertRaises(COMError) as cm:
+                anti_mon.ComposeWith(file_mon, True)
+            self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+            self.assertFalse(file_mon.ComposeWith(anti_mon, False))
+            self.assertFalse(file_mon.ComposeWith(anti_mon, True))
+
+    def test_anti_with_item(self):
+        anti_mon = _create_anti_moniker()
+        item_mon = _create_item_moniker("!", str(GUID.create_new()))
+        self.assertEqual(
+            anti_mon.ComposeWith(item_mon, False).GetClassID(),
+            CLSID_CompositeMoniker,
+        )
+        with self.assertRaises(COMError) as cm:
+            anti_mon.ComposeWith(item_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+        self.assertFalse(item_mon.ComposeWith(anti_mon, False))
+        self.assertFalse(item_mon.ComposeWith(anti_mon, True))
+
+    def test_item_with_same_type(self):
+        left_id = str(GUID.create_new())
+        left_mon = _create_item_moniker("!", left_id)
+        right_id = str(GUID.create_new())
+        right_mon = _create_item_moniker("!", right_id)
+        comp_mon = left_mon.ComposeWith(right_mon, False)
+        self.assertEqual(comp_mon.IsSystemMoniker(), MKSYS_GENERICCOMPOSITE)
+        self.assertEqual(comp_mon.GetClassID(), CLSID_CompositeMoniker)
+        self.assertEqual(
+            comp_mon.GetDisplayName(_create_bctx(), None), f"!{left_id}!{right_id}"
+        )
+        with self.assertRaises(COMError) as cm:
+            left_mon.ComposeWith(right_mon, True)
         self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
 
 
