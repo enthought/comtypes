@@ -158,6 +158,22 @@ class Test_ComposeWith(unittest.TestCase):
             left_mon.ComposeWith(right_mon, True)
         self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
 
+    def test_anti_with_file(self):
+        anti_mon = _create_anti_moniker()
+        with tempfile.TemporaryDirectory() as t:
+            tmpdir = Path(t)
+            tmpfile = tmpdir / "tmp.txt"
+            file_mon = _create_file_moniker(str(tmpfile))
+            self.assertEqual(
+                anti_mon.ComposeWith(file_mon, False).GetClassID(),
+                CLSID_CompositeMoniker,
+            )
+            with self.assertRaises(COMError) as cm:
+                anti_mon.ComposeWith(file_mon, True)
+            self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+            self.assertFalse(file_mon.ComposeWith(anti_mon, False))
+            self.assertFalse(file_mon.ComposeWith(anti_mon, True))
+
     def test_item_with_same_type(self):
         item_id = str(GUID.create_new())
         left_mon = _create_item_moniker("!", item_id)
