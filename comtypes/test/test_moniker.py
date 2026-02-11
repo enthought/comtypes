@@ -207,6 +207,58 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
 
 
 class Test_ComposeWith(unittest.TestCase):
+    def test_generic_composite_with_same_type(self):
+        item_id1 = str(GUID.create_new())
+        item_id2 = str(GUID.create_new())
+        item_id3 = str(GUID.create_new())
+        item_id4 = str(GUID.create_new())
+        left_mon = _create_generic_composite(
+            _create_item_moniker("!", item_id1),
+            _create_item_moniker("!", item_id2),
+        )
+        right_mon = _create_generic_composite(
+            _create_item_moniker("!", item_id3),
+            _create_item_moniker("!", item_id4),
+        )
+        comp_mon = left_mon.ComposeWith(right_mon, False)
+        self.assertEqual(comp_mon.GetClassID(), CLSID_CompositeMoniker)
+        self.assertEqual(
+            comp_mon.GetDisplayName(_create_bctx(), None),
+            f"!{item_id1}!{item_id2}!{item_id3}!{item_id4}",
+        )
+        with self.assertRaises(COMError) as cm:
+            left_mon.ComposeWith(right_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
+    def test_generic_composite_with_item(self):
+        item_id1 = str(GUID.create_new())
+        item_id2 = str(GUID.create_new())
+        item_id3 = str(GUID.create_new())
+        orig_mon = _create_generic_composite(
+            _create_item_moniker("!", item_id1),
+            _create_item_moniker("!", item_id2),
+        )
+        item_mon = _create_item_moniker("!", item_id3)
+        bctx = _create_bctx()
+        comp_with_item = orig_mon.ComposeWith(item_mon, False)
+        self.assertEqual(comp_with_item.GetClassID(), CLSID_CompositeMoniker)
+        self.assertEqual(
+            comp_with_item.GetDisplayName(bctx, None),
+            f"!{item_id1}!{item_id2}!{item_id3}",
+        )
+        item_with_comp = item_mon.ComposeWith(orig_mon, False)
+        self.assertEqual(item_with_comp.GetClassID(), CLSID_CompositeMoniker)
+        self.assertEqual(
+            item_with_comp.GetDisplayName(bctx, None),
+            f"!{item_id3}!{item_id1}!{item_id2}",
+        )
+        with self.assertRaises(COMError) as cm:
+            orig_mon.ComposeWith(item_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+        with self.assertRaises(COMError) as cm:
+            item_mon.ComposeWith(orig_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
     def test_file_with_same_type(self):
         with tempfile.TemporaryDirectory() as t:
             tmpdir = Path(t)
@@ -232,6 +284,29 @@ class Test_ComposeWith(unittest.TestCase):
         )
         with self.assertRaises(COMError) as cm:
             left_mon.ComposeWith(right_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
+    def test_anti_with_generic_composite(self):
+        item_id1 = str(GUID.create_new())
+        item_id2 = str(GUID.create_new())
+        orig_mon = _create_generic_composite(
+            _create_item_moniker("!", item_id1),
+            _create_item_moniker("!", item_id2),
+        )
+        bctx = _create_bctx()
+        comp_with_anti = orig_mon.ComposeWith(_create_anti_moniker(), False)
+        self.assertEqual(comp_with_anti.GetClassID(), CLSID_ItemMoniker)
+        self.assertEqual(comp_with_anti.GetDisplayName(bctx, None), f"!{item_id1}")
+        anti_with_comp = _create_anti_moniker().ComposeWith(orig_mon, False)
+        self.assertEqual(anti_with_comp.GetClassID(), CLSID_CompositeMoniker)
+        self.assertEqual(
+            anti_with_comp.GetDisplayName(bctx, None), f"\\..!{item_id1}!{item_id2}"
+        )
+        with self.assertRaises(COMError) as cm:
+            orig_mon.ComposeWith(_create_anti_moniker(), True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+        with self.assertRaises(COMError) as cm:
+            _create_anti_moniker().ComposeWith(orig_mon, True)
         self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
 
     def test_anti_with_file(self):
