@@ -9,7 +9,7 @@ from ctypes import POINTER, WinDLL, byref
 from ctypes.wintypes import DWORD, LPCWSTR, LPWSTR, MAX_PATH
 from pathlib import Path
 
-from comtypes import GUID, hresult
+from comtypes import GUID, IUnknown, hresult
 from comtypes.client import CreateObject, GetModule
 from comtypes.persist import IPersistFile
 from comtypes.test.monikers_helper import (
@@ -20,16 +20,19 @@ from comtypes.test.monikers_helper import (
     MKSYS_FILEMONIKER,
     MKSYS_GENERICCOMPOSITE,
     MKSYS_ITEMMONIKER,
+    MKSYS_POINTERMONIKER,
     ROTFLAGS_ALLOWANYCLIENT,
     CLSID_AntiMoniker,
     CLSID_CompositeMoniker,
     CLSID_FileMoniker,
     CLSID_ItemMoniker,
+    CLSID_PointerMoniker,
     _CreateAntiMoniker,
     _CreateBindCtx,
     _CreateFileMoniker,
     _CreateGenericComposite,
     _CreateItemMoniker,
+    _CreatePointerMoniker,
     _GetRunningObjectTable,
 )
 from comtypes.test.time_structs_helper import CompareFileTime
@@ -79,6 +82,13 @@ def _create_file_moniker(path: str) -> IMoniker:
 def _create_item_moniker(delim: str, item: str) -> IMoniker:
     mon = POINTER(IMoniker)()
     _CreateItemMoniker(delim, item, byref(mon))
+    return mon  # type: ignore
+
+
+def _create_pointer_moniker(punk: IUnknown) -> IMoniker:
+    mon = POINTER(IMoniker)()
+    # `punk` must be an instance of `POINTER(IUnknown)`.
+    _CreatePointerMoniker(punk, byref(mon))
     return mon  # type: ignore
 
 
@@ -144,6 +154,17 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
         bctx = _create_bctx()
         self.assertEqual(mon.GetDisplayName(bctx, None), f"!{item_id}")
         self.assertEqual(mon.GetClassID(), CLSID_ItemMoniker)
+        self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
+
+    def test_pointer(self):
+        vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
+        mon = _create_pointer_moniker(vidctl)
+        self.assertEqual(mon.IsSystemMoniker(), MKSYS_POINTERMONIKER)
+        bctx = _create_bctx()
+        with self.assertRaises(COMError) as cm:
+            mon.GetDisplayName(bctx, None)
+        self.assertEqual(cm.exception.hresult, hresult.E_NOTIMPL)
+        self.assertEqual(mon.GetClassID(), CLSID_PointerMoniker)
         self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
 
 
@@ -217,6 +238,18 @@ class Test_ComposeWith(unittest.TestCase):
         self.assertEqual(comp_mon.GetClassID(), CLSID_CompositeMoniker)
         self.assertEqual(
             comp_mon.GetDisplayName(_create_bctx(), None), f"!{left_id}!{right_id}"
+        )
+        with self.assertRaises(COMError) as cm:
+            left_mon.ComposeWith(right_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
+    def test_pointer_with_same_type(self):
+        vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
+        left_mon = _create_pointer_moniker(vidctl)
+        right_mon = _create_pointer_moniker(vidctl)
+        self.assertEqual(
+            left_mon.ComposeWith(right_mon, False).GetClassID(),
+            CLSID_CompositeMoniker,
         )
         with self.assertRaises(COMError) as cm:
             left_mon.ComposeWith(right_mon, True)
