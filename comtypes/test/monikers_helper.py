@@ -9,12 +9,14 @@ MKSYS_FILEMONIKER = 2
 MKSYS_ANTIMONIKER = 3
 MKSYS_ITEMMONIKER = 4
 MKSYS_POINTERMONIKER = 5
+MKSYS_CLASSMONIKER = 7
 
 CLSID_CompositeMoniker = GUID("{00000309-0000-0000-c000-000000000046}")
 CLSID_FileMoniker = GUID("{00000303-0000-0000-C000-000000000046}")
 CLSID_AntiMoniker = GUID("{00000305-0000-0000-c000-000000000046}")
 CLSID_ItemMoniker = GUID("{00000304-0000-0000-c000-000000000046}")
 CLSID_PointerMoniker = GUID("{00000306-0000-0000-c000-000000000046}")
+CLSID_ClassMoniker = GUID("{0000031A-0000-0000-C000-000000000046}")
 
 ROTFLAGS_ALLOWANYCLIENT = 1
 
@@ -45,6 +47,10 @@ _CreateItemMoniker.restype = HRESULT
 _CreatePointerMoniker = _ole32.CreatePointerMoniker
 _CreatePointerMoniker.argtypes = [POINTER(IUnknown), POINTER(POINTER(IUnknown))]
 _CreatePointerMoniker.restype = HRESULT
+
+_CreateClassMoniker = _ole32.CreateClassMoniker
+_CreateClassMoniker.argtypes = [POINTER(GUID), POINTER(POINTER(IUnknown))]
+_CreateClassMoniker.restype = HRESULT
 
 _CreateBindCtx = _ole32.CreateBindCtx
 _CreateBindCtx.argtypes = [DWORD, POINTER(POINTER(IUnknown))]

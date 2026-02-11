@@ -17,18 +17,21 @@ from comtypes.test.monikers_helper import (
     MK_E_NOINVERSE,
     MK_E_SYNTAX,
     MKSYS_ANTIMONIKER,
+    MKSYS_CLASSMONIKER,
     MKSYS_FILEMONIKER,
     MKSYS_GENERICCOMPOSITE,
     MKSYS_ITEMMONIKER,
     MKSYS_POINTERMONIKER,
     ROTFLAGS_ALLOWANYCLIENT,
     CLSID_AntiMoniker,
+    CLSID_ClassMoniker,
     CLSID_CompositeMoniker,
     CLSID_FileMoniker,
     CLSID_ItemMoniker,
     CLSID_PointerMoniker,
     _CreateAntiMoniker,
     _CreateBindCtx,
+    _CreateClassMoniker,
     _CreateFileMoniker,
     _CreateGenericComposite,
     _CreateItemMoniker,
@@ -89,6 +92,12 @@ def _create_pointer_moniker(punk: IUnknown) -> IMoniker:
     mon = POINTER(IMoniker)()
     # `punk` must be an instance of `POINTER(IUnknown)`.
     _CreatePointerMoniker(punk, byref(mon))
+    return mon  # type: ignore
+
+
+def _create_class_moniker(clsid: GUID) -> IMoniker:
+    mon = POINTER(IMoniker)()
+    _CreateClassMoniker(byref(clsid), byref(mon))
     return mon  # type: ignore
 
 
@@ -165,6 +174,17 @@ class Test_IsSystemMoniker_GetDisplayName_Inverse(unittest.TestCase):
             mon.GetDisplayName(bctx, None)
         self.assertEqual(cm.exception.hresult, hresult.E_NOTIMPL)
         self.assertEqual(mon.GetClassID(), CLSID_PointerMoniker)
+        self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
+
+    def test_class(self):
+        clsid = GUID.create_new()
+        mon = _create_class_moniker(clsid)
+        self.assertEqual(mon.IsSystemMoniker(), MKSYS_CLASSMONIKER)
+        bctx = _create_bctx()
+        self.assertEqual(
+            mon.GetDisplayName(bctx, None), f"clsid:{str(clsid).strip('{}')}:"
+        )
+        self.assertEqual(mon.GetClassID(), CLSID_ClassMoniker)
         self.assertEqual(mon.Inverse().GetClassID(), CLSID_AntiMoniker)
 
 
@@ -247,6 +267,18 @@ class Test_ComposeWith(unittest.TestCase):
         vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
         left_mon = _create_pointer_moniker(vidctl)
         right_mon = _create_pointer_moniker(vidctl)
+        self.assertEqual(
+            left_mon.ComposeWith(right_mon, False).GetClassID(),
+            CLSID_CompositeMoniker,
+        )
+        with self.assertRaises(COMError) as cm:
+            left_mon.ComposeWith(right_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
+    def test_class_with_same_type(self):
+        clsid = GUID.create_new()
+        left_mon = _create_class_moniker(clsid)
+        right_mon = _create_class_moniker(GUID.create_new())
         self.assertEqual(
             left_mon.ComposeWith(right_mon, False).GetClassID(),
             CLSID_CompositeMoniker,
