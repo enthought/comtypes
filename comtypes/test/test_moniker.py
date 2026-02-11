@@ -266,6 +266,47 @@ class Test_ComposeWith(unittest.TestCase):
         self.assertFalse(item_mon.ComposeWith(anti_mon, False))
         self.assertFalse(item_mon.ComposeWith(anti_mon, True))
 
+    def test_anti_with_pointer(self):
+        anti_mon = _create_anti_moniker()
+        vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
+        pointer_mon = _create_pointer_moniker(vidctl)
+        self.assertFalse(pointer_mon.ComposeWith(anti_mon, False))
+        self.assertFalse(pointer_mon.ComposeWith(anti_mon, True))
+        self.assertEqual(
+            anti_mon.ComposeWith(pointer_mon, False).GetClassID(),
+            CLSID_CompositeMoniker,
+        )
+        with self.assertRaises(COMError) as cm:
+            anti_mon.ComposeWith(pointer_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
+    def test_anti_with_class(self):
+        anti_mon = _create_anti_moniker()
+        class_mon = _create_class_moniker(GUID.create_new())
+        self.assertFalse(class_mon.ComposeWith(anti_mon, False))
+        self.assertFalse(class_mon.ComposeWith(anti_mon, True))
+        self.assertEqual(
+            anti_mon.ComposeWith(class_mon, False).GetClassID(),
+            CLSID_CompositeMoniker,
+        )
+        with self.assertRaises(COMError) as cm:
+            anti_mon.ComposeWith(class_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
+    def test_anti_with_objref(self):
+        anti_mon = _create_anti_moniker()
+        vidctl = CreateObject(msvidctl.MSVidCtl, interface=msvidctl.IMSVidCtl)
+        objref_mon = _create_objref_moniker(vidctl)
+        self.assertFalse(objref_mon.ComposeWith(anti_mon, False))
+        self.assertFalse(objref_mon.ComposeWith(anti_mon, True))
+        self.assertEqual(
+            anti_mon.ComposeWith(objref_mon, False).GetClassID(),
+            CLSID_CompositeMoniker,
+        )
+        with self.assertRaises(COMError) as cm:
+            anti_mon.ComposeWith(objref_mon, True)
+        self.assertEqual(cm.exception.hresult, MK_E_NEEDGENERIC)
+
     def test_item_with_same_type(self):
         left_id = str(GUID.create_new())
         left_mon = _create_item_moniker("!", left_id)
