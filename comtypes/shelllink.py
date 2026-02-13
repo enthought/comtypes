@@ -1,5 +1,6 @@
 from ctypes import (
     POINTER,
+    Structure,
     byref,
     c_char_p,
     c_int,
@@ -8,12 +9,21 @@ from ctypes import (
     create_string_buffer,
     create_unicode_buffer,
 )
-from ctypes.wintypes import DWORD, MAX_PATH, WIN32_FIND_DATAA, WIN32_FIND_DATAW
+from ctypes.wintypes import (
+    BYTE,
+    DWORD,
+    MAX_PATH,
+    USHORT,
+    WIN32_FIND_DATAA,
+    WIN32_FIND_DATAW,
+)
 from typing import TYPE_CHECKING, Literal
 
 from comtypes import COMMETHOD, GUID, HRESULT, CoClass, IUnknown
 
 if TYPE_CHECKING:
+    from ctypes import _Pointer
+
     from comtypes import hints  # type: ignore
 
 
@@ -42,8 +52,15 @@ HOTKEYF_CONTROL = 0x02
 HOTKEYF_EXT = 0x08
 HOTKEYF_SHIFT = 0x01
 
-# fake these...
-ITEMIDLIST = c_int
+
+class SHITEMID(Structure):
+    _fields_ = [("cb", USHORT), ("abID", BYTE * 1)]
+
+
+class ITEMIDLIST(Structure):
+    _fields_ = [("mkid", SHITEMID)]
+
+
 LPITEMIDLIST = LPCITEMIDLIST = POINTER(ITEMIDLIST)
 
 
@@ -134,8 +151,8 @@ class IShellLinkA(IUnknown):
 
     if TYPE_CHECKING:
 
-        def GetIDList(self) -> hints.Incomplete: ...
-        def SetIDList(self, pidl: hints.Incomplete) -> hints.Incomplete: ...
+        def GetIDList(self) -> _Pointer[ITEMIDLIST]: ...
+        def SetIDList(self, pidl: _Pointer[ITEMIDLIST]) -> hints.Hresult: ...
         def SetDescription(self, pszName: bytes) -> hints.Incomplete: ...
         def SetWorkingDirectory(self, pszDir: bytes) -> hints.Hresult: ...
         def SetArguments(self, pszArgs: bytes) -> hints.Hresult: ...
@@ -269,8 +286,8 @@ class IShellLinkW(IUnknown):
 
     if TYPE_CHECKING:
 
-        def GetIDList(self) -> hints.Incomplete: ...
-        def SetIDList(self, pidl: hints.Incomplete) -> hints.Incomplete: ...
+        def GetIDList(self) -> _Pointer[ITEMIDLIST]: ...
+        def SetIDList(self, pidl: _Pointer[ITEMIDLIST]) -> hints.Hresult: ...
         def SetDescription(self, pszName: str) -> hints.Incomplete: ...
         def SetWorkingDirectory(self, pszDir: str) -> hints.Hresult: ...
         def SetArguments(self, pszArgs: str) -> hints.Hresult: ...
