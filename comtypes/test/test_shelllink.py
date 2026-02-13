@@ -7,7 +7,7 @@ from pathlib import Path
 
 import comtypes.hresult
 from comtypes import GUID, CoCreateInstance, shelllink
-from comtypes.malloc import _CoTaskMemFree
+from comtypes.malloc import CoGetMalloc, _CoTaskMemFree
 from comtypes.persist import IPersistFile
 from comtypes.shelllink import LPITEMIDLIST as PIDLIST_ABSOLUTE
 
@@ -103,6 +103,12 @@ class Test_IShellLinkA(ut.TestCase):
         # Access the raw data from the pointer.
         self.assertEqual(string_at(addressof(idlist.mkid.abID), len(data)), data)
         self.assertTrue(_ILIsEqual(in_pidl, out_pidl))
+        malloc = CoGetMalloc()
+        # Verify that the input PIDL is not COM-allocated memory.
+        self.assertFalse(malloc.DidAlloc(in_pidl))
+        # Verify that the output PIDL IS COM-allocated memory, requiring
+        # `CoTaskMemFree` for proper deallocation.
+        self.assertTrue(malloc.DidAlloc(out_pidl))
         _CoTaskMemFree(out_pidl)
 
 
@@ -192,4 +198,10 @@ class Test_IShellLinkW(ut.TestCase):
         # Access the raw data from the pointer.
         self.assertEqual(string_at(addressof(idlist.mkid.abID), len(data)), data)
         self.assertTrue(_ILIsEqual(in_pidl, out_pidl))
+        malloc = CoGetMalloc()
+        # Verify that the input PIDL is not COM-allocated memory.
+        self.assertFalse(malloc.DidAlloc(in_pidl))
+        # Verify that the output PIDL IS COM-allocated memory, requiring
+        # `CoTaskMemFree` for proper deallocation.
+        self.assertTrue(malloc.DidAlloc(out_pidl))
         _CoTaskMemFree(out_pidl)
