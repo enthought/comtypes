@@ -1,9 +1,12 @@
+import struct
 import tempfile
 import unittest as ut
+from ctypes import addressof, cast, create_string_buffer, string_at
 from pathlib import Path
 
 import comtypes.hresult
 from comtypes import GUID, CoCreateInstance, shelllink
+from comtypes.malloc import _CoTaskMemFree
 from comtypes.persist import IPersistFile
 
 CLSID_ShellLink = GUID("{00021401-0000-0000-C000-000000000046}")
@@ -66,6 +69,32 @@ class Test_IShellLinkA(ut.TestCase):
         self.assertEqual(icon_path, str(self.src_file).encode("utf-8"))
         self.assertEqual(index, 1)
 
+    def test_set_and_get_idlist(self):
+        # Create a manual PIDL for testing.
+        # In reality, the `abID` portion contains Shell namespace identifiers.
+        # (e.g. file system item IDs, special folder tokens, virtual folder
+        # GUIDs, etc.)
+        # These IDs are referenced/used by Shell folders to identify and locate
+        # specific items in the namespace.
+        data = b"\xde\xad\xbe\xef"  # dummy test data (meaningless in real use).
+        cb = len(data) + 2
+        # ITEMIDLIST format:
+        # - little-endian ('<')
+        # - cb as 16-bit unsigned integer ('H')
+        # - data bytes of length ('{len(data)}s')
+        # - terminator as 16-bit unsigned integer ('H')
+        raw_pidl = struct.pack(f"<H{len(data)}sH", cb, data, 0)
+        in_pidl = cast(create_string_buffer(raw_pidl), shelllink.LPCITEMIDLIST)
+        shortcut = self._create_shortcut()
+        shortcut.SetIDList(in_pidl)
+        # Get it back and verify.
+        out_pidl = shortcut.GetIDList()
+        idlist = out_pidl.contents
+        self.assertEqual(idlist.mkid.cb, cb)
+        # Access the raw data from the pointer.
+        self.assertEqual(string_at(addressof(idlist.mkid.abID), len(data)), data)
+        _CoTaskMemFree(out_pidl)
+
 
 class Test_IShellLinkW(ut.TestCase):
     def setUp(self):
@@ -126,3 +155,30 @@ class Test_IShellLinkW(ut.TestCase):
         icon_path, index = shortcut.GetIconLocation()
         self.assertEqual(icon_path, str(self.src_file))
         self.assertEqual(index, 1)
+
+    def test_set_and_get_idlist(self):
+        # Create a manual PIDL for testing.
+        # In reality, the `abID` portion contains Shell namespace identifiers.
+        # (e.g. file system item IDs, special folder tokens, virtual folder
+        # GUIDs, etc.)
+        # These IDs are referenced/used by Shell folders to identify and locate
+        # specific items in the namespace.
+        data = b"\xca\xfe\xba\xbe"  # dummy test data (meaningless in real use).
+        cb = len(data) + 2
+        # ITEMIDLIST format:
+        # - little-endian ('<')
+        # - cb as 16-bit unsigned integer ('H')
+        # - data bytes of length ('{len(data)}s')
+        # - terminator as 16-bit unsigned integer ('H')
+        raw_pidl = struct.pack(f"<H{len(data)}sH", cb, data, 0)
+        in_pidl = cast(create_string_buffer(raw_pidl), shelllink.LPCITEMIDLIST)
+        # Set pidl.
+        shortcut = self._create_shortcut()
+        shortcut.SetIDList(in_pidl)
+        # Get it back and verify.
+        out_pidl = shortcut.GetIDList()
+        idlist = out_pidl.contents
+        self.assertEqual(idlist.mkid.cb, cb)
+        # Access the raw data from the pointer.
+        self.assertEqual(string_at(addressof(idlist.mkid.abID), len(data)), data)
+        _CoTaskMemFree(out_pidl)
