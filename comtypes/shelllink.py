@@ -1,5 +1,6 @@
 from ctypes import (
     POINTER,
+    Structure,
     byref,
     c_char_p,
     c_int,
@@ -8,7 +9,14 @@ from ctypes import (
     create_string_buffer,
     create_unicode_buffer,
 )
-from ctypes.wintypes import DWORD, MAX_PATH, WIN32_FIND_DATAA, WIN32_FIND_DATAW
+from ctypes.wintypes import (
+    BYTE,
+    DWORD,
+    MAX_PATH,
+    USHORT,
+    WIN32_FIND_DATAA,
+    WIN32_FIND_DATAW,
+)
 from typing import TYPE_CHECKING, Literal
 
 from comtypes import COMMETHOD, GUID, HRESULT, CoClass, IUnknown
@@ -42,8 +50,15 @@ HOTKEYF_CONTROL = 0x02
 HOTKEYF_EXT = 0x08
 HOTKEYF_SHIFT = 0x01
 
-# fake these...
-ITEMIDLIST = c_int
+
+class SHITEMID(Structure):
+    _fields_ = [("cb", USHORT), ("abID", BYTE * 1)]
+
+
+class ITEMIDLIST(Structure):
+    _fields_ = [("mkid", SHITEMID)]
+
+
 LPITEMIDLIST = LPCITEMIDLIST = POINTER(ITEMIDLIST)
 
 
