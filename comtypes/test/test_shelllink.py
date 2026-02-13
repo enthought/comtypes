@@ -1,15 +1,24 @@
 import struct
 import tempfile
 import unittest as ut
-from ctypes import addressof, cast, create_string_buffer, string_at
+from ctypes import WinDLL, addressof, cast, create_string_buffer, string_at
+from ctypes.wintypes import BOOL
 from pathlib import Path
 
 import comtypes.hresult
 from comtypes import GUID, CoCreateInstance, shelllink
 from comtypes.malloc import _CoTaskMemFree
 from comtypes.persist import IPersistFile
+from comtypes.shelllink import LPITEMIDLIST as PIDLIST_ABSOLUTE
 
 CLSID_ShellLink = GUID("{00021401-0000-0000-C000-000000000046}")
+
+_shell32 = WinDLL("shell32")
+
+# https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-ilisequal
+_ILIsEqual = _shell32.ILIsEqual
+_ILIsEqual.argtypes = [PIDLIST_ABSOLUTE, PIDLIST_ABSOLUTE]
+_ILIsEqual.restype = BOOL
 
 
 class Test_IShellLinkA(ut.TestCase):
@@ -93,6 +102,7 @@ class Test_IShellLinkA(ut.TestCase):
         self.assertEqual(idlist.mkid.cb, cb)
         # Access the raw data from the pointer.
         self.assertEqual(string_at(addressof(idlist.mkid.abID), len(data)), data)
+        self.assertTrue(_ILIsEqual(in_pidl, out_pidl))
         _CoTaskMemFree(out_pidl)
 
 
@@ -181,4 +191,5 @@ class Test_IShellLinkW(ut.TestCase):
         self.assertEqual(idlist.mkid.cb, cb)
         # Access the raw data from the pointer.
         self.assertEqual(string_at(addressof(idlist.mkid.abID), len(data)), data)
+        self.assertTrue(_ILIsEqual(in_pidl, out_pidl))
         _CoTaskMemFree(out_pidl)
