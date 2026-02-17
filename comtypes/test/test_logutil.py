@@ -196,10 +196,7 @@ def _listen_on_dbwin_channel(
 
 
 @contextlib.contextmanager
-def capture_debug_strings(ready: threading.Event, *, interval: int) -> Iterator[Queue]:
-    """Context manager to capture debug strings emitted via `OutputDebugString`.
-    Spawns a listener thread to monitor the debug channels.
-    """
+def _run_dbwin_listener(ready: threading.Event, interval: int) -> Iterator[Queue]:
     captured = Queue()
     finished = threading.Event()
     th = threading.Thread(
@@ -215,11 +212,22 @@ def capture_debug_strings(ready: threading.Event, *, interval: int) -> Iterator[
         th.join()
 
 
+@contextlib.contextmanager
+def capture_debug_strings(*, timeout: float, interval: float) -> Iterator[Queue]:
+    """Context manager to capture debug strings emitted via `OutputDebugString`.
+    Spawns a listener thread to monitor the debug channels.
+
+    Parameters are floats in seconds.
+    """
+    ready = threading.Event()
+    with _run_dbwin_listener(ready, int(interval * 1000)) as messages:
+        ready.wait(timeout=timeout)  # Wait for the listener to be ready
+        yield messages
+
+
 class Test_OutputDebugStringW(ut.TestCase):
     def test(self):
-        ready = threading.Event()
-        with capture_debug_strings(ready, interval=100) as cap:
-            ready.wait(timeout=5)  # Wait for the listener to be ready
+        with capture_debug_strings(timeout=5, interval=0.1) as cap:
             OutputDebugStringW("hello world")
             OutputDebugStringW("test message")
         self.assertEqual(cap.get(), b"hello world")
@@ -228,7 +236,6 @@ class Test_OutputDebugStringW(ut.TestCase):
 
 class Test_NTDebugHandler(ut.TestCase):
     def test_emit(self):
-        ready = threading.Event()
         handler = NTDebugHandler()
         # Direct `Logger()` instantiation for test isolation: bypasses global
         # registration and prevents any side effects / cross-test pollution.
@@ -242,8 +249,7 @@ class Test_NTDebugHandler(ut.TestCase):
         logger.handlers = []
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
-        with capture_debug_strings(ready, interval=100) as cap:
-            ready.wait(timeout=5)  # Wait for the listener to be ready
+        with capture_debug_strings(timeout=5, interval=0.1) as cap:
             msg = "This is a test message from NTDebugHandler."
             logger.info(msg)
         logger.removeHandler(handler)
