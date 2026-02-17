@@ -172,6 +172,29 @@ def open_dbwin_debug_channels() -> Iterator[tuple[int, int, int]]:
         yield (h_buffer_ready, h_data_ready, p_view)
 
 
+def _listen_on_dbwin_channel(
+    interval_ms: int,
+    messages: Queue,
+    ready: threading.Event,
+    stop: threading.Event,
+    pid: int,
+) -> None:
+    # Create/open named events and file mapping for interprocess communication.
+    # These objects are part of the Windows Debugging API contract.
+    with open_dbwin_debug_channels() as (h_buffer_ready, h_data_ready, p_view):
+        ready.set()  # Signal to the main thread that listener is ready.
+        while not stop.is_set():  # Loop until the main thread signals to finish.
+            _SetEvent(h_buffer_ready)  # Signal readiness to `OutputDebugString`.
+            # Wait for `OutputDebugString` to signal that data is ready.
+            if _WaitForSingleObject(h_data_ready, interval_ms) == WAIT_OBJECT_0:
+                # Debug string buffer format: [4 bytes: PID][N bytes: string].
+                # Check if the process ID in the buffer matches the current PID.
+                if ctypes.cast(p_view, POINTER(DWORD)).contents.value == pid:
+                    # Extract the null-terminated string, skipping the PID,
+                    # and put it into the queue.
+                    messages.put(ctypes.string_at(p_view + 4).strip(b"\x00"))
+
+
 @contextlib.contextmanager
 def capture_debug_strings(ready: threading.Event, *, interval: int) -> Iterator[Queue]:
     """Context manager to capture debug strings emitted via `OutputDebugString`.
@@ -179,28 +202,9 @@ def capture_debug_strings(ready: threading.Event, *, interval: int) -> Iterator[
     """
     captured = Queue()
     finished = threading.Event()
-
-    def _listener(
-        q: Queue, rdy: threading.Event, fin: threading.Event, pid: int
-    ) -> None:
-        # Create/open named events and file mapping for interprocess communication.
-        # These objects are part of the Windows Debugging API contract.
-        with open_dbwin_debug_channels() as (h_buffer_ready, h_data_ready, p_view):
-            rdy.set()  # Signal to the main thread that listener is ready.
-            while not fin.is_set():  # Loop until the main thread signals to finish.
-                _SetEvent(h_buffer_ready)  # Signal readiness to `OutputDebugString`.
-                # Wait for `OutputDebugString` to signal that data is ready.
-                if _WaitForSingleObject(h_data_ready, interval) == WAIT_OBJECT_0:
-                    # Debug string buffer format: [4 bytes: PID][N bytes: string].
-                    # Check if the process ID in the buffer matches the current PID.
-                    if ctypes.cast(p_view, POINTER(DWORD)).contents.value == pid:
-                        # Extract the null-terminated string, skipping the PID,
-                        # and put it into the queue.
-                        q.put(ctypes.string_at(p_view + 4).strip(b"\x00"))
-
     th = threading.Thread(
-        target=_listener,
-        args=(captured, ready, finished, _GetCurrentProcessId()),
+        target=_listen_on_dbwin_channel,
+        args=(interval, captured, ready, finished, _GetCurrentProcessId()),
         daemon=True,
     )
     th.start()
