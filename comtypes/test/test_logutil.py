@@ -226,8 +226,15 @@ class Test_NTDebugHandler(ut.TestCase):
     def test_emit(self):
         ready = threading.Event()
         handler = NTDebugHandler()
-        logger = logging.getLogger("test_ntdebug_handler")
+        # Direct `Logger()` instantiation for test isolation: bypasses global
+        # registration and prevents any side effects / cross-test pollution.
+        # (The official 'Loggers should NEVER be instantiated directly' rule
+        # targets production code where hierarchy and propagation matter;
+        # here we want neither.)
+        # https://docs.python.org/3/library/logging.html#logger-objects
+        logger = logging.Logger("test_ntdebug_handler")
         # Clear existing handlers to prevent interference from other tests
+        logger.propagate = False
         logger.handlers = []
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
