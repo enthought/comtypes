@@ -196,19 +196,19 @@ def _listen_on_dbwin_channel(
 
 
 @contextlib.contextmanager
-def _run_dbwin_listener(ready: threading.Event, interval: int) -> Iterator[Queue]:
-    captured = Queue()
-    finished = threading.Event()
+def _run_dbwin_listener(ready: threading.Event, interval_ms: int) -> Iterator[Queue]:
+    messages = Queue()
+    stop = threading.Event()
     th = threading.Thread(
         target=_listen_on_dbwin_channel,
-        args=(interval, captured, ready, finished, _GetCurrentProcessId()),
+        args=(interval_ms, messages, ready, stop, _GetCurrentProcessId()),
         daemon=True,
     )
     th.start()
     try:
-        yield captured
+        yield messages
     finally:
-        finished.set()
+        stop.set()
         th.join()
 
 
