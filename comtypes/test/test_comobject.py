@@ -1,12 +1,15 @@
 import ctypes
 import unittest as ut
-from ctypes import POINTER, byref, pointer
+from _ctypes import COMError
+from ctypes import POINTER, FormatError, byref, pointer
 from unittest import mock
 
 import comtypes.client
-from comtypes import CLSCTX_SERVER, COMObject, IPersist, IUnknown, hresult
+from comtypes import CLSCTX_SERVER, GUID, COMObject, IPersist, IUnknown, hresult
 from comtypes._post_coinit.misc import _CoCreateInstance
 from comtypes.automation import IDispatch
+from comtypes.errorinfo import ReportError
+from comtypes.server import IClassFactory
 from comtypes.typeinfo import GUIDKIND_DEFAULT_SOURCE_DISP_IID
 
 comtypes.client.GetModule("UIAutomationCore.dll")
@@ -157,3 +160,54 @@ class Test_Vtbl(ut.TestCase):
         self.assertNotIn(IDispatch._iid_, cuia._com_pointers_)
         self.assertIn(stdole.IPictureDisp._iid_, stdpic._com_pointers_)
         self.assertIn(uiac.IUIAutomation._iid_, cuia._com_pointers_)
+
+
+class Test_CustomImplementation(ut.TestCase):
+    def test_raises_comerror(self):
+        ERR_DESC = "Simulated COMError"
+        ERR_HELPFILE = "test.hlp"
+        ERR_HELPCTX = 42
+
+        class MyClassFactory(COMObject):
+            _com_interfaces_ = [IClassFactory]
+
+            def CreateInstance(self, this, punkOuter, riid, ppv):
+                return ReportError(
+                    f"{ERR_DESC}: CreateInstance",
+                    IClassFactory._iid_,
+                    GUID.create_new(),
+                    ERR_HELPFILE,
+                    ERR_HELPCTX,
+                    hresult.E_UNEXPECTED,
+                )
+
+            def LockServer(self, this, fLock):
+                return ReportError(
+                    f"{ERR_DESC}: LockServer",
+                    IClassFactory._iid_,
+                    GUID.create_new(),
+                    ERR_HELPFILE,
+                    ERR_HELPCTX,
+                    hresult.E_FAIL,
+                )
+
+        # Get a COM pointer to the interface of our custom object.
+        cf = MyClassFactory().QueryInterface(IClassFactory)
+        # calling `LockServer`
+        with self.assertRaises(COMError) as cm:
+            cf.CreateInstance(interface=IUnknown)
+        self.assertEqual(cm.exception.hresult, hresult.E_UNEXPECTED)
+        self.assertEqual(cm.exception.text, FormatError(hresult.E_UNEXPECTED))
+        self.assertEqual(
+            cm.exception.details,
+            (f"{ERR_DESC}: CreateInstance", None, ERR_HELPFILE, ERR_HELPCTX, None),
+        )
+        # calling `LockServer`
+        with self.assertRaises(COMError) as cm:
+            cf.LockServer(True)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        self.assertEqual(cm.exception.text, FormatError(hresult.E_FAIL))
+        self.assertEqual(
+            cm.exception.details,
+            (f"{ERR_DESC}: LockServer", None, ERR_HELPFILE, ERR_HELPCTX, None),
+        )
