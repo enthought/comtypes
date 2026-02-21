@@ -170,12 +170,13 @@ class Test_CustomImplementation(ut.TestCase):
 
         class MyClassFactory(COMObject):
             _com_interfaces_ = [IClassFactory]
+            _reg_clsid_ = GUID.create_new()
 
             def CreateInstance(self, this, punkOuter, riid, ppv):
                 return ReportError(
                     f"{ERR_DESC}: CreateInstance",
                     IClassFactory._iid_,
-                    GUID.create_new(),
+                    self._reg_clsid_,
                     ERR_HELPFILE,
                     ERR_HELPCTX,
                     hresult.E_UNEXPECTED,
@@ -185,7 +186,7 @@ class Test_CustomImplementation(ut.TestCase):
                 return ReportError(
                     f"{ERR_DESC}: LockServer",
                     IClassFactory._iid_,
-                    GUID.create_new(),
+                    self._reg_clsid_,
                     ERR_HELPFILE,
                     ERR_HELPCTX,
                     hresult.E_FAIL,
