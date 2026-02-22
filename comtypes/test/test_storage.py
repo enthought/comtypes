@@ -23,6 +23,8 @@ from comtypes.gen.PortableDeviceApiLib import WSTRING, IStorage, tagSTATSTG
 STGTY_STORAGE = 1
 
 STATFLAG_DEFAULT = 0
+STATFLAG_NONAME = 1
+
 STGC_DEFAULT = 0
 STGM_CREATE = 0x00001000
 STGM_DIRECT = 0x00000000
@@ -293,3 +295,11 @@ class Test_Stat(unittest.TestCase):
         self.assertEqual(malloc.DidAlloc(name_ptr), 1)
         del stat  # `pwcsName` is expected to be freed here.
         # `DidAlloc` checks are skipped to avoid using a dangling pointer.
+
+    def test_stat_returns_none_for_pwcsname_with_noname_flag(self):
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        # Using `STATFLAG_NONAME` should return `None` for `pwcsName`.
+        stat = storage.Stat(STATFLAG_NONAME)
+        self.assertIsNone(stat.pwcsName)
+        # Verify other fields are still present.
+        self.assertEqual(stat.type, STGTY_STORAGE)
