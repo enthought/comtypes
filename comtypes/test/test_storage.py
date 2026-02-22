@@ -206,6 +206,20 @@ class Test_IStorage(unittest.TestCase):
         storage.SetClass(comtypes.GUID())
         self.assertEqual(storage.Stat(STATFLAG_DEFAULT).clsid, comtypes.GUID())
 
+    def test_SetStateBits(self):
+        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        # Initial state bits should be 0
+        self.assertEqual(storage.Stat(STATFLAG_DEFAULT).grfStateBits, 0)
+        # 1. Set all bits
+        bits1, mask1 = 0xABCD1234, 0xFFFFFFFF
+        storage.SetStateBits(bits1, mask1)
+        self.assertEqual(storage.Stat(STATFLAG_DEFAULT).grfStateBits, bits1)
+        # 2. Partial update using mask (only lower 16 bits)
+        bits2, mask2 = 0x00005678, 0x0000FFFF
+        storage.SetStateBits(bits2, mask2)
+        # Expected: 0xABCD (original upper) + 0x5678 (new lower) = 0xABCD5678
+        self.assertEqual(storage.Stat(STATFLAG_DEFAULT).grfStateBits, 0xABCD5678)
+
     def test_Stat(self):
         with tempfile.TemporaryDirectory() as t:
             tmpdir = Path(t)
