@@ -39,6 +39,8 @@ STREAM_SEEK_SET = 0
 STG_E_PATHNOTFOUND = -2147287038
 STG_E_INVALIDFLAG = -2147286785
 
+E_ACCESSDENIED = -2147287035  # 0x80030005
+
 _ole32 = OleDLL("ole32")
 
 _StgCreateDocfile = _ole32.StgCreateDocfile
@@ -191,6 +193,15 @@ class Test_RenameElement(unittest.TestCase):
         with self.assertRaises(COMError) as cm:
             storage.OpenStorage("example", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
+
+    def test_rename_element_fails_if_destination_exists(self):
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        storage.CreateStorage("foo", RW_EXCLUSIVE_TX, 0, 0)
+        storage.CreateStorage("bar", RW_EXCLUSIVE_TX, 0, 0)
+        # Rename "foo" to "bar" (which already exists)
+        with self.assertRaises(COMError) as cm:
+            storage.RenameElement("foo", "bar")
+        self.assertEqual(cm.exception.hresult, E_ACCESSDENIED)
 
 
 class Test_SetElementTimes(unittest.TestCase):
