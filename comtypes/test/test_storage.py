@@ -65,7 +65,7 @@ FIXED_TEST_FILETIME = SystemTimeToFileTime(SYSTEMTIME(wYear=2000, wMonth=1, wDay
 
 
 class Test_CreateStream(unittest.TestCase):
-    def test_CreateStream(self):
+    def test_creates_and_writes_to_stream_in_docfile(self):
         storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         # When created with `StgCreateDocfile(NULL, ...)`, `pwcsName` is a
         # temporary filename. The file really exists on disk because Windows
@@ -104,14 +104,14 @@ class Test_CreateStream(unittest.TestCase):
 
 
 class Test_CreateStorage(unittest.TestCase):
-    def test_CreateStorage(self):
+    def test_creates_child_storage_in_parent(self):
         parent = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         child = parent.CreateStorage("child", RW_EXCLUSIVE_TX, 0, 0)
         self.assertEqual("child", child.Stat(STATFLAG_DEFAULT).pwcsName)
 
 
 class Test_OpenStorage(unittest.TestCase):
-    def test_OpenStorage(self):
+    def test_opens_existing_child_storage(self):
         parent = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         with self.assertRaises(COMError) as cm:
             parent.OpenStorage("child", None, RW_EXCLUSIVE_TX, None, 0)
@@ -122,7 +122,7 @@ class Test_OpenStorage(unittest.TestCase):
 
 
 class Test_RemoteCopyTo(unittest.TestCase):
-    def test_RemoteCopyTo(self):
+    def test_copies_storage_content_to_destination(self):
         src_stg = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         src_stg.CreateStorage("child", RW_EXCLUSIVE_TX, 0, 0)
         dst_stg = _create_docfile(mode=CREATE_TEMP_TESTDOC)
@@ -134,7 +134,7 @@ class Test_RemoteCopyTo(unittest.TestCase):
 
 
 class Test_MoveElementTo(unittest.TestCase):
-    def test_MoveElementTo(self):
+    def test_moves_element_to_new_location_and_renames(self):
         src_stg = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         src_stg.CreateStorage("foo", RW_EXCLUSIVE_TX, 0, 0)
         dst_stg = _create_docfile(mode=CREATE_TEMP_TESTDOC)
@@ -147,7 +147,7 @@ class Test_MoveElementTo(unittest.TestCase):
 
 
 class Test_Revert(unittest.TestCase):
-    def test_Revert(self):
+    def test_reverts_pending_changes_to_storage(self):
         storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         foo = storage.CreateStorage("foo", RW_EXCLUSIVE_TX, 0, 0)
         foo.CreateStorage("bar", RW_EXCLUSIVE_TX, 0, 0)
@@ -170,7 +170,7 @@ class Test_Revert(unittest.TestCase):
 
 
 class Test_DestroyElement(unittest.TestCase):
-    def test_DestroyElement(self):
+    def test_destroys_existing_element_in_storage(self):
         storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         storage.CreateStorage("example", RW_EXCLUSIVE_TX, 0, 0)
         storage.DestroyElement("example")
@@ -180,7 +180,7 @@ class Test_DestroyElement(unittest.TestCase):
 
 
 class Test_RenameElement(unittest.TestCase):
-    def test_RenameElement(self):
+    def test_renames_element_in_storage(self):
         storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         storage.CreateStorage("example", RW_EXCLUSIVE_TX, 0, 0)
         storage.RenameElement("example", "sample")
@@ -192,7 +192,7 @@ class Test_RenameElement(unittest.TestCase):
 
 
 class Test_SetElementTimes(unittest.TestCase):
-    def test_SetElementTimes(self):
+    def test_sets_modification_time_for_element(self):
         storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         sub_name = "SubStorageElement"
         orig_stat = storage.CreateStorage(sub_name, CREATE_TESTDOC, 0, 0).Stat(
@@ -218,7 +218,7 @@ class Test_SetElementTimes(unittest.TestCase):
 
 
 class Test_SetClass(unittest.TestCase):
-    def test_SetClass(self):
+    def test_sets_clsid(self):
         storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         # Initial value is CLSID_NULL.
         self.assertEqual(storage.Stat(STATFLAG_DEFAULT).clsid, comtypes.GUID())
@@ -231,7 +231,7 @@ class Test_SetClass(unittest.TestCase):
 
 
 class Test_SetStateBits(unittest.TestCase):
-    def test_SetStateBits(self):
+    def test_sets_and_updates_storage_state_bits(self):
         storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         # Initial state bits should be 0
         self.assertEqual(storage.Stat(STATFLAG_DEFAULT).grfStateBits, 0)
@@ -247,7 +247,7 @@ class Test_SetStateBits(unittest.TestCase):
 
 
 class Test_Stat(unittest.TestCase):
-    def test_Stat(self):
+    def test_returns_correct_stat_information_for_docfile(self):
         with tempfile.TemporaryDirectory() as t:
             tmpdir = Path(t)
             tmpfile = tmpdir / "test_docfile.cfs"
