@@ -182,6 +182,12 @@ class Test_DestroyElement(unittest.TestCase):
             storage.OpenStorage("example", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
+    def test_fails_to_destroy_non_existent_element(self):
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        with self.assertRaises(COMError) as cm:
+            storage.DestroyElement("non_existent")
+        self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
+
 
 class Test_RenameElement(unittest.TestCase):
     def test_renames_element_in_storage(self):
