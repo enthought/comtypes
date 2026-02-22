@@ -38,8 +38,7 @@ STREAM_SEEK_SET = 0
 
 STG_E_PATHNOTFOUND = -2147287038
 STG_E_INVALIDFLAG = -2147286785
-
-E_ACCESSDENIED = -2147287035  # 0x80030005
+STG_E_ACCESSDENIED = -2147287035  # 0x80030005
 
 _ole32 = OleDLL("ole32")
 
@@ -207,7 +206,7 @@ class Test_RenameElement(unittest.TestCase):
         # Rename "foo" to "bar" (which already exists)
         with self.assertRaises(COMError) as cm:
             storage.RenameElement("foo", "bar")
-        self.assertEqual(cm.exception.hresult, E_ACCESSDENIED)
+        self.assertEqual(cm.exception.hresult, STG_E_ACCESSDENIED)
 
     def test_fails_if_takes_same_name(self):
         storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
@@ -215,7 +214,7 @@ class Test_RenameElement(unittest.TestCase):
         # Rename "foo" to "foo" (same name)
         with self.assertRaises(COMError) as cm:
             storage.RenameElement("foo", "foo")
-        self.assertEqual(cm.exception.hresult, E_ACCESSDENIED)
+        self.assertEqual(cm.exception.hresult, STG_E_ACCESSDENIED)
 
 
 class Test_SetElementTimes(unittest.TestCase):
