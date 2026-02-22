@@ -92,13 +92,15 @@ class Test_CreateStream(unittest.TestCase):
         del stat  # `pwcsName` is expected to be freed here.
         # `DidAlloc` checks are skipped to avoid using a dangling pointer.
 
-    # TODO: Auto-generated methods based on type info are remote-side and hard
-    #       to call from the client.
-    #       If a proper invocation method or workaround is found, testing
-    #       becomes possible.
-    #       See: https://github.com/enthought/comtypes/issues/607
-    # def test_RemoteOpenStream(self):
-    #     pass
+
+# TODO: Auto-generated methods based on type info are remote-side and hard
+#       to call from the client.
+#       If a proper invocation method or workaround is found, testing
+#       becomes possible.
+#       See: https://github.com/enthought/comtypes/issues/607
+# class Test_RemoteOpenStream(unittest.TestCase):
+#     def test_RemoteOpenStream(self):
+#         pass
 
 
 class Test_CreateStorage(unittest.TestCase):
@@ -156,13 +158,15 @@ class Test_Revert(unittest.TestCase):
             foo.OpenStorage("bar", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
-    # TODO: Auto-generated methods based on type info are remote-side and hard
-    #       to call from the client.
-    #       If a proper invocation method or workaround is found, testing
-    #       becomes possible.
-    #       See: https://github.com/enthought/comtypes/issues/607
-    # def test_RemoteEnumElements(self):
-    #     pass
+
+# TODO: Auto-generated methods based on type info are remote-side and hard
+#       to call from the client.
+#       If a proper invocation method or workaround is found, testing
+#       becomes possible.
+#       See: https://github.com/enthought/comtypes/issues/607
+# class Test_RemoteEnumElements(unittest.TestCase):
+#     def test_RemoteEnumElements(self):
+#         pass
 
 
 class Test_DestroyElement(unittest.TestCase):
