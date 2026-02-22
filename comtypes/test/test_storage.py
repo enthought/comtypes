@@ -48,29 +48,32 @@ def _get_pwcsname(stat: tagSTATSTG) -> WSTRING:
     return WSTRING.from_address(ctypes.addressof(stat) + tagSTATSTG.pwcsName.offset)
 
 
-class Test_IStorage(unittest.TestCase):
-    RW_EXCLUSIVE = STGM_READWRITE | STGM_SHARE_EXCLUSIVE
-    RW_EXCLUSIVE_TX = RW_EXCLUSIVE | STGM_TRANSACTED
-    RW_EXCLUSIVE_CREATE = RW_EXCLUSIVE | STGM_CREATE
-    CREATE_TESTDOC = STGM_DIRECT | STGM_CREATE | RW_EXCLUSIVE
-    CREATE_TEMP_TESTDOC = CREATE_TESTDOC | STGM_DELETEONRELEASE
+RW_EXCLUSIVE = STGM_READWRITE | STGM_SHARE_EXCLUSIVE
+RW_EXCLUSIVE_TX = RW_EXCLUSIVE | STGM_TRANSACTED
+RW_EXCLUSIVE_CREATE = RW_EXCLUSIVE | STGM_CREATE
+CREATE_TESTDOC = STGM_DIRECT | STGM_CREATE | RW_EXCLUSIVE
+CREATE_TEMP_TESTDOC = CREATE_TESTDOC | STGM_DELETEONRELEASE
 
-    def _create_docfile(self, mode: int, name: Optional[str] = None) -> IStorage:
-        stg = POINTER(IStorage)()
-        _StgCreateDocfile(name, mode, 0, byref(stg))
-        return stg  # type: ignore
 
-    FIXED_TEST_FILETIME = SystemTimeToFileTime(SYSTEMTIME(wYear=2000, wMonth=1, wDay=1))
+def _create_docfile(mode: int, name: Optional[str] = None) -> IStorage:
+    stg = POINTER(IStorage)()
+    _StgCreateDocfile(name, mode, 0, byref(stg))
+    return stg  # type: ignore
 
+
+FIXED_TEST_FILETIME = SystemTimeToFileTime(SYSTEMTIME(wYear=2000, wMonth=1, wDay=1))
+
+
+class Test_CreateStream(unittest.TestCase):
     def test_CreateStream(self):
-        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         # When created with `StgCreateDocfile(NULL, ...)`, `pwcsName` is a
         # temporary filename. The file really exists on disk because Windows
         # creates an actual temporary file for the compound storage.
         stat = storage.Stat(STATFLAG_DEFAULT)
         filepath = Path(stat.pwcsName)
         self.assertTrue(filepath.exists())
-        stream = storage.CreateStream("example", self.RW_EXCLUSIVE_CREATE, 0, 0)
+        stream = storage.CreateStream("example", RW_EXCLUSIVE_CREATE, 0, 0)
         test_data = b"Some data"
         pv = (c_ubyte * len(test_data)).from_buffer(bytearray(test_data))
         stream.RemoteWrite(pv, len(test_data))
@@ -97,50 +100,60 @@ class Test_IStorage(unittest.TestCase):
     # def test_RemoteOpenStream(self):
     #     pass
 
+
+class Test_CreateStorage(unittest.TestCase):
     def test_CreateStorage(self):
-        parent = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
-        child = parent.CreateStorage("child", self.RW_EXCLUSIVE_TX, 0, 0)
+        parent = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        child = parent.CreateStorage("child", RW_EXCLUSIVE_TX, 0, 0)
         self.assertEqual("child", child.Stat(STATFLAG_DEFAULT).pwcsName)
 
+
+class Test_OpenStorage(unittest.TestCase):
     def test_OpenStorage(self):
-        parent = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        parent = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         with self.assertRaises(COMError) as cm:
-            parent.OpenStorage("child", None, self.RW_EXCLUSIVE_TX, None, 0)
+            parent.OpenStorage("child", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
-        parent.CreateStorage("child", self.RW_EXCLUSIVE_TX, 0, 0)
-        child = parent.OpenStorage("child", None, self.RW_EXCLUSIVE_TX, None, 0)
+        parent.CreateStorage("child", RW_EXCLUSIVE_TX, 0, 0)
+        child = parent.OpenStorage("child", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual("child", child.Stat(STATFLAG_DEFAULT).pwcsName)
 
+
+class Test_RemoteCopyTo(unittest.TestCase):
     def test_RemoteCopyTo(self):
-        src_stg = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
-        src_stg.CreateStorage("child", self.RW_EXCLUSIVE_TX, 0, 0)
-        dst_stg = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        src_stg = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        src_stg.CreateStorage("child", RW_EXCLUSIVE_TX, 0, 0)
+        dst_stg = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         src_stg.RemoteCopyTo(0, None, None, dst_stg)
         src_stg.Commit(STGC_DEFAULT)
         del src_stg
-        opened_stg = dst_stg.OpenStorage("child", None, self.RW_EXCLUSIVE_TX, None, 0)
+        opened_stg = dst_stg.OpenStorage("child", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual("child", opened_stg.Stat(STATFLAG_DEFAULT).pwcsName)
 
+
+class Test_MoveElementTo(unittest.TestCase):
     def test_MoveElementTo(self):
-        src_stg = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
-        src_stg.CreateStorage("foo", self.RW_EXCLUSIVE_TX, 0, 0)
-        dst_stg = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        src_stg = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        src_stg.CreateStorage("foo", RW_EXCLUSIVE_TX, 0, 0)
+        dst_stg = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         src_stg.MoveElementTo("foo", dst_stg, "bar", STGMOVE_MOVE)
-        opened_stg = dst_stg.OpenStorage("bar", None, self.RW_EXCLUSIVE_TX, None, 0)
+        opened_stg = dst_stg.OpenStorage("bar", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual("bar", opened_stg.Stat(STATFLAG_DEFAULT).pwcsName)
         with self.assertRaises(COMError) as cm:
-            src_stg.OpenStorage("foo", None, self.RW_EXCLUSIVE_TX, None, 0)
+            src_stg.OpenStorage("foo", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
+
+class Test_Revert(unittest.TestCase):
     def test_Revert(self):
-        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
-        foo = storage.CreateStorage("foo", self.RW_EXCLUSIVE_TX, 0, 0)
-        foo.CreateStorage("bar", self.RW_EXCLUSIVE_TX, 0, 0)
-        bar = foo.OpenStorage("bar", None, self.RW_EXCLUSIVE_TX, None, 0)
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        foo = storage.CreateStorage("foo", RW_EXCLUSIVE_TX, 0, 0)
+        foo.CreateStorage("bar", RW_EXCLUSIVE_TX, 0, 0)
+        bar = foo.OpenStorage("bar", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual("bar", bar.Stat(STATFLAG_DEFAULT).pwcsName)
         foo.Revert()
         with self.assertRaises(COMError) as cm:
-            foo.OpenStorage("bar", None, self.RW_EXCLUSIVE_TX, None, 0)
+            foo.OpenStorage("bar", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
     # TODO: Auto-generated methods based on type info are remote-side and hard
@@ -151,52 +164,58 @@ class Test_IStorage(unittest.TestCase):
     # def test_RemoteEnumElements(self):
     #     pass
 
+
+class Test_DestroyElement(unittest.TestCase):
     def test_DestroyElement(self):
-        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
-        storage.CreateStorage("example", self.RW_EXCLUSIVE_TX, 0, 0)
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        storage.CreateStorage("example", RW_EXCLUSIVE_TX, 0, 0)
         storage.DestroyElement("example")
         with self.assertRaises(COMError) as cm:
-            storage.OpenStorage("example", None, self.RW_EXCLUSIVE_TX, None, 0)
+            storage.OpenStorage("example", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
+
+class Test_RenameElement(unittest.TestCase):
     def test_RenameElement(self):
-        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
-        storage.CreateStorage("example", self.RW_EXCLUSIVE_TX, 0, 0)
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        storage.CreateStorage("example", RW_EXCLUSIVE_TX, 0, 0)
         storage.RenameElement("example", "sample")
-        sample = storage.OpenStorage("sample", None, self.RW_EXCLUSIVE_TX, None, 0)
+        sample = storage.OpenStorage("sample", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual("sample", sample.Stat(STATFLAG_DEFAULT).pwcsName)
         with self.assertRaises(COMError) as cm:
-            storage.OpenStorage("example", None, self.RW_EXCLUSIVE_TX, None, 0)
+            storage.OpenStorage("example", None, RW_EXCLUSIVE_TX, None, 0)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
+
+class Test_SetElementTimes(unittest.TestCase):
     def test_SetElementTimes(self):
-        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         sub_name = "SubStorageElement"
-        orig_stat = storage.CreateStorage(sub_name, self.CREATE_TESTDOC, 0, 0).Stat(
+        orig_stat = storage.CreateStorage(sub_name, CREATE_TESTDOC, 0, 0).Stat(
             STATFLAG_DEFAULT
         )
         storage.SetElementTimes(
             sub_name,
             None,  # pctime (creation time)
             None,  # patime (access time)
-            self.FIXED_TEST_FILETIME,  # pmtime (modification time)
+            FIXED_TEST_FILETIME,  # pmtime (modification time)
         )
         storage.Commit(STGC_DEFAULT)
         modified_stat = storage.OpenStorage(
-            sub_name, None, self.RW_EXCLUSIVE_TX, None, 0
+            sub_name, None, RW_EXCLUSIVE_TX, None, 0
         ).Stat(STATFLAG_DEFAULT)
         self.assertEqual(CompareFileTime(orig_stat.ctime, modified_stat.ctime), 0)
         self.assertEqual(CompareFileTime(orig_stat.atime, modified_stat.atime), 0)
         self.assertNotEqual(CompareFileTime(orig_stat.mtime, modified_stat.mtime), 0)
-        self.assertEqual(
-            CompareFileTime(self.FIXED_TEST_FILETIME, modified_stat.mtime), 0
-        )
+        self.assertEqual(CompareFileTime(FIXED_TEST_FILETIME, modified_stat.mtime), 0)
         with self.assertRaises(COMError) as cm:
-            storage.SetElementTimes("NonExistent", None, None, self.FIXED_TEST_FILETIME)
+            storage.SetElementTimes("NonExistent", None, None, FIXED_TEST_FILETIME)
         self.assertEqual(cm.exception.hresult, STG_E_PATHNOTFOUND)
 
+
+class Test_SetClass(unittest.TestCase):
     def test_SetClass(self):
-        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         # Initial value is CLSID_NULL.
         self.assertEqual(storage.Stat(STATFLAG_DEFAULT).clsid, comtypes.GUID())
         new_clsid = comtypes.GUID.create_new()
@@ -206,8 +225,10 @@ class Test_IStorage(unittest.TestCase):
         storage.SetClass(comtypes.GUID())
         self.assertEqual(storage.Stat(STATFLAG_DEFAULT).clsid, comtypes.GUID())
 
+
+class Test_SetStateBits(unittest.TestCase):
     def test_SetStateBits(self):
-        storage = self._create_docfile(mode=self.CREATE_TEMP_TESTDOC)
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
         # Initial state bits should be 0
         self.assertEqual(storage.Stat(STATFLAG_DEFAULT).grfStateBits, 0)
         # 1. Set all bits
@@ -220,6 +241,8 @@ class Test_IStorage(unittest.TestCase):
         # Expected: 0xABCD (original upper) + 0x5678 (new lower) = 0xABCD5678
         self.assertEqual(storage.Stat(STATFLAG_DEFAULT).grfStateBits, 0xABCD5678)
 
+
+class Test_Stat(unittest.TestCase):
     def test_Stat(self):
         with tempfile.TemporaryDirectory() as t:
             tmpdir = Path(t)
@@ -227,9 +250,7 @@ class Test_IStorage(unittest.TestCase):
             self.assertFalse(tmpfile.exists())
             # When created with `StgCreateDocfile(filepath_string, ...)`, the
             # compound file is created at that location.
-            storage = self._create_docfile(
-                name=str(tmpfile), mode=self.CREATE_TEMP_TESTDOC
-            )
+            storage = _create_docfile(name=str(tmpfile), mode=CREATE_TEMP_TESTDOC)
             self.assertTrue(tmpfile.exists())
             with self.assertRaises(COMError) as cm:
                 storage.Stat(0xFFFFFFFF)  # Invalid flag
@@ -258,7 +279,7 @@ class Test_IStorage(unittest.TestCase):
         # greater than 0 bytes.
         self.assertGreaterEqual(stat.cbSize, 0)
         # `grfMode` should reflect the access mode flags from creation.
-        self.assertEqual(stat.grfMode, self.RW_EXCLUSIVE | STGM_DIRECT)
+        self.assertEqual(stat.grfMode, RW_EXCLUSIVE | STGM_DIRECT)
         self.assertEqual(stat.grfLocksSupported, 0)
         self.assertEqual(stat.clsid, comtypes.GUID())  # CLSID_NULL for new creation.
         self.assertEqual(stat.grfStateBits, 0)
