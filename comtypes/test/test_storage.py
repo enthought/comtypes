@@ -209,6 +209,14 @@ class Test_RenameElement(unittest.TestCase):
             storage.RenameElement("foo", "bar")
         self.assertEqual(cm.exception.hresult, E_ACCESSDENIED)
 
+    def test_test_rename_element_fails_if_takes_same_name(self):
+        storage = _create_docfile(mode=CREATE_TEMP_TESTDOC)
+        storage.CreateStorage("foo", RW_EXCLUSIVE_TX, 0, 0)
+        # Rename "foo" to "foo" (same name)
+        with self.assertRaises(COMError) as cm:
+            storage.RenameElement("foo", "foo")
+        self.assertEqual(cm.exception.hresult, E_ACCESSDENIED)
+
 
 class Test_SetElementTimes(unittest.TestCase):
     def test_sets_modification_time_for_element(self):
