@@ -1,6 +1,25 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.16
+--------------
+* Decompose ``IStorage`` tests and enhance coverage. By @junkmd.
+* Enhance tests verifying custom ``COMObject``s raise errors. By @junkmd.
+* Refactor ``shelllink.py`` for ``ITEMIDLIST`` structure. By @junkmd.
+* Fix a code path in ``logutil.NTDebugHandler``. By @junkmd.
+* Add a deprecation decorator to ``logutil.setup_logging``. By @junkmd.
+* Add tests for connection point interfaces. By @junkmd.
+* Add tests for ``IGlobalInterfaceTable`` marshaling. By @junkmd.
+* Remove outdated Python 2.3 compatibility. By @junkmd.
+* Remove unused test utilities. By @junkmd.
+* Extract time utility test helpers. By @junkmd.
+* Add ``CreateTypeLib`` and ``ICreateTypeInfo`` tests. By @junkmd.
+* Add tests for ``VARIANTEnumerator``. By @junkmd.
+* Enhance tests for moniker, bind context and running object table. By @junkmd.
+* Introduce GDI test helper module and tests for ``IViewObject.Draw``. By @junkmd.
+* Unify COM descriptor release logic in ``ITypeComp.Bind``. By @junkmd.
+* Enhance dynamic dispatch and ``client`` testing. By @junkmd.
+
 Release 1.4.15
 --------------
 * Fix ``TYPE_E_ELEMENTNOTFOUND`` HRESULT constant value. By @junkmd.
