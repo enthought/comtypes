@@ -1,6 +1,7 @@
 import ctypes
 from ctypes import WinDLL, WinError, byref
-from ctypes.wintypes import MSG
+from ctypes.wintypes import BOOL, MSG
+from ctypes.wintypes import LPLONG as LRESULT
 from typing import TYPE_CHECKING, SupportsIndex
 
 if TYPE_CHECKING:
@@ -14,8 +15,15 @@ _user32 = WinDLL("user32")
 
 GetMessage = _user32.GetMessageA
 GetMessage.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+GetMessage.restype = BOOL
+
 TranslateMessage = _user32.TranslateMessage
+TranslateMessage.argtypes = [ctypes.c_void_p]
+TranslateMessage.restype = BOOL
+
 DispatchMessage = _user32.DispatchMessageA
+DispatchMessage.argtypes = [ctypes.c_void_p]
+DispatchMessage.restype = LRESULT
 
 
 class _MessageLoop:
