@@ -7,7 +7,7 @@ import unittest as ut
 from _ctypes import COMError
 from collections.abc import Iterator
 from ctypes import HRESULT, POINTER, OleDLL, WinDLL, byref
-from ctypes.wintypes import BOOL, DWORD, HANDLE, HWND, MSG, UINT
+from ctypes.wintypes import BOOL, DWORD, HANDLE, MSG
 from pathlib import Path
 from queue import Queue
 
@@ -18,15 +18,10 @@ from comtypes.git import (
     RegisterInterfaceInGlobal,
     RevokeInterfaceFromGlobal,
 )
-from comtypes.messageloop import DispatchMessage, TranslateMessage
+from comtypes.messageloop import DispatchMessage, PeekMessage, TranslateMessage
 from comtypes.persist import STGM_READ, IPersistFile
 
 _user32 = WinDLL("user32")
-
-# https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-peekmessagea
-PeekMessage = _user32.PeekMessageA
-PeekMessage.argtypes = [POINTER(MSG), HWND, UINT, UINT, UINT]
-PeekMessage.restype = BOOL
 
 # https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-msgwaitformultipleobjects
 MsgWaitForMultipleObjects = _user32.MsgWaitForMultipleObjects

@@ -1,9 +1,9 @@
 import unittest as ut
-from ctypes import POINTER, WinDLL, byref
-from ctypes.wintypes import BOOL, HWND, MSG, UINT
-from ctypes.wintypes import LPLONG as LRESULT
+from ctypes import byref
+from ctypes.wintypes import MSG
 
 from comtypes.client import CreateObject, GetEvents
+from comtypes.messageloop import DispatchMessage, PeekMessage, TranslateMessage
 
 # FIXME: External test dependencies like this seem bad.  Find a different
 # built-in win32 API to use.
@@ -44,25 +44,11 @@ class EventSink:
 
 
 def PumpWaitingMessages():
-    _user32 = WinDLL("user32")
-
-    _PeekMessageA = _user32.PeekMessageA
-    _PeekMessageA.argtypes = [POINTER(MSG), HWND, UINT, UINT, UINT]
-    _PeekMessageA.restype = BOOL
-
-    _TranslateMessage = _user32.TranslateMessage
-    _TranslateMessage.argtypes = [POINTER(MSG)]
-    _TranslateMessage.restype = BOOL
-
-    _DispatchMessageA = _user32.DispatchMessageA
-    _DispatchMessageA.argtypes = [POINTER(MSG)]
-    _DispatchMessageA.restype = LRESULT
-
     msg = MSG()
     PM_REMOVE = 0x0001
-    while _PeekMessageA(byref(msg), 0, 0, 0, PM_REMOVE):
-        _TranslateMessage(byref(msg))
-        _DispatchMessageA(byref(msg))
+    while PeekMessage(byref(msg), 0, 0, 0, PM_REMOVE):
+        TranslateMessage(byref(msg))
+        DispatchMessage(byref(msg))
 
 
 class Test(ut.TestCase):

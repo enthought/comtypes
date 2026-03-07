@@ -25,6 +25,11 @@ DispatchMessage = _user32.DispatchMessageA
 DispatchMessage.argtypes = [POINTER(MSG)]
 DispatchMessage.restype = LRESULT
 
+# https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-peekmessagea
+PeekMessage = _user32.PeekMessageA
+PeekMessage.argtypes = [POINTER(MSG), HWND, ctypes.c_uint, ctypes.c_uint, ctypes.c_uint]
+PeekMessage.restype = BOOL
+
 
 class _MessageLoop:
     def __init__(self) -> None:
