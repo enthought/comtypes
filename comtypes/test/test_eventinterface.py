@@ -1,6 +1,6 @@
 import unittest as ut
-from ctypes import POINTER, Structure, WinDLL, byref, c_long, c_uint, c_ulong
-from ctypes.wintypes import BOOL, HWND, UINT
+from ctypes import POINTER, WinDLL, byref
+from ctypes.wintypes import BOOL, HWND, MSG, UINT
 from ctypes.wintypes import LPLONG as LRESULT
 
 from comtypes.client import CreateObject, GetEvents
@@ -41,21 +41,6 @@ class EventSink:
     def DocumentComplete(self, this, *args):
         # print "DocumentComplete", args
         self._events.append("DocumentComplete")
-
-
-class POINT(Structure):
-    _fields_ = [("x", c_long), ("y", c_long)]
-
-
-class MSG(Structure):
-    _fields_ = [
-        ("hWnd", c_ulong),
-        ("message", c_uint),
-        ("wParam", c_ulong),
-        ("lParam", c_ulong),
-        ("time", c_ulong),
-        ("pt", POINT),
-    ]
 
 
 def PumpWaitingMessages():
