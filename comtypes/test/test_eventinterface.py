@@ -1,9 +1,11 @@
 import gc
 import time
 import unittest as ut
-from ctypes import byref
+from ctypes import HRESULT, byref
 from ctypes.wintypes import MSG
 
+from comtypes import COMMETHOD, GUID, IUnknown
+from comtypes.automation import DISPID
 from comtypes.client import CreateObject, GetEvents
 from comtypes.messageloop import (
     PM_REMOVE,
@@ -12,42 +14,35 @@ from comtypes.messageloop import (
     TranslateMessage,
 )
 
-# FIXME: External test dependencies like this seem bad.  Find a different
-# built-in win32 API to use.
 # The primary goal is to verify how `GetEvents` behaves when the
 # `interface` argument is explicitly specified versus when it is omitted,
 # using an object that has multiple outgoing event interfaces.
 
 
-class EventSink:
+class IPropertyNotifySink(IUnknown):
+    # https://learn.microsoft.com/en-us/windows/win32/api/ocidl/nn-ocidl-ipropertynotifysink
+    _iid_ = GUID("{9BFBBC02-EFF1-101A-84ED-00AA00341D07}")
+    _methods_ = [
+        COMMETHOD([], HRESULT, "OnChanged", (["in"], DISPID, "dispid")),
+        COMMETHOD([], HRESULT, "OnRequestEdit", (["in"], DISPID, "dispid")),
+    ]
+
+
+class MSXMLDocumentSink:
     def __init__(self):
         self._events = []
 
-    # some DWebBrowserEvents
-    def OnVisible(self, this, *args):
-        # print "OnVisible", args
-        self._events.append("OnVisible")
+    def onreadystatechange(self, this, *args):
+        self._events.append("onreadystatechange")
 
-    def BeforeNavigate(self, this, *args):
-        # print "BeforeNavigate", args
-        self._events.append("BeforeNavigate")
+    def ondataavailable(self, this, *args):
+        self._events.append("ondataavailable")
 
-    def NavigateComplete(self, this, *args):
-        # print "NavigateComplete", args
-        self._events.append("NavigateComplete")
+    def OnChanged(self, this, *args):
+        self._events.append("OnChanged")
 
-    # some DWebBrowserEvents2
-    def BeforeNavigate2(self, this, *args):
-        # print "BeforeNavigate2", args
-        self._events.append("BeforeNavigate2")
-
-    def NavigateComplete2(self, this, *args):
-        # print "NavigateComplete2", args
-        self._events.append("NavigateComplete2")
-
-    def DocumentComplete(self, this, *args):
-        # print "DocumentComplete", args
-        self._events.append("DocumentComplete")
+    def OnRequestEdit(self, this, *args):
+        self._events.append("OnRequestEdit")
 
 
 def PumpWaitingMessages():
@@ -57,64 +52,43 @@ def PumpWaitingMessages():
         DispatchMessage(byref(msg))
 
 
-class Test(ut.TestCase):
+class Test_MSXML(ut.TestCase):
+    def setUp(self):
+        self.doc = CreateObject("Msxml2.DOMDocument")
+        self.doc.async_ = True
+
     def tearDown(self):
+        del self.doc
         gc.collect()
         time.sleep(2)
 
-    @ut.skip(
-        "External test dependencies like this seem bad.  Find a different built-in "
-        "win32 API to use."
-    )
     def test_default_eventinterface(self):
-        sink = EventSink()
-        ie = CreateObject("InternetExplorer.Application")
-        conn = GetEvents(ie, sink=sink)
-        ie.Visible = True
-        ie.Navigate2(URL="http://docs.python.org/", Flags=0)
+        sink = MSXMLDocumentSink()
+        conn = GetEvents(self.doc, sink)
+        self.doc.loadXML("<root/>")
 
-        for i in range(50):
+        for _ in range(50):
             PumpWaitingMessages()
             time.sleep(0.1)
-        ie.Visible = False
-        ie.Quit()
+        self.assertIn("onreadystatechange", sink._events)
+        self.assertNotIn("OnChanged", sink._events)
 
-        self.assertEqual(
-            sink._events,
-            [
-                "OnVisible",
-                "BeforeNavigate2",
-                "NavigateComplete2",
-                "DocumentComplete",
-                "OnVisible",
-            ],
-        )
-
-        del ie
         del conn
 
-    @ut.skip(
-        "External test dependencies like this seem bad.  Find a different built-in "
-        "win32 API to use."
-    )
     def test_nondefault_eventinterface(self):
-        sink = EventSink()
-        ie = CreateObject("InternetExplorer.Application")
-        import comtypes.gen.SHDocVw as mod
+        sink = MSXMLDocumentSink()
 
-        conn = GetEvents(ie, sink, interface=mod.DWebBrowserEvents)
+        conn = GetEvents(self.doc, sink, interface=IPropertyNotifySink)
 
-        ie.Visible = True
-        ie.Navigate2(Flags=0, URL="http://docs.python.org/")
+        self.doc.loadXML("<root/>")
 
-        for i in range(50):
+        for _ in range(50):
             PumpWaitingMessages()
             time.sleep(0.1)
-        ie.Visible = False
-        ie.Quit()
+        self.assertNotIn("onreadystatechange", sink._events)
+        self.assertIn("OnChanged", sink._events)
 
-        self.assertEqual(sink._events, ["BeforeNavigate", "NavigateComplete"])
-        del ie
+        del conn
 
 
 if __name__ == "__main__":
