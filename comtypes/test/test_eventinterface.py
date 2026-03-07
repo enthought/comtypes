@@ -58,6 +58,9 @@ def PumpWaitingMessages():
 
 class Test_MSXML(ut.TestCase):
     def setUp(self):
+        # We use `Msxml2.DOMDocument` because it is a built-in Windows
+        # component that supports both a default source interface and the
+        # `IPropertyNotifySink` connection point.
         self.doc = CreateObject("Msxml2.DOMDocument")
         self.doc.async_ = True
 
