@@ -30,7 +30,7 @@ class IPropertyNotifySink(IUnknown):
     ]
 
 
-class MSXMLDocumentSink:
+class EventSink:
     def __init__(self):
         self._events = []
 
@@ -75,7 +75,7 @@ class Test_MSXML(ut.TestCase):
         # Verify that `GetEvents` automatically connects to the default source
         # interface (dispatch events like `onreadystatechange`) when no
         # interface is explicitly requested.
-        sink = MSXMLDocumentSink()
+        sink = EventSink()
         conn = GetEvents(self.doc, sink)
         self.doc.loadXML("<root/>")
 
@@ -93,7 +93,7 @@ class Test_MSXML(ut.TestCase):
     def test_nondefault_eventinterface(self):
         # Verify that `GetEvents` can connect to a non-default interface
         # (like `IPropertyNotifySink`) when it is explicitly provided.
-        sink = MSXMLDocumentSink()
+        sink = EventSink()
 
         conn = GetEvents(self.doc, sink, interface=IPropertyNotifySink)
 
