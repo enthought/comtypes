@@ -3,7 +3,12 @@ from ctypes import byref
 from ctypes.wintypes import MSG
 
 from comtypes.client import CreateObject, GetEvents
-from comtypes.messageloop import DispatchMessage, PeekMessage, TranslateMessage
+from comtypes.messageloop import (
+    PM_REMOVE,
+    DispatchMessage,
+    PeekMessage,
+    TranslateMessage,
+)
 
 # FIXME: External test dependencies like this seem bad.  Find a different
 # built-in win32 API to use.
@@ -45,7 +50,6 @@ class EventSink:
 
 def PumpWaitingMessages():
     msg = MSG()
-    PM_REMOVE = 0x0001
     while PeekMessage(byref(msg), 0, 0, 0, PM_REMOVE):
         TranslateMessage(byref(msg))
         DispatchMessage(byref(msg))

@@ -11,6 +11,11 @@ if TYPE_CHECKING:
 
     _FilterCallable = Callable[["_CArgObject"], Iterable[Any]]  # type: ignore
 
+# PeekMessage options
+PM_NOREMOVE = 0x0000
+PM_REMOVE = 0x0001
+PM_NOYIELD = 0x0002
+
 _user32 = WinDLL("user32")
 
 GetMessage = _user32.GetMessageA

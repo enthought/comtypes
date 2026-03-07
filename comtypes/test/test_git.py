@@ -18,7 +18,12 @@ from comtypes.git import (
     RegisterInterfaceInGlobal,
     RevokeInterfaceFromGlobal,
 )
-from comtypes.messageloop import DispatchMessage, PeekMessage, TranslateMessage
+from comtypes.messageloop import (
+    PM_REMOVE,
+    DispatchMessage,
+    PeekMessage,
+    TranslateMessage,
+)
 from comtypes.persist import STGM_READ, IPersistFile
 
 _user32 = WinDLL("user32")
@@ -43,8 +48,6 @@ _CoGetApartmentType.argtypes = [
 _CoGetApartmentType.restype = HRESULT
 
 QS_ALLINPUT = 0x04FF  # All message types including SendMessage
-
-PM_REMOVE = 0x0001  # Remove message from queue after Peek
 
 APTTYPE_MAINSTA = 3
 
