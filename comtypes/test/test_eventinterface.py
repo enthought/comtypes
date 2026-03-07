@@ -34,12 +34,14 @@ class MSXMLDocumentSink:
     def __init__(self):
         self._events = []
 
+    # Events from the default dispatch interface
     def onreadystatechange(self, this, *args):
         self._events.append("onreadystatechange")
 
     def ondataavailable(self, this, *args):
         self._events.append("ondataavailable")
 
+    # Events from `IPropertyNotifySink`
     def OnChanged(self, this, *args):
         self._events.append("OnChanged")
 
