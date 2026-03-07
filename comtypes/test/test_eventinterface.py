@@ -23,7 +23,9 @@ class IPropertyNotifySink(IUnknown):
     # https://learn.microsoft.com/en-us/windows/win32/api/ocidl/nn-ocidl-ipropertynotifysink
     _iid_ = GUID("{9BFBBC02-EFF1-101A-84ED-00AA00341D07}")
     _methods_ = [
+        # Called when a property has changed.
         COMMETHOD([], HRESULT, "OnChanged", (["in"], DISPID, "dispid")),
+        # Called when an object wants to know if it's okay to change a property.
         COMMETHOD([], HRESULT, "OnRequestEdit", (["in"], DISPID, "dispid")),
     ]
 
