@@ -66,6 +66,8 @@ class Test_MSXML(ut.TestCase):
 
     def tearDown(self):
         del self.doc
+        # Force garbage collection and wait slightly to ensure COM resources
+        # are released properly between tests.
         gc.collect()
         time.sleep(2)
 
