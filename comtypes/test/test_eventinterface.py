@@ -1,3 +1,5 @@
+import gc
+import time
 import unittest as ut
 from ctypes import byref
 from ctypes.wintypes import MSG
@@ -57,11 +59,7 @@ def PumpWaitingMessages():
 
 class Test(ut.TestCase):
     def tearDown(self):
-        import gc
-
         gc.collect()
-        import time
-
         time.sleep(2)
 
     @ut.skip(
@@ -74,7 +72,6 @@ class Test(ut.TestCase):
         conn = GetEvents(ie, sink=sink)
         ie.Visible = True
         ie.Navigate2(URL="http://docs.python.org/", Flags=0)
-        import time
 
         for i in range(50):
             PumpWaitingMessages()
@@ -109,7 +106,6 @@ class Test(ut.TestCase):
 
         ie.Visible = True
         ie.Navigate2(Flags=0, URL="http://docs.python.org/")
-        import time
 
         for i in range(50):
             PumpWaitingMessages()
