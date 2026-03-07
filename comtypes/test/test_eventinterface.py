@@ -1,8 +1,14 @@
 import unittest as ut
-from ctypes import POINTER, Structure, WinDLL, byref, c_long, c_uint, c_ulong
-from ctypes.wintypes import BOOL, HWND, LPLONG, UINT
+from ctypes import byref
+from ctypes.wintypes import MSG
 
 from comtypes.client import CreateObject, GetEvents
+from comtypes.messageloop import (
+    PM_REMOVE,
+    DispatchMessage,
+    PeekMessage,
+    TranslateMessage,
+)
 
 # FIXME: External test dependencies like this seem bad.  Find a different
 # built-in win32 API to use.
@@ -42,42 +48,11 @@ class EventSink:
         self._events.append("DocumentComplete")
 
 
-class POINT(Structure):
-    _fields_ = [("x", c_long), ("y", c_long)]
-
-
-class MSG(Structure):
-    _fields_ = [
-        ("hWnd", c_ulong),
-        ("message", c_uint),
-        ("wParam", c_ulong),
-        ("lParam", c_ulong),
-        ("time", c_ulong),
-        ("pt", POINT),
-    ]
-
-
 def PumpWaitingMessages():
-    _user32 = WinDLL("user32")
-
-    _PeekMessageA = _user32.PeekMessageA
-    _PeekMessageA.argtypes = [POINTER(MSG), HWND, UINT, UINT, UINT]
-    _PeekMessageA.restype = BOOL
-
-    _TranslateMessage = _user32.TranslateMessage
-    _TranslateMessage.argtypes = [POINTER(MSG)]
-    _TranslateMessage.restype = BOOL
-
-    LRESULT = LPLONG
-    _DispatchMessageA = _user32.DispatchMessageA
-    _DispatchMessageA.argtypes = [POINTER(MSG)]
-    _DispatchMessageA.restype = LRESULT
-
     msg = MSG()
-    PM_REMOVE = 0x0001
-    while _PeekMessageA(byref(msg), 0, 0, 0, PM_REMOVE):
-        _TranslateMessage(byref(msg))
-        _DispatchMessageA(byref(msg))
+    while PeekMessage(byref(msg), 0, 0, 0, PM_REMOVE):
+        TranslateMessage(byref(msg))
+        DispatchMessage(byref(msg))
 
 
 class Test(ut.TestCase):
