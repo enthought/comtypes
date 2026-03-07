@@ -1,6 +1,7 @@
 import unittest as ut
 from ctypes import POINTER, Structure, WinDLL, byref, c_long, c_uint, c_ulong
-from ctypes.wintypes import BOOL, HWND, LPLONG, UINT
+from ctypes.wintypes import BOOL, HWND, UINT
+from ctypes.wintypes import LPLONG as LRESULT
 
 from comtypes.client import CreateObject, GetEvents
 
@@ -68,7 +69,6 @@ def PumpWaitingMessages():
     _TranslateMessage.argtypes = [POINTER(MSG)]
     _TranslateMessage.restype = BOOL
 
-    LRESULT = LPLONG
     _DispatchMessageA = _user32.DispatchMessageA
     _DispatchMessageA.argtypes = [POINTER(MSG)]
     _DispatchMessageA.restype = LRESULT
