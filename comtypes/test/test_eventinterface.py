@@ -79,9 +79,12 @@ class Test_MSXML(ut.TestCase):
         conn = GetEvents(self.doc, sink)
         self.doc.loadXML("<root/>")
 
+        # Give the message loop time to process incoming events.
         for _ in range(50):
             PumpWaitingMessages()
             time.sleep(0.1)
+        # Should receive events from the default dispatch interface, but not
+        # events from `IPropertyNotifySink`.
         self.assertIn("onreadystatechange", sink._events)
         self.assertNotIn("OnChanged", sink._events)
 
@@ -96,9 +99,12 @@ class Test_MSXML(ut.TestCase):
 
         self.doc.loadXML("<root/>")
 
+        # Give the message loop time to process incoming events.
         for _ in range(50):
             PumpWaitingMessages()
             time.sleep(0.1)
+        # Should receive events from `IPropertyNotifySink`, but not events from
+        # the default dispatch interface.
         self.assertNotIn("onreadystatechange", sink._events)
         self.assertIn("OnChanged", sink._events)
 
