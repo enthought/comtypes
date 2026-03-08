@@ -140,12 +140,13 @@ class Test_IMAPI2FS(ut.TestCase):
         gc.collect()
         time.sleep(2)
 
-    def test(self):
+    def test_event_methods_lack_dispids(self):
         sink = object()
         # The default event interface for IMAPI2's FileSystemImage is
         # `DFileSystemImageEvents`. Although it inherits from `IDispatch`,
         # it is a custom interface (`TKIND_INTERFACE`), not a dual or pure
-        # dispatch interface (`TKIND_DISPATCH`).
+        # dispatch interface (`TKIND_DISPATCH`); therefore, its methods
+        # do not have DISPIDs.
         with self.assertRaises(NotImplementedError):
             GetEvents(self.image, sink)
 
