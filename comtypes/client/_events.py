@@ -121,6 +121,8 @@ def FindOutgoingInterface(source: IUnknown) -> type[IUnknown]:
         pass
     else:
         if guid == comtypes.GUID():
+            # Some COM servers, even if they implement `IProvideClassInfo2`,
+            # may return GUID_NULL instead of the default source interface's GUID.
             raise NotImplementedError("retrieved outgoing interface IID is GUID_NULL")
         # another try: block needed?
         try:
