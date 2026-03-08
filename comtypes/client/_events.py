@@ -120,6 +120,8 @@ def FindOutgoingInterface(source: IUnknown) -> type[IUnknown]:
     except COMError:
         pass
     else:
+        if guid == comtypes.GUID():
+            raise NotImplementedError("retrieved outgoing interface IID is GUID_NULL")
         # another try: block needed?
         try:
             interface = comtypes.com_interface_registry[str(guid)]

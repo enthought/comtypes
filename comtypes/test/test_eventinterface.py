@@ -112,16 +112,13 @@ class Test_MSXML(ut.TestCase):
 
 
 class Test_MSHTML(ut.TestCase):
-    def test(self):
+    def test_retrieved_outgoing_iid_is_guid_null(self):
         doc = CreateObject("htmlfile")
         sink = object()
         # MSHTML's HTMLDocument (which is what `CreateObject('htmlfile')`
         # returns) does not expose a valid default source interface through
         # `IProvideClassInfo2`.
-        # Specifically, it returns `GUID_NULL` as its default source interface,
-        # which results in a `KeyError` when `GetEvents` tries to look it up in
-        # the interface registry.
-        with self.assertRaises(KeyError, msg="{00000000-0000-0000-0000-000000000000}"):
+        with self.assertRaises(NotImplementedError):
             GetEvents(doc, sink)
 
 
