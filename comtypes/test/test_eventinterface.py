@@ -1,8 +1,10 @@
 import gc
+import tempfile
 import time
 import unittest as ut
 from ctypes import HRESULT, byref
 from ctypes.wintypes import MSG
+from pathlib import Path
 
 from comtypes import COMMETHOD, GUID, IUnknown
 from comtypes.automation import DISPID
@@ -120,6 +122,35 @@ class Test_MSHTML(ut.TestCase):
         # `IProvideClassInfo2`.
         with self.assertRaises(NotImplementedError):
             GetEvents(doc, sink)
+
+
+class Test_IMAPI2FS(ut.TestCase):
+    def setUp(self):
+        CLSID_MsftFileSystemImage = GUID("{2C941FC5-975B-59BE-A960-9A2A262853A5}")
+        self.image = CreateObject(CLSID_MsftFileSystemImage)
+        self.image.FileSystemsToCreate = 1  # FsiFileSystemISO9660
+        td = tempfile.TemporaryDirectory()
+        self.tmp_dir = Path(td.name)
+        self.addCleanup(td.cleanup)
+
+    def tearDown(self):
+        del self.image
+        # Force garbage collection and wait slightly to ensure COM resources
+        # are released properly between tests.
+        gc.collect()
+        time.sleep(2)
+
+    def test(self):
+        sink = object()
+        # The default event interface for IMAPI2's FileSystemImage is
+        # `DFileSystemImageEvents`. Although it inherits from `IDispatch`,
+        # it is a custom interface (`TKIND_INTERFACE`), not a dual or pure
+        # dispatch interface (`TKIND_DISPATCH`).
+        # Its methods are v-table bound, and the interface definition
+        # that comtypes generates from the type info lacks the `dispid`
+        # attributes that `GetEvents` requires.
+        with self.assertRaises(AssertionError):
+            GetEvents(self.image, sink)
 
 
 if __name__ == "__main__":
