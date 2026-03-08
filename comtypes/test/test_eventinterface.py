@@ -1,8 +1,10 @@
 import gc
+import tempfile
 import time
 import unittest as ut
 from ctypes import HRESULT, byref
 from ctypes.wintypes import MSG
+from pathlib import Path
 
 from comtypes import COMMETHOD, GUID, IUnknown
 from comtypes.automation import DISPID
@@ -109,6 +111,44 @@ class Test_MSXML(ut.TestCase):
         self.assertIn("OnChanged", sink._events)
 
         del conn
+
+
+class Test_MSHTML(ut.TestCase):
+    def test_retrieved_outgoing_iid_is_guid_null(self):
+        doc = CreateObject("htmlfile")
+        sink = object()
+        # MSHTML's HTMLDocument (which is what `CreateObject('htmlfile')`
+        # returns) does not expose a valid default source interface through
+        # `IProvideClassInfo2`.
+        with self.assertRaises(NotImplementedError):
+            GetEvents(doc, sink)
+
+
+class Test_IMAPI2FS(ut.TestCase):
+    def setUp(self):
+        CLSID_MsftFileSystemImage = GUID("{2C941FC5-975B-59BE-A960-9A2A262853A5}")
+        self.image = CreateObject(CLSID_MsftFileSystemImage)
+        self.image.FileSystemsToCreate = 1  # FsiFileSystemISO9660
+        td = tempfile.TemporaryDirectory()
+        self.tmp_dir = Path(td.name)
+        self.addCleanup(td.cleanup)
+
+    def tearDown(self):
+        del self.image
+        # Force garbage collection and wait slightly to ensure COM resources
+        # are released properly between tests.
+        gc.collect()
+        time.sleep(2)
+
+    def test_event_methods_lack_dispids(self):
+        sink = object()
+        # The default event interface for IMAPI2's FileSystemImage is
+        # `DFileSystemImageEvents`. Although it inherits from `IDispatch`,
+        # it is a custom interface (`TKIND_INTERFACE`), not a dual or pure
+        # dispatch interface (`TKIND_DISPATCH`); therefore, its methods
+        # do not have DISPIDs.
+        with self.assertRaises(NotImplementedError):
+            GetEvents(self.image, sink)
 
 
 if __name__ == "__main__":

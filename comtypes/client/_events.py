@@ -120,6 +120,10 @@ def FindOutgoingInterface(source: IUnknown) -> type[IUnknown]:
     except COMError:
         pass
     else:
+        if guid == comtypes.GUID():
+            # Some COM servers, even if they implement `IProvideClassInfo2`,
+            # may return GUID_NULL instead of the default source interface's GUID.
+            raise NotImplementedError("retrieved outgoing interface IID is GUID_NULL")
         # another try: block needed?
         try:
             interface = comtypes.com_interface_registry[str(guid)]
@@ -258,7 +262,15 @@ def CreateEventReceiver(interface: type[IUnknown], handler: Any) -> COMObject:
             # Can dispid be at a different index? Should check code generator...
             # ...but hand-written code should also work...
             dispid = m.idlflags[0]
-            assert isinstance(dispid, comtypes.dispid)
+            if not isinstance(dispid, comtypes.dispid):
+                # The interface is a subclass of `IDispatch` but its methods do not
+                # have DISPIDs, indicating it's not an interface suitable for event
+                # handling.
+                raise NotImplementedError(
+                    "Event receiver creation requires event methods to have DISPIDs "
+                    f"for dispatching, but '{interface.__name__}' ({interface._iid_}) "
+                    "lacks them, even though it inherits from 'IDispatch'."
+                )
             impl = finder.get_impl(interface, m.name, m.paramflags, m.idlflags)
             # XXX Wouldn't work for 'propget', 'propput', 'propputref'
             # methods - are they allowed on event interfaces?
