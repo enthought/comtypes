@@ -146,10 +146,7 @@ class Test_IMAPI2FS(ut.TestCase):
         # `DFileSystemImageEvents`. Although it inherits from `IDispatch`,
         # it is a custom interface (`TKIND_INTERFACE`), not a dual or pure
         # dispatch interface (`TKIND_DISPATCH`).
-        # Its methods are v-table bound, and the interface definition
-        # that comtypes generates from the type info lacks the `dispid`
-        # attributes that `GetEvents` requires.
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(NotImplementedError):
             GetEvents(self.image, sink)
 
 
