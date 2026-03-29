@@ -1,9 +1,8 @@
-##import ut
 import unittest as ut
-from ctypes import HRESULT, POINTER, byref
+from ctypes import HRESULT, POINTER
 
 from comtypes import GUID, STDMETHOD, IUnknown
-from comtypes.typeinfo import ICreateTypeLib2, _CreateTypeLib2
+from comtypes.typeinfo import SYS_WIN32, CreateTypeLib, ICreateTypeLib2
 
 # XXX leaks references!
 
@@ -14,8 +13,6 @@ def method_count(interface):
 
 class BasicTest(ut.TestCase):
     def test_IUnknown(self):
-        from comtypes import IUnknown
-
         self.assertEqual(method_count(IUnknown), 3)
 
     def test_release(self):
@@ -24,8 +21,9 @@ class BasicTest(ut.TestCase):
     def test_refcounts(self):
         # Since all COM interfaces derive from IUnknown and have the same reference counting behavior, any interface
         # — whether ICreateTypeLib2 or otherwise — could be used for this test.
-        p = POINTER(ICreateTypeLib2)()
-        _CreateTypeLib2(1, "blabla", byref(p))
+        p = CreateTypeLib("blabla", syskind=SYS_WIN32)
+        self.assertIsInstance(p, ICreateTypeLib2)
+        self.assertIsInstance(p, IUnknown)
         # initial refcount is 2
         for i in range(2, 10):
             self.assertEqual(p.AddRef(), i)
@@ -35,8 +33,9 @@ class BasicTest(ut.TestCase):
     def test_qi(self):
         # Since all COM interfaces derive from IUnknown and have the same QueryInterface behavior, any interface
         # — whether ICreateTypeLib2 or otherwise — could be used for this test.
-        p = POINTER(ICreateTypeLib2)()
-        _CreateTypeLib2(1, "blabla", byref(p))
+        p = CreateTypeLib("blabla", syskind=SYS_WIN32)
+        self.assertIsInstance(p, ICreateTypeLib2)
+        self.assertIsInstance(p, IUnknown)
         self.assertEqual(p.AddRef(), 2)
         self.assertEqual(p.Release(), 1)
 
@@ -114,8 +113,6 @@ class BasicTest(ut.TestCase):
         b = POINTER(IUnknown)()
         self.assertEqual(a, b)
         self.assertEqual(hash(a), hash(b))
-
-        from comtypes.typeinfo import CreateTypeLib
 
         # we do not save the lib, so no file will be created.
         # these should NOT be identical
