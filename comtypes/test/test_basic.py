@@ -1,4 +1,3 @@
-##import ut
 import unittest as ut
 from ctypes import HRESULT, POINTER
 
