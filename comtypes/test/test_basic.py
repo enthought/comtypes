@@ -23,6 +23,7 @@ class BasicTest(ut.TestCase):
         # — whether ICreateTypeLib2 or otherwise — could be used for this test.
         p = CreateTypeLib("blabla", syskind=SYS_WIN32)
         self.assertIsInstance(p, ICreateTypeLib2)
+        self.assertIsInstance(p, IUnknown)
         # initial refcount is 2
         for i in range(2, 10):
             self.assertEqual(p.AddRef(), i)
@@ -34,6 +35,7 @@ class BasicTest(ut.TestCase):
         # — whether ICreateTypeLib2 or otherwise — could be used for this test.
         p = CreateTypeLib("blabla", syskind=SYS_WIN32)
         self.assertIsInstance(p, ICreateTypeLib2)
+        self.assertIsInstance(p, IUnknown)
         self.assertEqual(p.AddRef(), 2)
         self.assertEqual(p.Release(), 1)
 
