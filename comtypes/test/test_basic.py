@@ -1,9 +1,9 @@
 ##import ut
 import unittest as ut
-from ctypes import HRESULT, POINTER, byref
+from ctypes import HRESULT, POINTER
 
 from comtypes import GUID, STDMETHOD, IUnknown
-from comtypes.typeinfo import SYS_WIN32, CreateTypeLib, ICreateTypeLib2, _CreateTypeLib2
+from comtypes.typeinfo import SYS_WIN32, CreateTypeLib, ICreateTypeLib2
 
 # XXX leaks references!
 
@@ -24,8 +24,8 @@ class BasicTest(ut.TestCase):
     def test_refcounts(self):
         # Since all COM interfaces derive from IUnknown and have the same reference counting behavior, any interface
         # — whether ICreateTypeLib2 or otherwise — could be used for this test.
-        p = POINTER(ICreateTypeLib2)()
-        _CreateTypeLib2(SYS_WIN32, "blabla", byref(p))
+        p = CreateTypeLib("blabla", syskind=SYS_WIN32)
+        self.assertIsInstance(p, ICreateTypeLib2)
         # initial refcount is 2
         for i in range(2, 10):
             self.assertEqual(p.AddRef(), i)
@@ -35,8 +35,8 @@ class BasicTest(ut.TestCase):
     def test_qi(self):
         # Since all COM interfaces derive from IUnknown and have the same QueryInterface behavior, any interface
         # — whether ICreateTypeLib2 or otherwise — could be used for this test.
-        p = POINTER(ICreateTypeLib2)()
-        _CreateTypeLib2(SYS_WIN32, "blabla", byref(p))
+        p = CreateTypeLib("blabla", syskind=SYS_WIN32)
+        self.assertIsInstance(p, ICreateTypeLib2)
         self.assertEqual(p.AddRef(), 2)
         self.assertEqual(p.Release(), 1)
 
