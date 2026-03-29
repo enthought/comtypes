@@ -3,7 +3,7 @@ import unittest as ut
 from ctypes import HRESULT, POINTER, byref
 
 from comtypes import GUID, STDMETHOD, IUnknown
-from comtypes.typeinfo import ICreateTypeLib2, _CreateTypeLib2
+from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib2, _CreateTypeLib2
 
 # XXX leaks references!
 
@@ -114,8 +114,6 @@ class BasicTest(ut.TestCase):
         b = POINTER(IUnknown)()
         self.assertEqual(a, b)
         self.assertEqual(hash(a), hash(b))
-
-        from comtypes.typeinfo import CreateTypeLib
 
         # we do not save the lib, so no file will be created.
         # these should NOT be identical
