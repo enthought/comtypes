@@ -14,8 +14,6 @@ def method_count(interface):
 
 class BasicTest(ut.TestCase):
     def test_IUnknown(self):
-        from comtypes import IUnknown
-
         self.assertEqual(method_count(IUnknown), 3)
 
     def test_release(self):
