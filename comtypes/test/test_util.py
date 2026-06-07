@@ -24,7 +24,7 @@ try:
     import comtypes.util
 except RuntimeError as e:
     SKIP_MSG = (
-        "Starting from Python 3.15, layout is changed. "
+        "Starting from Python 3.15, PyCArgObject layout is changed. "
         "See https://github.com/enthought/comtypes/issues/938."
     )
     if PY_3_15_ALPHA_BETA:
