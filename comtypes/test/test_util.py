@@ -1,3 +1,4 @@
+import sys
 import unittest
 from ctypes import (
     POINTER,
@@ -13,7 +14,25 @@ from ctypes import (
     sizeof,
 )
 
-import comtypes.util
+PY_3_15_ALPHA_BETA = (
+    sys.version_info.major == 3
+    and sys.version_info.minor == 15
+    and sys.version_info.releaselevel in ("alpha", "beta")
+)
+
+try:
+    import comtypes.util
+except RuntimeError as e:
+    SKIP_MSG = (
+        "Starting from Python 3.15, layout is changed. "
+        "See https://github.com/enthought/comtypes/issues/938."
+    )
+    if PY_3_15_ALPHA_BETA:
+
+        def setUpModule():
+            raise unittest.SkipTest(SKIP_MSG)
+    else:
+        raise e
 from comtypes import GUID, CoCreateInstance, IUnknown, shelllink
 
 
