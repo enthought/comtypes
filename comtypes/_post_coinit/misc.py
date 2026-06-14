@@ -14,6 +14,7 @@ from ctypes import (
 )
 from ctypes.wintypes import DWORD, LPCWSTR, LPVOID
 from typing import TYPE_CHECKING, Any, Optional, TypeVar, overload
+from typing import Union as _UnionT
 
 from comtypes import CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER, CLSCTX_SERVER, GUID
 from comtypes._memberspec import COMMETHOD
@@ -21,7 +22,7 @@ from comtypes._post_coinit.unknwn import IUnknown
 from comtypes.GUID import REFCLSID
 
 if TYPE_CHECKING:
-    from ctypes import _Pointer
+    from ctypes import _CArgObject, _Pointer
 
     from comtypes import hints as hints  # noqa  # type: ignore
 
@@ -146,20 +147,20 @@ def CoCreateInstance(
 def CoGetClassObject(
     clsid: GUID,
     clsctx: Optional[int] = None,
-    pServerInfo: "Optional[COSERVERINFO]" = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
     interface: None = None,
 ) -> "hints.IClassFactory": ...
 @overload
 def CoGetClassObject(
     clsid: GUID,
     clsctx: Optional[int] = None,
-    pServerInfo: "Optional[COSERVERINFO]" = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
     interface: type[_T_IUnknown] = IUnknown,
 ) -> _T_IUnknown: ...
 def CoGetClassObject(
     clsid: GUID,
     clsctx: Optional[int] = None,
-    pServerInfo: "Optional[COSERVERINFO]" = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
     interface: Optional[type[IUnknown]] = None,
 ) -> IUnknown:
     if clsctx is None:
@@ -337,7 +338,7 @@ def CoCreateInstanceEx(
     interface: None = None,
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
-    pServerInfo: Optional[COSERVERINFO] = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
 ) -> IUnknown: ...
 @overload
 def CoCreateInstanceEx(
@@ -345,14 +346,14 @@ def CoCreateInstanceEx(
     interface: type[_T_IUnknown],
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
-    pServerInfo: Optional[COSERVERINFO] = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
 ) -> _T_IUnknown: ...
 def CoCreateInstanceEx(
     clsid: GUID,
     interface: Optional[type[IUnknown]] = None,
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
-    pServerInfo: Optional[COSERVERINFO] = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
 ) -> IUnknown:
     """The basic windows api to create a COM class object and return a
     pointer to an interface, possibly on another machine.
