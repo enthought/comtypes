@@ -4,12 +4,11 @@ The global interface table provides a way to marshal interface pointers
 between different threading appartments.
 """
 
-from ctypes import *
+from ctypes import POINTER
 from ctypes.wintypes import DWORD
 
 from comtypes import (
     CLSCTX_INPROC_SERVER,
-    COMMETHOD,
     GUID,
     HRESULT,
     STDMETHOD,
