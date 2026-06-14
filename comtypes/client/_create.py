@@ -56,8 +56,28 @@ def CreateObject(
     progid: _UnionT[str, type[CoClass], GUID],
     clsctx: Optional[int] = None,
     machine: Optional[str] = None,
-    interface: Optional[type[_T_IUnknown]] = None,
-    dynamic: bool = ...,
+    interface: None = None,
+    dynamic: Literal[False] = False,
+    pServerInfo: Optional[COSERVERINFO] = None,
+) -> Any: ...
+@overload
+def CreateObject(
+    progid: _UnionT[str, type[CoClass], GUID],
+    clsctx: Optional[int] = None,
+    machine: Optional[str] = None,
+    interface: None = None,
+    dynamic: Literal[True] = True,
+    pServerInfo: Optional[COSERVERINFO] = None,
+) -> _UnionT[
+    "comtypes.client.lazybind.Dispatch", "comtypes.client.dynamic._Dispatch"
+]: ...
+@overload
+def CreateObject(
+    progid: _UnionT[str, type[CoClass], GUID],
+    clsctx: Optional[int] = None,
+    machine: Optional[str] = None,
+    interface: type[_T_IUnknown] = IUnknown,
+    dynamic: Literal[False] = False,
     pServerInfo: Optional[COSERVERINFO] = None,
 ) -> _T_IUnknown: ...
 def CreateObject(
