@@ -6,6 +6,7 @@ between different threading appartments.
 
 from ctypes import POINTER
 from ctypes.wintypes import DWORD
+from typing import Type, TypeVar
 
 from comtypes import (
     CLSCTX_INPROC_SERVER,
@@ -15,6 +16,8 @@ from comtypes import (
     CoCreateInstance,
     IUnknown,
 )
+
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
 
 class IGlobalInterfaceTable(IUnknown):
@@ -33,17 +36,21 @@ class IGlobalInterfaceTable(IUnknown):
         ),
     ]
 
-    def RegisterInterfaceInGlobal(self, obj, interface=IUnknown):
+    def RegisterInterfaceInGlobal(
+        self, obj: IUnknown, interface: Type[_T_IUnknown] = IUnknown
+    ) -> int:
         cookie = DWORD()
         self.__com_RegisterInterfaceInGlobal(obj, interface._iid_, cookie)  # type: ignore
         return cookie.value
 
-    def GetInterfaceFromGlobal(self, cookie, interface=IUnknown):
+    def GetInterfaceFromGlobal(
+        self, cookie: int, interface: Type[_T_IUnknown] = IUnknown
+    ) -> _T_IUnknown:
         ptr = POINTER(interface)()
         self.__com_GetInterfaceFromGlobal(cookie, interface._iid_, ptr)  # type: ignore
-        return ptr
+        return ptr  # type: ignore
 
-    def RevokeInterfaceFromGlobal(self, cookie):
+    def RevokeInterfaceFromGlobal(self, cookie: int) -> None:
         self.__com_RevokeInterfaceFromGlobal(cookie)  # type: ignore
 
 
