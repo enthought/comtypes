@@ -35,16 +35,16 @@ class IGlobalInterfaceTable(IUnknown):
 
     def RegisterInterfaceInGlobal(self, obj, interface=IUnknown):
         cookie = DWORD()
-        self.__com_RegisterInterfaceInGlobal(obj, interface._iid_, cookie)
+        self.__com_RegisterInterfaceInGlobal(obj, interface._iid_, cookie)  # type: ignore
         return cookie.value
 
     def GetInterfaceFromGlobal(self, cookie, interface=IUnknown):
         ptr = POINTER(interface)()
-        self.__com_GetInterfaceFromGlobal(cookie, interface._iid_, ptr)
+        self.__com_GetInterfaceFromGlobal(cookie, interface._iid_, ptr)  # type: ignore
         return ptr
 
     def RevokeInterfaceFromGlobal(self, cookie):
-        self.__com_RevokeInterfaceFromGlobal(cookie)
+        self.__com_RevokeInterfaceFromGlobal(cookie)  # type: ignore
 
 
 # It was a pain to get this CLSID: it's neither in the registry, nor
