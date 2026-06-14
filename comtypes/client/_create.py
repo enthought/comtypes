@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Any, Optional, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, overload
 from typing import Union as _UnionT
 
 import comtypes
@@ -123,11 +123,25 @@ def CreateObject(
 
 
 @overload
-def CoGetObject(displayname: str, interface: type[_T_IUnknown]) -> _T_IUnknown: ...
+def CoGetObject(
+    displayname: str,
+    interface: None = None,
+    dynamic: Literal[False] = False,
+) -> Any: ...
 @overload
 def CoGetObject(
-    displayname: str, interface: None = None, dynamic: bool = False
-) -> Any: ...
+    displayname: str,
+    interface: None = None,
+    dynamic: Literal[True] = True,
+) -> _UnionT[
+    "comtypes.client.lazybind.Dispatch", "comtypes.client.dynamic._Dispatch"
+]: ...
+@overload
+def CoGetObject(
+    displayname: str,
+    interface: type[_T_IUnknown],
+    dynamic: Literal[False] = False,
+) -> _T_IUnknown: ...
 def CoGetObject(
     displayname: str,
     interface: Optional[type[IUnknown]] = None,
