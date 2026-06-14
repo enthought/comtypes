@@ -4,18 +4,20 @@ The global interface table provides a way to marshal interface pointers
 between different threading appartments.
 """
 
-from ctypes import *
+from ctypes import POINTER
 from ctypes.wintypes import DWORD
+from typing import Type, TypeVar
 
 from comtypes import (
     CLSCTX_INPROC_SERVER,
-    COMMETHOD,
     GUID,
     HRESULT,
     STDMETHOD,
     CoCreateInstance,
     IUnknown,
 )
+
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
 
 
 class IGlobalInterfaceTable(IUnknown):
@@ -34,18 +36,22 @@ class IGlobalInterfaceTable(IUnknown):
         ),
     ]
 
-    def RegisterInterfaceInGlobal(self, obj, interface=IUnknown):
+    def RegisterInterfaceInGlobal(
+        self, obj: IUnknown, interface: Type[_T_IUnknown] = IUnknown
+    ) -> int:
         cookie = DWORD()
-        self.__com_RegisterInterfaceInGlobal(obj, interface._iid_, cookie)
+        self.__com_RegisterInterfaceInGlobal(obj, interface._iid_, cookie)  # type: ignore
         return cookie.value
 
-    def GetInterfaceFromGlobal(self, cookie, interface=IUnknown):
+    def GetInterfaceFromGlobal(
+        self, cookie: int, interface: Type[_T_IUnknown] = IUnknown
+    ) -> _T_IUnknown:
         ptr = POINTER(interface)()
-        self.__com_GetInterfaceFromGlobal(cookie, interface._iid_, ptr)
-        return ptr
+        self.__com_GetInterfaceFromGlobal(cookie, interface._iid_, ptr)  # type: ignore
+        return ptr  # type: ignore
 
-    def RevokeInterfaceFromGlobal(self, cookie):
-        self.__com_RevokeInterfaceFromGlobal(cookie)
+    def RevokeInterfaceFromGlobal(self, cookie: int) -> None:
+        self.__com_RevokeInterfaceFromGlobal(cookie)  # type: ignore
 
 
 # It was a pain to get this CLSID: it's neither in the registry, nor
@@ -69,20 +75,3 @@ __all__ = [
     "GetInterfaceFromGlobal",
 ]
 # fmt: on
-
-
-if __name__ == "__main__":
-    from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
-
-    tlib = CreateTypeLib("foo.bar")  # we don not save it later
-    assert (tlib.AddRef(), tlib.Release()) == (2, 1)
-
-    cookie = RegisterInterfaceInGlobal(tlib)
-    assert (tlib.AddRef(), tlib.Release()) == (3, 2)
-
-    GetInterfaceFromGlobal(cookie, ICreateTypeLib)
-    GetInterfaceFromGlobal(cookie, ICreateTypeLib)
-    GetInterfaceFromGlobal(cookie)
-    assert (tlib.AddRef(), tlib.Release()) == (3, 2)
-    RevokeInterfaceFromGlobal(cookie)
-    assert (tlib.AddRef(), tlib.Release()) == (2, 1)
