@@ -8,6 +8,8 @@ from comtypes import COSERVERINFO, GUID, CoClass, IUnknown, automation
 from comtypes.client._managing import _manage
 
 if TYPE_CHECKING:
+    from ctypes import _CArgObject
+
     from comtypes import hints  # type: ignore
 
 
@@ -23,20 +25,20 @@ logger = logging.getLogger(__name__)
 def GetClassObject(
     progid: _UnionT[str, type[CoClass], GUID],
     clsctx: Optional[int] = None,
-    pServerInfo: Optional[COSERVERINFO] = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
     interface: None = None,
 ) -> "hints.IClassFactory": ...
 @overload
 def GetClassObject(
     progid: _UnionT[str, type[CoClass], GUID],
     clsctx: Optional[int] = None,
-    pServerInfo: Optional[COSERVERINFO] = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
     interface: type[_T_IUnknown] = IUnknown,
 ) -> _T_IUnknown: ...
 def GetClassObject(
     progid: _UnionT[str, type[CoClass], GUID],
     clsctx: Optional[int] = None,
-    pServerInfo: Optional[COSERVERINFO] = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
     interface: Optional[type[IUnknown]] = None,
 ) -> IUnknown:
     """Create and return the class factory for a COM object.
@@ -58,7 +60,7 @@ def CreateObject(
     machine: Optional[str] = None,
     interface: None = None,
     dynamic: Literal[False] = False,
-    pServerInfo: Optional[COSERVERINFO] = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
 ) -> Any: ...
 @overload
 def CreateObject(
@@ -67,7 +69,7 @@ def CreateObject(
     machine: Optional[str] = None,
     interface: None = None,
     dynamic: Literal[True] = True,
-    pServerInfo: Optional[COSERVERINFO] = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
 ) -> _UnionT[
     "comtypes.client.lazybind.Dispatch", "comtypes.client.dynamic._Dispatch"
 ]: ...
@@ -78,7 +80,7 @@ def CreateObject(
     machine: Optional[str] = None,
     interface: type[_T_IUnknown] = IUnknown,
     dynamic: Literal[False] = False,
-    pServerInfo: Optional[COSERVERINFO] = None,
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
 ) -> _T_IUnknown: ...
 def CreateObject(
     progid: _UnionT[str, type[CoClass], GUID],  # which object to create
@@ -86,7 +88,7 @@ def CreateObject(
     machine: Optional[str] = None,  # where to create the object
     interface: Optional[type[IUnknown]] = None,  # the interface we want
     dynamic: bool = False,  # use dynamic dispatch
-    pServerInfo: Optional[COSERVERINFO] = None,  # server info struct for remoting
+    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,  # server info struct for remoting
 ) -> Any:
     """Create a COM object from 'progid', and try to QueryInterface()
     it to the most useful interface, generating typelib support on
