@@ -68,20 +68,3 @@ __all__ = [
     "GetInterfaceFromGlobal",
 ]
 # fmt: on
-
-
-if __name__ == "__main__":
-    from comtypes.typeinfo import CreateTypeLib, ICreateTypeLib
-
-    tlib = CreateTypeLib("foo.bar")  # we don not save it later
-    assert (tlib.AddRef(), tlib.Release()) == (2, 1)
-
-    cookie = RegisterInterfaceInGlobal(tlib)
-    assert (tlib.AddRef(), tlib.Release()) == (3, 2)
-
-    GetInterfaceFromGlobal(cookie, ICreateTypeLib)
-    GetInterfaceFromGlobal(cookie, ICreateTypeLib)
-    GetInterfaceFromGlobal(cookie)
-    assert (tlib.AddRef(), tlib.Release()) == (3, 2)
-    RevokeInterfaceFromGlobal(cookie)
-    assert (tlib.AddRef(), tlib.Release()) == (2, 1)
