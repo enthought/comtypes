@@ -44,10 +44,15 @@ def _calc_packing(struct, fields, pack, isStruct):
 def calc_packing(struct, fields):
     # try several packings, starting with unspecified packing
     isStruct = isinstance(struct, typedesc.Structure)
+    last_error = None
     for pack in [None, 16 * 8, 8 * 8, 4 * 8, 2 * 8, 1 * 8]:
         try:
             _calc_packing(struct, fields, pack, isStruct)
         except PackingError as details:
+            # The exception target is cleared when the ``except`` block ends
+            # (see https://docs.python.org/3/reference/compound_stmts.html#except-clause),
+            # so keep a reference for the final error message below.
+            last_error = details
             continue
         else:
             if pack is None:
@@ -55,7 +60,7 @@ def calc_packing(struct, fields):
 
             return int(pack / 8)
 
-    raise PackingError(f"PACKING FAILED: {details}")
+    raise PackingError(f"PACKING FAILED: {last_error}")
 
 
 class PackingError(Exception):
