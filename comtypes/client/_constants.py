@@ -4,7 +4,6 @@
 #
 ################################################################
 import keyword
-import sys
 
 import comtypes
 import comtypes.automation
