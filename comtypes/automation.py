@@ -6,7 +6,7 @@ from _ctypes import COMError, CopyComPointer
 from ctypes import *
 from ctypes import Array as _CArrayType
 from ctypes import _Pointer
-from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
+from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WORD
 from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 import comtypes
