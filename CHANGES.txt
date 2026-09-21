@@ -1,6 +1,17 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.17
+--------------
+* Unify Windows message handling APIs in ``messageloop.py``. By @junkmd.
+* Replace Internet Explorer with MSXML in ``test_eventinterface.py``. By @junkmd.
+* Improve error handling for ``GetEvents`` with currently unsupported COM servers. By @junkmd.
+* Refactor ``test_basic.py`` to use public APIs. By @junkmd.
+* Skip tests using ``util`` on Python 3.15 alpha/beta. By @junkmd.
+* Refine type hints for COM object creation and retrieval. By @junkmd.
+* Modernize ``IGlobalInterfaceTable`` with type hints. By @junkmd.
+* Fix ``UnboundLocalError`` when all struct packings fail in ``calc_packing``. By @ryanda9910.
+
 Release 1.4.16
 --------------
 * Decompose ``IStorage`` tests and enhance coverage. By @junkmd.
