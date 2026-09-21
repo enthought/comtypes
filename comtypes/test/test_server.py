@@ -219,7 +219,7 @@ class MyServer(comtypes.CoClass, ConnectableObjectMixin):
 
     def test_GetStackTrace(self):
         p = wrap(self.create())
-        from ctypes import POINTER, c_int, pointer
+        from ctypes import c_int, pointer
 
         frames = (c_int * 5)()
         res = p.GetStackTrace(42, frames, 5)
@@ -324,7 +324,7 @@ class MyServer(comtypes.CoClass, ConnectableObjectMixin):
 path = tlb.compile()
 from comtypes.connectionpoints import IConnectionPointContainer
 from comtypes.gen import TestLib
-from comtypes.typeinfo import IProvideClassInfo, IProvideClassInfo2
+from comtypes.typeinfo import IProvideClassInfo2
 
 MyServer._com_interfaces_ = [
     TestLib.IMyInterface,

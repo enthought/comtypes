@@ -157,7 +157,6 @@ class Interop:
         if self.enabled:
             return
         # first we have to be able to import numpy
-        import numpy
 
         # if that succeeded we can be enabled
         self.enabled = True

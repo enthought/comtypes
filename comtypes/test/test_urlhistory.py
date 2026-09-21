@@ -1,6 +1,5 @@
 import os
 import unittest
-from copy import copy
 from ctypes import *
 
 from comtypes.client import CreateObject, GetModule
