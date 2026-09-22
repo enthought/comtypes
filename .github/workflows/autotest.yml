@@ -36,7 +36,7 @@ jobs:
           pip install coverage[toml]
           coverage run -m unittest discover -v -s comtypes\test -t comtypes\test
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           fail_ci_if_error: true
           network_filter: comtype
