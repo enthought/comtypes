@@ -165,17 +165,30 @@ class dispid(int):
 # instances with more methods or properties, and should not behave as an unpackable.
 
 
-def STDMETHOD(restype, name, argtypes=()) -> _ComMemberSpec:
+def STDMETHOD(
+    restype: Optional[type["_CDataType"]],
+    name: str,
+    argtypes: tuple[type["_CDataType"], ...] = (),
+) -> _ComMemberSpec:
     "Specifies a COM method slot without idlflags"
     return _ComMemberSpec(restype, name, argtypes, None, (), None)
 
 
-def DISPMETHOD(idlflags, restype, name, *argspec) -> _DispMemberSpec:
+def DISPMETHOD(
+    idlflags: Sequence[_UnionT[int, str]],
+    restype: Optional[type["_CDataType"]],
+    name: str,
+    *argspec: "hints.ArgSpecElmType",
+) -> _DispMemberSpec:
     "Specifies a method of a dispinterface"
     return _DispMemberSpec("DISPMETHOD", name, tuple(idlflags), restype, argspec)
 
 
-def DISPPROPERTY(idlflags, proptype, name) -> _DispMemberSpec:
+def DISPPROPERTY(
+    idlflags: Sequence[_UnionT[int, str]],
+    proptype: Optional[type["_CDataType"]],
+    name: str,
+) -> _DispMemberSpec:
     "Specifies a property of a dispinterface"
     return _DispMemberSpec("DISPPROPERTY", name, tuple(idlflags), proptype, ())
 
@@ -189,7 +202,12 @@ def DISPPROPERTY(idlflags, proptype, name) -> _DispMemberSpec:
 #     )
 
 
-def COMMETHOD(idlflags, restype, methodname, *argspec) -> _ComMemberSpec:
+def COMMETHOD(
+    idlflags: Sequence[str],
+    restype: Optional[type["_CDataType"]],
+    methodname: str,
+    *argspec: "hints.ArgSpecElmType",
+) -> _ComMemberSpec:
     """Specifies a COM method slot with idlflags.
 
     XXX should explain the sematics of the arguments.

@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import subprocess
+import tempfile
 import unittest
 
 def read_version():
@@ -30,6 +31,15 @@ class TestPipInstall(unittest.TestCase):
     def test_pip_install(self):
         """Test that "pip install comtypes-x.y.z.tar.gz" works"""
         subprocess.check_call([self.pip_exe, 'install', self.target_package])
+        probe = (
+            "from pathlib import Path; import importlib.util; "
+            "spec = importlib.util.find_spec('comtypes'); "
+            "assert spec is not None and spec.origin is not None; "
+            "marker = Path(spec.origin).with_name('py.typed'); "
+            "assert marker.is_file(), marker"
+        )
+        with tempfile.TemporaryDirectory() as outside_checkout:
+            subprocess.check_call([sys.executable, '-c', probe], cwd=outside_checkout)
 
     def test_no_cache_dir_custom_location(self):
         """Test that 'pip install comtypes-x.y.z.tar.gz --no-cache-dir --target="...\custom location"' works"""
