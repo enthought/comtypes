@@ -240,24 +240,17 @@ class EnumerationNamespaces:
             # name, value, is_dupl, rest_dupl_count
             yield name, value, key_counter[name] > 1, decrementee[name]
 
-    def _iter_items(self) -> Iterator[tuple[str, Iterator[tuple[str, bool, int]]]]:
+    def _iter_items(self) -> Iterator[tuple[str, Iterator[tuple[str, int, bool, int]]]]:
         for name, members in self.data.items():
-            yield (
-                name,
-                (
-                    (f"{name} = {value}", is_dupl, rest_dupl_count)
-                    for name, value, is_dupl, rest_dupl_count in self._iter_members(
-                        members
-                    )
-                ),
-            )
+            yield name, self._iter_members(members)
 
     def to_constants(self) -> str:
         blocks = []
         for enum_name, members in self._iter_items():
             lines = []
             lines.append(f"# values for enumeration '{enum_name}'")
-            for definition, is_dupl, _ in members:
+            for member_name, member_value, is_dupl, _ in members:
+                definition = f"{member_name} = {member_value}"
                 if is_dupl:
                     msg1 = f"duplicated within the '{enum_name}'."
                     msg2 = "Perhaps there is a bug?"
@@ -273,7 +266,8 @@ class EnumerationNamespaces:
         for enum_name, members in self._iter_items():
             lines = []
             lines.append(f"class {enum_name}(IntFlag):")
-            for definition, is_dupl, rest_dupl_count in members:
+            for member_name, member_value, is_dupl, rest_dupl_count in members:
+                definition = f"{member_name} = {member_value}"
                 if is_dupl:
                     msg = "duplicated. Perhaps there is a bug in the type library?"
                     base_line = f"{definition}  # {msg}"
