@@ -2,7 +2,7 @@
 __version__ = "1.4.17"
 
 try:
-    from _ctypes import COMError  # noqa
+    from _ctypes import COMError as COMError  # noqa
 except ImportError as e:
     msg = "\n".join(
         (
@@ -40,8 +40,8 @@ if sys.version_info >= (3, 15):
 # If we remove the wildcard import from `ctypes`, they might break. So it is
 # left in the following line.
 from ctypes import *  # noqa  # type: ignore
-from ctypes import HRESULT, OleDLL, WinDLL, _SimpleCData, c_int, c_ulong
-from ctypes.wintypes import DWORD, LPVOID
+from ctypes import HRESULT as HRESULT, OleDLL, WinDLL, _SimpleCData, c_int, c_ulong
+from ctypes.wintypes import DWORD as DWORD, LPVOID
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -53,8 +53,8 @@ else:
 
 from comtypes import patcher  # noqa
 from comtypes._npsupport import interop as npsupport  # noqa
-from comtypes._tlib_version_checker import _check_version  # noqa
-from comtypes.GUID import GUID
+from comtypes._tlib_version_checker import _check_version as _check_version  # noqa
+from comtypes.GUID import GUID as GUID
 
 _all_slice = slice(None, None, None)
 
@@ -198,31 +198,34 @@ com_coclass_registry: dict[str, type["CoClass"]] = {}
 # IDL stuff
 
 from comtypes._memberspec import (  # noqa
-    COMMETHOD,
-    DISPMETHOD,
-    DISPPROPERTY,
-    STDMETHOD,
-    defaultvalue,
-    dispid,
-    helpstring,
+    COMMETHOD as COMMETHOD,
+    DISPMETHOD as DISPMETHOD,
+    DISPPROPERTY as DISPPROPERTY,
+    STDMETHOD as STDMETHOD,
+    defaultvalue as defaultvalue,
+    dispid as dispid,
+    helpstring as helpstring,
 )
 
 ################################################################
 # IUnknown, the root of all evil...
 from comtypes._post_coinit import _shutdown
-from comtypes._post_coinit.unknwn import IUnknown  # noqa
+from comtypes._post_coinit.unknwn import IUnknown as IUnknown  # noqa
 
 atexit.register(_shutdown)
 
 ################################################################
 
-from comtypes._post_coinit.bstr import BSTR  # noqa
+from comtypes._post_coinit.bstr import BSTR as BSTR  # noqa
 
 
 ################################################################
 # IPersist is a trivial interface, which allows to ask an object about
 # its clsid.
-from comtypes._post_coinit.misc import IPersist, IServiceProvider  # noqa
+from comtypes._post_coinit.misc import (
+    IPersist as IPersist,
+    IServiceProvider as IServiceProvider,
+)  # noqa
 
 
 ################################################################
@@ -232,39 +235,39 @@ from comtypes._post_coinit.instancemethod import instancemethod  # noqa
 from comtypes._post_coinit.activeobj import (  # noqa
     ACTIVEOBJECT_STRONG,
     ACTIVEOBJECT_WEAK,
-    GetActiveObject,
+    GetActiveObject as GetActiveObject,
     RegisterActiveObject,
     RevokeActiveObject,
 )
 from comtypes._post_coinit.misc import (  # noqa
     _is_object,
-    CoGetObject,
-    CoCreateInstance,
-    CoGetClassObject,
-    MULTI_QI,
+    CoGetObject as CoGetObject,
+    CoCreateInstance as CoCreateInstance,
+    CoGetClassObject as CoGetClassObject,
+    MULTI_QI as MULTI_QI,
     _COAUTHIDENTITY,
-    COAUTHIDENTITY,
+    COAUTHIDENTITY as COAUTHIDENTITY,
     _COAUTHINFO,
-    COAUTHINFO,
+    COAUTHINFO as COAUTHINFO,
     _COSERVERINFO,
-    COSERVERINFO,
+    COSERVERINFO as COSERVERINFO,
     _CoGetClassObject,
-    tagBIND_OPTS,
-    BIND_OPTS,
-    tagBIND_OPTS2,
-    BINDOPTS2,
+    tagBIND_OPTS as tagBIND_OPTS,
+    BIND_OPTS as BIND_OPTS,
+    tagBIND_OPTS2 as tagBIND_OPTS2,
+    BINDOPTS2 as BINDOPTS2,
     _SEC_WINNT_AUTH_IDENTITY,
-    SEC_WINNT_AUTH_IDENTITY,
+    SEC_WINNT_AUTH_IDENTITY as SEC_WINNT_AUTH_IDENTITY,
     _SOLE_AUTHENTICATION_INFO,
-    SOLE_AUTHENTICATION_INFO,
+    SOLE_AUTHENTICATION_INFO as SOLE_AUTHENTICATION_INFO,
     _SOLE_AUTHENTICATION_LIST,
-    SOLE_AUTHENTICATION_LIST,
-    CoCreateInstanceEx,
+    SOLE_AUTHENTICATION_LIST as SOLE_AUTHENTICATION_LIST,
+    CoCreateInstanceEx as CoCreateInstanceEx,
 )
 
 
 ################################################################
-from comtypes._comobject import COMObject
+from comtypes._comobject import COMObject as COMObject
 
 # What's a coclass?
 # a POINTER to a coclass is allowed as parameter in a function declaration:
