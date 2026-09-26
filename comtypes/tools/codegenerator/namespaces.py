@@ -232,17 +232,25 @@ class EnumerationNamespaces:
 
     def _iter_members(
         self, members: Sequence[tuple[str, int]]
-    ) -> Iterator[tuple[str, bool, int]]:
+    ) -> Iterator[tuple[str, int, bool, int]]:
         key_counter = Counter(m for m, _ in members)
         decrementee = dict(key_counter)  # shallow copy
         for name, value in members:
             decrementee[name] -= 1
-            # definition, is_dupl, rest_dupl_count
-            yield f"{name} = {value}", key_counter[name] > 1, decrementee[name]
+            # name, value, is_dupl, rest_dupl_count
+            yield name, value, key_counter[name] > 1, decrementee[name]
 
     def _iter_items(self) -> Iterator[tuple[str, Iterator[tuple[str, bool, int]]]]:
         for name, members in self.data.items():
-            yield name, self._iter_members(members)
+            yield (
+                name,
+                (
+                    (f"{name} = {value}", is_dupl, rest_dupl_count)
+                    for name, value, is_dupl, rest_dupl_count in self._iter_members(
+                        members
+                    )
+                ),
+            )
 
     def to_constants(self) -> str:
         blocks = []
