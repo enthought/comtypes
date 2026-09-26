@@ -379,6 +379,26 @@ class Test_Constants(ut.TestCase):
         self.assertEqual(consts.MSVidCCService.None_, consts.None_)
         self.assertEqual(MSVidCtlLib.None_, consts.None_)
 
+    def test_enum_base_classes(self):
+        """Test that enums with negative values are generated as IntEnum,
+        and enums with only non-negative values are generated as IntFlag."""
+        from enum import IntEnum, IntFlag
+
+        # MsiInstallState in msi.dll contains negative values, so it should be
+        # an IntEnum to preserve the values in Python 3.15+.
+        # See https://github.com/enthought/comtypes/issues/894
+        msi_module = comtypes.client.GetModule("msi.dll")
+        MsiInstallState = msi_module.MsiInstallState
+        self.assertTrue(issubclass(MsiInstallState, IntEnum))
+        self.assertFalse(issubclass(MsiInstallState, IntFlag))
+
+        # OLE_TRISTATE in stdole2.tlb contains only 0, 1, 2, so it can be
+        # an IntFlag.
+        stdole_module = comtypes.client.GetModule("stdole2.tlb")
+        OLE_TRISTATE = stdole_module.OLE_TRISTATE
+        self.assertTrue(issubclass(OLE_TRISTATE, IntFlag))
+        self.assertFalse(issubclass(OLE_TRISTATE, IntEnum))
+
 
 if __name__ == "__main__":
     ut.main()

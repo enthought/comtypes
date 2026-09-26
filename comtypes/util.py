@@ -12,6 +12,7 @@ from ctypes import (
     byref,
     c_byte,
     c_char,
+    c_char_p,
     c_double,
     c_float,
     c_int,
@@ -19,6 +20,7 @@ from ctypes import (
     c_longdouble,
     c_longlong,
     c_short,
+    c_ssize_t,
     c_void_p,
     cast,
     sizeof,
@@ -31,6 +33,13 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T")
 _CT = TypeVar("_CT", bound="_CData")
+
+if sys.version_info >= (3, 15):
+    _TAG_TYPE = c_char_p
+    _SIZE_TYPE = c_ssize_t
+else:
+    _TAG_TYPE = c_char
+    _SIZE_TYPE = c_int
 
 
 def _calc_offset():
@@ -103,10 +112,10 @@ def _calc_offset():
         _fields_ = [
             ("PyObject_HEAD", c_byte * object.__basicsize__),
             ("pffi_type", c_void_p),
-            ("tag", c_char),
+            ("tag", _TAG_TYPE),
             ("value", value),
             ("obj", c_void_p),
-            ("size", c_int),
+            ("size", _SIZE_TYPE),
         ]
 
         _anonymous_ = ["value"]
