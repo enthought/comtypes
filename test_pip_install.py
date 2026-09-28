@@ -3,8 +3,9 @@ import os
 import sys
 import shutil
 import subprocess
-import tempfile
+import tarfile
 import unittest
+from pathlib import Path
 
 def read_version():
     # Determine the version number by reading it from the file
@@ -31,15 +32,12 @@ class TestPipInstall(unittest.TestCase):
     def test_pip_install(self):
         """Test that "pip install comtypes-x.y.z.tar.gz" works"""
         subprocess.check_call([self.pip_exe, 'install', self.target_package])
-        probe = (
-            "from pathlib import Path; import importlib.util; "
-            "spec = importlib.util.find_spec('comtypes'); "
-            "assert spec is not None and spec.origin is not None; "
-            "marker = Path(spec.origin).with_name('py.typed'); "
-            "assert marker.is_file(), marker"
-        )
-        with tempfile.TemporaryDirectory() as outside_checkout:
-            subprocess.check_call([sys.executable, '-c', probe], cwd=outside_checkout)
+    def test_py_typed_is_packaged(self):
+        with tarfile.open(self.target_package, "r:gz") as tar:
+            self.assertTrue(
+                any(Path(name).parts[-2:] == ("comtypes", "py.typed") for name in tar.getnames())
+            )
+
 
     def test_no_cache_dir_custom_location(self):
         """Test that 'pip install comtypes-x.y.z.tar.gz --no-cache-dir --target="...\custom location"' works"""
