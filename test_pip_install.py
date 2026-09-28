@@ -5,7 +5,6 @@ import shutil
 import subprocess
 import tarfile
 import unittest
-from pathlib import Path
 
 def read_version():
     # Determine the version number by reading it from the file
@@ -32,10 +31,12 @@ class TestPipInstall(unittest.TestCase):
     def test_pip_install(self):
         """Test that "pip install comtypes-x.y.z.tar.gz" works"""
         subprocess.check_call([self.pip_exe, 'install', self.target_package])
+
+
     def test_py_typed_is_packaged(self):
         with tarfile.open(self.target_package, "r:gz") as tar:
-            self.assertTrue(
-                any(Path(name).parts[-2:] == ("comtypes", "py.typed") for name in tar.getnames())
+            self.assertIn(
+                f"comtypes-{read_version()}/comtypes/py.typed", tar.getnames()
             )
 
 

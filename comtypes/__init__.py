@@ -2,7 +2,7 @@
 __version__ = "1.4.17"
 
 try:
-    from _ctypes import COMError as COMError  # noqa
+    from _ctypes import COMError  # noqa
 except ImportError as e:
     msg = "\n".join(
         (
@@ -40,8 +40,8 @@ if sys.version_info >= (3, 15):
 # If we remove the wildcard import from `ctypes`, they might break. So it is
 # left in the following line.
 from ctypes import *  # noqa  # type: ignore
-from ctypes import HRESULT as HRESULT, OleDLL, WinDLL, _SimpleCData, c_int, c_ulong
-from ctypes.wintypes import DWORD as DWORD, LPVOID
+from ctypes import HRESULT, OleDLL, WinDLL, _SimpleCData, c_int, c_ulong
+from ctypes.wintypes import DWORD, LPVOID
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
