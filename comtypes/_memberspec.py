@@ -203,7 +203,7 @@ def DISPPROPERTY(
 
 
 def COMMETHOD(
-    idlflags: Sequence[str],
+    idlflags: Sequence[_UnionT[int, str]],
     restype: Optional[type["_CDataType"]],
     methodname: str,
     *argspec: "hints.ArgSpecElmType",
