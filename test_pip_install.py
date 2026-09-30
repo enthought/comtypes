@@ -49,8 +49,7 @@ class TestPipInstall(unittest.TestCase):
         os.makedirs(custom_dir)
 
         # this test catches issue #158
-        subprocess.check_call('{0} install {1} --no-cache-dir --target="{2}"' \
-            ''.format(self.pip_exe, self.target_package, custom_dir))
+        subprocess.check_call(f'{self.pip_exe} install {self.target_package} --no-cache-dir --target="{custom_dir}"')
 
 
 if __name__ == '__main__':
