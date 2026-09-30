@@ -1,10 +1,12 @@
 """This test covers 'pip install' issue #155"""
+
 import os
-import sys
 import shutil
 import subprocess
+import sys
 import tarfile
 import unittest
+
 
 def read_version():
     # Determine the version number by reading it from the file
@@ -13,7 +15,7 @@ def read_version():
     with open("comtypes/__init__.py") as ofi:
         for line in ofi:
             if line.startswith("__version__ = "):
-                var, value = line.split('=')
+                var, value = line.split("=")
                 return value.strip().strip('"').strip("'")
     raise NotImplementedError("__version__ is not found in __init__.py")
 
@@ -25,32 +27,34 @@ class TestPipInstall(unittest.TestCase):
 
     def setUp(self):
         """prepare the same package that is usually uploaded to PyPI"""
-        subprocess.check_call([sys.executable, '-m', 'build', '--sdist'])
+        subprocess.check_call([sys.executable, "-m", "build", "--sdist"])
 
-        filename_for_upload = f'comtypes-{self.version}.tar.gz'
-        self.target_package = os.path.join(os.getcwd(), 'dist', filename_for_upload)
-        self.pip_exe = os.path.join(os.path.dirname(sys.executable), 'Scripts', 'pip.exe')
+        filename_for_upload = f"comtypes-{self.version}.tar.gz"
+        self.target_package = os.path.join(os.getcwd(), "dist", filename_for_upload)
+        self.pip_exe = os.path.join(
+            os.path.dirname(sys.executable), "Scripts", "pip.exe"
+        )
 
     def test_pip_install(self):
         """Test that "pip install comtypes-x.y.z.tar.gz" works"""
-        subprocess.check_call([self.pip_exe, 'install', self.target_package])
+        subprocess.check_call([self.pip_exe, "install", self.target_package])
 
     def test_py_typed_is_packaged(self):
         with tarfile.open(self.target_package, "r:gz") as tar:
-            self.assertIn(
-                f"comtypes-{self.version}/comtypes/py.typed", tar.getnames()
-            )
+            self.assertIn(f"comtypes-{self.version}/comtypes/py.typed", tar.getnames())
 
     def test_no_cache_dir_custom_location(self):
         """Test that 'pip install comtypes-x.y.z.tar.gz --no-cache-dir --target="...\custom location"' works"""
-        custom_dir = os.path.join(os.getcwd(), 'custom location')
+        custom_dir = os.path.join(os.getcwd(), "custom location")
         if os.path.exists(custom_dir):
             shutil.rmtree(custom_dir)
         os.makedirs(custom_dir)
 
         # this test catches issue #158
-        subprocess.check_call(f'{self.pip_exe} install {self.target_package} --no-cache-dir --target="{custom_dir}"')
+        subprocess.check_call(
+            f'{self.pip_exe} install {self.target_package} --no-cache-dir --target="{custom_dir}"'
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
