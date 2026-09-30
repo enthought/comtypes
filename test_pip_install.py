@@ -52,7 +52,8 @@ class TestPipInstall(unittest.TestCase):
 
         # this test catches issue #158
         subprocess.check_call(
-            f'{self.pip_exe} install {self.target_package} --no-cache-dir --target="{custom_dir}"'
+            f"{self.pip_exe} install {self.target_package} "
+            f'--no-cache-dir --target="{custom_dir}"'
         )
 
 
