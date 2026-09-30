@@ -19,12 +19,15 @@ def read_version():
 
 
 class TestPipInstall(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.version = read_version()
 
     def setUp(self):
         """prepare the same package that is usually uploaded to PyPI"""
         subprocess.check_call([sys.executable, '-m', 'build', '--sdist'])
 
-        filename_for_upload = 'comtypes-%s.tar.gz' % read_version()
+        filename_for_upload = f'comtypes-{self.version}.tar.gz'
         self.target_package = os.path.join(os.getcwd(), 'dist', filename_for_upload)
         self.pip_exe = os.path.join(os.path.dirname(sys.executable), 'Scripts', 'pip.exe')
 
@@ -35,7 +38,7 @@ class TestPipInstall(unittest.TestCase):
     def test_py_typed_is_packaged(self):
         with tarfile.open(self.target_package, "r:gz") as tar:
             self.assertIn(
-                f"comtypes-{read_version()}/comtypes/py.typed", tar.getnames()
+                f"comtypes-{self.version}/comtypes/py.typed", tar.getnames()
             )
 
     def test_no_cache_dir_custom_location(self):
