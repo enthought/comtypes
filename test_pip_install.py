@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import subprocess
+import tarfile
 import unittest
 
 def read_version():
@@ -30,6 +31,12 @@ class TestPipInstall(unittest.TestCase):
     def test_pip_install(self):
         """Test that "pip install comtypes-x.y.z.tar.gz" works"""
         subprocess.check_call([self.pip_exe, 'install', self.target_package])
+
+    def test_py_typed_is_packaged(self):
+        with tarfile.open(self.target_package, "r:gz") as tar:
+            self.assertIn(
+                f"comtypes-{read_version()}/comtypes/py.typed", tar.getnames()
+            )
 
     def test_no_cache_dir_custom_location(self):
         """Test that 'pip install comtypes-x.y.z.tar.gz --no-cache-dir --target="...\custom location"' works"""

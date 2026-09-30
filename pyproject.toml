@@ -56,7 +56,7 @@ version = { attr = "comtypes.__version__" }
     "urlhist.tlb",
     "test_jscript.js",
 ]
-"comtypes" = ["hints.pyi"]
+"comtypes" = ["hints.pyi", "py.typed"]
 
 [tool.ruff.lint]
 extend-select = ["I"]
