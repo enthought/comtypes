@@ -1,0 +1,23 @@
+[project]
+name = "typecheck"
+version = "0.0.0"
+dependencies = [
+    "ty==0.0.84",
+    "pyright==1.1.414",
+    "mypy==2.3.1",
+]
+
+[tool.ty.environment]
+python = ".venv"
+
+[tool.ty.rules]
+unused-ignore-comment = "error"
+
+[tool.pyright]
+typeCheckingMode = "strict"
+reportPrivateImportUsage = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+
+[tool.mypy]
+check_untyped_defs = true
+warn_unused_ignores = true
