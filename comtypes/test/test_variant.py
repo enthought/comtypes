@@ -42,7 +42,6 @@ from comtypes.automation import (
     VT_UI4,
     VT_UI8,
 )
-from comtypes.test.find_memleak import find_memleak
 from comtypes.typeinfo import LoadRegTypeLib
 
 
@@ -316,7 +315,6 @@ def check_perf(rep=20000):
     from ctypes import byref, c_int
 
     import comtypes.automation
-    from comtypes.automation import VARIANT
 
     print(comtypes.automation)
     variable = c_int()
