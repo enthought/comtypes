@@ -72,6 +72,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        type-checker: ['ty', 'mypy', 'pyright']
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python
@@ -90,11 +91,24 @@ jobs:
         run: |
           .\.venv\Scripts\Activate.ps1
           pip install (Get-Item ../dist/*.tar.gz).FullName
+          # Install dependencies defined in `type-check/pyproject.toml`
+          pip install .
       - name: Run unittest
         working-directory: type-check
         run: |
           .\.venv\Scripts\Activate.ps1
           python -m unittest discover tests/ -v
+      - name: Run type checker
+        working-directory: type-check
+        run: |
+          .\.venv\Scripts\Activate.ps1
+          if ("${{ matrix.type-checker }}" -eq "ty") {
+            python -m ty check ./ --verbose
+          } elseif ("${{ matrix.type-checker }}" -eq "mypy") {
+            python -m mypy ./
+          } elseif ("${{ matrix.type-checker }}" -eq "pyright") {
+            python -m pyright ./ --stats
+          }
 
   docs-source-doctest:
     runs-on: windows-latest
