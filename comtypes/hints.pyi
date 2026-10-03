@@ -298,6 +298,9 @@ def to_dunder_setitem(item: Any) -> Callable[..., NoReturn]: ...
 _PosParamFlagType: TypeAlias = tuple[int, Optional[str]]
 _OptParamFlagType: TypeAlias = tuple[int, Optional[str], Any]
 ParamFlagType: TypeAlias = _UnionT[_PosParamFlagType, _OptParamFlagType]
+_ResArgSpecElmType: TypeAlias = tuple[list[str], type[_CDataType]]
 _PosArgSpecElmType: TypeAlias = tuple[list[str], type[_CDataType], str]
 _OptArgSpecElmType: TypeAlias = tuple[list[str], type[_CDataType], str, Any]
-ArgSpecElmType: TypeAlias = _UnionT[_PosArgSpecElmType, _OptArgSpecElmType]
+ArgSpecElmType: TypeAlias = _UnionT[
+    _ResArgSpecElmType, _PosArgSpecElmType, _OptArgSpecElmType
+]

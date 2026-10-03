@@ -168,10 +168,25 @@ class dispid(int):
 def STDMETHOD(
     restype: Optional[type["_CDataType"]],
     name: str,
-    argtypes: tuple[type["_CDataType"], ...] = (),
+    argtypes: Sequence[type["_CDataType"]] = (),
 ) -> _ComMemberSpec:
-    "Specifies a COM method slot without idlflags"
-    return _ComMemberSpec(restype, name, argtypes, None, (), None)
+    """Specifies a COM method slot without idlflags.
+
+    Use this when the method requires no parameter direction annotations
+    (`'in'`, `'out'`, etc.) and no helpstring.  If any of those are
+    needed, use `COMMETHOD` instead.
+
+    Args:
+        restype: The return type of the vtable method.  Typically
+            `HRESULT` or a primitive `ctypes` type.
+            Pass `None` when the method is declared `void`.
+        name: The name of the COM method.
+        argtypes: A sequence of `ctypes` types describing the raw
+            parameters of the vtable slot, in declaration order.
+            Defaults to an empty sequence when the method takes no
+            parameters.
+    """
+    return _ComMemberSpec(restype, name, tuple(argtypes), None, (), None)
 
 
 def DISPMETHOD(
@@ -180,17 +195,58 @@ def DISPMETHOD(
     name: str,
     *argspec: "hints.ArgSpecElmType",
 ) -> _DispMemberSpec:
-    "Specifies a method of a dispinterface"
-    return _DispMemberSpec("DISPMETHOD", name, tuple(idlflags), restype, argspec)
+    """Specifies a method of a dispinterface.
+
+    Args:
+        idlflags: A sequence that describes the method itself.
+            Must contain a `dispid` instance (an `int` subclass) that
+            carries the `DISPID` of this member.  May also contain string
+            flags that control how the method is exposed.
+        restype: The return type of the dispatch method as a `ctypes`
+            type, or `None` when the method returns nothing (`void`).
+        name: The name of the dispatch method.
+        argspec: Zero or more argument specifiers, each describing one
+            parameter of the method. Each element is a tuple that can be:
+            - `(flags, type)` for a parameter with no name.
+            - `(flags, type, name)` for a named parameter.
+            - `(flags, type, name, default)` for a named parameter with
+                a default value.
+            - `flags` is a list of strings chosen from `'in'`, `'out'`,
+                `'lcid'`, `'retval'`, and `'optional'`.
+                Pass `[]` for a plain input parameter with no special
+                attributes.
+    """
+    return _DispMemberSpec(
+        "DISPMETHOD",
+        name,
+        tuple(idlflags),  # type: ignore
+        restype,
+        argspec,
+    )
 
 
 def DISPPROPERTY(
     idlflags: Sequence[_UnionT[int, str]],
-    proptype: Optional[type["_CDataType"]],
+    proptype: type["_CDataType"],
     name: str,
 ) -> _DispMemberSpec:
-    "Specifies a property of a dispinterface"
-    return _DispMemberSpec("DISPPROPERTY", name, tuple(idlflags), proptype, ())
+    """Specifies a property of a dispinterface.
+
+    Args:
+        idlflags: A sequence that describes the property itself.  Must
+            contain a `dispid` instance (a subclass of `int`) that
+            carries the `DISPID` of this member.  May also contain string
+            flags that control how the property is exposed.
+        proptype: The `ctypes` type of the property value.
+        name: The name of the dispatch property.
+    """
+    return _DispMemberSpec(
+        "DISPPROPERTY",
+        name,
+        tuple(idlflags),  # type: ignore
+        proptype,
+        (),
+    )
 
 
 # tuple(idlflags) is for the method itself: (dispid, 'readonly')
@@ -210,7 +266,30 @@ def COMMETHOD(
 ) -> _ComMemberSpec:
     """Specifies a COM method slot with idlflags.
 
-    XXX should explain the sematics of the arguments.
+    Args:
+        idlflags: A sequence that describes the method or property itself.
+            Elements may be:
+            - String flags that control how the slot is exposed.
+            - A `helpstring` instance (a `str` subclass) whose
+              text is used as the method's docstring.
+            - A `dispid` instance (an `int` subclass) that
+              carries the `DISPID` when the method is part of a dual
+              interface.
+            - Pass `[]` for a regular vtable method with no special
+              attributes.
+        restype: The return type of the vtable method.  Typically
+            `HRESULT`.  Pass `None` when the method is `void`.
+        methodname: The name of the COM method or property.
+        argspec: Zero or more argument specifiers, each describing one
+            parameter of the method. Each element is a tuple that can be:
+            - `(flags, type)` for a parameter with no name.
+            - `(flags, type, name)` for a named parameter.
+            - `(flags, type, name, default)` for a named parameter with
+                a default value.
+            - `flags` is a list of strings chosen from `'in'`, `'out'`,
+                `'lcid'`, `'retval'`, and `'optional'`.
+                Pass `[]` for a plain input parameter with no special
+                attributes.
     """
     # collect all helpstring instances
     # We should suppress docstrings when Python is started with -OO
@@ -226,7 +305,12 @@ def COMMETHOD(
     else:
         name = methodname
     return _ComMemberSpec(
-        restype, name, argtypes, paramflags, tuple(idlflags), helptext
+        restype,
+        name,
+        argtypes,
+        paramflags,
+        tuple(idlflags),  # type: ignore
+        helptext,
     )
 
 
