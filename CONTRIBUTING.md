@@ -102,7 +102,10 @@ If any style issues are found, maintainers may ask you to make modifications.
 ### Pull requests
 When you have resolved your issue, open a pull request in the `comtypes` repository.  
 Please include the issue number on the PR comment.  
-When enough PRs have been accepted to resolve the issue, please close the issue or mention it to the person(s) involved.
+When enough PRs have been accepted to resolve the issue, please close the issue or mention it to the person(s) involved.  
+The CI pipeline runs on every pull request to ensure runtime functionality is maintained. It tests integration with optional dependencies such as `numpy` and `pywin32`, measures test coverage. Runtime reliability is **tier 1**.  
+The CI pipeline also runs static type checking (`mypy`, `pyright`, `ty`) on the installed package. This provides **tier 2** quality assurance for type inference and safety.  
+In urgent cases where runtime tests pass, releases may proceed even if type checking reports errors, especially for critical vulnerability fixes.
 
 ## Contributing to documentation :books:
 
