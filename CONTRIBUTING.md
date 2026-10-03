@@ -105,7 +105,7 @@ Please include the issue number on the PR comment.
 When enough PRs have been accepted to resolve the issue, please close the issue or mention it to the person(s) involved.  
 The CI pipeline runs on every pull request to ensure runtime functionality is maintained. It tests integration with optional dependencies such as `numpy` and `pywin32`, measures test coverage. Runtime reliability is **tier 1**.  
 The CI pipeline also runs static type checking (`mypy`, `pyright`, `ty`) on the installed package. This provides **tier 2** quality assurance for type inference and safety.  
-In urgent cases where runtime tests pass, releases may proceed even if type checking reports errors, especially for critical vulnerability fixes.
+For critical vulnerability fixes or bug fixes, releases may proceed in urgent cases if runtime tests pass, even when type checking reports errors.
 
 ## Contributing to documentation :books:
 
