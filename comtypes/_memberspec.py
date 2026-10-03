@@ -227,7 +227,7 @@ def DISPMETHOD(
 
 def DISPPROPERTY(
     idlflags: Sequence[_UnionT[int, str]],
-    proptype: Optional[type["_CDataType"]],
+    proptype: type["_CDataType"],
     name: str,
 ) -> _DispMemberSpec:
     """Specifies a property of a dispinterface.
@@ -238,8 +238,6 @@ def DISPPROPERTY(
             carries the `DISPID` of this member.  May also contain string
             flags that control how the property is exposed.
         proptype: The `ctypes` type of the property value.
-            Pass `None` only when the type is genuinely absent, though
-            in practice dispatch properties always carry a concrete type.
         name: The name of the dispatch property.
     """
     return _DispMemberSpec(
