@@ -71,12 +71,14 @@ between the ``ctypes.POINTER`` factory function and the complex
 metaclass of ``IUnknown``.
 
 It is not annotated as the commonly used ctypes pointer type
-``ctypes._Pointer[IUnknown]`` because Python's type system does not
-currently implement the intersection types needed to represent such
-a dynamically defined subclass. Consequently,
-``ctypes._Pointer[IDictionary]`` is interpreted as a container type,
-preventing static analysis tools from recognizing the COM pointer
-methods.
+``ctypes._Pointer[IUnknown]`` because Python's type system treats
+``ctypes._Pointer[CT]`` as a container type rather than as a subtype
+of ``CT``. Furthermore, Python's type system does not currently
+provide a way to express the intersection types needed to represent
+such a dynamically defined subclass. As a result, the current Python
+type system cannot express the type relationship needed for static
+analysis of the COM interface methods, including
+``ctypes._Pointer[IUnknown]``.
 
 The recommended typing style in Python is to annotate return values
 with the base or abstract interface that describes how the value is
