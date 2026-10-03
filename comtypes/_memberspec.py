@@ -168,10 +168,10 @@ class dispid(int):
 def STDMETHOD(
     restype: Optional[type["_CDataType"]],
     name: str,
-    argtypes: tuple[type["_CDataType"], ...] = (),
+    argtypes: Sequence[type["_CDataType"]] = (),
 ) -> _ComMemberSpec:
     "Specifies a COM method slot without idlflags"
-    return _ComMemberSpec(restype, name, argtypes, None, (), None)
+    return _ComMemberSpec(restype, name, tuple(argtypes), None, (), None)
 
 
 def DISPMETHOD(
