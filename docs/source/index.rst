@@ -29,6 +29,7 @@ Functionalities
     com_interfaces
     npsupport
     threading
+    type_checking
 
 
 Links
