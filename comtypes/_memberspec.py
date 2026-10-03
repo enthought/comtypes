@@ -181,7 +181,13 @@ def DISPMETHOD(
     *argspec: "hints.ArgSpecElmType",
 ) -> _DispMemberSpec:
     "Specifies a method of a dispinterface"
-    return _DispMemberSpec("DISPMETHOD", name, tuple(idlflags), restype, argspec)
+    return _DispMemberSpec(
+        "DISPMETHOD",
+        name,
+        tuple(idlflags),  # type: ignore
+        restype,
+        argspec,
+    )
 
 
 def DISPPROPERTY(
@@ -190,7 +196,13 @@ def DISPPROPERTY(
     name: str,
 ) -> _DispMemberSpec:
     "Specifies a property of a dispinterface"
-    return _DispMemberSpec("DISPPROPERTY", name, tuple(idlflags), proptype, ())
+    return _DispMemberSpec(
+        "DISPPROPERTY",
+        name,
+        tuple(idlflags),  # type: ignore
+        proptype,
+        (),
+    )
 
 
 # tuple(idlflags) is for the method itself: (dispid, 'readonly')
@@ -226,7 +238,12 @@ def COMMETHOD(
     else:
         name = methodname
     return _ComMemberSpec(
-        restype, name, argtypes, paramflags, tuple(idlflags), helptext
+        restype,
+        name,
+        argtypes,
+        paramflags,
+        tuple(idlflags),  # type: ignore
+        helptext,
     )
 
 
