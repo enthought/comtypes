@@ -3,11 +3,12 @@ import array
 import datetime
 import decimal
 from _ctypes import COMError, CopyComPointer
+from collections.abc import Sequence
 from ctypes import *
 from ctypes import Array as _CArrayType
 from ctypes import _Pointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Optional, overload
 
 import comtypes
 import comtypes.patcher
@@ -641,16 +642,22 @@ class IEnumVARIANT(IUnknown):
     _idlflags_ = ["hidden"]
     _dynamic = False
 
-    def __iter__(self):
+    if TYPE_CHECKING:
+
+        def Skip(self, cConnections: int) -> hints.Hresult: ...
+        def Reset(self) -> hints.Hresult: ...
+        def Clone(self) -> hints.Self: ...
+
+    def __iter__(self) -> "hints.Self":
         return self
 
-    def __next__(self):
+    def __next__(self) -> Any:
         item, fetched = self.Next(1)
         if fetched:
             return item
         raise StopIteration
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Any:
         self.Reset()
         # Does not yet work.
         # if isinstance(index, slice):
@@ -662,6 +669,10 @@ class IEnumVARIANT(IUnknown):
             return item
         raise IndexError
 
+    @overload
+    def Next(self, celt: Literal[1]) -> tuple[Any, int]: ...
+    @overload
+    def Next(self, celt: int) -> Sequence[Any]: ...
     def Next(self, celt):
         fetched = c_ulong()
         if celt == 1:
