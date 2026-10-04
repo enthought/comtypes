@@ -674,6 +674,36 @@ class IEnumVARIANT(IUnknown):
     @overload
     def Next(self, celt: int) -> Sequence[Any]: ...
     def Next(self, celt):  # type: ignore
+        """Retrieve the next *celt* items from the enumeration.
+
+        This method behaves differently depending on the value of *celt*:
+
+        - `celt == 1`:
+          A single `VARIANT` is fetched via one COM call.  The return
+          value is `(value, fetched)` — a two-element tuple where *value*
+          is the retrieved object and *fetched* is the number of items
+          actually returned (`0` or `1`).
+
+        - `celt != 1` (including `0`):
+          A `VARIANT` array of length *celt* is allocated and filled in a
+          single COM call.  Only the first *fetched* slots are meaningful;
+          the rest are discarded.  The return value is fetched items
+          (possibly empty when `celt == 0` or nothing is left in the
+          enumeration).
+
+        Args:
+            celt: The maximum number of items to retrieve.
+
+        Returns:
+            A `(value, fetched)` tuple when *celt* is `1`.
+            Fetched items when *celt* is not `1`.
+
+        Note:
+            This object implements dunder methods that define iterator and
+            container behavior, so a more Pythonic approach is recommended
+            for accessing its elements rather than calling this method
+            directly.
+        """
         fetched = c_ulong()
         if celt == 1:
             v = VARIANT()
