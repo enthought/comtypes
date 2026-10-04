@@ -704,6 +704,22 @@ class IEnumVARIANT(IUnknown):
             for accessing its elements rather than calling this method
             directly.
         """
+        # This wrapper deviates from a plain COM `IEnumVARIANT::Next` proxy in
+        # two ways that are specific to this package:
+        #
+        # 1. Support for celt != 1 (commit 9f68b6a, by theller):
+        #    "this allows to get more objects at a time."
+        #    When celt != 1, the method allocates a VARIANT array, fetches up
+        #    to `celt` items in a single COM call, and returns them as a list.
+        #
+        # 2. Return type for celt == 1 (commit 65bdc13, by theller):
+        #    The original override returned only the unwrapped value. It was
+        #    later corrected so that celt == 1 returns a tuple corresponding
+        #    exactly to the two `[out]` parameters declared by the COM method
+        #    specifier.
+        #
+        # Both decisions are those of the package originator (theller) and are
+        # intentionally preserved here.
         fetched = c_ulong()
         if celt == 1:
             v = VARIANT()
