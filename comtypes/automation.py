@@ -673,14 +673,14 @@ class IEnumVARIANT(IUnknown):
     def Next(self, celt: Literal[1]) -> tuple[Any, int]: ...
     @overload
     def Next(self, celt: int) -> Sequence[Any]: ...
-    def Next(self, celt):
+    def Next(self, celt):  # type: ignore
         fetched = c_ulong()
         if celt == 1:
             v = VARIANT()
-            self.__com_Next(celt, v, fetched)
+            self.__com_Next(celt, v, fetched)  # type: ignore
             return v._get_value(dynamic=self._dynamic), fetched.value
         array = (VARIANT * celt)()
-        self.__com_Next(celt, array, fetched)
+        self.__com_Next(celt, array, fetched)  # type: ignore
         result = [v._get_value(dynamic=self._dynamic) for v in array[: fetched.value]]
         for v in array:
             v.value = None
