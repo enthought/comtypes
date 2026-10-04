@@ -728,6 +728,7 @@ class IEnumVARIANT(IUnknown):
         array = (VARIANT * celt)()
         self.__com_Next(celt, array, fetched)  # type: ignore
         result = [v._get_value(dynamic=self._dynamic) for v in array[: fetched.value]]
+        # Release VARIANT refcounts before the temporary array is freed.
         for v in array:
             v.value = None
         return result
