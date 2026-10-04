@@ -3,11 +3,12 @@ import array
 import datetime
 import decimal
 from _ctypes import COMError, CopyComPointer
+from collections.abc import Sequence
 from ctypes import *
 from ctypes import Array as _CArrayType
 from ctypes import _Pointer
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Optional, overload
 
 import comtypes
 import comtypes.patcher
@@ -641,16 +642,22 @@ class IEnumVARIANT(IUnknown):
     _idlflags_ = ["hidden"]
     _dynamic = False
 
-    def __iter__(self):
+    if TYPE_CHECKING:
+
+        def Skip(self, cConnections: int) -> hints.Hresult: ...
+        def Reset(self) -> hints.Hresult: ...
+        def Clone(self) -> hints.Self: ...
+
+    def __iter__(self) -> "hints.Self":
         return self
 
-    def __next__(self):
+    def __next__(self) -> Any:
         item, fetched = self.Next(1)
         if fetched:
             return item
         raise StopIteration
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Any:
         self.Reset()
         # Does not yet work.
         # if isinstance(index, slice):
@@ -662,15 +669,66 @@ class IEnumVARIANT(IUnknown):
             return item
         raise IndexError
 
-    def Next(self, celt):
+    @overload
+    def Next(self, celt: Literal[1]) -> tuple[Any, int]: ...
+    @overload
+    def Next(self, celt: int) -> Sequence[Any]: ...
+    def Next(self, celt):  # type: ignore
+        """Retrieve the next *celt* items from the enumeration.
+
+        This method behaves differently depending on the value of *celt*:
+
+        - `celt == 1`:
+          A single `VARIANT` is fetched via one COM call.  The return
+          value is `(value, fetched)` — a two-element tuple where *value*
+          is the retrieved object and *fetched* is the number of items
+          actually returned (`0` or `1`).
+
+        - `celt != 1` (including `0`):
+          A `VARIANT` array of length *celt* is allocated and filled in a
+          single COM call.  Only the first *fetched* slots are meaningful;
+          the rest are discarded.  The return value is fetched items
+          (possibly empty when `celt == 0` or nothing is left in the
+          enumeration).
+
+        Args:
+            celt: The maximum number of items to retrieve.
+
+        Returns:
+            A `(value, fetched)` tuple when *celt* is `1`.
+            Fetched items when *celt* is not `1`.
+
+        Note:
+            This object implements dunder methods that define iterator and
+            container behavior, so a more Pythonic approach is recommended
+            for accessing its elements rather than calling this method
+            directly.
+        """
+        # This wrapper deviates from a plain COM `IEnumVARIANT::Next` proxy in
+        # two ways that are specific to this package:
+        #
+        # 1. Support for celt != 1 (commit 9f68b6a, by theller):
+        #    "this allows to get more objects at a time."
+        #    When celt != 1, the method allocates a VARIANT array, fetches up
+        #    to `celt` items in a single COM call, and returns them as a list.
+        #
+        # 2. Return type for celt == 1 (commit 65bdc13, by theller):
+        #    The original override returned only the unwrapped value. It was
+        #    later corrected so that celt == 1 returns a tuple corresponding
+        #    exactly to the two `[out]` parameters declared by the COM method
+        #    specifier.
+        #
+        # Both decisions are those of the package originator (theller) and are
+        # intentionally preserved here.
         fetched = c_ulong()
         if celt == 1:
             v = VARIANT()
-            self.__com_Next(celt, v, fetched)
+            self.__com_Next(celt, v, fetched)  # type: ignore
             return v._get_value(dynamic=self._dynamic), fetched.value
         array = (VARIANT * celt)()
-        self.__com_Next(celt, array, fetched)
+        self.__com_Next(celt, array, fetched)  # type: ignore
         result = [v._get_value(dynamic=self._dynamic) for v in array[: fetched.value]]
+        # Release VARIANT refcounts before the temporary array is freed.
         for v in array:
             v.value = None
         return result
