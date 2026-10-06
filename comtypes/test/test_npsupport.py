@@ -132,7 +132,7 @@ class NumpySupportTestCase(unittest.TestCase):
                     )
                     self.assertEqual(sa[0], expected_tuple)
                     result = get_ndarray(sa)
-                    self.assertEqual(result.dtype, data.dtype)
+                    self.assertEqual(result.dtype, numpy.dtype(dtype))
                     numpy.testing.assert_array_equal(result, data)
                     result.flat[0] = 99
                     self.assertEqual(sa[0], expected_tuple)
@@ -237,7 +237,7 @@ class NumpySupportTestCase(unittest.TestCase):
         arr = get_ndarray(sa)
 
         self.assertTrue(isinstance(arr, numpy.ndarray))
-        self.assertEqual(in_arr.dtype, arr.dtype)
+        self.assertEqual(numpy.dtype("int32"), arr.dtype)
         self.assertTrue((arr == in_arr).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_I4)
 
@@ -251,7 +251,7 @@ class NumpySupportTestCase(unittest.TestCase):
         arr = get_ndarray(sa)
 
         self.assertTrue(isinstance(arr, numpy.ndarray))
-        self.assertEqual(in_arr.dtype, arr.dtype)
+        self.assertEqual(numpy.dtype("int64"), arr.dtype)
         self.assertTrue((arr == in_arr).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_I8)
 
