@@ -136,108 +136,6 @@ HRESULT __stdcall CB::VerifyArray(SAFEARRAY* ptest_array,
 }
 
 
-// Return native arrays with fixed values, independent of Python/NumPy input.
-// Two-dimensional arrays have two rows and are filled in column-major order.
-template <class T>
-static HRESULT CreateNumericArray(VARTYPE vartype, short dimensions, long count,
-                                 const T (&values)[3], SAFEARRAY** result)
-{
-	if (result == NULL)
-	{
-		return E_POINTER ;
-	}
-	*result = NULL ;
-	if ((dimensions != 1 && dimensions != 2) || count <= 0 ||
-	    (dimensions == 2 && count % 2 != 0))
-	{
-		return E_INVALIDARG ;
-	}
-	SAFEARRAYBOUND bounds[2] = {{static_cast<ULONG>(count), -2}, {1, 5}} ;
-	if (dimensions == 2)
-	{
-		bounds[0].cElements = 2 ;
-		bounds[1].cElements = count / 2 ;
-	}
-	SAFEARRAY* array = SafeArrayCreate(vartype, dimensions, bounds) ;
-	if (array == NULL)
-	{
-		return E_OUTOFMEMORY ;
-	}
-	T* data = NULL ;
-	HRESULT hr = SafeArrayAccessData(array, reinterpret_cast<void**>(&data)) ;
-	if (FAILED(hr))
-	{
-		SafeArrayDestroy(array) ;
-		return hr ;
-	}
-	for (long i = 0; i < count; ++i)
-	{
-		data[i] = values[i % 3] ;
-	}
-	hr = SafeArrayUnaccessData(array) ;
-	if (FAILED(hr))
-	{
-		SafeArrayDestroy(array) ;
-		return hr ;
-	}
-	*result = array ;
-	return S_OK ;
-}
-
-HRESULT __stdcall CB::GetUint8Array(short dimensions, long count, SAFEARRAY** result)
-{
-	const BYTE values[3] = {0, 42, 255} ;
-	return CreateNumericArray(VT_UI1, dimensions, count, values, result) ;
-}
-
-HRESULT __stdcall CB::GetInt16Array(short dimensions, long count, SAFEARRAY** result)
-{
-	const SHORT values[3] = {-7, 0, 42} ;
-	return CreateNumericArray(VT_I2, dimensions, count, values, result) ;
-}
-
-HRESULT __stdcall CB::GetUint16Array(short dimensions, long count, SAFEARRAY** result)
-{
-	const USHORT values[3] = {0, 42, 65535} ;
-	return CreateNumericArray(VT_UI2, dimensions, count, values, result) ;
-}
-
-HRESULT __stdcall CB::GetInt32Array(short dimensions, long count, SAFEARRAY** result)
-{
-	const LONG values[3] = {-7, 0, 42} ;
-	return CreateNumericArray(VT_I4, dimensions, count, values, result) ;
-}
-
-HRESULT __stdcall CB::GetUint32Array(short dimensions, long count, SAFEARRAY** result)
-{
-	const ULONG values[3] = {0, 42, 4294967295UL} ;
-	return CreateNumericArray(VT_UI4, dimensions, count, values, result) ;
-}
-
-HRESULT __stdcall CB::GetInt64Array(short dimensions, long count, SAFEARRAY** result)
-{
-	const LONGLONG values[3] = {-7, 0, 42} ;
-	return CreateNumericArray(VT_I8, dimensions, count, values, result) ;
-}
-
-HRESULT __stdcall CB::GetUint64Array(short dimensions, long count, SAFEARRAY** result)
-{
-	const ULONGLONG values[3] = {0, 42, 4294967297ULL} ;
-	return CreateNumericArray(VT_UI8, dimensions, count, values, result) ;
-}
-
-HRESULT __stdcall CB::GetFloat32Array(short dimensions, long count, SAFEARRAY** result)
-{
-	const FLOAT values[3] = {1.25f, -2.5f, 3.75f} ;
-	return CreateNumericArray(VT_R4, dimensions, count, values, result) ;
-}
-
-HRESULT __stdcall CB::GetFloat64Array(short dimensions, long count, SAFEARRAY** result)
-{
-	const DOUBLE values[3] = {1.25, -2.5, 3.75} ;
-	return CreateNumericArray(VT_R8, dimensions, count, values, result) ;
-}
-
 //
 // Constructor
 //
@@ -270,10 +168,6 @@ HRESULT __stdcall CB::NondelegatingQueryInterface(const IID& iid,
 	if (iid == IID_IDualSafearrayParamTest)
 	{
 		return FinishQI(static_cast<IDualSafearrayParamTest*>(this), ppv) ;
-	}
-	else if (iid == IID_INumericSafearrayTest)
-	{
-		return FinishQI(static_cast<INumericSafearrayTest*>(this), ppv) ;
 	}
 	else 	if (iid == DIID_IDispSafearrayParamTest)
 	{

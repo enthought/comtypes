@@ -133,6 +133,15 @@ library ComtypesCppTestSrvLib
 	{
 		interface IDualSafearrayParamTest ;
 		dispinterface IDispSafearrayParamTest ;
-		interface INumericSafearrayTest ;
+	} ;
+
+	// A separate component for fixed numeric SAFEARRAY output.
+	[
+		uuid(69638BDB-0F95-460A-8619-27DDA97C4BC4),
+		helpstring("Comtypes component for numeric SAFEARRAY output tests.")
+	]
+	coclass CoNumericSafearrayTest
+	{
+		[default] interface INumericSafearrayTest ;
 	} ;
 } ;

@@ -41,7 +41,7 @@ guids.obj : guids.c
 # Component/server source files
 #
 
-server.obj : server.cpp cunknown.h cfactory.h iface.h
+server.obj : server.cpp cunknown.h cfactory.h iface.h CoNumericSafearrayTest.h
 	cl $(CPP_FLAGS) server.cpp
 
 CoComtypesDispRecordParamTest.obj : CoComtypesDispRecordParamTest.cpp \
@@ -51,6 +51,10 @@ CoComtypesDispRecordParamTest.obj : CoComtypesDispRecordParamTest.cpp \
 CoComtypesDispSafearrayParamTest.obj : CoComtypesDispSafearrayParamTest.cpp \
 		CoComtypesDispSafearrayParamTest.h iface.h registry.h CUnknown.h
 	cl $(CPP_FLAGS) CoComtypesDispSafearrayParamTest.cpp
+
+CoNumericSafearrayTest.obj : CoNumericSafearrayTest.cpp \
+		CoNumericSafearrayTest.h iface.h CUnknown.h
+	cl $(CPP_FLAGS) CoNumericSafearrayTest.cpp
 
 #
 # Helper classes
@@ -81,6 +85,7 @@ outproc.obj : outproc.cpp CFactory.h CUnknown.h
 SERVER_OBJS = Server.obj     \
               CoComtypesDispRecordParamTest.obj      \
               CoComtypesDispSafearrayParamTest.obj      \
+              CoNumericSafearrayTest.obj      \
               Registry.obj   \
               Cfactory.obj   \
               Cunknown.obj   \

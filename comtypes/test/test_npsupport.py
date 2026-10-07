@@ -109,7 +109,7 @@ class NumpySupportTestCase(unittest.TestCase):
             with self.subTest(fmt=fmt, typ=typ):
                 self.assertIs(comtypes.npsupport.typecodes[fmt], typ)
 
-    def test_numeric_ndarray_dtype(self):
+    def test_numeric_ndarray_dtype_1d(self):
         comtypes.npsupport.enable()
         for typ, dtype in [
             (ctypes.c_byte, "int8"),
@@ -123,22 +123,47 @@ class NumpySupportTestCase(unittest.TestCase):
             (ctypes.c_float, "float32"),
             (ctypes.c_double, "float64"),
         ]:
-            for shape in [(6,), (2, 3)]:
-                with self.subTest(typ=typ, shape=shape):
-                    data = numpy.arange(6, dtype=dtype).reshape(shape)
-                    sa = _midlSAFEARRAY(typ).from_param(data)
-                    expected_tuple = (
-                        tuple(data) if data.ndim == 1 else tuple(map(tuple, data))
-                    )
-                    self.assertEqual(sa[0], expected_tuple)
-                    result = get_ndarray(sa)
-                    self.assertEqual(result.dtype, numpy.dtype(dtype))
-                    numpy.testing.assert_array_equal(result, data)
-                    result.flat[0] = 99
-                    self.assertEqual(sa[0], expected_tuple)
-                    del sa
-                    data.flat[0] = 99
-                    numpy.testing.assert_array_equal(result, data)
+            with self.subTest(typ=typ):
+                data = numpy.arange(6, dtype=dtype).reshape((6,))
+                sa = _midlSAFEARRAY(typ).from_param(data)
+                expected_tuple = (0, 1, 2, 3, 4, 5)
+                self.assertEqual(sa[0], expected_tuple)
+                result = get_ndarray(sa)
+                self.assertEqual(result.dtype, numpy.dtype(dtype))
+                numpy.testing.assert_array_equal(result, data)
+                result.flat[0] = 99
+                self.assertEqual(sa[0], expected_tuple)
+                del sa
+                data.flat[0] = 99
+                numpy.testing.assert_array_equal(result, data)
+
+    def test_numeric_ndarray_dtype_2d(self):
+        comtypes.npsupport.enable()
+        for typ, dtype in [
+            (ctypes.c_byte, "int8"),
+            (ctypes.c_ubyte, "uint8"),
+            (ctypes.c_short, "int16"),
+            (ctypes.c_ushort, "uint16"),
+            (ctypes.c_long, "int32"),
+            (ctypes.c_ulong, "uint32"),
+            (ctypes.c_longlong, "int64"),
+            (ctypes.c_ulonglong, "uint64"),
+            (ctypes.c_float, "float32"),
+            (ctypes.c_double, "float64"),
+        ]:
+            with self.subTest(typ=typ):
+                data = numpy.arange(6, dtype=dtype).reshape((2, 3))
+                sa = _midlSAFEARRAY(typ).from_param(data)
+                expected_tuple = ((0, 1, 2), (3, 4, 5))
+                self.assertEqual(sa[0], expected_tuple)
+                result = get_ndarray(sa)
+                self.assertEqual(result.dtype, numpy.dtype(dtype))
+                numpy.testing.assert_array_equal(result, data)
+                result.flat[0] = 99
+                self.assertEqual(sa[0], expected_tuple)
+                del sa
+                data.flat[0] = 99
+                numpy.testing.assert_array_equal(result, data)
 
     @enabled_disabled(disabled_error=ImportError)
     def test_not_imported_imported(self):
