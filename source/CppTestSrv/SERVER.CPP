@@ -10,6 +10,7 @@
 #include "Iface.h"
 #include "CoComtypesDispRecordParamTest.h"
 #include "CoComtypesDispSafearrayParamTest.h"
+#include "CoNumericSafearrayTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -47,6 +48,12 @@ CFactoryData g_FactoryDataArray[] =
 		L"Comtypes.DispSafearrayParamTest.1",								// ProgID
 		L"Comtypes.DispSafearrayParamTest",								// Version-independent ProgID
 		&LIBID_ComtypesCppTestSrvLib,									// Type Library ID
+		NULL, 0},
+	{&CLSID_CoNumericSafearrayTest, CNumericSafearrayTest::CreateInstance,
+		L"Comtypes component for numeric SAFEARRAY output tests",
+		L"Comtypes.NumericSafearrayTest.1",
+		L"Comtypes.NumericSafearrayTest",
+		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0}
 } ;
 int g_cFactoryDataEntries

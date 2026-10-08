@@ -1,3 +1,4 @@
+import ctypes
 import datetime
 import functools
 import importlib
@@ -89,6 +90,90 @@ class NumpySupportTestCase(unittest.TestCase):
         # enabled interop functionality
         importlib.reload(comtypes._npsupport)
         comtypes.npsupport = comtypes._npsupport.interop
+
+    def test_typecodes(self):
+        comtypes.npsupport.enable()
+        for fmt, typ in [
+            ("|i1", ctypes.c_byte),
+            ("|u1", ctypes.c_ubyte),
+            ("<i2", ctypes.c_short),
+            ("<u2", ctypes.c_ushort),
+            ("<i4", ctypes.c_long),
+            ("<u4", ctypes.c_ulong),
+            ("<i8", ctypes.c_longlong),
+            ("<u8", ctypes.c_ulonglong),
+            ("<f4", ctypes.c_float),
+            ("<f8", ctypes.c_double),
+            ("|b1", ctypes.c_bool),
+        ]:
+            with self.subTest(fmt=fmt, typ=typ):
+                self.assertIs(comtypes.npsupport.typecodes[fmt], typ)
+
+    def test_numeric_ndarray_dtype_1d(self):
+        comtypes.npsupport.enable()
+        for typ, dtype in [
+            (ctypes.c_byte, "int8"),
+            (ctypes.c_ubyte, "uint8"),
+            (ctypes.c_short, "int16"),
+            (ctypes.c_ushort, "uint16"),
+            (ctypes.c_long, "int32"),
+            (ctypes.c_ulong, "uint32"),
+            (ctypes.c_longlong, "int64"),
+            (ctypes.c_ulonglong, "uint64"),
+            (ctypes.c_float, "float32"),
+            (ctypes.c_double, "float64"),
+        ]:
+            with self.subTest(typ=typ):
+                data = numpy.arange(6, dtype=dtype).reshape((6,))
+                sa = _midlSAFEARRAY(typ).from_param(data)
+                expected_tuple = (0, 1, 2, 3, 4, 5)
+                self.assertEqual(sa[0], expected_tuple)
+                result = get_ndarray(sa)
+                self.assertEqual(result.dtype, numpy.dtype(dtype))
+                numpy.testing.assert_array_equal(result, data)
+                result.flat[0] = 99
+                # The returned ndarray owns a copy: mutating it cannot change
+                # the SAFEARRAY, and destroying the SAFEARRAY leaves it valid.
+                self.assertEqual(sa[0], expected_tuple)
+                del sa
+                numpy.testing.assert_array_equal(result, (99, 1, 2, 3, 4, 5))
+                # Mutate the original input to a different value to detect any
+                # shared storage, rather than comparing two matching mutations.
+                data.flat[0] = 77
+                numpy.testing.assert_array_equal(result, (99, 1, 2, 3, 4, 5))
+
+    def test_numeric_ndarray_dtype_2d(self):
+        comtypes.npsupport.enable()
+        for typ, dtype in [
+            (ctypes.c_byte, "int8"),
+            (ctypes.c_ubyte, "uint8"),
+            (ctypes.c_short, "int16"),
+            (ctypes.c_ushort, "uint16"),
+            (ctypes.c_long, "int32"),
+            (ctypes.c_ulong, "uint32"),
+            (ctypes.c_longlong, "int64"),
+            (ctypes.c_ulonglong, "uint64"),
+            (ctypes.c_float, "float32"),
+            (ctypes.c_double, "float64"),
+        ]:
+            with self.subTest(typ=typ):
+                data = numpy.arange(6, dtype=dtype).reshape((2, 3))
+                sa = _midlSAFEARRAY(typ).from_param(data)
+                expected_tuple = ((0, 1, 2), (3, 4, 5))
+                self.assertEqual(sa[0], expected_tuple)
+                result = get_ndarray(sa)
+                self.assertEqual(result.dtype, numpy.dtype(dtype))
+                numpy.testing.assert_array_equal(result, data)
+                result.flat[0] = 99
+                # The returned ndarray owns a copy: mutating it cannot change
+                # the SAFEARRAY, and destroying the SAFEARRAY leaves it valid.
+                self.assertEqual(sa[0], expected_tuple)
+                del sa
+                numpy.testing.assert_array_equal(result, ((99, 1, 2), (3, 4, 5)))
+                # Mutate the original input to a different value to detect any
+                # shared storage, rather than comparing two matching mutations.
+                data.flat[0] = 77
+                numpy.testing.assert_array_equal(result, ((99, 1, 2), (3, 4, 5)))
 
     @enabled_disabled(disabled_error=ImportError)
     def test_not_imported_imported(self):
@@ -187,7 +272,7 @@ class NumpySupportTestCase(unittest.TestCase):
         arr = get_ndarray(sa)
 
         self.assertTrue(isinstance(arr, numpy.ndarray))
-        self.assertEqual(numpy.dtype(int), arr.dtype)
+        self.assertEqual(numpy.dtype("int32"), arr.dtype)
         self.assertTrue((arr == in_arr).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_I4)
 
@@ -201,7 +286,7 @@ class NumpySupportTestCase(unittest.TestCase):
         arr = get_ndarray(sa)
 
         self.assertTrue(isinstance(arr, numpy.ndarray))
-        self.assertEqual(numpy.dtype(int), arr.dtype)
+        self.assertEqual(numpy.dtype("int64"), arr.dtype)
         self.assertTrue((arr == in_arr).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_I8)
 

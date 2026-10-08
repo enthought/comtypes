@@ -68,6 +68,26 @@ interface IDualSafearrayParamTest : IDispatch
 } ;
 
 
+// A separate interface preserves the existing SAFEARRAY test interface's ABI.
+[
+	object,
+	uuid(02A02AC1-05CB-4900-B3AE-5263284DECA5),
+	oleautomation
+]
+interface INumericSafearrayTest : IUnknown
+{
+	HRESULT GetInt8Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(char)* result);
+	HRESULT GetUint8Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(byte)* result);
+	HRESULT GetInt16Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(short)* result);
+	HRESULT GetUint16Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(unsigned short)* result);
+	HRESULT GetInt32Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(long)* result);
+	HRESULT GetUint32Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(unsigned long)* result);
+	HRESULT GetInt64Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(hyper)* result);
+	HRESULT GetUint64Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(unsigned hyper)* result);
+	HRESULT GetFloat32Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(float)* result);
+	HRESULT GetFloat64Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(double)* result);
+} ;
+
 // Interface IDispSafearrayParamTest
 [
 	uuid(4097A6D0-A111-40E2-BD0B-177B775A9496)
@@ -114,5 +134,15 @@ library ComtypesCppTestSrvLib
 	{
 		interface IDualSafearrayParamTest ;
 		dispinterface IDispSafearrayParamTest ;
+	} ;
+
+	// A separate component for fixed numeric SAFEARRAY output.
+	[
+		uuid(69638BDB-0F95-460A-8619-27DDA97C4BC4),
+		helpstring("Comtypes component for numeric SAFEARRAY output tests.")
+	]
+	coclass CoNumericSafearrayTest
+	{
+		[default] interface INumericSafearrayTest ;
 	} ;
 } ;

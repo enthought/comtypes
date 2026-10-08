@@ -336,8 +336,10 @@ def _make_safearray_type(itemtype):
                         # we can get the most speed-up.
                         # XXX Only try to convert types known to
                         #     numpy.ctypeslib.
+                        # typecodes maps NumPy dtype strings to ctypes, so
+                        # compare against its values (see issue #551).
                         if safearray_as_ndarray and self._itemtype_ in list(
-                            comtypes.npsupport.typecodes.keys()
+                            comtypes.npsupport.typecodes.values()
                         ):
                             arr = comtypes.npsupport.numpy.ctypeslib.as_array(
                                 ptr, (num_elements,)
