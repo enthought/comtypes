@@ -132,10 +132,15 @@ class NumpySupportTestCase(unittest.TestCase):
                 self.assertEqual(result.dtype, numpy.dtype(dtype))
                 numpy.testing.assert_array_equal(result, data)
                 result.flat[0] = 99
+                # The returned ndarray owns a copy: mutating it cannot change
+                # the SAFEARRAY, and destroying the SAFEARRAY leaves it valid.
                 self.assertEqual(sa[0], expected_tuple)
                 del sa
-                data.flat[0] = 99
-                numpy.testing.assert_array_equal(result, data)
+                numpy.testing.assert_array_equal(result, (99, 1, 2, 3, 4, 5))
+                # Mutate the original input to a different value to detect any
+                # shared storage, rather than comparing two matching mutations.
+                data.flat[0] = 77
+                numpy.testing.assert_array_equal(result, (99, 1, 2, 3, 4, 5))
 
     def test_numeric_ndarray_dtype_2d(self):
         comtypes.npsupport.enable()
@@ -160,10 +165,15 @@ class NumpySupportTestCase(unittest.TestCase):
                 self.assertEqual(result.dtype, numpy.dtype(dtype))
                 numpy.testing.assert_array_equal(result, data)
                 result.flat[0] = 99
+                # The returned ndarray owns a copy: mutating it cannot change
+                # the SAFEARRAY, and destroying the SAFEARRAY leaves it valid.
                 self.assertEqual(sa[0], expected_tuple)
                 del sa
-                data.flat[0] = 99
-                numpy.testing.assert_array_equal(result, data)
+                numpy.testing.assert_array_equal(result, ((99, 1, 2), (3, 4, 5)))
+                # Mutate the original input to a different value to detect any
+                # shared storage, rather than comparing two matching mutations.
+                data.flat[0] = 77
+                numpy.testing.assert_array_equal(result, ((99, 1, 2), (3, 4, 5)))
 
     @enabled_disabled(disabled_error=ImportError)
     def test_not_imported_imported(self):

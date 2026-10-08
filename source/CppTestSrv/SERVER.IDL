@@ -76,6 +76,7 @@ interface IDualSafearrayParamTest : IDispatch
 ]
 interface INumericSafearrayTest : IUnknown
 {
+	HRESULT GetInt8Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(char)* result);
 	HRESULT GetUint8Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(byte)* result);
 	HRESULT GetInt16Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(short)* result);
 	HRESULT GetUint16Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(unsigned short)* result);

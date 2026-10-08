@@ -70,6 +70,12 @@ static HRESULT CreateNumericArray(VARTYPE vartype, short dimensions, long count,
 	return S_OK ;
 }
 
+HRESULT __stdcall CNumericSafearrayTest::GetInt8Array(short dimensions, long count, SAFEARRAY** result)
+{
+	const CHAR values[3] = {-7, 0, 42} ;
+	return CreateNumericArray(VT_I1, dimensions, count, values, result) ;
+}
+
 HRESULT __stdcall CNumericSafearrayTest::GetUint8Array(short dimensions, long count, SAFEARRAY** result)
 {
 	const BYTE values[3] = {0, 42, 255} ;

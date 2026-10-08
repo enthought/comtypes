@@ -99,7 +99,6 @@ class NumericSafearrayTest(unittest.TestCase):
 
     @unittest.skipIf(IMPORT_NUMPY_FAILED, "Requires NumPy.")
     def test_ndarray_values_1d(self):
-        # This also runs against the pre-fix production code.
         for method, dtype, expected in self.cases_1d:
             with self.subTest(dtype=dtype):
                 with safearray_as_ndarray:
@@ -107,6 +106,7 @@ class NumericSafearrayTest(unittest.TestCase):
                 self.assertIsInstance(result, numpy.ndarray)
                 self.assertEqual(result.shape, (6,))
                 numpy.testing.assert_array_equal(result, expected)
+                self.assertEqual(result.dtype, numpy.dtype(dtype))
                 # COM's returned SAFEARRAY is already destroyed at this point.
                 # A second call and mutation must not affect the first copy.
                 with safearray_as_ndarray:
@@ -114,14 +114,6 @@ class NumericSafearrayTest(unittest.TestCase):
                 other.flat[0] = 99
                 numpy.testing.assert_array_equal(result, expected)
                 self.assertEqual(method(1, 6), expected)
-
-    @unittest.skipIf(IMPORT_NUMPY_FAILED, "Requires NumPy.")
-    def test_ndarray_dtype_1d(self):
-        for method, dtype, expected in self.cases_1d:
-            with self.subTest(dtype=dtype):
-                with safearray_as_ndarray:
-                    result = method(1, 6)
-                self.assertEqual(result.dtype, numpy.dtype(dtype))
 
     def test_tuple_values_2d(self):
         for method, dtype, expected in self.cases_2d:
@@ -132,7 +124,6 @@ class NumericSafearrayTest(unittest.TestCase):
 
     @unittest.skipIf(IMPORT_NUMPY_FAILED, "Requires NumPy.")
     def test_ndarray_values_2d(self):
-        # This also runs against the pre-fix production code.
         for method, dtype, expected in self.cases_2d:
             with self.subTest(dtype=dtype):
                 with safearray_as_ndarray:
@@ -140,6 +131,7 @@ class NumericSafearrayTest(unittest.TestCase):
                 self.assertIsInstance(result, numpy.ndarray)
                 self.assertEqual(result.shape, (2, 3))
                 numpy.testing.assert_array_equal(result, expected)
+                self.assertEqual(result.dtype, numpy.dtype(dtype))
                 # COM's returned SAFEARRAY is already destroyed at this point.
                 # A second call and mutation must not affect the first copy.
                 with safearray_as_ndarray:
@@ -148,13 +140,17 @@ class NumericSafearrayTest(unittest.TestCase):
                 numpy.testing.assert_array_equal(result, expected)
                 self.assertEqual(method(2, 6), expected)
 
-    @unittest.skipIf(IMPORT_NUMPY_FAILED, "Requires NumPy.")
-    def test_ndarray_dtype_2d(self):
-        for method, dtype, expected in self.cases_2d:
-            with self.subTest(dtype=dtype):
-                with safearray_as_ndarray:
-                    result = method(2, 6)
-                self.assertEqual(result.dtype, numpy.dtype(dtype))
+    def test_int8_codegen_1d(self):
+        # VT_I1 is currently parsed as c_char (see #935), whose pointer slice
+        # returns bytes. Check the real COM/code-generator path and raw bytes;
+        # signed int8/NumPy dtype assertions await the separate c_char/c_byte fix.
+        result = self.server.GetInt8Array(1, 6)
+        self.assertEqual(result, (249, 0, 42, 249, 0, 42))
+
+    def test_int8_codegen_2d(self):
+        # As above, 249 is the raw byte for -7, not a signed dtype assertion.
+        result = self.server.GetInt8Array(2, 6)
+        self.assertEqual(result, ((249, 42, 0), (0, 249, 42)))
 
 
 if __name__ == "__main__":
