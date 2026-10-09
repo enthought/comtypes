@@ -20,6 +20,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}
+          allow-prereleases: true
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: Build and register the OutProc COM server
@@ -60,6 +61,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}
+          allow-prereleases: true
       - name: install comtypes
         run: |
           pip install --upgrade build
@@ -79,6 +81,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - name: Build sdist
         run: |
           pip install --upgrade build
