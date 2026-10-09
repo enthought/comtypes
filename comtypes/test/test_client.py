@@ -1,6 +1,5 @@
 import contextlib
 import os
-import sys
 import unittest as ut
 from ctypes import POINTER, byref
 
@@ -302,14 +301,6 @@ class Test_Constants(ut.TestCase):
         self.assertEqual(consts.TextCompare, Scripting.TextCompare)
         self.assertEqual(consts.DatabaseCompare, Scripting.DatabaseCompare)
 
-    PY_3_15 = sys.version_info.major == 3 and sys.version_info.minor == 15
-    ENUMS_MESSAGE = (
-        "Starting from Python 3.15, negative members in `IntFlag` may "
-        "no longer be evaluated as literals.\nWe need to address this before "
-        "the release. See: https://github.com/enthought/comtypes/issues/894"
-    )
-
-    @ut.skipIf(PY_3_15, ENUMS_MESSAGE)
     def test_enums_in_friendly_mod(self):
         comtypes.client.GetModule("scrrun.dll")
         comtypes.client.GetModule("msi.dll")
@@ -328,16 +319,11 @@ class Test_Constants(ut.TestCase):
             ),
         ]:
             for member in enumtype:
-                with self.subTest(
-                    msg=self.ENUMS_MESSAGE,
-                    enumtype=enumtype,
-                    member=member,
-                ):
+                with self.subTest(enumtype=enumtype, member=member):
                     self.assertIn(member.name, fadic)
                     self.assertEqual(fadic[member.name], member.value)
             for member_name, member_value in fadic.items():
                 with self.subTest(
-                    msg=self.ENUMS_MESSAGE,
                     enumtype=enumtype,
                     member_name=member_name,
                     member_value=member_value,
@@ -374,6 +360,26 @@ class Test_Constants(ut.TestCase):
         # `None` is a Python3 keyword.
         self.assertEqual(consts.MSVidCCService.None_, consts.None_)
         self.assertEqual(MSVidCtlLib.None_, consts.None_)
+
+    def test_enum_base_classes(self):
+        """Test that enums with negative values are generated as IntEnum,
+        and enums with only non-negative values are generated as IntFlag."""
+        from enum import IntEnum, IntFlag
+
+        # MsiInstallState in msi.dll contains negative values, so it should be
+        # an IntEnum to preserve the values in Python 3.15+.
+        # See https://github.com/enthought/comtypes/issues/894
+        msi_module = comtypes.client.GetModule("msi.dll")
+        MsiInstallState = msi_module.MsiInstallState
+        self.assertTrue(issubclass(MsiInstallState, IntEnum))
+        self.assertFalse(issubclass(MsiInstallState, IntFlag))
+
+        # OLE_TRISTATE in stdole2.tlb contains only 0, 1, 2, so it can be
+        # an IntFlag.
+        stdole_module = comtypes.client.GetModule("stdole2.tlb")
+        OLE_TRISTATE = stdole_module.OLE_TRISTATE
+        self.assertTrue(issubclass(OLE_TRISTATE, IntFlag))
+        self.assertFalse(issubclass(OLE_TRISTATE, IntEnum))
 
 
 if __name__ == "__main__":
