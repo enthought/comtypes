@@ -601,7 +601,7 @@ VARIANT.null = VARIANT(None)
 VARIANT.empty = VARIANT()
 VARIANT.missing = v = VARIANT()
 v.vt = VT_ERROR
-v._.VT_I4 = 0x80020004
+v._.VT_I4 = hresult.DISP_E_PARAMNOTFOUND
 del v
 
 
