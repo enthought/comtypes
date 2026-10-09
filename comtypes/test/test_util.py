@@ -14,11 +14,7 @@ from ctypes import (
     sizeof,
 )
 
-PY_3_15_ALPHA_BETA = (
-    sys.version_info.major == 3
-    and sys.version_info.minor == 15
-    and sys.version_info.releaselevel in ("alpha", "beta")
-)
+PY_3_15 = sys.version_info.major == 3 and sys.version_info.minor == 15
 
 try:
     import comtypes.util
@@ -27,7 +23,7 @@ except RuntimeError as e:
         "Starting from Python 3.15, PyCArgObject layout is changed. "
         "See https://github.com/enthought/comtypes/issues/938."
     )
-    if PY_3_15_ALPHA_BETA:
+    if PY_3_15:
 
         def setUpModule():
             raise unittest.SkipTest(SKIP_MSG)
