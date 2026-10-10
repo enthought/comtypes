@@ -88,6 +88,20 @@ interface INumericSafearrayTest : IUnknown
 	HRESULT GetFloat64Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(double)* result);
 } ;
 
+// A separate interface for scalar input/output and string compatibility.
+[
+	object,
+	uuid(047E34C1-33A8-4DAA-A1E5-B941756A8319),
+	oleautomation
+]
+interface IByteEchoTest : IUnknown
+{
+	HRESULT EchoInt8([in] small value, [out, retval] small* result);
+	HRESULT EchoUint8([in] byte value, [out, retval] byte* result);
+	HRESULT EchoLpStr([in] LPSTR value, [out, retval] LPSTR* result);
+	HRESULT ReadCharPointer([in] char* value, [out, retval] byte* result);
+} ;
+
 // Interface IDispSafearrayParamTest
 [
 	uuid(4097A6D0-A111-40E2-BD0B-177B775A9496)
@@ -144,5 +158,14 @@ library ComtypesCppTestSrvLib
 	coclass CoNumericSafearrayTest
 	{
 		[default] interface INumericSafearrayTest ;
+	} ;
+
+	[
+		uuid(E07D71E8-C8A5-4B76-9A88-688DB10CF712),
+		helpstring("Comtypes component for byte and narrow-string round-trip tests.")
+	]
+	coclass CoByteEchoTest
+	{
+		[default] interface IByteEchoTest ;
 	} ;
 } ;
