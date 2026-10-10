@@ -21,6 +21,7 @@ def PTR(typ):
 
 # basic C data types, with size and alignment in bits
 char_type = typedesc.FundamentalType("char", 8, 8)
+schar_type = typedesc.FundamentalType("signed char", 8, 8)
 uchar_type = typedesc.FundamentalType("unsigned char", 8, 8)
 wchar_t_type = typedesc.FundamentalType("wchar_t", 16, 16)
 short_type = typedesc.FundamentalType("short int", 16, 16)
@@ -81,7 +82,7 @@ COMTYPES = {
     automation.VT_VARIANT: VARIANT_type,  # 12
     automation.VT_UNKNOWN: PTR(IUNKNOWN_type),  # 13
     automation.VT_DECIMAL: DECIMAL_type,  # 14
-    automation.VT_I1: char_type,  # 16
+    automation.VT_I1: schar_type,  # 16
     automation.VT_UI1: uchar_type,  # 17
     automation.VT_UI2: ushort_type,  # 18
     automation.VT_UI4: ulong_type,  # 19
