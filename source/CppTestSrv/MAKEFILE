@@ -56,6 +56,10 @@ CoNumericSafearrayTest.obj : CoNumericSafearrayTest.cpp \
 		CoNumericSafearrayTest.h iface.h CUnknown.h
 	cl $(CPP_FLAGS) CoNumericSafearrayTest.cpp
 
+CoStringSafearrayInsideVariantTest.obj : CoStringSafearrayInsideVariantTest.cpp \
+		CoStringSafearrayInsideVariantTest.h iface.h registry.h CUnknown.h
+	cl $(CPP_FLAGS) CoStringSafearrayInsideVariantTest.cpp
+
 #
 # Helper classes
 #
@@ -86,6 +90,7 @@ SERVER_OBJS = Server.obj     \
               CoComtypesDispRecordParamTest.obj      \
               CoComtypesDispSafearrayParamTest.obj      \
               CoNumericSafearrayTest.obj      \
+              CoStringSafearrayInsideVariantTest.obj      \
               Registry.obj   \
               Cfactory.obj   \
               Cunknown.obj   \

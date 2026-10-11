@@ -145,4 +145,42 @@ library ComtypesCppTestSrvLib
 	{
 		[default] interface INumericSafearrayTest ;
 	} ;
+
+	// Interface IStringSafearrayInsideVariantTest
+	[
+		odl,
+		uuid(D621F143-5AAB-47B4-B2CF-8C4E2ED52E2B),
+		dual,
+		helpstring("Provides operations for converting and repeating one-dimensional string SAFEARRAYs passed as VARIANT values. Array results are returned through VARIANT*."),
+		nonextensible,
+		oleautomation
+	]
+	interface IStringSafearrayInsideVariantTest : IDispatch
+	{
+		[id(0x00000001), helpstring("Convert a one-dimensional SAFEARRAY(VARIANT) to a SAFEARRAY(BSTR).")]
+		HRESULT VariantArrayToBstrArray(
+			[in] VARIANT arr,
+			[out, retval] VARIANT* result);
+		[id(0x00000002), helpstring("Convert a one-dimensional SAFEARRAY(BSTR) to a SAFEARRAY(VARIANT).")]
+		HRESULT BstrArrayToVariantArray(
+			[in] VARIANT arr,
+			[out, retval] VARIANT* result);
+		[id(0x00000003), helpstring("Repeat the elements of a one-dimensional SAFEARRAY(VARIANT) count times. *count* must be non-negative.")]
+		HRESULT RepeatVariantArray(
+			[in] VARIANT arr, [in] LONG count,
+			[out, retval] VARIANT* result);
+		[id(0x00000004), helpstring("Repeat the elements of a one-dimensional SAFEARRAY(BSTR) count times. *count* must be non-negative.")]
+		HRESULT RepeatBstrArray(
+			[in] VARIANT arr, [in] LONG count,
+			[out, retval] VARIANT* result);
+	} ;
+
+	[
+		uuid(D54643DA-37A2-4823-8812-3A9F60C29CFA),
+		helpstring("String SAFEARRAY inside VARIANT Tester")
+	]
+	coclass CoStringSafearrayInsideVariantTest
+	{
+		[default] interface IStringSafearrayInsideVariantTest ;
+	} ;
 } ;

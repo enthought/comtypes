@@ -11,6 +11,7 @@
 #include "CoComtypesDispRecordParamTest.h"
 #include "CoComtypesDispSafearrayParamTest.h"
 #include "CoNumericSafearrayTest.h"
+#include "CoStringSafearrayInsideVariantTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -53,6 +54,12 @@ CFactoryData g_FactoryDataArray[] =
 		L"Comtypes component for numeric SAFEARRAY output tests",
 		L"Comtypes.NumericSafearrayTest.1",
 		L"Comtypes.NumericSafearrayTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoStringSafearrayInsideVariantTest, CStringSafearrayInsideVariantTest::CreateInstance,
+		L"String SAFEARRAY inside VARIANT Tester",
+		L"Comtypes.CoStringSafearrayInsideVariantTest.1",
+		L"Comtypes.CoStringSafearrayInsideVariantTest",
 		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0}
 } ;
