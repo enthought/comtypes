@@ -182,9 +182,12 @@ class EnumerationNamespaces:
             The 'egg' member of the 'Bar' enumeration is already assigned 4,
             but it will be overwritten with 5,
             based on the type information.
+            >>> enums.add('Baz', 'mix', -1)
+            >>> enums.add('Baz', 'juice', 0)
             >>> assert 'Foo' in enums
-            >>> assert 'Baz' not in enums
-            >>> print(enums.to_intflags())
+            >>> assert 'Qux' not in enums
+            >>> enumcode, enumbases = enums.to_enums()
+            >>> print(enumcode)
             class Foo(IntFlag):
                 ham = 1
                 spam = 2
@@ -194,6 +197,13 @@ class EnumerationNamespaces:
                 bacon = 3
                 # egg = 4  # duplicated. Perhaps there is a bug in the type library?
                 egg = 5  # duplicated. Perhaps there is a bug in the type library?
+            <BLANKLINE>
+            <BLANKLINE>
+            class Baz(IntEnum):
+                mix = -1
+                juice = 0
+            >>> sorted(list(enumbases))
+            ['IntEnum', 'IntFlag']
             >>> print(enums.to_constants())
             # values for enumeration 'Foo'
             ham = 1
@@ -205,6 +215,11 @@ class EnumerationNamespaces:
             egg = 4  # duplicated within the 'Bar'. Perhaps there is a bug?
             egg = 5  # duplicated within the 'Bar'. Perhaps there is a bug?
             Bar = c_int  # enum
+            <BLANKLINE>
+            # values for enumeration 'Baz'
+            mix = -1
+            juice = 0
+            Baz = c_int  # enum
         """
         members = self.data.setdefault(enum_name, [])
         if members:
@@ -261,11 +276,12 @@ class EnumerationNamespaces:
             blocks.append("\n".join(lines))
         return "\n\n".join(blocks)
 
-    def to_intflags(self) -> str:
-        blocks = []
+    def to_enums(self) -> tuple[str, set[str]]:
+        enumbases: set[str] = set()
+        blocks: list[str] = []
         for enum_name, members in self._iter_items():
+            has_negative = False
             lines = []
-            lines.append(f"class {enum_name}(IntFlag):")
             for member_name, member_value, is_dupl, rest_dupl_count in members:
                 definition = f"{member_name} = {member_value}"
                 if is_dupl:
@@ -279,5 +295,11 @@ class EnumerationNamespaces:
                         lines.append(f"    {base_line}")
                 else:
                     lines.append(f"    {definition}")
-            blocks.append("\n".join(lines))
-        return "\n\n\n".join(blocks)
+                if member_value < 0:
+                    has_negative = True
+            # Preventing the range-masking in Python 3.15
+            # See https://github.com/enthought/comtypes/issues/894
+            base_class = "IntEnum" if has_negative else "IntFlag"
+            enumbases.add(base_class)
+            blocks.append("\n".join([f"class {enum_name}({base_class}):"] + lines))
+        return "\n\n\n".join(blocks), enumbases

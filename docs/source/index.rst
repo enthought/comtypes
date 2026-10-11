@@ -30,6 +30,7 @@ Functionalities
     npsupport
     threading
     type_checking
+    byte_compatibility
 
 
 Links

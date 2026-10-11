@@ -11,7 +11,8 @@
 #include "CoComtypesDispRecordParamTest.h"
 #include "CoComtypesDispSafearrayParamTest.h"
 #include "CoNumericSafearrayTest.h"
-#include "CoByteEchoTest.h"
+#include "CoByteCompatibilityTest.h"
+#include "CoStringSafearrayInsideVariantTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -56,10 +57,16 @@ CFactoryData g_FactoryDataArray[] =
 		L"Comtypes.NumericSafearrayTest",
 		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0},
-	{&CLSID_CoByteEchoTest, CByteEchoTest::CreateInstance,
-		L"Comtypes component for byte and narrow-string round-trip tests",
-		L"Comtypes.ByteEchoTest.1",
-		L"Comtypes.ByteEchoTest",
+	{&CLSID_CoByteCompatibilityTest, CByteCompatibilityTest::CreateInstance,
+		L"Comtypes component for byte and narrow-string compatibility tests",
+		L"Comtypes.ByteCompatibilityTest.1",
+		L"Comtypes.ByteCompatibilityTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoStringSafearrayInsideVariantTest, CStringSafearrayInsideVariantTest::CreateInstance,
+		L"String SAFEARRAY inside VARIANT Tester",
+		L"Comtypes.CoStringSafearrayInsideVariantTest.1",
+		L"Comtypes.CoStringSafearrayInsideVariantTest",
 		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0}
 } ;

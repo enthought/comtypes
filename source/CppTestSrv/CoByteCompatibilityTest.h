@@ -1,8 +1,8 @@
-// A separate COM component for byte and narrow-string round trips.
+// A separate COM component for byte and narrow-string compatibility.
 #include "CUnknown.h"
 #include "Iface.h"
 
-class CByteEchoTest : public CUnknown, public IByteEchoTest
+class CByteCompatibilityTest : public CUnknown, public IByteCompatibilityTest
 {
 public:
 	static HRESULT CreateInstance(IUnknown* pUnknownOuter, CUnknown** ppNewComponent) ;
@@ -14,6 +14,7 @@ private:
 	virtual HRESULT __stdcall EchoUint8(byte value, byte* result) ;
 	virtual HRESULT __stdcall EchoLpStr(LPSTR value, LPSTR* result) ;
 	virtual HRESULT __stdcall ReadCharPointer(unsigned char* value, byte* result) ;
+	virtual HRESULT __stdcall GetCharacterBytes(byte value, unsigned char* result) ;
 
-	CByteEchoTest(IUnknown* pUnknownOuter) : CUnknown(pUnknownOuter) {} ;
+	CByteCompatibilityTest(IUnknown* pUnknownOuter) : CUnknown(pUnknownOuter) {} ;
 } ;
