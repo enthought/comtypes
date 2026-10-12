@@ -533,7 +533,6 @@ class tagVARIANT(Structure):
             return v.value
 
     # these are missing:
-    # getter[VT_ERROR]
     # getter[VT_ARRAY]
     # getter[VT_BYREF|VT_UI1]
     # getter[VT_BYREF|VT_I2]
@@ -561,6 +560,12 @@ class tagVARIANT(Structure):
 
     def __ctypes_from_outparam__(self):
         # XXX Manual resource management, because of the VARIANT bug:
+        if self.vt == VT_ERROR:
+            # Keep the original VARIANT. Its scode is an inline value,
+            # not a pointer to an owned resource.
+            # Letting Python automatically release the VARIANT is enough;
+            # VariantClear is not needed here or for the caller.
+            return self
         result = self.value
         self.value = None
         return result
