@@ -19,7 +19,7 @@ from ctypes import (
     pointer,
 )
 
-from comtypes import GUID, IUnknown
+from comtypes import GUID, IUnknown, hresult
 from comtypes.automation import (
     DISPPARAMS,
     VARIANT,
@@ -66,8 +66,7 @@ class VariantTestCase(unittest.TestCase):
 
         missing = VARIANT.missing
         self.assertEqual(missing.vt, VT_ERROR)
-        with self.assertRaises(NotImplementedError):
-            missing.value
+        self.assertEqual(missing.value, hresult.DISP_E_PARAMNOTFOUND)
 
     def test_com_refcounts(self):
         # typelib for oleaut32
@@ -253,9 +252,15 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(
             repr(VARIANT(byref(c_int(42)))), "VARIANT(vt=0x4003, byref(42))"
         )
+
+    def test_repr_error(self):
         self.assertEqual(repr(VARIANT.empty), "VARIANT.empty")
         self.assertEqual(repr(VARIANT.null), "VARIANT.null")
         self.assertEqual(repr(VARIANT.missing), "VARIANT.missing")
+        v = VARIANT()
+        v.vt = VT_ERROR
+        v._.scode = hresult.DISP_E_MEMBERNOTFOUND
+        self.assertEqual(repr(v), f"VARIANT(vt=0xa, {hresult.DISP_E_MEMBERNOTFOUND})")
 
 
 class ArrayTest(unittest.TestCase):

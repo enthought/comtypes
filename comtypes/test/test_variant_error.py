@@ -44,6 +44,7 @@ class TestGetErrorCode(unittest.TestCase):
         self.assertEqual(
             self.server.GetErrorCode(VARIANT.missing), hresult.DISP_E_PARAMNOTFOUND
         )
+        self.assertEqual(VARIANT.missing.value, hresult.DISP_E_PARAMNOTFOUND)
 
 
 if __name__ == "__main__":

@@ -170,6 +170,7 @@ class tagVARIANT(Structure):
                     ("VT_UI4", c_ulong),
                     ("VT_UI8", c_ulonglong),
                     ("VT_UINT", c_uint),
+                    ("scode", SCODE),
                     ("VT_R4", c_float),
                     ("VT_R8", c_double),
                     ("VT_CY", c_longlong),
@@ -454,6 +455,8 @@ class tagVARIANT(Structure):
             return self._.VT_R8
         elif vt == VT_BOOL:
             return self._.VT_BOOL
+        elif vt == VT_ERROR:
+            return self._.scode
         elif vt == VT_BSTR:
             return self._.bstrVal
         elif vt == VT_DATE:
