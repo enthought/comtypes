@@ -28,6 +28,23 @@ def _create_server() -> "IVariantErrorTest":
 
 
 @unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
+class TestCreateVariantError(unittest.TestCase):
+    def setUp(self):
+        self.server = _create_server()
+
+    def test_returns_error_code(self):
+        for errcode in [
+            hresult.DISP_E_TYPEMISMATCH,
+            hresult.DISP_E_BADINDEX,
+            hresult.DISP_E_UNKNOWNNAME,
+            hresult.DISP_E_OVERFLOW,
+        ]:
+            with self.subTest(errcode=errcode):
+                errvar = self.server.CreateVariantError(errcode)
+                self.assertEqual(errcode, errvar.value)
+
+
+@unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
 class TestGetErrorCode(unittest.TestCase):
     def setUp(self):
         self.server = _create_server()
