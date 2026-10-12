@@ -97,6 +97,25 @@ dispinterface IDispSafearrayParamTest
 	interface IDualSafearrayParamTest;
 } ;
 
+// Interface IVariantErrorTest
+// Regression test double for VT_ERROR VARIANT marshalling (issues #325, #821).
+// CreateVariantError constructs the VARIANT entirely in native C++ code:
+//   it sets vt = VT_ERROR and scode = errorCode directly without any
+//   Python reflection or type-library inference, matching what VBA's CVErr()
+//   produces.
+// GetErrorCode reads the SCODE back out, matching VBA's CLng() on an error
+//   cell, and returns DISP_E_TYPEMISMATCH for any non-VT_ERROR VARIANT.
+[
+	object,
+	uuid(A4421E3A-E17C-496E-B2DF-002C20FEC215),
+	oleautomation
+]
+interface IVariantErrorTest : IUnknown
+{
+	HRESULT CreateVariantError([in] LONG errorCode, [out, retval] VARIANT* result);
+	HRESULT GetErrorCode([in] VARIANT value, [out, retval] LONG* errorCode);
+} ;
+
 
 //
 // Component and type library descriptions
@@ -182,5 +201,16 @@ library ComtypesCppTestSrvLib
 	coclass CoStringSafearrayInsideVariantTest
 	{
 		[default] interface IStringSafearrayInsideVariantTest ;
+	} ;
+
+	// CoVariantErrorTest
+	// Test double for VT_ERROR VARIANT round-trip (issues #325, #821).
+	[
+		uuid(3AD33CCB-69A9-4FFD-A190-468A255D6479),
+		helpstring("Comtypes component for VT_ERROR VARIANT marshalling tests.")
+	]
+	coclass CoVariantErrorTest
+	{
+		[default] interface IVariantErrorTest ;
 	} ;
 } ;
