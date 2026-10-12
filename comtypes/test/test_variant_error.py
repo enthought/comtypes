@@ -41,7 +41,7 @@ class TestCreateVariantError(unittest.TestCase):
         ]:
             with self.subTest(errcode=errcode):
                 errvar = self.server.CreateVariantError(errcode)
-                self.assertEqual(errcode, errvar.value)
+                self.assertEqual(errcode, errvar._.scode)
 
 
 @unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
@@ -61,7 +61,7 @@ class TestGetErrorCode(unittest.TestCase):
         self.assertEqual(
             self.server.GetErrorCode(VARIANT.missing), hresult.DISP_E_PARAMNOTFOUND
         )
-        self.assertEqual(VARIANT.missing.value, hresult.DISP_E_PARAMNOTFOUND)
+        self.assertEqual(VARIANT.missing._.scode, hresult.DISP_E_PARAMNOTFOUND)
 
 
 if __name__ == "__main__":

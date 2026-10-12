@@ -215,7 +215,11 @@ class tagVARIANT(Structure):
             return "VARIANT.empty"
         elif self is type(self).missing:
             return "VARIANT.missing"
-        return f"VARIANT(vt=0x{self.vt:x}, {self.value!r})"
+        elif self.vt == VT_ERROR:
+            value = self._.scode
+        else:
+            value = self.value
+        return f"VARIANT(vt=0x{self.vt:x}, {value!r})"
 
     @classmethod
     def from_param(cls, value):
@@ -456,7 +460,7 @@ class tagVARIANT(Structure):
         elif vt == VT_BOOL:
             return self._.VT_BOOL
         elif vt == VT_ERROR:
-            return self._.scode
+            return self
         elif vt == VT_BSTR:
             return self._.bstrVal
         elif vt == VT_DATE:
@@ -563,12 +567,6 @@ class tagVARIANT(Structure):
 
     def __ctypes_from_outparam__(self):
         # XXX Manual resource management, because of the VARIANT bug:
-        if self.vt == VT_ERROR:
-            # Keep the original VARIANT. Its scode is an inline value,
-            # not a pointer to an owned resource.
-            # Letting Python automatically release the VARIANT is enough;
-            # VariantClear is not needed here or for the caller.
-            return self
         result = self.value
         self.value = None
         return result
@@ -610,7 +608,7 @@ VARIANT.empty = VARIANT()
 VARIANT.missing = v = VARIANT()
 v.vt = VT_ERROR
 v._.VT_I4 = 0x80020004
-assert v.value == hresult.DISP_E_PARAMNOTFOUND, "the shared 32-bit storage problem"
+assert v._.scode == hresult.DISP_E_PARAMNOTFOUND, "the shared 32-bit storage problem"
 del v
 
 

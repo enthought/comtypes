@@ -66,7 +66,8 @@ class VariantTestCase(unittest.TestCase):
 
         missing = VARIANT.missing
         self.assertEqual(missing.vt, VT_ERROR)
-        self.assertEqual(missing.value, hresult.DISP_E_PARAMNOTFOUND)
+        self.assertIs(missing.value, missing)
+        self.assertEqual(missing._.scode, hresult.DISP_E_PARAMNOTFOUND)
 
     def test_com_refcounts(self):
         # typelib for oleaut32
