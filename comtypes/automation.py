@@ -610,7 +610,7 @@ VARIANT.empty = VARIANT()
 VARIANT.missing = v = VARIANT()
 v.vt = VT_ERROR
 v._.VT_I4 = 0x80020004
-assert v.value == hresult.DISP_E_PARAMNOTFOUND
+assert v.value == hresult.DISP_E_PARAMNOTFOUND, "the shared 32-bit storage problem"
 del v
 
 
