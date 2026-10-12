@@ -23,24 +23,47 @@ from comtypes import GUID, IUnknown, hresult
 from comtypes.automation import (
     DISPPARAMS,
     VARIANT,
+    VT_BLOB,
+    VT_BLOB_OBJECT,
     VT_BSTR,
     VT_BYREF,
+    VT_CARRAY,
+    VT_CF,
+    VT_CLSID,
     VT_CY,
     VT_DATE,
     VT_DECIMAL,
     VT_EMPTY,
     VT_ERROR,
+    VT_FILETIME,
+    VT_HRESULT,
     VT_I1,
     VT_I2,
     VT_I4,
     VT_I8,
+    VT_ILLEGALMASKED,
+    VT_INT_PTR,
+    VT_LPSTR,
+    VT_LPWSTR,
     VT_NULL,
+    VT_PTR,
     VT_R4,
     VT_R8,
+    VT_RESERVED,
+    VT_SAFEARRAY,
+    VT_STORAGE,
+    VT_STORED_OBJECT,
+    VT_STREAM,
+    VT_STREAMED_OBJECT,
     VT_UI1,
     VT_UI2,
     VT_UI4,
     VT_UI8,
+    VT_UINT_PTR,
+    VT_USERDEFINED,
+    VT_VECTOR,
+    VT_VERSIONED_STREAM,
+    VT_VOID,
 )
 from comtypes.test.find_memleak import find_memleak
 from comtypes.typeinfo import LoadRegTypeLib
@@ -284,6 +307,46 @@ class ArrayTest(unittest.TestCase):
             v = VARIANT()
             v.value = a
             self.assertEqual(v.value, (1, 1, 1, 1))
+
+
+class UnsupportedVariantTestCase(unittest.TestCase):
+    def _create_variant(self, vt: int) -> VARIANT:
+        variant = VARIANT()
+        variant.vt = vt
+        return variant
+
+    def test_value_unsupported_types(self):
+        unsupported_types = (
+            VT_VOID,
+            VT_HRESULT,
+            VT_PTR,
+            VT_SAFEARRAY,
+            VT_CARRAY,
+            VT_USERDEFINED,
+            VT_LPSTR,
+            VT_LPWSTR,
+            VT_INT_PTR,
+            VT_UINT_PTR,
+            VT_FILETIME,
+            VT_BLOB,
+            VT_STREAM,
+            VT_STORAGE,
+            VT_STREAMED_OBJECT,
+            VT_STORED_OBJECT,
+            VT_BLOB_OBJECT,
+            VT_CF,
+            VT_CLSID,
+            VT_VERSIONED_STREAM,
+            VT_VECTOR,
+            VT_RESERVED,
+            VT_ILLEGALMASKED,
+        )
+        for vt in unsupported_types:
+            variant = self._create_variant(vt)
+            with self.subTest(vt=vt), self.assertRaises(NotImplementedError):
+                variant.value
+            # Supress `Exception ignored while calling deallocator: <function tagVARIANT.__del__ at ...>`
+            variant.vt = VT_EMPTY
 
 
 ################################################################
