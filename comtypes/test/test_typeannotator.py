@@ -78,7 +78,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             '        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: """bacon\'s \\\\ help"""; ...\n'  # noqa
             '        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: """spam help"""; ...\n'  # noqa
             "        def _set_spam(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
-            "        spam = hints.named_property('spam', _get_spam, _set_spam)\n"
+            '        spam = hints.named_property(\'spam\', _get_spam, _set_spam); """spam help"""\n'
             "        pass  # avoid using a keyword for def raise(self, foo: hints.Incomplete, bar: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _get_def(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _set_def(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
@@ -146,7 +146,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        spam = hints.normal_property(_get_spam)\n"
             '        def _get_ham(self) -> hints.Hresult: """ham help"""; ...\n'
             "        def _set_ham(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"
-            "        ham = hints.normal_property(_get_ham, _set_ham)\n"
+            '        ham = hints.normal_property(_get_ham, _set_ham); """ham help"""\n'
             '        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Hresult: """bacon\'s \\\\ help"""; ...\n'  # noqa
             "        def _get_global(self) -> hints.Hresult: ...\n"
             "        pass  # avoid using a keyword for global = hints.normal_property(_get_global)\n"  # noqa

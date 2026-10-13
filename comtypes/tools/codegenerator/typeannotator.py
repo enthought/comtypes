@@ -10,6 +10,7 @@ class _MethodTypeDesc(Protocol):
     arguments: list[tuple[Any, str, list[str], Optional[Any]]]
     idlflags: list[str]
     name: str
+    doc: Optional[str]
 
 
 _T_MTD = TypeVar("_T_MTD", bound=_MethodTypeDesc)
@@ -102,7 +103,11 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             self._define_member(f"__iter__ = hints.to_dunder_iter({name})")
 
     def _define_named_prop(
-        self, mem_name: str, getter: Optional[str] = None, setter: Optional[str] = None
+        self,
+        mem_name: str,
+        getter: Optional[str] = None,
+        setter: Optional[str] = None,
+        doc: Optional[str] = None,
     ) -> None:
         if getter and setter:
             content = (
@@ -116,10 +121,16 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             return
         if keyword.iskeyword(mem_name):
             content = f"pass  # avoid using a keyword for {content}"
+        if doc is not None:
+            content = f"{content}; {_to_docstr(doc)}"
         self._define_member(content)
 
     def _define_normal_prop(
-        self, mem_name: str, getter: Optional[str] = None, setter: Optional[str] = None
+        self,
+        mem_name: str,
+        getter: Optional[str] = None,
+        setter: Optional[str] = None,
+        doc: Optional[str] = None,
     ) -> None:
         if getter and setter:
             content = f"{mem_name} = hints.normal_property({getter}, {setter})"
@@ -131,6 +142,8 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             return
         if keyword.iskeyword(mem_name):
             content = f"pass  # avoid using a keyword for {content}"
+        if doc is not None:
+            content = f"{content}; {_to_docstr(doc)}"
         self._define_member(content)
 
     def _define_member(self, content: str) -> None:
@@ -143,9 +156,9 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         getter_anno = self.to_method_annotator(fget)
         self._define_member(getter_anno.getvalue(f"_get_{name}"))
         if getter_anno.inarg_specs:
-            self._define_named_prop(name, f"_get_{name}")
+            self._define_named_prop(name, f"_get_{name}", doc=fget.doc)
         else:
-            self._define_normal_prop(name, f"_get_{name}")
+            self._define_normal_prop(name, f"_get_{name}", doc=fget.doc)
 
     def _gen_prop_get_put(self, name: str, fget: _T_MTD, fput: _T_MTD) -> None:
         getter_anno = self.to_method_annotator(fget)
@@ -153,9 +166,9 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         self._define_member(getter_anno.getvalue(f"_get_{name}"))
         self._define_member(setter_anno.getvalue(f"_set_{name}"))
         if getter_anno.inarg_specs:
-            self._define_named_prop(name, f"_get_{name}", f"_set_{name}")
+            self._define_named_prop(name, f"_get_{name}", f"_set_{name}", doc=fget.doc)
         else:
-            self._define_normal_prop(name, f"_get_{name}", f"_set_{name}")
+            self._define_normal_prop(name, f"_get_{name}", f"_set_{name}", doc=fget.doc)
 
     def _gen_prop_get_putref(self, name: str, fget: _T_MTD, fputref: _T_MTD) -> None:
         getter_anno = self.to_method_annotator(fget)
@@ -163,9 +176,9 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         self._define_member(getter_anno.getvalue(f"_get_{name}"))
         self._define_member(setter_anno.getvalue(f"_setref_{name}"))
         if getter_anno.inarg_specs:
-            self._define_named_prop(name, f"_get_{name}", f"_setref_{name}")
+            self._define_named_prop(name, f"_get_{name}", f"_setref_{name}", doc=fget.doc)
         else:
-            self._define_normal_prop(name, f"_get_{name}", f"_setref_{name}")
+            self._define_normal_prop(name, f"_get_{name}", f"_setref_{name}", doc=fget.doc)
 
     def _gen_prop_get_put_putref(
         self, name: str, fget: _T_MTD, fput: _T_MTD, fputref: _T_MTD
@@ -178,9 +191,9 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         self._define_member(putref_anno.getvalue(f"_setref_{name}"))
         setter = f"hints.put_or_putref(_set_{name}, _setref_{name})"
         if getter_anno.inarg_specs:
-            self._define_named_prop(name, f"_get_{name}", setter)
+            self._define_named_prop(name, f"_get_{name}", setter, doc=fget.doc)
         else:
-            self._define_normal_prop(name, f"_get_{name}", setter)
+            self._define_normal_prop(name, f"_get_{name}", setter, doc=fget.doc)
 
     def _gen_prop_put(self, name: str, fput: _T_MTD) -> None:
         setter_anno = self.to_method_annotator(fput)
