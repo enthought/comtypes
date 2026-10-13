@@ -237,6 +237,10 @@ def _generate_trailing_params(specs: Sequence[tuple[Any, str, Optional[Any]]]) -
     return f"*args: hints.Unpack[{params}]"
 
 
+def _to_docstr(doc: str) -> str:
+    return '"""' + doc.replace("\\", "\\\\").replace('"', '\\"') + '"""'
+
+
 class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
     def _iter_outarg_specs(self) -> Iterator[tuple[Any, str]]:
         for typ, name, flags, _ in self.method.arguments:
@@ -274,7 +278,7 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
             out = "tuple[" + ", ".join(outargs) + "]"
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
         if self.method.doc is not None and not self.is_put_or_putref():
-            content = f"def {name}({in_}) -> {out}: {self.method.doc!r}; ..."
+            content = f"def {name}({in_}) -> {out}: {_to_docstr(self.method.doc)}; ..."
         else:
             content = f"def {name}({in_}) -> {out}: ..."
         if keyword.iskeyword(name):
@@ -329,16 +333,11 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
             if inargs:
                 inargs.append("/")
         out = _to_outtype(self.method.returns)
-        if inargs:
-            if self.method.doc is not None and not self.is_put_or_putref():
-                content = f"def {name}(self, {', '.join(inargs)}) -> {out}: {self.method.doc!r}; ..."
-            else:
-                content = f"def {name}(self, {', '.join(inargs)}) -> {out}: ..."
+        in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
+        if self.method.doc is not None and not self.is_put_or_putref():
+            content = f"def {name}({in_}) -> {out}: {_to_docstr(self.method.doc)}; ..."
         else:
-            if self.method.doc is not None and not self.is_put_or_putref():
-                content = f"def {name}(self) -> {out}: {self.method.doc!r}; ..."
-            else:
-                content = f"def {name}(self) -> {out}: ..."
+            content = f"def {name}({in_}) -> {out}: ..."
         if keyword.iskeyword(name):
             content = f"pass  # avoid using a keyword for {content}"
         return content
@@ -372,7 +371,7 @@ class DispInterfaceMembersAnnotator:
             out = _to_outtype(mem.typ)
             decorator = "@property  # dispprop"
             if mem.doc is not None:
-                content = f"def {mem.name}(self) -> {out}: {mem.doc!r}; ..."
+                content = f"def {mem.name}(self) -> {out}: {_to_docstr(mem.doc)}; ..."
             else:
                 content = f"def {mem.name}(self) -> {out}: ..."
             if keyword.iskeyword(mem.name):
