@@ -12,27 +12,13 @@ from typing import TYPE_CHECKING, Optional
 from typing import Union as _UnionT
 
 from comtypes.client._events import SECURITY_ATTRIBUTES
-from comtypes.logutil import NTDebugHandler, deprecated
+from comtypes.logutil import NTDebugHandler
 from comtypes.logutil import (
     _OutputDebugStringW as OutputDebugStringW,
 )
 
 if TYPE_CHECKING:
     from ctypes import _CArgObject, _Pointer
-
-
-class Test_deprecated(ut.TestCase):
-    def test_warning_is_raised(self):
-        reason_text = "This is deprecated."
-
-        @deprecated(reason_text)
-        def test_func():
-            return "success"
-
-        with self.assertWarns(DeprecationWarning) as cm:
-            result = test_func()
-        self.assertEqual(result, "success")
-        self.assertEqual(reason_text, str(cm.warning))
 
 
 _kernel32 = WinDLL("kernel32", use_last_error=True)
