@@ -19,6 +19,9 @@ class _MethodAnnotator(abc.ABC, Generic[_T_MTD]):
     def __init__(self, method: _T_MTD) -> None:
         self.method = method
 
+    def is_put_or_putref(self) -> bool:
+        return "propput" in self.method.idlflags or "propputref" in self.method.idlflags
+
     @property
     def inarg_specs(self) -> Sequence[tuple[Any, str, Optional[Any]]]:
         index = 0
@@ -270,7 +273,7 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
         else:
             out = "tuple[" + ", ".join(outargs) + "]"
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
-        if self.method.doc is not None:
+        if self.method.doc is not None and not self.is_put_or_putref():
             content = f"def {name}({in_}) -> {out}: {self.method.doc!r}; ..."
         else:
             content = f"def {name}({in_}) -> {out}: ..."
@@ -327,12 +330,12 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
                 inargs.append("/")
         out = _to_outtype(self.method.returns)
         if inargs:
-            if self.method.doc is not None:
+            if self.method.doc is not None and not self.is_put_or_putref():
                 content = f"def {name}(self, {', '.join(inargs)}) -> {out}: {self.method.doc!r}; ..."
             else:
                 content = f"def {name}(self, {', '.join(inargs)}) -> {out}: ..."
         else:
-            if self.method.doc is not None:
+            if self.method.doc is not None and not self.is_put_or_putref():
                 content = f"def {name}(self) -> {out}: {self.method.doc!r}; ..."
             else:
                 content = f"def {name}(self) -> {out}: ..."

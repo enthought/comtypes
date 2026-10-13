@@ -33,9 +33,13 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         )
         bacon.add_argument(VARIANT_type, "and", ["in"], None)
         bacon.add_argument(VARIANT_type, "foo", ["in"], None)
-        get_spam = typedesc.DispMethod(6, 2, "spam", VARIANT_type, ["propget"], None)
+        get_spam = typedesc.DispMethod(
+            6, 2, "spam", VARIANT_type, ["propget"], "spam help"
+        )
         get_spam.add_argument(VARIANT_type, "arg1", ["in", "optional"], None)
-        put_spam = typedesc.DispMethod(6, 4, "spam", void_type, ["propput"], None)
+        put_spam = typedesc.DispMethod(
+            6, 4, "spam", void_type, ["propput"], "spam setter"
+        )
         put_spam.add_argument(VARIANT_type, "arg1", ["in", "optional"], None)
         put_spam.add_argument(VARIANT_type, "arg2", ["in"], None)
         except_ = typedesc.DispProperty(1, "except", BSTR_type, ["readonly"], "help")
@@ -72,7 +76,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        pass  # @property  # dispprop\n"
             "        pass  # avoid using a keyword for def except(self) -> hints.Incomplete: 'help'; ...\n"  # noqa
             '        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: "bacon\'s \\\\ help"; ...\n'  # noqa
-            "        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
+            "        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: 'spam help'; ...\n"  # noqa
             "        def _set_spam(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
             "        spam = hints.named_property('spam', _get_spam, _set_spam)\n"
             "        pass  # avoid using a keyword for def raise(self, foo: hints.Incomplete, bar: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
@@ -105,10 +109,10 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             2, 1610678269, "spam", HRESULT_type, ["propget"], None
         )
         get_ham = typedesc.ComMethod(
-            2, 1610678270, "ham", HRESULT_type, ["propget"], None
+            2, 1610678270, "ham", HRESULT_type, ["propget"], "ham help"
         )
         put_ham = typedesc.ComMethod(
-            4, 1610678270, "ham", HRESULT_type, ["propput"], None
+            4, 1610678270, "ham", HRESULT_type, ["propput"], "ham setter"
         )
         put_ham.add_argument(VARIANT_type, "arg1", ["in"], None)
         bacon = typedesc.ComMethod(
@@ -140,7 +144,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         expected = (
             "        def _get_spam(self) -> hints.Hresult: ...\n"
             "        spam = hints.normal_property(_get_spam)\n"
-            "        def _get_ham(self) -> hints.Hresult: ...\n"
+            "        def _get_ham(self) -> hints.Hresult: 'ham help'; ...\n"
             "        def _set_ham(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"
             "        ham = hints.normal_property(_get_ham, _set_ham)\n"
             '        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Hresult: "bacon\'s \\\\ help"; ...\n'  # noqa
