@@ -176,9 +176,13 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         self._define_member(getter_anno.getvalue(f"_get_{name}"))
         self._define_member(setter_anno.getvalue(f"_setref_{name}"))
         if getter_anno.inarg_specs:
-            self._define_named_prop(name, f"_get_{name}", f"_setref_{name}", doc=fget.doc)
+            self._define_named_prop(
+                name, f"_get_{name}", f"_setref_{name}", doc=fget.doc
+            )
         else:
-            self._define_normal_prop(name, f"_get_{name}", f"_setref_{name}", doc=fget.doc)
+            self._define_normal_prop(
+                name, f"_get_{name}", f"_setref_{name}", doc=fget.doc
+            )
 
     def _gen_prop_get_put_putref(
         self, name: str, fget: _T_MTD, fput: _T_MTD, fputref: _T_MTD
