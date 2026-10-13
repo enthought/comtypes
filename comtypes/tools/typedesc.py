@@ -121,7 +121,7 @@ class DispMethod:
 class DispProperty:
     # dispatchable COM property, parsed from typelib
     def __init__(
-        self, dispid: int, name: str, typ: Any, idlflags: list[str], doc: Optional[Any]
+        self, dispid: int, name: str, typ: Any, idlflags: list[str], doc: Optional[str]
     ) -> None:
         self.dispid = dispid
         self.name = name
