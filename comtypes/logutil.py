@@ -1,5 +1,6 @@
 # logutil.py
 import logging
+from collections.abc import Callable
 from ctypes import WinDLL
 from ctypes.wintypes import LPCSTR, LPCWSTR
 
@@ -17,11 +18,11 @@ _OutputDebugStringW.restype = None
 class NTDebugHandler(logging.Handler):
     def emit(
         self,
-        record,
-        writeW=_OutputDebugStringW,
-    ):
+        record: logging.LogRecord,
+        writeW: Callable[[str], None] = _OutputDebugStringW,
+    ) -> None:
         text = self.format(record)
         writeW(text + "\n")
 
 
-logging.NTDebugHandler = NTDebugHandler
+logging.NTDebugHandler = NTDebugHandler  # type: ignore
