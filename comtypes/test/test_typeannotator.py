@@ -29,7 +29,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         itf = typedesc.DispInterface("IDispDerived", idispatch_type, guid, [], None)
         ham = typedesc.DispProperty(0, "ham", BSTR_type, ["readonly"], None)
         bacon = typedesc.DispMethod(
-            472, 1, "bacon", VARIANT_BOOL_type, ["hidden"], None
+            472, 1, "bacon", VARIANT_BOOL_type, ["hidden"], "bacon's \\ help"
         )
         bacon.add_argument(VARIANT_type, "and", ["in"], None)
         bacon.add_argument(VARIANT_type, "foo", ["in"], None)
@@ -71,7 +71,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        def ham(self) -> hints.Incomplete: ...\n"
             "        pass  # @property  # dispprop\n"
             "        pass  # avoid using a keyword for def except(self) -> hints.Incomplete: ...\n"  # noqa
-            "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
+            '        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: "bacon\'s \\\\ help"; ...\n'  # noqa
             "        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _set_spam(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
             "        spam = hints.named_property('spam', _get_spam, _set_spam)\n"
@@ -111,7 +111,9 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             4, 1610678270, "ham", HRESULT_type, ["propput"], None
         )
         put_ham.add_argument(VARIANT_type, "arg1", ["in"], None)
-        bacon = typedesc.ComMethod(1, 1610678271, "bacon", HRESULT_type, [], None)
+        bacon = typedesc.ComMethod(
+            1, 1610678271, "bacon", HRESULT_type, [], "bacon's \\ help"
+        )
         bacon.add_argument(VARIANT_type, "foo", ["in"], None)
         bacon.add_argument(VARIANT_type, "or", ["in"], None)
         global_ = typedesc.ComMethod(
@@ -141,7 +143,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        def _get_ham(self) -> hints.Hresult: ...\n"
             "        def _set_ham(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"
             "        ham = hints.normal_property(_get_ham, _set_ham)\n"
-            "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Hresult: ...\n"  # noqa
+            '        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Hresult: "bacon\'s \\\\ help"; ...\n'  # noqa
             "        def _get_global(self) -> hints.Hresult: ...\n"
             "        pass  # avoid using a keyword for global = hints.normal_property(_get_global)\n"  # noqa
             "        def _get_class(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"

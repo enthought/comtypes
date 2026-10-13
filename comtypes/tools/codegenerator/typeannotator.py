@@ -270,7 +270,10 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
         else:
             out = "tuple[" + ", ".join(outargs) + "]"
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
-        content = f"def {name}({in_}) -> {out}: ..."
+        if self.method.doc is not None:
+            content = f"def {name}({in_}) -> {out}: {self.method.doc!r}; ..."
+        else:
+            content = f"def {name}({in_}) -> {out}: ..."
         if keyword.iskeyword(name):
             content = f"pass  # avoid using a keyword for {content}"
         return content
@@ -324,9 +327,15 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
                 inargs.append("/")
         out = _to_outtype(self.method.returns)
         if inargs:
-            content = f"def {name}(self, {', '.join(inargs)}) -> {out}: ..."
+            if self.method.doc is not None:
+                content = f"def {name}(self, {', '.join(inargs)}) -> {out}: {self.method.doc!r}; ..."
+            else:
+                content = f"def {name}(self, {', '.join(inargs)}) -> {out}: ..."
         else:
-            content = f"def {name}(self) -> {out}: ..."
+            if self.method.doc is not None:
+                content = f"def {name}(self) -> {out}: {self.method.doc!r}; ..."
+            else:
+                content = f"def {name}(self) -> {out}: ..."
         if keyword.iskeyword(name):
             content = f"pass  # avoid using a keyword for {content}"
         return content
