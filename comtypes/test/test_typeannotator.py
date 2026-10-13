@@ -38,7 +38,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         put_spam = typedesc.DispMethod(6, 4, "spam", void_type, ["propput"], None)
         put_spam.add_argument(VARIANT_type, "arg1", ["in", "optional"], None)
         put_spam.add_argument(VARIANT_type, "arg2", ["in"], None)
-        except_ = typedesc.DispProperty(1, "except", BSTR_type, ["readonly"], None)
+        except_ = typedesc.DispProperty(1, "except", BSTR_type, ["readonly"], "help")
         raise_ = typedesc.DispMethod(
             474, 1, "raise", VARIANT_BOOL_type, ["hidden"], None
         )
@@ -70,7 +70,7 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        @property  # dispprop\n"
             "        def ham(self) -> hints.Incomplete: ...\n"
             "        pass  # @property  # dispprop\n"
-            "        pass  # avoid using a keyword for def except(self) -> hints.Incomplete: ...\n"  # noqa
+            "        pass  # avoid using a keyword for def except(self) -> hints.Incomplete: 'help'; ...\n"  # noqa
             '        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: "bacon\'s \\\\ help"; ...\n'  # noqa
             "        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _set_spam(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa

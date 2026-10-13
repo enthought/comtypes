@@ -368,7 +368,10 @@ class DispInterfaceMembersAnnotator:
         for mem in props:
             out = _to_outtype(mem.typ)
             decorator = "@property  # dispprop"
-            content = f"def {mem.name}(self) -> {out}: ..."
+            if mem.doc is not None:
+                content = f"def {mem.name}(self) -> {out}: {mem.doc!r}; ..."
+            else:
+                content = f"def {mem.name}(self) -> {out}: ..."
             if keyword.iskeyword(mem.name):
                 decorator = f"pass  # {decorator}"
                 content = f"pass  # avoid using a keyword for {content}"
