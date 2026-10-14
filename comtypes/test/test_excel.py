@@ -3,6 +3,7 @@ import sys
 import unittest
 from typing import ClassVar
 
+from comtypes import automation, hresult
 from comtypes.client import CreateObject, GetModule
 
 ################################################################
@@ -118,6 +119,14 @@ class BaseBindTest:
         sh.Cells.Item[3, 3].Value[()] = "Hello World!"
         sh.Range[sh.Cells.Item[1, 1], sh.Cells.Item[3, 3]].Copy(sh.Cells.Item[4, 1])
         sh.Range[sh.Cells.Item[4, 1], sh.Cells.Item[6, 3]].Select()
+
+        # Error Variant
+        err_rng = sh.Range("A1")
+        err_rng.Formula = "=1/0"
+        self.assertIsInstance(err_rng.Value(), automation.VARIANT)  # type: ignore
+        self.assertEqual(  # type: ignore
+            err_rng.Value()._.scode, hresult.signed32bithex_to_int("0x800A07D7")
+        )
 
 
 PY_VER = "Python {0}.{1}.{2}".format(*sys.version_info[:3])

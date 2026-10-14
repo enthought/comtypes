@@ -10,6 +10,7 @@ class _MethodTypeDesc(Protocol):
     arguments: list[tuple[Any, str, list[str], Optional[Any]]]
     idlflags: list[str]
     name: str
+    doc: Optional[str]
 
 
 _T_MTD = TypeVar("_T_MTD", bound=_MethodTypeDesc)
@@ -18,6 +19,9 @@ _T_MTD = TypeVar("_T_MTD", bound=_MethodTypeDesc)
 class _MethodAnnotator(abc.ABC, Generic[_T_MTD]):
     def __init__(self, method: _T_MTD) -> None:
         self.method = method
+
+    def is_put_or_putref(self) -> bool:
+        return "propput" in self.method.idlflags or "propputref" in self.method.idlflags
 
     @property
     def inarg_specs(self) -> Sequence[tuple[Any, str, Optional[Any]]]:
@@ -99,7 +103,11 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             self._define_member(f"__iter__ = hints.to_dunder_iter({name})")
 
     def _define_named_prop(
-        self, mem_name: str, getter: Optional[str] = None, setter: Optional[str] = None
+        self,
+        mem_name: str,
+        getter: Optional[str] = None,
+        setter: Optional[str] = None,
+        doc: Optional[str] = None,
     ) -> None:
         if getter and setter:
             content = (
@@ -113,10 +121,16 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             return
         if keyword.iskeyword(mem_name):
             content = f"pass  # avoid using a keyword for {content}"
+        if doc is not None:
+            content = f"{content}; {_to_docstr(doc)}"
         self._define_member(content)
 
     def _define_normal_prop(
-        self, mem_name: str, getter: Optional[str] = None, setter: Optional[str] = None
+        self,
+        mem_name: str,
+        getter: Optional[str] = None,
+        setter: Optional[str] = None,
+        doc: Optional[str] = None,
     ) -> None:
         if getter and setter:
             content = f"{mem_name} = hints.normal_property({getter}, {setter})"
@@ -128,6 +142,8 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
             return
         if keyword.iskeyword(mem_name):
             content = f"pass  # avoid using a keyword for {content}"
+        if doc is not None:
+            content = f"{content}; {_to_docstr(doc)}"
         self._define_member(content)
 
     def _define_member(self, content: str) -> None:
@@ -140,9 +156,9 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         getter_anno = self.to_method_annotator(fget)
         self._define_member(getter_anno.getvalue(f"_get_{name}"))
         if getter_anno.inarg_specs:
-            self._define_named_prop(name, f"_get_{name}")
+            self._define_named_prop(name, f"_get_{name}", doc=fget.doc)
         else:
-            self._define_normal_prop(name, f"_get_{name}")
+            self._define_normal_prop(name, f"_get_{name}", doc=fget.doc)
 
     def _gen_prop_get_put(self, name: str, fget: _T_MTD, fput: _T_MTD) -> None:
         getter_anno = self.to_method_annotator(fget)
@@ -150,9 +166,9 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         self._define_member(getter_anno.getvalue(f"_get_{name}"))
         self._define_member(setter_anno.getvalue(f"_set_{name}"))
         if getter_anno.inarg_specs:
-            self._define_named_prop(name, f"_get_{name}", f"_set_{name}")
+            self._define_named_prop(name, f"_get_{name}", f"_set_{name}", doc=fget.doc)
         else:
-            self._define_normal_prop(name, f"_get_{name}", f"_set_{name}")
+            self._define_normal_prop(name, f"_get_{name}", f"_set_{name}", doc=fget.doc)
 
     def _gen_prop_get_putref(self, name: str, fget: _T_MTD, fputref: _T_MTD) -> None:
         getter_anno = self.to_method_annotator(fget)
@@ -160,9 +176,13 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         self._define_member(getter_anno.getvalue(f"_get_{name}"))
         self._define_member(setter_anno.getvalue(f"_setref_{name}"))
         if getter_anno.inarg_specs:
-            self._define_named_prop(name, f"_get_{name}", f"_setref_{name}")
+            self._define_named_prop(
+                name, f"_get_{name}", f"_setref_{name}", doc=fget.doc
+            )
         else:
-            self._define_normal_prop(name, f"_get_{name}", f"_setref_{name}")
+            self._define_normal_prop(
+                name, f"_get_{name}", f"_setref_{name}", doc=fget.doc
+            )
 
     def _gen_prop_get_put_putref(
         self, name: str, fget: _T_MTD, fput: _T_MTD, fputref: _T_MTD
@@ -175,9 +195,9 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
         self._define_member(putref_anno.getvalue(f"_setref_{name}"))
         setter = f"hints.put_or_putref(_set_{name}, _setref_{name})"
         if getter_anno.inarg_specs:
-            self._define_named_prop(name, f"_get_{name}", setter)
+            self._define_named_prop(name, f"_get_{name}", setter, doc=fget.doc)
         else:
-            self._define_normal_prop(name, f"_get_{name}", setter)
+            self._define_normal_prop(name, f"_get_{name}", setter, doc=fget.doc)
 
     def _gen_prop_put(self, name: str, fput: _T_MTD) -> None:
         setter_anno = self.to_method_annotator(fput)
@@ -234,6 +254,10 @@ def _generate_trailing_params(specs: Sequence[tuple[Any, str, Optional[Any]]]) -
     return f"*args: hints.Unpack[{params}]"
 
 
+def _to_docstr(doc: str) -> str:
+    return '"""' + doc.replace("\\", "\\\\").replace('"', '\\"') + '"""'
+
+
 class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
     def _iter_outarg_specs(self) -> Iterator[tuple[Any, str]]:
         for typ, name, flags, _ in self.method.arguments:
@@ -270,7 +294,10 @@ class ComMethodAnnotator(_MethodAnnotator[typedesc.ComMethod]):
         else:
             out = "tuple[" + ", ".join(outargs) + "]"
         in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
-        content = f"def {name}({in_}) -> {out}: ..."
+        if self.method.doc is not None and not self.is_put_or_putref():
+            content = f"def {name}({in_}) -> {out}: {_to_docstr(self.method.doc)}; ..."
+        else:
+            content = f"def {name}({in_}) -> {out}: ..."
         if keyword.iskeyword(name):
             content = f"pass  # avoid using a keyword for {content}"
         return content
@@ -323,10 +350,11 @@ class DispMethodAnnotator(_MethodAnnotator[typedesc.DispMethod]):
             if inargs:
                 inargs.append("/")
         out = _to_outtype(self.method.returns)
-        if inargs:
-            content = f"def {name}(self, {', '.join(inargs)}) -> {out}: ..."
+        in_ = ("self, " + ", ".join(inargs)) if inargs else "self"
+        if self.method.doc is not None and not self.is_put_or_putref():
+            content = f"def {name}({in_}) -> {out}: {_to_docstr(self.method.doc)}; ..."
         else:
-            content = f"def {name}(self) -> {out}: ..."
+            content = f"def {name}({in_}) -> {out}: ..."
         if keyword.iskeyword(name):
             content = f"pass  # avoid using a keyword for {content}"
         return content
@@ -359,7 +387,10 @@ class DispInterfaceMembersAnnotator:
         for mem in props:
             out = _to_outtype(mem.typ)
             decorator = "@property  # dispprop"
-            content = f"def {mem.name}(self) -> {out}: ..."
+            if mem.doc is not None:
+                content = f"def {mem.name}(self) -> {out}: {_to_docstr(mem.doc)}; ..."
+            else:
+                content = f"def {mem.name}(self) -> {out}: ..."
             if keyword.iskeyword(mem.name):
                 decorator = f"pass  # {decorator}"
                 content = f"pass  # avoid using a keyword for {content}"

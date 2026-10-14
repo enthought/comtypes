@@ -15,7 +15,6 @@ import comtypes
 from comtypes import typeinfo
 from comtypes.tools import tlbparser, typedesc
 from comtypes.tools.codegenerator import heads, namespaces, packing
-from comtypes.tools.codegenerator.comments import ComInterfaceBodyImplCommentWriter
 from comtypes.tools.codegenerator.helpers import (
     ASSUME_STRINGS,
     ComMethodGenerator,
@@ -662,8 +661,6 @@ class CodeGenerator:
                     raise TypeError("what's this?")
 
             print("]", file=ofi)
-        print(file=self.stream)
-        ComInterfaceBodyImplCommentWriter(self.stream).write(body)
 
     def DispInterface(self, itf: typedesc.DispInterface) -> None:
         self.generate(itf.get_head())

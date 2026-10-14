@@ -170,6 +170,7 @@ class tagVARIANT(Structure):
                     ("VT_UI4", c_ulong),
                     ("VT_UI8", c_ulonglong),
                     ("VT_UINT", c_uint),
+                    ("scode", SCODE),
                     ("VT_R4", c_float),
                     ("VT_R8", c_double),
                     ("VT_CY", c_longlong),
@@ -214,7 +215,11 @@ class tagVARIANT(Structure):
             return "VARIANT.empty"
         elif self is type(self).missing:
             return "VARIANT.missing"
-        return f"VARIANT(vt=0x{self.vt:x}, {self.value!r})"
+        elif self.vt == VT_ERROR:
+            value = self._.scode
+        else:
+            value = self.value
+        return f"VARIANT(vt=0x{self.vt:x}, {value!r})"
 
     @classmethod
     def from_param(cls, value):
@@ -454,6 +459,8 @@ class tagVARIANT(Structure):
             return self._.VT_R8
         elif vt == VT_BOOL:
             return self._.VT_BOOL
+        elif vt == VT_ERROR:
+            return self
         elif vt == VT_BSTR:
             return self._.bstrVal
         elif vt == VT_DATE:
@@ -533,7 +540,6 @@ class tagVARIANT(Structure):
             return v.value
 
     # these are missing:
-    # getter[VT_ERROR]
     # getter[VT_ARRAY]
     # getter[VT_BYREF|VT_UI1]
     # getter[VT_BYREF|VT_I2]
@@ -602,6 +608,7 @@ VARIANT.empty = VARIANT()
 VARIANT.missing = v = VARIANT()
 v.vt = VT_ERROR
 v._.VT_I4 = 0x80020004
+assert v._.scode == hresult.DISP_E_PARAMNOTFOUND, "the shared 32-bit storage problem"
 del v
 
 

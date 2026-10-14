@@ -13,6 +13,7 @@
 #include "CoNumericSafearrayTest.h"
 #include "CoByteCompatibilityTest.h"
 #include "CoStringSafearrayInsideVariantTest.h"
+#include "CoVariantErrorTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -67,6 +68,12 @@ CFactoryData g_FactoryDataArray[] =
 		L"String SAFEARRAY inside VARIANT Tester",
 		L"Comtypes.CoStringSafearrayInsideVariantTest.1",
 		L"Comtypes.CoStringSafearrayInsideVariantTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoVariantErrorTest, CVariantErrorTest::CreateInstance,
+		L"Comtypes component for VT_ERROR VARIANT marshalling tests",
+		L"Comtypes.VariantErrorTest.1",
+		L"Comtypes.VariantErrorTest",
 		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0}
 } ;

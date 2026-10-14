@@ -29,16 +29,20 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         itf = typedesc.DispInterface("IDispDerived", idispatch_type, guid, [], None)
         ham = typedesc.DispProperty(0, "ham", BSTR_type, ["readonly"], None)
         bacon = typedesc.DispMethod(
-            472, 1, "bacon", VARIANT_BOOL_type, ["hidden"], None
+            472, 1, "bacon", VARIANT_BOOL_type, ["hidden"], "bacon's \\ help"
         )
         bacon.add_argument(VARIANT_type, "and", ["in"], None)
         bacon.add_argument(VARIANT_type, "foo", ["in"], None)
-        get_spam = typedesc.DispMethod(6, 2, "spam", VARIANT_type, ["propget"], None)
+        get_spam = typedesc.DispMethod(
+            6, 2, "spam", VARIANT_type, ["propget"], "spam help"
+        )
         get_spam.add_argument(VARIANT_type, "arg1", ["in", "optional"], None)
-        put_spam = typedesc.DispMethod(6, 4, "spam", void_type, ["propput"], None)
+        put_spam = typedesc.DispMethod(
+            6, 4, "spam", void_type, ["propput"], "spam setter"
+        )
         put_spam.add_argument(VARIANT_type, "arg1", ["in", "optional"], None)
         put_spam.add_argument(VARIANT_type, "arg2", ["in"], None)
-        except_ = typedesc.DispProperty(1, "except", BSTR_type, ["readonly"], None)
+        except_ = typedesc.DispProperty(1, "except", BSTR_type, ["readonly"], "help")
         raise_ = typedesc.DispMethod(
             474, 1, "raise", VARIANT_BOOL_type, ["hidden"], None
         )
@@ -70,11 +74,11 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             "        @property  # dispprop\n"
             "        def ham(self) -> hints.Incomplete: ...\n"
             "        pass  # @property  # dispprop\n"
-            "        pass  # avoid using a keyword for def except(self) -> hints.Incomplete: ...\n"  # noqa
-            "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: ...\n"  # noqa
-            "        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
+            '        pass  # avoid using a keyword for def except(self) -> hints.Incomplete: """help"""; ...\n'  # noqa
+            '        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Incomplete: """bacon\'s \\\\ help"""; ...\n'  # noqa
+            '        def _get_spam(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: """spam help"""; ...\n'  # noqa
             "        def _set_spam(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
-            "        spam = hints.named_property('spam', _get_spam, _set_spam)\n"
+            '        spam = hints.named_property(\'spam\', _get_spam, _set_spam); """spam help"""\n'
             "        pass  # avoid using a keyword for def raise(self, foo: hints.Incomplete, bar: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _get_def(self, arg1: hints.Incomplete = ..., /) -> hints.Incomplete: ...\n"  # noqa
             "        def _set_def(self, arg1: hints.Incomplete = ..., /, *args: hints.Unpack[tuple[hints.Incomplete]]) -> hints.Incomplete: ...\n"  # noqa
@@ -105,13 +109,15 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
             2, 1610678269, "spam", HRESULT_type, ["propget"], None
         )
         get_ham = typedesc.ComMethod(
-            2, 1610678270, "ham", HRESULT_type, ["propget"], None
+            2, 1610678270, "ham", HRESULT_type, ["propget"], "ham help"
         )
         put_ham = typedesc.ComMethod(
-            4, 1610678270, "ham", HRESULT_type, ["propput"], None
+            4, 1610678270, "ham", HRESULT_type, ["propput"], "ham setter"
         )
         put_ham.add_argument(VARIANT_type, "arg1", ["in"], None)
-        bacon = typedesc.ComMethod(1, 1610678271, "bacon", HRESULT_type, [], None)
+        bacon = typedesc.ComMethod(
+            1, 1610678271, "bacon", HRESULT_type, [], "bacon's \\ help"
+        )
         bacon.add_argument(VARIANT_type, "foo", ["in"], None)
         bacon.add_argument(VARIANT_type, "or", ["in"], None)
         global_ = typedesc.ComMethod(
@@ -138,10 +144,10 @@ class Test_AvoidUsingKeywords(unittest.TestCase):
         expected = (
             "        def _get_spam(self) -> hints.Hresult: ...\n"
             "        spam = hints.normal_property(_get_spam)\n"
-            "        def _get_ham(self) -> hints.Hresult: ...\n"
+            '        def _get_ham(self) -> hints.Hresult: """ham help"""; ...\n'
             "        def _set_ham(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"
-            "        ham = hints.normal_property(_get_ham, _set_ham)\n"
-            "        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Hresult: ...\n"  # noqa
+            '        ham = hints.normal_property(_get_ham, _set_ham); """ham help"""\n'
+            '        def bacon(self, *args: hints.Any, **kwargs: hints.Any) -> hints.Hresult: """bacon\'s \\\\ help"""; ...\n'  # noqa
             "        def _get_global(self) -> hints.Hresult: ...\n"
             "        pass  # avoid using a keyword for global = hints.normal_property(_get_global)\n"  # noqa
             "        def _get_class(self, arg1: hints.Incomplete) -> hints.Hresult: ...\n"
