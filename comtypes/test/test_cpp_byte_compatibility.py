@@ -28,7 +28,7 @@ except (ImportError, OSError):
 
 
 @unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
-class ByteCompatibilityTest(unittest.TestCase):
+class _NativeByteTest(unittest.TestCase):
     def setUp(self):
         self.server = CreateObject(
             CoByteCompatibilityTest,
@@ -36,6 +36,8 @@ class ByteCompatibilityTest(unittest.TestCase):
             interface=IByteCompatibilityTest,
         )
 
+
+class ByteCompatibilityTest(_NativeByteTest):
     def test_negative_int8(self):
         for value in (-128, -7, -1):
             with self.subTest(value=value):
@@ -65,49 +67,82 @@ class ByteCompatibilityTest(unittest.TestCase):
                 finally:
                     _CoTaskMemFree(cast(result, c_void_p))
 
+
+class LegacyMappingCompatibilityTest(_NativeByteTest):
+    """Calls accepted by the old mapping that regress with the proposed mapping."""
+
     @unittest.expectedFailure
-    def test_legacy_char_pointer_bytes(self):
+    def test_char_pointer_bytes_input(self):
         # Plain char* was previously inferred as STRING. Changing VT_I1 to
         # signed char loses this implicit bytes input, unlike explicit LPSTR.
         # Keep the compatibility regression visible for the review decision.
-        self.assertEqual(self.server.ReadCharPointer(b"h"), ord("h"))
-
-    def test_char_pointer_ctypes_inputs(self):
-        for value in (
-            pointer(c_byte(ord("h"))),
-            byref(c_byte(ord("h"))),
-            (c_byte * 1)(ord("h")),
-        ):
-            with self.subTest(value=value):
-                self.assertEqual(self.server.ReadCharPointer(value), ord("h"))
-
-    def test_character_pointer_output(self):
-        for value in (0, 1, ord("h"), 128, 255):
-            with self.subTest(value=value):
-                # Plain char* output uses the signed numeric mapping as well.
-                self.assertEqual(
-                    self.server.GetCharacterBytes(value),
-                    value if value < 128 else value - 256,
-                )
-
-    def test_character_ctypes_output_buffers(self):
-        for value in (0, ord("h"), 128, 255):
-            for result in (c_byte(), (c_byte * 1)()):
-                with self.subTest(value=value, result=result):
-                    argument = byref(result) if isinstance(result, c_byte) else result
-                    self.server._IByteCompatibilityTest__com_GetCharacterBytes(
-                        value, argument
-                    )
-                    actual = result.value if isinstance(result, c_byte) else result[0]
-                    self.assertEqual(actual, value if value < 128 else value - 256)
+        self.assertEqual(self.server.ReadCharPointer(b"h"), 104)
 
     @unittest.expectedFailure
-    def test_legacy_character_bytes_output(self):
+    def test_character_bytes_output_buffer(self):
         # Old STRING output accepts a char buffer. Reserve the terminator
         # locally because a plain char* marshals only one character.
         result = create_string_buffer(2)
-        self.server._IByteCompatibilityTest__com_GetCharacterBytes(ord("h"), result)
+        self.server._IByteCompatibilityTest__com_GetCharacterBytes(104, result)
         self.assertEqual(result.value, b"h")
+
+
+class ProposedMappingCompatibilityTest(_NativeByteTest):
+    """Numeric arguments and results supported by the proposed signed mapping."""
+
+    def test_char_pointer_input(self):
+        for value, expected in ((0, 0), (104, 104), (-128, 128), (-1, 255)):
+            with self.subTest(value=value):
+                self.assertEqual(
+                    self.server.ReadCharPointer(pointer(c_byte(value))), expected
+                )
+
+    def test_char_reference_input(self):
+        for value, expected in ((0, 0), (104, 104), (-128, 128), (-1, 255)):
+            with self.subTest(value=value):
+                self.assertEqual(
+                    self.server.ReadCharPointer(byref(c_byte(value))), expected
+                )
+
+    def test_char_array_input(self):
+        for value, expected in ((0, 0), (104, 104), (-128, 128), (-1, 255)):
+            with self.subTest(value=value):
+                self.assertEqual(
+                    self.server.ReadCharPointer((c_byte * 1)(value)), expected
+                )
+
+    def test_character_pointer_output(self):
+        for value, expected in ((0, 0), (1, 1), (104, 104), (128, -128), (255, -1)):
+            with self.subTest(value=value):
+                # Plain char* output uses the signed numeric mapping as well.
+                self.assertEqual(self.server.GetCharacterBytes(value), expected)
+
+    def test_character_pointer_output_buffer(self):
+        for value, expected in ((0, 0), (104, 104), (128, -128), (255, -1)):
+            with self.subTest(value=value):
+                result = pointer(c_byte())
+                self.server._IByteCompatibilityTest__com_GetCharacterBytes(
+                    value, result
+                )
+                self.assertEqual(result.contents.value, expected)
+
+    def test_character_reference_output_buffer(self):
+        for value, expected in ((0, 0), (104, 104), (128, -128), (255, -1)):
+            with self.subTest(value=value):
+                result = c_byte()
+                self.server._IByteCompatibilityTest__com_GetCharacterBytes(
+                    value, byref(result)
+                )
+                self.assertEqual(result.value, expected)
+
+    def test_character_array_output_buffer(self):
+        for value, expected in ((0, 0), (104, 104), (128, -128), (255, -1)):
+            with self.subTest(value=value):
+                result = (c_byte * 1)()
+                self.server._IByteCompatibilityTest__com_GetCharacterBytes(
+                    value, result
+                )
+                self.assertEqual(result[0], expected)
 
 
 if __name__ == "__main__":
