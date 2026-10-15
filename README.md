@@ -63,7 +63,7 @@ For as long as COM is not supported outside of Windows, there is no plan to port
 
 ### Q: Why does `cannot import name 'COMError' from '_ctypes'` error occur when using this package on platforms other than Windows?
 **A:** The [`_ctypes`](https://github.com/python/cpython/blob/main/Modules/_ctypes/_ctypes.c) is part of the internal implementation of the [`ctypes`](https://github.com/python/cpython/blob/main/Lib/ctypes/) standard library that exists for Python on all platforms.
-However, `COMError` and COM-related features are only implemented in Python for Windows.
+However, [`COMError`](https://docs.python.org/3/library/ctypes.html#ctypes.COMError) and COM-related features are only implemented in Python for Windows.
 
 In cross-platform software development, care must be taken to ensure that codebases that depend on `comtypes` do not execute in environments other than Windows.
 
