@@ -12,8 +12,6 @@ private:
 	virtual HRESULT __stdcall NondelegatingQueryInterface(const IID& iid, void** ppv) ;
 
 	// Interface INumericSafearrayTest
-	// VT_I1 has COM/code-generator smoke coverage; NumPy dtype coverage awaits
-	// the separate c_char/c_byte issue (#935).
 	virtual HRESULT __stdcall GetInt8Array(short dimensions, long count, SAFEARRAY** result) ;
 	virtual HRESULT __stdcall GetUint8Array(short dimensions, long count, SAFEARRAY** result) ;
 	virtual HRESULT __stdcall GetInt16Array(short dimensions, long count, SAFEARRAY** result) ;
