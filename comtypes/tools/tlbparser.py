@@ -82,6 +82,7 @@ COMTYPES = {
     automation.VT_VARIANT: VARIANT_type,  # 12
     automation.VT_UNKNOWN: PTR(IUNKNOWN_type),  # 13
     automation.VT_DECIMAL: DECIMAL_type,  # 14
+    # Signed-byte mapping and compatibility: https://github.com/enthought/comtypes/issues/969
     automation.VT_I1: schar_type,  # 16
     automation.VT_UI1: uchar_type,  # 17
     automation.VT_UI2: ushort_type,  # 18

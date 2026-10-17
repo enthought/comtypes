@@ -4,13 +4,16 @@ Signed 8-bit values from type libraries
 This page describes the compatibility impact of the proposed ``VT_I1``
 type-library mapping change. The change is under review; the examples below
 describe regenerated modules using that mapping.
+The decision and compatibility discussion is tracked in
+`issue #969 <https://github.com/enthought/comtypes/issues/969>`_.
 
 Generated types
 ---------------
 
 ``GetModule`` now represents ``VT_I1`` with ``ctypes.c_byte`` (a signed 8-bit
 integer) instead of ``ctypes.c_char``. This affects scalar values, pointers,
-and SAFEARRAY elements described by ``VT_I1`` in a type library. For example,
+structure and union fields, and SAFEARRAY elements described by ``VT_I1``
+in a type library. For example,
 an IDL ``small`` scalar and a plain ``char*`` pointer use this mapping.
 Explicit string types such as ``LPSTR`` still generate ``STRING``
 (``ctypes.c_char_p``); ``VT_UI1`` still generates ``ctypes.c_ubyte``.
