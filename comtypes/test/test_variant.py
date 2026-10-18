@@ -287,21 +287,24 @@ class VariantTestCase(unittest.TestCase):
         v._.scode = hresult.DISP_E_MEMBERNOTFOUND
         self.assertEqual(repr(v), f"VARIANT(vt=0xa, {hresult.DISP_E_MEMBERNOTFOUND})")
 
+    def spy_variant_clear(self) -> unittest.mock._patch:
+        from comtypes import automation
+        from comtypes.automation import _VariantClear
+
+        return unittest.mock.patch.object(
+            automation, "_VariantClear", autospec=True, side_effect=_VariantClear
+        )
+
     def test_del_to_clear(self):
         """Ensure `__del__` invokes `VariantClear` for standalone VARIANT instances.
 
         Even though a VARIANT fits in `ctypes`' inline buffer (<= 16 bytes),
         `_b_needsfree_` is set to 1 because the object owns the buffer.
         """
-        from comtypes import automation
-        from comtypes.automation import _VariantClear
-
         v = VARIANT(1)
         # Standalone instances own their memory, so `_b_needsfree_` must be 1.
         self.assertEqual(v._b_needsfree_, 1)
-        with unittest.mock.patch.object(
-            automation, "_VariantClear", side_effect=_VariantClear
-        ) as m:
+        with self.spy_variant_clear() as m:
             del v
         # Verify that `__del__` actually invoked `_VariantClear`.
         (((cleared,), _),) = m.call_args_list
