@@ -201,10 +201,14 @@ class tagVARIANT(Structure):
             self.value = args[0]
 
     def __del__(self):
+        # In `ctypes`, `_b_needsfree_` indicates ownership of the memory buffer.
         if self._b_needsfree_:
-            # XXX This does not work.  _b_needsfree_ is never
-            # set because the buffer is internal to the object.
+            # Standalone instances own their buffer (`_b_needsfree_ == 1`) even
+            # when using an inline buffer, so `_VariantClear` is invoked.
             _VariantClear(self)
+        # Referenced instances (e.g., struct members, array elements, or pointer
+        # contents) do not own the buffer (`_b_needsfree_ == 0`), so clearing
+        # is skipped.
 
     def __repr__(self):
         if self.vt & VT_BYREF:
