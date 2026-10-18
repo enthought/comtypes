@@ -41,7 +41,7 @@ guids.obj : guids.c
 # Component/server source files
 #
 
-server.obj : server.cpp cunknown.h cfactory.h iface.h CoNumericSafearrayTest.h CoVariantErrorTest.h
+server.obj : server.cpp cunknown.h cfactory.h iface.h CoNumericSafearrayTest.h CoByteCompatibilityTest.h CoVariantErrorTest.h
 	cl $(CPP_FLAGS) server.cpp
 
 CoComtypesDispRecordParamTest.obj : CoComtypesDispRecordParamTest.cpp \
@@ -56,6 +56,9 @@ CoNumericSafearrayTest.obj : CoNumericSafearrayTest.cpp \
 		CoNumericSafearrayTest.h iface.h CUnknown.h
 	cl $(CPP_FLAGS) CoNumericSafearrayTest.cpp
 
+CoByteCompatibilityTest.obj : CoByteCompatibilityTest.cpp \
+		CoByteCompatibilityTest.h iface.h CUnknown.h
+	cl $(CPP_FLAGS) CoByteCompatibilityTest.cpp
 CoStringSafearrayInsideVariantTest.obj : CoStringSafearrayInsideVariantTest.cpp \
 		CoStringSafearrayInsideVariantTest.h iface.h registry.h CUnknown.h
 	cl $(CPP_FLAGS) CoStringSafearrayInsideVariantTest.cpp
@@ -94,6 +97,7 @@ SERVER_OBJS = Server.obj     \
               CoComtypesDispRecordParamTest.obj      \
               CoComtypesDispSafearrayParamTest.obj      \
               CoNumericSafearrayTest.obj      \
+              CoByteCompatibilityTest.obj      \
               CoStringSafearrayInsideVariantTest.obj      \
               CoVariantErrorTest.obj      \
               Registry.obj   \
