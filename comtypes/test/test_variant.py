@@ -5,6 +5,7 @@ import unittest
 import unittest.mock
 from ctypes import (
     POINTER,
+    Structure,
     byref,
     c_byte,
     c_char,
@@ -312,6 +313,28 @@ class VariantTestCase(unittest.TestCase):
         # Verify that `_VariantClear` successfully cleared the vt and the value.
         self.assertEqual(cleared.vt, VT_EMPTY)
         self.assertIsNone(cleared.value, None)
+
+    def test_referenced_variant_b_needsfree_zero(self):
+        """Ensure `_b_needsfree_` is 0 for referenced VARIANTs and `__del__` does not clear.
+
+        When a VARIANT references another object's buffer (e.g., an array element,
+        a struct member, or pointer contents), `_b_needsfree_` is 0 because it
+        does not own the memory buffer. Consequently, `__del__` does not invoke `_VariantClear`.
+        """
+
+        class StructWithVariant(Structure):
+            _fields_ = [("v", VARIANT)]
+
+        s = StructWithVariant()
+        arr = (VARIANT * 1)()
+        element = arr[0]
+        orig = VARIANT(1)
+        p = pointer(orig)
+
+        self.assertEqual(s.v._b_needsfree_, 0)
+        self.assertEqual(element._b_needsfree_, 0)
+        self.assertEqual(p.contents._b_needsfree_, 0)
+        # Note: No explicit cleanup (like `VariantClear`) is required here.
 
 
 class ArrayTest(unittest.TestCase):
