@@ -2,6 +2,7 @@ import datetime
 import decimal
 import sys
 import unittest
+import unittest.mock
 from ctypes import (
     POINTER,
     byref,
@@ -285,6 +286,29 @@ class VariantTestCase(unittest.TestCase):
         v.vt = VT_ERROR
         v._.scode = hresult.DISP_E_MEMBERNOTFOUND
         self.assertEqual(repr(v), f"VARIANT(vt=0xa, {hresult.DISP_E_MEMBERNOTFOUND})")
+
+    def test_del_to_clear(self):
+        """Ensure `__del__` invokes `VariantClear` for standalone VARIANT instances.
+
+        Even though a VARIANT fits in `ctypes`' inline buffer (<= 16 bytes),
+        `_b_needsfree_` is set to 1 because the object owns the buffer.
+        """
+        from comtypes import automation
+        from comtypes.automation import _VariantClear
+
+        v = VARIANT(1)
+        # Standalone instances own their memory, so `_b_needsfree_` must be 1.
+        self.assertEqual(v._b_needsfree_, 1)
+        with unittest.mock.patch.object(
+            automation, "_VariantClear", side_effect=_VariantClear
+        ) as m:
+            del v
+        # Verify that `__del__` actually invoked `_VariantClear`.
+        (((cleared,), _),) = m.call_args_list
+        m.assert_called_once()
+        # Verify that `_VariantClear` successfully cleared the vt and the value.
+        self.assertEqual(cleared.vt, VT_EMPTY)
+        self.assertIsNone(cleared.value, None)
 
 
 class ArrayTest(unittest.TestCase):
