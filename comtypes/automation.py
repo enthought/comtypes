@@ -202,8 +202,8 @@ class tagVARIANT(Structure):
 
     def __del__(self):
         if self._b_needsfree_:
-            # XXX This does not work.  _b_needsfree_ is never
-            # set because the buffer is internal to the object.
+            # Even when using an inline buffer, current `ctypes` sets
+            # `_b_needsfree_ = 1` to indicate ownership of the memory.
             _VariantClear(self)
 
     def __repr__(self):
