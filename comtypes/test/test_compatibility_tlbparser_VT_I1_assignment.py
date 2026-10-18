@@ -257,24 +257,103 @@ class ByteCompatibilityTest(unittest.TestCase):
     def setUp(self):
         self.legacy_automatic = create_server(create_legacy_automatic_int8_output())
         self.legacy_buffered = create_server(create_legacy_buffered_int8_output())
-        self.proposed = {
-            "automatic": create_server(create_proposed_itf()),
-            "pointer": create_server(create_proposed_char_ptr_output_buf()),
-            "reference": create_server(create_proposed_char_ref_output_buf()),
-            "array": create_server(create_proposed_arr_output_buf()),
-            "generated": create_server(ComtypesCppTestSrvLib.IByteCompatibilityTest),
-        }
+        self.proposed_automatic = create_server(create_proposed_itf())
+        self.proposed_pointer = create_server(create_proposed_char_ptr_output_buf())
+        self.proposed_reference = create_server(create_proposed_char_ref_output_buf())
+        self.proposed_array = create_server(create_proposed_arr_output_buf())
+        self.generated = create_server(ComtypesCppTestSrvLib.IByteCompatibilityTest)
 
 
 class TestGeneratedMapping(ByteCompatibilityTest):
     def test_generated_mapping(self):
         self.assertEqual(
-            ComtypesCppTestSrvLib.IByteCompatibilityTest._methods_, PROPOSED_COMMETHODS
-        )
-        # The legacy mapping describes different Python argument/result types.
-        self.assertNotEqual(
             ComtypesCppTestSrvLib.IByteCompatibilityTest._methods_, LEGACY_COMMETHODS
         )
+        # The proposed mapping would change Python argument/result types.
+        self.assertNotEqual(
+            ComtypesCppTestSrvLib.IByteCompatibilityTest._methods_, PROPOSED_COMMETHODS
+        )
+
+    def test_echo_int8_raises_type_error(self):
+        # The current generated STRING retval cannot allocate a scalar result.
+        for value in (b"\x80", b"\xf9", b"\xff", b"\0", b"\x01", b"\x7f"):
+            with self.subTest(value=value):
+                with self.assertRaises(TypeError):
+                    self.generated.EchoInt8(value)
+
+    def test_echo_int8_raises_argument_error(self):
+        for value in (-128, -7, -1):
+            with self.subTest(value=value):
+                # Supply the output buffer so its automatic allocation error
+                # does not hide validation of the c_char input argument.
+                result = create_string_buffer(2)
+                with self.assertRaises(ArgumentError):
+                    self.generated._IByteCompatibilityTest__com_EchoInt8(value, result)
+
+    def test_echo_int8_with_explicit_storage(self):
+        for value, expected in (
+            (b"\x80", b"\x80"),
+            (b"\xf9", b"\xf9"),
+            (b"\xff", b"\xff"),
+            (0, b"\0"),
+            (1, b"\x01"),
+            (127, b"\x7f"),
+        ):
+            with self.subTest(value=value):
+                result = create_string_buffer(2)
+                self.generated._IByteCompatibilityTest__com_EchoInt8(value, result)
+                self.assertEqual(result.raw[:1], expected)
+
+    def test_read_char_pointer_takes_bytes(self):
+        for value, expected in (
+            (b"\0", 0),
+            (b"h", 104),
+            (b"\x80", 128),
+            (b"\xff", 255),
+        ):
+            with self.subTest(value=value):
+                self.assertEqual(self.generated.ReadCharPointer(value), expected)
+
+    def test_read_char_pointer_rejects_signed_byte_storage(self):
+        for argument in (pointer(c_byte(104)), byref(c_byte(104)), (c_byte * 1)(104)):
+            with self.subTest(argument=argument):
+                with self.assertRaises(ArgumentError):
+                    self.generated.ReadCharPointer(argument)
+
+    def test_get_character_bytes_raises_type_error(self):
+        with self.assertRaises(TypeError):
+            self.generated.GetCharacterBytes(104)
+
+    def test_get_character_bytes_with_explicit_storage(self):
+        for value, expected in (
+            (0, b"\0"),
+            (104, b"h"),
+            (128, b"\x80"),
+            (255, b"\xff"),
+        ):
+            with self.subTest(value=value):
+                result = create_string_buffer(2)
+                self.generated._IByteCompatibilityTest__com_GetCharacterBytes(
+                    value, result
+                )
+                self.assertEqual(result.raw[:1], expected)
+
+    def test_uint8_unchanged(self):
+        for value in (0, 1, 128, 255):
+            with self.subTest(value=value):
+                self.assertEqual(self.generated.EchoUint8(value), value)
+
+    def test_lpstr_unchanged(self):
+        for value in (b"", b"hello", b"\x80\xff"):
+            with self.subTest(value=value):
+                result = c_char_p()
+                try:
+                    self.generated._IByteCompatibilityTest__com_EchoLpStr(
+                        value, byref(result)
+                    )
+                    self.assertEqual(result.value, value)
+                finally:
+                    _CoTaskMemFree(cast(result, c_void_p))
 
 
 class TestEchoInt8(ByteCompatibilityTest):
@@ -289,7 +368,12 @@ class TestEchoInt8(ByteCompatibilityTest):
         ):
             with self.subTest(mapping="legacy_buffered", value=value):
                 self.assertEqual(self.legacy_buffered.EchoInt8(value), expected)
-        for name, server in self.proposed.items():
+        for name, server in [
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
+        ]:
             for value, expected in (
                 (-128, -128),
                 (-7, -7),
@@ -308,7 +392,12 @@ class TestEchoInt8(ByteCompatibilityTest):
                     self.legacy_automatic.EchoInt8(value)
 
     def test_raises_argument_error(self):
-        for name, server in self.proposed.items():
+        for name, server in [
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
+        ]:
             for value in (b"\x80", b"h", b"\xff"):
                 with self.subTest(mapping=name, value=value):
                     with self.assertRaises(ArgumentError):
@@ -320,7 +409,10 @@ class TestEchoUint8(ByteCompatibilityTest):
         for name, server in [
             ("legacy_automatic", self.legacy_automatic),
             ("legacy_buffered", self.legacy_buffered),
-            *self.proposed.items(),
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
         ]:
             for value, expected in ((0, 0), (1, 1), (42, 42), (128, 128), (255, 255)):
                 with self.subTest(mapping=name, value=value):
@@ -330,7 +422,10 @@ class TestEchoUint8(ByteCompatibilityTest):
         for name, server in [
             ("legacy_automatic", self.legacy_automatic),
             ("legacy_buffered", self.legacy_buffered),
-            *self.proposed.items(),
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
         ]:
             with self.subTest(mapping=name):
                 with self.assertRaises(ArgumentError):
@@ -343,7 +438,10 @@ class TestEchoLpStr(ByteCompatibilityTest):
         for name, server in [
             ("legacy_automatic", self.legacy_automatic),
             ("legacy_buffered", self.legacy_buffered),
-            *[(n, s) for n, s in self.proposed.items() if n != "generated"],
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
         ]:
             for value, expected in (
                 (b"", b""),
@@ -357,7 +455,10 @@ class TestEchoLpStr(ByteCompatibilityTest):
         for name, server in [
             ("legacy_automatic", self.legacy_automatic),
             ("legacy_buffered", self.legacy_buffered),
-            *self.proposed.items(),
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
         ]:
             with self.subTest(mapping=name):
                 with self.assertRaises(ArgumentError):
@@ -378,7 +479,12 @@ class TestReadCharPointer(ByteCompatibilityTest):
             ):
                 with self.subTest(mapping=name, value=value):
                     self.assertEqual(server.ReadCharPointer(value), expected)
-        for name, server in self.proposed.items():
+        for name, server in [
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
+        ]:
             for value, expected in ((0, 0), (104, 104), (-128, 128), (-1, 255)):
                 for argument in (
                     pointer(c_byte(value)),
@@ -401,9 +507,14 @@ class TestReadCharPointer(ByteCompatibilityTest):
                 with self.subTest(mapping=name, argument=argument):
                     with self.assertRaises(ArgumentError):
                         server.ReadCharPointer(argument)
-        # This includes the generated interface: bytes input compatibility is
-        # changed, even though signed-byte pointers now work as intended.
-        for name, server in self.proposed.items():
+        # Handwritten proposed interfaces reject the legacy bytes input.
+        # The generated interface still uses the legacy mapping, tested above.
+        for name, server in [
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
+        ]:
             for value in (b"\0", b"h", b"\x80", b"\xff"):
                 with self.subTest(mapping=name, value=value):
                     with self.assertRaises(ArgumentError):
@@ -425,7 +536,12 @@ class TestGetCharacterBytes(ByteCompatibilityTest):
             ):
                 with self.subTest(mapping=name, value=value):
                     self.assertEqual(server.GetCharacterBytes(value), expected)
-        for name, server in self.proposed.items():
+        for name, server in [
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
+        ]:
             for value, expected in ((0, 0), (1, 1), (104, 104), (128, -128), (255, -1)):
                 with self.subTest(mapping=name, value=value):
                     self.assertEqual(server.GetCharacterBytes(value), expected)
@@ -433,7 +549,12 @@ class TestGetCharacterBytes(ByteCompatibilityTest):
                     self.assertNotEqual(server.GetCharacterBytes(value), bytes([value]))
 
     def test_raises_argument_error(self):
-        for name, server in self.proposed.items():
+        for name, server in [
+            ("proposed_automatic", self.proposed_automatic),
+            ("proposed_pointer", self.proposed_pointer),
+            ("proposed_reference", self.proposed_reference),
+            ("proposed_array", self.proposed_array),
+        ]:
             with self.subTest(mapping=name):
                 result = create_string_buffer(2)
                 # Legacy character storage is incompatible with POINTER(c_byte).
