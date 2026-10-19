@@ -28,6 +28,8 @@ jobs:
           nmake /f Makefile
           ./server.exe /RegServer
       - name: unittest comtypes
+        env:
+          COVERAGE_CORE: ${{ matrix.python-version == '3.12' && 'sysmon' || '' }}
         run: |
           if ("${{ matrix.support }}" -eq "with 3rd parties") {
             pip install numpy
