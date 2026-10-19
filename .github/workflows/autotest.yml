@@ -8,6 +8,10 @@ jobs:
   unit-tests:
     runs-on: ${{ matrix.os }}
     strategy:
+      # Keep all matrix variants running even when one of the flaky unit-test
+      # combinations fails. This makes it easier to collect the remaining
+      # signal and avoids cancelling healthy runs.
+      fail-fast: false
       matrix:
         os: [windows-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
@@ -28,6 +32,13 @@ jobs:
           nmake /f Makefile
           ./server.exe /RegServer
       - name: unittest comtypes
+        env:
+          # The normal coverage core uses `sys.settrace`. In Python 3.12, this
+          # kind of tracing is very slow. `sysmon` uses Python's newer
+          # `sys.monitoring` API.
+          # It gets line events from Python with less extra work, so the test
+          # job can finish faster.
+          COVERAGE_CORE: ${{ matrix.python-version == '3.12' && 'sysmon' || '' }}
         run: |
           if ("${{ matrix.support }}" -eq "with 3rd parties") {
             pip install numpy

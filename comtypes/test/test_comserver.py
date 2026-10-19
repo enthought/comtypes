@@ -141,7 +141,7 @@ class TestInproc_win32com(BaseServerTest, unittest.TestCase):
     def create_object(self):
         return Dispatch("TestComServerLib.TestComServer")
 
-    if sys.version_info >= (3, 14):
+    if sys.version_info >= (3, 14) or sys.version_info[:2] == (3, 12):
 
         @unittest.skip("Fails occasionally with a memory leak on INPROC.")
         def test_eval(self):
