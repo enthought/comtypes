@@ -8,6 +8,10 @@ jobs:
   unit-tests:
     runs-on: ${{ matrix.os }}
     strategy:
+      # Keep all matrix variants running even when one of the flaky unit-test
+      # combinations fails. This makes it easier to collect the remaining signal
+      # and avoids cancelling healthy runs that would otherwise be retried again.
+      fail-fast: false
       matrix:
         os: [windows-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
