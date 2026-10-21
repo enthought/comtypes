@@ -81,7 +81,7 @@ class CodeGenerator:
         yield self.stream
         self.last_item = item
 
-    def generate(self, item: tlbparser.ParsedType) -> None:
+    def generate(self, item: Any) -> None:
         if item in self.done:
             return
         if self._is_interface_typedesc(item):
