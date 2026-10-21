@@ -617,7 +617,7 @@ class Parser:
             raise ValueError(f"Bug: Multiple registered name '{name}': {value!r}")
         self.items[fullname] = value
 
-    def parse_typeinfo(self, tinfo: typeinfo.ITypeInfo) -> Any:
+    def parse_typeinfo(self, tinfo: typeinfo.ITypeInfo) -> Optional[ParsedType]:
         name = tinfo.GetDocumentation(-1)[0]
         modname = self._typelib_module()
         try:
