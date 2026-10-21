@@ -7,7 +7,7 @@ import logging
 import os
 import textwrap
 import warnings
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from typing import Any, Literal, Optional
 from typing import Union as _UnionT
 
@@ -81,7 +81,7 @@ class CodeGenerator:
         yield self.stream
         self.last_item = item
 
-    def generate(self, item):
+    def generate(self, item: tlbparser.ParsedType) -> None:
         if item in self.done:
             return
         if self._is_interface_typedesc(item):
@@ -104,7 +104,7 @@ class CodeGenerator:
         self.done.add(item)
         mth(item)
 
-    def generate_all(self, items):
+    def generate_all(self, items: Iterable[tlbparser.ParsedType]) -> None:
         for item in items:
             self.generate(item)
 
@@ -160,7 +160,7 @@ class CodeGenerator:
             self.names.add("typelib_path")
 
     def generate_wrapper_code(
-        self, tdescs: Sequence[Any], filename: Optional[str]
+        self, tdescs: Sequence[tlbparser.ParsedType], filename: Optional[str]
     ) -> str:
         """Returns the code for the COM type library wrapper module.
 
