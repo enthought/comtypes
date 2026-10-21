@@ -1,9 +1,11 @@
 import os
 import sys
 from _ctypes import COMError
+from collections.abc import Mapping
 from ctypes import alignment, c_void_p, sizeof, windll
 from ctypes.wintypes import MAX_PATH
 from typing import Any, Optional
+from typing import Union as _UnionT
 
 from comtypes import automation, typeinfo
 from comtypes.tools import typedesc
@@ -106,6 +108,18 @@ COMTYPES = {
 
 # automation.VT_ARRAY = 8192
 # automation.VT_BYREF = 16384
+
+ParsedType = _UnionT[
+    typedesc.TypeLib,
+    typedesc.Constant,
+    typedesc.External,
+    typedesc.ComInterface,
+    typedesc.DispInterface,
+    typedesc.Typedef,
+    typedesc.Structure,
+    typedesc.Union,
+    typedesc.Enumeration,
+]
 
 ################################################################
 
@@ -670,7 +684,7 @@ class Parser:
 
     ################################################################
 
-    def parse(self):
+    def parse(self) -> Mapping[str, ParsedType]:
         self.parse_LibraryDescription()
 
         for i in range(self.tlib.GetTypeInfoCount()):
