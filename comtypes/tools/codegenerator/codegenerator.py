@@ -7,7 +7,7 @@ import logging
 import os
 import textwrap
 import warnings
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from typing import Any, Literal, Optional
 from typing import Union as _UnionT
 
@@ -50,8 +50,8 @@ class CodeGenerator:
         self.enums = namespaces.EnumerationNamespaces()
         self.unnamed_enum_members: list[tuple[str, int]] = []
         self._to_type_name = TypeNamer()
-        self.known_symbols = known_symbols or {}
-        self.known_interfaces = known_interfaces or {}
+        self.known_symbols: Mapping[str, str] = known_symbols or {}
+        self.known_interfaces: Mapping[str, str] = known_interfaces or {}
 
         self.done = set()  # type descriptions that have been generated
         self.names = set()  # names that have been generated
