@@ -133,7 +133,7 @@ SpecType = _UnionT[
 
 class Parser:
     tlib: typeinfo.ITypeLib
-    items: dict[str, Any]
+    items: dict[str, ParsedType]
 
     def make_type(
         self, tdesc: typeinfo.TYPEDESC, tinfo: typeinfo.ITypeInfo
