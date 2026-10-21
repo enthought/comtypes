@@ -122,6 +122,12 @@ ParsedType = _UnionT[
     typedesc.Enumeration,
 ]
 
+SpecType = _UnionT[
+    typedesc.FundamentalType,
+    typedesc.PointerType,
+    typedesc.ArrayType,
+    typedesc.SAFEARRAYType,
+]
 ################################################################
 
 
@@ -129,7 +135,9 @@ class Parser:
     tlib: typeinfo.ITypeLib
     items: dict[str, Any]
 
-    def make_type(self, tdesc: typeinfo.TYPEDESC, tinfo: typeinfo.ITypeInfo) -> Any:
+    def make_type(
+        self, tdesc: typeinfo.TYPEDESC, tinfo: typeinfo.ITypeInfo
+    ) -> _UnionT[ParsedType, SpecType]:
         if tdesc.vt in COMTYPES:
             return COMTYPES[tdesc.vt]
         if tdesc.vt == automation.VT_CARRAY:
