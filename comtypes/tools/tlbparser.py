@@ -602,7 +602,10 @@ class Parser:
         return str(tlib.GetLibAttr())
 
     def _register(
-        self, name: Optional[str], value: Any, tlib: Optional[typeinfo.ITypeLib] = None
+        self,
+        name: Optional[str],
+        value: ParsedType,
+        tlib: Optional[typeinfo.ITypeLib] = None,
     ) -> None:
         modname = self._typelib_module(tlib)
         fullname = f"{modname}.{name}"
