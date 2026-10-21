@@ -75,7 +75,6 @@ ignore = ["E402"]
 "comtypes/server/register.py" = ["E713"]
 "comtypes/tools/codegenerator/packing.py" = ["F821", "F841"]
 "comtypes/tools/typedesc.py" = ["F403", "F405"]
-"comtypes/tools/typedesc_base.py" = ["F401"]
 # gen directory
 "comtypes/gen/*" = ["E", "F", "I"]
 # stub

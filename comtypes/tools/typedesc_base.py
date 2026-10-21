@@ -2,8 +2,6 @@
 from typing import Any, Optional, SupportsInt
 from typing import Union as _UnionT
 
-import comtypes
-
 
 class Argument:
     "a Parameter in the argument list of a callable (Function, Method, ...)"
