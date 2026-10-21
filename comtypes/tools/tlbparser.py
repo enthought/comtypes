@@ -1,9 +1,11 @@
 import os
 import sys
 from _ctypes import COMError
+from collections.abc import Mapping
 from ctypes import alignment, c_void_p, sizeof, windll
 from ctypes.wintypes import MAX_PATH
 from typing import Any, Optional
+from typing import Union as _UnionT
 
 from comtypes import automation, typeinfo
 from comtypes.tools import typedesc
@@ -107,14 +109,35 @@ COMTYPES = {
 # automation.VT_ARRAY = 8192
 # automation.VT_BYREF = 16384
 
+ParsedType = _UnionT[
+    typedesc.TypeLib,
+    typedesc.Constant,
+    typedesc.External,
+    typedesc.CoClass,
+    typedesc.ComInterface,
+    typedesc.DispInterface,
+    typedesc.Typedef,
+    typedesc.Structure,
+    typedesc.Union,
+    typedesc.Enumeration,
+]
+
+SpecType = _UnionT[
+    typedesc.FundamentalType,
+    typedesc.PointerType,
+    typedesc.ArrayType,
+    typedesc.SAFEARRAYType,
+]
 ################################################################
 
 
 class Parser:
     tlib: typeinfo.ITypeLib
-    items: dict[str, Any]
+    items: dict[str, ParsedType]
 
-    def make_type(self, tdesc: typeinfo.TYPEDESC, tinfo: typeinfo.ITypeInfo) -> Any:
+    def make_type(
+        self, tdesc: typeinfo.TYPEDESC, tinfo: typeinfo.ITypeInfo
+    ) -> _UnionT[ParsedType, SpecType]:
         if tdesc.vt in COMTYPES:
             return COMTYPES[tdesc.vt]
         if tdesc.vt == automation.VT_CARRAY:
@@ -587,7 +610,10 @@ class Parser:
         return str(tlib.GetLibAttr())
 
     def _register(
-        self, name: Optional[str], value: Any, tlib: Optional[typeinfo.ITypeLib] = None
+        self,
+        name: Optional[str],
+        value: ParsedType,
+        tlib: Optional[typeinfo.ITypeLib] = None,
     ) -> None:
         modname = self._typelib_module(tlib)
         fullname = f"{modname}.{name}"
@@ -599,7 +625,7 @@ class Parser:
             raise ValueError(f"Bug: Multiple registered name '{name}': {value!r}")
         self.items[fullname] = value
 
-    def parse_typeinfo(self, tinfo: typeinfo.ITypeInfo) -> Any:
+    def parse_typeinfo(self, tinfo: typeinfo.ITypeInfo) -> Optional[ParsedType]:
         name = tinfo.GetDocumentation(-1)[0]
         modname = self._typelib_module()
         try:
@@ -670,7 +696,7 @@ class Parser:
 
     ################################################################
 
-    def parse(self):
+    def parse(self) -> Mapping[str, ParsedType]:
         self.parse_LibraryDescription()
 
         for i in range(self.tlib.GetTypeInfoCount()):

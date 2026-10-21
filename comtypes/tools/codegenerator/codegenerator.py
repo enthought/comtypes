@@ -7,7 +7,7 @@ import logging
 import os
 import textwrap
 import warnings
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from typing import Any, Literal, Optional
 from typing import Union as _UnionT
 
@@ -50,8 +50,8 @@ class CodeGenerator:
         self.enums = namespaces.EnumerationNamespaces()
         self.unnamed_enum_members: list[tuple[str, int]] = []
         self._to_type_name = TypeNamer()
-        self.known_symbols = known_symbols or {}
-        self.known_interfaces = known_interfaces or {}
+        self.known_symbols: Mapping[str, str] = known_symbols or {}
+        self.known_interfaces: Mapping[str, str] = known_interfaces or {}
 
         self.done = set()  # type descriptions that have been generated
         self.names = set()  # names that have been generated
@@ -81,7 +81,7 @@ class CodeGenerator:
         yield self.stream
         self.last_item = item
 
-    def generate(self, item):
+    def generate(self, item: Any) -> None:
         if item in self.done:
             return
         if self._is_interface_typedesc(item):
@@ -104,7 +104,7 @@ class CodeGenerator:
         self.done.add(item)
         mth(item)
 
-    def generate_all(self, items):
+    def generate_all(self, items: Iterable[tlbparser.ParsedType]) -> None:
         for item in items:
             self.generate(item)
 
@@ -160,7 +160,7 @@ class CodeGenerator:
             self.names.add("typelib_path")
 
     def generate_wrapper_code(
-        self, tdescs: Sequence[Any], filename: Optional[str]
+        self, tdescs: Sequence[tlbparser.ParsedType], filename: Optional[str]
     ) -> str:
         """Returns the code for the COM type library wrapper module.
 

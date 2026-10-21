@@ -2,8 +2,6 @@
 from typing import Any, Optional, SupportsInt
 from typing import Union as _UnionT
 
-import comtypes
-
 
 class Argument:
     "a Parameter in the argument list of a callable (Function, Method, ...)"
@@ -110,11 +108,10 @@ class Method(_HasArgs):
 class FundamentalType:
     location = None
 
-    def __init__(self, name, size, align):
+    def __init__(self, name: str, size: int, align: int) -> None:
         self.name = name
-        if name != "void":
-            self.size = int(size)
-            self.align = int(align)
+        self.size = int(size)
+        self.align = int(align)
 
 
 class PointerType:
