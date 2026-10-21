@@ -113,6 +113,7 @@ ParsedType = _UnionT[
     typedesc.TypeLib,
     typedesc.Constant,
     typedesc.External,
+    typedesc.CoClass,
     typedesc.ComInterface,
     typedesc.DispInterface,
     typedesc.Typedef,
