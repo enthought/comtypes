@@ -1,10 +1,12 @@
 import keyword
 from collections.abc import Iterator
-from typing import Any
+from typing import Any, TypeVar, overload
 from typing import Union as _UnionT
 
 from comtypes.tools import typedesc
 from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
+
+_TD = TypeVar("_TD")
 
 
 class lcid:
@@ -53,6 +55,10 @@ ctypes_names = {
 }
 
 
+@overload
+def get_real_type(tp: typedesc.Typedef[_TD]) -> _TD: ...
+@overload
+def get_real_type(tp: _TD) -> _TD: ...
 def get_real_type(tp):
     if type(tp) is typedesc.Typedef:
         return get_real_type(tp.typ)

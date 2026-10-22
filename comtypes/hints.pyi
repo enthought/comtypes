@@ -12,16 +12,18 @@ from typing import Union as _UnionT
 
 if sys.version_info >= (3, 10):
     from typing import Concatenate, ParamSpec, TypeAlias
-    from typing import TypeGuard as TypeGuard
 else:
     from typing_extensions import Concatenate, ParamSpec, TypeAlias
-    from typing_extensions import TypeGuard as TypeGuard
 if sys.version_info >= (3, 11):
     from typing import Self as Self
     from typing import Unpack as Unpack
 else:
     from typing_extensions import Self as Self
     from typing_extensions import Unpack as Unpack
+if sys.version_info >= (3, 13):
+    from typing import TypeIs as TypeIs
+else:
+    from typing_extensions import TypeIs as TypeIs
 
 import comtypes
 from comtypes import IUnknown as IUnknown, COMObject as COMObject, GUID as GUID

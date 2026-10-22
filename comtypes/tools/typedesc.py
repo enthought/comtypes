@@ -3,7 +3,7 @@
 
 import ctypes
 from collections.abc import Sequence
-from typing import Any, Optional
+from typing import Any, Generic, Optional, TypeVar
 from typing import Union as _UnionT
 
 from comtypes import typeinfo
@@ -30,6 +30,8 @@ from comtypes.tools.typedesc_base import Typedef as Typedef
 from comtypes.tools.typedesc_base import Union as Union
 from comtypes.tools.typedesc_base import Variable as Variable
 from comtypes.typeinfo import TLIBATTR, ITypeLib
+
+_TD = TypeVar("_TD")
 
 
 class TypeLib:
@@ -83,8 +85,8 @@ class External:
         return self
 
 
-class SAFEARRAYType:
-    def __init__(self, typ: Any) -> None:
+class SAFEARRAYType(Generic[_TD]):
+    def __init__(self, typ: _TD) -> None:
         self.typ = typ
         self.align = self.size = ctypes.sizeof(ctypes.c_void_p) * 8
 

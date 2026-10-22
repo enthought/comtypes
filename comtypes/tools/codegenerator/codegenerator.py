@@ -8,7 +8,7 @@ import os
 import textwrap
 import warnings
 from collections.abc import Iterable, Iterator, Mapping, Sequence
-from typing import Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 from typing import Union as _UnionT
 
 import comtypes
@@ -24,6 +24,10 @@ from comtypes.tools.codegenerator.helpers import (
     get_real_type,
 )
 from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
+
+if TYPE_CHECKING:
+    from comtypes import hints  # type: ignore
+
 
 version = comtypes.__version__
 
@@ -569,9 +573,7 @@ class CodeGenerator:
 
         self.names.add(coclass.name)
 
-    def _is_interface_typedesc(
-        self, item: Any
-    ) -> "comtypes.hints.TypeGuard[_InterfaceTypeDesc]":
+    def _is_interface_typedesc(self, item: Any) -> "hints.TypeIs[_InterfaceTypeDesc]":
         return isinstance(
             item,
             (

@@ -4,7 +4,7 @@ from _ctypes import COMError
 from collections.abc import Mapping
 from ctypes import alignment, c_void_p, sizeof, windll
 from ctypes.wintypes import MAX_PATH
-from typing import Any, Optional
+from typing import Any, Optional, TypeVar, overload
 from typing import Union as _UnionT
 
 from comtypes import automation, typeinfo
@@ -15,8 +15,14 @@ is_64bits = sys.maxsize > 2**32
 
 
 ################################
+_PT = TypeVar("_PT", bound=_UnionT["ParsedType", "SpecType"])
+_TypeDefNone = typedesc.Typedef[None]
 
 
+@overload
+def PTR(typ: _PT) -> typedesc.PointerType[_PT]: ...
+@overload
+def PTR(typ: _TypeDefNone) -> typedesc.PointerType[_TypeDefNone]: ...
 def PTR(typ):
     return typedesc.PointerType(typ, sizeof(c_void_p) * 8, alignment(c_void_p) * 8)
 
@@ -62,7 +68,7 @@ DECIMAL_type = typedesc.Structure(
 )
 
 
-def midlSAFEARRAY(typ):
+def midlSAFEARRAY(typ: _PT) -> typedesc.SAFEARRAYType[_PT]:
     return typedesc.SAFEARRAYType(typ)
 
 
@@ -116,7 +122,8 @@ ParsedType = _UnionT[
     typedesc.CoClass,
     typedesc.ComInterface,
     typedesc.DispInterface,
-    typedesc.Typedef,
+    typedesc.Typedef["_UnionT[ParsedType, SpecType]"],
+    _TypeDefNone,
     typedesc.Structure,
     typedesc.Union,
     typedesc.Enumeration,
@@ -124,9 +131,9 @@ ParsedType = _UnionT[
 
 SpecType = _UnionT[
     typedesc.FundamentalType,
-    typedesc.PointerType,
-    typedesc.ArrayType,
-    typedesc.SAFEARRAYType,
+    typedesc.PointerType["_UnionT[ParsedType, SpecType]"],
+    typedesc.ArrayType["_UnionT[ParsedType, SpecType]"],
+    typedesc.SAFEARRAYType["_UnionT[ParsedType, SpecType]"],
 ]
 ################################################################
 
