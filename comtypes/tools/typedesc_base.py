@@ -1,6 +1,8 @@
 # typedesc.py - classes representing C type descriptions
-from typing import Any, Optional, SupportsInt
+from typing import Any, Generic, Optional, SupportsInt, TypeVar
 from typing import Union as _UnionT
+
+_TD = TypeVar("_TD")
 
 
 class Argument:
@@ -114,27 +116,27 @@ class FundamentalType:
         self.align = int(align)
 
 
-class PointerType:
+class PointerType(Generic[_TD]):
     location = None
 
-    def __init__(self, typ, size, align):
+    def __init__(self, typ: _TD, size: int, align: int) -> None:
         self.typ = typ
         self.size = int(size)
         self.align = int(align)
 
 
-class Typedef:
+class Typedef(Generic[_TD]):
     location = None
 
-    def __init__(self, name, typ):
+    def __init__(self, name: str, typ: _TD) -> None:
         self.name = name
         self.typ = typ
 
 
-class ArrayType:
+class ArrayType(Generic[_TD]):
     location = None
 
-    def __init__(self, typ: Any, min: int, max: int) -> None:
+    def __init__(self, typ: _TD, min: int, max: int) -> None:
         self.typ = typ
         self.min = min
         self.max = max
