@@ -129,6 +129,9 @@ class CodeGenerator:
         # to avoid infinite recursion, we have to mark it as done
         # before actually generating the code.
         self.done.add(item)
+        self._dispatch_by(item)
+
+    def _dispatch_by(self, item: Any) -> None:
         if isinstance(item, typedesc.ArrayType):
             self.ArrayType(item)
         elif isinstance(item, typedesc.EnumValue):
@@ -159,8 +162,20 @@ class CodeGenerator:
             self.PointerType(item)
         elif isinstance(item, typedesc.CoClass):
             self.CoClass(item)
+        elif isinstance(item, typedesc.ComInterface):
+            self.ComInterface(item)
+        elif isinstance(item, typedesc.ComInterfaceHead):
+            self.ComInterfaceHead(item)
+        elif isinstance(item, typedesc.ComInterfaceBody):
+            self.ComInterfaceBody(item)
+        elif isinstance(item, typedesc.DispInterface):
+            self.DispInterface(item)
+        elif isinstance(item, typedesc.DispInterfaceHead):
+            self.DispInterfaceHead(item)
+        elif isinstance(item, typedesc.DispInterfaceBody):
+            self.DispInterfaceBody(item)
         else:
-            raise NotImplementedError(f"Unsupported: {type(item).__name__!r}")
+            raise TypeError(f"Unsupported: {type(item).__name__!r}")
 
     def generate_all(self, items: Iterable[tlbparser.ParsedType]) -> None:
         for item in items:
@@ -664,20 +679,7 @@ class CodeGenerator:
         else:
             raise TypeError
         self.done.add(item)  # to avoid infinite recursion.
-        if isinstance(item, typedesc.ComInterface):
-            self.ComInterface(item)
-        elif isinstance(item, typedesc.ComInterfaceHead):
-            self.ComInterfaceHead(item)
-        elif isinstance(item, typedesc.ComInterfaceBody):
-            self.ComInterfaceBody(item)
-        elif isinstance(item, typedesc.DispInterface):
-            self.DispInterface(item)
-        elif isinstance(item, typedesc.DispInterfaceHead):
-            self.DispInterfaceHead(item)
-        elif isinstance(item, typedesc.DispInterfaceBody):
-            self.DispInterfaceBody(item)
-        else:
-            raise TypeError
+        self._dispatch_by(item)
 
     def ComInterface(self, itf: typedesc.ComInterface) -> None:
         self.generate(itf.get_head())
