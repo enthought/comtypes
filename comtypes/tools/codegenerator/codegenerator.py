@@ -85,7 +85,20 @@ class CodeGenerator:
         yield self.stream
         self.last_item = item
 
-    def generate(self, item: Any) -> None:
+    def generate(
+        self,
+        item: _UnionT[
+            tlbparser.ParsedType,
+            tlbparser.SpecType,
+            typedesc.EnumValue,
+            typedesc.StructureHead,
+            typedesc.StructureBody,
+            typedesc.ComInterfaceHead,
+            typedesc.DispInterfaceHead,
+            typedesc.ComInterfaceBody,
+            typedesc.DispInterfaceBody,
+        ],
+    ) -> None:
         if item in self.done:
             return
         if self._is_interface_typedesc(item):
