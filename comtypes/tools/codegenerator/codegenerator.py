@@ -105,10 +105,21 @@ class CodeGenerator:
             self._define_interface(item)
             return
         if isinstance(item, typedesc.StructureHead):
-            name = getattr(item.struct, "name", None)
+            name = item.struct.name
+        elif isinstance(
+            item,
+            (
+                typedesc.External,
+                typedesc.PointerType,
+                typedesc.ArrayType,
+                typedesc.SAFEARRAYType,
+                typedesc.StructureBody,
+            ),
+        ):
+            name = None
         else:
-            name = getattr(item, "name", None)
-        if name in self.known_symbols:
+            name = item.name
+        if name is not None and name in self.known_symbols:
             self.imports.add(name, symbols=self.known_symbols)
             self.done.add(item)
             if isinstance(item, typedesc.Structure):
