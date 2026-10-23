@@ -4,7 +4,7 @@ from _ctypes import COMError
 from collections.abc import Mapping
 from ctypes import alignment, c_void_p, sizeof, windll
 from ctypes.wintypes import MAX_PATH
-from typing import Any, Optional, TypeVar, overload
+from typing import Any, Optional, TypeVar
 from typing import Union as _UnionT
 
 from comtypes import automation, typeinfo
@@ -16,14 +16,9 @@ is_64bits = sys.maxsize > 2**32
 
 ################################
 _PT = TypeVar("_PT", bound=_UnionT["ParsedType", "SpecType"])
-_TypeDefNone = typedesc.Typedef[None]
 
 
-@overload
-def PTR(typ: _PT) -> typedesc.PointerType[_PT]: ...
-@overload
-def PTR(typ: _TypeDefNone) -> typedesc.PointerType[_TypeDefNone]: ...
-def PTR(typ):
+def PTR(typ: _PT) -> typedesc.PointerType[_PT]:
     return typedesc.PointerType(typ, sizeof(c_void_p) * 8, alignment(c_void_p) * 8)
 
 
@@ -57,8 +52,34 @@ VARIANT_type = typedesc.Structure(
     bases=[],
     size=sizeof(automation.VARIANT) * 8,
 )
-IDISPATCH_type = typedesc.Typedef("IDispatch", None)
-IUNKNOWN_type = typedesc.Typedef("IUnknown", None)
+
+# These are simplified definitions of `IUnknown` and `IDispatch` from `stdole`.
+# Their full definitions include method arguments and IDL flags. However, these
+# basic interfaces are replaced with suitable definitions for each use case, so
+# they do not need to be modeled perfectly here. Even a complete model would not
+# be used, and adding more redundant fields would make maintenance harder.
+IUNKNOWN_type = typedesc.ComInterface(
+    "IUnknown", None, "{00000000-0000-0000-C000-000000000046}", [], None
+)
+IUNKNOWN_type.extend_members(
+    [
+        typedesc.ComMethod(1, 1610612736, "QueryInterface", HRESULT_type, [], None),
+        typedesc.ComMethod(1, 1610612737, "AddRef", ulong_type, [], None),
+        typedesc.ComMethod(1, 1610612738, "Release", ulong_type, [], None),
+    ]
+)
+IDISPATCH_type = typedesc.ComInterface(
+    "IDispatch", IUNKNOWN_type, "{00020400-0000-0000-C000-000000000046}", [], None
+)
+IDISPATCH_type.extend_members(
+    [
+        typedesc.ComMethod(1, 1610678272, "GetTypeInfoCount", HRESULT_type, [], None),
+        typedesc.ComMethod(1, 1610678273, "GetTypeInfo", HRESULT_type, [], None),
+        typedesc.ComMethod(1, 1610678274, "GetIDsOfNames", HRESULT_type, [], None),
+        typedesc.ComMethod(1, 1610678275, "Invoke", HRESULT_type, [], None),
+    ]
+)
+
 DECIMAL_type = typedesc.Structure(
     "DECIMAL",
     align=alignment(automation.DECIMAL) * 8,
@@ -123,7 +144,6 @@ ParsedType = _UnionT[
     typedesc.ComInterface,
     typedesc.DispInterface,
     typedesc.Typedef["_UnionT[ParsedType, SpecType]"],
-    _TypeDefNone,
     typedesc.Structure,
     typedesc.Union,
     typedesc.Enumeration,
