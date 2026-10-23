@@ -451,16 +451,16 @@ class CodeGenerator:
         fields: list[typedesc.Field] = []
         methods: list[typedesc.Method] = []
         for m in body.struct.members:
-            if type(m) is typedesc.Field:
+            if isinstance(m, typedesc.Field):
                 fields.append(m)
-                if type(m.typ) is typedesc.Typedef:
+                if isinstance(m.typ, typedesc.Typedef):
                     self.generate(get_real_type(m.typ))
                 self.generate(m.typ)
-            elif type(m) is typedesc.Method:
+            elif isinstance(m, typedesc.Method):
                 methods.append(m)
                 self.generate(m.returns)
                 self.generate_all(m.iterArgTypes())
-            elif type(m) is typedesc.Constructor:
+            elif isinstance(m, typedesc.Constructor):
                 pass
 
         # we don't need _pack_ on Unions (I hope, at least), and not
@@ -597,17 +597,17 @@ class CodeGenerator:
         self.imports.add("comtypes.automation", "_midlSAFEARRAY")
 
     def PointerType(self, tp: typedesc.PointerType) -> None:
-        if type(tp.typ) is typedesc.ComInterface:
+        if isinstance(tp.typ, typedesc.ComInterface):
             # this defines the class
             self.generate(tp.typ.get_head())
             # this defines the _methods_
             self.more.add(tp.typ)
-        elif type(tp.typ) is typedesc.PointerType:
+        elif isinstance(tp.typ, typedesc.PointerType):
             self.generate(tp.typ)
-        elif type(tp.typ) in (typedesc.Union, typedesc.Structure):
+        elif isinstance(tp.typ, (typedesc.Union, typedesc.Structure)):
             self.generate(tp.typ.get_head())
             self.more.add(tp.typ)
-        elif type(tp.typ) is typedesc.Typedef:
+        elif isinstance(tp.typ, typedesc.Typedef):
             self.generate(tp.typ)
         else:
             self.generate(tp.typ)
