@@ -85,28 +85,97 @@ class CodeGenerator:
         yield self.stream
         self.last_item = item
 
-    def generate(self, item: Any) -> None:
+    def generate(
+        self,
+        item: _UnionT[
+            tlbparser.ParsedType,
+            tlbparser.SpecType,
+            typedesc.EnumValue,
+            typedesc.StructureHead,
+            typedesc.StructureBody,
+            typedesc.ComInterfaceHead,
+            typedesc.DispInterfaceHead,
+            typedesc.ComInterfaceBody,
+            typedesc.DispInterfaceBody,
+        ],
+    ) -> None:
         if item in self.done:
             return
         if self._is_interface_typedesc(item):
             self._define_interface(item)
             return
         if isinstance(item, typedesc.StructureHead):
-            name = getattr(item.struct, "name", None)
+            name = item.struct.name
+        elif isinstance(
+            item,
+            (
+                typedesc.External,
+                typedesc.PointerType,
+                typedesc.ArrayType,
+                typedesc.SAFEARRAYType,
+                typedesc.StructureBody,
+            ),
+        ):
+            name = None
         else:
-            name = getattr(item, "name", None)
-        if name in self.known_symbols:
+            name = item.name
+        if name is not None and name in self.known_symbols:
             self.imports.add(name, symbols=self.known_symbols)
             self.done.add(item)
             if isinstance(item, typedesc.Structure):
                 self.done.add(item.get_head())
                 self.done.add(item.get_body())
             return
-        mth = getattr(self, type(item).__name__)
         # to avoid infinite recursion, we have to mark it as done
         # before actually generating the code.
         self.done.add(item)
-        mth(item)
+        self._dispatch_by(item)
+
+    def _dispatch_by(self, item: Any) -> None:
+        if isinstance(item, typedesc.ArrayType):
+            self.ArrayType(item)
+        elif isinstance(item, typedesc.EnumValue):
+            self.EnumValue(item)
+        elif isinstance(item, typedesc.Enumeration):
+            self.Enumeration(item)
+        elif isinstance(item, typedesc.Typedef):
+            self.Typedef(item)
+        elif isinstance(item, typedesc.FundamentalType):
+            self.FundamentalType(item)
+        elif isinstance(item, typedesc.StructureHead):
+            self.StructureHead(item)
+        elif isinstance(item, typedesc.Structure):
+            self.Structure(item)
+        elif isinstance(item, typedesc.Union):
+            self.Union(item)
+        elif isinstance(item, typedesc.StructureBody):
+            self.StructureBody(item)
+        elif isinstance(item, typedesc.TypeLib):
+            self.TypeLib(item)
+        elif isinstance(item, typedesc.External):
+            self.External(item)
+        elif isinstance(item, typedesc.Constant):
+            self.Constant(item)
+        elif isinstance(item, typedesc.SAFEARRAYType):
+            self.SAFEARRAYType(item)
+        elif isinstance(item, typedesc.PointerType):
+            self.PointerType(item)
+        elif isinstance(item, typedesc.CoClass):
+            self.CoClass(item)
+        elif isinstance(item, typedesc.ComInterface):
+            self.ComInterface(item)
+        elif isinstance(item, typedesc.ComInterfaceHead):
+            self.ComInterfaceHead(item)
+        elif isinstance(item, typedesc.ComInterfaceBody):
+            self.ComInterfaceBody(item)
+        elif isinstance(item, typedesc.DispInterface):
+            self.DispInterface(item)
+        elif isinstance(item, typedesc.DispInterfaceHead):
+            self.DispInterfaceHead(item)
+        elif isinstance(item, typedesc.DispInterfaceBody):
+            self.DispInterfaceBody(item)
+        else:
+            raise TypeError(f"Unsupported: {type(item).__name__!r}")
 
     def generate_all(self, items: Iterable[tlbparser.ParsedType]) -> None:
         for item in items:
@@ -382,16 +451,16 @@ class CodeGenerator:
         fields: list[typedesc.Field] = []
         methods: list[typedesc.Method] = []
         for m in body.struct.members:
-            if type(m) is typedesc.Field:
+            if isinstance(m, typedesc.Field):
                 fields.append(m)
-                if type(m.typ) is typedesc.Typedef:
+                if isinstance(m.typ, typedesc.Typedef):
                     self.generate(get_real_type(m.typ))
                 self.generate(m.typ)
-            elif type(m) is typedesc.Method:
+            elif isinstance(m, typedesc.Method):
                 methods.append(m)
                 self.generate(m.returns)
                 self.generate_all(m.iterArgTypes())
-            elif type(m) is typedesc.Constructor:
+            elif isinstance(m, typedesc.Constructor):
                 pass
 
         # we don't need _pack_ on Unions (I hope, at least), and not
@@ -528,17 +597,17 @@ class CodeGenerator:
         self.imports.add("comtypes.automation", "_midlSAFEARRAY")
 
     def PointerType(self, tp: typedesc.PointerType) -> None:
-        if type(tp.typ) is typedesc.ComInterface:
+        if isinstance(tp.typ, typedesc.ComInterface):
             # this defines the class
             self.generate(tp.typ.get_head())
             # this defines the _methods_
             self.more.add(tp.typ)
-        elif type(tp.typ) is typedesc.PointerType:
+        elif isinstance(tp.typ, typedesc.PointerType):
             self.generate(tp.typ)
-        elif type(tp.typ) in (typedesc.Union, typedesc.Structure):
+        elif isinstance(tp.typ, (typedesc.Union, typedesc.Structure)):
             self.generate(tp.typ.get_head())
             self.more.add(tp.typ)
-        elif type(tp.typ) is typedesc.Typedef:
+        elif isinstance(tp.typ, typedesc.Typedef):
             self.generate(tp.typ)
         else:
             self.generate(tp.typ)
@@ -610,8 +679,7 @@ class CodeGenerator:
         else:
             raise TypeError
         self.done.add(item)  # to avoid infinite recursion.
-        mth = getattr(self, type(item).__name__)
-        mth(item)
+        self._dispatch_by(item)
 
     def ComInterface(self, itf: typedesc.ComInterface) -> None:
         self.generate(itf.get_head())

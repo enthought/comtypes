@@ -1,5 +1,5 @@
 # typedesc.py - classes representing C type descriptions
-from typing import Any, Generic, Optional, SupportsInt, TypeVar
+from typing import Any, Generic, Optional, SupportsInt, TypeVar, final
 from typing import Union as _UnionT
 
 _TD = TypeVar("_TD")
@@ -72,6 +72,7 @@ class Function(_HasArgs):
         self.extern = extern
 
 
+@final
 class Constructor(_HasArgs):
     location = None
 
@@ -98,6 +99,7 @@ class FunctionType(_HasArgs):
         self.attributes = attributes
 
 
+@final
 class Method(_HasArgs):
     location = None
 
@@ -107,6 +109,7 @@ class Method(_HasArgs):
         self.returns = returns
 
 
+@final
 class FundamentalType:
     location = None
 
@@ -116,6 +119,7 @@ class FundamentalType:
         self.align = int(align)
 
 
+@final
 class PointerType(Generic[_TD]):
     location = None
 
@@ -125,6 +129,7 @@ class PointerType(Generic[_TD]):
         self.align = int(align)
 
 
+@final
 class Typedef(Generic[_TD]):
     location = None
 
@@ -133,6 +138,7 @@ class Typedef(Generic[_TD]):
         self.typ = typ
 
 
+@final
 class ArrayType(Generic[_TD]):
     location = None
 
@@ -142,6 +148,7 @@ class ArrayType(Generic[_TD]):
         self.max = max
 
 
+@final
 class StructureHead:
     location = None
 
@@ -149,6 +156,7 @@ class StructureHead:
         self.struct = struct
 
 
+@final
 class StructureBody:
     location = None
 
@@ -178,6 +186,7 @@ class _Struct_Union_Base:
         return self.struct_head
 
 
+@final
 class Structure(_Struct_Union_Base):
     def __init__(
         self,
@@ -200,6 +209,7 @@ class Structure(_Struct_Union_Base):
         super().__init__()
 
 
+@final
 class Union(_Struct_Union_Base):
     def __init__(
         self,
@@ -222,6 +232,7 @@ class Union(_Struct_Union_Base):
         super().__init__()
 
 
+@final
 class Field:
     def __init__(
         self, name: str, typ: Any, bits: Optional[Any], offset: SupportsInt
@@ -239,6 +250,7 @@ class CvQualifiedType:
         self.volatile = volatile
 
 
+@final
 class Enumeration:
     location = None
 
@@ -252,6 +264,7 @@ class Enumeration:
         self.values.append(v)
 
 
+@final
 class EnumValue:
     def __init__(self, name: str, value: int, enumeration: Enumeration) -> None:
         self.name = name
