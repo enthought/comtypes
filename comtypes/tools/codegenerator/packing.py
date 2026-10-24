@@ -8,12 +8,8 @@ def _calc_packing(struct, fields, pack, isStruct):
         return -1
     if struct.name in dont_assert_size:
         return None
-    if struct.bases:
-        size = struct.bases[0].size
-        total_align = struct.bases[0].align
-    else:
-        size = 0
-        total_align = 8  # in bits
+    size = 0
+    total_align = 8  # in bits
     for i, f in enumerate(fields):
         if f.bits:  # this code cannot handle bit field sizes.
             # print "##XXX FIXME"

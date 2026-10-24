@@ -1,6 +1,5 @@
 # typedesc.py - classes representing C type descriptions
 from typing import Any, Generic, Optional, SupportsInt, TypeVar, final
-from typing import Union as _UnionT
 
 _TD = TypeVar("_TD")
 
@@ -167,8 +166,7 @@ class StructureBody:
 class _Struct_Union_Base:
     name: str
     align: int
-    members: list[_UnionT["Field", Method, Constructor]]
-    bases: list["_Struct_Union_Base"]
+    members: list["Field"]
     artificial: Optional[Any]
     size: Optional[int]
     _recordinfo_: tuple[str, int, int, int, str]
@@ -193,14 +191,12 @@ class Structure(_Struct_Union_Base):
         name: str,
         align: SupportsInt,
         members: list["Field"],
-        bases: list[Any],
         size: Optional[SupportsInt],
         artificial: Optional[Any] = None,
     ) -> None:
         self.name = name
         self.align = int(align)
         self.members = members
-        self.bases = bases
         self.artificial = artificial
         if size is not None:
             self.size = int(size)
@@ -216,14 +212,12 @@ class Union(_Struct_Union_Base):
         name: str,
         align: SupportsInt,
         members: list["Field"],
-        bases: list[Any],
         size: Optional[SupportsInt],
         artificial: Optional[Any] = None,
     ) -> None:
         self.name = name
         self.align = int(align)
         self.members = members
-        self.bases = bases
         self.artificial = artificial
         if size is not None:
             self.size = int(size)

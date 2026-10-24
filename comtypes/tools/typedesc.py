@@ -177,7 +177,7 @@ class DispInterface:
     def __init__(
         self,
         name: str,
-        base: Any,
+        base: "_UnionT[ComInterface, DispInterface, External]",
         iid: str,
         idlflags: list[str],
         doc: Optional[str],
@@ -218,7 +218,7 @@ class ComInterface:
     def __init__(
         self,
         name: str,
-        base: "Optional[ComInterface]",
+        base: "_UnionT[None, ComInterface, External]",
         iid: str,
         idlflags: list[str],
         doc: Optional[str],

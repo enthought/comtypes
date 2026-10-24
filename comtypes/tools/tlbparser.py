@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 from _ctypes import COMError
 from collections.abc import Mapping
 from ctypes import alignment, c_void_p, sizeof, windll
@@ -7,7 +8,7 @@ from ctypes.wintypes import MAX_PATH
 from typing import Any, Optional, TypeVar
 from typing import Union as _UnionT
 
-from comtypes import automation, typeinfo
+from comtypes import IUnknown, automation, typeinfo
 from comtypes.tools import typedesc
 
 # Is the process 64-bit?
@@ -49,7 +50,6 @@ VARIANT_type = typedesc.Structure(
     "VARIANT",
     align=alignment(automation.VARIANT) * 8,
     members=[],
-    bases=[],
     size=sizeof(automation.VARIANT) * 8,
 )
 
@@ -84,7 +84,6 @@ DECIMAL_type = typedesc.Structure(
     "DECIMAL",
     align=alignment(automation.DECIMAL) * 8,
     members=[],
-    bases=[],
     size=sizeof(automation.DECIMAL) * 8,
 )
 
@@ -158,6 +157,12 @@ SpecType = _UnionT[
 ################################################################
 
 
+# To suppress obvious, non-essential warnings.
+# Cast to str only once to avoid redundant work.
+_IID_IUnknown = str(IUnknown._iid_)
+_IID_IDispatch = str(automation.IDispatch._iid_)
+
+
 class Parser:
     tlib: typeinfo.ITypeLib
     items: dict[str, ParsedType]
@@ -191,12 +196,8 @@ class Parser:
                     f"\n\tGetRefTypeInfo failed in {tlib_name}: {details}"
                     f"\n\tgenerating type '{type_name}' instead"
                 )
-                import warnings
-
                 warnings.warn(message, UserWarning)
-                result = typedesc.Structure(
-                    type_name, align=8, members=[], bases=[], size=0
-                )
+                result = typedesc.Structure(type_name, align=8, members=[], size=0)
                 return result
             result = self.parse_typeinfo(ti)
             assert result is not None, ti.GetDocumentation(-1)[0]
@@ -236,7 +237,6 @@ class Parser:
             struct_name,
             align=ta.cbAlignment * 8,
             members=members,
-            bases=[],
             size=ta.cbSizeInstance * 8,
         )
         self._register(struct_name, struct)
@@ -321,12 +321,20 @@ class Parser:
             # It's an interface without methods anyway.
             if itf_name != "IOleControlTypes":
                 message = f"Ignoring interface {itf_name} which has no base interface"
-                import warnings
-
                 warnings.warn(message, UserWarning)
             return None
 
         iid = str(ta.guid)
+        # IUnknown and IDispatch are fundamental COM interfaces, so reuse
+        # their canonical type-model constants instead of rebuilding a
+        # model from the type library. This avoids redundant work and
+        # keeps the handling of these well-known symbols consistent.
+        if iid == _IID_IUnknown:
+            self._register(itf_name, IUNKNOWN_type)
+            return IUNKNOWN_type
+        if iid == _IID_IDispatch:
+            self._register(itf_name, IDISPATCH_type)
+            return IDISPATCH_type
         idlflags = self.interface_type_flags(ta.wTypeFlags)
         itf = typedesc.ComInterface(itf_name, None, iid, idlflags, itf_doc)
         self._register(itf_name, itf)
@@ -603,7 +611,6 @@ class Parser:
             union_name,
             align=ta.cbAlignment * 8,
             members=members,
-            bases=[],
             size=ta.cbSizeInstance * 8,
         )
         self._register(union_name, union)

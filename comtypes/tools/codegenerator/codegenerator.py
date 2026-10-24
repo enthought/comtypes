@@ -428,15 +428,8 @@ class CodeGenerator:
         pass  # we should check if this is known somewhere
 
     def StructureHead(self, head: typedesc.StructureHead) -> None:
-        for struct in head.struct.bases:
-            self.generate(struct.get_head())
-            self.more.add(struct)
-        basenames = [self._to_type_name(b) for b in head.struct.bases]
-        if basenames:
-            self.imports.add("comtypes", "GUID")
-
         with self.adjust_blank("class") as ofi:
-            heads.StructureHeadWriter(ofi).write(head, basenames)
+            heads.StructureHeadWriter(ofi).write(head)
         self.names.add(head.struct.name)
 
     def Structure(self, struct: typedesc.Structure) -> None:
@@ -449,38 +442,27 @@ class CodeGenerator:
 
     def StructureBody(self, body: typedesc.StructureBody) -> None:
         fields: list[typedesc.Field] = []
-        methods: list[typedesc.Method] = []
         for m in body.struct.members:
             if isinstance(m, typedesc.Field):
                 fields.append(m)
                 if isinstance(m.typ, typedesc.Typedef):
                     self.generate(get_real_type(m.typ))
                 self.generate(m.typ)
-            elif isinstance(m, typedesc.Method):
-                methods.append(m)
-                self.generate(m.returns)
-                self.generate_all(m.iterArgTypes())
-            elif isinstance(m, typedesc.Constructor):
-                pass
 
         # we don't need _pack_ on Unions (I hope, at least), and not
         # on COM interfaces:
-        if not methods:
-            try:
-                pack = packing.calc_packing(body.struct, fields)
-                if pack is not None:
-                    with self.adjust_blank("attribute") as ofi:
-                        print(f"{body.struct.name}._pack_ = {pack}", file=ofi)
-            except packing.PackingError as details:
-                # if packing fails, write a warning comment to the output.
-                message = f"Structure {body.struct.name}: {details}"
-                warnings.warn(message, UserWarning)
-                with self.adjust_blank("comment") as ofi:
-                    print(f"# WARNING: {details}", file=ofi)
+        try:
+            pack = packing.calc_packing(body.struct, fields)
+            if pack is not None:
+                with self.adjust_blank("attribute") as ofi:
+                    print(f"{body.struct.name}._pack_ = {pack}", file=ofi)
+        except packing.PackingError as details:
+            # if packing fails, write a warning comment to the output.
+            message = f"Structure {body.struct.name}: {details}"
+            warnings.warn(message, UserWarning)
+            with self.adjust_blank("comment") as ofi:
+                print(f"# WARNING: {details}", file=ofi)
         if fields:
-            if body.struct.bases:
-                assert len(body.struct.bases) == 1
-                self.generate(body.struct.bases[0].get_body())
             with self.adjust_blank("attribute") as ofi:
                 self._write_structbody_fields(body, fields, ofi)
             if body.struct.size is None:
@@ -489,10 +471,6 @@ class CodeGenerator:
             elif body.struct.name not in packing.dont_assert_size:
                 with self.adjust_blank("assert") as ofi:
                     self._write_structbody_size_assertion(body, ofi)
-        if methods:
-            self.imports.add("comtypes", "COMMETHOD")
-            with self.adjust_blank("attribute") as ofi:
-                self._write_structbody_commethods(body, methods, ofi)
 
     def _write_structbody_fields(
         self,
@@ -536,32 +514,6 @@ class CodeGenerator:
         print(f"assert sizeof({name}) == {size}, sizeof({name})", file=ofi)
         align = body.struct.align // 8
         print(f"assert alignment({name}) == {align}, alignment({name})", file=ofi)
-
-    def _write_structbody_commethods(
-        self,
-        body: typedesc.StructureBody,
-        methods: list[typedesc.Method],
-        ofi: io.StringIO,
-    ) -> None:
-        print(f"{body.struct.name}._methods_ = [", file=ofi)
-        if body.struct.location:
-            print(f"# {body.struct.location}", file=ofi)
-        for m in methods:
-            if m.location:
-                print(f"    # {m.location}", file=ofi)
-            print(
-                (
-                    "    COMMETHOD(\n"
-                    "        [],\n"
-                    f"        {self._to_type_name(m.returns)},\n"
-                    f"        '{m.name}',\n"
-                ),
-                file=ofi,
-            )
-            for a in m.iterArgTypes():
-                print(f"        ([], {self._to_type_name(a)}),\n", file=ofi)
-                print("    ),", file=ofi)
-        print("]", file=ofi)
 
     ################################################################
     # top-level typedesc generators

@@ -1,5 +1,4 @@
 import io
-from collections.abc import Sequence
 from typing import Optional
 
 from comtypes.tools import typedesc
@@ -18,54 +17,20 @@ class StructureHeadWriter:
     def __init__(self, stream: io.StringIO) -> None:
         self.stream = stream
 
-    def write(self, head: typedesc.StructureHead, basenames: Sequence[str]) -> None:
+    def write(self, head: typedesc.StructureHead) -> None:
         if head.struct.location:
             print(f"# {head.struct.location}", file=self.stream)
-        if basenames:
-            method_names = [
-                m.name for m in head.struct.members if type(m) is typedesc.Method
-            ]
-            print(
-                f"class {head.struct.name}({', '.join(basenames)}):",
-                file=self.stream,
-            )
-            print(
-                "    _iid_ = GUID('{}') # please look up iid and fill in!",
-                file=self.stream,
-            )
-            if "Enum" in method_names:
-                print("    def __iter__(self):", file=self.stream)
-                print("        return self.Enum()", file=self.stream)
-            elif method_names == "Next Skip Reset Clone".split():
-                print("    def __iter__(self):", file=self.stream)
-                print("        return self", file=self.stream)
-                print(file=self.stream)
-                print("    def next(self):", file=self.stream)
-                print("         arr, fetched = self.Next(1)", file=self.stream)
-                print("         if fetched == 0:", file=self.stream)
-                print("             raise StopIteration", file=self.stream)
-                print("         return arr[0]", file=self.stream)
-
-        else:
-            methods = [m for m in head.struct.members if type(m) is typedesc.Method]
-
-            if methods:
-                # Hm. We cannot generate code for IUnknown...
-                print("assert 0, 'cannot generate code for IUnknown'", file=self.stream)
-                print(f"class {head.struct.name}(_com_interface):", file=self.stream)
+        if isinstance(head.struct, typedesc.Structure):
+            print(f"class {head.struct.name}(Structure):", file=self.stream)
+            if hasattr(head.struct, "_recordinfo_"):
+                print(
+                    f"    _recordinfo_ = {head.struct._recordinfo_!r}", file=self.stream
+                )
+            else:
                 print("    pass", file=self.stream)
-            elif type(head.struct) is typedesc.Structure:
-                print(f"class {head.struct.name}(Structure):", file=self.stream)
-                if hasattr(head.struct, "_recordinfo_"):
-                    print(
-                        f"    _recordinfo_ = {head.struct._recordinfo_!r}",
-                        file=self.stream,
-                    )
-                else:
-                    print("    pass", file=self.stream)
-            elif type(head.struct) is typedesc.Union:
-                print(f"class {head.struct.name}(Union):", file=self.stream)
-                print("    pass", file=self.stream)
+        elif isinstance(head.struct, typedesc.Union):
+            print(f"class {head.struct.name}(Union):", file=self.stream)
+            print("    pass", file=self.stream)
 
 
 class LibraryHeadWriter:
