@@ -22,9 +22,6 @@ class StructureHeadWriter:
         if head.struct.location:
             print(f"# {head.struct.location}", file=self.stream)
         if basenames:
-            method_names = [
-                m.name for m in head.struct.members if type(m) is typedesc.Method
-            ]
             print(
                 f"class {head.struct.name}({', '.join(basenames)}):",
                 file=self.stream,
@@ -33,18 +30,6 @@ class StructureHeadWriter:
                 "    _iid_ = GUID('{}') # please look up iid and fill in!",
                 file=self.stream,
             )
-            if "Enum" in method_names:
-                print("    def __iter__(self):", file=self.stream)
-                print("        return self.Enum()", file=self.stream)
-            elif method_names == "Next Skip Reset Clone".split():
-                print("    def __iter__(self):", file=self.stream)
-                print("        return self", file=self.stream)
-                print(file=self.stream)
-                print("    def next(self):", file=self.stream)
-                print("         arr, fetched = self.Next(1)", file=self.stream)
-                print("         if fetched == 0:", file=self.stream)
-                print("             raise StopIteration", file=self.stream)
-                print("         return arr[0]", file=self.stream)
 
         else:
             if type(head.struct) is typedesc.Structure:
