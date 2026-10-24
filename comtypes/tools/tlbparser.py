@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 from _ctypes import COMError
 from collections.abc import Mapping
 from ctypes import alignment, c_void_p, sizeof, windll
@@ -191,8 +192,6 @@ class Parser:
                     f"\n\tGetRefTypeInfo failed in {tlib_name}: {details}"
                     f"\n\tgenerating type '{type_name}' instead"
                 )
-                import warnings
-
                 warnings.warn(message, UserWarning)
                 result = typedesc.Structure(
                     type_name, align=8, members=[], bases=[], size=0
@@ -321,8 +320,6 @@ class Parser:
             # It's an interface without methods anyway.
             if itf_name != "IOleControlTypes":
                 message = f"Ignoring interface {itf_name} which has no base interface"
-                import warnings
-
                 warnings.warn(message, UserWarning)
             return None
 
