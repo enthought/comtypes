@@ -20,7 +20,7 @@ class StructureHeadWriter:
     def write(self, head: typedesc.StructureHead) -> None:
         if head.struct.location:
             print(f"# {head.struct.location}", file=self.stream)
-        if type(head.struct) is typedesc.Structure:
+        if isinstance(head.struct, typedesc.Structure):
             print(f"class {head.struct.name}(Structure):", file=self.stream)
             if hasattr(head.struct, "_recordinfo_"):
                 print(
@@ -28,7 +28,7 @@ class StructureHeadWriter:
                 )
             else:
                 print("    pass", file=self.stream)
-        elif type(head.struct) is typedesc.Union:
+        elif isinstance(head.struct, typedesc.Union):
             print(f"class {head.struct.name}(Union):", file=self.stream)
             print("    pass", file=self.stream)
 
