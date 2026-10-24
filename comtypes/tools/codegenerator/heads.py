@@ -47,14 +47,7 @@ class StructureHeadWriter:
                 print("         return arr[0]", file=self.stream)
 
         else:
-            methods = [m for m in head.struct.members if type(m) is typedesc.Method]
-
-            if methods:
-                # Hm. We cannot generate code for IUnknown...
-                print("assert 0, 'cannot generate code for IUnknown'", file=self.stream)
-                print(f"class {head.struct.name}(_com_interface):", file=self.stream)
-                print("    pass", file=self.stream)
-            elif type(head.struct) is typedesc.Structure:
+            if type(head.struct) is typedesc.Structure:
                 print(f"class {head.struct.name}(Structure):", file=self.stream)
                 if hasattr(head.struct, "_recordinfo_"):
                     print(
