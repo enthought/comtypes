@@ -1,6 +1,5 @@
 # typedesc.py - classes representing C type descriptions
 from typing import Any, Generic, Optional, SupportsInt, TypeVar, final
-from typing import Union as _UnionT
 
 _TD = TypeVar("_TD")
 
@@ -167,7 +166,7 @@ class StructureBody:
 class _Struct_Union_Base:
     name: str
     align: int
-    members: list[_UnionT["Field", Method, Constructor]]
+    members: list["Field"]
     bases: list["_Struct_Union_Base"]
     artificial: Optional[Any]
     size: Optional[int]
