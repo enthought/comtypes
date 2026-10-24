@@ -8,7 +8,7 @@ from ctypes.wintypes import MAX_PATH
 from typing import Any, Optional, TypeVar
 from typing import Union as _UnionT
 
-from comtypes import automation, typeinfo
+from comtypes import IUnknown, automation, typeinfo
 from comtypes.tools import typedesc
 
 # Is the process 64-bit?
@@ -157,6 +157,12 @@ SpecType = _UnionT[
     typedesc.SAFEARRAYType["_UnionT[ParsedType, SpecType]"],
 ]
 ################################################################
+
+
+# To suppress obvious, non-essential warnings.
+# Cast to str only once to avoid redundant work.
+_IID_IUnknown = str(IUnknown._iid_)
+_IID_IDispatch = str(automation.IDispatch._iid_)
 
 
 class Parser:
@@ -324,6 +330,16 @@ class Parser:
             return None
 
         iid = str(ta.guid)
+        # IUnknown and IDispatch are fundamental COM interfaces, so reuse
+        # their canonical type-model constants instead of rebuilding a
+        # model from the type library. This avoids redundant work and
+        # keeps the handling of these well-known symbols consistent.
+        if iid == _IID_IUnknown:
+            self._register(itf_name, IUNKNOWN_type)
+            return IUNKNOWN_type
+        if iid == _IID_IDispatch:
+            self._register(itf_name, IDISPATCH_type)
+            return IDISPATCH_type
         idlflags = self.interface_type_flags(ta.wTypeFlags)
         itf = typedesc.ComInterface(itf_name, None, iid, idlflags, itf_doc)
         self._register(itf_name, itf)
