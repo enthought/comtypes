@@ -428,9 +428,6 @@ class CodeGenerator:
         pass  # we should check if this is known somewhere
 
     def StructureHead(self, head: typedesc.StructureHead) -> None:
-        for struct in head.struct.bases:
-            self.generate(struct.get_head())
-            self.more.add(struct)
         with self.adjust_blank("class") as ofi:
             heads.StructureHeadWriter(ofi).write(head)
         self.names.add(head.struct.name)
@@ -466,9 +463,6 @@ class CodeGenerator:
             with self.adjust_blank("comment") as ofi:
                 print(f"# WARNING: {details}", file=ofi)
         if fields:
-            if body.struct.bases:
-                assert len(body.struct.bases) == 1
-                self.generate(body.struct.bases[0].get_body())
             with self.adjust_blank("attribute") as ofi:
                 self._write_structbody_fields(body, fields, ofi)
             if body.struct.size is None:
