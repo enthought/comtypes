@@ -50,7 +50,6 @@ VARIANT_type = typedesc.Structure(
     "VARIANT",
     align=alignment(automation.VARIANT) * 8,
     members=[],
-    bases=[],
     size=sizeof(automation.VARIANT) * 8,
 )
 
@@ -85,7 +84,6 @@ DECIMAL_type = typedesc.Structure(
     "DECIMAL",
     align=alignment(automation.DECIMAL) * 8,
     members=[],
-    bases=[],
     size=sizeof(automation.DECIMAL) * 8,
 )
 
@@ -199,9 +197,7 @@ class Parser:
                     f"\n\tgenerating type '{type_name}' instead"
                 )
                 warnings.warn(message, UserWarning)
-                result = typedesc.Structure(
-                    type_name, align=8, members=[], bases=[], size=0
-                )
+                result = typedesc.Structure(type_name, align=8, members=[], size=0)
                 return result
             result = self.parse_typeinfo(ti)
             assert result is not None, ti.GetDocumentation(-1)[0]
@@ -241,7 +237,6 @@ class Parser:
             struct_name,
             align=ta.cbAlignment * 8,
             members=members,
-            bases=[],
             size=ta.cbSizeInstance * 8,
         )
         self._register(struct_name, struct)
@@ -616,7 +611,6 @@ class Parser:
             union_name,
             align=ta.cbAlignment * 8,
             members=members,
-            bases=[],
             size=ta.cbSizeInstance * 8,
         )
         self._register(union_name, union)

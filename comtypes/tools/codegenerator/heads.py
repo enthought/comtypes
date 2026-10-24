@@ -23,7 +23,9 @@ class StructureHeadWriter:
         if type(head.struct) is typedesc.Structure:
             print(f"class {head.struct.name}(Structure):", file=self.stream)
             if hasattr(head.struct, "_recordinfo_"):
-                print(f"    _recordinfo_ = {head.struct._recordinfo_!r}", file=self.stream)
+                print(
+                    f"    _recordinfo_ = {head.struct._recordinfo_!r}", file=self.stream
+                )
             else:
                 print("    pass", file=self.stream)
         elif type(head.struct) is typedesc.Union:

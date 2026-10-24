@@ -15,16 +15,12 @@ class CalcPackingTest(unittest.TestCase):
     def test_returns_none_for_default_packing(self):
         # A naturally laid out single-field struct needs no explicit packing.
         field = _make_field("a", 32, 32, 0)
-        struct = typedesc.Structure(
-            "Good", align=32, members=[field], bases=[], size=32
-        )
+        struct = typedesc.Structure("Good", align=32, members=[field], size=32)
         self.assertIsNone(calc_packing(struct, [field]))
 
     def test_incomplete_struct_returns_none(self):
         field = _make_field("a", 32, 32, 0)
-        struct = typedesc.Structure(
-            "Incomplete", align=32, members=[field], bases=[], size=None
-        )
+        struct = typedesc.Structure("Incomplete", align=32, members=[field], size=None)
         self.assertIsNone(calc_packing(struct, [field]))
 
     def test_raises_packing_error_with_details_when_layout_is_inconsistent(self):
@@ -36,7 +32,7 @@ class CalcPackingTest(unittest.TestCase):
         # ``except ... as`` target after it had been cleared, raising
         # ``UnboundLocalError`` and masking the real ``PackingError``.
         field = _make_field("x", 32, 32, 64)
-        struct = typedesc.Structure("Bad", align=32, members=[field], bases=[], size=96)
+        struct = typedesc.Structure("Bad", align=32, members=[field], size=96)
         with self.assertRaises(PackingError) as ctx:
             calc_packing(struct, [field])
         message = str(ctx.exception)
