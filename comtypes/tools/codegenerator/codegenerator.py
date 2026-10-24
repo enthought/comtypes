@@ -431,12 +431,8 @@ class CodeGenerator:
         for struct in head.struct.bases:
             self.generate(struct.get_head())
             self.more.add(struct)
-        basenames = [self._to_type_name(b) for b in head.struct.bases]
-        if basenames:
-            self.imports.add("comtypes", "GUID")
-
         with self.adjust_blank("class") as ofi:
-            heads.StructureHeadWriter(ofi).write(head, basenames)
+            heads.StructureHeadWriter(ofi).write(head)
         self.names.add(head.struct.name)
 
     def Structure(self, struct: typedesc.Structure) -> None:

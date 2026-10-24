@@ -1,5 +1,4 @@
 import io
-from collections.abc import Sequence
 from typing import Optional
 
 from comtypes.tools import typedesc
@@ -18,32 +17,18 @@ class StructureHeadWriter:
     def __init__(self, stream: io.StringIO) -> None:
         self.stream = stream
 
-    def write(self, head: typedesc.StructureHead, basenames: Sequence[str]) -> None:
+    def write(self, head: typedesc.StructureHead) -> None:
         if head.struct.location:
             print(f"# {head.struct.location}", file=self.stream)
-        if basenames:
-            print(
-                f"class {head.struct.name}({', '.join(basenames)}):",
-                file=self.stream,
-            )
-            print(
-                "    _iid_ = GUID('{}') # please look up iid and fill in!",
-                file=self.stream,
-            )
-
-        else:
-            if type(head.struct) is typedesc.Structure:
-                print(f"class {head.struct.name}(Structure):", file=self.stream)
-                if hasattr(head.struct, "_recordinfo_"):
-                    print(
-                        f"    _recordinfo_ = {head.struct._recordinfo_!r}",
-                        file=self.stream,
-                    )
-                else:
-                    print("    pass", file=self.stream)
-            elif type(head.struct) is typedesc.Union:
-                print(f"class {head.struct.name}(Union):", file=self.stream)
+        if type(head.struct) is typedesc.Structure:
+            print(f"class {head.struct.name}(Structure):", file=self.stream)
+            if hasattr(head.struct, "_recordinfo_"):
+                print(f"    _recordinfo_ = {head.struct._recordinfo_!r}", file=self.stream)
+            else:
                 print("    pass", file=self.stream)
+        elif type(head.struct) is typedesc.Union:
+            print(f"class {head.struct.name}(Union):", file=self.stream)
+            print("    pass", file=self.stream)
 
 
 class LibraryHeadWriter:
