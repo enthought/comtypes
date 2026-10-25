@@ -364,8 +364,8 @@ class Parser:
             )
             for j in range(fd.cParams):
                 elemdesc = fd.lprgelemdescParam[j]
-                typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
                 paramdesc = elemdesc._.paramdesc
                 if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
@@ -450,8 +450,8 @@ class Parser:
             )
             for j in range(fd.cParams):
                 elemdesc = fd.lprgelemdescParam[j]
-                typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
                 paramdesc = elemdesc._.paramdesc
                 if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
