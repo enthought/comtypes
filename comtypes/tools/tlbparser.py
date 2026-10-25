@@ -157,7 +157,6 @@ SpecType = _UnionT[
 ################################################################
 
 
-# To suppress obvious, non-essential warnings.
 # Cast to str only once to avoid redundant work.
 _IID_IUnknown = str(IUnknown._iid_)
 _IID_IDispatch = str(automation.IDispatch._iid_)
