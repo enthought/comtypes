@@ -62,8 +62,6 @@ def get_real_type(tp: _TD) -> _TD: ...
 def get_real_type(tp):
     if type(tp) is typedesc.Typedef:
         return get_real_type(tp.typ)
-    elif isinstance(tp, typedesc.CvQualifiedType):
-        return get_real_type(tp.typ)
     return tp
 
 
@@ -313,15 +311,6 @@ class TypeNamer:
             return f"{'POINTER(' * pcnt}{self(_t)}{')' * pcnt}"
         elif isinstance(t, typedesc.ArrayType):
             return f"{self(t.typ)} * {int(t.max) + 1}"
-        elif isinstance(t, typedesc.FunctionType):
-            args = [self(x) for x in [t.returns] + list(t.iterArgTypes())]
-            if "__stdcall__" in t.attributes:
-                return f"WINFUNCTYPE({', '.join(args)})"
-            else:
-                return f"CFUNCTYPE({', '.join(args)})"
-        elif isinstance(t, typedesc.CvQualifiedType):
-            # const and volatile are ignored
-            return f"{self(t.typ)}"
         elif isinstance(t, typedesc.FundamentalType):
             return ctypes_names[t.name]
         elif isinstance(t, typedesc.Structure):
@@ -351,8 +340,6 @@ class TypeNamer:
                     return typedesc.Typedef("STRING", x), count
                 elif x.name == "wchar_t":
                     return typedesc.Typedef("WSTRING", x), count
-        if isinstance(t.typ, typedesc.FunctionType):
-            return t.typ, count
         if isinstance(t.typ, typedesc.FundamentalType):
             if t.typ.name == "void":
                 return typedesc.Typedef("c_void_p", t.typ), count
