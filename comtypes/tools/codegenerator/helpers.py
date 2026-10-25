@@ -60,7 +60,7 @@ def get_real_type(tp: typedesc.Typedef[_TD]) -> _TD: ...
 @overload
 def get_real_type(tp: _TD) -> _TD: ...
 def get_real_type(tp):
-    if type(tp) is typedesc.Typedef:
+    if isinstance(tp, typedesc.Typedef):
         return get_real_type(tp.typ)
     return tp
 
