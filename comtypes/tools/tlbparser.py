@@ -285,8 +285,8 @@ class Parser:
             # Automation defines `TYPE_E_AMBIGUOUSNAME` for cases where
             # multiple elements match during name resolution.
             # https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oaut/476f00da-0806-40d9-bbf3-6059154abbb7
-            # Therefore, at least, in COM, ambiguity during name resolution is considered
-            # in the specification.
+            # Therefore, at least, in COM, ambiguity during name resolution is
+            # considered in the specification.
             # If functions are also registered in the mapping that stores type
             # library parsing results, type information and function names may
             # conflict, potentially causing type information to be overwritten
