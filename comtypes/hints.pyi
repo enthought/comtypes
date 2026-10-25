@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterator, Sequence
 from ctypes import _CData, _CDataType
 from typing import Annotated as Annotated
 from typing import Any as Any
-from typing import ClassVar, Generic, NoReturn, Optional, Protocol, TypeVar, overload
+from typing import ClassVar, Generic, NoReturn, Optional, Protocol, overload
 from typing import Union as _UnionT
 
 if sys.version_info >= (3, 10):
@@ -20,6 +20,12 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self as Self
     from typing_extensions import Unpack as Unpack
+# Using a `TypeVar` with infer_variance that is compatible with PEP 695
+# style annotations helps to reduce differences between type checkers.
+if sys.version_info >= (3, 12):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
 if sys.version_info >= (3, 13):
     from typing import TypeIs as TypeIs
 else:
@@ -46,9 +52,9 @@ arguments and with `HRESULT` as its return type in its COM method definition.
 LP_LP_Vtbl: TypeAlias = ctypes._Pointer[ctypes._Pointer[ctypes.Structure]]
 """A pointer to a pointer to a virtual function table."""
 
-_CT = TypeVar("_CT", bound=_CData)
-_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
-_T_Struct = TypeVar("_T_Struct", bound=ctypes.Structure)
+_CT = TypeVar("_CT", bound=_CData, infer_variance=True)
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown, infer_variance=True)
+_T_Struct = TypeVar("_T_Struct", bound=ctypes.Structure, infer_variance=True)
 
 class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
     contents: tagSAFEARRAY
@@ -77,7 +83,7 @@ class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
     @classmethod
     def from_param(cls, value: Any, /) -> Self: ...
 
-_T_coclass = TypeVar("_T_coclass", bound=comtypes.CoClass)
+_T_coclass = TypeVar("_T_coclass", bound=comtypes.CoClass, infer_variance=True)
 
 class FirstComItfOf(Generic[_T_coclass]):
     """When the type assigned to the parameter marked as `'out'` is `CoClass`,
@@ -88,18 +94,18 @@ class FirstComItfOf(Generic[_T_coclass]):
     """
 
 _P_Put = ParamSpec("_P_Put")
-_R_Put = TypeVar("_R_Put")
+_R_Put = TypeVar("_R_Put", infer_variance=True)
 _P_PutRef = ParamSpec("_P_PutRef")
-_R_PutRef = TypeVar("_R_PutRef")
+_R_PutRef = TypeVar("_R_PutRef", infer_variance=True)
 
 def put_or_putref(
     put: Callable[_P_Put, _R_Put], putref: Callable[_P_PutRef, _R_PutRef]
 ) -> _UnionT[Callable[_P_Put, _R_Put], Callable[_P_PutRef, _R_PutRef]]: ...
 
-_T_Inst = TypeVar("_T_Inst")
-_T_SetVal = TypeVar("_T_SetVal")
+_T_Inst = TypeVar("_T_Inst", infer_variance=True)
+_T_SetVal = TypeVar("_T_SetVal", infer_variance=True)
 _P_Get = ParamSpec("_P_Get")
-_R_Get = TypeVar("_R_Get")
+_R_Get = TypeVar("_R_Get", infer_variance=True)
 _P_Set = ParamSpec("_P_Set")
 
 class _GetSetNormalProperty(Generic[_T_Inst, _R_Get, _T_SetVal]):
@@ -250,7 +256,7 @@ def to_dunder_len(count: _Descriptor[_T_Inst, int]) -> Callable[[_T_Inst], int]:
 def to_dunder_len(count: Any) -> Callable[..., NoReturn]: ...
 
 # `__iter__` for objects with `_NewEnum`
-_T_E = TypeVar("_T_E")
+_T_E = TypeVar("_T_E", infer_variance=True)
 
 @overload
 def to_dunder_iter(

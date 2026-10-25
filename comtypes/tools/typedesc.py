@@ -7,28 +7,17 @@ from typing import Any, Generic, Optional, TypeVar, final
 from typing import Union as _UnionT
 
 from comtypes import typeinfo
-from comtypes.tools.typedesc_base import Alias as Alias
-from comtypes.tools.typedesc_base import Argument as Argument
 from comtypes.tools.typedesc_base import ArrayType as ArrayType
-from comtypes.tools.typedesc_base import Constructor as Constructor
-from comtypes.tools.typedesc_base import CvQualifiedType as CvQualifiedType
 from comtypes.tools.typedesc_base import Enumeration as Enumeration
 from comtypes.tools.typedesc_base import EnumValue as EnumValue
 from comtypes.tools.typedesc_base import Field as Field
-from comtypes.tools.typedesc_base import File as File
-from comtypes.tools.typedesc_base import Function as Function
-from comtypes.tools.typedesc_base import FunctionType as FunctionType
 from comtypes.tools.typedesc_base import FundamentalType as FundamentalType
-from comtypes.tools.typedesc_base import Macro as Macro
-from comtypes.tools.typedesc_base import Method as Method
-from comtypes.tools.typedesc_base import OperatorFunction as OperatorFunction
 from comtypes.tools.typedesc_base import PointerType as PointerType
 from comtypes.tools.typedesc_base import Structure as Structure
 from comtypes.tools.typedesc_base import StructureBody as StructureBody
 from comtypes.tools.typedesc_base import StructureHead as StructureHead
 from comtypes.tools.typedesc_base import Typedef as Typedef
 from comtypes.tools.typedesc_base import Union as Union
-from comtypes.tools.typedesc_base import Variable as Variable
 from comtypes.typeinfo import TLIBATTR, ITypeLib
 
 _TD = TypeVar("_TD")

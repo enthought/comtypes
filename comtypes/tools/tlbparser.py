@@ -157,7 +157,6 @@ SpecType = _UnionT[
 ################################################################
 
 
-# To suppress obvious, non-essential warnings.
 # Cast to str only once to avoid redundant work.
 _IID_IUnknown = str(IUnknown._iid_)
 _IID_IDispatch = str(automation.IDispatch._iid_)
@@ -277,27 +276,30 @@ class Parser:
             # We skip all function definitions.  There are several
             # problems with these, and we can, for comtypes, ignore them.
             continue
-            fd = tinfo.GetFuncDesc(i)
-            dllname, func_name, ordinal = tinfo.GetDllEntry(fd.memid, fd.invkind)
-            func_doc = tinfo.GetDocumentation(fd.memid)[1]
-            assert 0 == fd.cParamsOpt  # XXX
-            returns = self.make_type(fd.elemdescFunc.tdesc, tinfo)
-
-            if fd.callconv == typeinfo.CC_CDECL:
-                attributes = "__cdecl__"
-            elif fd.callconv == typeinfo.CC_STDCALL:
-                attributes = "__stdcall__"
-            else:
-                raise ValueError(f"calling convention {fd.callconv:d}")
-
-            func = typedesc.Function(func_name, returns, attributes, extern=1)
-            if func_doc is not None:
-                func.doc = func_doc.encode("mbcs")
-            func.dllname = dllname
-            self._register(func_name, func)
-            for i in range(fd.cParams):
-                argtype = self.make_type(fd.lprgelemdescParam[i].tdesc, tinfo)
-                func.add_argument(argtype)
+            # Unreachable code has existed here since the oldest revision
+            # tracked in the version control system.
+            # MIDL requires interface names to be unique.
+            # https://learn.microsoft.com/en-us/windows/win32/midl/interface
+            # On the other hand, the `ITypeComp::Bind` specification in COM
+            # Automation defines `TYPE_E_AMBIGUOUSNAME` for cases where
+            # multiple elements match during name resolution.
+            # https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-oaut/476f00da-0806-40d9-bbf3-6059154abbb7
+            # Therefore, at least, in COM, ambiguity during name resolution is
+            # considered in the specification.
+            # If functions are also registered in the mapping that stores type
+            # library parsing results, type information and function names may
+            # conflict, potentially causing type information to be overwritten
+            # or become inaccessible.
+            # While such conflicts may be avoided by modern MIDL compiler
+            # constraints or developer naming conventions, existing type
+            # libraries do not necessarily follow the same constraints or
+            # conventions.
+            # Furthermore, an old Microsoft article also notes that `FUNCDESC`s
+            # for `TKIND_MODULE` (which describe regular functions) are seen
+            # in relatively few cases.
+            # https://web.archive.org/web/20161023092604/http://www.microsoft.com/msj/0399/comtype/comtype.aspx
+            # So, functions are excluded from registration during parsing t
+            # avoid unnecessary name conflicts.
 
         # constants
         for i in range(ta.cVars):
@@ -364,8 +366,8 @@ class Parser:
             )
             for j in range(fd.cParams):
                 elemdesc = fd.lprgelemdescParam[j]
-                typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
                 paramdesc = elemdesc._.paramdesc
                 if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
@@ -450,8 +452,8 @@ class Parser:
             )
             for j in range(fd.cParams):
                 elemdesc = fd.lprgelemdescParam[j]
-                typ = self.make_type(elemdesc.tdesc, tinfo)
                 name = names[j + 1]
+                typ = self.make_type(elemdesc.tdesc, tinfo)
                 paramdesc = elemdesc._.paramdesc
                 if paramdesc.wParamFlags & typeinfo.PARAMFLAG_FHASDEFAULT:
                     # XXX should be handled by VARIANT itself
