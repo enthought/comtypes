@@ -108,7 +108,7 @@ _P_Get = ParamSpec("_P_Get")
 _R_Get = TypeVar("_R_Get", infer_variance=True)
 _P_Set = ParamSpec("_P_Set")
 
-class _GetSetNormalProperty(Protocol[_T_Inst, _R_Get, _T_SetVal]):
+class _GetSetNormalProperty(Generic[_T_Inst, _R_Get, _T_SetVal]):
     fget: Callable[[_T_Inst], Any]
     fset: Callable[[_T_Inst, _T_SetVal], Any]
 
@@ -120,7 +120,7 @@ class _GetSetNormalProperty(Protocol[_T_Inst, _R_Get, _T_SetVal]):
     ) -> _R_Get: ...
     def __set__(self, instance: _T_Inst, value: _T_SetVal, /) -> None: ...
 
-class _GetOnlyNormalProperty(Protocol[_T_Inst, _R_Get]):
+class _GetOnlyNormalProperty(Generic[_T_Inst, _R_Get]):
     fget: Callable[[_T_Inst], Any]
 
     @overload
@@ -131,7 +131,7 @@ class _GetOnlyNormalProperty(Protocol[_T_Inst, _R_Get]):
     ) -> _R_Get: ...
     def __set__(self, instance: _T_Inst, value: Any, /) -> NoReturn: ...
 
-class _SetOnlyNormalProperty(Protocol[_T_Inst, _T_SetVal]):
+class _SetOnlyNormalProperty(Generic[_T_Inst, _T_SetVal]):
     fget: Callable[[_T_Inst], Any]
     fset: Callable[[_T_Inst, _T_SetVal], Any]
 
@@ -156,7 +156,7 @@ def normal_property(
     fget: Callable[[_T_Inst], _R_Get], fset: Callable[[_T_Inst, _T_SetVal], Any]
 ) -> _GetSetNormalProperty[_T_Inst, _R_Get, _T_SetVal]: ...
 
-class _GetSetBoundNamedProperty(Protocol[_T_Inst, _P_Get, _R_Get, _P_Set]):
+class _GetSetBoundNamedProperty(Generic[_T_Inst, _P_Get, _R_Get, _P_Set]):
     name: str
     fget: Callable[Concatenate[_T_Inst, _P_Get], _R_Get]
     fset: Callable[Concatenate[_T_Inst, _P_Set], Any]
@@ -166,7 +166,7 @@ class _GetSetBoundNamedProperty(Protocol[_T_Inst, _P_Get, _R_Get, _P_Set]):
     def __setitem__(self, index: Any, value: Any, /) -> None: ...
     def __iter__(self) -> NoReturn: ...
 
-class _GetSetNamedProperty(Protocol[_T_Inst, _P_Get, _R_Get, _P_Set]):
+class _GetSetNamedProperty(Generic[_T_Inst, _P_Get, _R_Get, _P_Set]):
     name: str
     fget: Callable[Concatenate[_T_Inst, _P_Get], _R_Get]
     fset: Callable[Concatenate[_T_Inst, _P_Set], Any]
@@ -180,7 +180,7 @@ class _GetSetNamedProperty(Protocol[_T_Inst, _P_Get, _R_Get, _P_Set]):
     ) -> _GetSetBoundNamedProperty[_T_Inst, _P_Get, _R_Get, _P_Set]: ...
     def __set__(self, instance: _T_Inst, value: Any, /) -> NoReturn: ...
 
-class _GetOnlyBoundNamedProperty(Protocol[_T_Inst, _P_Get, _R_Get]):
+class _GetOnlyBoundNamedProperty(Generic[_T_Inst, _P_Get, _R_Get]):
     name: str
     fget: Callable[Concatenate[_T_Inst, _P_Get], _R_Get]
     __doc__: Optional[str]
@@ -189,7 +189,7 @@ class _GetOnlyBoundNamedProperty(Protocol[_T_Inst, _P_Get, _R_Get]):
     def __setitem__(self, index: Any, value: Any, /) -> NoReturn: ...
     def __iter__(self) -> NoReturn: ...
 
-class _GetOnlyNamedProperty(Protocol[_T_Inst, _P_Get, _R_Get]):
+class _GetOnlyNamedProperty(Generic[_T_Inst, _P_Get, _R_Get]):
     name: str
     fget: Callable[Concatenate[_T_Inst, _P_Get], _R_Get]
     __doc__: Optional[str]
@@ -202,7 +202,7 @@ class _GetOnlyNamedProperty(Protocol[_T_Inst, _P_Get, _R_Get]):
     ) -> _GetOnlyBoundNamedProperty[_T_Inst, _P_Get, _R_Get]: ...
     def __set__(self, instance: _T_Inst, value: Any, /) -> NoReturn: ...
 
-class _SetOnlyBoundNamedProperty(Protocol[_T_Inst, _P_Set]):
+class _SetOnlyBoundNamedProperty(Generic[_T_Inst, _P_Set]):
     name: str
     fset: Callable[Concatenate[_T_Inst, _P_Set], Any]
     __doc__: Optional[str]
@@ -211,7 +211,7 @@ class _SetOnlyBoundNamedProperty(Protocol[_T_Inst, _P_Set]):
     def __setitem__(self, index: Any, value: Any, /) -> None: ...
     def __iter__(self) -> NoReturn: ...
 
-class _SetOnlyNamedProperty(Protocol[_T_Inst, _P_Set]):
+class _SetOnlyNamedProperty(Generic[_T_Inst, _P_Set]):
     name: str
     fset: Callable[Concatenate[_T_Inst, _P_Set], Any]
     __doc__: Optional[str]
