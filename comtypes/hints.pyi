@@ -20,6 +20,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self as Self
     from typing_extensions import Unpack as Unpack
+# Using a `TypeVar` with infer_variance that is compatible with PEP 695
+# style annotations helps to reduce differences between type checkers.
 if sys.version_info >= (3, 12):
     from typing import TypeVar
 else:
