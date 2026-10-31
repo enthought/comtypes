@@ -5,6 +5,7 @@ import comtypes
 import comtypes.safearray
 import comtypes.typeinfo
 from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
+from comtypes.automation import tagCY, tagDEC
 from comtypes.client import CreateObject, GetModule
 
 GetModule("UIAutomationCore.dll")
@@ -102,6 +103,36 @@ class Test_midlSAFEARRAY_create(unittest.TestCase):
                 (unpacked,) = sa.unpack()
                 self.assertIsInstance(unpacked, int)
                 self.assertEqual(unpacked, 1)
+
+    def test_tagCY(self):
+        """Test SAFEARRAY(tagCY) creation and unpacking.
+
+        Currently, creating a SAFEARRAY(tagCY) raises TypeError because
+        tagCY is not yet registered in _ctype_to_vartype.
+        """
+        cy_val = tagCY(int64=31400)
+        sa_type = comtypes.safearray._midlSAFEARRAY(tagCY)
+        with self.assertRaises(TypeError) as cm:
+            sa_type.create([cy_val])
+        self.assertEqual(
+            str(cm.exception),
+            "Cannot create SAFEARRAY type VT_RECORD without IRecordInfo.",
+        )
+
+    def test_tagDEC(self):
+        """Test SAFEARRAY(tagDEC) creation and unpacking.
+
+        Currently, creating a SAFEARRAY(tagDEC) raises TypeError because
+        tagDEC is not yet registered in _ctype_to_vartype.
+        """
+        dec_val = tagDEC(scale=2, sign=0, Hi32=0, Lo64=314)
+        sa_type = comtypes.safearray._midlSAFEARRAY(tagDEC)
+        with self.assertRaises(TypeError) as cm:
+            sa_type.create([dec_val])
+        self.assertEqual(
+            str(cm.exception),
+            "Cannot create SAFEARRAY type VT_RECORD without IRecordInfo.",
+        )
 
 
 if __name__ == "__main__":
