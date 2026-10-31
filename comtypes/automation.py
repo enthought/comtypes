@@ -29,6 +29,9 @@ else:
     _CArgObject = type(byref(c_int()))
 
 
+_CY_SCALE = decimal.Decimal("10000")
+
+
 LCID = DWORD
 DISPID = LONG
 SCODE = LONG
@@ -110,6 +113,10 @@ VT_TYPEMASK = 4095
 
 class tagCY(Structure):
     _fields_ = [("int64", c_longlong)]
+
+    def as_decimal(self) -> decimal.Decimal:
+        """Convert a tagCY struct to Decimal with scale 4 (10000)."""
+        return decimal.Decimal(self.int64) / _CY_SCALE
 
     def __repr__(self) -> str:
         return f"tagCY(int64={self.int64})"

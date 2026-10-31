@@ -5,6 +5,7 @@ methods directly.
 """
 
 import unittest
+from decimal import Decimal
 
 from comtypes.automation import tagCY, tagDEC
 
@@ -22,6 +23,16 @@ class TestTagCY(unittest.TestCase):
         for cy, expected in test_cases:
             with self.subTest(cy=cy):
                 self.assertEqual(repr(cy), expected)
+
+    def test_as_decimal(self):
+        """Test tagCY.as_decimal()."""
+        cy = tagCY(int64=1234500)
+        self.assertEqual(cy.as_decimal(), Decimal("123.45"))
+
+    def test_as_decimal_negative(self):
+        """Test tagCY.as_decimal() with negative value."""
+        cy = tagCY(int64=-1234500)
+        self.assertEqual(cy.as_decimal(), Decimal("-123.45"))
 
 
 class TestTagDEC(unittest.TestCase):
@@ -46,6 +57,16 @@ class TestTagDEC(unittest.TestCase):
         for dec, expected in test_cases:
             with self.subTest(dec=dec):
                 self.assertEqual(repr(dec), expected)
+
+    def test_as_decimal(self):
+        """Test tagDEC.as_decimal()."""
+        dec = tagDEC(scale=2, sign=0, Hi32=0, Lo64=314)
+        self.assertEqual(dec.as_decimal(), Decimal("3.14"))
+
+    def test_as_decimal_negative(self):
+        """Test tagDEC.as_decimal() with negative value."""
+        dec = tagDEC(scale=2, sign=0x80, Hi32=0, Lo64=314)
+        self.assertEqual(dec.as_decimal(), Decimal("-3.14"))
 
 
 if __name__ == "__main__":
