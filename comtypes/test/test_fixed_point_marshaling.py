@@ -12,7 +12,6 @@ from comtypes.automation import (
     _CY_MAX,
     _CY_MIN,
     _DECIMAL_MAX_MANTISSA,
-    _DECIMAL_MAX_SCALE,
     tagCY,
     tagDEC,
 )
