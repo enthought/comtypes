@@ -125,6 +125,24 @@ class TestTagCY(unittest.TestCase):
             cy = tagCY.from_decimal(Decimal("123.4567"))
             self.assertEqual(cy.int64, 1234567)
 
+    def test_tagCY_from_decimal_rejects_nan(self):
+        """Test tagCY.from_decimal rejects NaN."""
+        with self.assertRaises(ValueError) as cm:
+            tagCY.from_decimal(Decimal("NaN"))
+        self.assertIn("NaN cannot be converted", str(cm.exception))
+
+    def test_tagCY_from_decimal_rejects_infinity(self):
+        """Test tagCY.from_decimal rejects Infinity."""
+        with self.assertRaises(OverflowError) as cm:
+            tagCY.from_decimal(Decimal("Infinity"))
+        self.assertIn("Infinity cannot be converted", str(cm.exception))
+
+    def test_tagCY_from_decimal_rejects_non_decimal(self):
+        """Test tagCY.from_decimal rejects non-decimal."""
+        with self.assertRaises(TypeError) as cm:
+            tagCY.from_decimal(object())
+        self.assertIn("only Decimal is accepted", str(cm.exception))
+
 
 class TestTagDEC(unittest.TestCase):
     """Tests for tagDEC conversion methods."""
@@ -251,6 +269,24 @@ class TestTagDEC(unittest.TestCase):
             # Should not raise
             dec = tagDEC.from_decimal(Decimal("123.45678901234567890"))
             self.assertLessEqual(dec.scale, _DECIMAL_MAX_SCALE)
+
+    def test_tagDEC_from_decimal_rejects_nan(self):
+        """Test tagDEC.from_decimal rejects NaN."""
+        with self.assertRaises(ValueError) as cm:
+            tagDEC.from_decimal(Decimal("NaN"))
+        self.assertIn("NaN cannot be converted", str(cm.exception))
+
+    def test_tagDEC_from_decimal_rejects_infinity(self):
+        """Test tagDEC.from_decimal rejects Infinity."""
+        with self.assertRaises(OverflowError) as cm:
+            tagDEC.from_decimal(Decimal("Infinity"))
+        self.assertIn("Infinity cannot be converted", str(cm.exception))
+
+    def test_tagDEC_from_decimal_rejects_non_decimal(self):
+        """Test tagDEC.from_decimal rejects non-decimal."""
+        with self.assertRaises(TypeError) as cm:
+            tagDEC.from_decimal(object())
+        self.assertIn("only Decimal is accepted", str(cm.exception))
 
 
 if __name__ == "__main__":

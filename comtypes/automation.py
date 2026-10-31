@@ -50,21 +50,15 @@ _DECIMAL_MAX_MANTISSA = (1 << 96) - 1
 def _coerce_decimal(value: Any, context: str) -> decimal.Decimal:
     """Coerce a value to Decimal for VARIANT marshaling.
 
-    Accepts Decimal and int. Rejects float, bool, NaN, and Infinity.
+    Accepts only Decimal. Rejects int, float, bool, NaN, and Infinity.
     """
-    if isinstance(value, bool):
-        raise TypeError(f"{context}: bool is not accepted, use int or Decimal")
-    if isinstance(value, float):
-        raise TypeError(f"{context}: float is not accepted, use int or Decimal")
-    if isinstance(value, int):
-        return decimal.Decimal(value)
-    if isinstance(value, decimal.Decimal):
-        if value.is_nan():
-            raise ValueError(f"{context}: NaN cannot be converted to VARIANT")
-        if value.is_infinite():
-            raise OverflowError(f"{context}: Infinity cannot be converted to VARIANT")
-        return value
-    raise TypeError(f"{context}: cannot convert {type(value).__name__} to Decimal")
+    if not isinstance(value, decimal.Decimal):
+        raise TypeError(f"{context}: only Decimal is accepted")
+    if value.is_nan():
+        raise ValueError(f"{context}: NaN cannot be converted to VARIANT")
+    if value.is_infinite():
+        raise OverflowError(f"{context}: Infinity cannot be converted to VARIANT")
+    return value
 
 
 LCID = DWORD
