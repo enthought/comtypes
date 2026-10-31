@@ -474,7 +474,7 @@ class tagVARIANT(Structure):
             com_days /= comtypes.npsupport.numpy.timedelta64(1, "D")
             self.vt = VT_DATE
             self._.VT_R8 = com_days
-        elif decimal is not None and isinstance(value, decimal.Decimal):
+        elif isinstance(value, decimal.Decimal):
             # TODO: Use `self._.VT_CY = tagCY.from_decimal(value)` directly.
             # Currently writing via `VT_I8` because `VT_CY` is now a `tagCY`
             # struct in the union. This is correct since `VT_I8` and `VT_CY`
