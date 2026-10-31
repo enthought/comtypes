@@ -416,40 +416,40 @@ class TestCyVariantValueProperty(unittest.TestCase):
     """Tests for VARIANT.value property with VT_CY."""
 
     def test_value_property_returns_decimal(self):
-        with self.assertRaises(TypeError) as cm:
-            VARIANT(tagCY(int64=1234567))
-        self.assertIn("Cannot put tagCY", str(cm.exception))
+        cy_var = VARIANT(tagCY(int64=1234567))
+        self.assertEqual(cy_var.value, decimal.Decimal("123.4567"))
 
     def test_value_property_negative(self):
-        with self.assertRaises(TypeError) as cm:
-            VARIANT(tagCY(int64=-1234567))
-        self.assertIn("Cannot put tagCY", str(cm.exception))
+        cy_var = VARIANT(tagCY(int64=-1234567))
+        self.assertEqual(cy_var.value, decimal.Decimal("-123.4567"))
 
     def test_value_property_zero(self):
-        with self.assertRaises(TypeError) as cm:
-            VARIANT(tagCY(int64=0))
-        self.assertIn("Cannot put tagCY", str(cm.exception))
+        cy_var = VARIANT(tagCY(int64=0))
+        self.assertEqual(cy_var.value, decimal.Decimal("0"))
 
 
 class TestDecVariantValueProperty(unittest.TestCase):
     """Tests for VARIANT.value property with VT_DECIMAL."""
 
     def test_value_property_returns_decimal(self):
-        with self.assertRaises(TypeError) as cm:
-            VARIANT(tagDEC(scale=26, sign=0, Hi32=669260594, Lo64=5097733592125636885))
-        self.assertIn("Cannot put tagDEC", str(cm.exception))
+        dec_var = VARIANT(
+            tagDEC(scale=26, sign=0, Hi32=669260594, Lo64=5097733592125636885)
+        )
+        self.assertEqual(
+            dec_var.value, decimal.Decimal("123.45678901234567890123456789")
+        )
 
     def test_value_property_negative(self):
-        with self.assertRaises(TypeError) as cm:
-            VARIANT(
-                tagDEC(scale=26, sign=0x80, Hi32=669260594, Lo64=5097733592125636885)
-            )
-        self.assertIn("Cannot put tagDEC", str(cm.exception))
+        dec_var = VARIANT(
+            tagDEC(scale=26, sign=0x80, Hi32=669260594, Lo64=5097733592125636885)
+        )
+        self.assertEqual(
+            dec_var.value, decimal.Decimal("-123.45678901234567890123456789")
+        )
 
     def test_value_property_zero(self):
-        with self.assertRaises(TypeError) as cm:
-            VARIANT(tagDEC(scale=0, sign=0, Hi32=0, Lo64=0))
-        self.assertIn("Cannot put tagDEC", str(cm.exception))
+        dec_var = VARIANT(tagDEC(scale=0, sign=0, Hi32=0, Lo64=0))
+        self.assertEqual(dec_var.value, decimal.Decimal("0"))
 
 
 if __name__ == "__main__":
