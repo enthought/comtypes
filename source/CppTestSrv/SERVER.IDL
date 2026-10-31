@@ -141,6 +141,8 @@ interface IVariantErrorTest : IUnknown
 ]
 interface IFixedPointNumberTest : IUnknown
 {
+	HRESULT ToDecVariant([in] BSTR strValue, [out, retval] VARIANT* result);
+	HRESULT ToCyVariant([in] BSTR strValue, [out, retval] VARIANT* result);
 	HRESULT InitCyVariantWith3dot14([in, out] VARIANT* value);
 	HRESULT InitDecVariantWith3dot14([in, out] VARIANT* value);
 } ;
