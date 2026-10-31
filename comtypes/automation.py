@@ -29,7 +29,67 @@ else:
     _CArgObject = type(byref(c_int()))
 
 
+# ============================================================
+# Fixed-point number (VT_CY / VT_DECIMAL) marshaling helpers
+# ============================================================
+
+# CY range constants
+_CY_BITS = 64
+_LLONG_MIN = -(1 << (_CY_BITS - 1))
+_LLONG_MAX = (1 << (_CY_BITS - 1)) - 1
 _CY_SCALE = decimal.Decimal("10000")
+_CY_MIN = decimal.Decimal(_LLONG_MIN) / _CY_SCALE
+_CY_MAX = decimal.Decimal(_LLONG_MAX) / _CY_SCALE
+
+# DECIMAL limits
+_DECIMAL_MAX_SCALE = 28
+_DECIMAL_MAX_DIGITS = 96  # 96 bits = max 28 decimal digits (2**96-1 has 29 digits, but we use 96-bit mantissa)
+_DECIMAL_MAX_MANTISSA = (1 << 96) - 1
+
+
+def _coerce_decimal(value: Any, context: str) -> decimal.Decimal:
+    """Coerce a value to Decimal for VARIANT marshaling.
+
+    Accepts Decimal and int. Rejects float, bool, NaN, and Infinity.
+    """
+    if isinstance(value, bool):
+        raise TypeError(f"{context}: bool is not accepted, use int or Decimal")
+    if isinstance(value, float):
+        raise TypeError(f"{context}: float is not accepted, use int or Decimal")
+    if isinstance(value, int):
+        return decimal.Decimal(value)
+    if isinstance(value, decimal.Decimal):
+        if value.is_nan():
+            raise ValueError(f"{context}: NaN cannot be converted to VARIANT")
+        if value.is_infinite():
+            raise OverflowError(f"{context}: Infinity cannot be converted to VARIANT")
+        return value
+    raise TypeError(f"{context}: cannot convert {type(value).__name__} to Decimal")
+
+
+def _scaled_int(d: decimal.Decimal, scale: int) -> tuple[int, bool]:
+    """Convert a Decimal to an integer scaled by 10**scale using ROUND_HALF_EVEN.
+
+    Returns (n, exact) where n is the scaled integer and exact is True if
+    the conversion was exact (no rounding occurred).
+    """
+    sign, digits, exp = d.as_tuple()
+    coef = int("".join(map(str, digits))) if digits else 0
+    shift = -exp - scale
+    if shift <= 0:
+        n = coef * 10 ** (-shift)
+        exact = True
+    elif shift > len(digits):
+        n = 0
+        exact = coef == 0
+    else:
+        q, r = divmod(coef, 10**shift)
+        half = 5 * 10 ** (shift - 1)
+        exact = r == 0
+        if r > half or (r == half and (q & 1)):
+            q += 1
+        n = q
+    return (-n if sign else n), exact
 
 
 LCID = DWORD
@@ -121,6 +181,30 @@ class tagCY(Structure):
     def __repr__(self) -> str:
         return f"tagCY(int64={self.int64})"
 
+    @classmethod
+    def from_decimal(cls, d: decimal.Decimal) -> "hints.Self":
+        """Create a tagCY from a Decimal.
+
+        The value is multiplied by 10000 and must be exactly representable
+        as an integer (no fractional part after scaling). Raises OverflowError
+        if the value has more than 4 decimal places, or if the value is
+        outside the int64 range.
+        """
+        d = _coerce_decimal(d, "tagCY.from_decimal")
+        # Use localcontext with high precision to avoid context-dependent rounding
+        with decimal.localcontext(decimal.Context(prec=decimal.MAX_PREC)):
+            scaled = d * _CY_SCALE
+            # Check if the scaled value has a fractional part
+            if scaled != scaled.to_integral_value():
+                raise OverflowError(
+                    f"Value {d} has more than 4 decimal places, cannot convert to VT_CY exactly. "
+                    f"Round explicitly before calling."
+                )
+            n = int(scaled)
+        if not _LLONG_MIN <= n <= _LLONG_MAX:
+            raise OverflowError(f"Value {d} out of range for VT_CY")
+        return cls(n)
+
 
 CY = tagCY
 CURRENCY = CY
@@ -148,6 +232,79 @@ class tagDEC(Structure):
 
     def __repr__(self) -> str:
         return f"tagDEC(scale={self.scale}, sign={self.sign}, Hi32={self.Hi32}, Lo64={self.Lo64})"
+
+    @classmethod
+    def from_decimal(cls, d: decimal.Decimal) -> "hints.Self":
+        """Create a tagDEC from a Decimal.
+
+        The scale is chosen as min(-exponent, 28) initially. The value must
+        fit in 96 bits at that scale; if not, the scale is reduced until it
+        fits, but this requires rounding which is not allowed. The caller
+        must explicitly round the value before calling.
+
+        Returns a tagDEC instance.
+
+        Raises OverflowError if the value has more than 28 decimal places
+        (exceeds VT_DECIMAL maximum scale), or if the value cannot be
+        represented exactly at the initial scale (would require rounding
+        to fit 96-bit mantissa), or if the value cannot fit in DECIMAL
+        even at scale 0.
+        """
+        d = _coerce_decimal(d, "tagDEC.from_decimal")
+        sign, digits, exp = d.as_tuple()
+        coef = int("".join(map(str, digits))) if digits else 0
+
+        # Start with scale = min(-exp, 28)
+        scale = min(-exp, _DECIMAL_MAX_SCALE) if exp < 0 else 0
+
+        # If the value has more decimal places than max scale, it cannot be
+        # represented exactly in VT_DECIMAL. Require explicit rounding by caller.
+        if exp < -_DECIMAL_MAX_SCALE:
+            raise OverflowError(
+                f"Value {d} has more than {_DECIMAL_MAX_SCALE} decimal places, "
+                f"cannot convert to VT_DECIMAL exactly. Round explicitly before calling."
+            )
+
+        # Check if the value fits exactly at the initial scale
+        shift = -exp - scale
+        if shift <= 0:
+            scaled_coef = coef * 10 ** (-shift)
+            exact = True
+        elif shift > len(digits):
+            scaled_coef = 0
+            exact = coef == 0
+        else:
+            q, r = divmod(coef, 10**shift)
+            half = 5 * 10 ** (shift - 1)
+            exact = r == 0
+            if r > half or (r == half and (q & 1)):
+                q += 1
+            scaled_coef = q
+
+        # Check if it fits in 96 bits at the initial scale
+        if scaled_coef <= _DECIMAL_MAX_MANTISSA:
+            if not exact:
+                raise OverflowError(
+                    f"Value {d} cannot be represented exactly at scale {scale} "
+                    f"(would require rounding to fit 96-bit mantissa). "
+                    f"Round explicitly before calling."
+                )
+        else:
+            # Value doesn't fit in 96 bits at initial scale.
+            # Reducing scale would require rounding, which is not allowed.
+            raise OverflowError(
+                f"Value {d} exceeds 96-bit mantissa at scale {scale}. "
+                f"Reduce precision explicitly before calling."
+            )
+
+        # Build the tagDEC
+        dec = cls()
+        dec.wReserved = 0
+        dec.scale = scale
+        dec.sign = 0x80 if sign else 0x00
+        dec.Hi32 = (scaled_coef >> 64) & 0xFFFFFFFF
+        dec.Lo64 = scaled_coef & 0xFFFFFFFFFFFFFFFF
+        return dec
 
 
 DECIMAL = tagDEC
