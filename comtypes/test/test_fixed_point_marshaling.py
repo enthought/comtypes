@@ -209,7 +209,7 @@ class TestTagDEC(unittest.TestCase):
 
     def test_from_decimal_overflow(self):
         """Test tagDEC.from_decimal() raises OverflowError for too-large values."""
-        # Value exceeding 96-bit mantissa even at scale 0
+        # Value exceeding 96-bit mantissa at the required scale
         val = Decimal("12345678901234567890123456789.0123456789")
         with self.assertRaises(OverflowError) as cm:
             tagDEC.from_decimal(val)
@@ -218,7 +218,8 @@ class TestTagDEC(unittest.TestCase):
 
     def test_from_decimal_too_many_decimal_places(self):
         """Test tagDEC.from_decimal() raises OverflowError for >28 decimal places."""
-        val = Decimal("1.23456789012345678901234567890")
+        # Use a value with 29 non-zero decimal places (no trailing zeros to strip)
+        val = Decimal("1.23456789012345678901234567891")
         with self.assertRaises(OverflowError) as cm:
             tagDEC.from_decimal(val)
         self.assertIn("more than 28 decimal places", str(cm.exception))
@@ -230,6 +231,32 @@ class TestTagDEC(unittest.TestCase):
         dec = tagDEC.from_decimal(Decimal("1.2300"))
         self.assertEqual(dec.scale, 4)
         self.assertEqual(dec.as_decimal(), Decimal("1.2300"))
+
+    def test_from_decimal_trailing_zeros_stripped(self):
+        """Test tagDEC.from_decimal() accepts values with many trailing zeros beyond 28 places."""
+        # 1.23 with 30 trailing zeros (32 decimal places total) - should be accepted
+        # because trailing zeros are stripped until exp >= -28, reducing scale to 28
+        val = Decimal("1.23" + "0" * 30)
+        dec = tagDEC.from_decimal(val)
+        self.assertEqual(dec.scale, 28)
+        self.assertEqual(dec.as_decimal(), Decimal("1.23" + "0" * 28))
+
+    def test_from_decimal_zero_with_many_decimal_places(self):
+        """Test tagDEC.from_decimal() accepts zero with many decimal places."""
+        # 0E-30 should be accepted (zero is special-cased, scale preserved)
+        val = Decimal("0E-30")
+        dec = tagDEC.from_decimal(val)
+        self.assertEqual(dec.scale, 28)  # scale preserved from exponent
+        self.assertEqual(dec.as_decimal(), Decimal("0E-28"))
+
+    def test_from_decimal_huge_positive_exponent(self):
+        """Test tagDEC.from_decimal() rejects huge positive exponent early."""
+        # 1E1000000 would cause huge integer allocation if not checked early
+        val = Decimal("1E1000000")
+        with self.assertRaises(OverflowError) as cm:
+            tagDEC.from_decimal(val)
+        self.assertIn("exceeds 96-bit mantissa", str(cm.exception))
+        self.assertIn("Reduce precision explicitly", str(cm.exception))
 
     def test_from_decimal_negative_zero(self):
         """Test tagDEC.from_decimal() with negative zero."""
@@ -257,23 +284,51 @@ class TestTagDEC(unittest.TestCase):
     def test_tagDEC_from_decimal_context_independent(self):
         """Test tagDEC.from_decimal is context-independent."""
         with decimal.localcontext(decimal.Context(prec=5)):
-            dec = tagDEC.from_decimal(Decimal("123.45678901234567890"))
-            # Should not be affected by context precision
-            self.assertLessEqual(dec.scale, _DECIMAL_MAX_SCALE)
+            val = Decimal("123.45678901234567890")
+            dec = tagDEC.from_decimal(val)
+            # Should not be affected by context precision - round-trip must match
+            self.assertEqual(dec.as_decimal(), val)
 
     def test_tagDEC_from_decimal_traps_independent(self):
         """Test tagDEC.from_decimal is not affected by context traps."""
         with decimal.localcontext(
             decimal.Context(traps=[decimal.Inexact, decimal.Rounded])
         ):
-            # Should not raise
-            dec = tagDEC.from_decimal(Decimal("123.45678901234567890"))
-            self.assertLessEqual(dec.scale, _DECIMAL_MAX_SCALE)
+            val = Decimal("123.45678901234567890")
+            dec = tagDEC.from_decimal(val)
+            # Should not raise and round-trip must match
+            self.assertEqual(dec.as_decimal(), val)
+
+    def test_tagDEC_from_decimal_positive_exponent_zero(self):
+        """Test tagDEC.from_decimal with positive exponent zero (0E+5)."""
+        val = Decimal("0E+5")
+        dec = tagDEC.from_decimal(val)
+        self.assertEqual(dec.scale, 0)
+        self.assertEqual(dec.as_decimal(), Decimal("0"))
+
+    def test_tagDEC_from_decimal_positive_exponent(self):
+        """Test tagDEC.from_decimal with positive exponent (1E+1)."""
+        val = Decimal("1E+1")  # = 10
+        dec = tagDEC.from_decimal(val)
+        self.assertEqual(dec.scale, 0)
+        self.assertEqual(dec.as_decimal(), Decimal("10"))
+
+        # Larger positive exponent
+        val = Decimal("123E+2")  # = 12300
+        dec = tagDEC.from_decimal(val)
+        self.assertEqual(dec.scale, 0)
+        self.assertEqual(dec.as_decimal(), Decimal("12300"))
 
     def test_tagDEC_from_decimal_rejects_nan(self):
         """Test tagDEC.from_decimal rejects NaN."""
         with self.assertRaises(ValueError) as cm:
             tagDEC.from_decimal(Decimal("NaN"))
+        self.assertIn("NaN cannot be converted", str(cm.exception))
+
+    def test_tagDEC_from_decimal_rejects_snan(self):
+        """Test tagDEC.from_decimal rejects signaling NaN."""
+        with self.assertRaises(ValueError) as cm:
+            tagDEC.from_decimal(Decimal("sNaN"))
         self.assertIn("NaN cannot be converted", str(cm.exception))
 
     def test_tagDEC_from_decimal_rejects_infinity(self):
@@ -282,11 +337,79 @@ class TestTagDEC(unittest.TestCase):
             tagDEC.from_decimal(Decimal("Infinity"))
         self.assertIn("Infinity cannot be converted", str(cm.exception))
 
+    def test_tagDEC_from_decimal_rejects_negative_infinity(self):
+        """Test tagDEC.from_decimal rejects -Infinity."""
+        with self.assertRaises(OverflowError) as cm:
+            tagDEC.from_decimal(Decimal("-Infinity"))
+        self.assertIn("Infinity cannot be converted", str(cm.exception))
+
     def test_tagDEC_from_decimal_rejects_non_decimal(self):
         """Test tagDEC.from_decimal rejects non-decimal."""
         with self.assertRaises(TypeError) as cm:
             tagDEC.from_decimal(object())
         self.assertIn("only Decimal is accepted", str(cm.exception))
+
+    def test_tagDEC_from_decimal_boundary_values(self):
+        """Test tagDEC.from_decimal with boundary values."""
+        # 1E+28 (29 digits) - should be accepted (fits in 96-bit mantissa)
+        val = Decimal("1E+28")
+        dec = tagDEC.from_decimal(val)
+        self.assertEqual(dec.as_decimal(), val)
+
+        # 1E+29 (30 digits) - should be rejected (exceeds 96-bit mantissa)
+        val = Decimal("1E+29")
+        with self.assertRaises(OverflowError) as cm:
+            tagDEC.from_decimal(val)
+        self.assertIn("exceeds 96-bit mantissa", str(cm.exception))
+
+        # Max mantissa value (2**96 - 1) - should be accepted
+        val = Decimal(str(_DECIMAL_MAX_MANTISSA))
+        dec = tagDEC.from_decimal(val)
+        mantissa = (dec.Hi32 << 64) + dec.Lo64
+        self.assertEqual(mantissa, _DECIMAL_MAX_MANTISSA)
+
+        # Max mantissa + 1 - should be rejected
+        val = Decimal(str(_DECIMAL_MAX_MANTISSA + 1))
+        with self.assertRaises(OverflowError) as cm:
+            tagDEC.from_decimal(val)
+        self.assertIn("exceeds 96-bit mantissa", str(cm.exception))
+
+        # Negative boundary values
+        # -1E+28 - should be accepted
+        val = Decimal("-1E+28")
+        dec = tagDEC.from_decimal(val)
+        self.assertEqual(dec.as_decimal(), val)
+        self.assertEqual(dec.sign, 0x80)
+
+        # -1E+29 - should be rejected
+        val = Decimal("-1E+29")
+        with self.assertRaises(OverflowError) as cm:
+            tagDEC.from_decimal(val)
+        self.assertIn("exceeds 96-bit mantissa", str(cm.exception))
+
+        # -Max mantissa - should be accepted
+        val = Decimal(str(-_DECIMAL_MAX_MANTISSA))
+        dec = tagDEC.from_decimal(val)
+        mantissa = (dec.Hi32 << 64) + dec.Lo64
+        self.assertEqual(mantissa, _DECIMAL_MAX_MANTISSA)
+        self.assertEqual(dec.sign, 0x80)
+
+        # -Max mantissa - 1 - should be rejected
+        val = Decimal(str(-_DECIMAL_MAX_MANTISSA - 1))
+        with self.assertRaises(OverflowError) as cm:
+            tagDEC.from_decimal(val)
+        self.assertIn("exceeds 96-bit mantissa", str(cm.exception))
+
+        # 1.5E-27 (28 decimal places, non-zero) - should be accepted
+        val = Decimal("1.5E-27")
+        dec = tagDEC.from_decimal(val)
+        self.assertEqual(dec.as_decimal(), val)
+
+        # 1E-29 (29 decimal places) - should be rejected
+        val = Decimal("1E-29")
+        with self.assertRaises(OverflowError) as cm:
+            tagDEC.from_decimal(val)
+        self.assertIn("more than 28 decimal places", str(cm.exception))
 
 
 if __name__ == "__main__":

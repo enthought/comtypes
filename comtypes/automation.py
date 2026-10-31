@@ -206,61 +206,71 @@ class tagDEC(Structure):
     def from_decimal(cls, d: decimal.Decimal) -> "hints.Self":
         """Create a tagDEC from a Decimal.
 
-        The scale is chosen as min(-exponent, 28) initially. The value must
-        fit in 96 bits at that scale; if not, the scale is reduced until it
-        fits, but this requires rounding which is not allowed. The caller
-        must explicitly round the value before calling.
+        The scale is chosen as min(max(-exponent, 0), 28) for zero values,
+        and min(-exponent, 28) for non-zero values. Trailing zeros in the
+        fractional part are stripped only when they would cause the scale
+        to exceed 28 (i.e., when exponent < -28). This allows values like
+        1.230000... (many trailing zeros) to be accepted by reducing scale.
 
         Returns a tagDEC instance.
 
-        Raises OverflowError if the value has more than 28 decimal places
-        (exceeds VT_DECIMAL maximum scale), or if the value cannot be
-        represented exactly at the initial scale (would require rounding
-        to fit 96-bit mantissa), or if the value cannot fit in DECIMAL
-        even at scale 0.
+        Raises:
+            TypeError: If d is not a Decimal.
+            ValueError: If d is NaN.
+            OverflowError: If:
+                - d is Infinity.
+                - The value has more than 28 non-zero decimal places (exceeds
+                  VT_DECIMAL maximum scale).
+                - The value exceeds the 96-bit mantissa (≈7.9e28) at the
+                  required scale.
         """
         d = _coerce_decimal(d, "tagDEC.from_decimal")
         sign, digits, exp = d.as_tuple()
         coef = int("".join(map(str, digits))) if digits else 0
 
-        # Start with scale = min(-exp, 28)
-        scale = min(-exp, _DECIMAL_MAX_SCALE) if exp < 0 else 0
-
-        # If the value has more decimal places than max scale, it cannot be
-        # represented exactly in VT_DECIMAL. Require explicit rounding by caller.
-        if exp < -_DECIMAL_MAX_SCALE:
-            raise OverflowError(
-                f"Value {d} has more than {_DECIMAL_MAX_SCALE} decimal places, "
-                f"cannot convert to VT_DECIMAL exactly. Round explicitly before calling."
-            )
-
-        # Check if the value fits exactly at the initial scale
-        shift = -exp - scale
-        if shift <= 0:
-            scaled_coef = coef * 10 ** (-shift)
-            exact = True
-        elif shift > len(digits):
+        # Handle zero specially - preserve scale and sign for round-trip fidelity
+        if coef == 0:
+            # Zero: scale = min(max(-exp, 0), 28) to preserve trailing zeros
+            scale = min(max(-exp, 0), _DECIMAL_MAX_SCALE)
             scaled_coef = 0
-            exact = coef == 0
         else:
-            q, r = divmod(coef, 10**shift)
-            half = 5 * 10 ** (shift - 1)
-            exact = r == 0
-            if r > half or (r == half and (q & 1)):
-                q += 1
-            scaled_coef = q
+            # Strip trailing zeros from coefficient ONLY when they would cause
+            # scale to exceed 28 (i.e., when exp < -28). This allows values like
+            # 1.230000... (many trailing zeros) to be accepted by reducing scale.
+            while exp < -_DECIMAL_MAX_SCALE and coef % 10 == 0:
+                coef //= 10
+                exp += 1
 
-        # Check if it fits in 96 bits at the initial scale
-        if scaled_coef <= _DECIMAL_MAX_MANTISSA:
-            if not exact:
+            # Check for huge positive exponent that would cause huge integer allocation
+            # 96-bit mantissa max is 2**96-1 ≈ 7.9e28, so 29+ digits exceeds it.
+            # Use 29 explicitly (not _DECIMAL_MAX_SCALE + 1) to avoid confusion.
+            if d.adjusted() >= 29:
                 raise OverflowError(
-                    f"Value {d} cannot be represented exactly at scale {scale} "
-                    f"(would require rounding to fit 96-bit mantissa). "
-                    f"Round explicitly before calling."
+                    f"Value {d} exceeds 96-bit mantissa. "
+                    f"Reduce precision explicitly before calling."
                 )
-        else:
-            # Value doesn't fit in 96 bits at initial scale.
-            # Reducing scale would require rounding, which is not allowed.
+
+            # Start with scale = min(-exp, 28)
+            scale = min(-exp, _DECIMAL_MAX_SCALE) if exp < 0 else 0
+
+            # If the value has more decimal places than max scale, it cannot be
+            # represented exactly in VT_DECIMAL. Require explicit rounding by caller.
+            if exp < -_DECIMAL_MAX_SCALE:
+                raise OverflowError(
+                    f"Value {d} has more than {_DECIMAL_MAX_SCALE} decimal places, "
+                    f"cannot convert to VT_DECIMAL exactly. Round explicitly before calling."
+                )
+
+            # After the check above, we know exp >= -28 (or exp >= 0).
+            # For exp >= 0: scale=0, multiply by 10**exp.
+            # For exp < 0: scale=-exp, use coef directly (no scaling needed).
+            if exp >= 0:
+                scaled_coef = coef * 10**exp
+            else:
+                scaled_coef = coef
+
+        # Check if it fits in 96 bits at the required scale
+        if scaled_coef > _DECIMAL_MAX_MANTISSA:
             raise OverflowError(
                 f"Value {d} exceeds 96-bit mantissa at scale {scale}. "
                 f"Reduce precision explicitly before calling."
