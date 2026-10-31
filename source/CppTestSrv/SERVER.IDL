@@ -143,6 +143,8 @@ interface IFixedPointNumberTest : IUnknown
 {
 	HRESULT ToDecVariant([in] BSTR strValue, [out, retval] VARIANT* result);
 	HRESULT ToCyVariant([in] BSTR strValue, [out, retval] VARIANT* result);
+	HRESULT DecomposeCyVariant([in] VARIANT value, [out, retval] LONGLONG* result);
+	HRESULT DecomposeDecVariant([in] VARIANT value, [out] BYTE* sign, [out] SAFEARRAY(BYTE)* digits, [out] LONG* exponent);
 	HRESULT InitCyVariantWith3dot14([in, out] VARIANT* value);
 	HRESULT InitDecVariantWith3dot14([in, out] VARIANT* value);
 } ;

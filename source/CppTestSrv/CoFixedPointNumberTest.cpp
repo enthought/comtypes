@@ -2,6 +2,8 @@
 // Test component for converting strings to VT_DECIMAL and VT_CY VARIANTs.
 // ToDecVariant: takes a BSTR string and calls VarDecFromStr to return a VT_DECIMAL VARIANT.
 // ToCyVariant: takes a BSTR string and calls VarCyFromStr to return a VT_CY VARIANT.
+// DecomposeCyVariant: takes a VT_CY VARIANT and returns the int64 value.
+// DecomposeDecVariant: takes a VT_DECIMAL VARIANT and returns sign (uint8_t), digits (SAFEARRAY of uint8_t), and exponent (int32_t).
 // InitCyVariantWith3dot14: [in, out] VARIANT*. Discards the incoming content and reflects a VT_CY VARIANT holding 3.14.
 //                          If the incoming VARIANT is VT_BYREF | VT_CY, writes 3.14 through the reference instead.
 // InitDecVariantWith3dot14: [in, out] VARIANT*. Discards the incoming content and reflects a VT_DECIMAL VARIANT holding 3.14.
@@ -84,6 +86,155 @@ HRESULT __stdcall CFixedPointNumberTest::ToCyVariant(BSTR strValue, VARIANT* res
 	}
 
 	return hr ;
+}
+
+// DecomposeCyVariant
+// Takes a VT_CY VARIANT and returns the int64 value.
+HRESULT __stdcall CFixedPointNumberTest::DecomposeCyVariant(VARIANT value, LONGLONG* result)
+{
+	if (result == NULL)
+	{
+		return E_POINTER ;
+	}
+
+	if (value.vt != VT_CY)
+	{
+		return DISP_E_TYPEMISMATCH ;
+	}
+
+	// CY is a 64-bit integer scaled by 10000 (4 decimal places)
+	// The int64 value is stored in value.cyVal.int64
+	*result = value.cyVal.int64 ;
+
+	return S_OK ;
+}
+
+// DecomposeDecVariant
+// Takes a VT_DECIMAL VARIANT and returns sign (uint8_t), digits (SAFEARRAY of uint8_t), and exponent (int32_t).
+// This replicates Python's Decimal tuple representation: (sign, digits, exponent)
+// where sign is 0 for positive, 1 for negative; digits is a tuple of individual digits; exponent is negative scale.
+HRESULT __stdcall CFixedPointNumberTest::DecomposeDecVariant(VARIANT value, BYTE* sign, SAFEARRAY** digits, LONG* exponent)
+{
+	if (sign == NULL || digits == NULL || exponent == NULL)
+	{
+		return E_POINTER ;
+	}
+
+	if (value.vt != VT_DECIMAL)
+	{
+		return DISP_E_TYPEMISMATCH ;
+	}
+
+	// DECIMAL structure (tagDEC):
+	// wReserved (16 bits) - contains scale (lo byte) and sign (hi byte)
+	// Hi32 (32 bits) - high 32 bits of 96-bit integer
+	// Lo64 (64 bits) - low 64 bits of 96-bit integer
+	//
+	// Scale: number of digits to the right of decimal point (0-28)
+	// Sign: 0x00 for positive, 0x80 for negative
+	// The 96-bit integer is (Hi32 << 64) | Lo64
+
+	DECIMAL dec = value.decVal ;
+
+	// Extract sign (0 for positive, 1 for negative)
+	*sign = (dec.sign & 0x80) ? 1 : 0 ;
+
+	// Extract scale (number of decimal places)
+	BYTE scale = dec.scale ;
+
+	// Combine Hi32 and Lo64 into a 96-bit integer
+	// We need to convert this to individual decimal digits
+	// Since we can't easily work with 96-bit integers in C++, we'll use a string approach
+	// by converting the DECIMAL to a string first, then parsing it
+
+	// Use VarBstrFromDec to get a string representation
+	BSTR bstrValue = NULL ;
+	HRESULT hr = VarBstrFromDec(&dec, LOCALE_NOUSEROVERRIDE, 0, &bstrValue) ;
+	if (FAILED(hr))
+	{
+		return hr ;
+	}
+
+	// Convert BSTR to char array for processing
+	int len = SysStringLen(bstrValue) ;
+	char* str = new char[len + 1] ;
+	for (int i = 0; i < len; i++)
+	{
+		str[i] = static_cast<char>(bstrValue[i]) ;
+	}
+	str[len] = '\0' ;
+
+	SysFreeString(bstrValue) ;
+
+	// Parse the string to extract digits
+	// Format could be like "12345", "-12345", "123.45", "-123.45", "0.00123", etc.
+	char* p = str ;
+	bool negative = false ;
+	if (*p == '-')
+	{
+		negative = true ;
+		p++ ;
+	}
+	else if (*p == '+')
+	{
+		p++ ;
+	}
+
+	// Count digits and find decimal point
+	int digitCount = 0 ;
+	int decimalPos = -1 ;
+	for (int i = 0; i < len; i++)
+	{
+		if (p[i] >= '0' && p[i] <= '9')
+		{
+			digitCount++ ;
+		}
+		else if (p[i] == '.')
+		{
+			decimalPos = i ;
+		}
+	}
+
+	// Create SAFEARRAY for digits
+	SAFEARRAYBOUND bound ;
+	bound.lLbound = 0 ;
+	bound.cElements = digitCount ;
+	*digits = SafeArrayCreate(VT_UI1, 1, &bound) ;
+	if (*digits == NULL)
+	{
+		delete[] str ;
+		return E_OUTOFMEMORY ;
+	}
+
+	// Lock the array and fill with digits
+	BYTE* pDigits = NULL ;
+	hr = SafeArrayAccessData(*digits, (void**)&pDigits) ;
+	if (FAILED(hr))
+	{
+		SafeArrayDestroy(*digits) ;
+		*digits = NULL ;
+		delete[] str ;
+		return hr ;
+	}
+
+	int digitIndex = 0 ;
+	for (int i = 0; i < len; i++)
+	{
+		if (p[i] >= '0' && p[i] <= '9')
+		{
+			pDigits[digitIndex++] = static_cast<BYTE>(p[i] - '0') ;
+		}
+	}
+
+	SafeArrayUnaccessData(*digits) ;
+	delete[] str ;
+
+	// Calculate exponent: negative of scale (number of decimal places)
+	// If there was a decimal point, the scale tells us how many digits after it
+	// The exponent in Python's Decimal tuple is negative scale
+	*exponent = -static_cast<LONG>(scale) ;
+
+	return S_OK ;
 }
 
 // InitCyVariantWith3dot14
