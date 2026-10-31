@@ -14,6 +14,7 @@
 #include "CoByteCompatibilityTest.h"
 #include "CoStringSafearrayInsideVariantTest.h"
 #include "CoVariantErrorTest.h"
+#include "CoFixedPointNumberTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -74,6 +75,12 @@ CFactoryData g_FactoryDataArray[] =
 		L"Comtypes component for VT_ERROR VARIANT marshalling tests",
 		L"Comtypes.VariantErrorTest.1",
 		L"Comtypes.VariantErrorTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoFixedPointNumberTest, CFixedPointNumberTest::CreateInstance,
+		L"Comtypes component for fixed point number conversion tests",
+		L"Comtypes.FixedPointNumberTest.1",
+		L"Comtypes.FixedPointNumberTest",
 		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0}
 } ;
