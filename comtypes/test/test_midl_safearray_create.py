@@ -1,3 +1,4 @@
+import decimal
 import unittest
 from ctypes import HRESULT, POINTER, c_int, pointer
 
@@ -107,35 +108,26 @@ class Test_midlSAFEARRAY_create(unittest.TestCase):
     def test_tagCY(self):
         """Test SAFEARRAY(tagCY) creation and unpacking.
 
-        The mapping tagCY -> VT_CY is now in _ctype_to_vartype, so creation
-        succeeds. Unpacking currently returns the raw tagCY struct.
-        Once the marshaling branch is added, unpacking will return Decimal
-        (via tagCY.as_decimal()).
+        Unpacking returns Decimal for easier use (tagCY.as_decimal()).
         """
-        cy_val = tagCY(int64=31400)
+        cy_val = tagCY.from_decimal(decimal.Decimal("123.45"))
         sa_type = comtypes.safearray._midlSAFEARRAY(tagCY)
         sa = sa_type.create([cy_val])
         (unpacked,) = sa.unpack()
-        self.assertIsInstance(unpacked, tagCY)
-        self.assertEqual(unpacked.int64, 31400)
+        self.assertIsInstance(unpacked, decimal.Decimal)
+        self.assertEqual(unpacked, decimal.Decimal("123.45"))
 
     def test_tagDEC(self):
         """Test SAFEARRAY(tagDEC) creation and unpacking.
 
-        The mapping tagDEC -> VT_DECIMAL is now in _ctype_to_vartype, so creation
-        succeeds. Unpacking currently returns the raw tagDEC struct.
-        Once the marshaling branch is added, unpacking will return Decimal
-        (via tagDEC.as_decimal()).
+        Unpacking returns Decimal for easier use (tagDEC.as_decimal()).
         """
-        dec_val = tagDEC(scale=2, sign=0, Hi32=0, Lo64=314)
+        dec_val = tagDEC.from_decimal(decimal.Decimal("3.14"))
         sa_type = comtypes.safearray._midlSAFEARRAY(tagDEC)
         sa = sa_type.create([dec_val])
         (unpacked,) = sa.unpack()
-        self.assertIsInstance(unpacked, tagDEC)
-        self.assertEqual(unpacked.scale, 2)
-        self.assertEqual(unpacked.sign, 0)
-        self.assertEqual(unpacked.Hi32, 0)
-        self.assertEqual(unpacked.Lo64, 314)
+        self.assertIsInstance(unpacked, decimal.Decimal)
+        self.assertEqual(unpacked, decimal.Decimal("3.14"))
 
 
 if __name__ == "__main__":
