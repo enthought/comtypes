@@ -8,7 +8,14 @@ import decimal
 import unittest
 from decimal import Decimal
 
-from comtypes.automation import _CY_MAX, _CY_MIN, _DECIMAL_MAX_MANTISSA, tagCY, tagDEC
+from comtypes.automation import (
+    _CY_MAX,
+    _CY_MIN,
+    _DECIMAL_MAX_MANTISSA,
+    VARIANT,
+    tagCY,
+    tagDEC,
+)
 
 
 class TestTagCY(unittest.TestCase):
@@ -403,6 +410,46 @@ class TestTagDEC(unittest.TestCase):
         with self.assertRaises(OverflowError) as cm:
             tagDEC.from_decimal(val)
         self.assertIn("more than 28 decimal places", str(cm.exception))
+
+
+class TestCyVariantValueProperty(unittest.TestCase):
+    """Tests for VARIANT.value property with VT_CY."""
+
+    def test_value_property_returns_decimal(self):
+        with self.assertRaises(TypeError) as cm:
+            VARIANT(tagCY(int64=1234567))
+        self.assertIn("Cannot put tagCY", str(cm.exception))
+
+    def test_value_property_negative(self):
+        with self.assertRaises(TypeError) as cm:
+            VARIANT(tagCY(int64=-1234567))
+        self.assertIn("Cannot put tagCY", str(cm.exception))
+
+    def test_value_property_zero(self):
+        with self.assertRaises(TypeError) as cm:
+            VARIANT(tagCY(int64=0))
+        self.assertIn("Cannot put tagCY", str(cm.exception))
+
+
+class TestDecVariantValueProperty(unittest.TestCase):
+    """Tests for VARIANT.value property with VT_DECIMAL."""
+
+    def test_value_property_returns_decimal(self):
+        with self.assertRaises(TypeError) as cm:
+            VARIANT(tagDEC(scale=26, sign=0, Hi32=669260594, Lo64=5097733592125636885))
+        self.assertIn("Cannot put tagDEC", str(cm.exception))
+
+    def test_value_property_negative(self):
+        with self.assertRaises(TypeError) as cm:
+            VARIANT(
+                tagDEC(scale=26, sign=0x80, Hi32=669260594, Lo64=5097733592125636885)
+            )
+        self.assertIn("Cannot put tagDEC", str(cm.exception))
+
+    def test_value_property_zero(self):
+        with self.assertRaises(TypeError) as cm:
+            VARIANT(tagDEC(scale=0, sign=0, Hi32=0, Lo64=0))
+        self.assertIn("Cannot put tagDEC", str(cm.exception))
 
 
 if __name__ == "__main__":
