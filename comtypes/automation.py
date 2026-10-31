@@ -67,31 +67,6 @@ def _coerce_decimal(value: Any, context: str) -> decimal.Decimal:
     raise TypeError(f"{context}: cannot convert {type(value).__name__} to Decimal")
 
 
-def _scaled_int(d: decimal.Decimal, scale: int) -> tuple[int, bool]:
-    """Convert a Decimal to an integer scaled by 10**scale using ROUND_HALF_EVEN.
-
-    Returns (n, exact) where n is the scaled integer and exact is True if
-    the conversion was exact (no rounding occurred).
-    """
-    sign, digits, exp = d.as_tuple()
-    coef = int("".join(map(str, digits))) if digits else 0
-    shift = -exp - scale
-    if shift <= 0:
-        n = coef * 10 ** (-shift)
-        exact = True
-    elif shift > len(digits):
-        n = 0
-        exact = coef == 0
-    else:
-        q, r = divmod(coef, 10**shift)
-        half = 5 * 10 ** (shift - 1)
-        exact = r == 0
-        if r > half or (r == half and (q & 1)):
-            q += 1
-        n = q
-    return (-n if sign else n), exact
-
-
 LCID = DWORD
 DISPID = LONG
 SCODE = LONG
