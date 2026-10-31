@@ -111,6 +111,9 @@ VT_TYPEMASK = 4095
 class tagCY(Structure):
     _fields_ = [("int64", c_longlong)]
 
+    def __repr__(self) -> str:
+        return f"tagCY(int64={self.int64})"
+
 
 CY = tagCY
 CURRENCY = CY
@@ -135,6 +138,9 @@ class tagDEC(Structure):
         digits = (self.Hi32 << 64) + self.Lo64
         sign = "-" if self.sign else ""
         return decimal.Decimal(f"{sign}{digits}e-{self.scale}")
+
+    def __repr__(self) -> str:
+        return f"tagDEC(scale={self.scale}, sign={self.sign}, Hi32={self.Hi32}, Lo64={self.Lo64})"
 
 
 DECIMAL = tagDEC
