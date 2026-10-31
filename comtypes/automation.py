@@ -343,7 +343,7 @@ class tagVARIANT(Structure):
                     ("scode", SCODE),
                     ("VT_R4", c_float),
                     ("VT_R8", c_double),
-                    ("VT_CY", c_longlong),
+                    ("VT_CY", tagCY),
                     ("c_wchar_p", c_wchar_p),
                     ("c_void_p", c_void_p),
                     ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
@@ -475,7 +475,17 @@ class tagVARIANT(Structure):
             self.vt = VT_DATE
             self._.VT_R8 = com_days
         elif decimal is not None and isinstance(value, decimal.Decimal):
-            self._.VT_CY = int(round(value * 10000))
+            # TODO: Use `self._.VT_CY = tagCY.from_decimal(value)` directly.
+            # Currently writing via `VT_I8` because `VT_CY` is now a `tagCY`
+            # struct in the union. This is correct since `VT_I8` and `VT_CY`
+            # share the same memory in the union.
+            #
+            # Direct assignment to `VT_CY` would require constructing a
+            # `tagCY` instance. This is avoided because `tagCY.from_decimal()`
+            # raises `OverflowError` for values outside the CY range or with
+            # more than 4 decimal places, which would break user code that
+            # implicitly relied on rounding behavior.
+            self._.VT_I8 = int(round(value * _CY_SCALE))
             self.vt = VT_CY
         elif isinstance(value, POINTER(IDispatch)):
             CopyComPointer(value, byref(self._))
@@ -641,7 +651,7 @@ class tagVARIANT(Structure):
             days = self._.VT_R8
             return datetime.timedelta(days=days) + _com_null_date
         elif vt == VT_CY:
-            return self._.VT_CY / decimal.Decimal("10000")
+            return self._.VT_CY.as_decimal()
         elif vt == VT_UNKNOWN:
             val = self._.c_void_p
             if not val:
