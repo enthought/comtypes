@@ -1,3 +1,4 @@
+import decimal
 import unittest
 from ctypes import HRESULT, POINTER, c_int, pointer
 
@@ -5,6 +6,7 @@ import comtypes
 import comtypes.safearray
 import comtypes.typeinfo
 from comtypes import CLSCTX_INPROC_SERVER, CLSCTX_LOCAL_SERVER
+from comtypes.automation import tagCY, tagDEC
 from comtypes.client import CreateObject, GetModule
 
 GetModule("UIAutomationCore.dll")
@@ -102,6 +104,30 @@ class Test_midlSAFEARRAY_create(unittest.TestCase):
                 (unpacked,) = sa.unpack()
                 self.assertIsInstance(unpacked, int)
                 self.assertEqual(unpacked, 1)
+
+    def test_tagCY(self):
+        """Test SAFEARRAY(tagCY) creation and unpacking.
+
+        Unpacking returns Decimal for easier use (tagCY.as_decimal()).
+        """
+        cy_val = tagCY.from_decimal(decimal.Decimal("123.45"))
+        sa_type = comtypes.safearray._midlSAFEARRAY(tagCY)
+        sa = sa_type.create([cy_val])
+        (unpacked,) = sa.unpack()
+        self.assertIsInstance(unpacked, decimal.Decimal)
+        self.assertEqual(unpacked, decimal.Decimal("123.45"))
+
+    def test_tagDEC(self):
+        """Test SAFEARRAY(tagDEC) creation and unpacking.
+
+        Unpacking returns Decimal for easier use (tagDEC.as_decimal()).
+        """
+        dec_val = tagDEC.from_decimal(decimal.Decimal("3.14"))
+        sa_type = comtypes.safearray._midlSAFEARRAY(tagDEC)
+        sa = sa_type.create([dec_val])
+        (unpacked,) = sa.unpack()
+        self.assertIsInstance(unpacked, decimal.Decimal)
+        self.assertEqual(unpacked, decimal.Decimal("3.14"))
 
 
 if __name__ == "__main__":

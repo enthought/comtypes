@@ -298,7 +298,7 @@ def _make_safearray_type(itemtype):
         def _get_elements_raw(self, num_elements):
             """Returns a flat list or ndarray containing ALL elements in
             the safearray."""
-            from comtypes.automation import VARIANT
+            from comtypes.automation import VARIANT, tagCY, tagDEC
 
             # XXX Not sure this is true:
             # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
@@ -327,6 +327,12 @@ def _make_safearray_type(itemtype):
                             # return a NULL-interface pointer.
                             result.append(POINTER(itf)())
                     return result
+                elif self._itemtype_ == tagCY:
+                    # Convert tagCY to Decimal for easier use
+                    return [x.as_decimal() for x in ptr[:num_elements]]
+                elif self._itemtype_ == tagDEC:
+                    # Convert tagDEC to Decimal for easier use
+                    return [x.as_decimal() for x in ptr[:num_elements]]
                 else:
                     # If the safearray element are NOT native python
                     # objects, the containing safearray must be kept

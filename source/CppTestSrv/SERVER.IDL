@@ -132,6 +132,18 @@ interface IVariantErrorTest : IUnknown
 	HRESULT GetErrorCode([in] VARIANT value, [out, retval] LONG* errorCode);
 } ;
 
+// Interface IFixedPointNumberTest
+// Test interface for converting strings to VT_DECIMAL and VT_CY VARIANTs.
+[
+	object,
+	uuid(8F4E2D1A-7C3B-4A9E-8F1D-2B5C6D7E8F9A),
+	oleautomation
+]
+interface IFixedPointNumberTest : IUnknown
+{
+	HRESULT InitCyVariantWith3dot14([in, out] VARIANT* value);
+	HRESULT InitDecVariantWith3dot14([in, out] VARIANT* value);
+} ;
 
 //
 // Component and type library descriptions
@@ -237,5 +249,16 @@ library ComtypesCppTestSrvLib
 	coclass CoVariantErrorTest
 	{
 		[default] interface IVariantErrorTest ;
+	} ;
+
+	// CoFixedPointNumberTest
+	// Component for testing string to VT_DECIMAL and VT_CY VARIANT conversion.
+	[
+		uuid(9A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D),
+		helpstring("Comtypes component for fixed point number conversion tests.")
+	]
+	coclass CoFixedPointNumberTest
+	{
+		[default] interface IFixedPointNumberTest ;
 	} ;
 } ;
