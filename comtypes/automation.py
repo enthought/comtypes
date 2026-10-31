@@ -453,6 +453,14 @@ class tagVARIANT(Structure):
             com_days /= comtypes.npsupport.numpy.timedelta64(1, "D")
             self.vt = VT_DATE
             self._.VT_R8 = com_days
+        elif isinstance(value, tagDEC):
+            # decVal overlaps with __tagVARIANT in the union, so set decVal first,
+            # then set vt to avoid overwriting it.
+            self.decVal = value
+            self.vt = VT_DECIMAL
+        elif isinstance(value, tagCY):
+            self.vt = VT_CY
+            self._.VT_CY = value
         elif isinstance(value, decimal.Decimal):
             # TODO: Use `self._.VT_CY = tagCY.from_decimal(value)` directly.
             # Currently writing via `VT_I8` because `VT_CY` is now a `tagCY`

@@ -8,7 +8,14 @@ import decimal
 import unittest
 from decimal import Decimal
 
-from comtypes.automation import _CY_MAX, _CY_MIN, _DECIMAL_MAX_MANTISSA, tagCY, tagDEC
+from comtypes.automation import (
+    _CY_MAX,
+    _CY_MIN,
+    _DECIMAL_MAX_MANTISSA,
+    VARIANT,
+    tagCY,
+    tagDEC,
+)
 
 
 class TestTagCY(unittest.TestCase):
@@ -403,6 +410,46 @@ class TestTagDEC(unittest.TestCase):
         with self.assertRaises(OverflowError) as cm:
             tagDEC.from_decimal(val)
         self.assertIn("more than 28 decimal places", str(cm.exception))
+
+
+class TestCyVariantValueProperty(unittest.TestCase):
+    """Tests for VARIANT.value property with VT_CY."""
+
+    def test_value_property_returns_decimal(self):
+        cy_var = VARIANT(tagCY(int64=1234567))
+        self.assertEqual(cy_var.value, decimal.Decimal("123.4567"))
+
+    def test_value_property_negative(self):
+        cy_var = VARIANT(tagCY(int64=-1234567))
+        self.assertEqual(cy_var.value, decimal.Decimal("-123.4567"))
+
+    def test_value_property_zero(self):
+        cy_var = VARIANT(tagCY(int64=0))
+        self.assertEqual(cy_var.value, decimal.Decimal("0"))
+
+
+class TestDecVariantValueProperty(unittest.TestCase):
+    """Tests for VARIANT.value property with VT_DECIMAL."""
+
+    def test_value_property_returns_decimal(self):
+        dec_var = VARIANT(
+            tagDEC(scale=26, sign=0, Hi32=669260594, Lo64=5097733592125636885)
+        )
+        self.assertEqual(
+            dec_var.value, decimal.Decimal("123.45678901234567890123456789")
+        )
+
+    def test_value_property_negative(self):
+        dec_var = VARIANT(
+            tagDEC(scale=26, sign=0x80, Hi32=669260594, Lo64=5097733592125636885)
+        )
+        self.assertEqual(
+            dec_var.value, decimal.Decimal("-123.45678901234567890123456789")
+        )
+
+    def test_value_property_zero(self):
+        dec_var = VARIANT(tagDEC(scale=0, sign=0, Hi32=0, Lo64=0))
+        self.assertEqual(dec_var.value, decimal.Decimal("0"))
 
 
 if __name__ == "__main__":

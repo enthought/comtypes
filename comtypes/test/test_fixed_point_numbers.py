@@ -2,9 +2,10 @@
 
 import decimal
 import unittest
+from _ctypes import COMError
 from ctypes import POINTER, byref, pointer, sizeof
 
-from comtypes import CLSCTX_LOCAL_SERVER
+from comtypes import CLSCTX_LOCAL_SERVER, hresult
 from comtypes.automation import VARIANT, VT_CY, VT_DECIMAL, VT_NULL, tagCY, tagDEC
 from comtypes.client import CreateObject, GetModule
 
@@ -34,6 +35,336 @@ def _create_server() -> "IFixedPointNumberTest":
         clsctx=CLSCTX_LOCAL_SERVER,
         interface=IFixedPointNumberTest,
     )
+
+
+@unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
+class TestToDecVariant(unittest.TestCase):
+    """Tests for ToDecVariant: string -> VT_DECIMAL VARIANT (returns Decimal directly)."""
+
+    def setUp(self):
+        self.server = _create_server()
+
+    def test_positive_integer(self):
+        result = self.server.ToDecVariant("12345")
+        self.assertEqual(result, decimal.Decimal("12345"))
+
+    def test_negative_integer(self):
+        result = self.server.ToDecVariant("-12345")
+        self.assertEqual(result, decimal.Decimal("-12345"))
+
+    def test_positive_decimal(self):
+        result = self.server.ToDecVariant("123.45")
+        self.assertEqual(result, decimal.Decimal("123.45"))
+
+    def test_negative_decimal(self):
+        result = self.server.ToDecVariant("-123.45")
+        self.assertEqual(result, decimal.Decimal("-123.45"))
+
+    def test_zero(self):
+        result = self.server.ToDecVariant("0")
+        self.assertEqual(result, decimal.Decimal("0"))
+
+    def test_zero_with_decimal_point(self):
+        result = self.server.ToDecVariant("0.0")
+        self.assertEqual(result, decimal.Decimal("0.0"))
+
+    def test_small_decimal(self):
+        result = self.server.ToDecVariant("0.0001")
+        self.assertEqual(result, decimal.Decimal("0.0001"))
+
+    def test_many_decimal_places(self):
+        result = self.server.ToDecVariant("123.45678901234567890123456789")
+        self.assertEqual(result, decimal.Decimal("123.45678901234567890123456789"))
+
+    def test_scientific_notation(self):
+        result = self.server.ToDecVariant("1.23E+2")
+        self.assertEqual(result, decimal.Decimal("123"))
+
+    def test_negative_scientific_notation(self):
+        result = self.server.ToDecVariant("-1.23E-2")
+        self.assertEqual(result, decimal.Decimal("-0.0123"))
+
+
+@unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
+class TestToCyVariant(unittest.TestCase):
+    """Tests for ToCyVariant: string -> VT_CY VARIANT (returns Decimal directly)."""
+
+    def setUp(self):
+        self.server = _create_server()
+
+    def test_positive_integer(self):
+        result = self.server.ToCyVariant("12345")
+        self.assertEqual(result, decimal.Decimal("12345"))
+
+    def test_negative_integer(self):
+        result = self.server.ToCyVariant("-12345")
+        self.assertEqual(result, decimal.Decimal("-12345"))
+
+    def test_positive_decimal(self):
+        result = self.server.ToCyVariant("123.45")
+        self.assertEqual(result, decimal.Decimal("123.45"))
+
+    def test_negative_decimal(self):
+        result = self.server.ToCyVariant("-123.45")
+        self.assertEqual(result, decimal.Decimal("-123.45"))
+
+    def test_zero(self):
+        result = self.server.ToCyVariant("0")
+        self.assertEqual(result, decimal.Decimal("0"))
+
+    def test_four_decimal_places(self):
+        result = self.server.ToCyVariant("123.4567")
+        self.assertEqual(result, decimal.Decimal("123.4567"))
+
+    def test_more_than_four_decimal_places_rounded(self):
+        result = self.server.ToCyVariant("123.45678")
+        self.assertEqual(result, decimal.Decimal("123.4568"))
+
+    def test_max_cy_value(self):
+        result = self.server.ToCyVariant(str(_CY_MAX))
+        self.assertEqual(result, _CY_MAX)
+
+    def test_min_cy_value(self):
+        result = self.server.ToCyVariant(str(_CY_MIN))
+        self.assertEqual(result, _CY_MIN)
+
+    def test_above_max_cy_value_raises_overflow(self):
+        """Value exceeding CY max should raise DISP_E_OVERFLOW."""
+        # CY max is 922337203685477.5807 (2^63-1 / 10000)
+        # Adding 1 to the integer part exceeds the range
+        over_max = str(_CY_MAX + decimal.Decimal("1"))
+        with self.assertRaises(COMError) as cm:
+            self.server.ToCyVariant(over_max)
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_OVERFLOW)
+
+    def test_below_min_cy_value_raises_overflow(self):
+        """Value below CY min should raise DISP_E_OVERFLOW."""
+        # CY min is -922337203685477.5808 (-2^63 / 10000)
+        # Subtracting 1 from the integer part exceeds the range
+        under_min = str(_CY_MIN - decimal.Decimal("1"))
+        with self.assertRaises(COMError) as cm:
+            self.server.ToCyVariant(under_min)
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_OVERFLOW)
+
+
+@unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
+class TestDecomposeCyVariant(unittest.TestCase):
+    """Tests for DecomposeCyVariant: VT_CY VARIANT -> int64."""
+
+    def setUp(self):
+        self.server = _create_server()
+
+    def test_positive_value(self):
+        cy_var = VARIANT(tagCY(int64=123456789))
+        result = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(result, 123456789)
+
+    def test_negative_value(self):
+        cy_var = VARIANT(tagCY(int64=-123456789))
+        result = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(result, -123456789)
+
+    def test_zero(self):
+        cy_var = VARIANT(tagCY(int64=0))
+        result = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(result, 0)
+
+    def test_max_int64(self):
+        cy_var = VARIANT(tagCY(int64=_LLONG_MAX))
+        result = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(result, _LLONG_MAX)
+
+    def test_min_int64(self):
+        cy_var = VARIANT(tagCY(int64=_LLONG_MIN))
+        result = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(result, _LLONG_MIN)
+
+    def test_raises_type_mismatch_for_non_cy(self):
+        for value in [
+            VARIANT(123),
+            VARIANT("hello"),
+            VARIANT(),
+            VARIANT(123.45),
+            VARIANT(tagDEC(scale=0, sign=0, Hi32=0, Lo64=0)),
+        ]:
+            with self.subTest(value=value):
+                with self.assertRaises(COMError) as cm:
+                    self.server.DecomposeCyVariant(value)
+                self.assertEqual(cm.exception.hresult, hresult.DISP_E_TYPEMISMATCH)
+
+
+@unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
+class TestDecomposeDecVariant(unittest.TestCase):
+    """Tests for DecomposeDecVariant: VT_DECIMAL VARIANT -> (sign, digits, exponent)."""
+
+    def setUp(self):
+        self.server = _create_server()
+
+    def test_positive_integer(self):
+        var = VARIANT(tagDEC(scale=0, sign=0, Hi32=0, Lo64=12345))
+        sign, digits, exponent = self.server.DecomposeDecVariant(var)
+        self.assertEqual(sign, 0)
+        self.assertEqual(list(digits), [1, 2, 3, 4, 5])
+        self.assertEqual(exponent, 0)
+
+    def test_negative_integer(self):
+        var = VARIANT(tagDEC(scale=0, sign=0x80, Hi32=0, Lo64=12345))
+        sign, digits, exponent = self.server.DecomposeDecVariant(var)
+        self.assertEqual(sign, 1)
+        self.assertEqual(list(digits), [1, 2, 3, 4, 5])
+        self.assertEqual(exponent, 0)
+
+    def test_positive_decimal(self):
+        var = VARIANT(tagDEC(scale=2, sign=0, Hi32=0, Lo64=12345))
+        sign, digits, exponent = self.server.DecomposeDecVariant(var)
+        self.assertEqual(sign, 0)
+        self.assertEqual(list(digits), [1, 2, 3, 4, 5])
+        self.assertEqual(exponent, -2)
+
+    def test_negative_decimal(self):
+        var = VARIANT(tagDEC(scale=2, sign=0x80, Hi32=0, Lo64=12345))
+        sign, digits, exponent = self.server.DecomposeDecVariant(var)
+        self.assertEqual(sign, 1)
+        self.assertEqual(list(digits), [1, 2, 3, 4, 5])
+        self.assertEqual(exponent, -2)
+
+    def test_zero(self):
+        var = VARIANT(tagDEC(scale=0, sign=0, Hi32=0, Lo64=0))
+        sign, digits, exponent = self.server.DecomposeDecVariant(var)
+        self.assertEqual(sign, 0)
+        self.assertEqual(list(digits), [0])
+        self.assertEqual(exponent, 0)
+
+    def test_small_decimal(self):
+        var = VARIANT(tagDEC(scale=4, sign=0, Hi32=0, Lo64=1))
+        sign, digits, exponent = self.server.DecomposeDecVariant(var)
+        self.assertEqual(sign, 0)
+        self.assertEqual(list(digits), [0, 0, 0, 0, 1])
+        self.assertEqual(exponent, -4)
+
+    def test_many_decimal_places(self):
+        var = VARIANT(
+            tagDEC(scale=26, sign=0, Hi32=669260594, Lo64=5097733592125636885)
+        )
+        sign, digits, exponent = self.server.DecomposeDecVariant(var)
+        self.assertEqual(sign, 0)
+        self.assertEqual(list(digits), (list(range(10)) * 3)[1:])
+        self.assertEqual(exponent, -26)
+
+    def test_raises_type_mismatch_for_non_decimal(self):
+        for value in [
+            VARIANT(123),
+            VARIANT("hello"),
+            VARIANT(),
+            VARIANT(123.45),
+            VARIANT(tagCY(int64=0)),
+        ]:
+            with self.subTest(value=value):
+                with self.assertRaises(COMError) as cm:
+                    self.server.DecomposeDecVariant(value)
+                self.assertEqual(cm.exception.hresult, hresult.DISP_E_TYPEMISMATCH)
+
+
+@unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
+class TestRoundTripCy(unittest.TestCase):
+    """Round-trip tests: string -> ToCyVariant -> DecomposeCyVariant -> int64."""
+
+    def setUp(self):
+        self.server = _create_server()
+
+    def test_round_trip_positive(self):
+        original = "12345.6789"
+        dec_val = self.server.ToCyVariant(original)
+        cy_var = VARIANT(tagCY.from_decimal(dec_val))
+        decomposed = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(decomposed, 123456789)
+
+    def test_round_trip_negative(self):
+        original = "-12345.6789"
+        dec_val = self.server.ToCyVariant(original)
+        cy_var = VARIANT(tagCY.from_decimal(dec_val))
+        decomposed = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(decomposed, -123456789)
+
+    def test_round_trip_zero(self):
+        original = "0"
+        dec_val = self.server.ToCyVariant(original)
+        cy_var = VARIANT(tagCY.from_decimal(dec_val))
+        decomposed = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(decomposed, 0)
+
+    def test_round_trip_max(self):
+        original = str(_CY_MAX)
+        dec_val = self.server.ToCyVariant(original)
+        cy_var = VARIANT(tagCY.from_decimal(dec_val))
+        decomposed = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(decomposed, _LLONG_MAX)
+
+    def test_round_trip_min(self):
+        original = str(_CY_MIN)
+        dec_val = self.server.ToCyVariant(original)
+        cy_var = VARIANT(tagCY.from_decimal(dec_val))
+        decomposed = self.server.DecomposeCyVariant(cy_var)
+        self.assertEqual(decomposed, _LLONG_MIN)
+
+
+@unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
+class TestRoundTripDec(unittest.TestCase):
+    """Round-trip tests: string -> ToDecVariant -> DecomposeDecVariant -> (sign, digits, exponent)."""
+
+    def setUp(self):
+        self.server = _create_server()
+
+    def test_round_trip_positive_integer(self):
+        original = "12345"
+        dec_val = self.server.ToDecVariant(original)
+        dec_var = VARIANT(tagDEC.from_decimal(dec_val))
+        sign, digits, exponent = self.server.DecomposeDecVariant(dec_var)
+        self.assertEqual((sign, tuple(digits), exponent), (0, (1, 2, 3, 4, 5), 0))
+
+    def test_round_trip_negative_integer(self):
+        original = "-12345"
+        dec_val = self.server.ToDecVariant(original)
+        dec_var = VARIANT(tagDEC.from_decimal(dec_val))
+        sign, digits, exponent = self.server.DecomposeDecVariant(dec_var)
+        self.assertEqual((sign, tuple(digits), exponent), (1, (1, 2, 3, 4, 5), 0))
+
+    def test_round_trip_positive_decimal(self):
+        original = "123.45"
+        dec_val = self.server.ToDecVariant(original)
+        dec_var = VARIANT(tagDEC.from_decimal(dec_val))
+        sign, digits, exponent = self.server.DecomposeDecVariant(dec_var)
+        self.assertEqual((sign, tuple(digits), exponent), (0, (1, 2, 3, 4, 5), -2))
+
+    def test_round_trip_negative_decimal(self):
+        original = "-123.45"
+        dec_val = self.server.ToDecVariant(original)
+        dec_var = VARIANT(tagDEC.from_decimal(dec_val))
+        sign, digits, exponent = self.server.DecomposeDecVariant(dec_var)
+        self.assertEqual((sign, tuple(digits), exponent), (1, (1, 2, 3, 4, 5), -2))
+
+    def test_round_trip_zero(self):
+        original = "0"
+        dec_val = self.server.ToDecVariant(original)
+        dec_var = VARIANT(tagDEC.from_decimal(dec_val))
+        sign, digits, exponent = self.server.DecomposeDecVariant(dec_var)
+        self.assertEqual((sign, tuple(digits), exponent), (0, (0,), 0))
+
+    def test_round_trip_small_decimal(self):
+        original = "0.0001"
+        dec_val = self.server.ToDecVariant(original)
+        dec_var = VARIANT(tagDEC.from_decimal(dec_val))
+        sign, digits, exponent = self.server.DecomposeDecVariant(dec_var)
+        self.assertEqual((sign, tuple(digits), exponent), (0, (0, 0, 0, 0, 1), -4))
+
+    def test_round_trip_many_decimal_places(self):
+        original = "123.45678901234567890123456789"
+        dec_val = self.server.ToDecVariant(original)
+        dec_var = VARIANT(tagDEC.from_decimal(dec_val))
+        sign, digits, exponent = self.server.DecomposeDecVariant(dec_var)
+        self.assertEqual(
+            (sign, tuple(digits), exponent), (0, (tuple(range(10)) * 3)[1:], -26)
+        )
 
 
 @unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
