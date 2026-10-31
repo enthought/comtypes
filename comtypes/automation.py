@@ -1042,6 +1042,8 @@ _ctype_to_vartype: dict[type["_CDataType"], int] = {
     BSTR: VT_BSTR,
     HRESULT: VT_HRESULT,
     VARIANT: VT_VARIANT,
+    tagCY: VT_CY,
+    tagDEC: VT_DECIMAL,
     # SAFEARRAY(VARIANT *)
     #
     # It is unlear to me if this is allowed or not.  Apparently there

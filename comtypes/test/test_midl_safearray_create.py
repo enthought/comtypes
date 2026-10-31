@@ -107,32 +107,35 @@ class Test_midlSAFEARRAY_create(unittest.TestCase):
     def test_tagCY(self):
         """Test SAFEARRAY(tagCY) creation and unpacking.
 
-        Currently, creating a SAFEARRAY(tagCY) raises TypeError because
-        tagCY is not yet registered in _ctype_to_vartype.
+        The mapping tagCY -> VT_CY is now in _ctype_to_vartype, so creation
+        succeeds. Unpacking currently returns the raw tagCY struct.
+        Once the marshaling branch is added, unpacking will return Decimal
+        (via tagCY.as_decimal()).
         """
         cy_val = tagCY(int64=31400)
         sa_type = comtypes.safearray._midlSAFEARRAY(tagCY)
-        with self.assertRaises(TypeError) as cm:
-            sa_type.create([cy_val])
-        self.assertEqual(
-            str(cm.exception),
-            "Cannot create SAFEARRAY type VT_RECORD without IRecordInfo.",
-        )
+        sa = sa_type.create([cy_val])
+        (unpacked,) = sa.unpack()
+        self.assertIsInstance(unpacked, tagCY)
+        self.assertEqual(unpacked.int64, 31400)
 
     def test_tagDEC(self):
         """Test SAFEARRAY(tagDEC) creation and unpacking.
 
-        Currently, creating a SAFEARRAY(tagDEC) raises TypeError because
-        tagDEC is not yet registered in _ctype_to_vartype.
+        The mapping tagDEC -> VT_DECIMAL is now in _ctype_to_vartype, so creation
+        succeeds. Unpacking currently returns the raw tagDEC struct.
+        Once the marshaling branch is added, unpacking will return Decimal
+        (via tagDEC.as_decimal()).
         """
         dec_val = tagDEC(scale=2, sign=0, Hi32=0, Lo64=314)
         sa_type = comtypes.safearray._midlSAFEARRAY(tagDEC)
-        with self.assertRaises(TypeError) as cm:
-            sa_type.create([dec_val])
-        self.assertEqual(
-            str(cm.exception),
-            "Cannot create SAFEARRAY type VT_RECORD without IRecordInfo.",
-        )
+        sa = sa_type.create([dec_val])
+        (unpacked,) = sa.unpack()
+        self.assertIsInstance(unpacked, tagDEC)
+        self.assertEqual(unpacked.scale, 2)
+        self.assertEqual(unpacked.sign, 0)
+        self.assertEqual(unpacked.Hi32, 0)
+        self.assertEqual(unpacked.Lo64, 314)
 
 
 if __name__ == "__main__":

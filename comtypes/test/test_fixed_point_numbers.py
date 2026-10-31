@@ -110,36 +110,24 @@ class TestInitCyVariantWith3dot14(unittest.TestCase):
     def test_byref_cy_is_written_through(self):
         """`byref(tagCY)` becomes a VT_BYREF | VT_CY VARIANT; the server writes
         through it. Return value is the outer VARIANT (VT_NULL).
-
-        NOTE: This test currently expects a KeyError because `tagCY` is not
-        registered in `comtypes.automation._ctype_to_vartype`. The mapping
-        should include:
-            tagCY: VT_CY,
-        Once this is added to _ctype_to_vartype, this test should be updated
-        to verify the correct behavior (the server writes 3.14 through the
-        byref).
         """
         cy = tagCY(0)
-        with self.assertRaises(KeyError) as cm:
-            self.server.InitCyVariantWith3dot14(byref(cy))
-        self.assertIn("tagCY", str(cm.exception))
+        result = self.server.InitCyVariantWith3dot14(byref(cy))
+        # Return value is the outer VARIANT (VT_NULL)
+        self.assertEqual(result.vt, VT_NULL)
+        # Argument is mutated
+        self.assertEqual(cy.int64, 31400)
 
     def test_pointer_to_cy_is_written_through(self):
         """`pointer(tagCY)` becomes a VT_BYREF | VT_CY VARIANT; the server
         writes through it. Return value is the outer VARIANT (VT_NULL).
-
-        NOTE: This test currently expects a KeyError because `tagCY` is not
-        registered in `comtypes.automation._ctype_to_vartype`. The mapping
-        should include:
-            tagCY: VT_CY,
-        Once this is added to _ctype_to_vartype, this test should be updated
-        to verify the correct behavior (the server writes 3.14 through the
-        pointer).
         """
         cy = tagCY(0)
-        with self.assertRaises(KeyError) as cm:
-            self.server.InitCyVariantWith3dot14(pointer(cy))
-        self.assertIn("tagCY", str(cm.exception))
+        result = self.server.InitCyVariantWith3dot14(pointer(cy))
+        # Return value is the outer VARIANT (VT_NULL) created to wrap the pointer
+        self.assertEqual(result.vt, VT_NULL)
+        # Argument is mutated
+        self.assertEqual(cy.int64, 31400)
 
 
 @unittest.skipIf(IMPORT_SERVER_FAILED, "Requires the C++ out-of-process COM server.")
@@ -226,36 +214,26 @@ class TestInitDecVariantWith3dot14(unittest.TestCase):
     def test_byref_decimal_is_written_through(self):
         """`byref(tagDEC)` becomes a VT_BYREF | VT_DECIMAL VARIANT; the server
         writes through it. Return value is the outer VARIANT (VT_NULL).
-
-        NOTE: This test currently expects a KeyError because `tagDEC` is not
-        registered in `comtypes.automation._ctype_to_vartype`. The mapping
-        should include:
-            tagDEC: VT_DECIMAL,
-        Once this is added to _ctype_to_vartype, this test should be updated
-        to verify the correct behavior (the server writes 3.14 through the
-        byref).
         """
         dec = tagDEC()
-        with self.assertRaises(KeyError) as cm:
-            self.server.InitDecVariantWith3dot14(byref(dec))
-        self.assertIn("tagDEC", str(cm.exception))
+        result = self.server.InitDecVariantWith3dot14(byref(dec))
+        # Return value is the outer VARIANT (VT_NULL)
+        self.assertEqual(result.vt, VT_NULL)
+        # Argument is mutated
+        self.assertEqual(dec.as_decimal(), decimal.Decimal("3.14"))
+        self.assertEqual((dec.scale, dec.sign, dec.Hi32, dec.Lo64), (2, 0, 0, 314))
 
     def test_pointer_to_decimal_is_written_through(self):
         """`pointer(tagDEC)` becomes a VT_BYREF | VT_DECIMAL VARIANT; the server
         writes through it. Return value is the outer VARIANT (VT_NULL).
-
-        NOTE: This test currently expects a KeyError because `tagDEC` is not
-        registered in `comtypes.automation._ctype_to_vartype`. The mapping
-        should include:
-            tagDEC: VT_DECIMAL,
-        Once this is added to _ctype_to_vartype, this test should be updated
-        to verify the correct behavior (the server writes 3.14 through the
-        pointer).
         """
         dec = tagDEC()
-        with self.assertRaises(KeyError) as cm:
-            self.server.InitDecVariantWith3dot14(pointer(dec))
-        self.assertIn("tagDEC", str(cm.exception))
+        result = self.server.InitDecVariantWith3dot14(pointer(dec))
+        # Return value is the outer VARIANT (VT_NULL) created to wrap the pointer
+        self.assertEqual(result.vt, VT_NULL)
+        # Argument is mutated
+        self.assertEqual(dec.as_decimal(), decimal.Decimal("3.14"))
+        self.assertEqual((dec.scale, dec.sign, dec.Hi32, dec.Lo64), (2, 0, 0, 314))
 
 
 if __name__ == "__main__":
