@@ -15,6 +15,7 @@
 #include "CoStringSafearrayInsideVariantTest.h"
 #include "CoVariantErrorTest.h"
 #include "CoFixedPointNumberTest.h"
+#include "CoRecordSafearrayTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -81,6 +82,12 @@ CFactoryData g_FactoryDataArray[] =
 		L"Comtypes component for fixed point number conversion tests",
 		L"Comtypes.FixedPointNumberTest.1",
 		L"Comtypes.FixedPointNumberTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoRecordSafearrayTest, CRecordSafearrayTest::CreateInstance,
+		L"Record SAFEARRAY round-trip test component",
+		L"Comtypes.RecordSafeArrayRoundTripTest.1",
+		L"Comtypes.RecordSafeArrayRoundTripTest",
 		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0}
 } ;

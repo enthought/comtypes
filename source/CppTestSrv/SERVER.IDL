@@ -149,6 +149,90 @@ interface IFixedPointNumberTest : IUnknown
 	HRESULT InitDecVariantWith3dot14([in, out] VARIANT* value);
 } ;
 
+
+// Value-only record for basic SAFEARRAY round-trip tests
+typedef [uuid(6B298B7B-CA0E-431D-988C-FED3CEB59729)]
+struct StructValueRecordSafearrayTest {
+    long id;
+    long seq;
+    hyper checksum;
+} StructValueRecordSafearrayTest;
+
+
+// BSTR-containing record for deep copy validation
+typedef [uuid(5F72F918-EC40-42C1-A034-F6608902ECB3)]
+struct StructBstrRecordSafearrayTest {
+    long id;
+    long seq;
+    BSTR text;
+    hyper checksum;
+} StructBstrRecordSafearrayTest;
+
+
+// IDispatch dual interface for typed record SAFEARRAY
+[
+    odl,
+    uuid(000CB4A0-9492-4E7E-9D1F-E19512B0FA3A),
+    dual,
+    helpstring("Dual interface for typed record SAFEARRAY round-trip tests."),
+    nonextensible,
+    oleautomation
+]
+interface IDualRecordSafearrayTest : IDispatch
+{
+    // Wrap a single record into a SAFEARRAY of length 1
+    [id(1)]
+    HRESULT WrapValueRecord(
+        [in] StructValueRecordSafearrayTest* record,
+        [out, retval] SAFEARRAY(StructValueRecordSafearrayTest)* records
+    );
+
+    // Return the first record from a SAFEARRAY
+    [id(2)]
+    HRESULT FirstValueRecord(
+        [in] SAFEARRAY(StructValueRecordSafearrayTest) records,
+        [out, retval] StructValueRecordSafearrayTest* record
+    );
+
+    [id(3)]
+    HRESULT ReverseValueRecords(
+        [in] SAFEARRAY(StructValueRecordSafearrayTest) records,
+        [out, retval] SAFEARRAY(StructValueRecordSafearrayTest)* reversed
+    );
+
+    // Wrap a single BSTR record into a SAFEARRAY of length 1
+    [id(4)]
+    HRESULT WrapBstrRecord(
+        [in] StructBstrRecordSafearrayTest* record,
+        [out, retval] SAFEARRAY(StructBstrRecordSafearrayTest)* records
+    );
+
+    // Return the first BSTR record from a SAFEARRAY
+    [id(5)]
+    HRESULT FirstBstrRecord(
+        [in] SAFEARRAY(StructBstrRecordSafearrayTest) records,
+        [out, retval] StructBstrRecordSafearrayTest* record
+    );
+
+    [id(6)]
+    HRESULT ReverseBstrRecords(
+        [in] SAFEARRAY(StructBstrRecordSafearrayTest) records,
+        [out, retval] SAFEARRAY(StructBstrRecordSafearrayTest)* reversed
+    );
+};
+
+
+// Dispinterface alias for dual interface
+[
+    uuid(E5D25FDE-3FF5-42A4-BAD0-44BB502D007E),
+    helpstring("Dispinterface alias for dual typed record SAFEARRAY tests.")
+]
+dispinterface IDispRecordSafearrayTest
+{
+    interface IDualRecordSafearrayTest;
+};
+
+
 //
 // Component and type library descriptions
 //
@@ -264,5 +348,18 @@ library ComtypesCppTestSrvLib
 	coclass CoFixedPointNumberTest
 	{
 		[default] interface IFixedPointNumberTest ;
+	} ;
+
+
+	// CoRecordSafearrayTest
+	// Component that implements record SAFEARRAY round-trip tests.
+	[
+		uuid(1B9EB37E-1E97-4866-8600-C1F1D3620FAE),
+		helpstring("Record SAFEARRAY round-trip test component.")
+	]
+	coclass CoRecordSafearrayTest
+	{
+		[default] interface IDualRecordSafearrayTest ;
+		dispinterface IDispRecordSafearrayTest ;
 	} ;
 } ;
