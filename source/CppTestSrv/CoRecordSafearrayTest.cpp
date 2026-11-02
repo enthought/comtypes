@@ -168,6 +168,73 @@ HRESULT __stdcall CRecordSafearrayTest::Invoke(
 // IDualRecordSafearrayTest Implementation
 // ------------------------------------------------------------------------
 
+// Wrap a single value record into a SAFEARRAY of length 1
+HRESULT __stdcall CRecordSafearrayTest::WrapValueRecord(
+    StructValueRecordSafearrayTest* record, SAFEARRAY** records)
+{
+    trace("WrapValueRecord called");
+    if (records == NULL)
+        return E_POINTER;
+    *records = NULL;
+
+    if (record == NULL)
+        return E_POINTER;
+
+    // Get IRecordInfo from typelib
+    IRecordInfo* pRecordInfo = NULL;
+    HRESULT hr = ::GetRecordInfoFromGuids(
+        LIBID_ComtypesCppTestSrvLib, 1, 0, 0, GUID_StructValueRecordSafearrayTest, &pRecordInfo);
+    if (FAILED(hr))
+    {
+        trace("GetRecordInfoFromGuids failed", hr);
+        return hr;
+    }
+
+    // Create SAFEARRAY with 1 element
+    SAFEARRAY* psa = ::SafeArrayCreateVectorEx(VT_RECORD, 0, 1, pRecordInfo);
+    if (psa == NULL)
+    {
+        pRecordInfo->Release();
+        return E_OUTOFMEMORY;
+    }
+
+    // Access data and copy the input record using RecordCopy
+    void* pvData = NULL;
+    hr = ::SafeArrayAccessData(psa, &pvData);
+    if (FAILED(hr))
+    {
+        ::SafeArrayDestroy(psa);
+        pRecordInfo->Release();
+        return hr;
+    }
+
+    // Initialize destination element before RecordCopy (S5/N5)
+    // RecordCopy expects destination to be initialized; otherwise it may
+    // try to free garbage BSTR/pointer values.
+    hr = pRecordInfo->RecordInit(pvData);
+    if (FAILED(hr))
+    {
+        ::SafeArrayUnaccessData(psa);
+        ::SafeArrayDestroy(psa);
+        pRecordInfo->Release();
+        return hr;
+    }
+
+    // Use RecordCopy to properly copy the record (handles BSTR/pointers)
+    hr = pRecordInfo->RecordCopy(record, pvData);
+    ::SafeArrayUnaccessData(psa);
+    pRecordInfo->Release();
+
+    if (FAILED(hr))
+    {
+        ::SafeArrayDestroy(psa);
+        return hr;
+    }
+
+    *records = psa;
+    return S_OK;
+}
+
 // Return the first value record from a SAFEARRAY
 HRESULT __stdcall CRecordSafearrayTest::FirstValueRecord(
     SAFEARRAY* records, StructValueRecordSafearrayTest* record)
@@ -237,6 +304,73 @@ HRESULT __stdcall CRecordSafearrayTest::FirstValueRecord(
     pRecordInfo->Release();
 
     return hr;
+}
+
+// Wrap a single BSTR record into a SAFEARRAY of length 1
+HRESULT __stdcall CRecordSafearrayTest::WrapBstrRecord(
+    StructBstrRecordSafearrayTest* record, SAFEARRAY** records)
+{
+    trace("WrapBstrRecord called");
+    if (records == NULL)
+        return E_POINTER;
+    *records = NULL;
+
+    if (record == NULL)
+        return E_POINTER;
+
+    // Get IRecordInfo from typelib
+    IRecordInfo* pRecordInfo = NULL;
+    HRESULT hr = ::GetRecordInfoFromGuids(
+        LIBID_ComtypesCppTestSrvLib, 1, 0, 0, GUID_StructBstrRecordSafearrayTest, &pRecordInfo);
+    if (FAILED(hr))
+    {
+        trace("GetRecordInfoFromGuids failed", hr);
+        return hr;
+    }
+
+    // Create SAFEARRAY with 1 element
+    SAFEARRAY* psa = ::SafeArrayCreateVectorEx(VT_RECORD, 0, 1, pRecordInfo);
+    if (psa == NULL)
+    {
+        pRecordInfo->Release();
+        return E_OUTOFMEMORY;
+    }
+
+    // Access data and copy the input record using RecordCopy
+    void* pvData = NULL;
+    hr = ::SafeArrayAccessData(psa, &pvData);
+    if (FAILED(hr))
+    {
+        ::SafeArrayDestroy(psa);
+        pRecordInfo->Release();
+        return hr;
+    }
+
+    // Initialize destination element before RecordCopy (S5/N5)
+    // RecordCopy expects destination to be initialized; otherwise it may
+    // try to free garbage BSTR/pointer values.
+    hr = pRecordInfo->RecordInit(pvData);
+    if (FAILED(hr))
+    {
+        ::SafeArrayUnaccessData(psa);
+        ::SafeArrayDestroy(psa);
+        pRecordInfo->Release();
+        return hr;
+    }
+
+    // Use RecordCopy to properly copy the record (handles BSTR/pointers)
+    hr = pRecordInfo->RecordCopy(record, pvData);
+    ::SafeArrayUnaccessData(psa);
+    pRecordInfo->Release();
+
+    if (FAILED(hr))
+    {
+        ::SafeArrayDestroy(psa);
+        return hr;
+    }
+
+    *records = psa;
+    return S_OK;
 }
 
 // Return the first BSTR record from a SAFEARRAY

@@ -177,6 +177,20 @@ class TestVtableBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCase
     def setUpClass(cls):
         cls.interface = ComtypesCppTestSrvLib.IDualRecordSafearrayTest
 
+    def test_wrap_record(self):
+        ifc = _create_server(self.interface)
+        record = _create_record(id=500, seq=0, text="WrapBstr-500-0", checksum=50708)
+
+        result = ifc.WrapBstrRecord(record)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].id, 500)
+        self.assertEqual(result[0].seq, 0)
+        self.assertEqual(str(result[0].text), "WrapBstr-500-0")
+        self.assertEqual(result[0].checksum, 50708)
+
+        del record
+        gc.collect()
+
     def test_first_record_length_1_list(self):
         ifc = _create_server(self.interface)
         records = [
@@ -258,6 +272,17 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
     @classmethod
     def setUpClass(cls):
         cls.interface = ComtypesCppTestSrvLib.IDispRecordSafearrayTest
+
+    def test_wrap_record(self):
+        ifc = _create_server(self.interface)
+        record = _create_record(id=500, seq=0, text="WrapBstr-500-0", checksum=50708)
+
+        with self.assertRaises(KeyError) as cm:
+            ifc.WrapBstrRecord(record)
+        self.assertEqual(str(cm.exception), "36")
+
+        del record
+        gc.collect()
 
     def test_first_record_length_1_list(self):
         ifc = _create_server(self.interface)

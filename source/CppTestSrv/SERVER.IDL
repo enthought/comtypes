@@ -180,15 +180,29 @@ struct StructBstrRecordSafearrayTest {
 ]
 interface IDualRecordSafearrayTest : IDispatch
 {
-    // Return the first record from a SAFEARRAY
+    // Wrap a single record into a SAFEARRAY of length 1
     [id(1)]
+    HRESULT WrapValueRecord(
+        [in] StructValueRecordSafearrayTest* record,
+        [out, retval] SAFEARRAY(StructValueRecordSafearrayTest)* records
+    );
+
+    // Return the first record from a SAFEARRAY
+    [id(2)]
     HRESULT FirstValueRecord(
         [in] SAFEARRAY(StructValueRecordSafearrayTest) records,
         [out, retval] StructValueRecordSafearrayTest* record
     );
 
+    // Wrap a single BSTR record into a SAFEARRAY of length 1
+    [id(3)]
+    HRESULT WrapBstrRecord(
+        [in] StructBstrRecordSafearrayTest* record,
+        [out, retval] SAFEARRAY(StructBstrRecordSafearrayTest)* records
+    );
+
     // Return the first BSTR record from a SAFEARRAY
-    [id(2)]
+    [id(4)]
     HRESULT FirstBstrRecord(
         [in] SAFEARRAY(StructBstrRecordSafearrayTest) records,
         [out, retval] StructBstrRecordSafearrayTest* record

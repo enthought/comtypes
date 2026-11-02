@@ -180,6 +180,19 @@ class TestVtableValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.TestCa
     def setUpClass(cls):
         cls.interface = ComtypesCppTestSrvLib.IDualRecordSafearrayTest
 
+    def test_wrap_record(self):
+        ifc = _create_server(self.interface)
+        record = _create_record(id=300, seq=0, checksum=30042)
+
+        result = ifc.WrapValueRecord(record)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].id, 300)
+        self.assertEqual(result[0].seq, 0)
+        self.assertEqual(result[0].checksum, 30042)
+
+        del record
+        gc.collect()
+
     def test_first_record_length_1_list(self):
         ifc = _create_server(self.interface)
         records = [
@@ -254,6 +267,17 @@ class TestDispatchValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.Test
     @classmethod
     def setUpClass(cls):
         cls.interface = ComtypesCppTestSrvLib.IDispRecordSafearrayTest
+
+    def test_wrap_record(self):
+        ifc = _create_server(self.interface)
+        record = _create_record(id=300, seq=0, checksum=30042)
+
+        with self.assertRaises(KeyError) as cm:
+            ifc.WrapValueRecord(record)
+        self.assertEqual(str(cm.exception), "36")
+
+        del record
+        gc.collect()
 
     def test_first_record_length_1_list(self):
         ifc = _create_server(self.interface)

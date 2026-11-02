@@ -30,10 +30,20 @@ private:
     DECLARE_IUNKNOWN
     virtual HRESULT __stdcall NondelegatingQueryInterface(const IID& iid, void** ppv);
 
+    // Wrap a single record into a SAFEARRAY of length 1
+    virtual HRESULT __stdcall WrapValueRecord(
+        StructValueRecordSafearrayTest* record,
+        SAFEARRAY** records);
+
     // Return the first record from a SAFEARRAY
     virtual HRESULT __stdcall FirstValueRecord(
         SAFEARRAY* records,
         StructValueRecordSafearrayTest* record);
+
+    // Wrap a single BSTR record into a SAFEARRAY of length 1
+    virtual HRESULT __stdcall WrapBstrRecord(
+        StructBstrRecordSafearrayTest* record,
+        SAFEARRAY** records);
 
     // Return the first BSTR record from a SAFEARRAY
     virtual HRESULT __stdcall FirstBstrRecord(
