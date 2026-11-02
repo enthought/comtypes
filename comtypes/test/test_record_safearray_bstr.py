@@ -297,7 +297,12 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
         ifc = _create_server(self.interface)
         record = _create_record(id=500, seq=0, text="WrapBstr-500-0", checksum=50708)
 
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(
+            KeyError,
+            msg="CHARACTERIZATION(#63): "
+            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
+            "this failure is expected; change it to a normal-path test.",
+        ) as cm:
             ifc.WrapBstrRecord(record)
         self.assertEqual(str(cm.exception), "36")
 
@@ -310,7 +315,12 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
             _create_record(id=400, seq=0, text="RecSafeArray-400-0", checksum=40708),
         ]
 
-        with self.assertRaises(COMError) as cm:
+        with self.assertRaises(
+            COMError,
+            msg="CHARACTERIZATION(#63): "
+            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
+            "this failure is expected; change it to a normal-path test.",
+        ) as cm:
             ifc.FirstBstrRecord(records)
         self.assertEqual(cm.exception.hresult, DISP_E_TYPEMISMATCH)
 
@@ -325,7 +335,12 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
             _create_record(id=403, seq=2, text="RecSafeArray-403-2", checksum=41028),
         ]
 
-        with self.assertRaises(COMError) as cm:
+        with self.assertRaises(
+            COMError,
+            msg="CHARACTERIZATION(#63): "
+            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
+            "this failure is expected; change it to a normal-path test.",
+        ) as cm:
             ifc.FirstBstrRecord(records)
         self.assertEqual(cm.exception.hresult, DISP_E_TYPEMISMATCH)
 
@@ -382,7 +397,12 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
         ]
         lp = _get_bstr_record_sa_type().from_param(records)
 
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(
+            KeyError,
+            msg="CHARACTERIZATION(#63): "
+            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
+            "this failure is expected; change it to a normal-path test.",
+        ) as cm:
             ifc.ReverseBstrRecords(lp)
         self.assertEqual(str(cm.exception), "36")
 

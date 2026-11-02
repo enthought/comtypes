@@ -292,7 +292,12 @@ class TestDispatchValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.Test
         ifc = _create_server(self.interface)
         record = _create_record(id=300, seq=0, checksum=30042)
 
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(
+            KeyError,
+            msg="CHARACTERIZATION(#63): "
+            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
+            "this failure is expected; change it to a normal-path test.",
+        ) as cm:
             ifc.WrapValueRecord(record)
         self.assertEqual(str(cm.exception), "36")
 
@@ -305,7 +310,12 @@ class TestDispatchValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.Test
             _create_record(id=200, seq=0, checksum=20042),
         ]
 
-        with self.assertRaises(COMError) as cm:
+        with self.assertRaises(
+            COMError,
+            msg="CHARACTERIZATION(#63): "
+            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
+            "this failure is expected; change it to a normal-path test.",
+        ) as cm:
             ifc.FirstValueRecord(records)
         self.assertEqual(cm.exception.hresult, DISP_E_TYPEMISMATCH)
 
@@ -319,7 +329,12 @@ class TestDispatchValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.Test
             _create_record(id=202, seq=1, checksum=20252),
             _create_record(id=203, seq=2, checksum=20362),
         ]
-        with self.assertRaises(COMError) as cm:
+        with self.assertRaises(
+            COMError,
+            msg="CHARACTERIZATION(#63): "
+            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
+            "this failure is expected; change it to a normal-path test.",
+        ) as cm:
             ifc.FirstValueRecord(records)
         self.assertEqual(cm.exception.hresult, DISP_E_TYPEMISMATCH)
 
@@ -376,7 +391,12 @@ class TestDispatchValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.Test
         ]
         lp = _get_value_record_sa_type().from_param(records)
 
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(
+            KeyError,
+            msg="CHARACTERIZATION(#63): "
+            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
+            "this failure is expected; change it to a normal-path test.",
+        ) as cm:
             ifc.ReverseValueRecords(lp)
         self.assertEqual(str(cm.exception), "36")
 
