@@ -259,6 +259,26 @@ class TestVtableBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCase
         del records
         gc.collect()
 
+    def test_reverse_records_length_3(self):
+        ifc = _create_server(self.interface)
+
+        records = [
+            _create_record(id=401, seq=0, text="RecSafeArray-401-0", checksum=40808),
+            _create_record(id=402, seq=1, text="RecSafeArray-402-1", checksum=40918),
+            _create_record(id=403, seq=2, text="RecSafeArray-403-2", checksum=41028),
+        ]
+        lp = _get_bstr_record_sa_type().from_param(records)
+
+        result = ifc.ReverseBstrRecords(lp)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(
+            [(r.id, r.seq, r.text, r.checksum) for r in result],
+            [(s.id, s.seq, s.text, s.checksum) for s in reversed(records)],
+        )
+
+        del records
+        gc.collect()
+
 
 # ======================================================================
 # Dispatch pathway tests (IDispRecordSafearrayTest)
@@ -348,6 +368,23 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
         # wrapped in DISP_E_EXCEPTION with scode=E_INVALIDARG.
         self.assertEqual(cm.exception.hresult, DISP_E_EXCEPTION)
         self.assertEqual(cm.exception.details[4], E_INVALIDARG)
+
+        del records
+        gc.collect()
+
+    def test_reverse_records_length_3(self):
+        ifc = _create_server(self.interface)
+
+        records = [
+            _create_record(id=401, seq=0, text="RecSafeArray-401-0", checksum=40808),
+            _create_record(id=402, seq=1, text="RecSafeArray-402-1", checksum=40918),
+            _create_record(id=403, seq=2, text="RecSafeArray-403-2", checksum=41028),
+        ]
+        lp = _get_bstr_record_sa_type().from_param(records)
+
+        with self.assertRaises(KeyError) as cm:
+            ifc.ReverseBstrRecords(lp)
+        self.assertEqual(str(cm.exception), "36")
 
         del records
         gc.collect()

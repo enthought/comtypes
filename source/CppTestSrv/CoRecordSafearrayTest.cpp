@@ -31,6 +31,108 @@ static inline void trace(const char* msg, HRESULT hr)
     { Util::Trace("CoRecordSafearrayTest", msg, hr); }
 
 // ========================================================================
+// Helper Functions
+// ========================================================================
+
+// Return a reversed deep copy of a record SAFEARRAY.
+static HRESULT ReverseRecords(
+    SAFEARRAY* records, const GUID& recGuid, SAFEARRAY** reversed)
+{
+    if (reversed == NULL)
+        return E_POINTER;
+    *reversed = NULL;
+    if (records == NULL)
+        return E_POINTER;
+
+    if (::SafeArrayGetDim(records) != 1)
+        return DISP_E_TYPEMISMATCH;
+
+    VARTYPE vt;
+    HRESULT hr = ::SafeArrayGetVartype(records, &vt);
+    if (FAILED(hr) || vt != VT_RECORD)
+        return DISP_E_TYPEMISMATCH;
+
+    IRecordInfo* pRecordInfo = NULL;
+    hr = ::SafeArrayGetRecordInfo(records, &pRecordInfo);
+    if (FAILED(hr) || pRecordInfo == NULL)
+        return DISP_E_TYPEMISMATCH;
+
+    GUID actual_guid;
+    hr = pRecordInfo->GetGuid(&actual_guid);
+    if (FAILED(hr) || !IsEqualGUID(actual_guid, recGuid))
+    {
+        pRecordInfo->Release();
+        return DISP_E_TYPEMISMATCH;
+    }
+
+    LONG lbound, ubound;
+    hr = ::SafeArrayGetLBound(records, 1, &lbound);
+    if (FAILED(hr)) { pRecordInfo->Release(); return hr; }
+    hr = ::SafeArrayGetUBound(records, 1, &ubound);
+    if (FAILED(hr)) { pRecordInfo->Release(); return hr; }
+
+    LONG count = ubound - lbound + 1;
+    if (count <= 0)
+    {
+        pRecordInfo->Release();
+        return E_INVALIDARG;
+    }
+
+    ULONG size = 0;
+    hr = pRecordInfo->GetSize(&size);
+    if (FAILED(hr)) { pRecordInfo->Release(); return hr; }
+
+    SAFEARRAY* psa = ::SafeArrayCreateVectorEx(VT_RECORD, 0, count, pRecordInfo);
+    if (psa == NULL)
+    {
+        pRecordInfo->Release();
+        return E_OUTOFMEMORY;
+    }
+
+    void* pvSrc = NULL;
+    void* pvDst = NULL;
+    hr = ::SafeArrayAccessData(records, &pvSrc);
+    if (FAILED(hr))
+    {
+        ::SafeArrayDestroy(psa);
+        pRecordInfo->Release();
+        return hr;
+    }
+    hr = ::SafeArrayAccessData(psa, &pvDst);
+    if (FAILED(hr))
+    {
+        ::SafeArrayUnaccessData(records);
+        ::SafeArrayDestroy(psa);
+        pRecordInfo->Release();
+        return hr;
+    }
+
+    BYTE* src = static_cast<BYTE*>(pvSrc);
+    BYTE* dst = static_cast<BYTE*>(pvDst);
+    for (LONG i = 0; i < count && SUCCEEDED(hr); ++i)
+    {
+        BYTE* dstElem = dst + (size_t)i * size;
+        BYTE* srcElem = src + (size_t)(count - 1 - i) * size;
+        hr = pRecordInfo->RecordInit(dstElem);
+        if (SUCCEEDED(hr))
+            hr = pRecordInfo->RecordCopy(srcElem, dstElem);
+    }
+
+    ::SafeArrayUnaccessData(psa);
+    ::SafeArrayUnaccessData(records);
+    pRecordInfo->Release();
+
+    if (FAILED(hr))
+    {
+        ::SafeArrayDestroy(psa);
+        return hr;
+    }
+
+    *reversed = psa;
+    return S_OK;
+}
+
+// ========================================================================
 // CRecordSafearrayTest Implementation
 // ========================================================================
 
@@ -306,6 +408,14 @@ HRESULT __stdcall CRecordSafearrayTest::FirstValueRecord(
     return hr;
 }
 
+// Return a reversed deep copy of a record SAFEARRAY.
+HRESULT __stdcall CRecordSafearrayTest::ReverseValueRecords(
+    SAFEARRAY* records, SAFEARRAY** reversed)
+{
+    trace("ReverseValueRecords called");
+    return ReverseRecords(records, GUID_StructValueRecordSafearrayTest, reversed);
+}
+
 // Wrap a single BSTR record into a SAFEARRAY of length 1
 HRESULT __stdcall CRecordSafearrayTest::WrapBstrRecord(
     StructBstrRecordSafearrayTest* record, SAFEARRAY** records)
@@ -442,4 +552,12 @@ HRESULT __stdcall CRecordSafearrayTest::FirstBstrRecord(
     pRecordInfo->Release();
 
     return hr;
+}
+
+// Return a reversed deep copy of a record SAFEARRAY.
+HRESULT __stdcall CRecordSafearrayTest::ReverseBstrRecords(
+    SAFEARRAY* records, SAFEARRAY** reversed)
+{
+    trace("ReverseBstrRecords called");
+    return ReverseRecords(records, GUID_StructBstrRecordSafearrayTest, reversed);
 }

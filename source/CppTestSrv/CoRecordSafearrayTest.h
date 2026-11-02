@@ -40,6 +40,11 @@ private:
         SAFEARRAY* records,
         StructValueRecordSafearrayTest* record);
 
+    // Return a reversed deep copy of a record SAFEARRAY.
+    virtual HRESULT __stdcall ReverseValueRecords(
+        SAFEARRAY* records,
+        SAFEARRAY** reversed);
+
     // Wrap a single BSTR record into a SAFEARRAY of length 1
     virtual HRESULT __stdcall WrapBstrRecord(
         StructBstrRecordSafearrayTest* record,
@@ -49,6 +54,11 @@ private:
     virtual HRESULT __stdcall FirstBstrRecord(
         SAFEARRAY* records,
         StructBstrRecordSafearrayTest* record);
+
+    // Return a reversed deep copy of a record SAFEARRAY.
+    virtual HRESULT __stdcall ReverseBstrRecords(
+        SAFEARRAY* records,
+        SAFEARRAY** reversed);
 
     // IDispatch
     virtual HRESULT __stdcall GetTypeInfoCount(UINT* pCountTypeInfo);

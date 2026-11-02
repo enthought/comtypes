@@ -259,6 +259,26 @@ class TestVtableValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.TestCa
         del records
         gc.collect()
 
+    def test_reverse_records_length_3(self):
+        ifc = _create_server(self.interface)
+
+        records = [
+            _create_record(id=201, seq=0, checksum=20142),
+            _create_record(id=202, seq=1, checksum=20252),
+            _create_record(id=203, seq=2, checksum=20362),
+        ]
+        lp = _get_value_record_sa_type().from_param(records)
+
+        result = ifc.ReverseValueRecords(lp)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(
+            [(r.id, r.seq, r.checksum) for r in result],
+            [(s.id, s.seq, s.checksum) for s in reversed(records)],
+        )
+
+        del records
+        gc.collect()
+
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class TestDispatchValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.TestCase):
@@ -342,6 +362,23 @@ class TestDispatchValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.Test
         # wrapped in DISP_E_EXCEPTION with scode=E_INVALIDARG.
         self.assertEqual(cm.exception.hresult, DISP_E_EXCEPTION)
         self.assertEqual(cm.exception.details[4], E_INVALIDARG)
+
+        del records
+        gc.collect()
+
+    def test_reverse_records_length_3(self):
+        ifc = _create_server(self.interface)
+
+        records = [
+            _create_record(id=201, seq=0, checksum=20142),
+            _create_record(id=202, seq=1, checksum=20252),
+            _create_record(id=203, seq=2, checksum=20362),
+        ]
+        lp = _get_value_record_sa_type().from_param(records)
+
+        with self.assertRaises(KeyError) as cm:
+            ifc.ReverseValueRecords(lp)
+        self.assertEqual(str(cm.exception), "36")
 
         del records
         gc.collect()

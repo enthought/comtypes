@@ -194,18 +194,30 @@ interface IDualRecordSafearrayTest : IDispatch
         [out, retval] StructValueRecordSafearrayTest* record
     );
 
-    // Wrap a single BSTR record into a SAFEARRAY of length 1
     [id(3)]
+    HRESULT ReverseValueRecords(
+        [in] SAFEARRAY(StructValueRecordSafearrayTest) records,
+        [out, retval] SAFEARRAY(StructValueRecordSafearrayTest)* reversed
+    );
+
+    // Wrap a single BSTR record into a SAFEARRAY of length 1
+    [id(4)]
     HRESULT WrapBstrRecord(
         [in] StructBstrRecordSafearrayTest* record,
         [out, retval] SAFEARRAY(StructBstrRecordSafearrayTest)* records
     );
 
     // Return the first BSTR record from a SAFEARRAY
-    [id(4)]
+    [id(5)]
     HRESULT FirstBstrRecord(
         [in] SAFEARRAY(StructBstrRecordSafearrayTest) records,
         [out, retval] StructBstrRecordSafearrayTest* record
+    );
+
+    [id(6)]
+    HRESULT ReverseBstrRecords(
+        [in] SAFEARRAY(StructBstrRecordSafearrayTest) records,
+        [out, retval] SAFEARRAY(StructBstrRecordSafearrayTest)* reversed
     );
 };
 
