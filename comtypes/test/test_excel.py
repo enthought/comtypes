@@ -1,114 +1,152 @@
-# -*- coding: latin-1 -*-
-import unittest
-
-import comtypes.test
-comtypes.test.requires("ui")
-
 import datetime
+import sys
+import unittest
+from typing import ClassVar
 
-from comtypes.client import CreateObject
+from comtypes import automation, hresult
+from comtypes.client import CreateObject, GetModule
 
-xlRangeValueDefault = 10
-xlRangeValueXMLSpreadsheet = 11
-xlRangeValueMSPersistXML = 12
+################################################################
+#
+# TODO:
+#
+# It seems bad that only external test like this
+# can verify the behavior of `comtypes` implementation.
+# Find a different built-in win32 API to use.
+#
+################################################################
 
-class Test(unittest.TestCase):
+try:
+    GetModule(("{00020813-0000-0000-C000-000000000046}",))  # Excel libUUID
+    from comtypes.gen.Excel import xlRangeValueDefault
 
-    def test_earlybound(self):
-        self._doit(False)
+    IMPORT_FAILED = False
+except (ImportError, OSError):
+    IMPORT_FAILED = True
 
-    def test_latebound(self):
-        self._doit(True)
 
-    def _doit(self, dynamic):
-        self.xl = CreateObject("Excel.Application", dynamic=dynamic)
+class BaseBindTest:
+    # `dynamic = True/False` must be defined in subclasses!
+    dynamic: ClassVar[bool]
 
-        xl = self.xl
-        xl.Visible = 0
-        self.failUnlessEqual(xl.Visible, False)
-        xl.Visible = 1
-        self.failUnlessEqual(xl.Visible, True)
-
-        wb = xl.Workbooks.Add()
-
-        # Test with empty-tuple argument
-        xl.Range["A1", "C1"].Value[()] = (10,"20",31.4)
-        xl.Range["A2:C2"].Value[()] = ('x','y','z')
-        # Test with empty slice argument
-        xl.Range["A3:C3"].Value[:] = ('3','2','1')
-## not (yet?) implemented:
-##        xl.Range["A4:C4"].Value = ('3','2','1')
-
-        # call property to retrieve value
-        self.failUnlessEqual(xl.Range["A1:C3"].Value(),
-                             ((10.0, 20.0, 31.4),
-                              ("x", "y", "z"),
-                              (3.0, 2.0, 1.0)))
-        # index with empty tuple
-        self.failUnlessEqual(xl.Range["A1:C3"].Value[()],
-                             ((10.0, 20.0, 31.4),
-                              ("x", "y", "z"),
-                              (3.0, 2.0, 1.0)))
-        # index with empty slice
-        self.failUnlessEqual(xl.Range["A1:C3"].Value[:],
-                             ((10.0, 20.0, 31.4),
-                              ("x", "y", "z"),
-                              (3.0, 2.0, 1.0)))
-        self.failUnlessEqual(xl.Range["A1:C3"].Value[xlRangeValueDefault],
-                             ((10.0, 20.0, 31.4),
-                              ("x", "y", "z"),
-                              (3.0, 2.0, 1.0)))
-        self.failUnlessEqual(xl.Range["A1", "C3"].Value[()],
-                             ((10.0, 20.0, 31.4),
-                              ("x", "y", "z"),
-                              (3.0, 2.0, 1.0)))
-
-        r = xl.Range["A1:C3"]
-        i = iter(r)
-
-        # Test for iteration support in 'Range' interface
-        self.failUnlessEqual([c.Value() for c in xl.Range["A1:C3"]],
-                             [10.0, 20.0, 31.4,
-                              "x", "y", "z",
-                              3.0, 2.0, 1.0])
-
-        # With pywin32, one could write xl.Cells(a, b)
-        # With comtypes, one must write xl.Cells.Item(1, b)
-
-        for i in xrange(20):
-            xl.Cells.Item[i+1,i+1].Value[()] = "Hi %d" % i
-            print xl.Cells.Item[i+1, i+1].Value[()]
-
-        for i in xrange(20):
-            xl.Cells(i+1,i+1).Value[()] = "Hi %d" % i
-            print xl.Cells(i+1, i+1).Value[()]
-
-        # test dates out with Excel
-        xl.Range["A5"].Value[()] = "Excel time"
-        xl.Range["B5"].Formula = "=Now()"
-        self.failUnlessEqual(xl.Cells.Item[5,2].Formula, "=NOW()")
-
-        xl.Range["A6"].Calculate()
-        excel_time = xl.Range["B5"].Value[()]
-        self.failUnlessEqual(type(excel_time), datetime.datetime)
-        python_time = datetime.datetime.now()
-
-        self.failUnless(python_time >= excel_time)
-        self.failUnless(python_time - excel_time < datetime.timedelta(seconds=1))
-
-        # some random code, grabbed from c.l.p
-        sh = wb.Worksheets[1]
-
-        sh.Cells.Item[1,1].Value[()] = "Hello World!"
-        sh.Cells.Item[3,3].Value[()] = "Hello World!"
-        sh.Range[sh.Cells.Item[1,1],sh.Cells.Item[3,3]].Copy(sh.Cells.Item[4,1])
-        sh.Range[sh.Cells.Item[4,1],sh.Cells.Item[6,3]].Select()
+    def setUp(self):
+        self.xl = CreateObject("Excel.Application", dynamic=self.dynamic)
 
     def tearDown(self):
         # Close all open workbooks without saving, then quit excel.
         for wb in self.xl.Workbooks:
             wb.Close(0)
         self.xl.Quit()
+        del self.xl
+
+    def test(self):
+        xl = self.xl
+        xl.Visible = 0
+        self.assertEqual(xl.Visible, False)  # type: ignore
+        xl.Visible = 1
+        self.assertEqual(xl.Visible, True)  # type: ignore
+
+        wb = xl.Workbooks.Add()
+
+        # Test with empty-tuple argument
+        xl.Range["A1", "C1"].Value[()] = (
+            10,
+            "20",
+            31.4,
+        )  # XXX: in Python >= 3.8.x, cannot set values to A1:C1
+        xl.Range["A2:C2"].Value[()] = ("x", "y", "z")
+        # Test with empty slice argument
+        xl.Range["A3:C3"].Value[:] = ("3", "2", "1")
+        # not implemented:
+        #     xl.Range["A4:C4"].Value = ("3", "2" ,"1")
+
+        # call property to retrieve value
+        expected_values = ((10.0, 20.0, 31.4), ("x", "y", "z"), (3.0, 2.0, 1.0))
+        # XXX: in Python >= 3.8.x, fails below
+        self.assertEqual(xl.Range["A1:C3"].Value(), expected_values)  # type: ignore
+        # index with empty tuple
+        self.assertEqual(xl.Range["A1:C3"].Value[()], expected_values)  # type: ignore
+        # index with empty slice
+        self.assertEqual(xl.Range["A1:C3"].Value[:], expected_values)  # type: ignore
+        self.assertEqual(  # type: ignore
+            xl.Range["A1:C3"].Value[xlRangeValueDefault], expected_values
+        )
+        self.assertEqual(  # type: ignore
+            xl.Range["A1", "C3"].Value[()], expected_values
+        )
+
+        # Test for iteration support in "Range" interface
+        iter(xl.Range["A1:C3"])
+        self.assertEqual(  # type: ignore
+            [c.Value() for c in xl.Range["A1:C3"]],
+            [10.0, 20.0, 31.4, "x", "y", "z", 3.0, 2.0, 1.0],
+        )
+
+        # With pywin32, one could write xl.Cells(a, b)
+        # With comtypes, one must write xl.Cells.Item(1, b)
+
+        for i in range(20):
+            val = "Hi %d" % i
+            xl.Cells.Item[i + 1, i + 1].Value[()] = val
+            self.assertEqual(  # type: ignore
+                xl.Cells.Item[i + 1, i + 1].Value[()], val
+            )
+
+        for i in range(20):
+            val = "Hi %d" % i
+            xl.Cells(i + 1, i + 1).Value[()] = val
+            self.assertEqual(xl.Cells(i + 1, i + 1).Value[()], val)  # type: ignore
+
+        # test dates out with Excel
+        xl.Range["A5"].Value[()] = "Excel time"
+        xl.Range["B5"].Formula = "=Now()"
+        self.assertEqual(xl.Cells.Item[5, 2].Formula, "=NOW()")  # type: ignore
+
+        xl.Range["A6"].Calculate()
+        excel_time = xl.Range["B5"].Value[()]
+        self.assertEqual(type(excel_time), datetime.datetime)  # type: ignore
+        python_time = datetime.datetime.now()
+
+        self.assertTrue(python_time >= excel_time)  # type: ignore
+        self.assertTrue(  # type: ignore
+            python_time - excel_time < datetime.timedelta(seconds=1)
+        )
+
+        # some random code, grabbed from c.l.p
+        sh = wb.Worksheets[1]
+
+        sh.Cells.Item[1, 1].Value[()] = "Hello World!"
+        sh.Cells.Item[3, 3].Value[()] = "Hello World!"
+        sh.Range[sh.Cells.Item[1, 1], sh.Cells.Item[3, 3]].Copy(sh.Cells.Item[4, 1])
+        sh.Range[sh.Cells.Item[4, 1], sh.Cells.Item[6, 3]].Select()
+
+        # Error Variant
+        err_rng = sh.Range("A1")
+        err_rng.Formula = "=1/0"
+        self.assertIsInstance(err_rng.Value(), automation.VARIANT)  # type: ignore
+        self.assertEqual(  # type: ignore
+            err_rng.Value()._.scode, hresult.signed32bithex_to_int("0x800A07D7")
+        )
+
+
+PY_VER = "Python {0}.{1}.{2}".format(*sys.version_info[:3])
+
+
+@unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
+@unittest.skipIf(
+    sys.version_info[:2] == (3, 9)
+    or (sys.version_info[:2] == (3, 10) and sys.version_info < (3, 10, 10))
+    or (sys.version_info[:2] == (3, 11) and sys.version_info < (3, 11, 2)),
+    f"This fails in {PY_VER}. See https://github.com/enthought/comtypes/issues/212",
+)
+class Test_EarlyBind(BaseBindTest, unittest.TestCase):
+    dynamic = False
+
+
+@unittest.skipIf(IMPORT_FAILED, "This depends on Excel.")
+class Test_LateBind(BaseBindTest, unittest.TestCase):
+    dynamic = True
+
 
 if __name__ == "__main__":
     unittest.main()

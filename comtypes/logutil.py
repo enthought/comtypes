@@ -1,51 +1,28 @@
 # logutil.py
-import logging, ctypes
+import logging
+from collections.abc import Callable
+from ctypes import WinDLL
+from ctypes.wintypes import LPCSTR, LPCWSTR
+
+_kernel32 = WinDLL("kernel32")
+
+_OutputDebugStringA = _kernel32.OutputDebugStringA
+_OutputDebugStringA.argtypes = [LPCSTR]
+_OutputDebugStringA.restype = None
+
+_OutputDebugStringW = _kernel32.OutputDebugStringW
+_OutputDebugStringW.argtypes = [LPCWSTR]
+_OutputDebugStringW.restype = None
+
 
 class NTDebugHandler(logging.Handler):
-    def emit(self, record,
-             writeA=ctypes.windll.kernel32.OutputDebugStringA,
-             writeW=ctypes.windll.kernel32.OutputDebugStringW):
+    def emit(
+        self,
+        record: logging.LogRecord,
+        writeW: Callable[[str], None] = _OutputDebugStringW,
+    ) -> None:
         text = self.format(record)
-        if isinstance(text, str):
-            writeA(text + "\n")
-        else:
-            writeW(text + u"\n")
-logging.NTDebugHandler = NTDebugHandler
+        writeW(text + "\n")
 
-def setup_logging(*pathnames):
-    import ConfigParser
 
-    parser = ConfigParser.ConfigParser()
-    parser.optionxform = str # use case sensitive option names!
-
-    parser.read(pathnames)
-
-    DEFAULTS = {"handler": "StreamHandler()",
-                "format": "%(levelname)s:%(name)s:%(message)s",
-                "level": "WARNING"}
-
-    def get(section, option):
-        try:
-            return parser.get(section, option, True)
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            return DEFAULTS[option]
-
-    levelname = get("logging", "level")
-    format = get("logging", "format")
-    handlerclass = get("logging", "handler")
-
-    # convert level name to level value
-    level = getattr(logging, levelname)
-    # create the handler instance
-    handler = eval(handlerclass, vars(logging))
-    formatter = logging.Formatter(format)
-    handler.setFormatter(formatter)
-    logging.root.addHandler(handler)
-    logging.root.setLevel(level)
-
-    try:
-        for name, value in parser.items("logging.levels", True):
-            value = getattr(logging, value)
-            logging.getLogger(name).setLevel(value)
-    except ConfigParser.NoSectionError:
-        pass
+logging.NTDebugHandler = NTDebugHandler  # type: ignore

@@ -1,10 +1,8 @@
-import unittest, sys
-from comtypes import IUnknown, GUID
-from ctypes import *
+import unittest
+from ctypes import c_void_p
 
-def test_main():
-    from test import test_support
-    test_support.run_unittest(Test)
+from comtypes import IUnknown
+
 
 class Test(unittest.TestCase):
     def test_subinterface(self):

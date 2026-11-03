@@ -2,8 +2,12 @@
 # ../gen/_C866CA3A_32F7_11D2_9602_00C04F8EE628_0_5_0
 # http://thread.gmane.org/gmane.comp.python.ctypes.user/1485
 
-import os, unittest, tempfile
+import os
+import tempfile
+import unittest
+
 from comtypes.client import CreateObject
+
 
 class Test(unittest.TestCase):
     def test(self, dynamic=False):
@@ -18,15 +22,16 @@ class Test(unittest.TestCase):
 
         # engine.AudioStream is a propputref property
         engine.AudioOutputStream = stream
-        self.failUnlessEqual(engine.AudioOutputStream, stream)
+        self.assertEqual(engine.AudioOutputStream, stream)
         engine.speak("Hello, World", 0)
         stream.Close()
         filesize = os.stat(fname).st_size
-        self.failUnless(filesize > 100, "filesize only %d bytes" % filesize)
+        self.assertTrue(filesize > 100, "filesize only %d bytes" % filesize)
         os.unlink(fname)
 
     def test_dyndisp(self):
         return self.test(dynamic=True)
+
 
 if __name__ == "__main__":
     unittest.main()

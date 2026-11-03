@@ -1,0 +1,95 @@
+/*
+	This code is based on example code to the book:
+		Inside COM
+		by Dale E. Rogerson
+		Microsoft Press 1997
+		ISBN 1-57231-349-8
+*/
+
+#include "CFactory.h"
+#include "Iface.h"
+#include "CoComtypesDispRecordParamTest.h"
+#include "CoComtypesDispSafearrayParamTest.h"
+#include "CoNumericSafearrayTest.h"
+#include "CoByteCompatibilityTest.h"
+#include "CoStringSafearrayInsideVariantTest.h"
+#include "CoVariantErrorTest.h"
+#include "CoFixedPointNumberTest.h"
+#include "CoRecordSafearrayTest.h"
+
+
+///////////////////////////////////////////////////////////
+//
+// Server.cpp
+//
+// This file contains the component server code.
+// The FactoryDataArray contains the components that 
+// can be served.
+//
+
+// Each component derived from CUnknown defines a static function
+// for creating the component with the following prototype. 
+// HRESULT CreateInstance(IUnknown* pUnknownOuter, 
+//                        CUnknown** ppNewComponent) ;
+// This function is used to create the component.
+//
+
+//
+// The following array contains the data used by CFactory
+// to create components. Each element in the array contains
+// the CLSID, the pointer to the creation function, and the name
+// of the component to place in the Registry.
+//
+CFactoryData g_FactoryDataArray[] =
+{
+	{&CLSID_CoComtypesDispRecordParamTest, CA::CreateInstance,
+		L"Comtypes component for dispinterface record parameter tests",	// Friendly Name
+		L"Comtypes.DispRecordParamTest.1",								// ProgID
+		L"Comtypes.DispRecordParamTest",								// Version-independent ProgID
+		&LIBID_ComtypesCppTestSrvLib,									// Type Library ID
+		NULL, 0},
+	{&CLSID_CoComtypesDispSafearrayParamTest, CB::CreateInstance,
+		L"Comtypes component for dispinterface Safearray parameter tests",	// Friendly Name
+		L"Comtypes.DispSafearrayParamTest.1",								// ProgID
+		L"Comtypes.DispSafearrayParamTest",								// Version-independent ProgID
+		&LIBID_ComtypesCppTestSrvLib,									// Type Library ID
+		NULL, 0},
+	{&CLSID_CoNumericSafearrayTest, CNumericSafearrayTest::CreateInstance,
+		L"Comtypes component for numeric SAFEARRAY output tests",
+		L"Comtypes.NumericSafearrayTest.1",
+		L"Comtypes.NumericSafearrayTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoByteCompatibilityTest, CByteCompatibilityTest::CreateInstance,
+		L"Comtypes component for byte and narrow-string compatibility tests",
+		L"Comtypes.ByteCompatibilityTest.1",
+		L"Comtypes.ByteCompatibilityTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoStringSafearrayInsideVariantTest, CStringSafearrayInsideVariantTest::CreateInstance,
+		L"String SAFEARRAY inside VARIANT Tester",
+		L"Comtypes.CoStringSafearrayInsideVariantTest.1",
+		L"Comtypes.CoStringSafearrayInsideVariantTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoVariantErrorTest, CVariantErrorTest::CreateInstance,
+		L"Comtypes component for VT_ERROR VARIANT marshalling tests",
+		L"Comtypes.VariantErrorTest.1",
+		L"Comtypes.VariantErrorTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoFixedPointNumberTest, CFixedPointNumberTest::CreateInstance,
+		L"Comtypes component for fixed point number conversion tests",
+		L"Comtypes.FixedPointNumberTest.1",
+		L"Comtypes.FixedPointNumberTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoRecordSafearrayTest, CRecordSafearrayTest::CreateInstance,
+		L"Record SAFEARRAY round-trip test component",
+		L"Comtypes.RecordSafeArrayRoundTripTest.1",
+		L"Comtypes.RecordSafeArrayRoundTripTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0}
+} ;
+int g_cFactoryDataEntries
+	= sizeof(g_FactoryDataArray) / sizeof(CFactoryData) ;

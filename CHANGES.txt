@@ -1,6 +1,410 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.4.17
+--------------
+* Unify Windows message handling APIs in ``messageloop.py``. By @junkmd.
+* Replace Internet Explorer with MSXML in ``test_eventinterface.py``. By @junkmd.
+* Improve error handling for ``GetEvents`` with currently unsupported COM servers. By @junkmd.
+* Refactor ``test_basic.py`` to use public APIs. By @junkmd.
+* Skip tests using ``util`` on Python 3.15 alpha/beta. By @junkmd.
+* Refine type hints for COM object creation and retrieval. By @junkmd.
+* Modernize ``IGlobalInterfaceTable`` with type hints. By @junkmd.
+* Fix ``UnboundLocalError`` when all struct packings fail in ``calc_packing``. By @ryanda9910.
+
+Release 1.4.16
+--------------
+* Decompose ``IStorage`` tests and enhance coverage. By @junkmd.
+* Enhance tests verifying custom ``COMObject``s raise errors. By @junkmd.
+* Refactor ``shelllink.py`` for ``ITEMIDLIST`` structure. By @junkmd.
+* Fix a code path in ``logutil.NTDebugHandler``. By @junkmd.
+* Add a deprecation decorator to ``logutil.setup_logging``. By @junkmd.
+* Add tests for connection point interfaces. By @junkmd.
+* Add tests for ``IGlobalInterfaceTable`` marshaling. By @junkmd.
+* Remove outdated Python 2.3 compatibility. By @junkmd.
+* Remove unused test utilities. By @junkmd.
+* Extract time utility test helpers. By @junkmd.
+* Add ``CreateTypeLib`` and ``ICreateTypeInfo`` tests. By @junkmd.
+* Add tests for ``VARIANTEnumerator``. By @junkmd.
+* Enhance tests for moniker, bind context and running object table. By @junkmd.
+* Introduce GDI test helper module and tests for ``IViewObject.Draw``. By @junkmd.
+* Unify COM descriptor release logic in ``ITypeComp.Bind``. By @junkmd.
+* Enhance dynamic dispatch and ``client`` testing. By @junkmd.
+
+Release 1.4.15
+--------------
+* Fix ``TYPE_E_ELEMENTNOTFOUND`` HRESULT constant value. By @junkmd.
+* Enhance ``ITypeInfo`` testing in ``test_typeinfo.py``. By @junkmd.
+* Improve type hints for for generated dispmethods and properties. By @junkmd.
+* Enhance tests for generated type hints. By @junkmd.
+* Remove Internet Explorer dependency from ``test_QueryService.py`` and ``test_casesensitivity.py``. By @junkmd.
+* Rename ``test_ie.py`` to ``test_eventinterface.py``. By @junkmd.
+* Fix ``SyntaxError`` in ``DispMethodAnnotator`` signature generation. By @junkmd.
+* Rename ``test_msi.py`` to ``test_puredispatch.py``. By @junkmd.
+* Rename ``test_wmi.py`` to ``test_variant_outparam.py``. By @junkmd.
+* Replace the module-level skip with individual ``@skip`` decorators on the test methods in ``test_eventinterface.py``. By @junkmd.
+* Add tests for ``stdole.IPicture`` creation through ``IStream``. By @junkmd.
+* Improve enum testing in ``test_client.py``. By @junkmd.
+* Revive and enhance ``test_outparam``. By @junkmd.
+* Enhance ``test_stream``. By @junkmd.
+* Enhance ``test_storage``. By @junkmd.
+* Add ``malloc`` module. By @junkmd.
+* Enhance and refactor COM moniker tests. By @junkmd.
+* Refine type hints and enhance tests for ``client.GetClassObject``, ``CoGetClassObject`` and ``IClassFactory``. By @junkmd.
+* Implement ``ITypeInfo.AddressOfMember`` with tests and clarifications. By @junkmd.
+* Enhance ``ITypeComp.Bind`` tests and type hints. By @junkmd.
+* Introduce warnings for Python 3.15 enum compatibility. By @junkmd.
+
+Release 1.4.14
+--------------
+* Replace ``setup.py`` with ``pyproject.toml``. By @moi15moi.
+* Update codebases for PEP585 compliance. By @junkmd.
+
+Release 1.4.13
+--------------
+* Remove Python 3.8 and add Python 3.14 to the CI pipelines. By @junkmd.
+* Declare the minimum Python version as 3.9. By @junkmd. By @junkmd.
+* Update ``PyCArgObject.value`` for Python 3.14 compatibility. By @junkmd.
+* Add version bridges for the ``__pointer_type__`` attribute protocol. By @junkmd.
+
+Release 1.4.12
+--------------
+* Add support for coverage. By @moi15moi.
+* CI/CD Improvements for runners and the codecov badge. By @junkmd.
+* Add signed 32-bit hexadecimal converters. By @junkmd.
+* Add ``Test_Stat`` to ``test_stream``. By @junkmd.
+* Add client-side ``RegisterActiveObject``. By @junkmd.
+* Remove useless ``object`` inheritance from every class. By @moi15moi.
+* Modernize ``super()`` calls by removing explicit class and instance arguments. By @moi15moi.
+* Eliminate outdated encoding boilerplates. By @moi15moi.
+* Update byte string creation to use ``b""`` instead of ``str.encode("utf-8")``. By @moi15moi.
+* Introduce ``codecov.yml``. By @moi15moi.
+* Migrate exception catches from older aliases to ``OSError``. By @moi15moi.
+* Remove obsolete Python 2 compatibility code in ``test_variant``. By @junkmd.
+* Skip ``test_eval`` in INPROC server tests due to instability. By @junkmd.
+* Adjust structure sizes and alignments for 64-bit Python in ``viewobject.py``. By @junkmd.
+* Add ``test_viewobject``. By @junkmd.
+* Ensure ``test_npsupport`` passes with ``numpy>=2.0.0`` by explicitly setting ``dtype=numpy.int32``. By @junkmd.
+* Add tests for ``DictPropertyBag`` and type hints for ``IPropertyBag``. By @junkmd.
+* Fix ``numpy`` interoperability and enable ``datetime64`` tests. By @junkmd.
+* Revive and correct integer handling logic for ``VARIANT``s when setting values. By @junkmd.
+* Add tests for ``messageloop``. By @junkmd.
+* Revive ``util`` and add comprehensive tests. By @junkmd.
+* Refactor and enhance ``util`` with explicit imports and typing. By @junkmd.
+* Modernize ``npsupport`` by removing the patch for the ``np._typecodes``. By @junkmd.
+
+Release 1.4.11
+--------------
+* Improve ``PARAMFLAG_...`` and ``DISPATCH_...`` constants definitions and imports. By @junkmd.
+* Introduce the ``_CDataType`` alias from typeshed. By @junkmd.
+* Replace ``260`` literals/constant definitions with imports from ``ctypes.wintypes.MAX_PATH``. By @junkmd.
+* Replace ``client._code_cache._get_module_filename`` with ``typeinfo.GetModuleFileName``. By @junkmd.
+* Improve ``client._code_cache.SHGetSpecialFolderPath`` definition. By @junkmd.
+* Add type annotations to many modules. By @junkmd.
+* Add constants to many modules. By @junkmd.
+* Improve import block styles to many modules. By @junkmd.
+* Add ``SupportErrorInfoTest`` to ``test_comserver``. By @junkmd.
+* Add ``test_errorinfo``. By @junkmd.
+* Improve the type safety of ``errorinfo.ReportException``. By @junkmd.
+* Change the method of retrieving the values of each field in ``_...MemberSpec`` from unpacking to dot access. By @junkmd.
+* Split ``server.connectionpoints.ConnectionPointImpl._call_sinks``. By @junkmd.
+* Refactor ``create_vtbl_mapping``, ``create_dispimpl`` and ``_encode_idl``. By @junkmd.
+* Add ``test_hresult``. By @junkmd.
+* Add ``Test_Vtbl`` to ``test_comobject.py``. By @junkmd.
+* Delint ``IUnknown_AddRef`` and ``IUnknown_Release``. By @junkmd.
+* Convert ``assertRaises`` usage to context manager for improved readability. By @junkmd.
+* Remove the unused ``PATH`` variable from ``client/_generate.py``. By @moi15moi.
+
+Release 1.4.10
+--------------
+* Replace ``GetModuleFileNameA`` with ``GetModuleFileNameW`` to prevent a ``TypeError``. By @junkmd.
+* Refactor ``server.register``. By @junkmd.
+* ``PythonClass`` and ``PythonPath`` are no longer registered in the registry for a frozen server. By @junkmd.
+* Use ``WinDLL``/``OleDLL`` instead of ``windll``/``oledll``. By @moi15moi.
+* In ``tools.tlbparser``, replace ``windll.oleaut32.QueryPathOfRegTypeLib`` with ``typeinfo.QueryPathOfRegTypeLib``. By @moi15moi.
+* Adjust ``QueryPathOfRegTypeLib`` docstring. By @moi15moi.
+* Reserve blank lines in the generated modules. By @junkmd.
+* Refactor ``tools`` subpackage. By @junkmd.
+* Add ``ActiveObjTest`` to ``test_comserver``. By @junkmd.
+* Replace deprecated install command in CI pipelines. By @moi15moi.
+* Remove unused parameters in ``_shutdown``. By @moi15moi.
+* Delete ``preview.bat``. By @moi15moi.
+* Remove unnecessary ``ruff`` lint rules from ``pyproject.toml``. By @moi15moi.
+* Refactor some code from ``client/__init__.py`` into modules. By @junkmd.
+* Remove workarounds for Windows CE in ``find_memleak``. By @junkmd.
+* Format import blocks and add ``extend-select = ["I"]`` to ``[tool.ruff.lint]``. By @junkmd.
+
+Release 1.4.9
+--------------
+* Separate patch processing within ``_com_interface_meta`` into a module. By @junkmd.
+* Replace ``Literal`` and ``Protocol`` with runtime-referable symbols. By @junkmd.
+* Refactor from ``%`` string formatting to f-strings in many modules. By @newwingbird.
+* Refactor from ``%`` string formatting to f-strings in ``_post_coinit.unknwn``. By @junkmd.
+* Remove the script entry point in ``comtypes.shelllink``. By @cosmastech.
+* Move the modules that define IDL stuff and ``instancemethod``. By @junkmd.
+* Allow the definition of the ``_midlSAFEARRAY(HRESULT)`` type. By @davidschranz.
+* Split ``server/w_getopt.py`` into production code and test code. By @junkmd.
+* Add docstrings to the module defining the ``GUID`` symbol. By @junkmd.
+* Fix broken unregistration of 64bit type libraries. By @forderud.
+* Replace alias definitions with ``ctypes.wintypes`` imports. By @fmtabler.
+* Revive ``pywin32`` related tests. By @junkmd.
+* Revive comserver related tests. By @junkmd.
+* Separate the part that creates entries from ``server.register.Registrar`` and refactor it. By @junkmd.
+* Add ``Test_Registrar_...``. By @junkmd.
+* Many typing improvements. By @junkmd.
+* Separate ``vtbl`` creation within ``_comobject`` into a module. By @junkmd.
+* Migrate the documentation from PythonHosted to ReadTheDocs. By @junkmd.
+
+Release 1.4.8
+--------------
+* Remove Python 3.7 and add Python 3.13 to the CI pipelines. By @junkmd.
+* Add constant definitions to ``shelllink``. By @junkmd.
+* Add more tests to ``test_stream``. By @junkmd.
+* Add the ``void_type`` definition to ``tlbparser``. By @junkmd.
+* Modernize ``tools.tlbparser.get_tlib_filename``. By @junkmd.
+* Extract the methods for parsing externals and dual interfaces from ``Parser.parse_typeinfo``. By @junkmd.
+* Fix type annotations referenced by ``tlbparser``. By @junkmd.
+* Modernize ``codegenerator.namespaces``. By @junkmd.
+* Improve static typing for ``CoGetClassObject`` and ``GetClassObject``. By @junkmd.
+* Refactor the ``__new__`` methods of ``_cominterface_meta`` and ``_coclass_meta``. By @junkmd.
+* Prevent errors caused by defining members with the same name within an enum type. By @junkmd.
+* Remove remaining ``__cmp__`` methods. By @newwingbird.
+* Remove remaining ``from __future__ import print_function`` lines. By @newwingbird.
+* Prevent ``itf`` to be an unbound variable in ``_cominterface_meta.__get_baseinterface_methodcount``. By @newwingbird.
+* Modify the metaclasses to ensure compatibility with Python 3.13 and earlier versions. By @junkmd.
+
+Release 1.4.7
+--------------
+* Improve ``_CArrayType`` alias import. By @junkmd.
+* Rename ``_byref_type`` and ``_carg_obj`` to ``_CArgObject``. By @junkmd.
+* Fix typos and make the wording more natural in ``README.md``. By @umarbutler.
+* Modernize ``BSTR`` definition. By @junkmd.
+* Modernize ``tagDEC`` definition. By @junkmd.
+* Remove methods with mangling names in ``typeinfo``. By @junkmd.
+* Rename ``test_istream`` to ``test_stream``. By @junkmd.
+* Add ``test_msvidctl``. By @junkmd.
+* Add ``test_storage``. By @junkmd.
+* Add ``test_monikers``. By @junkmd.
+* Add ``test_shelllink``. By @junkmd.
+* Add ``test_persist``. By @junkmd.
+* Modernize ``persist``. By @junkmd.
+* Add type annotations to ``shelllink``. By @junkmd.
+* Bump ``python_requires`` to ``>=3.8`` in ``setup.cfg``. By @junkmd.
+
+Release 1.4.6
+--------------
+* Add tests and method annotations for ``IRecordInfo``. By @junkmd.
+* Improve static typings in ``automation``. By @junkmd.
+* Tidy up import part in some modules. By @junkmd.
+* Refer to ``Any`` and ``Tuple`` from the ``hints`` stub instead of directly importing them in generated modules. By @junkmd.
+* Modernize ``GUID.py``. By @junkmd.
+* Improve ``codegenerator.modulenamer`` static typing. By @junkmd.
+* Avoid using keywords in ``TYPE_CHECKING`` blocks. By @junkmd.
+* Improve member defining parts of ``ParseInterface`` and ``ParseDispatch``. By @junkmd.
+* Fix Annoying SyntaxWarning. By @v01d-gh.
+
+Release 1.4.5
+--------------
+* Split ``__init__.py`` into some modules. By @junkmd.
+* Fix importing ``_DispMemberSpec`` in ``automation``. By @junkmd.
+* Fix importing ``_encode_idl`` in ``_comobject``. By @junkmd.
+* Change the name of the component that implements the interface for record parameter testing. By @geppi.
+* Implement ``SAFEARRAY`` pointers and ``SAFEARRAY``s as method parameters of a Dispatch Interface. By @geppi.
+* Change the default value of the ``extra`` parameter in the ``create`` method of ``tagSAFEARRAY`` subtypes. By @geppi.
+* Implement static import for ``ISequentialStream``. By @jonschz.
+* Modernize ``test_wmi``. By @junkmd.
+* Add static typing for ``_midlSAFEARRAY``. By @junkmd.
+
+Release 1.4.4
+--------------
+* Stop mentioning the last version supporting Windows CE in ``README.md``. By @forderud.
+* Declare the minimum Python version as 3.7. By @jaraco.
+* Move package configuration to declarative config. By @jaraco.
+
+Release 1.4.3
+--------------
+* Refactor ``test_findgendir``. By @junkmd.
+* Update ``test_GUID``. By @junkmd.
+* Add a feature to ``typeannotator`` that interprets the return value. By @junkmd.
+* Update type annotations for ``_IUnknown_Base`` and ``IUnknown``. By @junkmd.
+* Add ``groupby_impltypeflags``. By @junkmd.
+* Add static typing for when a ``CoClass`` is assigned as the return value type. By @junkmd.
+* Improve ``EnumerationNamespaces`` and ``CodeGenerator.enum_aliases``. By @junkmd.
+* Modernize constructor arguments and attributes of each stuff in ``typedesc``. By @junkmd.
+* Split ``codegenerator`` into some modules in the sub-package directory. By @junkmd.
+* Implement record pointers as method parameters of a Dispatch Interface. By @geppi.
+* Add ``npsupport`` to CI pipeline matrix. By @junkmd.
+* Add "Frequently Asked Questions" to ``README.md``. By @junkmd.
+
+Release 1.4.2
+--------------
+* Improve the stability of module generation by ``GetModule``. By @junkmd.
+* Define ``c_int`` aliases earlier than others in wrapper modules. By @junkmd.
+* Remove trailing newlines generated by ``codegenerator`` and ``typeannotator``. By @junkmd.
+* Determine whether a interface is one of the known symbols not only by its name but also by using its iid. By @junkmd.
+* Add ``Incomplete`` and ``Hresult`` to ``hints.pyi``. By @junkmd.
+
+Release 1.4.1
+--------------
+* Fix ``TypeError`` when defining enumeration types. By @junkmd.
+
+Release 1.4.0
+--------------
+* Add enumeration definitions in generated friendly modules. By @junkmd.
+* Add descriptions to ``index.rst`` about the enumeration types. By @junkmd.
+* Add GitHub Actions auto-test workflow. By @junkmd.
+
+Release 1.3.1
+--------------
+* Add type annotations to dynamically generated modules. By @junkmd.
+* Bring back Excel early-bind test. By @junkmd.
+* update ``README.md``. By @junkmd.
+
+Release 1.3.0
+--------------
+ * Improve error message on non Windows environments. By @CristiFati.
+ * Adjust styles of codebase. By @junkmd.
+ * Apply ``black==22.12.0`` formatter. By @junkmd.
+ * Modernize ``client.dynamic``. By @junkmd.
+ * Add tests for ``client.dynamic``. By @junkmd.
+ * Fix ``test_client``. By @junkmd.
+ * Fix ``test_getactiveobj``. By @junkmd.
+ * Make explicit the symbols that imports from the wrapper module into the friendly module. By @junkmd.
+ * Modernize type annotations in statically defined modules. By @junkmd.
+ * Fix several type annotations in statically defined modules. By @jonschz and @junkmd.
+ * Remove ``sys.version_info`` bridges from production codebase. By @junkmd.
+ * Remove ``for_stub=True`` conditional branch from the ``tools.codegenerator.ImportedNamespaces.getvalue``. By @junkmd.
+ * Fix ``codegenerator`` as generating ``__next__()`` instead of ``next()`` in ``IEnum...``. By @jonschz.
+ * Add unit test for generated ``IEnum...`` interfaces. By @jonschz.
+ * Remove ``'Programming Language :: Python :: 2.7'`` from ``setup.py``. By @junkmd.
+ * Change the base class of ``_ComMemberSpec`` and ``_DispMemberSpec`` to ``typing.NamedTuple``. By @junkmd.
+ * Delint and remove wildcard-import from ``typeinfo``. By @junkmd.
+ * Split ``DISPPARAMS`` instantiation in ``IDispatch.Invoke`` method. By @junkmd.
+ * Move ``clear_comtypes_cache`` to be a callable ``comtypes.clear_cache`` module. By @bennyrowland.
+ * Wrapper modules are now imported into friendly modules using an abstracted name, ``__wrapper_module__``. By @junkmd.
+ * Fix old index bug in ``call_with_inout`` within ``_fix_inout_args``. By @jonschz.
+ * Fix ``CONTRIBUTING.md``. By @junkmd.
+ * Update ``README.md``. By @junkmd.
+
+Release 1.2.1
+--------------
+ * Replace ``distutils`` with ``setuptools``. By @junkmd.
+ * Add Python 3.12 testing into CI pipeline. By @junkmd.
+ * Set long description type to "markdown" to fix PyPI description rendering. By @junkmd.
+ * Add ``hints.pyi`` to ``package_data`` in ``setup.py`` which copies ``hints.pyi`` to correct install location. By @junkmd.
+ * Remove Python >=3.3, <=3.6 from CI pipeline. By @vasily-v-ryabov.
+
+Release 1.2.0
+--------------
+ * Remove all automatic imports of ``numpy``, and make ``numpy`` interop opt-in. By @bennyrowland.
+ * Move and redefine generating module functions for fixing cross imports. By @junkmd.
+ * Refactor creating ``__all__`` part in ``codegenerator.Generator.generate_code``. By @junkmd.
+ * Quit calling ``GetModule`` from ``tools.codegenerator``. By @junkmd.
+ * Commonize module-creating functions. By @junkmd.
+ * Shorten the lifetime of ``io.StringIO`` used for code generation. By @junkmd.
+ * Fix import source of ``Array`` from ``_ctypes`` to ``ctypes``. By @junkmd.
+ * Add ``for_stub`` mode to ``ImportedNamespaces.getvalue``. By @junkmd.
+ * Remove ``monkeypatch_COMError``. By @junkmd.
+ * Remove ``CodeGenerator.need_GUID``. By @junkmd.
+ * Carve out ``CodeGenerator.type_name`` method to ``TypeNamer`` class. By @junkmd.
+ * Add ``__known_symbols__`` attributes. By @junkmd.
+ * Remove ``CodeGenerator.type_name`` calls no longer needed and rename to ``_to_type_name``. By @junkmd.
+ * Change ``_fix_inout_args`` to module-level top level function. By @junkmd.
+ * Fix docstring from ``DispInterfaceHead``. By @junkmd.
+ * ``...METHOD`` and ``...PROPERTY`` return ``_MemberSpec``s instead of ``tuple``s. By @junkmd.
+ * Make generating ``...property`` DRY. By @junkmd.
+ * Refactor ``_MemberSpec`` stuffs and separate modules. By @junkmd.
+ * Carve out ``make_...Method`` and ``make_...Property`` of ``codegenerator``. By @junkmd.
+ * Removed extra space in ``typeinfo.IRecordInfo._methods_``. By @j0ker70.
+ * Add type annotations to many modules. By @junkmd.
+ * Fix type annotations in many modules. By @j0ker70, @muddi900, and @junkmd.
+ * Delint ``setup.py``. By @jaraco.
+ * Add ``CONTRIBUTING.md``. By @junkmd.
+ * Modernize ``README.md`` style. By @junkmd.
+ * Add announcements of plan for renaming ``master`` branch to ``main`` and dropping Python2 to ``README.md``. By @junkmd.
+
+Release 1.1.14
+--------------
+ * Fix ``SyntaxError`` in generated docstring. Thanks @junkmd.
+
+Release 1.1.13
+--------------
+ * Many fixes in code generator. Thanks @junkmd.
+ * Make tests runnable on AppVeyor CI. Many improvements in tests. Thanks @junkmd and @dmwyatt.
+ * Update (bound_)named_property args and attributes names to be similar to builtin property. Thanks @junkmd.
+ * Refactor function ``GetModule`` and fix type lib timestamping for incomplete generated module. Thanks @junkmd.
+ * Fix recent numpy versions support. Thanks @mworion.
+ * Split ``Constants`` into a separate module. Thanks @junkmd.
+ * ``client.GetModule`` can take a one liner containing lib UUID. Thanks @junkmd.
+ * Use ``Generator.imports`` instead of ``Generator._externals``. Thanks @junkmd.
+ * Rename README to README.md. Thanks @junkmd and @filipporomani.
+ * No patching or modifying ``typedesc.Obj.name`` in ``tools.codegenerator``. Thanks @junkmd.
+ * Load enumerations into ``client.Constants``. Thanks @junkmd.
+
+Release 1.1.12
+--------------
+ * Fix ``_pack_`` being returned as a float. Thanks @kdschlosser.
+ * More general fix for timestamping a type library. Thanks @kdschlosser.
+
+Release 1.1.11
+--------------
+ * Fix setuptools>=57.5.0 compatibility. Thanks @kdschlosser.
+ * Fix timestamping for typelib. Thanks @fusentasticus.
+ * Fix 64bit inproc server. Thanks @klusidy.
+ * Drop Python 2.6 support (Python 2.7 is still supported).
+ * Fix IndexError for empty safearray. Thanks @BALOGHBence.
+ * Make numpy typecodes consistent across numpy versions. Thanks @bennyrowland.
+
+Release 1.1.10
+--------------
+ * Fix loading module from relative path on Windows 7.
+
+Release 1.1.9
+-------------
+ * Fix loading module from relative path.
+ * Use comtypes release version in code generator version check.
+
+Release 1.1.8
+-------------
+ * Fix No module named 'comtypes.gen.stdole'. Thanks @fxthomas.
+ * Fix NumPy >= 1.16 support. Thanks @mobiusklein.
+ * Use the embedded timestamp for cache invalidation. Thanks @vijairaj.
+ * Allow customization of shutdown behavior (It fixes crash during exit in applications that embed Python). Thanks @lassoan.
+ * Extend GetModule() with CLSID support. Thanks @forderud.
+ * Fix invalid handling of WindowsError on Python 3. Thanks @leonardder.
+ * End bdist_wininst support in setup.py. Thanks @wkschwartz.
+ * Drop Windows CE support. Thanks @forderud.
+
+Release 1.1.7
+-------------
+ * Fix command ``pip install comtypes --no-cache-dir --target="C:\tmp"`` (issue #158).
+
+Release 1.1.6
+-------------
+ * Fix ``pip install comtypes`` error: "option --single-version-externally-managed
+   not recognized" (issue #155).
+
+Release 1.1.5
+-------------
+ * Fix using temp directory as a cache folder when it has no write permission.
+   Thanks to @kviktor, @totaam, @morganwillcock, @kongxinchi, @Chaoste
+   for their pull requests and patience.
+ * Revive ``clear_comtypes_cache.py`` and add it to post-install step.
+ * Fix hang in ``CreateObject`` for restricted user (#124).
+
+Release 1.1.4
+-------------
+
+ * Fix TypeError when gen folder is unwriteable and it is a
+   namespace package (#102). Thanks to @orf for the bug report. Thanks
+   to @jornb for the initial proposal demonstrating a workaround.
+
+Release 1.1.3
+-------------
+
+ * Fix SyntaxError caused by enums containing python keywords. Thanks to
+   @laripk for the fix and @janbrohl for the bug report.
+
 Release 1.1.2
 -------------
 
@@ -9,7 +413,7 @@ Release 1.1.2
  * Fix AttributeError when cleaning up safe arrays at shutdown (#83). Thanks to
    mitaa for the bug report and fix.
  * Fix 64-bit ULONG_PTR definition in typeinfo module (#82). Thanks to aparamon
-   for the bug report. 
+   for the bug report.
  * Add POINTER(BSTR) to supported VARIANT types (#81). This allows the Esri
    ArcObjects library to be loaded. Thanks to Matt Wilkie for the patch.
  * Properly catch error when attempting to cache code to an unwritable
@@ -235,7 +639,7 @@ Earlier Changes
 
 	* Register the InprocServer32 only when running as script or
 	py2exe dll, not when running as py2exe exe server.
-	
+
 2009-04-25  Thomas Heller  <theller@python.net>
 
 	* SAFEARRAYs can now also be created from multi-dimensional numpy
@@ -265,7 +669,7 @@ Earlier Changes
 2009-01-29  Thomas Heller  <theller@python.net>
 
 	* Restore compatibility with Python 2.3.
-	
+
 	* comtypes\client\_code_cache.py: Add missing 'import types' in
 	comtypes\client\_code_cache.py.
 
@@ -288,7 +692,7 @@ Earlier Changes
 	* Fix memoryleak in IEnumVARIANT.
 
 2008-12-12  Thomas Heller  <theller@python.net>
-	
+
 	* Merged changes from the dyndispatch branch:
 
 	    * Add a comtypes.client.Constants class that provides a way to
@@ -316,7 +720,7 @@ Earlier Changes
 	    * Started changes based on ideas from Michael Curran: better
 	    dynamic dispatch support, and a way to disable the
 	    time-consuming wrapper code generation on demand.
-	
+
 	    * comtypes\client: Add a new 'dynamic=False' parameter to the
 	    CreateObject function.  This parameter allows to create a
 	    dynamic dispatch object, bypassing the code generation.
@@ -333,7 +737,7 @@ Earlier Changes
 
 
 2008-12-12  Thomas Heller  <theller@python.net>
-	
+
 	* Bumped version number to 0.5.3.
 
 	* Added VARIANT support for VT_I8 and VT_UI8 typecodes.
@@ -478,7 +882,7 @@ Earlier Changes
 
 	This makes sure that generated modules will *always* cached in the
 	file system.
-	
+
 2008-08-13  Thomas Heller  <theller@python.net>
 
 	* comtypes\automation.py: Allow this module to be imported on
@@ -610,7 +1014,7 @@ Earlier Changes
 	* The badly named comtypes.client.wrap function was renamed into
 	comtypes.client.GetBestInterface.  For backwards compatibility the
 	old name stays as an alias.
-	
+
 	* Replaced the comtypes.messageloop.add_filter(filter) function
 	with comtypes-messageloop.insert_filter(index, filter).  This
 	allows to specify the order in which the filters are applied.
@@ -695,11 +1099,11 @@ Earlier Changes
 	TypeError because we cannot handle this case for now.
 
 	* Fixed infinit recursion error in __getattr__ implementation.
-	
+
 	* comtypes.dynamic._Dispatch now implements a __setattr__ methods
 	that will call to Invoke() with DISPATCH_PROPERTYPUT or
 	DISPATCH_PROPERTYPUTREF.
-	
+
 	* Handle DISPATCH_PROPERTYPUTREF in IDispatch.Invoke
 	implementation.
 
@@ -717,9 +1121,9 @@ Earlier Changes
 	not work yet.
 
 	* More multidimensional safearray tests, bug fixes.
-	
+
 	* Speed up the unpacking of 1- and 2-dimensional safearrays.
-	
+
 	* Lots of refatoring of the new SAFEARRAY code; added a docstring
 	to the public function comtypes.safearray._midlSAFEARRAY.
 
@@ -729,7 +1133,7 @@ Earlier Changes
 2007-10-16  Thomas Heller  <theller@python.net>
 
 	* Changed version number to 0.3.4.
-	
+
 	* Mega-patch: Completely rewritten safearray support.  SAFERARRAYs
 	are now automatically converted to Python tuples when they are
 	received as [out] parameters in COM methods, and sequences are
@@ -791,7 +1195,7 @@ Earlier Changes
 	* comtypes.client: Fix ShowEvents(): COM methods must return a
 	HRESULT value, not None.  Fix several NameErrors in the
 	PumpWaitingMessages function.
-	
+
 2007-08-14  Thomas Heller  <theller@python.net>
 
 	* comtypes\tools\codegenerator.py: Generate the needed imports
@@ -845,7 +1249,7 @@ Earlier Changes
 	* Fixed several memory leaks and other problems in the BSTR
 	implementation.  The previous change that requires ctypes version
 	1.0.2 was backed out again because it was the wrong approach.
-	
+
 2007-01-25  Thomas Heller  <theller@python.net>
 
 	NOTE: This comment is no longer true, see above.
@@ -881,7 +1285,7 @@ Earlier Changes
 
 	* Iterating over COM collections retrived the _NewEnum property
 	twice.
-	
+
 	* Cleaned up the codegeneration.  Generated modules now have a
 	'typelib_path' variable that points to the type library used to
 	generate them, 'CoClass' subclasses have '_typelib_path_' which is
@@ -959,7 +1363,7 @@ Earlier Changes
 	* Added a COM server for testing to the comtypes.test package,
 	plus tests for it.  There are still several memory leaks in
 	comtypes, as the tests show.
-	
+
 2006-08-03  Thomas Heller  <theller@python.net>
 
 	* comtypes\server\register.py: For localserver, the wrong script
@@ -989,7 +1393,7 @@ Earlier Changes
 	- Changes in the COM shutdown code: maybe the win32com way of
 	never calling CoUninitialize() is the best compromise ;-), but I
 	have not yet given up.
-	
+
 2006-07-11  Thomas Heller  <theller@python.net>
 
 	* Imported comtypes 0.2.1 into the python.org svn repository.
@@ -1030,7 +1434,7 @@ Earlier Changes
 
 	* comtypes\tools\codegenerator.py: Don't generate dispid() for
 	non-dispatch based interfaces.
-	
+
 	* comtypes\client\__init__.py: Add logging for easier debugging.
 
 	* comtypes\persist.py: Remove dispid() from non-dispatch based

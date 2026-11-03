@@ -1,20 +1,74 @@
-from ctypes import (
-    POINTER, byref, c_byte, c_char, c_double, c_float, c_int, c_int64, c_short,
-    c_ubyte, c_ushort, c_uint, c_uint64, pointer,
-)
 import datetime
 import decimal
 import sys
 import unittest
+import unittest.mock
+from ctypes import (
+    POINTER,
+    Structure,
+    byref,
+    c_byte,
+    c_char,
+    c_double,
+    c_float,
+    c_int,
+    c_int64,
+    c_short,
+    c_ubyte,
+    c_uint,
+    c_uint64,
+    c_ushort,
+    pointer,
+)
 
-from comtypes import IUnknown, GUID
+from comtypes import GUID, IUnknown, hresult
 from comtypes.automation import (
-    VARIANT, DISPPARAMS, VT_NULL, VT_EMPTY, VT_ERROR, VT_I1, VT_I2, VT_I4,
-    VT_I8, VT_UI1, VT_UI2, VT_UI4, VT_UI8, VT_R4, VT_R8, VT_BYREF, VT_BSTR,
-    VT_DATE, VT_DECIMAL, VT_CY,)
-from comtypes.typeinfo import LoadRegTypeLib
-from comtypes.test import get_numpy
+    DISPPARAMS,
+    VARIANT,
+    VT_BLOB,
+    VT_BLOB_OBJECT,
+    VT_BSTR,
+    VT_BYREF,
+    VT_CARRAY,
+    VT_CF,
+    VT_CLSID,
+    VT_CY,
+    VT_DATE,
+    VT_DECIMAL,
+    VT_EMPTY,
+    VT_ERROR,
+    VT_FILETIME,
+    VT_HRESULT,
+    VT_I1,
+    VT_I2,
+    VT_I4,
+    VT_I8,
+    VT_ILLEGALMASKED,
+    VT_INT_PTR,
+    VT_LPSTR,
+    VT_LPWSTR,
+    VT_NULL,
+    VT_PTR,
+    VT_R4,
+    VT_R8,
+    VT_RESERVED,
+    VT_SAFEARRAY,
+    VT_STORAGE,
+    VT_STORED_OBJECT,
+    VT_STREAM,
+    VT_STREAMED_OBJECT,
+    VT_UI1,
+    VT_UI2,
+    VT_UI4,
+    VT_UI8,
+    VT_UINT_PTR,
+    VT_USERDEFINED,
+    VT_VECTOR,
+    VT_VERSIONED_STREAM,
+    VT_VOID,
+)
 from comtypes.test.find_memleak import find_memleak
+from comtypes.typeinfo import LoadRegTypeLib
 
 
 def get_refcnt(comptr):
@@ -26,19 +80,19 @@ def get_refcnt(comptr):
 
 
 class VariantTestCase(unittest.TestCase):
-
     def test_constants(self):
         empty = VARIANT.empty
-        self.failUnlessEqual(empty.vt, VT_EMPTY)
-        self.failUnless(empty.value is None)
+        self.assertEqual(empty.vt, VT_EMPTY)
+        self.assertTrue(empty.value is None)
 
         null = VARIANT.null
-        self.failUnlessEqual(null.vt, VT_NULL)
-        self.failUnless(null.value is None)
+        self.assertEqual(null.vt, VT_NULL)
+        self.assertTrue(null.value is None)
 
         missing = VARIANT.missing
-        self.failUnlessEqual(missing.vt, VT_ERROR)
-        self.assertRaises(NotImplementedError, lambda: missing.value)
+        self.assertEqual(missing.vt, VT_ERROR)
+        self.assertIs(missing.value, missing)
+        self.assertEqual(missing._.scode, hresult.DISP_E_PARAMNOTFOUND)
 
     def test_com_refcounts(self):
         # typelib for oleaut32
@@ -46,10 +100,10 @@ class VariantTestCase(unittest.TestCase):
         rc = get_refcnt(tlb)
 
         p = tlb.QueryInterface(IUnknown)
-        self.failUnlessEqual(get_refcnt(tlb), rc+1)
+        self.assertEqual(get_refcnt(tlb), rc + 1)
 
         del p
-        self.failUnlessEqual(get_refcnt(tlb), rc)
+        self.assertEqual(get_refcnt(tlb), rc)
 
     def test_com_pointers(self):
         # Storing a COM interface pointer in a VARIANT increments the refcount,
@@ -58,22 +112,22 @@ class VariantTestCase(unittest.TestCase):
         rc = get_refcnt(tlb)
 
         v = VARIANT(tlb)
-        self.failUnlessEqual(get_refcnt(tlb), rc+1)
+        self.assertEqual(get_refcnt(tlb), rc + 1)
 
         p = v.value
-        self.failUnlessEqual(get_refcnt(tlb), rc+2)
+        self.assertEqual(get_refcnt(tlb), rc + 2)
         del p
-        self.failUnlessEqual(get_refcnt(tlb), rc+1)
+        self.assertEqual(get_refcnt(tlb), rc + 1)
 
         v.value = None
-        self.failUnlessEqual(get_refcnt(tlb), rc)
+        self.assertEqual(get_refcnt(tlb), rc)
 
     def test_null_com_pointers(self):
         p = POINTER(IUnknown)()
-        self.failUnlessEqual(get_refcnt(p), 0)
+        self.assertEqual(get_refcnt(p), 0)
 
         VARIANT(p)
-        self.failUnlessEqual(get_refcnt(p), 0)
+        self.assertEqual(get_refcnt(p), 0)
 
     def test_dispparams(self):
         # DISPPARAMS is a complex structure, well worth testing.
@@ -83,90 +137,94 @@ class VariantTestCase(unittest.TestCase):
         for i, v in enumerate(values):
             d.rgvarg[i].value = v
         result = [d.rgvarg[i].value for i in range(3)]
-        self.failUnlessEqual(result, values)
+        self.assertEqual(result, values)
 
     def test_pythonobjects(self):
-        objects = [None, 42, 3.14, True, False, "abc", u"abc", 7L]
+        objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
         for x in objects:
-            v = VARIANT(x)
-            self.failUnlessEqual(x, v.value)
+            with self.subTest(x=x):
+                v = VARIANT(x)
+                self.assertEqual(x, v.value)
 
     def test_integers(self):
         v = VARIANT()
 
-        if (hasattr(sys, "maxint")):
-            # this test doesn't work in Python 3000
-            v.value = sys.maxint
-            self.failUnlessEqual(v.value, sys.maxint)
-            self.failUnlessEqual(type(v.value), int)
+        v.value = 1
 
-            v.value += 1
-            self.failUnlessEqual(v.value, sys.maxint+1)
-            self.failUnlessEqual(type(v.value), long)
+        self.assertEqual(v.value, 1)
+        self.assertIsInstance(v.value, int)
 
-        v.value = 1L
-        self.failUnlessEqual(v.value, 1)
-        self.failUnlessEqual(type(v.value), int)
+    def test_vt_uix_range_boundaries(self):
+        MIN_VT_I4 = -(2**31)
+        MAX_VT_I4 = 2**31 - 1
+        MAX_VT_UI4 = 2**32 - 1
+        MIN_VT_I8 = -(2**63)
+        MAX_VT_I8 = 2**63 - 1
+        MAX_VT_UI8 = 2**64 - 1
+        for val, vt in [
+            (MIN_VT_I8, VT_I8),
+            (MIN_VT_I4 - 1, VT_I8),
+            (MIN_VT_I4, VT_I4),
+            (0, VT_I4),
+            (MAX_VT_I4, VT_I4),
+            (MAX_VT_I4 + 1, VT_UI4),
+            (MAX_VT_UI4, VT_UI4),
+            (MAX_VT_UI4 + 1, VT_I8),
+            (MAX_VT_I8, VT_I8),
+            (MAX_VT_I8 + 1, VT_UI8),
+            (MAX_VT_UI8, VT_UI8),
+        ]:
+            with self.subTest(val=val, vt=vt):
+                v = VARIANT()
+                v.value = val
+                self.assertEqual(v.value, val)
+                self.assertEqual(v.vt, vt)
+
+    def test_out_of_vt_uix_range(self):
+        MIN_VT_I8 = -(2**63)
+        MAX_VT_UI8 = 2**64 - 1
+        for val in [MIN_VT_I8 - 1, MAX_VT_UI8 + 1]:
+            with self.subTest(val=val), self.assertRaises(TypeError):
+                VARIANT().value = val
 
     def test_datetime(self):
         now = datetime.datetime.now()
 
         v = VARIANT()
         v.value = now
-        self.failUnlessEqual(v.vt, VT_DATE)
-        self.failUnlessEqual(v.value, now)
-
-    def test_datetime64(self):
-        np = get_numpy()
-        if np is None:
-            return
-        try:
-            np.datetime64
-        except AttributeError:
-            return
-
-        dates = [
-            np.datetime64("2000-01-01T05:30:00", "s"),
-            np.datetime64("1800-01-01T05:30:00", "ms"),
-            np.datetime64("2000-01-01T12:34:56", "us")
-        ]
-
-        for date in dates:
-            v = VARIANT()
-            v.value = date
-            self.failUnlessEqual(v.vt, VT_DATE)
-            self.failUnlessEqual(v.value, date.astype(datetime.datetime))
+        self.assertEqual(v.vt, VT_DATE)
+        self.assertEqual(v.value, now)
 
     def test_decimal_as_currency(self):
-        value = decimal.Decimal('3.14')
+        value = decimal.Decimal("3.14")
 
         v = VARIANT()
         v.value = value
-        self.failUnlessEqual(v.vt, VT_CY)
-        self.failUnlessEqual(v.value, value)
+        self.assertEqual(v.vt, VT_CY)
+        self.assertEqual(v.value, value)
 
     def test_decimal_as_decimal(self):
         v = VARIANT()
         v.vt = VT_DECIMAL
         v.decVal.Lo64 = 1234
         v.decVal.scale = 3
-        self.failUnlessEqual(v.value, decimal.Decimal('1.234'))
+        self.assertEqual(v.value, decimal.Decimal("1.234"))
 
         v.decVal.sign = 0x80
-        self.failUnlessEqual(v.value, decimal.Decimal('-1.234'))
+        self.assertEqual(v.value, decimal.Decimal("-1.234"))
 
         v.decVal.scale = 28
-        self.failUnlessEqual(v.value, decimal.Decimal('-1.234e-25'))
+        self.assertEqual(v.value, decimal.Decimal("-1.234e-25"))
 
         v.decVal.scale = 12
         v.decVal.Hi32 = 100
-        self.failUnlessEqual(
-            v.value, decimal.Decimal('-1844674407.370955162834'))
+        self.assertEqual(v.value, decimal.Decimal("-1844674407.370955162834"))
 
+    @unittest.skip("This test causes python(3?) to crash.")
     def test_BSTR(self):
         v = VARIANT()
-        v.value = u"abc\x00123\x00"
-        self.failUnlessEqual(v.value, "abc\x00123\x00")
+        v.value = "abc\x00123\x00"
+        self.assertEqual(v.value, "abc\x00123\x00")
 
         v.value = None
         # manually clear the variant
@@ -174,155 +232,221 @@ class VariantTestCase(unittest.TestCase):
 
         # NULL pointer BSTR should be handled as empty string
         v.vt = VT_BSTR
-        self.failUnless(v.value in ("", None))
+        self.assertTrue(v.value in ("", None))
 
     def test_empty_BSTR(self):
         v = VARIANT()
         v.value = ""
         self.assertEqual(v.vt, VT_BSTR)
 
-    def test_UDT(self):
-        from comtypes.gen.TestComServerLib import MYCOLOR
-        v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
-        value = v.value
-        self.failUnlessEqual((1.0, 2.0, 3.0),
-                             (value.red, value.green, value.blue))
-
-        def func():
-            v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
-            return v.value
-
-        bytes = find_memleak(func)
-        self.failIf(bytes, "Leaks %d bytes" % bytes)
-
     def test_ctypes_in_variant(self):
         v = VARIANT()
-        objs = [(c_ubyte(3), VT_UI1),
-                (c_char("x"), VT_UI1),
-                (c_byte(3), VT_I1),
-                (c_ushort(3), VT_UI2),
-                (c_short(3), VT_I2),
-                (c_uint(3), VT_UI4),
-                (c_uint64(2**64), VT_UI8),
-                (c_int(3), VT_I4),
-                (c_int64(2**32), VT_I8),
-                (c_double(3.14), VT_R8),
-                (c_float(3.14), VT_R4),
-                ]
+        objs = [
+            (c_ubyte(3), VT_UI1),
+            (c_char(b"x"), VT_UI1),
+            (c_byte(3), VT_I1),
+            (c_ushort(3), VT_UI2),
+            (c_short(3), VT_I2),
+            (c_uint(3), VT_UI4),
+            (c_uint64(2**64), VT_UI8),
+            (c_int(3), VT_I4),
+            (c_int64(2**32), VT_I8),
+            (c_double(3.14), VT_R8),
+            (c_float(3.14), VT_R4),
+        ]
         for value, vt in objs:
             v.value = value
-            self.failUnlessEqual(v.vt, vt)
+            self.assertEqual(v.vt, vt)
 
     def test_byref(self):
         variable = c_int(42)
         v = VARIANT(byref(variable))
-        self.failUnlessEqual(v[0], 42)
-        self.failUnlessEqual(v.vt, VT_BYREF | VT_I4)
+        self.assertEqual(v[0], 42)
+        self.assertEqual(v.vt, VT_BYREF | VT_I4)
         variable.value = 96
-        self.failUnlessEqual(v[0], 96)
+        self.assertEqual(v[0], 96)
 
         variable = c_int(42)
         v = VARIANT(pointer(variable))
-        self.failUnlessEqual(v[0], 42)
-        self.failUnlessEqual(v.vt, VT_BYREF | VT_I4)
+        self.assertEqual(v[0], 42)
+        self.assertEqual(v.vt, VT_BYREF | VT_I4)
         variable.value = 96
-        self.failUnlessEqual(v[0], 96)
+        self.assertEqual(v[0], 96)
 
+    def test_repr(self):
+        self.assertEqual(repr(VARIANT(c_int(42))), "VARIANT(vt=0x3, 42)")
+        self.assertEqual(
+            repr(VARIANT(byref(c_int(42)))), "VARIANT(vt=0x4003, byref(42))"
+        )
 
-class NdArrayTest(unittest.TestCase):
-    def test_double(self):
-        np = get_numpy()
-        if np is None:
-            return
-        for dtype in ('float32', 'float64'):
-            # because of FLOAT rounding errors, whi will only work for
-            # certain values!
-            a = np.array([1.0, 2.0, 3.0, 4.5], dtype=dtype)
-            v = VARIANT()
-            v.value = a
-            self.failUnless((v.value == a).all())
-
-    def test_int(self):
-        np = get_numpy()
-        if np is None:
-            return
-        for dtype in ('int8', 'int16', 'int32', 'int64', 'uint8',
-                'uint16', 'uint32', 'uint64'):
-            a = np.array((1, 1, 1, 1), dtype=dtype)
-            v = VARIANT()
-            v.value = a
-            self.failUnless((v.value == a).all())
-
-    def test_mixed(self):
-        np = get_numpy()
-        if np is None:
-            return
-
-        now = datetime.datetime.now()
-        a = np.array(
-            [11, "22", None, True, now, decimal.Decimal("3.14")]).reshape(2,3)
+    def test_repr_error(self):
+        self.assertEqual(repr(VARIANT.empty), "VARIANT.empty")
+        self.assertEqual(repr(VARIANT.null), "VARIANT.null")
+        self.assertEqual(repr(VARIANT.missing), "VARIANT.missing")
         v = VARIANT()
-        v.value = a
-        self.failUnless((v.value == a).all())
+        v.vt = VT_ERROR
+        v._.scode = hresult.DISP_E_MEMBERNOTFOUND
+        self.assertEqual(repr(v), f"VARIANT(vt=0xa, {hresult.DISP_E_MEMBERNOTFOUND})")
+
+    def spy_variant_clear(self) -> unittest.mock._patch:
+        from comtypes import automation
+        from comtypes.automation import _VariantClear
+
+        return unittest.mock.patch.object(
+            automation, "_VariantClear", autospec=True, side_effect=_VariantClear
+        )
+
+    def test_del_to_clear(self):
+        """Ensure `__del__` invokes `VariantClear` for standalone VARIANT instances.
+
+        Even though a VARIANT fits in `ctypes`' inline buffer (<= 16 bytes),
+        `_b_needsfree_` is set to 1 because the object owns the buffer.
+        """
+        v = VARIANT(1)
+        # Standalone instances own their memory, so `_b_needsfree_` must be 1.
+        self.assertEqual(v._b_needsfree_, 1)
+        with self.spy_variant_clear() as m:
+            del v
+        # Verify that `__del__` actually invoked `_VariantClear`.
+        (((cleared,), _),) = m.call_args_list
+        m.assert_called_once()
+        # Verify that `_VariantClear` successfully cleared the vt and the value.
+        self.assertEqual(cleared.vt, VT_EMPTY)
+        self.assertIsNone(cleared.value, None)
+
+    def test_referenced_variant_b_needsfree_zero(self):
+        """Ensure `_b_needsfree_` is 0 for referenced VARIANTs and `__del__` does not clear.
+
+        When a VARIANT references another object's buffer (e.g., an array element,
+        a struct member, or pointer contents), `_b_needsfree_` is 0 because it
+        does not own the memory buffer. Consequently, `__del__` does not invoke `_VariantClear`.
+        """
+
+        class StructWithVariant(Structure):
+            _fields_ = [("v", VARIANT)]
+
+        s = StructWithVariant()
+        arr = (VARIANT * 1)()
+        element = arr[0]
+        orig = VARIANT(1)
+        p = pointer(orig)
+
+        self.assertEqual(s.v._b_needsfree_, 0)
+        self.assertEqual(element._b_needsfree_, 0)
+        self.assertEqual(p.contents._b_needsfree_, 0)
+        # Note: No explicit cleanup (like `VariantClear`) is required here.
 
 
 class ArrayTest(unittest.TestCase):
     def test_double(self):
         import array
+
         for typecode in "df":
             # because of FLOAT rounding errors, whi will only work for
             # certain values!
             a = array.array(typecode, (1.0, 2.0, 3.0, 4.5))
             v = VARIANT()
             v.value = a
-            self.failUnlessEqual(v.value, (1.0, 2.0, 3.0, 4.5))
+            self.assertEqual(v.value, (1.0, 2.0, 3.0, 4.5))
 
     def test_int(self):
         import array
+
         for typecode in "bhiBHIlL":
             a = array.array(typecode, (1, 1, 1, 1))
             v = VARIANT()
             v.value = a
-            self.failUnlessEqual(v.value, (1, 1, 1, 1))
+            self.assertEqual(v.value, (1, 1, 1, 1))
+
+
+class UnsupportedVariantTestCase(unittest.TestCase):
+    def _create_variant(self, vt: int) -> VARIANT:
+        variant = VARIANT()
+        variant.vt = vt
+        return variant
+
+    def test_value_unsupported_types(self):
+        unsupported_types = (
+            VT_VOID,
+            VT_HRESULT,
+            VT_PTR,
+            VT_SAFEARRAY,
+            VT_CARRAY,
+            VT_USERDEFINED,
+            VT_LPSTR,
+            VT_LPWSTR,
+            VT_INT_PTR,
+            VT_UINT_PTR,
+            VT_FILETIME,
+            VT_BLOB,
+            VT_STREAM,
+            VT_STORAGE,
+            VT_STREAMED_OBJECT,
+            VT_STORED_OBJECT,
+            VT_BLOB_OBJECT,
+            VT_CF,
+            VT_CLSID,
+            VT_VERSIONED_STREAM,
+            VT_VECTOR,
+            VT_RESERVED,
+            VT_ILLEGALMASKED,
+        )
+        for vt in unsupported_types:
+            variant = self._create_variant(vt)
+            with self.subTest(vt=vt), self.assertRaises(NotImplementedError):
+                variant.value
+            # Supress `Exception ignored while calling deallocator: <function tagVARIANT.__del__ at ...>`
+            variant.vt = VT_EMPTY
+
 
 ################################################################
 def run_test(rep, msg, func=None, previous={}, results={}):
-##    items = [None] * rep
+    # items = [None] * rep
     if func is None:
         locals = sys._getframe(1).f_locals
         func = eval("lambda: %s" % msg, locals)
-    items = xrange(rep)
+    items = range(rep)
     from time import clock
+
     start = clock()
     for i in items:
-        func(); func(); func(); func(); func()
+        func()
+        func()
+        func()
+        func()
+        func()
     stop = clock()
-    duration = (stop-start)*1e6/5/rep
+    duration = (stop - start) * 1e6 / 5 / rep
     try:
         prev = previous[msg]
     except KeyError:
-        print >> sys.stderr, "%40s: %7.1f us" % (msg, duration)
+        print("%40s: %7.1f us" % (msg, duration), file=sys.stderr)
         delta = 0.0
     else:
         delta = duration / prev * 100.0
-        print >> sys.stderr, "%40s: %7.1f us, time = %5.1f%%" % (msg, duration, delta)
+        print(
+            "%40s: %7.1f us, time = %5.1f%%" % (msg, duration, delta), file=sys.stderr
+        )
     results[msg] = duration
     return delta
 
 
 def check_perf(rep=20000):
-    from ctypes import c_int, byref
-    from comtypes.automation import VARIANT
+    from ctypes import byref, c_int
+
     import comtypes.automation
-    print comtypes.automation
+    from comtypes.automation import VARIANT
+
+    print(comtypes.automation)
     variable = c_int()
     by_var = byref(variable)
     ptr_var = pointer(variable)
 
-    import cPickle
+    import pickle
+
     try:
-        previous = cPickle.load(open("result.pickle", "rb"))
-    except IOError:
+        previous = pickle.load(open("result.pickle", "rb"))
+    except OSError:
         previous = {}
 
     results = {}
@@ -341,14 +465,22 @@ def check_perf(rep=20000):
     d += run_test(rep, "VARIANT((42,)).value", previous=previous, results=results)
     d += run_test(rep, "VARIANT([42,]).value", previous=previous, results=results)
 
-    print "Average duration %.1f%%" % (d / 10)
-##    cPickle.dump(results, open("result.pickle", "wb"))
+    print("Average duration %.1f%%" % (d / 10))
+    # cPickle.dump(results, open("result.pickle", "wb"))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     try:
         unittest.main()
     except SystemExit:
         pass
     import comtypes
-    print "Running benchmark with comtypes %s/Python %s ..." % (comtypes.__version__, sys.version.split()[0],)
+
+    print(
+        "Running benchmark with comtypes %s/Python %s ..."
+        % (
+            comtypes.__version__,
+            sys.version.split()[0],
+        )
+    )
     check_perf()

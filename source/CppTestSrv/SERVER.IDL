@@ -1,0 +1,365 @@
+//
+// Server.idl
+//
+// This file will be processed by the MIDL compiler to
+// produce the type library (server.tlb) and marshaling code.
+//
+
+import "oaidl.idl" ;
+
+// Simple structure used for tests related to IRecordInfo or GetRecordInfoFromGuids functionality.
+// If a new test would require other fields do NOT modify this structure but add a new structure instead.
+typedef [uuid(00FABB0F-5691-41A6-B7C1-11606671F8E5)]
+struct StructRecordParamTest {
+	BSTR question ;
+	long answer ;
+	VARIANT_BOOL needs_clarification ;
+} StructRecordParamTest ;
+
+
+// Interface IDualRecordParamTest
+[
+	odl,
+	uuid(0C4E01E8-4625-46A2-BC4C-2E889A8DBBD6),
+	dual,
+	helpstring("Dual Interface for testing record parameters."),
+	nonextensible,
+	oleautomation
+]
+interface IDualRecordParamTest : IDispatch
+{
+	[id(0x00000001)]
+	HRESULT InitRecord([in, out] StructRecordParamTest* test_record) ;
+	[id(0x00000002)]
+	HRESULT VerifyRecord(
+					[in] StructRecordParamTest* test_record,
+					[out, retval] VARIANT_BOOL* result);
+} ;
+
+
+// Interface IDispRecordParamTest
+[
+	uuid(033E4C10-0A7F-4E93-8377-499AD4B6583A),
+	helpstring("Dispinterface for testing record parameters.")
+]
+dispinterface IDispRecordParamTest
+{
+	interface IDualRecordParamTest;
+} ;
+
+
+// Interface IDualSafearrayParamTest
+[
+	odl,
+	uuid(1F4F3B8B-D07E-4BB6-8D2C-D79B375696DA),
+	dual,
+	helpstring("IDualSafearrayParamTest Interface"),
+	nonextensible,
+	oleautomation
+]
+interface IDualSafearrayParamTest : IDispatch
+{
+	[id(0x00000001)]
+	HRESULT InitArray([in, out] SAFEARRAY(double)* test_array) ;
+	[id(0x00000002)]
+	HRESULT VerifyArray(
+					[in] SAFEARRAY(double) test_array,
+					[out, retval] VARIANT_BOOL* result);
+} ;
+
+
+// A separate interface preserves the existing SAFEARRAY test interface's ABI.
+[
+	object,
+	uuid(02A02AC1-05CB-4900-B3AE-5263284DECA5),
+	oleautomation
+]
+interface INumericSafearrayTest : IUnknown
+{
+	HRESULT GetInt8Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(char)* result);
+	HRESULT GetUint8Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(byte)* result);
+	HRESULT GetInt16Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(short)* result);
+	HRESULT GetUint16Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(unsigned short)* result);
+	HRESULT GetInt32Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(long)* result);
+	HRESULT GetUint32Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(unsigned long)* result);
+	HRESULT GetInt64Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(hyper)* result);
+	HRESULT GetUint64Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(unsigned hyper)* result);
+	HRESULT GetFloat32Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(float)* result);
+	HRESULT GetFloat64Array([in] short dimensions, [in] long count, [out, retval] SAFEARRAY(double)* result);
+} ;
+
+// A separate interface for scalar input/output and string compatibility.
+[
+	object,
+	uuid(047E34C1-33A8-4DAA-A1E5-B941756A8319),
+	oleautomation
+]
+interface IByteCompatibilityTest : IUnknown
+{
+	HRESULT EchoInt8([in] small value, [out, retval] small* result);
+	HRESULT EchoUint8([in] byte value, [out, retval] byte* result);
+	HRESULT EchoLpStr([in] LPSTR value, [out, retval] LPSTR* result);
+	HRESULT ReadCharPointer([in] char* value, [out, retval] byte* result);
+	// Return one character through a plain char pointer.
+	HRESULT GetCharacterBytes([in] byte value, [out, retval] char* result);
+} ;
+
+// Interface IDispSafearrayParamTest
+[
+	uuid(4097A6D0-A111-40E2-BD0B-177B775A9496)
+]
+dispinterface IDispSafearrayParamTest
+{
+	interface IDualSafearrayParamTest;
+} ;
+
+// Interface IVariantErrorTest
+// Regression test double for VT_ERROR VARIANT marshalling (issues #325, #821).
+// CreateVariantError constructs the VARIANT entirely in native C++ code:
+//   it sets vt = VT_ERROR and scode = errorCode directly without any
+//   Python reflection or type-library inference, matching what VBA's CVErr()
+//   produces.
+// GetErrorCode reads the SCODE back out, matching VBA's CLng() on an error
+//   cell, and returns DISP_E_TYPEMISMATCH for any non-VT_ERROR VARIANT.
+[
+	object,
+	uuid(A4421E3A-E17C-496E-B2DF-002C20FEC215),
+	oleautomation
+]
+interface IVariantErrorTest : IUnknown
+{
+	HRESULT CreateVariantError([in] LONG errorCode, [out, retval] VARIANT* result);
+	HRESULT GetErrorCode([in] VARIANT value, [out, retval] LONG* errorCode);
+} ;
+
+// Interface IFixedPointNumberTest
+// Test interface for converting strings to VT_DECIMAL and VT_CY VARIANTs.
+[
+	object,
+	uuid(8F4E2D1A-7C3B-4A9E-8F1D-2B5C6D7E8F9A),
+	oleautomation
+]
+interface IFixedPointNumberTest : IUnknown
+{
+	HRESULT ToDecVariant([in] BSTR strValue, [out, retval] VARIANT* result);
+	HRESULT ToCyVariant([in] BSTR strValue, [out, retval] VARIANT* result);
+	HRESULT DecomposeCyVariant([in] VARIANT value, [out, retval] LONGLONG* result);
+	HRESULT DecomposeDecVariant([in] VARIANT value, [out] BYTE* sign, [out] SAFEARRAY(BYTE)* digits, [out] LONG* exponent);
+	HRESULT InitCyVariantWith3dot14([in, out] VARIANT* value);
+	HRESULT InitDecVariantWith3dot14([in, out] VARIANT* value);
+} ;
+
+
+// Value-only record for basic SAFEARRAY round-trip tests
+typedef [uuid(6B298B7B-CA0E-431D-988C-FED3CEB59729)]
+struct StructValueRecordSafearrayTest {
+    long id;
+    long seq;
+    hyper checksum;
+} StructValueRecordSafearrayTest;
+
+
+// BSTR-containing record for deep copy validation
+typedef [uuid(5F72F918-EC40-42C1-A034-F6608902ECB3)]
+struct StructBstrRecordSafearrayTest {
+    long id;
+    long seq;
+    BSTR text;
+    hyper checksum;
+} StructBstrRecordSafearrayTest;
+
+
+// IDispatch dual interface for typed record SAFEARRAY
+[
+    odl,
+    uuid(000CB4A0-9492-4E7E-9D1F-E19512B0FA3A),
+    dual,
+    helpstring("Dual interface for typed record SAFEARRAY round-trip tests."),
+    nonextensible,
+    oleautomation
+]
+interface IDualRecordSafearrayTest : IDispatch
+{
+    // Wrap a single record into a SAFEARRAY of length 1
+    [id(1)]
+    HRESULT WrapValueRecord(
+        [in] StructValueRecordSafearrayTest* record,
+        [out, retval] SAFEARRAY(StructValueRecordSafearrayTest)* records
+    );
+
+    // Return the first record from a SAFEARRAY
+    [id(2)]
+    HRESULT FirstValueRecord(
+        [in] SAFEARRAY(StructValueRecordSafearrayTest) records,
+        [out, retval] StructValueRecordSafearrayTest* record
+    );
+
+    [id(3)]
+    HRESULT ReverseValueRecords(
+        [in] SAFEARRAY(StructValueRecordSafearrayTest) records,
+        [out, retval] SAFEARRAY(StructValueRecordSafearrayTest)* reversed
+    );
+
+    // Wrap a single BSTR record into a SAFEARRAY of length 1
+    [id(4)]
+    HRESULT WrapBstrRecord(
+        [in] StructBstrRecordSafearrayTest* record,
+        [out, retval] SAFEARRAY(StructBstrRecordSafearrayTest)* records
+    );
+
+    // Return the first BSTR record from a SAFEARRAY
+    [id(5)]
+    HRESULT FirstBstrRecord(
+        [in] SAFEARRAY(StructBstrRecordSafearrayTest) records,
+        [out, retval] StructBstrRecordSafearrayTest* record
+    );
+
+    [id(6)]
+    HRESULT ReverseBstrRecords(
+        [in] SAFEARRAY(StructBstrRecordSafearrayTest) records,
+        [out, retval] SAFEARRAY(StructBstrRecordSafearrayTest)* reversed
+    );
+};
+
+
+// Dispinterface alias for dual interface
+[
+    uuid(E5D25FDE-3FF5-42A4-BAD0-44BB502D007E),
+    helpstring("Dispinterface alias for dual typed record SAFEARRAY tests.")
+]
+dispinterface IDispRecordSafearrayTest
+{
+    interface IDualRecordSafearrayTest;
+};
+
+
+//
+// Component and type library descriptions
+//
+[
+	uuid(07D2AEE5-1DF8-4D2C-953A-554ADFD25F99),
+	version(1.0),
+	helpstring("Comtypes C++ Test COM Server 1.0 Type Library.")
+]
+library ComtypesCppTestSrvLib
+{
+	// TLib : OLE Automation : {00020430-0000-0000-C000-000000000046}
+	importlib("stdole2.tlb") ;
+
+	// CoComtypesDispRecordParamTest
+	// Component that implements interfaces used for dispinterface record parameter tests.
+	[
+		uuid(5E78C9A8-4C19-4285-BCD6-3FFBBA5B17A8),
+		helpstring("Comtypes component for dispinterface record parameter tests.")
+	]
+	coclass CoComtypesDispRecordParamTest
+	{
+		interface IDualRecordParamTest ;
+		dispinterface IDispRecordParamTest ;
+	} ;
+
+
+	// CoComtypesDispSafearrayParamTest
+	// Component that implements interfaces used for dispinterface Safearray parameter tests.
+	[
+		uuid(091D762E-FF4B-4532-8B24-23807FE873C3),
+		helpstring("Comtypes component for dispinterface Safearray parameter tests.")
+	]
+	coclass CoComtypesDispSafearrayParamTest
+	{
+		interface IDualSafearrayParamTest ;
+		dispinterface IDispSafearrayParamTest ;
+	} ;
+
+	// A separate component for fixed numeric SAFEARRAY output.
+	[
+		uuid(69638BDB-0F95-460A-8619-27DDA97C4BC4),
+		helpstring("Comtypes component for numeric SAFEARRAY output tests.")
+	]
+	coclass CoNumericSafearrayTest
+	{
+		[default] interface INumericSafearrayTest ;
+	} ;
+
+	[
+		uuid(E07D71E8-C8A5-4B76-9A88-688DB10CF712),
+		helpstring("Comtypes component for byte and narrow-string compatibility tests.")
+	]
+	coclass CoByteCompatibilityTest
+	{
+		[default] interface IByteCompatibilityTest ;
+	} ;
+
+	// Interface IStringSafearrayInsideVariantTest
+	[
+		odl,
+		uuid(D621F143-5AAB-47B4-B2CF-8C4E2ED52E2B),
+		dual,
+		helpstring("Provides operations for converting and repeating one-dimensional string SAFEARRAYs passed as VARIANT values. Array results are returned through VARIANT*."),
+		nonextensible,
+		oleautomation
+	]
+	interface IStringSafearrayInsideVariantTest : IDispatch
+	{
+		[id(0x00000001), helpstring("Convert a one-dimensional SAFEARRAY(VARIANT) to a SAFEARRAY(BSTR).")]
+		HRESULT VariantArrayToBstrArray(
+			[in] VARIANT arr,
+			[out, retval] VARIANT* result);
+		[id(0x00000002), helpstring("Convert a one-dimensional SAFEARRAY(BSTR) to a SAFEARRAY(VARIANT).")]
+		HRESULT BstrArrayToVariantArray(
+			[in] VARIANT arr,
+			[out, retval] VARIANT* result);
+		[id(0x00000003), helpstring("Repeat the elements of a one-dimensional SAFEARRAY(VARIANT) count times. *count* must be non-negative.")]
+		HRESULT RepeatVariantArray(
+			[in] VARIANT arr, [in] LONG count,
+			[out, retval] VARIANT* result);
+		[id(0x00000004), helpstring("Repeat the elements of a one-dimensional SAFEARRAY(BSTR) count times. *count* must be non-negative.")]
+		HRESULT RepeatBstrArray(
+			[in] VARIANT arr, [in] LONG count,
+			[out, retval] VARIANT* result);
+	} ;
+
+	[
+		uuid(D54643DA-37A2-4823-8812-3A9F60C29CFA),
+		helpstring("String SAFEARRAY inside VARIANT Tester")
+	]
+	coclass CoStringSafearrayInsideVariantTest
+	{
+		[default] interface IStringSafearrayInsideVariantTest ;
+	} ;
+
+	// CoVariantErrorTest
+	// Test double for VT_ERROR VARIANT round-trip (issues #325, #821).
+	[
+		uuid(3AD33CCB-69A9-4FFD-A190-468A255D6479),
+		helpstring("Comtypes component for VT_ERROR VARIANT marshalling tests.")
+	]
+	coclass CoVariantErrorTest
+	{
+		[default] interface IVariantErrorTest ;
+	} ;
+
+	// CoFixedPointNumberTest
+	// Component for testing string to VT_DECIMAL and VT_CY VARIANT conversion.
+	[
+		uuid(9A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D),
+		helpstring("Comtypes component for fixed point number conversion tests.")
+	]
+	coclass CoFixedPointNumberTest
+	{
+		[default] interface IFixedPointNumberTest ;
+	} ;
+
+
+	// CoRecordSafearrayTest
+	// Component that implements record SAFEARRAY round-trip tests.
+	[
+		uuid(1B9EB37E-1E97-4866-8600-C1F1D3620FAE),
+		helpstring("Record SAFEARRAY round-trip test component.")
+	]
+	coclass CoRecordSafearrayTest
+	{
+		[default] interface IDualRecordSafearrayTest ;
+		dispinterface IDispRecordSafearrayTest ;
+	} ;
+} ;

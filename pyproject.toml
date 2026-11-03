@@ -1,0 +1,106 @@
+[project]
+name = "comtypes"
+description = "Pure Python COM package"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+authors = [
+    { name = "Thomas Heller", email = "theller@python.net" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dynamic = ["version"]
+
+[project.scripts]
+clear_comtypes_cache = "comtypes.clear_cache:main"
+
+[project.urls]
+Source = "https://github.com/enthought/comtypes"
+Download = "https://github.com/enthought/comtypes/releases"
+Issues = "https://github.com/enthought/comtypes/issues"
+
+[build-system]
+requires = ["setuptools>=77.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "comtypes",
+    "comtypes._post_coinit",
+    "comtypes.client",
+    "comtypes.server",
+    "comtypes.tools",
+    "comtypes.tools.codegenerator",
+    "comtypes.test",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "comtypes.__version__" }
+
+[tool.setuptools.package-data]
+"comtypes.test" = [
+    "TestComServer.idl",
+    "TestComServer.tlb",
+    "TestDispServer.idl",
+    "TestDispServer.tlb",
+    "mytypelib.idl",
+    "mylib.idl",
+    "mylib.tlb",
+    "urlhist.tlb",
+    "test_jscript.js",
+]
+"comtypes" = ["hints.pyi", "py.typed"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+ignore = ["E402"]
+
+[tool.ruff.lint.per-file-ignores]
+# production
+"comtypes/_npsupport.py" = ["F401"]
+"comtypes/_vtbl.py" = ["E722"]
+"comtypes/automation.py" = ["F401", "F403", "F405"]
+"comtypes/viewobject.py" = ["F403", "F405"]
+"comtypes/client/_constants.py" = ["F401"]
+"comtypes/server/automation.py" = ["F403", "F405"]
+"comtypes/server/connectionpoints.py" = ["F401", "F403", "F405"]
+"comtypes/server/inprocserver.py" = ["E722"]
+"comtypes/server/register.py" = ["E713"]
+"comtypes/tools/codegenerator/packing.py" = ["F821", "F841"]
+# gen directory
+"comtypes/gen/*" = ["E", "F", "I"]
+# stub
+"comtypes/hints.pyi" = ["I"]
+# tests
+"comtypes/test/TestDispServer.py" = ["E401"]
+"comtypes/test/find_memleak.py" = ["E401", "F401", "F403", "F405"]
+"comtypes/test/setup.py" = ["F401"]
+"comtypes/test/test_agilent.py" = ["F401", "F841"]
+"comtypes/test/test_client.py" = ["F401"]
+"comtypes/test/test_dict.py" = ["F841"]
+"comtypes/test/test_eventinterface.py" = ["F841"]
+"comtypes/test/test_outparam.py" = ["F841"]
+"comtypes/test/test_sapi.py" = ["E401"]
+"comtypes/test/test_server.py" = ["F401", "F841"]
+"comtypes/test/test_subinterface.py" = ["E401", "F401", "F403", "F405"]
+"comtypes/test/test_urlhistory.py" = ["E401", "F401", "F403", "F405", "F841"]
+"comtypes/test/test_variant.py" = ["F401", "F821", "F841"]
+
+[tool.coverage.run]
+# Specify the source directory to avoid tracking temporary files created by "test_client_regenerate_modules.py".
+# Without this, coverage track these temporary files, leading to error when trying to generate a report.
+source = ["comtypes"]
+omit = ["comtypes/gen/*"]
+
+[tool.coverage.report]
+exclude_also = [
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

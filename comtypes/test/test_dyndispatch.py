@@ -1,4 +1,5 @@
 import unittest
+
 from comtypes.automation import IDispatch
 from comtypes.client import CreateObject, GetModule
 from comtypes.client.lazybind import Dispatch
@@ -9,7 +10,6 @@ from comtypes.gen.Scripting import IDictionary
 
 
 class Test(unittest.TestCase):
-
     def setUp(self):
         self.d = CreateObject("Scripting.Dictionary", dynamic=True)
 
@@ -17,7 +17,7 @@ class Test(unittest.TestCase):
         del self.d
 
     def test_type(self):
-        self.failUnless(isinstance(self.d, Dispatch))
+        self.assertTrue(isinstance(self.d, Dispatch))
 
     def test_index_setter(self):
         d = self.d
@@ -66,13 +66,15 @@ class Test(unittest.TestCase):
         self.assertEqual(d3.Item["baz"], 3.14)
 
     def test_named_property_no_length(self):
-        self.assertRaises(TypeError, len, self.d.Item)
+        with self.assertRaises(TypeError):
+            len(self.d.Item)
 
     def test_named_property_not_iterable(self):
-        self.assertRaises(TypeError, list, self.d.Item)
+        with self.assertRaises(TypeError):
+            list(self.d.Item)
 
     def assertAccessInterface(self, d):
-        """ Asserts access via indexing and named property """
+        """Asserts access via indexing and named property"""
         self.assertEqual(d.CompareMode, 42)
         self.assertEqual(d["foo"], 1)
         self.assertEqual(d.Item["foo"], d["foo"])

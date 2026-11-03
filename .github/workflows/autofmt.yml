@@ -1,0 +1,21 @@
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+    formatter:
+        name: auto-formatter
+        runs-on: windows-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v6
+          - name: Set up Python
+            uses: actions/setup-python@v6
+            with:
+              python-version: 3.9
+          - name: Install ruff
+            run: pip install ruff==0.6.9
+          - name: Check format
+            run: python -m ruff format type-check/. test_pip_install.py comtypes/. --check --diff
+          - name: Check lint
+            run: python -m ruff check --output-format=github type-check/. test_pip_install.py comtypes/.

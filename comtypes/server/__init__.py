@@ -1,28 +1,66 @@
-import comtypes.client, ctypes
+import ctypes
+from ctypes import HRESULT, POINTER, byref
+from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, overload
+
+import comtypes
+import comtypes.client
+import comtypes.client.dynamic
+from comtypes import GUID, STDMETHOD, IUnknown
+from comtypes import RevokeActiveObject as RevokeActiveObject
+from comtypes.automation import IDispatch
+
+if TYPE_CHECKING:
+    from ctypes import _Pointer
+
+    from comtypes import hints  # type: ignore
+
+
+_T_IUnknown = TypeVar("_T_IUnknown", bound=IUnknown)
+
 
 ################################################################
 # Interfaces
-class IClassFactory(comtypes.IUnknown):
-    _iid_ = comtypes.GUID("{00000001-0000-0000-C000-000000000046}")
+class IClassFactory(IUnknown):
+    _iid_ = GUID("{00000001-0000-0000-C000-000000000046}")
     _methods_ = [
-        comtypes.STDMETHOD(comtypes.HRESULT, "CreateInstance",
-                           [ctypes.POINTER(comtypes.IUnknown),
-                            ctypes.POINTER(comtypes.GUID),
-                            ctypes.POINTER(ctypes.c_void_p)]),
-        comtypes.STDMETHOD(comtypes.HRESULT, "LockServer",
-                           [ctypes.c_int])]
+        STDMETHOD(
+            HRESULT,
+            "CreateInstance",
+            [POINTER(IUnknown), POINTER(GUID), POINTER(ctypes.c_void_p)],
+        ),
+        STDMETHOD(HRESULT, "LockServer", [ctypes.c_int]),
+    ]
 
-    def CreateInstance(self, punkouter=None, interface=None, dynamic=False):
+    @overload
+    def CreateInstance(
+        self,
+        punkouter: Optional["_Pointer[IUnknown]"] = None,
+        interface: type[_T_IUnknown] = IUnknown,
+        dynamic: Literal[False] = False,
+    ) -> _T_IUnknown: ...
+    @overload
+    def CreateInstance(
+        self,
+        punkouter: Optional["_Pointer[IUnknown]"] = None,
+        interface: None = None,
+        dynamic: Literal[True] = True,
+    ) -> Any: ...
+    def CreateInstance(
+        self,
+        punkouter: Optional["_Pointer[IUnknown]"] = None,
+        interface: Optional[type[IUnknown]] = None,
+        dynamic: bool = False,
+    ) -> Any:
         if dynamic:
             if interface is not None:
                 raise ValueError("interface and dynamic are mutually exclusive")
-            realInterface = comtypes.automation.IDispatch
+            itf = IDispatch
         elif interface is None:
-            realInterface = comtypes.IUnknown
+            itf = IUnknown
         else:
-            realInterface = interface
-        obj = ctypes.POINTER(realInterface)()
-        self.__com_CreateInstance(punkouter, realInterface._iid_, ctypes.byref(obj))
+            itf = interface
+        obj = POINTER(itf)()
+        self.__com_CreateInstance(punkouter, itf._iid_, byref(obj))  # type: ignore
         if dynamic:
             return comtypes.client.dynamic.Dispatch(obj)
         elif interface is None:
@@ -31,32 +69,21 @@ class IClassFactory(comtypes.IUnknown):
         # An interface was specified and obj is already that interface.
         return obj
 
-##class IExternalConnection(IUnknown):
-##    _iid_ = GUID("{00000019-0000-0000-C000-000000000046}")
-##    _methods_ = [
-##        STDMETHOD(HRESULT, "AddConnection", [c_ulong, c_ulong]),
-##        STDMETHOD(HRESULT, "ReleaseConnection", [c_ulong, c_ulong, c_ulong])]
+    if TYPE_CHECKING:
 
-# The following code is untested:
+        def LockServer(self, fLock: int) -> hints.Hresult: ...
 
-ACTIVEOBJECT_STRONG = 0x0
-ACTIVEOBJECT_WEAK   = 0x1
 
-oleaut32 = ctypes.oledll.oleaut32
+# class IExternalConnection(IUnknown):
+#     _iid_ = GUID("{00000019-0000-0000-C000-000000000046}")
+#     _methods_ = [
+#         STDMETHOD(HRESULT, "AddConnection", [c_ulong, c_ulong]),
+#         STDMETHOD(HRESULT, "ReleaseConnection", [c_ulong, c_ulong, c_ulong])]
 
-def RegisterActiveObject(comobj, weak=True):
-    punk = comobj._com_pointers_[comtypes.IUnknown._iid_]
+
+def RegisterActiveObject(comobj: comtypes.COMObject, weak: bool = True) -> int:
+    """Registers a pointer as the active object for its class and returns the handle."""
+    punk = comobj._com_pointers_[IUnknown._iid_]
     clsid = comobj._reg_clsid_
-    if weak:
-        flags = ACTIVEOBJECT_WEAK
-    else:
-        flags = ACTIVEOBJECT_STRONG
-    handle = ctypes.c_ulong()
-    oleaut32.RegisterActiveObject(punk,
-                                  ctypes.byref(clsid),
-                                  flags,
-                                  ctypes.byref(handle))
-    return handle.value
-
-def RevokeActiveObject(handle):
-    oleaut32.RevokeActiveObject(handle, None)
+    flags = comtypes.ACTIVEOBJECT_WEAK if weak else comtypes.ACTIVEOBJECT_STRONG
+    return comtypes.RegisterActiveObject(punk, clsid, flags)

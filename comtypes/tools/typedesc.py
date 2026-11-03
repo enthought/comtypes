@@ -2,10 +2,32 @@
 # in typedesc_base
 
 import ctypes
-from comtypes.tools.typedesc_base import *
+from collections.abc import Sequence
+from typing import Any, Generic, Optional, TypeVar, final
+from typing import Union as _UnionT
 
-class TypeLib(object):
-    def __init__(self, name, guid, major, minor, doc=None):
+from comtypes import typeinfo
+from comtypes.tools.typedesc_base import ArrayType as ArrayType
+from comtypes.tools.typedesc_base import Enumeration as Enumeration
+from comtypes.tools.typedesc_base import EnumValue as EnumValue
+from comtypes.tools.typedesc_base import Field as Field
+from comtypes.tools.typedesc_base import FundamentalType as FundamentalType
+from comtypes.tools.typedesc_base import PointerType as PointerType
+from comtypes.tools.typedesc_base import Structure as Structure
+from comtypes.tools.typedesc_base import StructureBody as StructureBody
+from comtypes.tools.typedesc_base import StructureHead as StructureHead
+from comtypes.tools.typedesc_base import Typedef as Typedef
+from comtypes.tools.typedesc_base import Union as Union
+from comtypes.typeinfo import TLIBATTR, ITypeLib
+
+_TD = TypeVar("_TD")
+
+
+@final
+class TypeLib:
+    def __init__(
+        self, name: str, guid: str, major: int, minor: int, doc: Optional[str] = None
+    ) -> None:
         self.name = name
         self.guid = guid
         self.major = major
@@ -13,16 +35,34 @@ class TypeLib(object):
         self.doc = doc
 
     def __repr__(self):
-        return "<TypeLib(%s: %s, %s, %s)>" % (self.name, self.guid, self.major, self.minor)
+        return f"<TypeLib({self.name}: {self.guid}, {self.major}, {self.minor})>"
 
-class Constant(object):
-    def __init__(self, name, typ, value):
+
+@final
+class Constant:
+    def __init__(
+        self,
+        name: str,
+        typ: _UnionT[Typedef, FundamentalType],
+        value: Any,
+        doc: Optional[str],
+    ) -> None:
         self.name = name
         self.typ = typ
         self.value = value
+        self.doc = doc
 
-class External(object):
-    def __init__(self, tlib, name, size, align, docs=None):
+
+@final
+class External:
+    def __init__(
+        self,
+        tlib: ITypeLib,
+        name: str,
+        size: int,
+        align: int,
+        docs: Optional[tuple[str, Optional[str]]] = None,
+    ) -> None:
         # the type library containing the symbol
         self.tlib = tlib
         # name of symbol
@@ -32,107 +72,209 @@ class External(object):
         # type lib description
         self.docs = docs
 
-    def get_head(self):
+    def get_head(self) -> "External":
         # codegen might call this
         return self
 
-class SAFEARRAYType(object):
-    def __init__(self, typ):
+
+@final
+class SAFEARRAYType(Generic[_TD]):
+    def __init__(self, typ: _TD) -> None:
         self.typ = typ
         self.align = self.size = ctypes.sizeof(ctypes.c_void_p) * 8
 
-class ComMethod(object):
+
+@final
+class ComMethod:
     # custom COM method, parsed from typelib
-    def __init__(self, invkind, memid, name, returns, idlflags, doc):
+    def __init__(
+        self,
+        invkind: int,
+        memid: int,
+        name: str,
+        returns: Any,
+        idlflags: list[str],
+        doc: Optional[str],
+    ) -> None:
         self.invkind = invkind
         self.name = name
         self.returns = returns
         self.idlflags = idlflags
         self.memid = memid
         self.doc = doc
-        self.arguments = []
+        self.arguments: list[tuple[Any, str, list[str], Optional[Any]]] = []
 
-    def add_argument(self, typ, name, idlflags, default):
+    def add_argument(
+        self, typ: Any, name: str, idlflags: list[str], default: Optional[Any]
+    ) -> None:
         self.arguments.append((typ, name, idlflags, default))
 
-class DispMethod(object):
+
+@final
+class DispMethod:
     # dispatchable COM method, parsed from typelib
-    def __init__(self, dispid, invkind, name, returns, idlflags, doc):
+    def __init__(
+        self,
+        dispid: int,
+        invkind: int,
+        name: str,
+        returns: Any,
+        idlflags: list[str],
+        doc: Optional[str],
+    ) -> None:
         self.dispid = dispid
         self.invkind = invkind
         self.name = name
         self.returns = returns
         self.idlflags = idlflags
         self.doc = doc
-        self.arguments = []
+        self.arguments: list[tuple[Any, str, list[str], Optional[Any]]] = []
 
-    def add_argument(self, typ, name, idlflags, default):
+    def add_argument(
+        self, typ: Any, name: str, idlflags: list[str], default: Optional[Any]
+    ) -> None:
         self.arguments.append((typ, name, idlflags, default))
 
-class DispProperty(object):
+
+@final
+class DispProperty:
     # dispatchable COM property, parsed from typelib
-    def __init__(self, dispid, name, typ, idlflags, doc):
+    def __init__(
+        self, dispid: int, name: str, typ: Any, idlflags: list[str], doc: Optional[str]
+    ) -> None:
         self.dispid = dispid
         self.name = name
         self.typ = typ
         self.idlflags = idlflags
         self.doc = doc
 
-class DispInterfaceHead(object):
-    def __init__(self, itf):
+
+@final
+class DispInterfaceHead:
+    def __init__(self, itf: "DispInterface") -> None:
         self.itf = itf
 
-class DispInterfaceBody(object):
-    def __init__(self, itf):
+
+@final
+class DispInterfaceBody:
+    def __init__(self, itf: "DispInterface") -> None:
         self.itf = itf
 
-class DispInterface(object):
-    def __init__(self, name, members, base, iid, idlflags):
+
+@final
+class DispInterface:
+    def __init__(
+        self,
+        name: str,
+        base: "_UnionT[ComInterface, DispInterface, External]",
+        iid: str,
+        idlflags: list[str],
+        doc: Optional[str],
+    ) -> None:
         self.name = name
-        self.members = members
+        self.members: list[_UnionT[DispMethod, DispProperty]] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
         self.itf_head = DispInterfaceHead(self)
         self.itf_body = DispInterfaceBody(self)
+        self.doc = doc
 
-    def get_body(self):
+    def add_member(self, member: _UnionT[DispMethod, DispProperty]) -> None:
+        self.members.append(member)
+
+    def get_body(self) -> DispInterfaceBody:
         return self.itf_body
 
-    def get_head(self):
+    def get_head(self) -> DispInterfaceHead:
         return self.itf_head
 
-class ComInterfaceHead(object):
-    def __init__(self, itf):
+
+@final
+class ComInterfaceHead:
+    def __init__(self, itf: "ComInterface") -> None:
         self.itf = itf
 
-class ComInterfaceBody(object):
-    def __init__(self, itf):
+
+@final
+class ComInterfaceBody:
+    def __init__(self, itf: "ComInterface") -> None:
         self.itf = itf
 
-class ComInterface(object):
-    def __init__(self, name, members, base, iid, idlflags):
+
+@final
+class ComInterface:
+    def __init__(
+        self,
+        name: str,
+        base: "_UnionT[None, ComInterface, External]",
+        iid: str,
+        idlflags: list[str],
+        doc: Optional[str],
+    ) -> None:
         self.name = name
-        self.members = members
+        self.members: list[ComMethod] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
         self.itf_head = ComInterfaceHead(self)
         self.itf_body = ComInterfaceBody(self)
+        self.doc = doc
 
-    def get_body(self):
+    def extend_members(self, members: Sequence[ComMethod]) -> None:
+        self.members.extend(members)
+
+    def get_body(self) -> ComInterfaceBody:
         return self.itf_body
 
-    def get_head(self):
+    def get_head(self) -> ComInterfaceHead:
         return self.itf_head
 
-class CoClass(object):
-    def __init__(self, name, clsid, idlflags, tlibattr):
+
+_ImplTypeFlags = int
+_Interface = _UnionT[ComInterface, DispInterface]
+
+
+@final
+class CoClass:
+    def __init__(
+        self,
+        name: str,
+        clsid: str,
+        idlflags: list[str],
+        tlibattr: TLIBATTR,
+        doc: Optional[str],
+    ) -> None:
         self.name = name
         self.clsid = clsid
         self.idlflags = idlflags
         self.tlibattr = tlibattr
-        self.interfaces = []
+        self.interfaces: list[tuple[_Interface, _ImplTypeFlags]] = []
+        self.doc = doc
 
-    def add_interface(self, itf, idlflags):
+    def add_interface(self, itf: _Interface, idlflags: _ImplTypeFlags) -> None:
         self.interfaces.append((itf, idlflags))
+
+
+_ImplementedInterfaces = Sequence[_Interface]
+_SourceInterfaces = Sequence[_Interface]
+
+
+def groupby_impltypeflags(
+    seq: Sequence[tuple[_Interface, _ImplTypeFlags]],
+) -> tuple[_ImplementedInterfaces, _SourceInterfaces]:
+    implemented = []
+    sources = []
+    for itf, impltypeflags in seq:
+        if impltypeflags & typeinfo.IMPLTYPEFLAG_FSOURCE:
+            # source interface
+            where = sources
+        else:
+            # sink interface
+            where = implemented
+        if impltypeflags & typeinfo.IMPLTYPEFLAG_FDEFAULT:
+            # The default interface should be the first item on the list
+            where.insert(0, itf)
+        else:
+            where.append(itf)
+    return implemented, sources

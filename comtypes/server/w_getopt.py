@@ -1,7 +1,13 @@
+from collections.abc import Sequence
+
+
 class GetoptError(Exception):
     pass
 
-def w_getopt(args, options):
+
+def w_getopt(
+    args: Sequence[str], options: str
+) -> tuple[Sequence[tuple[str, str]], Sequence[str]]:
     """A getopt for Windows.
 
     Options may start with either '-' or '/', the option names may
@@ -21,55 +27,22 @@ def w_getopt(args, options):
     arguments = []
     while args:
         if args[0][:1] in "/-":
-            arg = args[0][1:] # strip the '-' or '/'
+            arg = args[0][1:]  # strip the '-' or '/'
             arg = arg.lower()
 
-            if arg + ':' in options:
+            if arg + ":" in options:
                 try:
                     opts.append((arg, args[1]))
                 except IndexError:
-                    raise GetoptError("option '%s' requires an argument" % args[0])
+                    raise GetoptError(f"option '{args[0]}' requires an argument")
                 args = args[1:]
             elif arg in options:
-                opts.append((arg, ''))
+                opts.append((arg, ""))
             else:
-                raise GetoptError("invalid option '%s'" % args[0])
+                raise GetoptError(f"invalid option '{args[0]}'")
             args = args[1:]
         else:
             arguments.append(args[0])
             args = args[1:]
 
     return opts, arguments
-
-if __debug__:
-    if __name__ == "__main__":
-        import unittest
-
-        class TestCase(unittest.TestCase):
-            def test_1(self):
-                args = "-embedding spam /RegServer foo /UnregSERVER blabla".split()
-                opts, args = w_getopt(args,
-                                      "regserver unregserver embedding".split())
-                self.assertEqual(opts,
-                                 [('embedding', ''),
-                                  ('regserver', ''),
-                                  ('unregserver', '')])
-                self.assertEqual(args, ["spam", "foo", "blabla"])
-
-            def test_2(self):
-                args = "/TLB Hello.Tlb HELLO.idl".split()
-                opts, args = w_getopt(args, ["tlb:"])
-                self.assertEqual(opts, [('tlb', 'Hello.Tlb')])
-                self.assertEqual(args, ['HELLO.idl'])
-
-            def test_3(self):
-                # Invalid option
-                self.assertRaises(GetoptError, w_getopt,
-                                  "/TLIB hello.tlb hello.idl".split(), ["tlb:"])
-
-            def test_4(self):
-                # Missing argument
-                self.assertRaises(GetoptError, w_getopt,
-                                  "/TLB".split(), ["tlb:"])
-
-        unittest.main()

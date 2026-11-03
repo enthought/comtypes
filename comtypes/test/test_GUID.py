@@ -1,38 +1,57 @@
-import os
 import unittest
+
 from comtypes import GUID
 
+
 class Test(unittest.TestCase):
-    def test(self):
-        self.failUnlessEqual(GUID(), GUID())
-        self.failUnlessEqual(GUID("{00000000-0000-0000-C000-000000000046}"),
-                             GUID("{00000000-0000-0000-C000-000000000046}"))
+    def test_GUID_null(self):
+        self.assertEqual(GUID(), GUID())
+        self.assertEqual(
+            str(GUID()),
+            "{00000000-0000-0000-0000-000000000000}",
+        )
 
-        self.failUnlessEqual(str(GUID("{0002DF01-0000-0000-C000-000000000046}")),
-                             "{0002DF01-0000-0000-C000-000000000046}")
-        self.failUnlessEqual(repr(GUID("{0002DF01-0000-0000-C000-000000000046}")),
-                             'GUID("{0002DF01-0000-0000-C000-000000000046}")')
+    def test_dunder_eq(self):
+        self.assertEqual(
+            GUID("{00000000-0000-0000-C000-000000000046}"),
+            GUID("{00000000-0000-0000-C000-000000000046}"),
+        )
 
-        self.assertRaises(WindowsError, GUID, "abc")
-        self.assertRaises(WindowsError, GUID.from_progid, "abc")
+    def test_duner_str(self):
+        self.assertEqual(
+            str(GUID("{0002DF01-0000-0000-C000-000000000046}")),
+            "{0002DF01-0000-0000-C000-000000000046}",
+        )
 
-        self.assertRaises(WindowsError, lambda guid: guid.as_progid(),
-                          GUID("{00000000-0000-0000-C000-000000000046}"))
+    def test_dunder_repr(self):
+        self.assertEqual(
+            repr(GUID("{0002DF01-0000-0000-C000-000000000046}")),
+            'GUID("{0002DF01-0000-0000-C000-000000000046}")',
+        )
 
+    def test_invalid_constructor_arg(self):
+        with self.assertRaises(WindowsError):
+            GUID("abc")
 
-        if os.name == "nt":
-            self.failUnlessEqual(GUID.from_progid("InternetExplorer.Application"),
-                                 GUID("{0002DF01-0000-0000-C000-000000000046}"))
-            self.failUnlessEqual(GUID("{0002DF01-0000-0000-C000-000000000046}").as_progid(),
-                                 u'InternetExplorer.Application.1')
-        elif os.name == "ce":
-            self.failUnlessEqual(GUID.from_progid("JScript"),
-                                 GUID("{f414c260-6ac0-11cf-b6d1-00aa00bbbb58}"))
-            self.failUnlessEqual(GUID("{f414c260-6ac0-11cf-b6d1-00aa00bbbb58}").as_progid(),
-                                 u'JScript')
+    def test_from_progid(self):
+        self.assertEqual(
+            GUID.from_progid("Scripting.FileSystemObject"),
+            GUID("{0D43FE01-F093-11CF-8940-00A0C9054228}"),
+        )
+        with self.assertRaises(WindowsError):
+            GUID.from_progid("abc")
 
+    def test_as_progid(self):
+        self.assertEqual(
+            GUID("{0D43FE01-F093-11CF-8940-00A0C9054228}").as_progid(),
+            "Scripting.FileSystemObject",
+        )
+        with self.assertRaises(WindowsError):
+            GUID("{00000000-0000-0000-C000-000000000046}").as_progid()
 
-        self.failIfEqual(GUID.create_new(), GUID.create_new())
+    def test_create_new(self):
+        self.assertNotEqual(GUID.create_new(), GUID.create_new())
+
 
 if __name__ == "__main__":
     unittest.main()

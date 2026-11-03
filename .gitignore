@@ -1,0 +1,55 @@
+# comtypes specific
+comtypes/__pycache__/*.pyc
+comtypes/client/__pycache__/*.pyc
+comtypes/gen/
+!comtypes/gen/__init__.py
+comtypes/tools/__pycache__/*.pyc
+comtypes.egg-info/*
+custom location/*
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyCharm project data folder
+.idea
+
+# Distribution / packaging
+.Python
+env/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+
+
+# Sphinx documentation
+docs/_build/
+
+

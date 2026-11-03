@@ -1,0 +1,143 @@
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Keep all matrix variants running even when one of the flaky unit-test
+      # combinations fails. This makes it easier to collect the remaining
+      # signal and avoids cancelling healthy runs.
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+        architecture: ['x86', 'x64']
+        support: ['with 3rd parties', 'without 3rd parties']
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Build and register the OutProc COM server
+        run: |
+          cd source/CppTestSrv
+          nmake /f Makefile
+          ./server.exe /RegServer
+      - name: unittest comtypes
+        env:
+          # The normal coverage core uses `sys.settrace`. In Python 3.12, this
+          # kind of tracing is very slow. `sysmon` uses Python's newer
+          # `sys.monitoring` API.
+          # It gets line events from Python with less extra work, so the test
+          # job can finish faster.
+          COVERAGE_CORE: ${{ matrix.python-version == '3.12' && 'sysmon' || '' }}
+        run: |
+          if ("${{ matrix.support }}" -eq "with 3rd parties") {
+            pip install numpy
+            pip install pywin32
+          }
+          pip install coverage[toml]
+          coverage run -m unittest discover -v -s comtypes\test -t comtypes\test
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          fail_ci_if_error: true
+          network_filter: comtype
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Unregister the OutProc COM server
+        run: |
+          cd source/CppTestSrv
+          ./server.exe /UnregServer
+
+  install-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2025, windows-2022]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+        architecture: ['x86', 'x64']
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+      - name: install comtypes
+        run: |
+          pip install --upgrade build
+          python -m pip install .
+          pip uninstall comtypes -y
+          python test_pip_install.py
+
+  type-check:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+        type-checker: ['ty', 'mypy', 'pyright']
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Build sdist
+        run: |
+          pip install --upgrade build
+          python -m build --sdist
+      - name: Create virtual environment
+        working-directory: type-check
+        run: python -m venv .venv
+      - name: Install dependencies
+        working-directory: type-check
+        run: |
+          .\.venv\Scripts\Activate.ps1
+          pip install (Get-Item ../dist/*.tar.gz).FullName
+          # Install dependencies defined in `type-check/pyproject.toml`
+          pip install .
+      - name: Run unittest
+        working-directory: type-check
+        run: |
+          .\.venv\Scripts\Activate.ps1
+          python -m unittest discover tests/ -v
+      - name: Run type checker
+        working-directory: type-check
+        run: |
+          .\.venv\Scripts\Activate.ps1
+          if ("${{ matrix.type-checker }}" -eq "ty") {
+            python -m ty check ./ --verbose
+          } elseif ("${{ matrix.type-checker }}" -eq "mypy") {
+            python -m mypy ./
+          } elseif ("${{ matrix.type-checker }}" -eq "pyright") {
+            python -m pyright ./ --stats
+          }
+
+  docs-source-doctest:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          architecture: x64
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r docs/requirements.txt
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Compile IDL
+        run: midl /out docs\source docs\source\mytypelib.idl
+      - name: Run doctest
+        run: sphinx-build -b doctest -d docs/build/doctrees docs/source docs/build/doctest
+        working-directory: ./
