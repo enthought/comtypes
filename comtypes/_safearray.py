@@ -2,8 +2,15 @@
 
 from ctypes import POINTER, Structure, WinDLL, byref, c_uint, c_ushort, c_void_p
 from ctypes.wintypes import DWORD, LONG, UINT, USHORT
+from typing import TYPE_CHECKING
+from typing import Union as _UnionT
 
 from comtypes import GUID, HRESULT
+
+if TYPE_CHECKING:
+    from ctypes import _Pointer
+
+    from comtypes import hints  # type: ignore
 
 ################################################################
 # if __debug__:
@@ -83,7 +90,9 @@ _SafeArrayGetRecordInfo.restype = HRESULT
 _SafeArrayGetRecordInfo.argtypes = [POINTER(SAFEARRAY), POINTER(c_void_p)]
 
 
-def SafeArrayGetRecordInfo(pa):
+def SafeArrayGetRecordInfo(
+    pa: "_UnionT[hints.LP_SAFEARRAY, _Pointer[tagSAFEARRAY]]",
+) -> "hints.IRecordInfo":
     # Defined here to avoid a circular import
     from comtypes.typeinfo import IRecordInfo
 
