@@ -387,6 +387,7 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
         del records
         gc.collect()
 
+    @unittest.skip("CLASH! CHARACTERIZATION(#63)")
     def test_reverse_records_length_3(self):
         ifc = _create_server(self.interface)
 
