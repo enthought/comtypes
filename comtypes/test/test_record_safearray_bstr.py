@@ -472,6 +472,7 @@ STATUS_ACCESS_VIOLATION = 0xC0000005
 STATUS_STACK_BUFFER_OVERRUN = 0xC0000409
 
 
+@unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class TestOwnership(unittest.TestCase):
     @unittest.skipIf(sys.version_info < (3, 14), "NOT CRASH! CHARACTERIZATION(#63)")
     def test_bstr_record_safearray_ownership(self):
