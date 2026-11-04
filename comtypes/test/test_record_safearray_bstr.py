@@ -4,10 +4,16 @@ Tests record marshaling of BSTR records (structures owning heap-allocated
 strings) between Python and a COM server.
 """
 
+import faulthandler
 import gc
+import io
+import multiprocessing
+import tempfile
 import unittest
 from _ctypes import COMError
-from typing import TYPE_CHECKING, ClassVar, TypeVar
+from collections.abc import Callable
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypeVar
 from typing import Union as _UnionT
 
 from comtypes import CLSCTX_LOCAL_SERVER, IUnknown, _safearray
@@ -407,6 +413,60 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
 
         del records
         gc.collect()
+
+
+def enable_fault_log(tmpfile: Path) -> io.TextIOWrapper:
+    """Send faulthandler output to `tmpfile` until the process exits."""
+    f = tmpfile.open(mode="w", encoding="utf-8")
+    # We keep `faulthandler` enabled and the file open until the process
+    # exits so that crash information can be captured.
+    # It is only enabled in the child process and does not affect the main
+    # process, so there is no need to worry about forgetting to close and
+    # disable.
+    faulthandler.enable(file=f)
+    return f
+
+
+def run_in_mp(fn: Callable[[Path], Any]) -> tuple[Optional[int], str]:
+    """Run a function in a separate process and return exit code and output.
+
+    Using spawn isolates the process so crashes like segfaults do not affect
+    the main test process.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        tmpdir = Path(td)
+        tmpfile = tmpdir / "fault.txt"
+        ctx = multiprocessing.get_context("spawn")
+        process = ctx.Process(target=fn, args=(tmpfile,))
+        process.start()
+        process.join()
+        output = tmpfile.read_text()
+    return process.exitcode, output
+
+
+def call_reverse_bstr_records(tmpfile: Path) -> None:
+    enable_fault_log(tmpfile)
+    ifc = _create_server(ComtypesCppTestSrvLib.IDispRecordSafearrayTest)
+
+    records = [
+        _create_record(id=401, seq=0, text="RecSafeArray-401-0", checksum=40808),
+        _create_record(id=402, seq=1, text="RecSafeArray-402-1", checksum=40918),
+        _create_record(id=403, seq=2, text="RecSafeArray-403-2", checksum=41028),
+    ]
+    lp = _get_bstr_record_sa_type().from_param(records)
+
+    result = ifc.ReverseBstrRecords(lp)
+
+    del records
+    del result
+    del lp
+    gc.collect()
+
+
+class TestOwnership(unittest.TestCase):
+    def test_bstr_record_safearray_ownership(self):
+        exitcode, output = run_in_mp(call_reverse_bstr_records)
+        self.assertEqual(exitcode, 0, msg=f"Process crashed with output: {output}")
 
 
 if __name__ == "__main__":
