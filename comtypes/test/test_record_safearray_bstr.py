@@ -9,6 +9,7 @@ import gc
 import io
 import multiprocessing
 import re
+import sys
 import tempfile
 import unittest
 from _ctypes import COMError
@@ -392,7 +393,7 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
         del records
         gc.collect()
 
-    @unittest.skip("CLASH! CHARACTERIZATION(#63)")
+    @unittest.skipIf(sys.version_info >= (3, 14), "CRASH! CHARACTERIZATION(#63)")
     def test_reverse_records_length_3(self):
         ifc = _create_server(self.interface)
 
@@ -403,14 +404,12 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
         ]
         lp = _get_bstr_record_sa_type().from_param(records)
 
-        with self.assertRaises(
-            KeyError,
-            msg="CHARACTERIZATION(#63): "
-            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
-            "this failure is expected; change it to a normal-path test.",
-        ) as cm:
-            ifc.ReverseBstrRecords(lp)
-        self.assertEqual(str(cm.exception), "36")
+        result = ifc.ReverseBstrRecords(lp)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(
+            [(r.id, r.seq, r.text, r.checksum) for r in result],
+            [(s.id, s.seq, s.text, s.checksum) for s in reversed(records)],
+        )
 
         del records
         gc.collect()
@@ -474,6 +473,7 @@ STATUS_STACK_BUFFER_OVERRUN = 0xC0000409
 
 
 class TestOwnership(unittest.TestCase):
+    @unittest.skipIf(sys.version_info < (3, 14), "NOT CRASH! CHARACTERIZATION(#63)")
     def test_bstr_record_safearray_ownership(self):
         exitcode, output = run_in_mp(call_reverse_bstr_records)
         self.assertIsNotNone(exitcode)
