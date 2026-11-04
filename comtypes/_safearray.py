@@ -77,17 +77,20 @@ def SafeArrayGetVartype(pa):
     _SafeArrayGetVartype(pa, result)
     return result.value
 
+
+_SafeArrayGetRecordInfo = _oleaut32.SafeArrayGetRecordInfo
+_SafeArrayGetRecordInfo.restype = HRESULT
+_SafeArrayGetRecordInfo.argtypes = [POINTER(SAFEARRAY), POINTER(c_void_p)]
+
+
 def SafeArrayGetRecordInfo(pa):
     # Defined here to avoid a circular import
     from comtypes.typeinfo import IRecordInfo
 
-    _SafeArrayGetRecordInfo = _oleaut32.SafeArrayGetRecordInfo
-    _SafeArrayGetRecordInfo.restype = HRESULT
-    _SafeArrayGetRecordInfo.argtypes = [POINTER(SAFEARRAY), POINTER(POINTER(IRecordInfo))]
-
     result = POINTER(IRecordInfo)()
     _SafeArrayGetRecordInfo(pa, byref(result))
-    return result.value
+    return result  # type: ignore
+
 
 SafeArrayGetElement = _oleaut32.SafeArrayGetElement
 SafeArrayGetElement.restype = HRESULT
