@@ -297,14 +297,12 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
         ifc = _create_server(self.interface)
         record = _create_record(id=500, seq=0, text="WrapBstr-500-0", checksum=50708)
 
-        with self.assertRaises(
-            KeyError,
-            msg="CHARACTERIZATION(#63): "
-            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
-            "this failure is expected; change it to a normal-path test.",
-        ) as cm:
-            ifc.WrapBstrRecord(record)
-        self.assertEqual(str(cm.exception), "36")
+        result = ifc.WrapBstrRecord(record)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].id, 500)
+        self.assertEqual(result[0].seq, 0)
+        self.assertEqual(str(result[0].text), "WrapBstr-500-0")
+        self.assertEqual(result[0].checksum, 50708)
 
         del record
         gc.collect()

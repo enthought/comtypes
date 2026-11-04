@@ -292,14 +292,11 @@ class TestDispatchValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.Test
         ifc = _create_server(self.interface)
         record = _create_record(id=300, seq=0, checksum=30042)
 
-        with self.assertRaises(
-            KeyError,
-            msg="CHARACTERIZATION(#63): "
-            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
-            "this failure is expected; change it to a normal-path test.",
-        ) as cm:
-            ifc.WrapValueRecord(record)
-        self.assertEqual(str(cm.exception), "36")
+        result = ifc.WrapValueRecord(record)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].id, 300)
+        self.assertEqual(result[0].seq, 0)
+        self.assertEqual(result[0].checksum, 30042)
 
         del record
         gc.collect()
@@ -391,14 +388,12 @@ class TestDispatchValueRecordSafeArray(_ValueRecordScenariosMixin, unittest.Test
         ]
         lp = _get_value_record_sa_type().from_param(records)
 
-        with self.assertRaises(
-            KeyError,
-            msg="CHARACTERIZATION(#63): "
-            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
-            "this failure is expected; change it to a normal-path test.",
-        ) as cm:
-            ifc.ReverseValueRecords(lp)
-        self.assertEqual(str(cm.exception), "36")
+        result = ifc.ReverseValueRecords(lp)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(
+            [(r.id, r.seq, r.checksum) for r in result],
+            [(s.id, s.seq, s.checksum) for s in reversed(records)],
+        )
 
         del records
         gc.collect()
