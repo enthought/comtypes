@@ -1,6 +1,6 @@
 """SAFEARRAY api functions, data types, and constants."""
 
-from ctypes import POINTER, Structure, WinDLL, c_uint, c_ushort, c_void_p
+from ctypes import POINTER, Structure, WinDLL, byref, c_uint, c_ushort, c_void_p
 from ctypes.wintypes import DWORD, LONG, UINT, USHORT
 
 from comtypes import GUID, HRESULT
@@ -77,6 +77,17 @@ def SafeArrayGetVartype(pa):
     _SafeArrayGetVartype(pa, result)
     return result.value
 
+def SafeArrayGetRecordInfo(pa):
+    # Defined here to avoid a circular import
+    from comtypes.typeinfo import IRecordInfo
+
+    _SafeArrayGetRecordInfo = _oleaut32.SafeArrayGetRecordInfo
+    _SafeArrayGetRecordInfo.restype = HRESULT
+    _SafeArrayGetRecordInfo.argtypes = [POINTER(SAFEARRAY), POINTER(POINTER(IRecordInfo))]
+
+    result = POINTER(IRecordInfo)()
+    _SafeArrayGetRecordInfo(pa, byref(result))
+    return result.value
 
 SafeArrayGetElement = _oleaut32.SafeArrayGetElement
 SafeArrayGetElement.restype = HRESULT
