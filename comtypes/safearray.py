@@ -357,15 +357,17 @@ def _make_safearray_type(itemtype):
                             return arr.copy()
                         return ptr[:num_elements]
 
-                    def keep_safearray(v):
-                        # Simply keeping a reference to self does not keep the
-                        # internal addresses of BSTR safe and strings will be
-                        # overwritten. A copy of the bytes solves the problem
-                        v1 = v.__class__()
-                        memmove(byref(v1), byref(v), sizeof(v))
-                        return v1
-
-                    return [keep_safearray(x) for x in ptr[:num_elements]]
+                    # A Structure subtype without `_recordinfo_` cannot represent
+                    # a valid COM SAFEARRAY of VT_RECORD: the COM specification
+                    # requires IRecordInfo to describe the record layout.
+                    # Reaching here means the type was constructed outside the
+                    # normal COM codegen path.  No safe extraction strategy
+                    # exists, so raise rather than silently returning corrupt data.
+                    raise NotImplementedError(
+                        f"{self._itemtype_!r} is a Structure without"
+                        " _recordinfo_; safe extraction from SAFEARRAY is not"
+                        " supported."
+                    )
             finally:
                 _safearray.SafeArrayUnaccessData(self)
 
