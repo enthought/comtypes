@@ -385,9 +385,8 @@ def _make_safearray_type(itemtype):
 
             Once the array and all element records are GC'd in Python, the
             copied array is automatically `SafeArrayDestroy`ed, which destroys
-            the array descriptor and all data: `VariantClear` on `VARIANT`s,
-            `SysFreeString` on `BSTR`s, `IRecordInfo::RecordClear` on records,
-            `Release` on `IUnknown`s.
+            the array descriptor and all data: `IRecordInfo::RecordClear` on
+            records.
             """
             ptr = POINTER(self._itemtype_)()  # container for the values
             # Make an independent `SAFEARRAY` so its data does not depend on
