@@ -2,8 +2,14 @@
 
 from ctypes import POINTER, Structure, WinDLL, byref, c_uint, c_ushort, c_void_p
 from ctypes.wintypes import DWORD, LONG, UINT, USHORT
+from typing import TYPE_CHECKING
 
 from comtypes import GUID, HRESULT
+
+if TYPE_CHECKING:
+    from ctypes import _Pointer
+
+    from comtypes import hints  # type: ignore
 
 ################################################################
 # if __debug__:
@@ -77,17 +83,20 @@ def SafeArrayGetVartype(pa):
     _SafeArrayGetVartype(pa, result)
     return result.value
 
-def SafeArrayGetRecordInfo(pa):
+
+_SafeArrayGetRecordInfo = _oleaut32.SafeArrayGetRecordInfo
+_SafeArrayGetRecordInfo.restype = HRESULT
+_SafeArrayGetRecordInfo.argtypes = [POINTER(SAFEARRAY), POINTER(c_void_p)]
+
+
+def SafeArrayGetRecordInfo(pa: "_Pointer[tagSAFEARRAY]") -> "hints.IRecordInfo":
     # Defined here to avoid a circular import
     from comtypes.typeinfo import IRecordInfo
 
-    _SafeArrayGetRecordInfo = _oleaut32.SafeArrayGetRecordInfo
-    _SafeArrayGetRecordInfo.restype = HRESULT
-    _SafeArrayGetRecordInfo.argtypes = [POINTER(SAFEARRAY), POINTER(POINTER(IRecordInfo))]
-
     result = POINTER(IRecordInfo)()
     _SafeArrayGetRecordInfo(pa, byref(result))
-    return result.value
+    return result  # type: ignore
+
 
 SafeArrayGetElement = _oleaut32.SafeArrayGetElement
 SafeArrayGetElement.restype = HRESULT
