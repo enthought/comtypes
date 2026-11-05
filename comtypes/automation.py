@@ -697,27 +697,22 @@ class tagVARIANT(Structure):
             except KeyError:
                 pass
 
-            if self.vt & VT_RECORD:
+            if (self.vt & ~VT_ARRAY) == VT_RECORD:
                 from comtypes.client import GetModule
-                from comtypes.typeinfo import IRecordInfo
 
                 # Get generic safearray and its IRecordInfo
-                ri0 = cast(self._.pparray, POINTER(_safearray.SAFEARRAY))
-                ri1 = _safearray.SafeArrayGetRecordInfo(ri0)
-                # QUESTION: Do we need to add a ref ?
-                ri2 = ri1.QueryInterface(IRecordInfo)
+                pa = cast(self._.pparray, POINTER(_safearray.SAFEARRAY))
+                ri = _safearray.SafeArrayGetRecordInfo(pa)
 
                 # Now containing typelib and through it the right class type
-                mod = GetModule(ri2.GetTypeInfo().GetContainingTypeLib()[0])
-                ricls = getattr(mod, ri2.GetName())
+                mod = GetModule(ri.GetTypeInfo().GetContainingTypeLib()[0])
+                ricls = getattr(mod, ri.GetName())
 
                 # Cast the array to the right safearray(type), unpack -> return
                 return cast(self._.pparray, _midlSAFEARRAY(ricls)).unpack()
 
             # Else we cannot unpack the array
-            raise NotImplementedError("typecode %d = 0x%x)" % (vt, vt))
-        else:
-            raise NotImplementedError(f"typecode {vt} = 0x{vt:x})")
+        raise NotImplementedError(f"typecode {vt} = 0x{vt:x})")
 
     def __getitem__(self, index):
         if index != 0:
