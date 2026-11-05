@@ -8,8 +8,6 @@ import faulthandler
 import gc
 import io
 import multiprocessing
-import re
-import sys
 import tempfile
 import unittest
 from _ctypes import COMError
@@ -393,7 +391,6 @@ class TestDispatchBstrRecordSafeArray(_BstrRecordScenariosMixin, unittest.TestCa
         del records
         gc.collect()
 
-    @unittest.skipIf(sys.version_info >= (3, 14), "CRASH! CHARACTERIZATION(#63)")
     def test_reverse_records_length_3(self):
         ifc = _create_server(self.interface)
 
@@ -474,25 +471,9 @@ STATUS_STACK_BUFFER_OVERRUN = 0xC0000409
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class TestOwnership(unittest.TestCase):
-    @unittest.skipIf(sys.version_info < (3, 14), "NOT CRASH! CHARACTERIZATION(#63)")
     def test_bstr_record_safearray_ownership(self):
         exitcode, output = run_in_mp(call_reverse_bstr_records)
-        self.assertIsNotNone(exitcode)
-        # Python's process.exitcode on Windows may return the exit code as
-        # either a signed or unsigned 32-bit integer. Masking with 0xFFFFFFFF
-        # normalizes it to the unsigned 32-bit representation for comparison
-        # with the NTSTATUS constants defined above.
-        self.assertEqual(
-            exitcode & 0xFFFFFFFF,  # type: ignore
-            STATUS_HEAP_CORRUPTION,
-            msg="CHARACTERIZATION(#63): "
-            "If https://github.com/enthought/comtypes/issues/63 is fixed, "
-            "this failure is expected; change it to a normal-path test.",
-        )
-        ptn = re.compile(
-            r'test_record_safearray_bstr\.py", line \d+ in call_reverse_bstr_records'
-        )
-        self.assertTrue(bool(ptn.search(output)))
+        self.assertEqual(exitcode, 0, msg=f"Process crashed with output: {output}")
 
 
 if __name__ == "__main__":
