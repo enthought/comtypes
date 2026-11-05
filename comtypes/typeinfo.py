@@ -663,6 +663,40 @@ def GetRecordInfoFromTypeInfo(tinfo: ITypeInfo) -> IRecordInfo:
     return ri  # type: ignore
 
 
+_RIGuids = tuple[str, int, int, int, str]
+
+
+def _is_recordinfo_guids(obj: Any) -> "hints.TypeIs[_RIGuids]":
+    if not isinstance(obj, tuple):
+        return False
+    if len(obj) != 5:
+        return False
+    tlibid, majorver, minver, lcid, tinfoid = obj
+    if (
+        isinstance(tlibid, str)
+        and isinstance(majorver, int)
+        and isinstance(minver, int)
+        and isinstance(lcid, int)
+        and isinstance(tinfoid, str)
+    ):
+        return True
+    return False
+
+
+# TODO: This should be typed as an intersection of structure and protocol.
+def is_struct_type_with_recordinfo(typ: type[Any]) -> bool:
+    """Return `True` if `typ` is a `Structure` type with valid `_recordinfo_`
+    class variable.
+    """
+    if not issubclass(typ, ctypes.Structure):
+        return False
+    if not hasattr(typ, "_recordinfo_"):
+        return False
+    if not _is_recordinfo_guids(typ._recordinfo_):
+        return False
+    return True
+
+
 def GetRecordInfoFromGuids(
     rGuidTypeLib: str, verMajor: int, verMinor: int, lcid: int, rGuidTypeInfo: str
 ) -> IRecordInfo:
