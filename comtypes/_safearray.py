@@ -98,6 +98,17 @@ def SafeArrayGetRecordInfo(pa: "_Pointer[tagSAFEARRAY]") -> "hints.IRecordInfo":
     return result  # type: ignore
 
 
+_SafeArrayCopy = _oleaut32.SafeArrayCopy
+_SafeArrayCopy.restype = HRESULT
+_SafeArrayCopy.argtypes = [POINTER(SAFEARRAY), POINTER(POINTER(SAFEARRAY))]
+
+
+def SafeArrayCopy(pa: "_Pointer[SAFEARRAY]") -> "hints.LP_SAFEARRAY":
+    result = POINTER(SAFEARRAY)()
+    _SafeArrayCopy(pa, byref(result))
+    return result  # type: ignore
+
+
 SafeArrayGetElement = _oleaut32.SafeArrayGetElement
 SafeArrayGetElement.restype = HRESULT
 SafeArrayGetElement.argtypes = [POINTER(SAFEARRAY), POINTER(LONG), c_void_p]
