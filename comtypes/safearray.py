@@ -300,9 +300,8 @@ def _make_safearray_type(itemtype):
             """Returns a flat list or ndarray containing ALL elements in
             the safearray."""
             from comtypes.automation import VARIANT, tagCY, tagDEC
-            from comtypes.typeinfo import is_struct_type_with_recordinfo
 
-            if is_struct_type_with_recordinfo(self._itemtype_):
+            if self._vartype_ == VT_RECORD:
                 return self._get_records(num_elements)
             # XXX Not sure this is true:
             # For VT_UNKNOWN and VT_DISPATCH, we should retrieve the
