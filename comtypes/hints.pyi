@@ -62,7 +62,7 @@ class LP_SAFEARRAY(ctypes._Pointer[tagSAFEARRAY], Generic[_CT]):
     contents: tagSAFEARRAY
     _itemtype_: ClassVar[_CT]  # type: ignore
     _vartype_: ClassVar[int]
-    _needsfree: ClassVar[bool]
+    _needsfree: bool
 
     @overload
     @classmethod
