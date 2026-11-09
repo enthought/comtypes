@@ -1,6 +1,32 @@
 Comtypes CHANGELOG
 ==================
 
+Release 1.5.0
+--------------
+* Bump GitHub Actions dependencies. By @junkmd.
+* Refactor enum member iteration in code generator namespaces. By @junkmd.
+* Expose inline typing metadata to type checkers. By @Robolightning.
+* Modernize ``test_pip_install.py`` and include in ``autofmt`` workflow. By @junkmd.
+* Introduce CI type-checking harness. By @junkmd.
+* Add documentations for developers on how this package supports static typing. By @junkmd.
+* Restore numeric ``SAFEARRAY`` to ``numpy.ndarray`` conversion. By @haoxuanjng-lang.
+* Add Python 3.15 to CI matrix. By @junkmd.
+* Support Python 3.15 ``PyCArgObject`` struct layout changes. By @junkmd.
+* Update the code generator to handle Python 3.15's changes to ``enum.IntFlag``. By @junkmd.
+* Add tests for explicit string ``SAFEARRAY`` types inside ``VARIANT``s. By @junkmd.
+* Remove ``setup_logging`` from ``comtypes.logutil``. By @junkmd.
+* Support ``VT_ERROR`` variant type. By @junkmd.
+* Remove ``..._Impl`` comments generation and add member‑level docstrings under ``if TYPE_CHECKING``. By @junkmd.
+* Add tests to show the problems with the current ``VT_I1`` mapping in ``tlbparser``. By @haoxuanjng-lang.
+* Clarify ``ctypes`` ``_b_needsfree_`` ownership in ``tagVARIANT`` and add tests. By @junkmd.
+* Use ``sysmon`` for coverage on Python 3.12. By @junkmd.
+* Resolve remaining type-checking errors. By @junkmd.
+* Improve ``IEnumVARIANT`` type hints. By @junkmd.
+* Refactor ``tlbparser`` and ``codegenerator``. By @junkmd.
+* Improve fixed-point number marshaling and ``VARIANT`` support. By @junkmd.
+* Add record ``SAFEARRAY`` support. By @mementum and @junkmd.
+* Update docs for Python 3.15 support. By @junkmd.
+
 Release 1.4.17
 --------------
 * Unify Windows message handling APIs in ``messageloop.py``. By @junkmd.
