@@ -8,14 +8,8 @@ import decimal
 import unittest
 from decimal import Decimal
 
-from comtypes.automation import (
-    _CY_MAX,
-    _CY_MIN,
-    _DECIMAL_MAX_MANTISSA,
-    VARIANT,
-    tagCY,
-    tagDEC,
-)
+from comtypes._automation import _CY_MAX, _CY_MIN, _DECIMAL_MAX_MANTISSA
+from comtypes.automation import VARIANT, tagCY, tagDEC
 
 
 class TestTagCY(unittest.TestCase):

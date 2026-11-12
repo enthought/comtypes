@@ -289,11 +289,11 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(repr(v), f"VARIANT(vt=0xa, {hresult.DISP_E_MEMBERNOTFOUND})")
 
     def spy_variant_clear(self) -> unittest.mock._patch:
-        from comtypes import automation
-        from comtypes.automation import _VariantClear
+        from comtypes import _automation
+        from comtypes._automation import _VariantClear
 
         return unittest.mock.patch.object(
-            automation, "_VariantClear", autospec=True, side_effect=_VariantClear
+            _automation, "_VariantClear", autospec=True, side_effect=_VariantClear
         )
 
     def test_del_to_clear(self):
