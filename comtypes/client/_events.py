@@ -15,7 +15,6 @@ from ctypes.wintypes import (
     ULONG,
 )
 from typing import Any
-from typing import Union as _UnionT
 
 import comtypes
 from comtypes import COMObject, IUnknown, hresult
@@ -62,7 +61,7 @@ _CloseHandle = _kernel32.CloseHandle
 _CloseHandle.argtypes = [HANDLE]
 _CloseHandle.restype = BOOL
 
-_ReceiverType = _UnionT[COMObject, IUnknown]
+_ReceiverType = COMObject | IUnknown
 
 
 class _AdviseConnection:

@@ -1,6 +1,6 @@
 import ctypes
 from collections.abc import Callable, Iterator, Sequence
-from typing import TYPE_CHECKING, Any, Literal, NamedTuple, Optional
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple
 from typing import Union as _UnionT
 
 import comtypes
@@ -95,8 +95,8 @@ if TYPE_CHECKING:
     _VarFlagsWithDispIdHelpstr = tuple["dispid", "helpstring", hints.Unpack[_VarFlags]]
     _VarFlagsWithDispId = tuple["dispid", hints.Unpack[_VarFlags]]
     _VarFlagsWithHelpstr = tuple["helpstring", hints.Unpack[_VarFlags]]
-    _DispIdlFlags = _UnionT[_VarFlagsWithDispIdHelpstr, _VarFlagsWithDispId]
-    _ComIdlFlags = _UnionT[_VarFlags, _VarFlagsWithHelpstr]
+    _DispIdlFlags = _VarFlagsWithDispIdHelpstr | _VarFlagsWithDispId
+    _ComIdlFlags = _VarFlags | _VarFlagsWithHelpstr
 
 
 class _ComMemberSpec(NamedTuple):
@@ -135,7 +135,7 @@ class _DispMemberSpec(NamedTuple):
 
 # Specifier of a slot of method or property.
 # This should be `typing.Protocol` if supporting Py3.8+ only.
-_MemberSpec = _UnionT[_ComMemberSpec, _DispMemberSpec]
+_MemberSpec = _ComMemberSpec | _DispMemberSpec
 
 
 def _is_spec_prop(m: _MemberSpec):
@@ -439,8 +439,8 @@ def _fix_inout_args(
 ################################################################
 
 
-_PropFunc = Optional[Callable[..., Any]]
-_DocType = Optional[str]
+_PropFunc = Callable[..., Any] | None
+_DocType = str | None
 
 
 class PropertyMapping:

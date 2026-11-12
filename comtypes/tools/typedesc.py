@@ -4,7 +4,6 @@
 import ctypes
 from collections.abc import Sequence
 from typing import Any, Generic, TypeVar, final
-from typing import Union as _UnionT
 
 from comtypes import typeinfo
 from comtypes.tools.typedesc_base import ArrayType as ArrayType
@@ -232,7 +231,7 @@ class ComInterface:
 
 
 _ImplTypeFlags = int
-_Interface = _UnionT[ComInterface, DispInterface]
+_Interface = ComInterface | DispInterface
 
 
 @final

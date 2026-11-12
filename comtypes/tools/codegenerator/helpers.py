@@ -72,7 +72,7 @@ ASSUME_STRINGS = True
 
 
 _DefValType = _UnionT["lcid", Any, None]
-_IdlFlagType = _UnionT[str, dispid, helpstring]
+_IdlFlagType = str | dispid | helpstring
 
 
 def _to_arg_definition(

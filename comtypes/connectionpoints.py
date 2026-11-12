@@ -1,6 +1,5 @@
 from ctypes import POINTER, Structure, c_ulong
 from typing import TYPE_CHECKING
-from typing import Union as _UnionT
 
 from comtypes import COMMETHOD, GUID, HRESULT, IUnknown
 
@@ -9,7 +8,7 @@ if TYPE_CHECKING:
 
     from comtypes import hints  # noqa  # type: ignore
 
-    REFIID = _UnionT[_Pointer[GUID], _CArgObject]
+    REFIID = _Pointer[GUID] | _CArgObject
 
 _GUID = GUID
 

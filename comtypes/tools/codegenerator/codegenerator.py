@@ -9,7 +9,6 @@ import textwrap
 import warnings
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Literal
-from typing import Union as _UnionT
 
 import comtypes
 from comtypes import typeinfo
@@ -36,14 +35,14 @@ logger = logging.getLogger(__name__)
 __warn_on_munge__ = __debug__
 
 
-_InterfaceTypeDesc = _UnionT[
-    typedesc.ComInterface,
-    typedesc.ComInterfaceHead,
-    typedesc.ComInterfaceBody,
-    typedesc.DispInterface,
-    typedesc.DispInterfaceHead,
-    typedesc.DispInterfaceBody,
-]
+_InterfaceTypeDesc = (
+    typedesc.ComInterface
+    | typedesc.ComInterfaceHead
+    | typedesc.ComInterfaceBody
+    | typedesc.DispInterface
+    | typedesc.DispInterfaceHead
+    | typedesc.DispInterfaceBody
+)
 
 
 class CodeGenerator:

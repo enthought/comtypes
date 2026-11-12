@@ -135,25 +135,25 @@ COMTYPES = {
 # automation.VT_ARRAY = 8192
 # automation.VT_BYREF = 16384
 
-ParsedType = _UnionT[
-    typedesc.TypeLib,
-    typedesc.Constant,
-    typedesc.External,
-    typedesc.CoClass,
-    typedesc.ComInterface,
-    typedesc.DispInterface,
-    typedesc.Typedef["ParsedType | SpecType"],
-    typedesc.Structure,
-    typedesc.Union,
-    typedesc.Enumeration,
-]
+ParsedType = (
+    typedesc.TypeLib
+    | typedesc.Constant
+    | typedesc.External
+    | typedesc.CoClass
+    | typedesc.ComInterface
+    | typedesc.DispInterface
+    | typedesc.Typedef["ParsedType | SpecType"]
+    | typedesc.Structure
+    | typedesc.Union
+    | typedesc.Enumeration
+)
 
-SpecType = _UnionT[
-    typedesc.FundamentalType,
-    typedesc.PointerType["ParsedType | SpecType"],
-    typedesc.ArrayType["ParsedType | SpecType"],
-    typedesc.SAFEARRAYType["ParsedType | SpecType"],
-]
+SpecType = (
+    typedesc.FundamentalType
+    | typedesc.PointerType["ParsedType | SpecType"]
+    | typedesc.ArrayType["ParsedType | SpecType"]
+    | typedesc.SAFEARRAYType["ParsedType | SpecType"]
+)
 ################################################################
 
 
