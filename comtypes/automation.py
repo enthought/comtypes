@@ -280,7 +280,8 @@ class IDispatch(IUnknown):
             (["in"], LCID, "lcid", 0),
             # Normally, we would declare this parameter in this way:
             # (['out'], POINTER(POINTER(ITypeInfo)) ) ),
-            # but we cannot import comtypes.typeinfo at the top level (recursive imports!).
+            # this is a remnant of when import comtypes.typeinfo at the top
+            # level used to cause recursive imports.
             (["out"], POINTER(POINTER(IUnknown))),
         ),
         STDMETHOD(
