@@ -1,30 +1,56 @@
-# comtypes.automation module
+# comtypes._automation module
 import array
 import datetime
 import decimal
-from _ctypes import COMError, CopyComPointer
-from collections.abc import Sequence
-from ctypes import *
+from _ctypes import CopyComPointer
+from ctypes import (
+    HRESULT,
+    POINTER,
+    OleDLL,
+    Structure,
+    Union,
+    WinDLL,
+    _Pointer,
+    addressof,
+    byref,
+    c_byte,
+    c_char,
+    c_double,
+    c_float,
+    c_int,
+    c_int64,
+    c_long,
+    c_longlong,
+    c_short,
+    c_ubyte,
+    c_uint,
+    c_uint64,
+    c_ulong,
+    c_ulonglong,
+    c_ushort,
+    c_void_p,
+    c_wchar_p,
+    cast,
+    memmove,
+    sizeof,
+)
 from ctypes import Array as _CArrayType
-from ctypes import _Pointer
-from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, Optional, overload
+from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WORD
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 import comtypes
 import comtypes.patcher
-from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _safearray
+from comtypes import BSTR, GUID, IUnknown, _safearray
 from comtypes import hresult as hresult
 from comtypes._memberspec import DISPATCH_METHOD as DISPATCH_METHOD
 from comtypes._memberspec import DISPATCH_PROPERTYGET as DISPATCH_PROPERTYGET
 from comtypes._memberspec import DISPATCH_PROPERTYPUT as DISPATCH_PROPERTYPUT
 from comtypes._memberspec import DISPATCH_PROPERTYPUTREF as DISPATCH_PROPERTYPUTREF
-from comtypes.safearray import _midlSAFEARRAY
 
 if TYPE_CHECKING:
     from ctypes import _CArgObject, _CDataType
 
     from comtypes import hints  # type: ignore
-    from comtypes._memberspec import _DispMemberSpec
 else:
     _CArgObject = type(byref(c_int()))
 
@@ -503,8 +529,6 @@ class tagVARIANT(Structure):
             self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
             guids = value._recordinfo_
-            from comtypes.typeinfo import GetRecordInfoFromGuids
-
             ri = GetRecordInfoFromGuids(*guids)
             self.vt = VT_RECORD
             # Assigning a COM pointer to a structure field does NOT
@@ -553,8 +577,6 @@ class tagVARIANT(Structure):
             self.__keepref = value
             if isinstance(ref, Structure) and hasattr(ref, "_recordinfo_"):
                 guids = ref._recordinfo_
-                from comtypes.typeinfo import GetRecordInfoFromGuids
-
                 ri = GetRecordInfoFromGuids(*guids)
                 self.vt = VT_RECORD | VT_BYREF
                 # Assigning a COM pointer to a structure field does NOT
@@ -575,8 +597,6 @@ class tagVARIANT(Structure):
             self.__keepref = value
             if isinstance(ref, Structure) and hasattr(ref, "_recordinfo_"):
                 guids = ref._recordinfo_
-                from comtypes.typeinfo import GetRecordInfoFromGuids
-
                 ri = GetRecordInfoFromGuids(*guids)
                 self.vt = VT_RECORD | VT_BYREF
                 # Assigning a COM pointer to a structure field does NOT
@@ -671,7 +691,6 @@ class tagVARIANT(Structure):
             return self
         elif vt == VT_RECORD:
             from comtypes.client import GetModule
-            from comtypes.typeinfo import IRecordInfo
 
             # Retrieving a COM pointer from a structure field does NOT
             # call AddRef(), have to call it manually:
@@ -702,7 +721,7 @@ class tagVARIANT(Structure):
 
                 # Get generic safearray and its IRecordInfo
                 pa = cast(self._.pparray, POINTER(_safearray.SAFEARRAY))
-                ri = _safearray.SafeArrayGetRecordInfo(pa)
+                ri = SafeArrayGetRecordInfo(pa)
 
                 # Now containing typelib and through it the right class type
                 mod = GetModule(ri.GetTypeInfo().GetContainingTypeLib()[0])
@@ -831,122 +850,6 @@ class _:
         self[index].value = value  # type: ignore
 
 
-################################################################
-# interfaces, structures, ...
-class IEnumVARIANT(IUnknown):
-    _iid_ = GUID("{00020404-0000-0000-C000-000000000046}")
-    _idlflags_ = ["hidden"]
-    _dynamic = False
-
-    if TYPE_CHECKING:
-
-        def Skip(self, cConnections: int) -> hints.Hresult: ...
-        def Reset(self) -> hints.Hresult: ...
-        def Clone(self) -> hints.Self: ...
-
-    def __iter__(self) -> "hints.Self":
-        return self
-
-    def __next__(self) -> Any:
-        item, fetched = self.Next(1)
-        if fetched:
-            return item
-        raise StopIteration
-
-    def __getitem__(self, index: int) -> Any:
-        self.Reset()
-        # Does not yet work.
-        # if isinstance(index, slice):
-        #     self.Skip(index.start or 0)
-        #     return self.Next(index.stop or sys.maxint)
-        self.Skip(index)
-        item, fetched = self.Next(1)
-        if fetched:
-            return item
-        raise IndexError
-
-    @overload
-    def Next(self, celt: Literal[1]) -> tuple[Any, int]: ...
-    @overload
-    def Next(self, celt: int) -> Sequence[Any]: ...
-    def Next(self, celt):  # type: ignore
-        """Retrieve the next *celt* items from the enumeration.
-
-        This method behaves differently depending on the value of *celt*:
-
-        - `celt == 1`:
-          A single `VARIANT` is fetched via one COM call.  The return
-          value is `(value, fetched)` — a two-element tuple where *value*
-          is the retrieved object and *fetched* is the number of items
-          actually returned (`0` or `1`).
-
-        - `celt != 1` (including `0`):
-          A `VARIANT` array of length *celt* is allocated and filled in a
-          single COM call.  Only the first *fetched* slots are meaningful;
-          the rest are discarded.  The return value is fetched items
-          (possibly empty when `celt == 0` or nothing is left in the
-          enumeration).
-
-        Args:
-            celt: The maximum number of items to retrieve.
-
-        Returns:
-            A `(value, fetched)` tuple when *celt* is `1`.
-            Fetched items when *celt* is not `1`.
-
-        Note:
-            This object implements dunder methods that define iterator and
-            container behavior, so a more Pythonic approach is recommended
-            for accessing its elements rather than calling this method
-            directly.
-        """
-        # This wrapper deviates from a plain COM `IEnumVARIANT::Next` proxy in
-        # two ways that are specific to this package:
-        #
-        # 1. Support for celt != 1 (commit 9f68b6a, by theller):
-        #    "this allows to get more objects at a time."
-        #    When celt != 1, the method allocates a VARIANT array, fetches up
-        #    to `celt` items in a single COM call, and returns them as a list.
-        #
-        # 2. Return type for celt == 1 (commit 65bdc13, by theller):
-        #    The original override returned only the unwrapped value. It was
-        #    later corrected so that celt == 1 returns a tuple corresponding
-        #    exactly to the two `[out]` parameters declared by the COM method
-        #    specifier.
-        #
-        # Both decisions are those of the package originator (theller) and are
-        # intentionally preserved here.
-        fetched = c_ulong()
-        if celt == 1:
-            v = VARIANT()
-            self.__com_Next(celt, v, fetched)  # type: ignore
-            return v._get_value(dynamic=self._dynamic), fetched.value
-        array = (VARIANT * celt)()
-        self.__com_Next(celt, array, fetched)  # type: ignore
-        result = [v._get_value(dynamic=self._dynamic) for v in array[: fetched.value]]
-        # Release VARIANT refcounts before the temporary array is freed.
-        for v in array:
-            v.value = None
-        return result
-
-
-IEnumVARIANT._methods_ = [
-    COMMETHOD(
-        [],
-        HRESULT,
-        "Next",
-        (["in"], c_ulong, "celt"),
-        (["out"], POINTER(VARIANT), "rgvar"),
-        (["out"], POINTER(c_ulong), "pceltFetched"),
-    ),
-    COMMETHOD([], HRESULT, "Skip", (["in"], c_ulong, "celt")),
-    COMMETHOD([], HRESULT, "Reset"),
-    COMMETHOD(
-        [], HRESULT, "Clone", (["out"], POINTER(POINTER(IEnumVARIANT)), "ppenum")
-    ),
-]
-
-
 ##from _ctypes import VARIANT_set
 ##import new
 ##VARIANT.value = property(VARIANT._get_value, new.instancemethod(VARIANT_set, None, VARIANT))
@@ -1024,162 +927,6 @@ DISPID_DESTRUCTOR = -7
 DISPID_COLLECT = -8
 
 
-class IDispatch(IUnknown):
-    _disp_methods_: ClassVar[list["_DispMemberSpec"]]
-
-    _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
-    _methods_ = [
-        COMMETHOD([], HRESULT, "GetTypeInfoCount", (["out"], POINTER(UINT))),
-        COMMETHOD(
-            [],
-            HRESULT,
-            "GetTypeInfo",
-            (["in"], UINT, "index"),
-            (["in"], LCID, "lcid", 0),
-            # Normally, we would declare this parameter in this way:
-            # (['out'], POINTER(POINTER(ITypeInfo)) ) ),
-            # but we cannot import comtypes.typeinfo at the top level (recursive imports!).
-            (["out"], POINTER(POINTER(IUnknown))),
-        ),
-        STDMETHOD(
-            HRESULT,
-            "GetIDsOfNames",
-            [POINTER(IID), POINTER(c_wchar_p), UINT, LCID, POINTER(DISPID)],
-        ),
-        STDMETHOD(
-            HRESULT,
-            "Invoke",
-            [
-                DISPID,
-                POINTER(IID),
-                LCID,
-                WORD,
-                POINTER(DISPPARAMS),
-                POINTER(VARIANT),
-                POINTER(EXCEPINFO),
-                POINTER(UINT),
-            ],
-        ),
-    ]
-
-    if TYPE_CHECKING:
-
-        def GetTypeInfoCount(self) -> int: ...
-
-    def GetTypeInfo(self, index: int, lcid: int = 0) -> "hints.ITypeInfo":
-        """Return type information.  Index 0 specifies typeinfo for IDispatch"""
-        import comtypes.typeinfo
-
-        result = self._GetTypeInfo(index, lcid)  # type: ignore
-        return result.QueryInterface(comtypes.typeinfo.ITypeInfo)
-
-    def GetIDsOfNames(self, *names: str, **kw: Any) -> list[int]:
-        """Map string names to integer ids."""
-        lcid = kw.pop("lcid", 0)
-        assert not kw
-        arr = (c_wchar_p * len(names))(*names)
-        ids = (DISPID * len(names))()
-        self.__com_GetIDsOfNames(riid_null, arr, len(names), lcid, ids)  # type: ignore
-        return ids[:]
-
-    def _invoke(self, memid: int, invkind: int, lcid: int, *args: Any) -> Any:
-        var = VARIANT()
-        argerr = c_uint()
-        dp = DISPPARAMS()
-
-        if args:
-            array = (VARIANT * len(args))()
-
-            for i, a in enumerate(args[::-1]):
-                array[i].value = a
-
-            dp.cArgs = len(args)
-            if invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):
-                dp.cNamedArgs = 1
-                dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
-            dp.rgvarg = array
-
-        self.__com_Invoke(  # type: ignore
-            memid, riid_null, lcid, invkind, dp, var, None, argerr
-        )
-        return var._get_value(dynamic=True)
-
-    def __make_dp(self, _invkind: int, *args: Any) -> DISPPARAMS:
-        array = (VARIANT * len(args))()
-        for i, a in enumerate(args[::-1]):
-            array[i].value = a
-        dp = DISPPARAMS()
-        dp.cArgs = len(args)
-        dp.rgvarg = array
-        if _invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):  # propput
-            dp.cNamedArgs = 1
-            dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
-        else:
-            dp.cNamedArgs = 0
-        return dp
-
-    def Invoke(self, dispid: int, *args: Any, **kw: Any) -> Any:
-        """Invoke a method or property."""
-
-        # Memory management in Dispatch::Invoke calls:
-        # http://msdn.microsoft.com/library/en-us/automat/htm/chap5_4x2q.asp
-        # Quote:
-        #     The *CALLING* code is responsible for releasing all strings and
-        #     objects referred to by rgvarg[ ] or placed in *pVarResult.
-        #
-        # For comtypes this is handled in DISPPARAMS.__del__ and VARIANT.__del__.
-        _invkind = kw.pop("_invkind", DISPATCH_METHOD)
-        _lcid = kw.pop("_lcid", 0)
-        if kw:
-            raise ValueError("named parameters not yet implemented")
-        dp = self.__make_dp(_invkind, *args)
-        result = VARIANT()
-        excepinfo = EXCEPINFO()
-        argerr = c_uint()
-        try:
-            self.__com_Invoke(  # type: ignore
-                dispid,
-                riid_null,
-                _lcid,
-                _invkind,
-                byref(dp),
-                byref(result),
-                byref(excepinfo),
-                byref(argerr),
-            )
-        except COMError as err:
-            (hr, text, details) = err.args
-            if hr == hresult.DISP_E_EXCEPTION:
-                details = (
-                    excepinfo.bstrDescription,
-                    excepinfo.bstrSource,
-                    excepinfo.bstrHelpFile,
-                    excepinfo.dwHelpContext,
-                    excepinfo.scode,
-                )
-                raise COMError(hr, text, details)
-            elif hr == hresult.DISP_E_PARAMNOTFOUND:
-                # MSDN says: You get the error DISP_E_PARAMNOTFOUND
-                # when you try to set a property and you have not
-                # initialized the cNamedArgs and rgdispidNamedArgs
-                # elements of your DISPPARAMS structure.
-                #
-                # So, this looks like a bug.
-                raise COMError(hr, text, argerr.value)
-            elif hr == hresult.DISP_E_TYPEMISMATCH:
-                # MSDN: One or more of the arguments could not be
-                # coerced.
-                #
-                # Hm, should we raise TypeError, or COMError?
-                raise COMError(
-                    hr, text, (f"TypeError: Parameter {argerr.value + 1}", args)
-                )
-            raise
-        return result._get_value(dynamic=True)
-
-    # XXX Would separate methods for _METHOD, _PROPERTYGET and _PROPERTYPUT be better?
-
-
 ################################################################
 # safearrays
 # XXX Only one-dimensional arrays are currently implemented
@@ -1245,29 +992,13 @@ _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
 _ctype_to_vartype[c_char] = VT_UI1
 
-
-# fmt: off
-__known_symbols__ = [
-    "CURRENCY", "CY", "tagCY", "DECIMAL", "tagDEC", "DISPATCH_METHOD",
-    "DISPATCH_PROPERTYGET", "DISPATCH_PROPERTYPUT", "DISPATCH_PROPERTYPUTREF",
-    "DISPID", "DISPID_COLLECT", "DISPID_CONSTRUCTOR", "DISPID_DESTRUCTOR",
-    "DISPID_EVALUATE", "DISPID_NEWENUM", "DISPID_PROPERTYPUT",
-    "DISPID_UNKNOWN", "DISPID_VALUE", "DISPPARAMS", "tagDISPPARAMS",
-    "EXCEPINFO", "tagEXCEPINFO", "IDispatch", "IEnumVARIANT", "IID_NULL",
-    "INVOKE_FUNC", "INVOKE_PROPERTYGET", "INVOKE_PROPERTYPUT",
-    "INVOKE_PROPERTYPUTREF", "INVOKEKIND", "tagINVOKEKIND", "_midlSAFEARRAY",
-    "SCODE", "_SysAllocStringLen", "VARENUM", "VARIANT", "tagVARIANT",
-    "VARIANTARG", "_VariantChangeType", "_VariantClear", "_VariantCopy",
-    "_VariantCopyInd", "VARTYPE", "VT_ARRAY", "VT_BLOB", "VT_BLOB_OBJECT",
-    "VT_BOOL", "VT_BSTR", "VT_BSTR_BLOB", "VT_BYREF", "VT_CARRAY", "VT_CF",
-    "VT_CLSID", "VT_CY", "VT_DATE", "VT_DECIMAL", "VT_DISPATCH", "VT_EMPTY",
-    "VT_ERROR", "VT_FILETIME", "VT_HRESULT", "VT_I1", "VT_I2", "VT_I4",
-    "VT_I8", "VT_ILLEGAL", "VT_ILLEGALMASKED", "VT_INT", "VT_INT_PTR",
-    "VT_LPSTR", "VT_LPWSTR", "VT_NULL", "VT_PTR", "VT_R4", "VT_R8",
-    "VT_RECORD", "VT_RESERVED", "VT_SAFEARRAY", "VT_STORAGE",
-    "VT_STORED_OBJECT", "VT_STREAM", "VT_STREAMED_OBJECT", "VT_TYPEMASK",
-    "VT_UI1", "VT_UI2", "VT_UI4", "VT_UI8", "VT_UINT", "VT_UINT_PTR",
-    "VT_UNKNOWN", "VT_USERDEFINED", "VT_VARIANT", "VT_VECTOR",
-    "VT_VERSIONED_STREAM", "VT_VOID",
-]
-# fmt: on
+# VARIANT conversion needs the factory/interface after its definition.
+# isort: off
+from comtypes.safearray import _midlSAFEARRAY
+from comtypes.automation import IDispatch
+from comtypes.recordinfo import (
+    IRecordInfo,
+    GetRecordInfoFromGuids,
+    SafeArrayGetRecordInfo,
+)
+# isort: on

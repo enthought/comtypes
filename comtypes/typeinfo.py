@@ -33,6 +33,7 @@ from ctypes.wintypes import (
 from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, overload
 from typing import Union as _UnionT
 
+# isort: off
 from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData
 from comtypes._memberspec import PARAMFLAG_FHASCUSTDATA as PARAMFLAG_FHASCUSTDATA
 from comtypes._memberspec import PARAMFLAG_FHASDEFAULT as PARAMFLAG_FHASDEFAULT
@@ -42,7 +43,7 @@ from comtypes._memberspec import PARAMFLAG_FOPT as PARAMFLAG_FOPT
 from comtypes._memberspec import PARAMFLAG_FOUT as PARAMFLAG_FOUT
 from comtypes._memberspec import PARAMFLAG_FRETVAL as PARAMFLAG_FRETVAL
 from comtypes._memberspec import PARAMFLAG_NONE as PARAMFLAG_NONE
-from comtypes.automation import (
+from comtypes._automation import (
     DISPID,
     DISPPARAMS,
     EXCEPINFO,
@@ -52,6 +53,7 @@ from comtypes.automation import (
     VARIANTARG,
     VARTYPE,
 )
+# isort: on
 
 if TYPE_CHECKING:
     from ctypes import _Pointer

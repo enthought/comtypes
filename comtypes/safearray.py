@@ -75,15 +75,6 @@ def _midlSAFEARRAY(itemtype: "type[_CT]") -> "type[hints.LP_SAFEARRAY[_CT]]":
 
 def _make_safearray_type(itemtype):
     # Create and return a subclass of tagSAFEARRAY
-    from comtypes.automation import (
-        VT_DISPATCH,
-        VT_HRESULT,
-        VT_RECORD,
-        VT_UNKNOWN,
-        IDispatch,
-        _ctype_to_vartype,
-    )
-
     meta = type(_safearray.tagSAFEARRAY)
     sa_type = meta(f"SAFEARRAY_{itemtype.__name__}", (_safearray.tagSAFEARRAY,), {})
 
@@ -97,8 +88,6 @@ def _make_safearray_type(itemtype):
             except AttributeError:
                 extra = None
             else:
-                from comtypes.recordinfo import GetRecordInfoFromGuids
-
                 extra = GetRecordInfoFromGuids(*guids)
             vartype = VT_RECORD
         elif issubclass(itemtype, POINTER(IDispatch)):
@@ -175,8 +164,6 @@ def _make_safearray_type(itemtype):
 
         @classmethod
         def create_from_ndarray(cls, value, extra, lBound=0):
-            from comtypes.automation import VARIANT
-
             # If processing VARIANT, makes sure the array type is correct.
             if cls._itemtype_ is VARIANT:
                 if value.dtype != comtypes.npsupport.VARIANT_dtype:
@@ -299,8 +286,6 @@ def _make_safearray_type(itemtype):
         def _get_elements_raw(self, num_elements):
             """Returns a flat list or ndarray containing ALL elements in
             the safearray."""
-            from comtypes.automation import VARIANT, tagCY, tagDEC
-
             if self._vartype_ == VT_RECORD:
                 return self._get_records(num_elements)
             # XXX Not sure this is true:
@@ -472,8 +457,6 @@ def _ndarray_to_variant_array(value):
     if numpy.issubdtype(value.dtype, comtypes.npsupport.datetime64):
         return _datetime64_ndarray_to_variant_array(value)
 
-    from comtypes.automation import VARIANT
-
     # Empty array
     varr = numpy.zeros(value.shape, comtypes.npsupport.VARIANT_dtype, order="F")
     # Convert each value to a variant and put it in the array.
@@ -486,8 +469,6 @@ def _datetime64_ndarray_to_variant_array(value):
     # The OLE automation date format is a floating point value, counting days
     # since midnight 30 December 1899. Hours and minutes are represented as
     # fractional days.
-    from comtypes.automation import VT_DATE
-
     numpy = comtypes.npsupport.numpy
     value = numpy.array(value, "datetime64[ns]")
     value = value - comtypes.npsupport.com_null_date64
@@ -497,3 +478,19 @@ def _datetime64_ndarray_to_variant_array(value):
     varr["vt"] = VT_DATE
     varr["_"]["VT_R8"].flat = value.flat
     return varr
+
+
+# Load after defining _midlSAFEARRAY; _automation uses this factory at runtime.
+from comtypes._automation import (
+    VARIANT,
+    VT_DATE,
+    VT_DISPATCH,
+    VT_HRESULT,
+    VT_RECORD,
+    VT_UNKNOWN,
+    _ctype_to_vartype,
+    tagCY,
+    tagDEC,
+)
+from comtypes.automation import IDispatch
+from comtypes.recordinfo import GetRecordInfoFromGuids

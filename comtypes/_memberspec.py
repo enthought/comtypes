@@ -65,7 +65,7 @@ def _resolve_argspec(
     - paramflags is a sequence of `(pflags: int, argname: str, | None[, defval: Any])`.
     - argtypes is a sequence of `type[_CDataType]`.
     """
-    from comtypes.automation import VARIANT
+    from comtypes._automation import VARIANT
 
     paramflags = []
     argtypes = []

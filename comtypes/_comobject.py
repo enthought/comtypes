@@ -31,6 +31,7 @@ from comtypes.typeinfo import (
     IProvideClassInfo,
     IProvideClassInfo2,
     ITypeInfo,
+    LoadRegTypeLib,
 )
 
 if TYPE_CHECKING:
@@ -240,8 +241,6 @@ class COMObject:
         if ISupportErrorInfo not in interfaces:
             interfaces += (ISupportErrorInfo,)
         if hasattr(self, "_reg_typelib_"):
-            from comtypes.typeinfo import LoadRegTypeLib
-
             self._COMObject__typelib = LoadRegTypeLib(*self._reg_typelib_)
             if hasattr(self, "_reg_clsid_"):
                 if IProvideClassInfo not in interfaces:
