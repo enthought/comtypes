@@ -66,7 +66,6 @@ ignore = ["E402"]
 # production
 "comtypes/_npsupport.py" = ["F401"]
 "comtypes/_vtbl.py" = ["E722"]
-"comtypes/automation.py" = ["F401", "F403", "F405"]
 "comtypes/viewobject.py" = ["F403", "F405"]
 "comtypes/client/_constants.py" = ["F401"]
 "comtypes/server/automation.py" = ["F403", "F405"]
