@@ -721,7 +721,7 @@ class tagVARIANT(Structure):
 
                 # Get generic safearray and its IRecordInfo
                 pa = cast(self._.pparray, POINTER(_safearray.SAFEARRAY))
-                ri = _safearray.SafeArrayGetRecordInfo(pa)
+                ri = SafeArrayGetRecordInfo(pa)
 
                 # Now containing typelib and through it the right class type
                 mod = GetModule(ri.GetTypeInfo().GetContainingTypeLib()[0])
@@ -996,5 +996,9 @@ _ctype_to_vartype[c_char] = VT_UI1
 # isort: off
 from comtypes.safearray import _midlSAFEARRAY
 from comtypes.automation import IDispatch
-from comtypes.recordinfo import IRecordInfo, GetRecordInfoFromGuids
+from comtypes.recordinfo import (
+    IRecordInfo,
+    GetRecordInfoFromGuids,
+    SafeArrayGetRecordInfo,
+)
 # isort: on
