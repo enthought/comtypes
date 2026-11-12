@@ -503,7 +503,7 @@ class tagVARIANT(Structure):
             self.vt = VT_ARRAY | obj._vartype_
         elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
             guids = value._recordinfo_
-            from comtypes.typeinfo import GetRecordInfoFromGuids
+            from comtypes.recordinfo import GetRecordInfoFromGuids
 
             ri = GetRecordInfoFromGuids(*guids)
             self.vt = VT_RECORD
@@ -553,7 +553,7 @@ class tagVARIANT(Structure):
             self.__keepref = value
             if isinstance(ref, Structure) and hasattr(ref, "_recordinfo_"):
                 guids = ref._recordinfo_
-                from comtypes.typeinfo import GetRecordInfoFromGuids
+                from comtypes.recordinfo import GetRecordInfoFromGuids
 
                 ri = GetRecordInfoFromGuids(*guids)
                 self.vt = VT_RECORD | VT_BYREF
@@ -575,7 +575,7 @@ class tagVARIANT(Structure):
             self.__keepref = value
             if isinstance(ref, Structure) and hasattr(ref, "_recordinfo_"):
                 guids = ref._recordinfo_
-                from comtypes.typeinfo import GetRecordInfoFromGuids
+                from comtypes.recordinfo import GetRecordInfoFromGuids
 
                 ri = GetRecordInfoFromGuids(*guids)
                 self.vt = VT_RECORD | VT_BYREF
@@ -671,7 +671,7 @@ class tagVARIANT(Structure):
             return self
         elif vt == VT_RECORD:
             from comtypes.client import GetModule
-            from comtypes.typeinfo import IRecordInfo
+            from comtypes.recordinfo import IRecordInfo
 
             # Retrieving a COM pointer from a structure field does NOT
             # call AddRef(), have to call it manually:
