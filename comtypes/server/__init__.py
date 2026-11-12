@@ -1,6 +1,6 @@
 import ctypes
 from ctypes import HRESULT, POINTER, byref
-from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import comtypes
 import comtypes.client
@@ -34,20 +34,20 @@ class IClassFactory(IUnknown):
     @overload
     def CreateInstance(
         self,
-        punkouter: Optional["_Pointer[IUnknown]"] = None,
+        punkouter: "_Pointer[IUnknown] | None" = None,
         interface: type[_T_IUnknown] = IUnknown,
         dynamic: Literal[False] = False,
     ) -> _T_IUnknown: ...
     @overload
     def CreateInstance(
         self,
-        punkouter: Optional["_Pointer[IUnknown]"] = None,
+        punkouter: "_Pointer[IUnknown] | None" = None,
         interface: None = None,
         dynamic: Literal[True] = True,
     ) -> Any: ...
     def CreateInstance(
         self,
-        punkouter: Optional["_Pointer[IUnknown]"] = None,
+        punkouter: "_Pointer[IUnknown] | None" = None,
         interface: type[IUnknown] | None = None,
         dynamic: bool = False,
     ) -> Any:

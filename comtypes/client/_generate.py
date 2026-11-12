@@ -64,7 +64,7 @@ def GetModule(tlib: Any | typeinfo.ITypeLib) -> types.ModuleType:
       - interpreted as relative to the callers `__file__`, if this exists
     - a COM CLSID `GUID`
     - a `tuple`/`list` specifying the typelib
-      - `List[_UnionT[str, int]]`
+      - `list[str | int]`
       - `(libid: str[, wMajorVerNum: int, wMinorVerNum: int[, lcid: int]])`
     - an object with `_reg_libid_: str` and `_reg_version_: Iterable[int]`
 

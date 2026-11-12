@@ -3,7 +3,6 @@ from _ctypes import COMError
 from collections.abc import Callable, Iterator, Sequence
 from ctypes import WINFUNCTYPE, Structure, c_void_p
 from typing import TYPE_CHECKING, Any
-from typing import Union as _UnionT
 
 import comtypes
 from comtypes import GUID, IUnknown, hresult
@@ -229,7 +228,7 @@ class _MethodFinder:
         interface: type[IUnknown],
         mthname: str,
         paramflags: tuple["hints.ParamFlagType", ...] | None,
-        idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"],
+        idlflags: "_ComIdlFlags | _DispIdlFlags",
     ) -> Callable[..., Any]:
         mth = self.find_impl(interface, mthname, paramflags, idlflags)
         if mth is None:
@@ -251,7 +250,7 @@ class _MethodFinder:
         interface: type[IUnknown],
         mthname: str,
         paramflags: tuple["hints.ParamFlagType", ...] | None,
-        idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"],
+        idlflags: "_ComIdlFlags | _DispIdlFlags",
     ) -> Callable[..., Any] | None:
         fq_name = f"{interface.__name__}_{mthname}"
         if interface._case_insensitive_:

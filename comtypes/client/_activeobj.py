@@ -1,5 +1,4 @@
 from typing import Any, Literal, TypeVar, overload
-from typing import Union as _UnionT
 
 import comtypes
 import comtypes.client.dynamic
@@ -24,9 +23,7 @@ def GetActiveObject(
     progid: str | type[CoClass] | GUID,
     interface: None = None,
     dynamic: Literal[True] = True,
-) -> _UnionT[
-    "comtypes.client.lazybind.Dispatch", "comtypes.client.dynamic._Dispatch"
-]: ...
+) -> "comtypes.client.lazybind.Dispatch | comtypes.client.dynamic._Dispatch": ...
 @overload
 def GetActiveObject(
     progid: str | type[CoClass] | GUID,

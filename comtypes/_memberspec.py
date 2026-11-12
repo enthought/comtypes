@@ -1,7 +1,6 @@
 import ctypes
 from collections.abc import Callable, Iterator, Sequence
 from typing import TYPE_CHECKING, Any, Literal, NamedTuple
-from typing import Union as _UnionT
 
 import comtypes
 
@@ -106,7 +105,7 @@ class _ComMemberSpec(NamedTuple):
     name: str
     argtypes: tuple[type["_CDataType"], ...]
     paramflags: tuple["hints.ParamFlagType", ...] | None
-    idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"]
+    idlflags: "_ComIdlFlags | _DispIdlFlags"
     doc: str | None
 
     def is_prop(self) -> bool:
@@ -504,7 +503,7 @@ class PropertyGenerator:
 
     # The following code assumes that the docstrings for
     # propget and propput are identical.
-    def __iter__(self) -> Iterator[tuple[str, _UnionT[property, "named_property"]]]:
+    def __iter__(self) -> Iterator[tuple[str, "property | named_property"]]:
         for name, doc, nargs, fget, fset in self._mapping:
             if nargs == 0:
                 prop = property(fget, fset, None, doc)

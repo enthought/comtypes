@@ -15,7 +15,6 @@ from ctypes import (
 )
 from ctypes.wintypes import INT, LONG, LPVOID, UINT, ULONG, WORD
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
-from typing import Union as _UnionT
 
 import comtypes
 from comtypes import GUID, IPersist, IUnknown, _CoUninitialize, hresult
@@ -355,7 +354,7 @@ class COMObject:
         self,
         this: Any,
         riid: "_Pointer[GUID]",
-        ppvObj: _UnionT[c_void_p, "_CArgObject"],
+        ppvObj: "c_void_p | _CArgObject",
         _debug=_debug,
     ) -> int:
         # XXX This is probably too slow.

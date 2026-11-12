@@ -1,6 +1,5 @@
 import logging
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
-from typing import Union as _UnionT
 
 import comtypes
 import comtypes.client.dynamic
@@ -70,9 +69,7 @@ def CreateObject(
     interface: None = None,
     dynamic: Literal[True] = True,
     pServerInfo: "None | _CArgObject | COSERVERINFO" = None,
-) -> _UnionT[
-    "comtypes.client.lazybind.Dispatch", "comtypes.client.dynamic._Dispatch"
-]: ...
+) -> "comtypes.client.lazybind.Dispatch | comtypes.client.dynamic._Dispatch": ...
 @overload
 def CreateObject(
     progid: str | type[CoClass] | GUID,
@@ -155,9 +152,7 @@ def CoGetObject(
     displayname: str,
     interface: None = None,
     dynamic: Literal[True] = True,
-) -> _UnionT[
-    "comtypes.client.lazybind.Dispatch", "comtypes.client.dynamic._Dispatch"
-]: ...
+) -> "comtypes.client.lazybind.Dispatch | comtypes.client.dynamic._Dispatch": ...
 @overload
 def CoGetObject(
     displayname: str,

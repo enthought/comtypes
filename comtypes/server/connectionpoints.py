@@ -5,7 +5,6 @@ from collections.abc import Callable, Iterator
 from ctypes import c_void_p, pointer
 from ctypes.wintypes import DWORD
 from typing import TYPE_CHECKING, Any
-from typing import Union as _UnionT
 
 from comtypes import GUID, COMObject, IUnknown
 from comtypes.automation import IDispatch

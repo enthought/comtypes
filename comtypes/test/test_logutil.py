@@ -9,7 +9,6 @@ from ctypes import c_size_t as SIZE_T
 from ctypes.wintypes import BOOL, DWORD, HANDLE, LPCWSTR
 from queue import Queue
 from typing import TYPE_CHECKING
-from typing import Union as _UnionT
 
 from comtypes.client._events import SECURITY_ATTRIBUTES
 from comtypes.logutil import NTDebugHandler
@@ -74,7 +73,7 @@ _GetCurrentProcessId.restype = DWORD
 @contextlib.contextmanager
 def create_file_mapping(
     hfile: int,
-    security: _UnionT["_Pointer[SECURITY_ATTRIBUTES]", "_CArgObject", None],
+    security: "_Pointer[SECURITY_ATTRIBUTES] | _CArgObject | None",
     flprotect: int,
     size_high: int,
     size_low: int,
@@ -106,7 +105,7 @@ def map_view_of_file(
 
 @contextlib.contextmanager
 def create_event(
-    security: _UnionT["_Pointer[SECURITY_ATTRIBUTES]", "_CArgObject", None],
+    security: "_Pointer[SECURITY_ATTRIBUTES] | _CArgObject | None",
     manual: bool,
     init: bool,
     name: str | None,

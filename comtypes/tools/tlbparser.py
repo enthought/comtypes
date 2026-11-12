@@ -6,7 +6,6 @@ from collections.abc import Mapping
 from ctypes import alignment, c_void_p, sizeof, windll
 from ctypes.wintypes import MAX_PATH
 from typing import Any, TypeVar
-from typing import Union as _UnionT
 
 from comtypes import IUnknown, automation, typeinfo
 from comtypes.tools import typedesc
@@ -16,7 +15,7 @@ is_64bits = sys.maxsize > 2**32
 
 
 ################################
-_PT = TypeVar("_PT", bound=_UnionT["ParsedType", "SpecType"])
+_PT = TypeVar("_PT", bound="ParsedType | SpecType")
 
 
 def PTR(typ: _PT) -> typedesc.PointerType[_PT]:
