@@ -14,8 +14,7 @@ from ctypes.wintypes import (
     LPVOID,
     ULONG,
 )
-from typing import Any, Optional
-from typing import Union as _UnionT
+from typing import Any
 
 import comtypes
 from comtypes import COMObject, IUnknown, hresult
@@ -62,13 +61,13 @@ _CloseHandle = _kernel32.CloseHandle
 _CloseHandle.argtypes = [HANDLE]
 _CloseHandle.restype = BOOL
 
-_ReceiverType = _UnionT[COMObject, IUnknown]
+_ReceiverType = COMObject | IUnknown
 
 
 class _AdviseConnection:
-    cp: Optional[IConnectionPoint]
-    cookie: Optional[int]
-    receiver: Optional[_ReceiverType]
+    cp: IConnectionPoint | None
+    cookie: int | None
+    receiver: _ReceiverType | None
 
     def __init__(
         self, source: IUnknown, interface: type[IUnknown], receiver: _ReceiverType
@@ -280,7 +279,7 @@ def CreateEventReceiver(interface: type[IUnknown], handler: Any) -> COMObject:
 
 
 def GetEvents(
-    source: IUnknown, sink: Any, interface: Optional[type[IUnknown]] = None
+    source: IUnknown, sink: Any, interface: type[IUnknown] | None = None
 ) -> _AdviseConnection:
     """Receive COM events from 'source'.  Events will call methods on
     the 'sink' object.  'interface' is the source interface to use.
@@ -314,7 +313,7 @@ class EventDumper:
 
 
 def ShowEvents(
-    source: IUnknown, interface: Optional[type[IUnknown]] = None
+    source: IUnknown, interface: type[IUnknown] | None = None
 ) -> _AdviseConnection:
     """Receive COM events from 'source'.  A special event sink will be
     used that first prints the names of events that are found in the

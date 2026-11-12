@@ -8,7 +8,6 @@ import gc
 import unittest
 from _ctypes import COMError
 from typing import TYPE_CHECKING, ClassVar, TypeVar
-from typing import Union as _UnionT
 
 from comtypes import CLSCTX_LOCAL_SERVER, IUnknown, _safearray
 from comtypes.client import CreateObject, GetModule
@@ -75,10 +74,8 @@ class _ValueRecordScenariosMixin(_TCBase):
     """
 
     interface: ClassVar[
-        _UnionT[
-            type["ComtypesCppTestSrvLib.IDualRecordSafearrayTest"],
-            type["ComtypesCppTestSrvLib.IDispRecordSafearrayTest"],
-        ]
+        type["ComtypesCppTestSrvLib.IDualRecordSafearrayTest"]
+        | type["ComtypesCppTestSrvLib.IDispRecordSafearrayTest"]
     ]
 
     def test_first_record_length_1_safearray_by_from_param(self):

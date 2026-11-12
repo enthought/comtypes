@@ -6,7 +6,6 @@ from _ctypes import COMError
 from ctypes import HRESULT, POINTER, OleDLL, byref, c_ubyte
 from ctypes.wintypes import DWORD, FILETIME, PWCHAR
 from pathlib import Path
-from typing import Optional
 
 import comtypes
 import comtypes.client
@@ -58,7 +57,7 @@ CREATE_TESTDOC = STGM_DIRECT | STGM_CREATE | RW_EXCLUSIVE
 CREATE_TEMP_TESTDOC = CREATE_TESTDOC | STGM_DELETEONRELEASE
 
 
-def _create_docfile(mode: int, name: Optional[str] = None) -> IStorage:
+def _create_docfile(mode: int, name: str | None = None) -> IStorage:
     stg = POINTER(IStorage)()
     _StgCreateDocfile(name, mode, 0, byref(stg))
     return stg  # type: ignore

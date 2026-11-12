@@ -14,8 +14,7 @@ from ctypes import (
     pointer,
 )
 from ctypes.wintypes import INT, LONG, LPVOID, UINT, ULONG, WORD
-from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypeVar
-from typing import Union as _UnionT
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import comtypes
 from comtypes import GUID, IPersist, IUnknown, _CoUninitialize, hresult
@@ -135,7 +134,7 @@ _PostQuitMessage.restype = None
 
 
 class LocalServer:
-    _queue: Optional[queue.Queue] = None
+    _queue: queue.Queue | None = None
 
     def run(self, classobjects: Sequence["hints.localserver.ClassFactory"]) -> None:
         hr = _CoInitialize(None)
@@ -270,7 +269,7 @@ class COMObject:
 
     ################################################################
     # LocalServer / InprocServer stuff
-    __server__: _UnionT[None, InprocServer, LocalServer] = None
+    __server__: None | InprocServer | LocalServer = None
 
     @staticmethod
     def __run_inprocserver__() -> None:
@@ -355,7 +354,7 @@ class COMObject:
         self,
         this: Any,
         riid: "_Pointer[GUID]",
-        ppvObj: _UnionT[c_void_p, "_CArgObject"],
+        ppvObj: "c_void_p | _CArgObject",
         _debug=_debug,
     ) -> int:
         # XXX This is probably too slow.

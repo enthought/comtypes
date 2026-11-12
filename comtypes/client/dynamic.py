@@ -1,5 +1,5 @@
 import ctypes
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 from comtypes import GUID, COMError, IUnknown, _is_object, automation
 from comtypes import hresult as hres
@@ -90,7 +90,7 @@ class _Dispatch:
         return item
 
     def QueryInterface(
-        self, interface: type[_T_IUnknown], iid: Optional[GUID] = None
+        self, interface: type[_T_IUnknown], iid: GUID | None = None
     ) -> _T_IUnknown:
         """QueryInterface is forwarded to the real com object."""
         return self._comobj.QueryInterface(interface, iid)

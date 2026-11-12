@@ -1,8 +1,7 @@
 import sys
 from ctypes import POINTER, OleDLL, byref, c_wchar_p
 from ctypes.wintypes import DWORD, ULONG
-from typing import TYPE_CHECKING, Optional
-from typing import Union as _UnionT
+from typing import TYPE_CHECKING
 
 from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown
 from comtypes.hresult import DISP_E_EXCEPTION, S_OK
@@ -90,7 +89,7 @@ def CreateErrorInfo() -> ICreateErrorInfo:
     return cei  # type: ignore
 
 
-def GetErrorInfo() -> Optional[IErrorInfo]:
+def GetErrorInfo() -> IErrorInfo | None:
     """Get the error information for the current thread."""
     errinfo = POINTER(IErrorInfo)()
     if S_OK == _GetErrorInfo(0, byref(errinfo)):
@@ -98,7 +97,7 @@ def GetErrorInfo() -> Optional[IErrorInfo]:
     return None
 
 
-def SetErrorInfo(errinfo: _UnionT[IErrorInfo, ICreateErrorInfo]) -> "hints.Hresult":
+def SetErrorInfo(errinfo: IErrorInfo | ICreateErrorInfo) -> "hints.Hresult":
     """Set error information for the current thread."""
     # ICreateErrorInfo can QueryInterface with IErrorInfo, so both types are
     # accepted, thanks to the magic of from_param.
@@ -108,9 +107,9 @@ def SetErrorInfo(errinfo: _UnionT[IErrorInfo, ICreateErrorInfo]) -> "hints.Hresu
 def ReportError(
     text: str,
     iid: GUID,
-    clsid: _UnionT[None, str, GUID] = None,
-    helpfile: Optional[str] = None,
-    helpcontext: Optional[int] = 0,
+    clsid: None | str | GUID = None,
+    helpfile: str | None = None,
+    helpcontext: int | None = 0,
     hresult: int = DISP_E_EXCEPTION,
 ) -> int:
     """Report a COM error.  Returns the passed in hresult value."""
@@ -138,10 +137,10 @@ def ReportError(
 def ReportException(
     hresult: int,
     iid: GUID,
-    clsid: _UnionT[None, str, GUID] = None,
-    helpfile: Optional[str] = None,
-    helpcontext: Optional[int] = None,
-    stacklevel: Optional[int] = None,
+    clsid: None | str | GUID = None,
+    helpfile: str | None = None,
+    helpcontext: int | None = None,
+    stacklevel: int | None = None,
 ) -> int:
     """Report a COM exception.  Returns the passed in hresult value."""
     typ, value, tb = sys.exc_info()

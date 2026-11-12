@@ -1,7 +1,6 @@
 import keyword
 from collections.abc import Iterator
-from typing import Any, TypeVar, overload
-from typing import Union as _UnionT
+from typing import Any, TypeAlias, TypeVar, overload
 
 from comtypes.tools import typedesc
 from comtypes.tools.codegenerator.modulenamer import name_wrapper_module
@@ -71,8 +70,8 @@ ASSUME_STRINGS = True
 ################################################################
 
 
-_DefValType = _UnionT["lcid", Any, None]
-_IdlFlagType = _UnionT[str, dispid, helpstring]
+_DefValType: TypeAlias = "lcid | Any | None"
+_IdlFlagType = str | dispid | helpstring
 
 
 def _to_arg_definition(

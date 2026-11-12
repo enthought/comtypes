@@ -1,16 +1,16 @@
 import abc
 import keyword
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Any, Generic, Optional, Protocol, TypeVar
+from typing import Any, Generic, Protocol, TypeVar
 
 from comtypes.tools import typedesc
 
 
 class _MethodTypeDesc(Protocol):
-    arguments: list[tuple[Any, str, list[str], Optional[Any]]]
+    arguments: list[tuple[Any, str, list[str], Any | None]]
     idlflags: list[str]
     name: str
-    doc: Optional[str]
+    doc: str | None
 
 
 _T_MTD = TypeVar("_T_MTD", bound=_MethodTypeDesc)
@@ -24,7 +24,7 @@ class _MethodAnnotator(abc.ABC, Generic[_T_MTD]):
         return "propput" in self.method.idlflags or "propputref" in self.method.idlflags
 
     @property
-    def inarg_specs(self) -> Sequence[tuple[Any, str, Optional[Any]]]:
+    def inarg_specs(self) -> Sequence[tuple[Any, str, Any | None]]:
         index = 0
         result = []
         for typ, name, flags, default in self.method.arguments:
@@ -40,7 +40,7 @@ class _MethodAnnotator(abc.ABC, Generic[_T_MTD]):
 
 
 _CatMths = tuple[  # categorized methods
-    str, Optional[_T_MTD], Optional[_T_MTD], Optional[_T_MTD], Optional[_T_MTD]
+    str, _T_MTD | None, _T_MTD | None, _T_MTD | None, _T_MTD | None
 ]
 
 
@@ -52,7 +52,7 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
     def to_method_annotator(self, method: _T_MTD) -> _MethodAnnotator[_T_MTD]: ...
 
     def _iter_methods(self, members: Iterable[_T_MTD]) -> Iterator[_CatMths[_T_MTD]]:
-        methods: dict[str, list[Optional[_T_MTD]]] = {}
+        methods: dict[str, list[_T_MTD | None]] = {}
         MTH = 0
         GET = 1
         PUT = 2
@@ -105,9 +105,9 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
     def _define_named_prop(
         self,
         mem_name: str,
-        getter: Optional[str] = None,
-        setter: Optional[str] = None,
-        doc: Optional[str] = None,
+        getter: str | None = None,
+        setter: str | None = None,
+        doc: str | None = None,
     ) -> None:
         if getter and setter:
             content = (
@@ -128,9 +128,9 @@ class _MethodsAnnotator(abc.ABC, Generic[_T_MTD]):
     def _define_normal_prop(
         self,
         mem_name: str,
-        getter: Optional[str] = None,
-        setter: Optional[str] = None,
-        doc: Optional[str] = None,
+        getter: str | None = None,
+        setter: str | None = None,
+        doc: str | None = None,
     ) -> None:
         if getter and setter:
             content = f"{mem_name} = hints.normal_property({getter}, {setter})"
@@ -242,7 +242,7 @@ def _to_outtype(typ: Any) -> str:
     return "hints.Incomplete"
 
 
-def _generate_trailing_params(specs: Sequence[tuple[Any, str, Optional[Any]]]) -> str:
+def _generate_trailing_params(specs: Sequence[tuple[Any, str, Any | None]]) -> str:
     """Generates a type hint for variadic positional arguments.
 
     This is for cases where required parameters follow optional ones, which is

@@ -13,8 +13,7 @@ from ctypes import (
     pointer,
 )
 from ctypes.wintypes import DWORD, LPCWSTR, LPVOID
-from typing import TYPE_CHECKING, Any, Optional, TypeVar, overload
-from typing import Union as _UnionT
+from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from comtypes import CLSCTX_LOCAL_SERVER, CLSCTX_REMOTE_SERVER, CLSCTX_SERVER, GUID
 from comtypes._memberspec import COMMETHOD
@@ -96,7 +95,7 @@ class IServiceProvider(IUnknown):
 def CoGetObject(displayname: str, interface: None) -> IUnknown: ...
 @overload
 def CoGetObject(displayname: str, interface: type[_T_IUnknown]) -> _T_IUnknown: ...
-def CoGetObject(displayname: str, interface: Optional[type[IUnknown]]) -> IUnknown:
+def CoGetObject(displayname: str, interface: type[IUnknown] | None) -> IUnknown:
     """Convert a displayname to a moniker, then bind and return the object
     identified by the moniker."""
     if interface is None:
@@ -114,21 +113,21 @@ _pUnkOuter = type["_Pointer[IUnknown]"]
 def CoCreateInstance(
     clsid: GUID,
     interface: None = None,
-    clsctx: Optional[int] = None,
-    punkouter: Optional[_pUnkOuter] = None,
+    clsctx: int | None = None,
+    punkouter: _pUnkOuter | None = None,
 ) -> IUnknown: ...
 @overload
 def CoCreateInstance(
     clsid: GUID,
     interface: type[_T_IUnknown],
-    clsctx: Optional[int] = None,
-    punkouter: Optional[_pUnkOuter] = None,
+    clsctx: int | None = None,
+    punkouter: _pUnkOuter | None = None,
 ) -> _T_IUnknown: ...
 def CoCreateInstance(
     clsid: GUID,
-    interface: Optional[type[IUnknown]] = None,
-    clsctx: Optional[int] = None,
-    punkouter: Optional[_pUnkOuter] = None,
+    interface: type[IUnknown] | None = None,
+    clsctx: int | None = None,
+    punkouter: _pUnkOuter | None = None,
 ) -> IUnknown:
     """The basic windows api to create a COM class object and return a
     pointer to an interface.
@@ -146,22 +145,22 @@ def CoCreateInstance(
 @overload
 def CoGetClassObject(
     clsid: GUID,
-    clsctx: Optional[int] = None,
-    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
+    clsctx: int | None = None,
+    pServerInfo: "None | _CArgObject | COSERVERINFO" = None,
     interface: None = None,
 ) -> "hints.IClassFactory": ...
 @overload
 def CoGetClassObject(
     clsid: GUID,
-    clsctx: Optional[int] = None,
-    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
+    clsctx: int | None = None,
+    pServerInfo: "None | _CArgObject | COSERVERINFO" = None,
     interface: type[_T_IUnknown] = IUnknown,
 ) -> _T_IUnknown: ...
 def CoGetClassObject(
     clsid: GUID,
-    clsctx: Optional[int] = None,
-    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
-    interface: Optional[type[IUnknown]] = None,
+    clsctx: int | None = None,
+    pServerInfo: "None | _CArgObject | COSERVERINFO" = None,
+    interface: type[IUnknown] | None = None,
 ) -> IUnknown:
     if clsctx is None:
         clsctx = CLSCTX_SERVER
@@ -221,7 +220,7 @@ class _COSERVERINFO(Structure):
     ]
     if TYPE_CHECKING:
         dwReserved1: int
-        pwszName: Optional[str]
+        pwszName: str | None
         pAuthInfo: _COAUTHINFO
         dwReserved2: int
 
@@ -336,24 +335,24 @@ SOLE_AUTHENTICATION_LIST = _SOLE_AUTHENTICATION_LIST
 def CoCreateInstanceEx(
     clsid: GUID,
     interface: None = None,
-    clsctx: Optional[int] = None,
-    machine: Optional[str] = None,
-    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
+    clsctx: int | None = None,
+    machine: str | None = None,
+    pServerInfo: "None | _CArgObject | COSERVERINFO" = None,
 ) -> IUnknown: ...
 @overload
 def CoCreateInstanceEx(
     clsid: GUID,
     interface: type[_T_IUnknown],
-    clsctx: Optional[int] = None,
-    machine: Optional[str] = None,
-    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
+    clsctx: int | None = None,
+    machine: str | None = None,
+    pServerInfo: "None | _CArgObject | COSERVERINFO" = None,
 ) -> _T_IUnknown: ...
 def CoCreateInstanceEx(
     clsid: GUID,
-    interface: Optional[type[IUnknown]] = None,
-    clsctx: Optional[int] = None,
-    machine: Optional[str] = None,
-    pServerInfo: "_UnionT[None, _CArgObject, COSERVERINFO]" = None,
+    interface: type[IUnknown] | None = None,
+    clsctx: int | None = None,
+    machine: str | None = None,
+    pServerInfo: "None | _CArgObject | COSERVERINFO" = None,
 ) -> IUnknown:
     """The basic windows api to create a COM class object and return a
     pointer to an interface, possibly on another machine.

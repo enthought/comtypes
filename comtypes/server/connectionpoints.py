@@ -5,7 +5,6 @@ from collections.abc import Callable, Iterator
 from ctypes import c_void_p, pointer
 from ctypes.wintypes import DWORD
 from typing import TYPE_CHECKING, Any
-from typing import Union as _UnionT
 
 from comtypes import GUID, COMObject, IUnknown
 from comtypes.automation import IDispatch
@@ -162,7 +161,7 @@ class ConnectableObjectMixin:
         return CONNECT_E_NOCONNECTION
 
     def Fire_Event(
-        self, itf: _UnionT[int, type[IDispatch]], name: str, *args: Any, **kw: Any
+        self, itf: int | type[IDispatch], name: str, *args: Any, **kw: Any
     ) -> Any:
         # Fire event 'name' with arguments *args and **kw.
         # Accepts either an interface index or an interface as first argument.

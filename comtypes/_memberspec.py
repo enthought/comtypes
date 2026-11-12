@@ -1,7 +1,6 @@
 import ctypes
 from collections.abc import Callable, Iterator, Sequence
-from typing import TYPE_CHECKING, Any, Literal, NamedTuple, Optional
-from typing import Union as _UnionT
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple
 
 import comtypes
 
@@ -51,9 +50,9 @@ _NOTHING = object()
 def _unpack_argspec(
     idl: list[str],
     typ: type["_CDataType"],
-    name: Optional[str] = None,
+    name: str | None = None,
     defval: Any = _NOTHING,
-) -> tuple[list[str], type["_CDataType"], Optional[str], Any]:
+) -> tuple[list[str], type["_CDataType"], str | None, Any]:
     return idl, typ, name, defval
 
 
@@ -95,19 +94,19 @@ if TYPE_CHECKING:
     _VarFlagsWithDispIdHelpstr = tuple["dispid", "helpstring", hints.Unpack[_VarFlags]]
     _VarFlagsWithDispId = tuple["dispid", hints.Unpack[_VarFlags]]
     _VarFlagsWithHelpstr = tuple["helpstring", hints.Unpack[_VarFlags]]
-    _DispIdlFlags = _UnionT[_VarFlagsWithDispIdHelpstr, _VarFlagsWithDispId]
-    _ComIdlFlags = _UnionT[_VarFlags, _VarFlagsWithHelpstr]
+    _DispIdlFlags = _VarFlagsWithDispIdHelpstr | _VarFlagsWithDispId
+    _ComIdlFlags = _VarFlags | _VarFlagsWithHelpstr
 
 
 class _ComMemberSpec(NamedTuple):
     """Specifier for a slot of COM method or property."""
 
-    restype: Optional[type["_CDataType"]]
+    restype: type["_CDataType"] | None
     name: str
     argtypes: tuple[type["_CDataType"], ...]
-    paramflags: Optional[tuple["hints.ParamFlagType", ...]]
-    idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"]
-    doc: Optional[str]
+    paramflags: tuple["hints.ParamFlagType", ...] | None
+    idlflags: "_ComIdlFlags | _DispIdlFlags"
+    doc: str | None
 
     def is_prop(self) -> bool:
         return _is_spec_prop(self)
@@ -119,7 +118,7 @@ class _DispMemberSpec(NamedTuple):
     what: Literal["DISPMETHOD", "DISPPROPERTY"]
     name: str
     idlflags: "_DispIdlFlags"
-    restype: Optional[type["_CDataType"]]
+    restype: type["_CDataType"] | None
     argspec: tuple["hints.ArgSpecElmType", ...]
 
     @property
@@ -135,7 +134,7 @@ class _DispMemberSpec(NamedTuple):
 
 # Specifier of a slot of method or property.
 # This should be `typing.Protocol` if supporting Py3.8+ only.
-_MemberSpec = _UnionT[_ComMemberSpec, _DispMemberSpec]
+_MemberSpec = _ComMemberSpec | _DispMemberSpec
 
 
 def _is_spec_prop(m: _MemberSpec):
@@ -166,7 +165,7 @@ class dispid(int):
 
 
 def STDMETHOD(
-    restype: Optional[type["_CDataType"]],
+    restype: type["_CDataType"] | None,
     name: str,
     argtypes: Sequence[type["_CDataType"]] = (),
 ) -> _ComMemberSpec:
@@ -190,8 +189,8 @@ def STDMETHOD(
 
 
 def DISPMETHOD(
-    idlflags: Sequence[_UnionT[int, str]],
-    restype: Optional[type["_CDataType"]],
+    idlflags: Sequence[int | str],
+    restype: type["_CDataType"] | None,
     name: str,
     *argspec: "hints.ArgSpecElmType",
 ) -> _DispMemberSpec:
@@ -226,7 +225,7 @@ def DISPMETHOD(
 
 
 def DISPPROPERTY(
-    idlflags: Sequence[_UnionT[int, str]],
+    idlflags: Sequence[int | str],
     proptype: type["_CDataType"],
     name: str,
 ) -> _DispMemberSpec:
@@ -259,8 +258,8 @@ def DISPPROPERTY(
 
 
 def COMMETHOD(
-    idlflags: Sequence[_UnionT[int, str]],
-    restype: Optional[type["_CDataType"]],
+    idlflags: Sequence[int | str],
+    restype: type["_CDataType"] | None,
     methodname: str,
     *argspec: "hints.ArgSpecElmType",
 ) -> _ComMemberSpec:
@@ -439,8 +438,8 @@ def _fix_inout_args(
 ################################################################
 
 
-_PropFunc = Optional[Callable[..., Any]]
-_DocType = Optional[str]
+_PropFunc = Callable[..., Any] | None
+_DocType = str | None
 
 
 class PropertyMapping:
@@ -504,7 +503,7 @@ class PropertyGenerator:
 
     # The following code assumes that the docstrings for
     # propget and propput are identical.
-    def __iter__(self) -> Iterator[tuple[str, _UnionT[property, "named_property"]]]:
+    def __iter__(self) -> Iterator[tuple[str, "property | named_property"]]:
         for name, doc, nargs, fget, fset in self._mapping:
             if nargs == 0:
                 prop = property(fget, fset, None, doc)
@@ -610,7 +609,7 @@ class DispMemberGenerator:
     def __init__(self, cls_name: str) -> None:
         self._props = DispPropertyGenerator(cls_name)
         # sequence of (name: str, func_or_prop: Callable | property, is_prop: bool)
-        self._items: list[tuple[str, _UnionT[Callable[..., Any], property], bool]] = []
+        self._items: list[tuple[str, Callable[..., Any] | property, bool]] = []
 
     def add(self, m: _DispMemberSpec) -> None:
         if m.what == "DISPPROPERTY":  # DISPPROPERTY

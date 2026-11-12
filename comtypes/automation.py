@@ -1,7 +1,7 @@
 # comtypes.automation module
 from _ctypes import COMError
 from collections.abc import Sequence
-from ctypes import HRESULT, POINTER, byref, c_int, c_uint, c_ulong, c_wchar_p, pointer
+from ctypes import HRESULT, POINTER, byref, c_uint, c_ulong, c_wchar_p, pointer
 from ctypes.wintypes import UINT, WORD
 from ctypes.wintypes import VARIANT_BOOL as VARIANT_BOOL
 from ctypes.wintypes import WCHAR as WCHAR
@@ -19,12 +19,8 @@ from comtypes._memberspec import DISPATCH_PROPERTYPUTREF as DISPATCH_PROPERTYPUT
 from comtypes.safearray import _midlSAFEARRAY as _midlSAFEARRAY
 
 if TYPE_CHECKING:
-    from ctypes import _CArgObject, _CDataType
-
     from comtypes import hints  # type: ignore
     from comtypes._memberspec import _DispMemberSpec
-else:
-    _CArgObject = type(byref(c_int()))
 
 # isort: off
 from comtypes._automation import LCID as LCID

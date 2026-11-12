@@ -2,8 +2,7 @@ import logging
 from _ctypes import COMError
 from collections.abc import Callable, Iterator, Sequence
 from ctypes import WINFUNCTYPE, Structure, c_void_p
-from typing import TYPE_CHECKING, Any, Optional
-from typing import Union as _UnionT
+from typing import TYPE_CHECKING, Any
 
 import comtypes
 from comtypes import GUID, IUnknown, hresult
@@ -32,7 +31,7 @@ class E_NotImplemented(Exception):
     """COM method is not implemented"""
 
 
-def HRESULT_FROM_WIN32(errcode: Optional[int]) -> int:
+def HRESULT_FROM_WIN32(errcode: int | None) -> int:
     "Convert a Windows error code into a HRESULT value."
     if errcode is None:
         return 0x80000000
@@ -71,7 +70,7 @@ def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
 def catch_errors(
     obj: "hints.COMObject",
     mth: Callable[..., Any],
-    paramflags: Optional[tuple["hints.ParamFlagType", ...]],
+    paramflags: tuple["hints.ParamFlagType", ...] | None,
     interface: type[IUnknown],
     mthname: str,
 ) -> Callable[..., Any]:
@@ -120,7 +119,7 @@ def catch_errors(
 def hack(
     inst: "hints.COMObject",
     mth: Callable[..., Any],
-    paramflags: Optional[tuple["hints.ParamFlagType", ...]],
+    paramflags: tuple["hints.ParamFlagType", ...] | None,
     interface: type[IUnknown],
     mthname: str,
 ) -> Callable[..., Any]:
@@ -228,8 +227,8 @@ class _MethodFinder:
         self,
         interface: type[IUnknown],
         mthname: str,
-        paramflags: Optional[tuple["hints.ParamFlagType", ...]],
-        idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"],
+        paramflags: tuple["hints.ParamFlagType", ...] | None,
+        idlflags: "_ComIdlFlags | _DispIdlFlags",
     ) -> Callable[..., Any]:
         mth = self.find_impl(interface, mthname, paramflags, idlflags)
         if mth is None:
@@ -250,9 +249,9 @@ class _MethodFinder:
         self,
         interface: type[IUnknown],
         mthname: str,
-        paramflags: Optional[tuple["hints.ParamFlagType", ...]],
-        idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"],
-    ) -> Optional[Callable[..., Any]]:
+        paramflags: tuple["hints.ParamFlagType", ...] | None,
+        idlflags: "_ComIdlFlags | _DispIdlFlags",
+    ) -> Callable[..., Any] | None:
         fq_name = f"{interface.__name__}_{mthname}"
         if interface._case_insensitive_:
             # simple name, like 'QueryInterface'

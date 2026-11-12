@@ -2,7 +2,7 @@ import logging
 import sys
 import winreg
 from ctypes import c_void_p, pointer
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal
 
 from comtypes import GUID, COMObject, IUnknown, hresult
 from comtypes._comobject import InprocServer as _InprocRefCounter
@@ -28,7 +28,7 @@ class ClassFactory(COMObject):
     def IClassFactory_CreateInstance(
         self,
         this: Any,
-        punkOuter: Optional[type["_Pointer[IUnknown]"]],
+        punkOuter: type["_Pointer[IUnknown]"] | None,
         riid: "_Pointer[GUID]",
         ppv: c_void_p,
     ) -> int:

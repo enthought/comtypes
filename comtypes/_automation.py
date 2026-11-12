@@ -36,7 +36,7 @@ from ctypes import (
 )
 from ctypes import Array as _CArrayType
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WORD
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import comtypes
 import comtypes.patcher
@@ -863,8 +863,8 @@ class tagEXCEPINFO(Structure):
         bstrDescription: str
         bstrHelpFile: str
         dwHelpContext: int
-        pvReserved: Optional[int]
-        pfnDeferredFillIn: Optional[int]
+        pvReserved: int | None
+        pfnDeferredFillIn: int | None
         scode: int
 
     def __repr__(self):

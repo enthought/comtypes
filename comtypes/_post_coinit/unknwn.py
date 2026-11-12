@@ -3,7 +3,7 @@
 import logging
 import sys
 from ctypes import HRESULT, POINTER, byref, c_ulong, c_void_p
-from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import comtypes
 from comtypes import GUID, _CoUninitialize
@@ -13,7 +13,6 @@ from comtypes._post_coinit.instancemethod import instancemethod
 
 if TYPE_CHECKING:
     from typing import Literal
-    from typing import Union as _UnionT
 
     from comtypes import hints  # type: ignore
     from comtypes._memberspec import _ComMemberSpec, _DispMemberSpec
@@ -315,7 +314,7 @@ class _compointer_base(c_void_p, metaclass=_compointer_meta):
     # It also allows to pass a COMObject instance to an api expecting a COM interface.
     @classmethod
     def from_param(
-        cls, value: "_UnionT[None, Literal[0], hints.Self, IUnknown, hints.COMObject]"
+        cls, value: "None | Literal[0] | hints.Self | IUnknown | hints.COMObject"
     ) -> Any:
         """Convert 'value' into a COM pointer to the interface.
 
@@ -397,7 +396,7 @@ class IUnknown(_IUnknown_Base, metaclass=_cominterface_meta):
     # And if `isinstance(p, POINTER(T))` is `True`, then `isinstance(p, T)` is also `True`.
     # So returning `T` is not a lie, and good way to know what members the class has.
     def QueryInterface(
-        self, interface: type[_T_IUnknown], iid: Optional[GUID] = None
+        self, interface: type[_T_IUnknown], iid: GUID | None = None
     ) -> _T_IUnknown:
         """QueryInterface(interface) -> instance"""
         p = POINTER(interface)()

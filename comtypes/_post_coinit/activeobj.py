@@ -1,7 +1,6 @@
 from ctypes import HRESULT, POINTER, OleDLL, byref, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPVOID
-from typing import TYPE_CHECKING, Optional, TypeVar, overload
-from typing import Union as _UnionT
+from typing import TYPE_CHECKING, TypeVar, overload
 
 from comtypes import GUID
 from comtypes._post_coinit.unknwn import IUnknown
@@ -18,7 +17,7 @@ ACTIVEOBJECT_WEAK = 0x1
 
 
 def RegisterActiveObject(
-    punk: "_UnionT[IUnknown, hints.LP_LP_Vtbl]", clsid: GUID, flags: int
+    punk: "IUnknown | hints.LP_LP_Vtbl", clsid: GUID, flags: int
 ) -> int:
     """Registers a pointer as the active object for its class and returns the handle."""
     handle = c_ulong()
@@ -35,9 +34,7 @@ def RevokeActiveObject(handle: int) -> None:
 def GetActiveObject(clsid: GUID, interface: None = None) -> IUnknown: ...
 @overload
 def GetActiveObject(clsid: GUID, interface: type[_T_IUnknown]) -> _T_IUnknown: ...
-def GetActiveObject(
-    clsid: GUID, interface: Optional[type[IUnknown]] = None
-) -> IUnknown:
+def GetActiveObject(clsid: GUID, interface: type[IUnknown] | None = None) -> IUnknown:
     """Retrieves a pointer to a running object"""
     p = POINTER(IUnknown)()
     _GetActiveObject(byref(clsid), None, byref(p))

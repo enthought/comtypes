@@ -2,13 +2,12 @@ import textwrap
 import warnings
 from collections import Counter
 from collections.abc import Iterator, Mapping, Sequence
-from typing import Optional, overload
-from typing import Union as _UnionT
+from typing import overload
 
 
 class ImportedNamespaces:
     def __init__(self) -> None:
-        self.data: dict[str, Optional[str]] = {}
+        self.data: dict[str, str | None] = {}
 
     @overload
     def add(self, modulename: str, /) -> None: ...
@@ -19,8 +18,8 @@ class ImportedNamespaces:
     def add(
         self,
         name1: str,
-        name2: Optional[str] = None,
-        symbols: Optional[Mapping[str, str]] = None,
+        name2: str | None = None,
+        symbols: Mapping[str, str] | None = None,
     ) -> None:
         """Adds a namespace will be imported.
 
@@ -58,7 +57,7 @@ class ImportedNamespaces:
             from_, import_ = name1, name2
         self.data[import_] = from_
 
-    def __contains__(self, item: _UnionT[str, tuple[str, str]]) -> bool:
+    def __contains__(self, item: str | tuple[str, str]) -> bool:
         """Returns item has already added.
 
         Examples:
@@ -105,7 +104,7 @@ class ImportedNamespaces:
         return code
 
     def getvalue(self) -> str:
-        ns: dict[str, Optional[set[str]]] = {}
+        ns: dict[str, set[str] | None] = {}
         lines: list[str] = []
         for key, val in self.data.items():
             if val is None:
@@ -125,9 +124,9 @@ class ImportedNamespaces:
 
 class DeclaredNamespaces:
     def __init__(self) -> None:
-        self.data: dict[tuple[str, str], Optional[str]] = {}
+        self.data: dict[tuple[str, str], str | None] = {}
 
-    def add(self, alias: str, definition: str, comment: Optional[str] = None) -> None:
+    def add(self, alias: str, definition: str, comment: str | None = None) -> None:
         """Adds a namespace will be declared.
 
         Examples:

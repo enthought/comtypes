@@ -5,8 +5,7 @@ from _ctypes import COMError
 from collections.abc import Mapping
 from ctypes import alignment, c_void_p, sizeof, windll
 from ctypes.wintypes import MAX_PATH
-from typing import Any, Optional, TypeVar
-from typing import Union as _UnionT
+from typing import Any, TypeVar
 
 from comtypes import IUnknown, automation, typeinfo
 from comtypes.tools import typedesc
@@ -16,7 +15,7 @@ is_64bits = sys.maxsize > 2**32
 
 
 ################################
-_PT = TypeVar("_PT", bound=_UnionT["ParsedType", "SpecType"])
+_PT = TypeVar("_PT", bound="ParsedType | SpecType")
 
 
 def PTR(typ: _PT) -> typedesc.PointerType[_PT]:
@@ -135,25 +134,25 @@ COMTYPES = {
 # automation.VT_ARRAY = 8192
 # automation.VT_BYREF = 16384
 
-ParsedType = _UnionT[
-    typedesc.TypeLib,
-    typedesc.Constant,
-    typedesc.External,
-    typedesc.CoClass,
-    typedesc.ComInterface,
-    typedesc.DispInterface,
-    typedesc.Typedef["_UnionT[ParsedType, SpecType]"],
-    typedesc.Structure,
-    typedesc.Union,
-    typedesc.Enumeration,
-]
+ParsedType = (
+    typedesc.TypeLib
+    | typedesc.Constant
+    | typedesc.External
+    | typedesc.CoClass
+    | typedesc.ComInterface
+    | typedesc.DispInterface
+    | typedesc.Typedef["ParsedType | SpecType"]
+    | typedesc.Structure
+    | typedesc.Union
+    | typedesc.Enumeration
+)
 
-SpecType = _UnionT[
-    typedesc.FundamentalType,
-    typedesc.PointerType["_UnionT[ParsedType, SpecType]"],
-    typedesc.ArrayType["_UnionT[ParsedType, SpecType]"],
-    typedesc.SAFEARRAYType["_UnionT[ParsedType, SpecType]"],
-]
+SpecType = (
+    typedesc.FundamentalType
+    | typedesc.PointerType["ParsedType | SpecType"]
+    | typedesc.ArrayType["ParsedType | SpecType"]
+    | typedesc.SAFEARRAYType["ParsedType | SpecType"]
+)
 ################################################################
 
 
@@ -168,7 +167,7 @@ class Parser:
 
     def make_type(
         self, tdesc: typeinfo.TYPEDESC, tinfo: typeinfo.ITypeInfo
-    ) -> _UnionT[ParsedType, SpecType]:
+    ) -> ParsedType | SpecType:
         if tdesc.vt in COMTYPES:
             return COMTYPES[tdesc.vt]
         if tdesc.vt == automation.VT_CARRAY:
@@ -314,7 +313,7 @@ class Parser:
     # TKIND_INTERFACE = 3
     def ParseInterface(
         self, tinfo: typeinfo.ITypeInfo, ta: typeinfo.TYPEATTR
-    ) -> Optional[typedesc.ComInterface]:
+    ) -> typedesc.ComInterface | None:
         itf_name, itf_doc = tinfo.GetDocumentation(-1)[0:2]
         assert ta.cImplTypes <= 1
         if ta.cImplTypes == 0 and itf_name != "IUnknown":
@@ -638,7 +637,7 @@ class Parser:
 
     ################################################################
 
-    def _typelib_module(self, tlib: Optional[typeinfo.ITypeLib] = None) -> str:
+    def _typelib_module(self, tlib: typeinfo.ITypeLib | None = None) -> str:
         if tlib is None:
             tlib = self.tlib
         # return a string that uniquely identifies a typelib.
@@ -647,9 +646,9 @@ class Parser:
 
     def _register(
         self,
-        name: Optional[str],
+        name: str | None,
         value: ParsedType,
-        tlib: Optional[typeinfo.ITypeLib] = None,
+        tlib: typeinfo.ITypeLib | None = None,
     ) -> None:
         modname = self._typelib_module(tlib)
         fullname = f"{modname}.{name}"
@@ -661,7 +660,7 @@ class Parser:
             raise ValueError(f"Bug: Multiple registered name '{name}': {value!r}")
         self.items[fullname] = value
 
-    def parse_typeinfo(self, tinfo: typeinfo.ITypeInfo) -> Optional[ParsedType]:
+    def parse_typeinfo(self, tinfo: typeinfo.ITypeInfo) -> ParsedType | None:
         name = tinfo.GetDocumentation(-1)[0]
         modname = self._typelib_module()
         try:
@@ -706,7 +705,7 @@ class Parser:
 
     def _parse_DualInterface(
         self, tinfo: typeinfo.ITypeInfo
-    ) -> Optional[typedesc.ComInterface]:
+    ) -> typedesc.ComInterface | None:
         ta = tinfo.GetTypeAttr()
         assert ta.typekind == typeinfo.TKIND_INTERFACE
         return self.ParseInterface(tinfo, ta)
@@ -801,7 +800,7 @@ class TypeLibParser(Parser):
 # path = r"c:\vc98\include\activscp.tlb"
 
 
-def get_tlib_filename(tlib: typeinfo.ITypeLib) -> Optional[str]:
+def get_tlib_filename(tlib: typeinfo.ITypeLib) -> str | None:
     # seems if the typelib is not registered, there's no way to
     # determine the filename.
     la = tlib.GetLibAttr()
