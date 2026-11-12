@@ -31,11 +31,9 @@ _VariantArrType = _midlSAFEARRAY(VARIANT)
 
 PY_VER = "Python {0}.{1}.{2}".format(*sys.version_info[:3])
 # It seems to be the same root cause we discussed in https://github.com/enthought/comtypes/issues/212
-IS_SKIP_PY_VER = sys.version_info[:2] == (
-    (3, 9)
-    or (sys.version_info[:2] == (3, 10) and sys.version_info < (3, 10, 10))
-    or (sys.version_info[:2] == (3, 11) and sys.version_info < (3, 11, 2))
-)
+IS_SKIP_PY_VER = (
+    sys.version_info[:2] == (3, 10) and sys.version_info < (3, 10, 10)
+) or (sys.version_info[:2] == (3, 11) and sys.version_info < (3, 11, 2))
 
 
 @unittest.skipIf(IS_SKIP_PY_VER, f"This fails in {PY_VER}.")
