@@ -699,10 +699,11 @@ class tagVARIANT(Structure):
 
             if (self.vt & ~VT_ARRAY) == VT_RECORD:
                 from comtypes.client import GetModule
+                from comtypes.recordinfo import SafeArrayGetRecordInfo
 
                 # Get generic safearray and its IRecordInfo
                 pa = cast(self._.pparray, POINTER(_safearray.SAFEARRAY))
-                ri = _safearray.SafeArrayGetRecordInfo(pa)
+                ri = SafeArrayGetRecordInfo(pa)
 
                 # Now containing typelib and through it the right class type
                 mod = GetModule(ri.GetTypeInfo().GetContainingTypeLib()[0])

@@ -9,11 +9,13 @@ from ctypes import (
 from ctypes.wintypes import BOOL, LCID, ULONG
 from typing import TYPE_CHECKING, Any, Optional
 
-from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown
+from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown, _safearray
 from comtypes.automation import VARIANT
 from comtypes.typeinfo import ITypeInfo
 
 if TYPE_CHECKING:
+    from ctypes import _Pointer
+
     from comtypes import hints  # type: ignore
 
 
@@ -164,3 +166,16 @@ def GetRecordInfoFromGuids(
         byref(ri),
     )
     return ri  # type: ignore
+
+
+_SafeArrayGetRecordInfo = _oleaut32.SafeArrayGetRecordInfo
+_SafeArrayGetRecordInfo.restype = HRESULT
+_SafeArrayGetRecordInfo.argtypes = [POINTER(_safearray.SAFEARRAY), POINTER(c_void_p)]
+
+
+def SafeArrayGetRecordInfo(
+    pa: "_Pointer[_safearray.tagSAFEARRAY]",
+) -> IRecordInfo:
+    result = POINTER(IRecordInfo)()
+    _SafeArrayGetRecordInfo(pa, byref(result))
+    return result  # type: ignore
