@@ -97,7 +97,7 @@ def _make_safearray_type(itemtype):
             except AttributeError:
                 extra = None
             else:
-                from comtypes.typeinfo import GetRecordInfoFromGuids
+                from comtypes.recordinfo import GetRecordInfoFromGuids
 
                 extra = GetRecordInfoFromGuids(*guids)
             vartype = VT_RECORD

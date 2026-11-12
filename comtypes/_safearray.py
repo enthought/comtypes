@@ -84,20 +84,6 @@ def SafeArrayGetVartype(pa):
     return result.value
 
 
-_SafeArrayGetRecordInfo = _oleaut32.SafeArrayGetRecordInfo
-_SafeArrayGetRecordInfo.restype = HRESULT
-_SafeArrayGetRecordInfo.argtypes = [POINTER(SAFEARRAY), POINTER(c_void_p)]
-
-
-def SafeArrayGetRecordInfo(pa: "_Pointer[tagSAFEARRAY]") -> "hints.IRecordInfo":
-    # Defined here to avoid a circular import
-    from comtypes.typeinfo import IRecordInfo
-
-    result = POINTER(IRecordInfo)()
-    _SafeArrayGetRecordInfo(pa, byref(result))
-    return result  # type: ignore
-
-
 _SafeArrayCopy = _oleaut32.SafeArrayCopy
 _SafeArrayCopy.restype = HRESULT
 _SafeArrayCopy.argtypes = [POINTER(SAFEARRAY), POINTER(POINTER(SAFEARRAY))]
