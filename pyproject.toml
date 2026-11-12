@@ -2,7 +2,7 @@
 name = "comtypes"
 description = "Pure Python COM package"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE.txt"]
 authors = [
