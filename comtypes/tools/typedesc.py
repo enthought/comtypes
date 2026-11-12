@@ -3,7 +3,7 @@
 
 import ctypes
 from collections.abc import Sequence
-from typing import Any, Generic, Optional, TypeVar, final
+from typing import Any, Generic, TypeVar, final
 from typing import Union as _UnionT
 
 from comtypes import typeinfo
@@ -26,7 +26,7 @@ _TD = TypeVar("_TD")
 @final
 class TypeLib:
     def __init__(
-        self, name: str, guid: str, major: int, minor: int, doc: Optional[str] = None
+        self, name: str, guid: str, major: int, minor: int, doc: str | None = None
     ) -> None:
         self.name = name
         self.guid = guid
@@ -43,9 +43,9 @@ class Constant:
     def __init__(
         self,
         name: str,
-        typ: _UnionT[Typedef, FundamentalType],
+        typ: Typedef | FundamentalType,
         value: Any,
-        doc: Optional[str],
+        doc: str | None,
     ) -> None:
         self.name = name
         self.typ = typ
@@ -61,7 +61,7 @@ class External:
         name: str,
         size: int,
         align: int,
-        docs: Optional[tuple[str, Optional[str]]] = None,
+        docs: tuple[str, str | None] | None = None,
     ) -> None:
         # the type library containing the symbol
         self.tlib = tlib
@@ -94,7 +94,7 @@ class ComMethod:
         name: str,
         returns: Any,
         idlflags: list[str],
-        doc: Optional[str],
+        doc: str | None,
     ) -> None:
         self.invkind = invkind
         self.name = name
@@ -102,10 +102,10 @@ class ComMethod:
         self.idlflags = idlflags
         self.memid = memid
         self.doc = doc
-        self.arguments: list[tuple[Any, str, list[str], Optional[Any]]] = []
+        self.arguments: list[tuple[Any, str, list[str], Any | None]] = []
 
     def add_argument(
-        self, typ: Any, name: str, idlflags: list[str], default: Optional[Any]
+        self, typ: Any, name: str, idlflags: list[str], default: Any | None
     ) -> None:
         self.arguments.append((typ, name, idlflags, default))
 
@@ -120,7 +120,7 @@ class DispMethod:
         name: str,
         returns: Any,
         idlflags: list[str],
-        doc: Optional[str],
+        doc: str | None,
     ) -> None:
         self.dispid = dispid
         self.invkind = invkind
@@ -128,10 +128,10 @@ class DispMethod:
         self.returns = returns
         self.idlflags = idlflags
         self.doc = doc
-        self.arguments: list[tuple[Any, str, list[str], Optional[Any]]] = []
+        self.arguments: list[tuple[Any, str, list[str], Any | None]] = []
 
     def add_argument(
-        self, typ: Any, name: str, idlflags: list[str], default: Optional[Any]
+        self, typ: Any, name: str, idlflags: list[str], default: Any | None
     ) -> None:
         self.arguments.append((typ, name, idlflags, default))
 
@@ -140,7 +140,7 @@ class DispMethod:
 class DispProperty:
     # dispatchable COM property, parsed from typelib
     def __init__(
-        self, dispid: int, name: str, typ: Any, idlflags: list[str], doc: Optional[str]
+        self, dispid: int, name: str, typ: Any, idlflags: list[str], doc: str | None
     ) -> None:
         self.dispid = dispid
         self.name = name
@@ -166,13 +166,13 @@ class DispInterface:
     def __init__(
         self,
         name: str,
-        base: "_UnionT[ComInterface, DispInterface, External]",
+        base: "ComInterface | DispInterface | External",
         iid: str,
         idlflags: list[str],
-        doc: Optional[str],
+        doc: str | None,
     ) -> None:
         self.name = name
-        self.members: list[_UnionT[DispMethod, DispProperty]] = []
+        self.members: list[DispMethod | DispProperty] = []
         self.base = base
         self.iid = iid
         self.idlflags = idlflags
@@ -180,7 +180,7 @@ class DispInterface:
         self.itf_body = DispInterfaceBody(self)
         self.doc = doc
 
-    def add_member(self, member: _UnionT[DispMethod, DispProperty]) -> None:
+    def add_member(self, member: DispMethod | DispProperty) -> None:
         self.members.append(member)
 
     def get_body(self) -> DispInterfaceBody:
@@ -207,10 +207,10 @@ class ComInterface:
     def __init__(
         self,
         name: str,
-        base: "_UnionT[None, ComInterface, External]",
+        base: "None | ComInterface | External",
         iid: str,
         idlflags: list[str],
-        doc: Optional[str],
+        doc: str | None,
     ) -> None:
         self.name = name
         self.members: list[ComMethod] = []
@@ -243,7 +243,7 @@ class CoClass:
         clsid: str,
         idlflags: list[str],
         tlibattr: TLIBATTR,
-        doc: Optional[str],
+        doc: str | None,
     ) -> None:
         self.name = name
         self.clsid = clsid

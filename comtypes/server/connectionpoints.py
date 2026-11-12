@@ -162,7 +162,7 @@ class ConnectableObjectMixin:
         return CONNECT_E_NOCONNECTION
 
     def Fire_Event(
-        self, itf: _UnionT[int, type[IDispatch]], name: str, *args: Any, **kw: Any
+        self, itf: int | type[IDispatch], name: str, *args: Any, **kw: Any
     ) -> Any:
         # Fire event 'name' with arguments *args and **kw.
         # Accepts either an interface index or an interface as first argument.

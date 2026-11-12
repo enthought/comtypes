@@ -3,7 +3,7 @@ import queue
 from collections.abc import Sequence
 from ctypes import HRESULT, OleDLL, byref, c_ulong, c_void_p
 from ctypes.wintypes import DWORD, LPDWORD
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal
 
 import comtypes
 from comtypes import GUID, COMObject, IUnknown, hresult
@@ -42,7 +42,7 @@ def run(classes: Sequence[type[COMObject]]) -> None:
 class ClassFactory(COMObject):
     _com_interfaces_ = [IClassFactory]
     _locks: int = 0
-    _queue: Optional[queue.Queue] = None
+    _queue: queue.Queue | None = None
     regcls: int = REGCLS_MULTIPLEUSE
 
     def __init__(self, cls: type[COMObject], *args, **kw) -> None:
@@ -79,7 +79,7 @@ class ClassFactory(COMObject):
     def CreateInstance(
         self,
         this: Any,
-        punkOuter: Optional[type["_Pointer[IUnknown]"]],
+        punkOuter: type["_Pointer[IUnknown]"] | None,
         riid: "_Pointer[GUID]",
         ppv: c_void_p,
     ) -> int:

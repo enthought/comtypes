@@ -7,7 +7,7 @@ from ctypes import (
     c_wchar_p,
 )
 from ctypes.wintypes import BOOL, LCID, ULONG
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from comtypes import BSTR, COMMETHOD, GUID, HRESULT, IUnknown, _safearray
 from comtypes._automation import VARIANT
@@ -23,7 +23,7 @@ class IRecordInfo(IUnknown):
     # C:/vc98/include/OAIDL.H 5974
     _iid_ = GUID("{0000002F-0000-0000-C000-000000000046}")
 
-    def GetFieldNames(self, *args: Any) -> list[Optional[str]]:
+    def GetFieldNames(self, *args: Any) -> list[str | None]:
         count = ctypes.c_ulong()
         self.__com_GetFieldNames(count, None)  # type: ignore
         array = (BSTR * count.value)()

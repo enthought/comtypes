@@ -8,7 +8,7 @@ import os
 import textwrap
 import warnings
 from collections.abc import Iterable, Iterator, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal
 from typing import Union as _UnionT
 
 import comtypes
@@ -87,17 +87,15 @@ class CodeGenerator:
 
     def generate(
         self,
-        item: _UnionT[
-            tlbparser.ParsedType,
-            tlbparser.SpecType,
-            typedesc.EnumValue,
-            typedesc.StructureHead,
-            typedesc.StructureBody,
-            typedesc.ComInterfaceHead,
-            typedesc.DispInterfaceHead,
-            typedesc.ComInterfaceBody,
-            typedesc.DispInterfaceBody,
-        ],
+        item: tlbparser.ParsedType
+        | tlbparser.SpecType
+        | typedesc.EnumValue
+        | typedesc.StructureHead
+        | typedesc.StructureBody
+        | typedesc.ComInterfaceHead
+        | typedesc.DispInterfaceHead
+        | typedesc.ComInterfaceBody
+        | typedesc.DispInterfaceBody,
     ) -> None:
         if item in self.done:
             return
@@ -233,7 +231,7 @@ class CodeGenerator:
             self.names.add("typelib_path")
 
     def generate_wrapper_code(
-        self, tdescs: Sequence[tlbparser.ParsedType], filename: Optional[str]
+        self, tdescs: Sequence[tlbparser.ParsedType], filename: str | None
     ) -> str:
         """Returns the code for the COM type library wrapper module.
 
@@ -639,7 +637,7 @@ class CodeGenerator:
         self.names.add(itf.name)
 
     def _is_known_interface(
-        self, item: _UnionT[typedesc.ComInterface, typedesc.DispInterface]
+        self, item: typedesc.ComInterface | typedesc.DispInterface
     ) -> bool:
         """Returns whether an interface is statically defined in `comtypes`,
         based on its name and iid.

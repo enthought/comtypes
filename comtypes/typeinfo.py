@@ -30,8 +30,7 @@ from ctypes.wintypes import (
     WCHAR,
     WORD,
 )
-from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, overload
-from typing import Union as _UnionT
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 # isort: off
 from comtypes import BSTR, COMMETHOD, GUID, IID, STDMETHOD, IUnknown, _CData
@@ -247,7 +246,7 @@ class ITypeLib(IUnknown):
 
         def GetDocumentation(
             self, index: int
-        ) -> tuple[str, Optional[str], int, Optional[str]]:
+        ) -> tuple[str, str | None, int, str | None]:
             """Return documentation for a type description."""
             ...
 
@@ -262,7 +261,7 @@ class ITypeLib(IUnknown):
             self.ReleaseTLibAttr,
         )
 
-    def IsName(self, name: str, lHashVal: int = 0) -> Optional[str]:
+    def IsName(self, name: str, lHashVal: int = 0) -> str | None:
         """Check if there is type information for this name.
 
         Returns the name with capitalization found in the type
@@ -275,9 +274,7 @@ class ITypeLib(IUnknown):
             return namebuf[:].split("\0", 1)[0]  # type: ignore
         return None
 
-    def FindName(
-        self, name: str, lHashVal: int = 0
-    ) -> Optional[tuple[int, "ITypeInfo"]]:
+    def FindName(self, name: str, lHashVal: int = 0) -> tuple[int, "ITypeInfo"] | None:
         # Hm...
         # Could search for more than one name - should we support this?
         found = ctypes.c_ushort(1)
@@ -332,7 +329,7 @@ class ITypeInfo(IUnknown):
         # ),
         def GetDllEntry(
             self, memid: int, invkind: int
-        ) -> tuple[Optional[str], Optional[str], int]:
+        ) -> tuple[str | None, str | None, int]:
             """Return the dll name, function name, and ordinal for a function
             and invkind.
             """
@@ -342,7 +339,7 @@ class ITypeInfo(IUnknown):
             """Get type info for reftype"""
             ...
 
-        def GetMops(self, index: int) -> Optional[str]:
+        def GetMops(self, index: int) -> str | None:
             """Get marshalling opcodes (whatever that is...)"""
             ...
 
@@ -369,9 +366,7 @@ class ITypeInfo(IUnknown):
             self.ReleaseTypeAttr,
         )
 
-    def GetDocumentation(
-        self, memid: int
-    ) -> tuple[str, Optional[str], int, Optional[str]]:
+    def GetDocumentation(self, memid: int) -> tuple[str, str | None, int, str | None]:
         """Return name, docstring, helpcontext, and helpfile for 'memid'."""
         name, doc, helpctx, helpfile = self._GetDocumentation(memid)  # type: ignore
         return fix_name(name), fix_name(doc), helpctx, fix_name(helpfile)
@@ -412,9 +407,9 @@ class ITypeInfo(IUnknown):
 
     def CreateInstance(
         self,
-        punkouter: Optional[type["_Pointer[IUnknown]"]] = None,
+        punkouter: type["_Pointer[IUnknown]"] | None = None,
         interface: type[_T_IUnknown] = IUnknown,
-        iid: Optional[GUID] = None,
+        iid: GUID | None = None,
     ) -> _T_IUnknown:
         if iid is None:
             iid = interface._iid_
@@ -429,12 +424,12 @@ class ITypeComp(IUnknown):
 
     def Bind(
         self, name: str, flags: int = 0, lHashVal: int = 0
-    ) -> _UnionT[
-        tuple[Literal["function"], "FUNCDESC"],
-        tuple[Literal["variable"], "VARDESC"],
-        tuple[Literal["type"], "ITypeComp"],
-        None,
-    ]:
+    ) -> (
+        tuple[Literal["function"], "FUNCDESC"]
+        | tuple[Literal["variable"], "VARDESC"]
+        | tuple[Literal["type"], "ITypeComp"]
+        | None
+    ):
         """Bind to a name"""
         bindptr = BINDPTR()
         desckind = DESCKIND()
@@ -542,7 +537,7 @@ from comtypes.recordinfo import GetRecordInfoFromGuids as GetRecordInfoFromGuids
 
 
 def LoadRegTypeLib(
-    guid: _UnionT[str, GUID], wMajorVerNum: int, wMinorVerNum: int, lcid: int = 0
+    guid: str | GUID, wMajorVerNum: int, wMinorVerNum: int, lcid: int = 0
 ) -> ITypeLib:
     """Load a registered type library"""
     tlib = POINTER(ITypeLib)()
@@ -575,9 +570,7 @@ def UnRegisterTypeLib(
     return _UnRegisterTypeLib(byref(GUID(libID)), wVerMajor, wVerMinor, lcid, syskind)
 
 
-def RegisterTypeLib(
-    tlib: ITypeLib, fullpath: str, helpdir: Optional[str] = None
-) -> int:
+def RegisterTypeLib(tlib: ITypeLib, fullpath: str, helpdir: str | None = None) -> int:
     """Register a type library in the registry"""
     return _RegisterTypeLib(tlib, c_wchar_p(fullpath), c_wchar_p(helpdir))
 
@@ -618,7 +611,7 @@ def QueryPathOfRegTypeLib(
     return pathname.value.split("\0")[0]
 
 
-def GetModuleFileName(handle: Optional[int], maxsize: int) -> str:
+def GetModuleFileName(handle: int | None, maxsize: int) -> str:
     """Returns the fullpath of the loaded module specified by the handle.
     If the handle is NULL, returns the executable file path of the current process.
 

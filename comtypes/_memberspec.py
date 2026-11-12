@@ -51,9 +51,9 @@ _NOTHING = object()
 def _unpack_argspec(
     idl: list[str],
     typ: type["_CDataType"],
-    name: Optional[str] = None,
+    name: str | None = None,
     defval: Any = _NOTHING,
-) -> tuple[list[str], type["_CDataType"], Optional[str], Any]:
+) -> tuple[list[str], type["_CDataType"], str | None, Any]:
     return idl, typ, name, defval
 
 
@@ -102,12 +102,12 @@ if TYPE_CHECKING:
 class _ComMemberSpec(NamedTuple):
     """Specifier for a slot of COM method or property."""
 
-    restype: Optional[type["_CDataType"]]
+    restype: type["_CDataType"] | None
     name: str
     argtypes: tuple[type["_CDataType"], ...]
-    paramflags: Optional[tuple["hints.ParamFlagType", ...]]
+    paramflags: tuple["hints.ParamFlagType", ...] | None
     idlflags: _UnionT["_ComIdlFlags", "_DispIdlFlags"]
-    doc: Optional[str]
+    doc: str | None
 
     def is_prop(self) -> bool:
         return _is_spec_prop(self)
@@ -119,7 +119,7 @@ class _DispMemberSpec(NamedTuple):
     what: Literal["DISPMETHOD", "DISPPROPERTY"]
     name: str
     idlflags: "_DispIdlFlags"
-    restype: Optional[type["_CDataType"]]
+    restype: type["_CDataType"] | None
     argspec: tuple["hints.ArgSpecElmType", ...]
 
     @property
@@ -166,7 +166,7 @@ class dispid(int):
 
 
 def STDMETHOD(
-    restype: Optional[type["_CDataType"]],
+    restype: type["_CDataType"] | None,
     name: str,
     argtypes: Sequence[type["_CDataType"]] = (),
 ) -> _ComMemberSpec:
@@ -190,8 +190,8 @@ def STDMETHOD(
 
 
 def DISPMETHOD(
-    idlflags: Sequence[_UnionT[int, str]],
-    restype: Optional[type["_CDataType"]],
+    idlflags: Sequence[int | str],
+    restype: type["_CDataType"] | None,
     name: str,
     *argspec: "hints.ArgSpecElmType",
 ) -> _DispMemberSpec:
@@ -226,7 +226,7 @@ def DISPMETHOD(
 
 
 def DISPPROPERTY(
-    idlflags: Sequence[_UnionT[int, str]],
+    idlflags: Sequence[int | str],
     proptype: type["_CDataType"],
     name: str,
 ) -> _DispMemberSpec:
@@ -259,8 +259,8 @@ def DISPPROPERTY(
 
 
 def COMMETHOD(
-    idlflags: Sequence[_UnionT[int, str]],
-    restype: Optional[type["_CDataType"]],
+    idlflags: Sequence[int | str],
+    restype: type["_CDataType"] | None,
     methodname: str,
     *argspec: "hints.ArgSpecElmType",
 ) -> _ComMemberSpec:
@@ -610,7 +610,7 @@ class DispMemberGenerator:
     def __init__(self, cls_name: str) -> None:
         self._props = DispPropertyGenerator(cls_name)
         # sequence of (name: str, func_or_prop: Callable | property, is_prop: bool)
-        self._items: list[tuple[str, _UnionT[Callable[..., Any], property], bool]] = []
+        self._items: list[tuple[str, Callable[..., Any] | property, bool]] = []
 
     def add(self, m: _DispMemberSpec) -> None:
         if m.what == "DISPPROPERTY":  # DISPPROPERTY

@@ -7,8 +7,7 @@ from collections.abc import Callable, Iterator, Sequence
 from ctypes import _CData, _CDataType
 from typing import Annotated as Annotated
 from typing import Any as Any
-from typing import ClassVar, Generic, NoReturn, Optional, Protocol, overload
-from typing import Union as _UnionT
+from typing import ClassVar, Generic, NoReturn, Protocol, overload
 
 if sys.version_info >= (3, 10):
     from typing import Concatenate, ParamSpec, TypeAlias
@@ -102,7 +101,7 @@ _R_PutRef = TypeVar("_R_PutRef", infer_variance=True)
 
 def put_or_putref(
     put: Callable[_P_Put, _R_Put], putref: Callable[_P_PutRef, _R_PutRef]
-) -> _UnionT[Callable[_P_Put, _R_Put], Callable[_P_PutRef, _R_PutRef]]: ...
+) -> Callable[_P_Put, _R_Put] | Callable[_P_PutRef, _R_PutRef]: ...
 
 _T_Inst = TypeVar("_T_Inst", infer_variance=True)
 _T_SetVal = TypeVar("_T_SetVal", infer_variance=True)
@@ -117,9 +116,7 @@ class _GetSetNormalProperty(Generic[_T_Inst, _R_Get, _T_SetVal]):
     @overload
     def __get__(self, instance: None, owner: type[_T_Inst], /) -> Self: ...
     @overload
-    def __get__(
-        self, instance: _T_Inst, owner: Optional[type[_T_Inst]], /
-    ) -> _R_Get: ...
+    def __get__(self, instance: _T_Inst, owner: type[_T_Inst] | None, /) -> _R_Get: ...
     def __set__(self, instance: _T_Inst, value: _T_SetVal, /) -> None: ...
 
 class _GetOnlyNormalProperty(Generic[_T_Inst, _R_Get]):
@@ -128,9 +125,7 @@ class _GetOnlyNormalProperty(Generic[_T_Inst, _R_Get]):
     @overload
     def __get__(self, instance: None, owner: type[_T_Inst], /) -> Self: ...
     @overload
-    def __get__(
-        self, instance: _T_Inst, owner: Optional[type[_T_Inst]], /
-    ) -> _R_Get: ...
+    def __get__(self, instance: _T_Inst, owner: type[_T_Inst] | None, /) -> _R_Get: ...
     def __set__(self, instance: _T_Inst, value: Any, /) -> NoReturn: ...
 
 class _SetOnlyNormalProperty(Generic[_T_Inst, _T_SetVal]):
@@ -141,7 +136,7 @@ class _SetOnlyNormalProperty(Generic[_T_Inst, _T_SetVal]):
     def __get__(self, instance: None, owner: type[_T_Inst], /) -> Self: ...
     @overload
     def __get__(
-        self, instance: _T_Inst, owner: Optional[type[_T_Inst]], /
+        self, instance: _T_Inst, owner: type[_T_Inst] | None, /
     ) -> NoReturn: ...
     def __set__(self, instance: _T_Inst, value: _T_SetVal, /) -> None: ...
 
@@ -162,7 +157,7 @@ class _GetSetBoundNamedProperty(Generic[_T_Inst, _P_Get, _R_Get, _P_Set]):
     name: str
     fget: Callable[Concatenate[_T_Inst, _P_Get], _R_Get]
     fset: Callable[Concatenate[_T_Inst, _P_Set], Any]
-    __doc__: Optional[str]
+    __doc__: str | None
     def __getitem__(self, index: Any, /) -> _R_Get: ...
     def __call__(self, *args: _P_Get.args, **kwargs: _P_Get.kwargs) -> _R_Get: ...
     def __setitem__(self, index: Any, value: Any, /) -> None: ...
@@ -172,20 +167,20 @@ class _GetSetNamedProperty(Generic[_T_Inst, _P_Get, _R_Get, _P_Set]):
     name: str
     fget: Callable[Concatenate[_T_Inst, _P_Get], _R_Get]
     fset: Callable[Concatenate[_T_Inst, _P_Set], Any]
-    __doc__: Optional[str]
+    __doc__: str | None
 
     @overload
     def __get__(self, instance: None, owner: type[_T_Inst], /) -> Self: ...
     @overload
     def __get__(
-        self, instance: _T_Inst, owner: Optional[type[_T_Inst]], /
+        self, instance: _T_Inst, owner: type[_T_Inst] | None, /
     ) -> _GetSetBoundNamedProperty[_T_Inst, _P_Get, _R_Get, _P_Set]: ...
     def __set__(self, instance: _T_Inst, value: Any, /) -> NoReturn: ...
 
 class _GetOnlyBoundNamedProperty(Generic[_T_Inst, _P_Get, _R_Get]):
     name: str
     fget: Callable[Concatenate[_T_Inst, _P_Get], _R_Get]
-    __doc__: Optional[str]
+    __doc__: str | None
     def __getitem__(self, index: Any, /) -> _R_Get: ...
     def __call__(self, *args: _P_Get.args, **kwargs: _P_Get.kwargs) -> _R_Get: ...
     def __setitem__(self, index: Any, value: Any, /) -> NoReturn: ...
@@ -194,20 +189,20 @@ class _GetOnlyBoundNamedProperty(Generic[_T_Inst, _P_Get, _R_Get]):
 class _GetOnlyNamedProperty(Generic[_T_Inst, _P_Get, _R_Get]):
     name: str
     fget: Callable[Concatenate[_T_Inst, _P_Get], _R_Get]
-    __doc__: Optional[str]
+    __doc__: str | None
 
     @overload
     def __get__(self, instance: None, owner: type[_T_Inst], /) -> Self: ...
     @overload
     def __get__(
-        self, instance: _T_Inst, owner: Optional[type[_T_Inst]], /
+        self, instance: _T_Inst, owner: type[_T_Inst] | None, /
     ) -> _GetOnlyBoundNamedProperty[_T_Inst, _P_Get, _R_Get]: ...
     def __set__(self, instance: _T_Inst, value: Any, /) -> NoReturn: ...
 
 class _SetOnlyBoundNamedProperty(Generic[_T_Inst, _P_Set]):
     name: str
     fset: Callable[Concatenate[_T_Inst, _P_Set], Any]
-    __doc__: Optional[str]
+    __doc__: str | None
     def __getitem__(self, index: Any, /) -> NoReturn: ...
     def __call__(self, *args: Any, **kwargs: Any) -> NoReturn: ...
     def __setitem__(self, index: Any, value: Any, /) -> None: ...
@@ -216,13 +211,13 @@ class _SetOnlyBoundNamedProperty(Generic[_T_Inst, _P_Set]):
 class _SetOnlyNamedProperty(Generic[_T_Inst, _P_Set]):
     name: str
     fset: Callable[Concatenate[_T_Inst, _P_Set], Any]
-    __doc__: Optional[str]
+    __doc__: str | None
 
     @overload
     def __get__(self, instance: None, owner: type[_T_Inst], /) -> Self: ...
     @overload
     def __get__(
-        self, instance: _T_Inst, owner: Optional[type[_T_Inst]], /
+        self, instance: _T_Inst, owner: type[_T_Inst] | None, /
     ) -> _SetOnlyBoundNamedProperty[_T_Inst, _P_Set]: ...
     def __set__(self, instance: _T_Inst, value: Any, /) -> NoReturn: ...
 
@@ -247,9 +242,7 @@ class _Descriptor(Protocol[_T_Inst, _R_Get]):
     @overload
     def __get__(self, instance: None, owner: type[_T_Inst], /) -> Self: ...
     @overload
-    def __get__(
-        self, instance: _T_Inst, owner: Optional[type[_T_Inst]], /
-    ) -> _R_Get: ...
+    def __get__(self, instance: _T_Inst, owner: type[_T_Inst] | None, /) -> _R_Get: ...
 
 # `__len__` for objects with `Count`
 @overload
@@ -262,9 +255,7 @@ _T_E = TypeVar("_T_E", infer_variance=True)
 
 @overload
 def to_dunder_iter(
-    newenum: _UnionT[
-        _Descriptor[_T_Inst, Iterator[_T_E]], Callable[[_T_Inst], Iterator[_T_E]]
-    ],
+    newenum: _Descriptor[_T_Inst, Iterator[_T_E]] | Callable[[_T_Inst], Iterator[_T_E]],
 ) -> Callable[[_T_Inst], Iterator[_T_E]]: ...
 @overload
 def to_dunder_iter(newenum: Any) -> Callable[..., NoReturn]: ...
@@ -273,11 +264,9 @@ def to_dunder_iter(newenum: Any) -> Callable[..., NoReturn]: ...
 # `__call__`
 @overload
 def to_dunder_call(
-    item: _UnionT[
-        _GetSetNamedProperty[_T_Inst, _P_Get, _R_Get, ...],
-        _GetOnlyNamedProperty[_T_Inst, _P_Get, _R_Get],
-        Callable[Concatenate[_T_Inst, _P_Get], _R_Get],
-    ],
+    item: _GetSetNamedProperty[_T_Inst, _P_Get, _R_Get, ...]
+    | _GetOnlyNamedProperty[_T_Inst, _P_Get, _R_Get]
+    | Callable[Concatenate[_T_Inst, _P_Get], _R_Get],
 ) -> Callable[Concatenate[_T_Inst, _P_Get], _R_Get]: ...
 @overload
 def to_dunder_call(item: Any) -> Callable[..., NoReturn]: ...
@@ -285,11 +274,9 @@ def to_dunder_call(item: Any) -> Callable[..., NoReturn]: ...
 # `__getitem__`
 @overload
 def to_dunder_getitem(
-    item: _UnionT[
-        _GetSetNamedProperty[_T_Inst, _P_Get, _R_Get, ...],
-        _GetOnlyNamedProperty[_T_Inst, _P_Get, _R_Get],
-        Callable[Concatenate[_T_Inst, _P_Get], _R_Get],
-    ],
+    item: _GetSetNamedProperty[_T_Inst, _P_Get, _R_Get, ...]
+    | _GetOnlyNamedProperty[_T_Inst, _P_Get, _R_Get]
+    | Callable[Concatenate[_T_Inst, _P_Get], _R_Get],
 ) -> Callable[Concatenate[_T_Inst, _P_Get], _R_Get]: ...
 @overload
 def to_dunder_getitem(item: Any) -> Callable[..., NoReturn]: ...
@@ -297,20 +284,16 @@ def to_dunder_getitem(item: Any) -> Callable[..., NoReturn]: ...
 # `__setitem__`
 @overload
 def to_dunder_setitem(
-    item: _UnionT[
-        _GetSetNamedProperty[_T_Inst, ..., Any, _P_Set],
-        _SetOnlyNamedProperty[_T_Inst, _P_Set],
-    ],
+    item: _GetSetNamedProperty[_T_Inst, ..., Any, _P_Set]
+    | _SetOnlyNamedProperty[_T_Inst, _P_Set],
 ) -> Callable[Concatenate[_T_Inst, _P_Set], Any]: ...
 @overload
 def to_dunder_setitem(item: Any) -> Callable[..., NoReturn]: ...
 
-_PosParamFlagType: TypeAlias = tuple[int, Optional[str]]
-_OptParamFlagType: TypeAlias = tuple[int, Optional[str], Any]
-ParamFlagType: TypeAlias = _UnionT[_PosParamFlagType, _OptParamFlagType]
+_PosParamFlagType: TypeAlias = tuple[int, str | None]
+_OptParamFlagType: TypeAlias = tuple[int, str | None, Any]
+ParamFlagType: TypeAlias = _PosParamFlagType | _OptParamFlagType
 _ResArgSpecElmType: TypeAlias = tuple[list[str], type[_CDataType]]
 _PosArgSpecElmType: TypeAlias = tuple[list[str], type[_CDataType], str]
 _OptArgSpecElmType: TypeAlias = tuple[list[str], type[_CDataType], str, Any]
-ArgSpecElmType: TypeAlias = _UnionT[
-    _ResArgSpecElmType, _PosArgSpecElmType, _OptArgSpecElmType
-]
+ArgSpecElmType: TypeAlias = _ResArgSpecElmType | _PosArgSpecElmType | _OptArgSpecElmType

@@ -7,8 +7,7 @@ import sys
 import types
 import winreg
 from collections.abc import Mapping
-from typing import Any, Optional
-from typing import Union as _UnionT
+from typing import Any
 
 import comtypes.client
 from comtypes import GUID, typeinfo
@@ -55,7 +54,7 @@ def _resolve_filename(tlib_string: str, dirpath: str) -> tuple[str, bool]:
     return tlib_string, False
 
 
-def GetModule(tlib: _UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType:
+def GetModule(tlib: Any | typeinfo.ITypeLib) -> types.ModuleType:
     """Create a module wrapping a COM typelibrary on demand.
 
     'tlib' must be ...
@@ -102,7 +101,7 @@ def GetModule(tlib: _UnionT[Any, typeinfo.ITypeLib]) -> types.ModuleType:
         # if a relative pathname is used, we try to interpret it relative to
         # the directory of the calling module (if not from command line)
         frame = sys._getframe(1)
-        _file_: Optional[str] = frame.f_globals.get("__file__", None)
+        _file_: str | None = frame.f_globals.get("__file__", None)
         pathname, is_abs = _resolve_filename(
             tlib_string,
             _file_ and os.path.dirname(_file_),  # type: ignore
@@ -159,8 +158,8 @@ def _load_tlib(obj: Any) -> typeinfo.ITypeLib:
     raise TypeError(f"'{obj!r}' is not supported type for loading typelib")
 
 
-def _get_existing_module(tlib: typeinfo.ITypeLib) -> Optional[types.ModuleType]:
-    def _get_friendly(name: str) -> Optional[types.ModuleType]:
+def _get_existing_module(tlib: typeinfo.ITypeLib) -> types.ModuleType | None:
+    def _get_friendly(name: str) -> types.ModuleType | None:
         try:
             mod = _my_import(name)
         except Exception as details:
@@ -168,7 +167,7 @@ def _get_existing_module(tlib: typeinfo.ITypeLib) -> Optional[types.ModuleType]:
         else:
             return mod
 
-    def _get_wrapper(name: str) -> Optional[types.ModuleType]:
+    def _get_wrapper(name: str) -> types.ModuleType | None:
         if name in sys.modules:
             return sys.modules[name]
         try:
@@ -213,7 +212,7 @@ def _create_module(modulename: str, code: str) -> types.ModuleType:
 
 
 class ModuleGenerator:
-    def __init__(self, tlib: typeinfo.ITypeLib, pathname: Optional[str]) -> None:
+    def __init__(self, tlib: typeinfo.ITypeLib, pathname: str | None) -> None:
         self.wrapper_name = codegenerator.name_wrapper_module(tlib)
         self.friendly_name = codegenerator.name_friendly_module(tlib)
         if pathname is None:

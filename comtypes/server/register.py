@@ -45,7 +45,6 @@ import winreg
 from collections.abc import Iterable, Iterator
 from ctypes import WinDLL, WinError
 from ctypes.wintypes import HKEY, LONG, LPCWSTR, MAX_PATH
-from typing import Optional, Union
 from winreg import HKEY_CLASSES_ROOT as HKCR
 from winreg import HKEY_CURRENT_USER as HKCU
 from winreg import HKEY_LOCAL_MACHINE as HKLM
@@ -65,7 +64,7 @@ from comtypes.typeinfo import (
 _debug = logging.getLogger(__name__).debug
 
 
-def get_winerror(exception: OSError) -> Optional[int]:
+def get_winerror(exception: OSError) -> int | None:
     try:
         return exception.winerror
     except AttributeError:
@@ -94,7 +93,7 @@ _KEYS = {
 }
 
 
-def _explain(hkey: int) -> Union[str, int]:
+def _explain(hkey: int) -> str | int:
     return _KEYS.get(hkey, hkey)
 
 
@@ -124,8 +123,8 @@ class Registrar:
     work.
     """
 
-    _frozen: Union[None, int, str]
-    _frozendllhandle: Optional[int]
+    _frozen: None | int | str
+    _frozendllhandle: int | None
 
     def __init__(self) -> None:
         self._frozen = getattr(sys, "frozen", None)
@@ -147,7 +146,7 @@ class Registrar:
             if get_winerror(detail) != 2:
                 raise
 
-    def debug(self, cls: type, levels: list[str], format: Optional[str]) -> None:
+    def debug(self, cls: type, levels: list[str], format: str | None) -> None:
         """Write entries in the registry to setup logging for this clsid."""
         # handlers
         # format
@@ -171,7 +170,7 @@ class Registrar:
                 if get_winerror(detail) != 2:
                     raise
 
-    def register(self, cls: type, executable: Optional[str] = None) -> None:
+    def register(self, cls: type, executable: str | None = None) -> None:
         """Register the COM server class."""
         # First, we unregister the object with force=True, to force removal
         # of all registry entries, even if we would not write them.
@@ -184,7 +183,7 @@ class Registrar:
             self._unregister(cls, force=True)
             self._register(cls, executable)
 
-    def _register(self, cls: type, executable: Optional[str] = None) -> None:
+    def _register(self, cls: type, executable: str | None = None) -> None:
         table = sorted(self._generate_reg_entries(cls))
         _debug("Registering %s", cls)
         for hkey, subkey, valuename, value in table:
@@ -276,8 +275,8 @@ class FrozenRegistryEntries(RegistryEntries):
     def __init__(
         self,
         cls: type,
-        frozen: Union[str, int],
-        frozendllhandle: Optional[int] = None,
+        frozen: str | int,
+        frozendllhandle: int | None = None,
     ) -> None:
         self._cls = cls
         self._frozen = frozen

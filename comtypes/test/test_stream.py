@@ -32,7 +32,6 @@ from ctypes.wintypes import (
     ULARGE_INTEGER,
 )
 from pathlib import Path
-from typing import Optional
 
 import comtypes.client
 from comtypes import hresult
@@ -92,7 +91,7 @@ _SHCreateStreamOnFileEx.restype = HRESULT
 
 
 def _create_stream_on_hglobal(
-    handle: Optional[int] = None, delete_on_release: bool = True
+    handle: int | None = None, delete_on_release: bool = True
 ) -> IStream:
     # Create an IStream
     stream = POINTER(IStream)()  # type: ignore

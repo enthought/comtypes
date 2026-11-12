@@ -12,7 +12,7 @@ interface, useful in client code.
 
 from ctypes import POINTER, Structure, c_int, c_ulong, c_ushort, c_wchar_p
 from ctypes.wintypes import BOOL, DWORD, WORD
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from comtypes import COMMETHOD, GUID, HRESULT, IPersist, IUnknown
 from comtypes.automation import VARIANT, tagEXCEPINFO
@@ -68,7 +68,7 @@ class IPropertyBag(IUnknown):
     if TYPE_CHECKING:
 
         def Read(
-            self, pszPropName: str, pVar: VARIANT, pErrorLog: Optional[IErrorLog]
+            self, pszPropName: str, pVar: VARIANT, pErrorLog: IErrorLog | None
         ) -> Any: ...
         def Write(self, pszPropName: str, pVar: Any) -> hints.Hresult: ...
 

@@ -48,7 +48,7 @@ class IClassFactory(IUnknown):
     def CreateInstance(
         self,
         punkouter: Optional["_Pointer[IUnknown]"] = None,
-        interface: Optional[type[IUnknown]] = None,
+        interface: type[IUnknown] | None = None,
         dynamic: bool = False,
     ) -> Any:
         if dynamic:

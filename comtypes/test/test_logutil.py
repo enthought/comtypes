@@ -8,7 +8,7 @@ from ctypes import POINTER, WinDLL, c_void_p
 from ctypes import c_size_t as SIZE_T
 from ctypes.wintypes import BOOL, DWORD, HANDLE, LPCWSTR
 from queue import Queue
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 from typing import Union as _UnionT
 
 from comtypes.client._events import SECURITY_ATTRIBUTES
@@ -78,7 +78,7 @@ def create_file_mapping(
     flprotect: int,
     size_high: int,
     size_low: int,
-    name: Optional[str],
+    name: str | None,
 ) -> Iterator[int]:
     """Context manager to creates a Windows file mapping object."""
     handle = _CreateFileMappingW(hfile, security, flprotect, size_high, size_low, name)
@@ -109,7 +109,7 @@ def create_event(
     security: _UnionT["_Pointer[SECURITY_ATTRIBUTES]", "_CArgObject", None],
     manual: bool,
     init: bool,
-    name: Optional[str],
+    name: str | None,
 ) -> Iterator[int]:
     """Context manager to creates a Windows event object."""
     handle = _CreateEventW(security, manual, init, name)

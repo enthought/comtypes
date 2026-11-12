@@ -13,8 +13,7 @@ import unittest
 from _ctypes import COMError
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypeVar
-from typing import Union as _UnionT
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from comtypes import CLSCTX_LOCAL_SERVER, IUnknown, _safearray
 from comtypes.client import CreateObject, GetModule
@@ -70,10 +69,8 @@ class _BstrRecordScenariosMixin(_TCBase):
     """
 
     interface: ClassVar[
-        _UnionT[
-            type["ComtypesCppTestSrvLib.IDualRecordSafearrayTest"],
-            type["ComtypesCppTestSrvLib.IDispRecordSafearrayTest"],
-        ]
+        type["ComtypesCppTestSrvLib.IDualRecordSafearrayTest"]
+        | type["ComtypesCppTestSrvLib.IDispRecordSafearrayTest"]
     ]
 
     def test_first_record_length_1_safearray_by_from_param(self):
@@ -424,7 +421,7 @@ def enable_fault_log(tmpfile: Path) -> io.TextIOWrapper:
     return f
 
 
-def run_in_mp(fn: Callable[[Path], Any]) -> tuple[Optional[int], str]:
+def run_in_mp(fn: Callable[[Path], Any]) -> tuple[int | None, str]:
     """Run a function in a separate process and return exit code and output.
 
     Using spawn isolates the process so crashes like segfaults do not affect

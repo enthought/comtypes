@@ -1,5 +1,4 @@
 import io
-from typing import Optional
 
 from comtypes.tools import typedesc
 from comtypes.tools.codegenerator import typeannotator
@@ -60,7 +59,7 @@ class LibraryHeadWriter:
 
 
 class CoClassHeadWriter:
-    def __init__(self, stream: io.StringIO, filename: Optional[str]) -> None:
+    def __init__(self, stream: io.StringIO, filename: str | None) -> None:
         self.stream = stream
         self.filename = filename
 

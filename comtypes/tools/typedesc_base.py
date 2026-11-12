@@ -1,5 +1,5 @@
 # typedesc.py - classes representing C type descriptions
-from typing import Any, Generic, Optional, SupportsInt, TypeVar, final
+from typing import Any, Generic, SupportsInt, TypeVar, final
 
 _TD = TypeVar("_TD")
 
@@ -167,8 +167,8 @@ class _Struct_Union_Base:
     name: str
     align: int
     members: list["Field"]
-    artificial: Optional[Any]
-    size: Optional[int]
+    artificial: Any | None
+    size: int | None
     _recordinfo_: tuple[str, int, int, int, str]
 
     location = None
@@ -191,8 +191,8 @@ class Structure(_Struct_Union_Base):
         name: str,
         align: SupportsInt,
         members: list["Field"],
-        size: Optional[SupportsInt],
-        artificial: Optional[Any] = None,
+        size: SupportsInt | None,
+        artificial: Any | None = None,
     ) -> None:
         self.name = name
         self.align = int(align)
@@ -212,8 +212,8 @@ class Union(_Struct_Union_Base):
         name: str,
         align: SupportsInt,
         members: list["Field"],
-        size: Optional[SupportsInt],
-        artificial: Optional[Any] = None,
+        size: SupportsInt | None,
+        artificial: Any | None = None,
     ) -> None:
         self.name = name
         self.align = int(align)
@@ -229,7 +229,7 @@ class Union(_Struct_Union_Base):
 @final
 class Field:
     def __init__(
-        self, name: str, typ: Any, bits: Optional[Any], offset: SupportsInt
+        self, name: str, typ: Any, bits: Any | None, offset: SupportsInt
     ) -> None:
         self.name = name
         self.typ = typ
