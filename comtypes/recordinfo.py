@@ -1,11 +1,5 @@
 import ctypes
-from ctypes import (
-    POINTER,
-    OleDLL,
-    byref,
-    c_void_p,
-    c_wchar_p,
-)
+from ctypes import POINTER, OleDLL, byref, c_void_p, c_wchar_p
 from ctypes.wintypes import BOOL, LCID, ULONG
 from typing import TYPE_CHECKING, Any
 
