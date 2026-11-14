@@ -82,13 +82,8 @@ def _make_safearray_type(itemtype):
         vartype = _ctype_to_vartype[itemtype]
         extra = None
     except KeyError:
-        if issubclass(itemtype, Structure):
-            try:
-                guids = itemtype._recordinfo_
-            except AttributeError:
-                extra = None
-            else:
-                extra = GetRecordInfoFromGuids(*guids)
+        if issubclass(itemtype, SupportsRecordInfo):
+            extra = GetRecordInfoFromGuids(*itemtype._recordinfo_)
             vartype = VT_RECORD
         elif issubclass(itemtype, POINTER(IDispatch)):
             vartype = VT_DISPATCH
@@ -493,4 +488,4 @@ from comtypes._automation import (
     tagDEC,
 )
 from comtypes.automation import IDispatch
-from comtypes.recordinfo import GetRecordInfoFromGuids
+from comtypes.recordinfo import GetRecordInfoFromGuids, SupportsRecordInfo
