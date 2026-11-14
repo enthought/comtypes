@@ -78,10 +78,10 @@ def _make_safearray_type(itemtype):
     meta = type(_safearray.tagSAFEARRAY)
     sa_type = meta(f"SAFEARRAY_{itemtype.__name__}", (_safearray.tagSAFEARRAY,), {})
 
-    try:
+    if itemtype in _ctype_to_vartype:
         vartype = _ctype_to_vartype[itemtype]
         extra = None
-    except KeyError:
+    else:
         if issubclass(itemtype, SupportsRecordInfo):
             extra = GetRecordInfoFromGuids(*itemtype._recordinfo_)
             vartype = VT_RECORD
