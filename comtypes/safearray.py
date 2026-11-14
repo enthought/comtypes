@@ -81,18 +81,17 @@ def _make_safearray_type(itemtype):
     if itemtype in _ctype_to_vartype:
         vartype = _ctype_to_vartype[itemtype]
         extra = None
+    elif issubclass(itemtype, SupportsRecordInfo):
+        extra = GetRecordInfoFromGuids(*itemtype._recordinfo_)
+        vartype = VT_RECORD
+    elif issubclass(itemtype, POINTER(IDispatch)):
+        vartype = VT_DISPATCH
+        extra = pointer(itemtype._iid_)
+    elif issubclass(itemtype, POINTER(IUnknown)):
+        vartype = VT_UNKNOWN
+        extra = pointer(itemtype._iid_)
     else:
-        if issubclass(itemtype, SupportsRecordInfo):
-            extra = GetRecordInfoFromGuids(*itemtype._recordinfo_)
-            vartype = VT_RECORD
-        elif issubclass(itemtype, POINTER(IDispatch)):
-            vartype = VT_DISPATCH
-            extra = pointer(itemtype._iid_)
-        elif issubclass(itemtype, POINTER(IUnknown)):
-            vartype = VT_UNKNOWN
-            extra = pointer(itemtype._iid_)
-        else:
-            raise TypeError(itemtype)
+        raise TypeError(itemtype)
 
     @Patch(POINTER(sa_type))
     class _:
