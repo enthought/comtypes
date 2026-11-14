@@ -17,6 +17,7 @@ except (ImportError, OSError):
 
 
 class SupportsRecordInfoTest(unittest.TestCase):
+    # TODO: Use assertIsSubclass / assertNotIsSubclass in Python 3.14+
     class Valid(Structure):
         _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
 
@@ -57,22 +58,22 @@ class SupportsRecordInfoTest(unittest.TestCase):
             self.WithFiveButWrongElement,
         ):
             with self.subTest(typ.__name__):
-                self.assertNotIsSubclass(typ, SupportsRecordInfo)
-                self.assertNotIsInstance(typ(), SupportsRecordInfo)
+                self.assertFalse(issubclass(typ, SupportsRecordInfo))
+                self.assertFalse(isinstance(typ(), SupportsRecordInfo))
 
     def test_not_a_structure(self):
         for typ in (self.NotAStructureButUnion, self.NotAStructureButPlain):
             with self.subTest(typ.__name__):
-                self.assertNotIsSubclass(typ, SupportsRecordInfo)
-                self.assertNotIsInstance(typ(), SupportsRecordInfo)
+                self.assertFalse(issubclass(typ, SupportsRecordInfo))
+                self.assertFalse(isinstance(typ(), SupportsRecordInfo))
 
     def test_not_a_class(self):
-        self.assertNotIsSubclass(42, SupportsRecordInfo)  # type: ignore
+        self.assertFalse(issubclass(42, SupportsRecordInfo))  # type: ignore
 
     def test_instance_attribute_is_ignored(self):
         obj = self.Missing()
         obj._recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
-        self.assertNotIsInstance(obj, SupportsRecordInfo)
+        self.assertFalse(isinstance(obj, SupportsRecordInfo))
 
     def test_cannot_subclass(self):
         with self.assertRaises(TypeError):
