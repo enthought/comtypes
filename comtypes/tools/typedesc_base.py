@@ -172,6 +172,7 @@ class _Struct_Union_Base:
     location = None
 
     def __init__(self):
+        self.members: list["Field"] = []
         self.struct_body = StructureBody(self)
         self.struct_head = StructureHead(self)
 
@@ -191,14 +192,12 @@ class Structure(_Struct_Union_Base):
         self,
         name: str,
         align: SupportsInt,
-        members: list["Field"],
         size: SupportsInt | None,
         artificial: Any | None = None,
         recordinfo: tuple[str, int, int, int, str] | None = None,
     ) -> None:
         self.name = name
         self.align = int(align)
-        self.members = members
         self.artificial = artificial
         if size is not None:
             self.size = int(size)
@@ -214,13 +213,11 @@ class Union(_Struct_Union_Base):
         self,
         name: str,
         align: SupportsInt,
-        members: list["Field"],
         size: SupportsInt | None,
         artificial: Any | None = None,
     ) -> None:
         self.name = name
         self.align = int(align)
-        self.members = members
         self.artificial = artificial
         if size is not None:
             self.size = int(size)

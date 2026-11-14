@@ -48,7 +48,6 @@ HRESULT_type = typedesc.Typedef("HRESULT", ulong_type)
 VARIANT_type = typedesc.Structure(
     "VARIANT",
     align=alignment(automation.VARIANT) * 8,
-    members=[],
     size=sizeof(automation.VARIANT) * 8,
 )
 
@@ -82,7 +81,6 @@ IDISPATCH_type.extend_members(
 DECIMAL_type = typedesc.Structure(
     "DECIMAL",
     align=alignment(automation.DECIMAL) * 8,
-    members=[],
     size=sizeof(automation.DECIMAL) * 8,
 )
 
@@ -195,7 +193,7 @@ class Parser:
                     f"\n\tgenerating type '{type_name}' instead"
                 )
                 warnings.warn(message, UserWarning)
-                result = typedesc.Structure(type_name, align=8, members=[], size=0)
+                result = typedesc.Structure(type_name, align=8, size=0)
                 return result
             result = self.parse_typeinfo(ti)
             assert result is not None, ti.GetDocumentation(-1)[0]
@@ -229,7 +227,6 @@ class Parser:
     def ParseRecord(
         self, tinfo: typeinfo.ITypeInfo, ta: typeinfo.TYPEATTR
     ) -> typedesc.Structure:
-        members = []  # will be filled later
         struct_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
         tlib, _ = tinfo.GetContainingTypeLib()
         tlib_ta = tlib.GetLibAttr()
@@ -246,7 +243,7 @@ class Parser:
         else:
             guids = None
         struct = typedesc.Structure(
-            struct_name, align=align, members=members, size=size, recordinfo=guids
+            struct_name, align=align, size=size, recordinfo=guids
         )
         self._register(struct_name, struct)
 
@@ -600,7 +597,6 @@ class Parser:
         self, tinfo: typeinfo.ITypeInfo, ta: typeinfo.TYPEATTR
     ) -> typedesc.Union:
         union_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
-        members = []
         tlib, _ = tinfo.GetContainingTypeLib()
         tlib_ta = tlib.GetLibAttr()
         # If this is a 32-bit typlib being loaded in a 64-bit process, then the
@@ -610,7 +606,7 @@ class Parser:
             size, align = None, 64
         else:
             size, align = ta.cbSizeInstance * 8, ta.cbAlignment * 8
-        union = typedesc.Union(union_name, align=align, members=members, size=size)
+        union = typedesc.Union(union_name, align=align, size=size)
         self._register(union_name, union)
 
         for i in range(ta.cVars):
