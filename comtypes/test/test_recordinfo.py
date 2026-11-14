@@ -1,8 +1,9 @@
 import unittest
-from ctypes import byref, pointer, sizeof
+from ctypes import Structure, Union, byref, pointer, sizeof
 
-from comtypes import typeinfo
+from comtypes import GUID, typeinfo
 from comtypes.client import GetModule
+from comtypes.recordinfo import SupportsRecordInfo
 
 ComtypesCppTestSrvLib_GUID = "{07D2AEE5-1DF8-4D2C-953A-554ADFD25F99}"
 
@@ -13,6 +14,78 @@ try:
     IMPORT_FAILED = False
 except (ImportError, OSError):
     IMPORT_FAILED = True
+
+
+class SupportsRecordInfoTest(unittest.TestCase):
+    class Valid(Structure):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
+
+    class Missing(Structure): ...
+
+    class WithNone(Structure):
+        _recordinfo_ = None
+
+    class WithEmptyTuple(Structure):
+        _recordinfo_ = ()
+
+    class WithFourElements(Structure):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0)
+
+    class WithSixElements(Structure):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()), 0)
+
+    class WithFiveButWrongElement(Structure):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, 0)
+
+    class NotAStructureButUnion(Union):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
+
+    class NotAStructureButPlain:
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
+
+    def test_valid(self):
+        self.assertTrue(issubclass(self.Valid, SupportsRecordInfo))
+        self.assertIsInstance(self.Valid(), SupportsRecordInfo)
+
+    def test_invalid_structures(self):
+        for typ in (
+            self.Missing,
+            self.WithNone,
+            self.WithEmptyTuple,
+            self.WithFourElements,
+            self.WithSixElements,
+            self.WithFiveButWrongElement,
+        ):
+            with self.subTest(typ.__name__):
+                self.assertNotIsSubclass(typ, SupportsRecordInfo)
+                self.assertNotIsInstance(typ(), SupportsRecordInfo)
+
+    def test_not_a_structure(self):
+        for typ in (self.NotAStructureButUnion, self.NotAStructureButPlain):
+            with self.subTest(typ.__name__):
+                self.assertNotIsSubclass(typ, SupportsRecordInfo)
+                self.assertNotIsInstance(typ(), SupportsRecordInfo)
+
+    def test_not_a_class(self):
+        self.assertNotIsSubclass(42, SupportsRecordInfo)  # type: ignore
+
+    def test_instance_attribute_is_ignored(self):
+        obj = self.Missing()
+        obj._recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
+        self.assertNotIsInstance(obj, SupportsRecordInfo)
+
+    def test_cannot_subclass(self):
+        with self.assertRaises(TypeError):
+
+            class BadSub(SupportsRecordInfo): ...  # type: ignore
+
+        with self.assertRaises(TypeError):
+
+            class BadMeta(type(SupportsRecordInfo)): ...
+
+    def test_cannot_instantiated(self):
+        with self.assertRaises(TypeError):
+            SupportsRecordInfo()
 
 
 def _create_recordinfo() -> typeinfo.IRecordInfo:

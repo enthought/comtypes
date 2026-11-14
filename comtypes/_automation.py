@@ -527,7 +527,7 @@ class tagVARIANT(Structure):
                 obj = _midlSAFEARRAY(typ).create(value)
             memmove(byref(self._), byref(obj), sizeof(obj))
             self.vt = VT_ARRAY | obj._vartype_
-        elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
+        elif isinstance(value, SupportsRecordInfo):
             guids = value._recordinfo_
             ri = GetRecordInfoFromGuids(*guids)
             self.vt = VT_RECORD
@@ -575,7 +575,7 @@ class tagVARIANT(Structure):
             ref = value._obj
             self._.c_void_p = addressof(ref)
             self.__keepref = value
-            if isinstance(ref, Structure) and hasattr(ref, "_recordinfo_"):
+            if isinstance(ref, SupportsRecordInfo):
                 guids = ref._recordinfo_
                 ri = GetRecordInfoFromGuids(*guids)
                 self.vt = VT_RECORD | VT_BYREF
@@ -595,7 +595,7 @@ class tagVARIANT(Structure):
             ref = value.contents
             self._.c_void_p = addressof(ref)
             self.__keepref = value
-            if isinstance(ref, Structure) and hasattr(ref, "_recordinfo_"):
+            if isinstance(ref, SupportsRecordInfo):
                 guids = ref._recordinfo_
                 ri = GetRecordInfoFromGuids(*guids)
                 self.vt = VT_RECORD | VT_BYREF
@@ -997,8 +997,9 @@ _ctype_to_vartype[c_char] = VT_UI1
 from comtypes.safearray import _midlSAFEARRAY
 from comtypes.automation import IDispatch
 from comtypes.recordinfo import (
-    IRecordInfo,
     GetRecordInfoFromGuids,
+    IRecordInfo,
     SafeArrayGetRecordInfo,
+    SupportsRecordInfo,
 )
 # isort: on
