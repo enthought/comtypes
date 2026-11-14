@@ -601,22 +601,17 @@ class Parser:
     ) -> typedesc.Union:
         union_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
         members = []
-        union = typedesc.Union(
-            union_name,
-            align=ta.cbAlignment * 8,
-            members=members,
-            size=ta.cbSizeInstance * 8,
-        )
-        self._register(union_name, union)
-
         tlib, _ = tinfo.GetContainingTypeLib()
         tlib_ta = tlib.GetLibAttr()
         # If this is a 32-bit typlib being loaded in a 64-bit process, then the
         # size and alignment are incorrect. Set the size to None to disable
         # size checks and correct the alignment.
         if is_64bits and tlib_ta.syskind == typeinfo.SYS_WIN32:
-            union.size = None
-            union.align = 64
+            size, align = None, 64
+        else:
+            size, align = ta.cbSizeInstance * 8, ta.cbAlignment * 8
+        union = typedesc.Union(union_name, align=align, members=members, size=size)
+        self._register(union_name, union)
 
         for i in range(ta.cVars):
             vd = tinfo.GetVarDesc(i)
