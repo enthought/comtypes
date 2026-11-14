@@ -1,8 +1,9 @@
 import unittest
-from ctypes import byref, pointer, sizeof
+from ctypes import Structure, Union, byref, pointer, sizeof
 
-from comtypes import typeinfo
+from comtypes import GUID, typeinfo
 from comtypes.client import GetModule
+from comtypes.recordinfo import SupportsRecordInfo
 
 ComtypesCppTestSrvLib_GUID = "{07D2AEE5-1DF8-4D2C-953A-554ADFD25F99}"
 
@@ -15,59 +16,130 @@ except (ImportError, OSError):
     IMPORT_FAILED = True
 
 
-def _create_recordinfo() -> typeinfo.IRecordInfo:
-    return typeinfo.GetRecordInfoFromGuids(*StructRecordParamTest._recordinfo_)
+class SupportsRecordInfoTest(unittest.TestCase):
+    # TODO: Use assertIsSubclass / assertNotIsSubclass in Python 3.14+
+    class Valid(Structure):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
 
+    class Missing(Structure): ...
 
-def _create_record(
-    question: str, answer: int, needs_clarification: bool
-) -> "StructRecordParamTest":
-    record = StructRecordParamTest()
-    record.question = question
-    record.answer = answer
-    record.needs_clarification = needs_clarification
-    return record
+    class WithNone(Structure):
+        _recordinfo_ = None
+
+    class WithEmptyTuple(Structure):
+        _recordinfo_ = ()
+
+    class WithFourElements(Structure):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0)
+
+    class WithSixElements(Structure):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()), 0)
+
+    class WithFiveButWrongElement(Structure):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, 0)
+
+    class NotAStructureButUnion(Union):
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
+
+    class NotAStructureButPlain:
+        _recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
+
+    def test_valid(self):
+        self.assertTrue(issubclass(self.Valid, SupportsRecordInfo))
+        self.assertIsInstance(self.Valid(), SupportsRecordInfo)
+
+    def test_invalid_structures(self):
+        for typ in (
+            self.Missing,
+            self.WithNone,
+            self.WithEmptyTuple,
+            self.WithFourElements,
+            self.WithSixElements,
+            self.WithFiveButWrongElement,
+        ):
+            with self.subTest(typ.__name__):
+                self.assertFalse(issubclass(typ, SupportsRecordInfo))
+                self.assertFalse(isinstance(typ(), SupportsRecordInfo))
+
+    def test_not_a_structure(self):
+        for typ in (self.NotAStructureButUnion, self.NotAStructureButPlain):
+            with self.subTest(typ.__name__):
+                self.assertFalse(issubclass(typ, SupportsRecordInfo))
+                self.assertFalse(isinstance(typ(), SupportsRecordInfo))
+
+    def test_not_a_class(self):
+        self.assertFalse(issubclass(42, SupportsRecordInfo))  # type: ignore
+
+    def test_instance_attribute_is_ignored(self):
+        obj = self.Missing()
+        obj._recordinfo_ = (str(GUID.create_new()), 1, 0, 0, str(GUID.create_new()))
+        self.assertFalse(isinstance(obj, SupportsRecordInfo))
+
+    def test_cannot_subclass(self):
+        with self.assertRaises(TypeError):
+
+            class BadSub(SupportsRecordInfo): ...  # type: ignore
+
+        with self.assertRaises(TypeError):
+
+            class BadMeta(type(SupportsRecordInfo)): ...
+
+    def test_cannot_instantiated(self):
+        with self.assertRaises(TypeError):
+            SupportsRecordInfo()
 
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class Test_IRecordInfo(unittest.TestCase):
+    def _create_recordinfo(self) -> typeinfo.IRecordInfo:
+        return typeinfo.GetRecordInfoFromGuids(*StructRecordParamTest._recordinfo_)
+
+    def _create_record(
+        self, question: str, answer: int, needs_clarification: bool
+    ) -> "StructRecordParamTest":
+        record = StructRecordParamTest()
+        record.question = question
+        record.answer = answer
+        record.needs_clarification = needs_clarification
+        return record
+
     def test_RecordCopy(self):
         dst_rec = StructRecordParamTest()
-        ri = _create_recordinfo()
-        ri.RecordCopy(pointer(_create_record("foo", 3, True)), byref(dst_rec))
+        ri = self._create_recordinfo()
+        ri.RecordCopy(pointer(self._create_record("foo", 3, True)), byref(dst_rec))
         self.assertEqual(dst_rec.question, "foo")
         self.assertEqual(dst_rec.answer, 3)
         self.assertEqual(dst_rec.needs_clarification, True)
 
     def test_GetGuid(self):
         *_, expected_guid = StructRecordParamTest._recordinfo_
-        self.assertEqual(str(_create_recordinfo().GetGuid()), expected_guid)
+        self.assertEqual(str(self._create_recordinfo().GetGuid()), expected_guid)
 
     def test_GetName(self):
         self.assertEqual(
-            _create_recordinfo().GetName(),
+            self._create_recordinfo().GetName(),
             StructRecordParamTest.__qualname__,
         )
 
     def test_GetSize(self):
         self.assertEqual(
-            _create_recordinfo().GetSize(),
+            self._create_recordinfo().GetSize(),
             sizeof(StructRecordParamTest),
         )
 
     def test_GetTypeInfo(self):
-        ta = _create_recordinfo().GetTypeInfo().GetTypeAttr()
+        ta = self._create_recordinfo().GetTypeInfo().GetTypeAttr()
         *_, expected_guid = StructRecordParamTest._recordinfo_
         self.assertEqual(str(ta.guid), expected_guid)
 
     def test_IsMatchingType(self):
-        ri = _create_recordinfo()
+        ri = self._create_recordinfo()
         ti = ri.GetTypeInfo()
         self.assertTrue(typeinfo.GetRecordInfoFromTypeInfo(ti).IsMatchingType(ri))
 
     def test_RecordCreateCopy(self):
-        ri = _create_recordinfo()
-        actual = ri.RecordCreateCopy(byref(_create_record("foo", 3, True)))
+        ri = self._create_recordinfo()
+        actual = ri.RecordCreateCopy(byref(self._create_record("foo", 3, True)))
         self.assertIsInstance(actual, int)
         dst_rec = StructRecordParamTest()
         ri.RecordCopy(actual, byref(dst_rec))

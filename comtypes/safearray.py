@@ -78,26 +78,20 @@ def _make_safearray_type(itemtype):
     meta = type(_safearray.tagSAFEARRAY)
     sa_type = meta(f"SAFEARRAY_{itemtype.__name__}", (_safearray.tagSAFEARRAY,), {})
 
-    try:
+    if itemtype in _ctype_to_vartype:
         vartype = _ctype_to_vartype[itemtype]
         extra = None
-    except KeyError:
-        if issubclass(itemtype, Structure):
-            try:
-                guids = itemtype._recordinfo_
-            except AttributeError:
-                extra = None
-            else:
-                extra = GetRecordInfoFromGuids(*guids)
-            vartype = VT_RECORD
-        elif issubclass(itemtype, POINTER(IDispatch)):
-            vartype = VT_DISPATCH
-            extra = pointer(itemtype._iid_)
-        elif issubclass(itemtype, POINTER(IUnknown)):
-            vartype = VT_UNKNOWN
-            extra = pointer(itemtype._iid_)
-        else:
-            raise TypeError(itemtype)
+    elif issubclass(itemtype, SupportsRecordInfo):
+        extra = GetRecordInfoFromGuids(*itemtype._recordinfo_)
+        vartype = VT_RECORD
+    elif issubclass(itemtype, POINTER(IDispatch)):
+        vartype = VT_DISPATCH
+        extra = pointer(itemtype._iid_)
+    elif issubclass(itemtype, POINTER(IUnknown)):
+        vartype = VT_UNKNOWN
+        extra = pointer(itemtype._iid_)
+    else:
+        raise TypeError(itemtype)
 
     @Patch(POINTER(sa_type))
     class _:
@@ -493,4 +487,4 @@ from comtypes._automation import (
     tagDEC,
 )
 from comtypes.automation import IDispatch
-from comtypes.recordinfo import GetRecordInfoFromGuids
+from comtypes.recordinfo import GetRecordInfoFromGuids, SupportsRecordInfo

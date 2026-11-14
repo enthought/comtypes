@@ -21,7 +21,7 @@ class StructureHeadWriter:
             print(f"# {head.struct.location}", file=self.stream)
         if isinstance(head.struct, typedesc.Structure):
             print(f"class {head.struct.name}(Structure):", file=self.stream)
-            if hasattr(head.struct, "_recordinfo_"):
+            if head.struct._recordinfo_ is not None:
                 print(
                     f"    _recordinfo_ = {head.struct._recordinfo_!r}", file=self.stream
                 )

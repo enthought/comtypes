@@ -169,11 +169,10 @@ class _Struct_Union_Base:
     members: list["Field"]
     artificial: Any | None
     size: int | None
-    _recordinfo_: tuple[str, int, int, int, str]
-
     location = None
 
     def __init__(self):
+        self.members: list["Field"] = []
         self.struct_body = StructureBody(self)
         self.struct_head = StructureHead(self)
 
@@ -183,6 +182,9 @@ class _Struct_Union_Base:
     def get_head(self) -> StructureHead:
         return self.struct_head
 
+    def add_member(self, member: "Field") -> None:
+        self.members.append(member)
+
 
 @final
 class Structure(_Struct_Union_Base):
@@ -190,18 +192,18 @@ class Structure(_Struct_Union_Base):
         self,
         name: str,
         align: SupportsInt,
-        members: list["Field"],
         size: SupportsInt | None,
         artificial: Any | None = None,
+        recordinfo: tuple[str, int, int, int, str] | None = None,
     ) -> None:
         self.name = name
         self.align = int(align)
-        self.members = members
         self.artificial = artificial
         if size is not None:
             self.size = int(size)
         else:
             self.size = None
+        self._recordinfo_ = recordinfo
         super().__init__()
 
 
@@ -211,13 +213,11 @@ class Union(_Struct_Union_Base):
         self,
         name: str,
         align: SupportsInt,
-        members: list["Field"],
         size: SupportsInt | None,
         artificial: Any | None = None,
     ) -> None:
         self.name = name
         self.align = int(align)
-        self.members = members
         self.artificial = artificial
         if size is not None:
             self.size = int(size)

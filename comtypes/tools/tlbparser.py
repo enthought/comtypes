@@ -48,7 +48,6 @@ HRESULT_type = typedesc.Typedef("HRESULT", ulong_type)
 VARIANT_type = typedesc.Structure(
     "VARIANT",
     align=alignment(automation.VARIANT) * 8,
-    members=[],
     size=sizeof(automation.VARIANT) * 8,
 )
 
@@ -82,7 +81,6 @@ IDISPATCH_type.extend_members(
 DECIMAL_type = typedesc.Structure(
     "DECIMAL",
     align=alignment(automation.DECIMAL) * 8,
-    members=[],
     size=sizeof(automation.DECIMAL) * 8,
 )
 
@@ -195,7 +193,7 @@ class Parser:
                     f"\n\tgenerating type '{type_name}' instead"
                 )
                 warnings.warn(message, UserWarning)
-                result = typedesc.Structure(type_name, align=8, members=[], size=0)
+                result = typedesc.Structure(type_name, align=8, size=0)
                 return result
             result = self.parse_typeinfo(ti)
             assert result is not None, ti.GetDocumentation(-1)[0]
@@ -229,33 +227,25 @@ class Parser:
     def ParseRecord(
         self, tinfo: typeinfo.ITypeInfo, ta: typeinfo.TYPEATTR
     ) -> typedesc.Structure:
-        members = []  # will be filled later
         struct_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
-        struct = typedesc.Structure(
-            struct_name,
-            align=ta.cbAlignment * 8,
-            members=members,
-            size=ta.cbSizeInstance * 8,
-        )
-        self._register(struct_name, struct)
-
         tlib, _ = tinfo.GetContainingTypeLib()
         tlib_ta = tlib.GetLibAttr()
         # If this is a 32-bit typlib being loaded in a 64-bit process, then the
         # size and alignment are incorrect. Set the size to None to disable
         # size checks and correct the alignment.
         if is_64bits and tlib_ta.syskind == typeinfo.SYS_WIN32:
-            struct.size = None
-            struct.align = 64
-
+            size, align = None, 64
+        else:
+            size, align = ta.cbSizeInstance * 8, ta.cbAlignment * 8
         if ta.guid:
-            struct._recordinfo_ = (
-                str(tlib_ta.guid),
-                tlib_ta.wMajorVerNum,
-                tlib_ta.wMinorVerNum,
-                tlib_ta.lcid,
-                str(ta.guid),
-            )
+            ma, mi, lcid = tlib_ta.wMajorVerNum, tlib_ta.wMinorVerNum, tlib_ta.lcid
+            guids = str(tlib_ta.guid), ma, mi, lcid, str(ta.guid)
+        else:
+            guids = None
+        struct = typedesc.Structure(
+            struct_name, align=align, size=size, recordinfo=guids
+        )
+        self._register(struct_name, struct)
 
         for i in range(ta.cVars):
             vd = tinfo.GetVarDesc(i)
@@ -264,7 +254,7 @@ class Parser:
             assert vd.varkind == typeinfo.VAR_PERINSTANCE
             typ = self.make_type(vd.elemdescVar.tdesc, tinfo)
             field = typedesc.Field(name, typ, None, offset)  # bits
-            members.append(field)
+            struct.add_member(field)
         return struct
 
     # TKIND_MODULE = 2
@@ -607,23 +597,17 @@ class Parser:
         self, tinfo: typeinfo.ITypeInfo, ta: typeinfo.TYPEATTR
     ) -> typedesc.Union:
         union_name, doc, helpcntext, helpfile = tinfo.GetDocumentation(-1)
-        members = []
-        union = typedesc.Union(
-            union_name,
-            align=ta.cbAlignment * 8,
-            members=members,
-            size=ta.cbSizeInstance * 8,
-        )
-        self._register(union_name, union)
-
         tlib, _ = tinfo.GetContainingTypeLib()
         tlib_ta = tlib.GetLibAttr()
         # If this is a 32-bit typlib being loaded in a 64-bit process, then the
         # size and alignment are incorrect. Set the size to None to disable
         # size checks and correct the alignment.
         if is_64bits and tlib_ta.syskind == typeinfo.SYS_WIN32:
-            union.size = None
-            union.align = 64
+            size, align = None, 64
+        else:
+            size, align = ta.cbSizeInstance * 8, ta.cbAlignment * 8
+        union = typedesc.Union(union_name, align=align, size=size)
+        self._register(union_name, union)
 
         for i in range(ta.cVars):
             vd = tinfo.GetVarDesc(i)
@@ -632,7 +616,7 @@ class Parser:
             assert vd.varkind == typeinfo.VAR_PERINSTANCE
             typ = self.make_type(vd.elemdescVar.tdesc, tinfo)
             field = typedesc.Field(name, typ, None, offset)  # bits
-            members.append(field)
+            union.add_member(field)
         return union
 
     ################################################################
