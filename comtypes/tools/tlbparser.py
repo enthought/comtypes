@@ -240,14 +240,15 @@ class Parser:
             size, align = None, 64
         else:
             size, align = ta.cbSizeInstance * 8, ta.cbAlignment * 8
-        struct = typedesc.Structure(
-            struct_name, align=align, members=members, size=size
-        )
-        self._register(struct_name, struct)
-
         if ta.guid:
             ma, mi, lcid = tlib_ta.wMajorVerNum, tlib_ta.wMinorVerNum, tlib_ta.lcid
-            struct._recordinfo_ = str(tlib_ta.guid), ma, mi, lcid, str(ta.guid)
+            guids = str(tlib_ta.guid), ma, mi, lcid, str(ta.guid)
+        else:
+            guids = None
+        struct = typedesc.Structure(
+            struct_name, align=align, members=members, size=size, recordinfo=guids
+        )
+        self._register(struct_name, struct)
 
         for i in range(ta.cVars):
             vd = tinfo.GetVarDesc(i)
