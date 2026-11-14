@@ -88,59 +88,57 @@ class SupportsRecordInfoTest(unittest.TestCase):
             SupportsRecordInfo()
 
 
-def _create_recordinfo() -> typeinfo.IRecordInfo:
-    return typeinfo.GetRecordInfoFromGuids(*StructRecordParamTest._recordinfo_)
-
-
-def _create_record(
-    question: str, answer: int, needs_clarification: bool
-) -> "StructRecordParamTest":
-    record = StructRecordParamTest()
-    record.question = question
-    record.answer = answer
-    record.needs_clarification = needs_clarification
-    return record
-
-
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class Test_IRecordInfo(unittest.TestCase):
+    def _create_recordinfo(self) -> typeinfo.IRecordInfo:
+        return typeinfo.GetRecordInfoFromGuids(*StructRecordParamTest._recordinfo_)
+
+    def _create_record(
+        self, question: str, answer: int, needs_clarification: bool
+    ) -> "StructRecordParamTest":
+        record = StructRecordParamTest()
+        record.question = question
+        record.answer = answer
+        record.needs_clarification = needs_clarification
+        return record
+
     def test_RecordCopy(self):
         dst_rec = StructRecordParamTest()
-        ri = _create_recordinfo()
-        ri.RecordCopy(pointer(_create_record("foo", 3, True)), byref(dst_rec))
+        ri = self._create_recordinfo()
+        ri.RecordCopy(pointer(self._create_record("foo", 3, True)), byref(dst_rec))
         self.assertEqual(dst_rec.question, "foo")
         self.assertEqual(dst_rec.answer, 3)
         self.assertEqual(dst_rec.needs_clarification, True)
 
     def test_GetGuid(self):
         *_, expected_guid = StructRecordParamTest._recordinfo_
-        self.assertEqual(str(_create_recordinfo().GetGuid()), expected_guid)
+        self.assertEqual(str(self._create_recordinfo().GetGuid()), expected_guid)
 
     def test_GetName(self):
         self.assertEqual(
-            _create_recordinfo().GetName(),
+            self._create_recordinfo().GetName(),
             StructRecordParamTest.__qualname__,
         )
 
     def test_GetSize(self):
         self.assertEqual(
-            _create_recordinfo().GetSize(),
+            self._create_recordinfo().GetSize(),
             sizeof(StructRecordParamTest),
         )
 
     def test_GetTypeInfo(self):
-        ta = _create_recordinfo().GetTypeInfo().GetTypeAttr()
+        ta = self._create_recordinfo().GetTypeInfo().GetTypeAttr()
         *_, expected_guid = StructRecordParamTest._recordinfo_
         self.assertEqual(str(ta.guid), expected_guid)
 
     def test_IsMatchingType(self):
-        ri = _create_recordinfo()
+        ri = self._create_recordinfo()
         ti = ri.GetTypeInfo()
         self.assertTrue(typeinfo.GetRecordInfoFromTypeInfo(ti).IsMatchingType(ri))
 
     def test_RecordCreateCopy(self):
-        ri = _create_recordinfo()
-        actual = ri.RecordCreateCopy(byref(_create_record("foo", 3, True)))
+        ri = self._create_recordinfo()
+        actual = ri.RecordCreateCopy(byref(self._create_record("foo", 3, True)))
         self.assertIsInstance(actual, int)
         dst_rec = StructRecordParamTest()
         ri.RecordCopy(actual, byref(dst_rec))
