@@ -257,7 +257,7 @@ class Parser:
             assert vd.varkind == typeinfo.VAR_PERINSTANCE
             typ = self.make_type(vd.elemdescVar.tdesc, tinfo)
             field = typedesc.Field(name, typ, None, offset)  # bits
-            members.append(field)
+            struct.add_member(field)
         return struct
 
     # TKIND_MODULE = 2
@@ -620,7 +620,7 @@ class Parser:
             assert vd.varkind == typeinfo.VAR_PERINSTANCE
             typ = self.make_type(vd.elemdescVar.tdesc, tinfo)
             field = typedesc.Field(name, typ, None, offset)  # bits
-            members.append(field)
+            union.add_member(field)
         return union
 
     ################################################################

@@ -181,6 +181,9 @@ class _Struct_Union_Base:
     def get_head(self) -> StructureHead:
         return self.struct_head
 
+    def add_member(self, member: "Field") -> None:
+        self.members.append(member)
+
 
 @final
 class Structure(_Struct_Union_Base):
