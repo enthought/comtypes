@@ -246,13 +246,8 @@ class Parser:
         self._register(struct_name, struct)
 
         if ta.guid:
-            struct._recordinfo_ = (
-                str(tlib_ta.guid),
-                tlib_ta.wMajorVerNum,
-                tlib_ta.wMinorVerNum,
-                tlib_ta.lcid,
-                str(ta.guid),
-            )
+            ma, mi, lcid = tlib_ta.wMajorVerNum, tlib_ta.wMinorVerNum, tlib_ta.lcid
+            struct._recordinfo_ = str(tlib_ta.guid), ma, mi, lcid, str(ta.guid)
 
         for i in range(ta.cVars):
             vd = tinfo.GetVarDesc(i)
