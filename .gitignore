@@ -7,6 +7,18 @@ comtypes/tools/__pycache__/*.pyc
 comtypes.egg-info/*
 custom location/*
 
+# C++ test server build artifacts (CppTestSrv)
+source/CppTestSrv/*.obj
+source/CppTestSrv/*.ilk
+source/CppTestSrv/*.pdb
+source/CppTestSrv/Server.exe
+source/CppTestSrv/server.tlb
+source/CppTestSrv/proxy.c
+source/CppTestSrv/dlldata.c
+source/CppTestSrv/guids.c
+source/CppTestSrv/iface.h
+source/CppTestSrv/vc*.pdb
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -51,5 +63,3 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
-
-
