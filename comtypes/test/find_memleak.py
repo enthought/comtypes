@@ -1,6 +1,8 @@
 import gc
+from collections.abc import Callable
 from ctypes import POINTER, Structure, WinDLL, WinError, byref, c_size_t, sizeof
 from ctypes.wintypes import BOOL, DWORD, HANDLE
+from typing import Any
 
 ################################################################
 
@@ -45,7 +47,7 @@ def wss():
 LOOPS = 10, 1000
 
 
-def find_memleak(func, loops=LOOPS):
+def find_memleak(func: Callable[[], Any], loops: tuple[int, int] = LOOPS) -> int:
     # call 'func' several times, so that memory consumption
     # stabilizes:
     for j in range(loops[0]):
