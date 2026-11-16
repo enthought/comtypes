@@ -58,6 +58,19 @@ class PROCESS_MEMORY_COUNTERS(Structure):
 
 
 class PROCESS_MEMORY_COUNTERS_EX(Structure):
+    if TYPE_CHECKING:
+        cb: _CIntLikeField[DWORD]
+        PageFaultCount: _CIntLikeField[DWORD]
+        PeakWorkingSetSize: _CIntLikeField[c_size_t]
+        WorkingSetSize: _CIntLikeField[c_size_t]
+        QuotaPeakPagedPoolUsage: _CIntLikeField[c_size_t]
+        QuotaPagedPoolUsage: _CIntLikeField[c_size_t]
+        QuotaPeakNonPagedPoolUsage: _CIntLikeField[c_size_t]
+        QuotaNonPagedPoolUsage: _CIntLikeField[c_size_t]
+        PagefileUsage: _CIntLikeField[c_size_t]
+        PeakPagefileUsage: _CIntLikeField[c_size_t]
+        PrivateUsage: _CIntLikeField[c_size_t]
+
     _fields_ = [
         ("cb", DWORD),
         ("PageFaultCount", DWORD),
@@ -77,6 +90,21 @@ class PROCESS_MEMORY_COUNTERS_EX(Structure):
 
 
 class PROCESS_MEMORY_COUNTERS_EX2(Structure):
+    if TYPE_CHECKING:
+        cb: _CIntLikeField[DWORD]
+        PageFaultCount: _CIntLikeField[DWORD]
+        PeakWorkingSetSize: _CIntLikeField[c_size_t]
+        WorkingSetSize: _CIntLikeField[c_size_t]
+        QuotaPeakPagedPoolUsage: _CIntLikeField[c_size_t]
+        QuotaPagedPoolUsage: _CIntLikeField[c_size_t]
+        QuotaPeakNonPagedPoolUsage: _CIntLikeField[c_size_t]
+        QuotaNonPagedPoolUsage: _CIntLikeField[c_size_t]
+        PagefileUsage: _CIntLikeField[c_size_t]
+        PeakPagefileUsage: _CIntLikeField[c_size_t]
+        PrivateUsage: _CIntLikeField[c_size_t]
+        PrivateWorkingSetSize: _CIntLikeField[c_size_t]
+        SharedCommitUsage: _CIntLikeField[ULONGLONG]
+
     _fields_ = [
         ("cb", DWORD),
         ("PageFaultCount", DWORD),
