@@ -192,8 +192,8 @@ def find_memleak(
         loops: Tuple of (outer_loops, inner_loops) for warmup and measurement
             phases.
         target: Method to use for leak detection:
-            - "working_set": Use WorkingSetSize (physical RAM pages) - default
-            - "private_usage": Use PrivateUsage (Commit Charge)
+            - 'working_set': Use WorkingSetSize (physical RAM pages) - default
+            - 'private_usage': Use PrivateUsage (Commit Charge)
 
     Returns:
         The increase in memory usage in bytes (0 if no increase or decrease).
