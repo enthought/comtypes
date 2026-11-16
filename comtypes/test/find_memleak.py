@@ -2,12 +2,31 @@ import gc
 from collections.abc import Callable
 from ctypes import POINTER, Structure, WinDLL, WinError, byref, c_size_t, sizeof
 from ctypes.wintypes import BOOL, DWORD, HANDLE
-from typing import Any
+from typing import TYPE_CHECKING, Any, TypeVar
+
+if TYPE_CHECKING:
+    from _ctypes import _CField
+    from ctypes import _SimpleCData
+
+    _CIntLikeT = TypeVar("_CIntLikeT", bound=_SimpleCData[int])
+    _CIntLikeField = _CField[_CIntLikeT, int, _CIntLikeT | int]
 
 ################################################################
 
 
 class PROCESS_MEMORY_COUNTERS(Structure):
+    if TYPE_CHECKING:
+        cb: _CIntLikeField[DWORD]
+        PageFaultCount: _CIntLikeField[DWORD]
+        PeakWorkingSetSize: _CIntLikeField[c_size_t]
+        WorkingSetSize: _CIntLikeField[c_size_t]
+        QuotaPeakPagedPoolUsage: _CIntLikeField[c_size_t]
+        QuotaPagedPoolUsage: _CIntLikeField[c_size_t]
+        QuotaPeakNonPagedPoolUsage: _CIntLikeField[c_size_t]
+        QuotaNonPagedPoolUsage: _CIntLikeField[c_size_t]
+        PagefileUsage: _CIntLikeField[c_size_t]
+        PeakPagefileUsage: _CIntLikeField[c_size_t]
+
     _fields_ = [
         ("cb", DWORD),
         ("PageFaultCount", DWORD),
