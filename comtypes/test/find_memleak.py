@@ -1,6 +1,15 @@
 import gc
 from collections.abc import Callable
-from ctypes import POINTER, Structure, WinDLL, WinError, byref, c_size_t, sizeof
+from ctypes import (
+    Structure,
+    WinDLL,
+    WinError,
+    byref,
+    c_size_t,
+    c_void_p,
+    sizeof,
+)
+from ctypes import c_ulonglong as ULONGLONG
 from ctypes.wintypes import BOOL, DWORD, HANDLE
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -48,10 +57,51 @@ class PROCESS_MEMORY_COUNTERS(Structure):
             print(n, getattr(self, n) / 1e6)
 
 
+class PROCESS_MEMORY_COUNTERS_EX(Structure):
+    _fields_ = [
+        ("cb", DWORD),
+        ("PageFaultCount", DWORD),
+        ("PeakWorkingSetSize", c_size_t),
+        ("WorkingSetSize", c_size_t),
+        ("QuotaPeakPagedPoolUsage", c_size_t),
+        ("QuotaPagedPoolUsage", c_size_t),
+        ("QuotaPeakNonPagedPoolUsage", c_size_t),
+        ("QuotaNonPagedPoolUsage", c_size_t),
+        ("PagefileUsage", c_size_t),
+        ("PeakPagefileUsage", c_size_t),
+        ("PrivateUsage", c_size_t),
+    ]
+
+    def __init__(self):
+        self.cb = sizeof(self)
+
+
+class PROCESS_MEMORY_COUNTERS_EX2(Structure):
+    _fields_ = [
+        ("cb", DWORD),
+        ("PageFaultCount", DWORD),
+        ("PeakWorkingSetSize", c_size_t),
+        ("WorkingSetSize", c_size_t),
+        ("QuotaPeakPagedPoolUsage", c_size_t),
+        ("QuotaPagedPoolUsage", c_size_t),
+        ("QuotaPeakNonPagedPoolUsage", c_size_t),
+        ("QuotaNonPagedPoolUsage", c_size_t),
+        ("PagefileUsage", c_size_t),
+        ("PeakPagefileUsage", c_size_t),
+        ("PrivateUsage", c_size_t),
+        ("PrivateWorkingSetSize", c_size_t),
+        ("SharedCommitUsage", ULONGLONG),
+    ]
+
+    def __init__(self):
+        self.cb = sizeof(self)
+
+
 _psapi = WinDLL("psapi")
 
 _GetProcessMemoryInfo = _psapi.GetProcessMemoryInfo
-_GetProcessMemoryInfo.argtypes = [HANDLE, POINTER(PROCESS_MEMORY_COUNTERS), DWORD]
+# Use `c_void_p` to accept any of the `PROCESS_MEMORY_COUNTERS*` structures.
+_GetProcessMemoryInfo.argtypes = [HANDLE, c_void_p, DWORD]
 _GetProcessMemoryInfo.restype = BOOL
 
 

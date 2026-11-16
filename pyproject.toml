@@ -79,7 +79,6 @@ ignore = ["E402"]
 "comtypes/hints.pyi" = ["I"]
 # tests
 "comtypes/test/TestDispServer.py" = ["E401"]
-"comtypes/test/find_memleak.py" = ["E401", "F401", "F403", "F405"]
 "comtypes/test/setup.py" = ["F401"]
 "comtypes/test/test_agilent.py" = ["F401", "F841"]
 "comtypes/test/test_client.py" = ["F401"]
