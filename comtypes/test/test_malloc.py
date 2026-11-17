@@ -335,3 +335,27 @@ class Test_IMallocSpy(unittest.TestCase):
         spy = self.create_spy()
         malloc.HeapMinimize()
         spy.PostHeapMinimize.assert_called_once()
+
+    def test_register_twice_raises_objisreg(self):
+        spy1 = MockMallocSpy()
+        hr = _CoRegisterMallocSpy(spy1)
+        self.assertEqual(hr, hresult.S_OK)
+        spy2 = MockMallocSpy()
+        with self.assertRaises(OSError) as cm:
+            _CoRegisterMallocSpy(spy2)
+        self.assertEqual(cm.exception.winerror, hresult.CO_E_OBJISREG)
+        _CoRevokeMallocSpy()
+
+    def test_revoke_without_register_raises_objnotreg(self):
+        with self.assertRaises(OSError) as cm:
+            _CoRevokeMallocSpy()
+        self.assertEqual(cm.exception.winerror, hresult.CO_E_OBJNOTREG)
+
+    def test_revoke_twice_raises_objnotreg(self):
+        spy = MockMallocSpy()
+        _CoRegisterMallocSpy(spy)
+        hr = _CoRevokeMallocSpy()
+        self.assertEqual(hr, hresult.S_OK)
+        with self.assertRaises(OSError) as cm:
+            _CoRevokeMallocSpy()
+        self.assertEqual(cm.exception.winerror, hresult.CO_E_OBJNOTREG)
