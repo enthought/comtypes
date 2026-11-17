@@ -208,3 +208,130 @@ class Test_IMallocSpy(unittest.TestCase):
         del data
         gc.collect()
         self.assertEqual(spy.call_names, [])
+
+    def test_prealloc_receives_size(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(12345)
+        malloc.Free(ptr)
+        spy.PreAlloc.assert_called_once()
+        # args: (this, cbRequest);
+        # `this` is the COM interface pointer (opaque `int`).
+        # It is constant for the spy instance; not relevant to the test.
+        _, cbRequest = spy.PreAlloc.call_args.args
+        self.assertEqual(cbRequest, 12345)
+
+    def test_postalloc_receives_pointer(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(100)
+        malloc.Free(ptr)
+        spy.PostAlloc.assert_called_once()
+        _, pActual = spy.PostAlloc.call_args.args
+        # `pActual` and `ptr` are Python `int`s (not `None` here).
+        # `ctypes` converts non-NULL `c_void_p` to `int`; NULL becomes `None`.
+        # They hold the address value; comparing ints is safe after `Free`.
+        self.assertEqual(pActual, ptr)
+
+    def test_prefree_receives_pointer(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(100)
+        malloc.Free(ptr)
+        spy.PreFree.assert_called_once()
+        _, pRequest, fSpyed = spy.PreFree.call_args.args
+        self.assertEqual(pRequest, ptr)
+        self.assertEqual(fSpyed, 1)
+
+    def test_postfree_receives_fspyed(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(100)
+        malloc.Free(ptr)
+        spy.PostFree.assert_called_once()
+        _, fSpyed = spy.PostFree.call_args.args
+        self.assertEqual(fSpyed, 1)
+
+    def test_prerealloc_receives_old_pointer_and_new_size(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(100)
+        new_ptr = malloc.Realloc(ptr, 200)
+        malloc.Free(new_ptr)
+        spy.PreRealloc.assert_called_once()
+        # args: (this, pRequest, cbRequest, ppNewRequest, fSpyed);
+        # `ppNewRequest` is an out-param (`POINTER(c_void_p)`).
+        # Reading it gives an uninitialized `ctypes` pointer;
+        # dereferencing crashes.
+        _, pRequest, cbRequest, _, fSpyed = spy.PreRealloc.call_args.args
+        self.assertEqual(pRequest, ptr)
+        self.assertEqual(cbRequest, 200)
+        self.assertEqual(fSpyed, 1)
+
+    def test_postrealloc_receives_pointer(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(100)
+        new_ptr = malloc.Realloc(ptr, 200)
+        malloc.Free(new_ptr)
+        spy.PostRealloc.assert_called_once()
+        _, pActual, fSpyed = spy.PostRealloc.call_args.args
+        self.assertEqual(pActual, new_ptr)
+        self.assertEqual(fSpyed, 1)
+
+    def test_pregetsize_receives_pointer(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(100)
+        malloc.GetSize(ptr)
+        malloc.Free(ptr)
+        spy.PreGetSize.assert_called_once()
+        _, pRequest, fSpyed = spy.PreGetSize.call_args.args
+        self.assertEqual(pRequest, ptr)
+        self.assertEqual(fSpyed, 1)
+
+    def test_postgetsize_receives_size(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(100)
+        malloc.GetSize(ptr)
+        malloc.Free(ptr)
+        spy.PostGetSize.assert_called_once()
+        _, cbActual, fSpyed = spy.PostGetSize.call_args.args
+        self.assertEqual(cbActual, 100)
+        self.assertEqual(fSpyed, 1)
+
+    def test_predidalloc_receives_pointer(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(100)
+        malloc.DidAlloc(ptr)
+        malloc.Free(ptr)
+        spy.PreDidAlloc.assert_called_once()
+        _, pRequest, fSpyed = spy.PreDidAlloc.call_args.args
+        self.assertEqual(pRequest, ptr)
+        self.assertEqual(fSpyed, 1)
+
+    def test_postdidalloc_receives_result(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        ptr = malloc.Alloc(100)
+        malloc.DidAlloc(ptr)
+        malloc.Free(ptr)
+        spy.PostDidAlloc.assert_called_once()
+        _, pRequest, fSpyed, fActual = spy.PostDidAlloc.call_args.args
+        self.assertEqual(pRequest, ptr)
+        self.assertEqual(fSpyed, 1)
+        self.assertEqual(fActual, 1)
+
+    def test_preheapminimize_called(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        malloc.HeapMinimize()
+        spy.PreHeapMinimize.assert_called_once()
+
+    def test_postheapminimize_called(self):
+        malloc = CoGetMalloc()
+        spy = self.create_spy()
+        malloc.HeapMinimize()
+        spy.PostHeapMinimize.assert_called_once()
