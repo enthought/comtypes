@@ -1,6 +1,6 @@
 from ctypes import HRESULT, POINTER, OleDLL, WinDLL, byref, c_int, c_ulong, c_void_p
 from ctypes import c_size_t as SIZE_T
-from ctypes.wintypes import DWORD, LPVOID
+from ctypes.wintypes import BOOL, DWORD, LPVOID
 from typing import TYPE_CHECKING, Any
 
 from comtypes import COMMETHOD, GUID, IUnknown
@@ -27,11 +27,82 @@ class IMalloc(IUnknown):
         def HeapMinimize(self) -> None: ...
 
 
+class IMallocSpy(IUnknown):
+    _iid_ = GUID("{0000001D-0000-0000-C000-000000000046}")
+    _methods_ = [
+        COMMETHOD([], SIZE_T, "PreAlloc", (["in"], SIZE_T, "cbRequest")),
+        COMMETHOD([], c_void_p, "PostAlloc", (["in"], c_void_p, "pActual")),
+        COMMETHOD(
+            [],
+            c_void_p,
+            "PreFree",
+            (["in"], c_void_p, "pRequest"),
+            (["in"], BOOL, "fSpyed"),
+        ),
+        COMMETHOD([], None, "PostFree", (["in"], BOOL, "fSpyed")),
+        COMMETHOD(
+            [],
+            SIZE_T,
+            "PreRealloc",
+            (["in"], c_void_p, "pRequest"),
+            (["in"], SIZE_T, "cbRequest"),
+            (["out"], POINTER(c_void_p), "ppNewRequest"),
+            (["in"], BOOL, "fSpyed"),
+        ),
+        COMMETHOD(
+            [],
+            c_void_p,
+            "PostRealloc",
+            (["in"], c_void_p, "pActual"),
+            (["in"], BOOL, "fSpyed"),
+        ),
+        COMMETHOD(
+            [],
+            c_void_p,
+            "PreGetSize",
+            (["in"], c_void_p, "pRequest"),
+            (["in"], BOOL, "fSpyed"),
+        ),
+        COMMETHOD(
+            [],
+            SIZE_T,
+            "PostGetSize",
+            (["in"], SIZE_T, "cbActual"),
+            (["in"], BOOL, "fSpyed"),
+        ),
+        COMMETHOD(
+            [],
+            c_void_p,
+            "PreDidAlloc",
+            (["in"], c_void_p, "pRequest"),
+            (["in"], BOOL, "fSpyed"),
+        ),
+        COMMETHOD(
+            [],
+            c_int,
+            "PostDidAlloc",
+            (["in"], c_void_p, "pRequest"),
+            (["in"], BOOL, "fSpyed"),
+            (["in"], c_int, "fActual"),
+        ),
+        COMMETHOD([], None, "PreHeapMinimize"),
+        COMMETHOD([], None, "PostHeapMinimize"),
+    ]
+
+
 _ole32 = OleDLL("ole32")
 
 _CoGetMalloc = _ole32.CoGetMalloc
 _CoGetMalloc.argtypes = [DWORD, POINTER(POINTER(IMalloc))]
 _CoGetMalloc.restype = HRESULT
+
+_CoRegisterMallocSpy = _ole32.CoRegisterMallocSpy
+_CoRegisterMallocSpy.argtypes = [POINTER(IMallocSpy)]
+_CoRegisterMallocSpy.restype = HRESULT
+
+_CoRevokeMallocSpy = _ole32.CoRevokeMallocSpy
+_CoRevokeMallocSpy.argtypes = []
+_CoRevokeMallocSpy.restype = HRESULT
 
 _ole32_nohresult = WinDLL("ole32")
 
