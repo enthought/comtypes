@@ -1,12 +1,21 @@
 import unittest
 
-from comtypes.client import CreateObject
+from comtypes.client import CreateObject, GetModule
 from comtypes.test.find_memleak import find_memleak
 
+# LIBID from AvmcIfc.idl: library AVMCIFCLib
+AVMCIFCLib_LIBID = "{70577167-ED71-4977-B719-2C40C6DD8E1D}"
 
-@unittest.skip(
-    "This test does not work.  Apparently it's supposed to work with the 'avmc' stuff "
-    "in comtypes/source, but it doesn't.  It's not clear to me why."
+try:
+    GetModule((AVMCIFCLib_LIBID, 1, 0, 0))
+    IMPORT_FAILED = False
+except (ImportError, OSError):
+    # AvmcIfc type library not registered; tests depending on it will be skipped.
+    IMPORT_FAILED = True
+
+
+@unittest.skipIf(
+    IMPORT_FAILED, "This depends on the AvmcIfc COM server being registered."
 )
 class Test(unittest.TestCase):
     """Test COM records"""
