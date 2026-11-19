@@ -31,6 +31,13 @@ jobs:
           cd source/CppTestSrv
           nmake /f Makefile
           ./server.exe /RegServer
+      - name: Register AvmcIfc COM server
+        run: |
+          if ("${{ matrix.architecture }}" -eq "x86") {
+            regsvr32 /s source\Avmc\Debug\AvmcIfc.dll
+          } else {
+            regsvr32 /s source\Avmc\Debug\AvmcIfc_x64.dll
+          }
       - name: unittest comtypes
         env:
           # The normal coverage core uses `sys.settrace`. In Python 3.12, this
@@ -56,6 +63,13 @@ jobs:
         run: |
           cd source/CppTestSrv
           ./server.exe /UnregServer
+      - name: Unregister AvmcIfc COM server
+        run: |
+          if ("${{ matrix.architecture }}" -eq "x86") {
+            regsvr32 /u /s source\Avmc\Debug\AvmcIfc.dll
+          } else {
+            regsvr32 /u /s source\Avmc\Debug\AvmcIfc_x64.dll
+          }
 
   install-tests:
     runs-on: ${{ matrix.os }}
