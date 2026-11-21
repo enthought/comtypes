@@ -39,13 +39,19 @@ class Test(unittest.TestCase):
         self.assertEqual(devs[1].Description, "Avmc2")
         self.assertEqual(devs[1].SerialNumber, "5678")
 
-        # # Leaks... where?
-        # def doit():
-        #     avmc.FindAllAvmc()
-        # self.check_leaks(doit)
+        # `FindAllAvmc` returns a SAFEARRAY of `DeviceInfo` records whose
+        # ownership is transferred to the caller. `mallocspy` counts the COM
+        # allocations (SAFEARRAY descriptor/data and the BSTR fields) exactly,
+        # so a per-call leak shows up deterministically, unlike process-wide
+        # memory sampling (see https://github.com/enthought/comtypes/issues/971).
+        def doit():
+            avmc.FindAllAvmc()
+
+        self.check_leaks(doit)
 
     def check_leaks(self, func, limit=0):
-        bytes = find_memleak(func)
+        # `mallocspy` counts allocations exactly, so few iterations are needed.
+        bytes = find_memleak(func, loops=(10, 100), target="mallocspy")
         self.assertFalse(bytes > limit, f"Leaks {bytes} bytes")
 
 
