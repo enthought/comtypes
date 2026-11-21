@@ -5,7 +5,12 @@ from ctypes import POINTER, c_long
 from decimal import Decimal
 
 from comtypes import BSTR, IUnknown
-from comtypes._safearray import SafeArrayGetVartype
+from comtypes._safearray import (
+    SAFEARRAY,
+    SafeArrayCopy,
+    SafeArrayDestroy,
+    SafeArrayGetVartype,
+)
 from comtypes.automation import (
     VARIANT,
     VARIANT_BOOL,
@@ -221,6 +226,24 @@ class SafeArrayTestCase(unittest.TestCase):
 
         del sa
         self.assertEqual((a, b), (com_refcnt(plib), com_refcnt(punk)))
+
+
+class SafeArrayCopyTestCase(unittest.TestCase):
+    def test(self):
+        sa_type = _midlSAFEARRAY(c_long)
+        src = sa_type.from_param([10, 20, 30])
+        copied = SafeArrayCopy(src)
+        try:
+            # `SafeArrayCopy` returns a plain `POINTER(SAFEARRAY)`, not the
+            # type created by `_midlSAFEARRAY`.
+            self.assertIsInstance(copied, POINTER(SAFEARRAY))
+            self.assertNotIsInstance(copied, sa_type)
+        finally:
+            # The type from `_midlSAFEARRAY` has a `__del__` method that calls
+            # `SafeArrayDestroy` automatically.
+            # But the plain pointer does not have this, so we must call
+            # `SafeArrayDestroy` ourselves to free the memory.
+            SafeArrayDestroy(copied)
 
 
 if __name__ == "__main__":

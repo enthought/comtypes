@@ -9,7 +9,6 @@ from comtypes import GUID, HRESULT
 if TYPE_CHECKING:
     from ctypes import _Pointer
 
-    from comtypes import hints  # type: ignore
 
 ################################################################
 # if __debug__:
@@ -89,7 +88,7 @@ _SafeArrayCopy.restype = HRESULT
 _SafeArrayCopy.argtypes = [POINTER(SAFEARRAY), POINTER(POINTER(SAFEARRAY))]
 
 
-def SafeArrayCopy(pa: "_Pointer[SAFEARRAY]") -> "hints.LP_SAFEARRAY":
+def SafeArrayCopy(pa: "_Pointer[SAFEARRAY]") -> "_Pointer[SAFEARRAY]":
     result = POINTER(SAFEARRAY)()
     _SafeArrayCopy(pa, byref(result))
     return result  # type: ignore
