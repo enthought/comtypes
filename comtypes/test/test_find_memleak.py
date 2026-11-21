@@ -1,8 +1,107 @@
 import gc
 import unittest
+from collections.abc import Callable
+from typing import Any
 
-from comtypes.malloc import CoGetMalloc
-from comtypes.test.find_memleak import find_memleak, get_working_set_size
+from comtypes.malloc import CoGetMalloc, _CoRegisterMallocSpy, _CoRevokeMallocSpy
+from comtypes.test.find_memleak import (
+    BytesTrackingMallocSpy,
+    find_memleak,
+    get_working_set_size,
+)
+
+
+class Test_BytesTrackingMallocSpy(unittest.TestCase):
+    """Test the BytesTrackingMallocSpy COMObject implementation."""
+
+    def _run_with_spy(self, test_func: Callable[[BytesTrackingMallocSpy], Any]) -> None:
+        """Helper to run a test with a registered spy, ensuring cleanup."""
+        self.addCleanup(_CoRevokeMallocSpy)
+        spy = BytesTrackingMallocSpy()
+        _CoRegisterMallocSpy(spy)
+        test_func(spy)
+
+    def test_tracks_allocations(self):
+        def _test(spy: BytesTrackingMallocSpy) -> None:
+            malloc = CoGetMalloc()
+            ptr1 = malloc.Alloc(100)
+            ptr2 = malloc.Alloc(200)
+            malloc.Free(ptr1)
+            malloc.Free(ptr2)
+            # Check that allocations were tracked in bytes
+            allocated = spy.get_allocated_bytes()
+            freed = spy.get_freed_bytes()
+            # We should have at least 300 bytes allocated and 300 bytes freed
+            self.assertEqual(allocated, 300)
+            self.assertEqual(freed, 300)
+            # Net should be 0 since we freed everything
+            net = spy.get_net_bytes()
+            self.assertEqual(net, 0)
+
+        self._run_with_spy(_test)
+
+    def test_detects_leak(self):
+        def _test(spy: BytesTrackingMallocSpy) -> None:
+            # Do some COM allocations but don't free them (leak)
+            malloc = CoGetMalloc()
+            ptr1 = malloc.Alloc(100)
+            ptr2 = malloc.Alloc(200)
+            # Intentionally not freeing - this is a leak
+            # Check that allocations were tracked
+            allocated = spy.get_allocated_bytes()
+            freed = spy.get_freed_bytes()
+            # We should have 300 bytes allocated and 0 bytes freed
+            self.assertEqual(allocated, 300)
+            self.assertEqual(freed, 0)
+            # Net should be positive (leak detected)
+            net = spy.get_net_bytes()
+            self.assertEqual(net, 300)
+            # Free the memory so we can revoke the spy
+            malloc.Free(ptr1)
+            malloc.Free(ptr2)
+
+        self._run_with_spy(_test)
+
+    def test_realloc(self):
+        def _test(spy: BytesTrackingMallocSpy) -> None:
+            malloc = CoGetMalloc()
+            # Allocate initial memory (100 bytes)
+            ptr1 = malloc.Alloc(100)
+            # Realloc to larger size (200 bytes) - frees 100, allocates 200
+            ptr2 = malloc.Realloc(ptr1, 200)
+            # Realloc to smaller size (50 bytes) - frees 200, allocates 50
+            ptr3 = malloc.Realloc(ptr2, 50)
+            malloc.Free(ptr3)
+            # Allocations: 100 + 200 + 50 = 350
+            # Frees: 100 + 200 + 50 = 350
+            # Net: 0
+            self.assertEqual(spy.get_allocated_bytes(), 350)
+            self.assertEqual(spy.get_freed_bytes(), 350)
+            self.assertEqual(spy.get_net_bytes(), 0)
+
+        self._run_with_spy(_test)
+
+    def test_no_changing_byte_counts(self):
+        def _test(spy: BytesTrackingMallocSpy) -> None:
+            malloc = CoGetMalloc()
+            self.assertEqual(spy.get_net_bytes(), 0)
+            # Allocate initial memory
+            ptr1 = malloc.Alloc(100)
+            self.assertEqual(spy.get_net_bytes(), 100)
+            # This should trigger `PreGetSize`/`PostGetSize`
+            self.assertEqual(malloc.GetSize(ptr1), 100)
+            self.assertEqual(spy.get_net_bytes(), 100)
+            # This should trigger `PreDidAlloc`/`PostDidAlloc`
+            self.assertEqual(malloc.DidAlloc(ptr1), 1)
+            self.assertEqual(spy.get_net_bytes(), 100)
+            # This should trigger `PreHeapMinimize`/`PostHeapMinimize`
+            self.assertEqual(malloc.HeapMinimize(), None)
+            self.assertEqual(spy.get_net_bytes(), 100)
+            # Free the memory
+            malloc.Free(ptr1)
+            self.assertEqual(spy.get_net_bytes(), 0)
+
+        self._run_with_spy(_test)
 
 
 class Test_find_memleak(unittest.TestCase):

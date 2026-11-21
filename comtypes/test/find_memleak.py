@@ -5,9 +5,12 @@ from ctypes import c_ulonglong as ULONGLONG
 from ctypes.wintypes import BOOL, DWORD, HANDLE
 from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
+from comtypes import COMObject
+from comtypes.malloc import IMallocSpy
+
 if TYPE_CHECKING:
     from _ctypes import _CField
-    from ctypes import _SimpleCData
+    from ctypes import _Pointer, _SimpleCData
 
     _CIntLikeT = TypeVar("_CIntLikeT", bound=_SimpleCData[int])
     _CIntLikeField = _CField[_CIntLikeT, int, _CIntLikeT | int]
@@ -174,6 +177,87 @@ def get_private_usage() -> int:
         # (same as PrivateUsage on older Windows)
         return pmi.PagefileUsage
     return pmi.PrivateUsage
+
+
+class BytesTrackingMallocSpy(COMObject):
+    _com_interfaces_ = [IMallocSpy]
+
+    def __init__(self):
+        super().__init__()
+        self._sizes: dict[int, int] = {}  # pointer -> allocated size
+        self._pending: int = 0  # size from PreAlloc/PreRealloc
+        self._allocated: int = 0  # cumulative allocated bytes
+        self._freed: int = 0  # cumulative freed bytes
+
+    def IMallocSpy_PreAlloc(self, this: int, cbRequest: int) -> int:
+        self._pending = cbRequest
+        return cbRequest
+
+    def IMallocSpy_PostAlloc(self, this: int, pActual: int) -> int:
+        if pActual:
+            self._sizes[pActual] = self._pending
+            self._allocated += self._pending
+        return pActual
+
+    def IMallocSpy_PreFree(self, this: int, pRequest: int, fSpyed: int) -> int:
+        if fSpyed and pRequest:
+            self._freed += self._sizes.pop(pRequest, 0)
+        return pRequest
+
+    def IMallocSpy_PostFree(self, this: int, fSpyed: int) -> None: ...
+
+    def IMallocSpy_PreRealloc(
+        self,
+        this: int,
+        pRequest: int,
+        cbRequest: int,
+        ppNewRequest: "_Pointer[c_void_p]",
+        fSpyed: int,
+    ) -> int:
+        self._pending = cbRequest
+        if fSpyed and pRequest:
+            self._freed += self._sizes.pop(pRequest, 0)
+        # `ppNewRequest` is an [out] parameter that `PreRealloc` must write.
+        # Write `pRequest` to pass through the original pointer unchanged.
+        # (A spy that extends/modifies the allocation would write a different
+        # pointer here.)
+        # See also https://learn.microsoft.com/en-us/windows/win32/api/objidl/nf-objidl-imallocspy-prerealloc
+        if ppNewRequest:
+            ppNewRequest[0] = pRequest
+        return cbRequest
+
+    def IMallocSpy_PostRealloc(self, this: int, pActual: int, fSpyed: int) -> int:
+        if pActual:
+            self._sizes[pActual] = self._pending
+            self._allocated += self._pending
+        return pActual
+
+    def IMallocSpy_PreGetSize(self, this: int, pRequest: int, fSpyed: int) -> int:
+        return pRequest
+
+    def IMallocSpy_PostGetSize(self, this: int, cbActual: int, fSpyed: int) -> int:
+        return cbActual
+
+    def IMallocSpy_PreDidAlloc(self, this: int, pRequest: int, fSpyed: int) -> int:
+        return pRequest
+
+    def IMallocSpy_PostDidAlloc(
+        self, this: int, pRequest: int, fSpyed: int, fActual: int
+    ) -> int:
+        return fActual
+
+    def IMallocSpy_PreHeapMinimize(self, this: int) -> None: ...
+
+    def IMallocSpy_PostHeapMinimize(self, this: int) -> None: ...
+
+    def get_allocated_bytes(self) -> int:
+        return self._allocated
+
+    def get_freed_bytes(self) -> int:
+        return self._freed
+
+    def get_net_bytes(self) -> int:
+        return self._allocated - self._freed
 
 
 LOOPS = 10, 1000
