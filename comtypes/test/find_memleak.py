@@ -296,13 +296,33 @@ class ComAllocationDiffDetector:
         self._spy = BytesTrackingMallocSpy()
 
     def __enter__(self) -> "ComAllocationDiffDetector":
-        hr = _CoRegisterMallocSpy(self._spy)
-        assert hr == hresult.S_OK
+        _CoRegisterMallocSpy(self._spy)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        hr = _CoRevokeMallocSpy()
-        assert hr == hresult.S_OK
+        # Avoid failing here when revoking the spy raises an exception because
+        # some memory it tracked has not been freed yet.
+        err = None
+        for _ in (0, 1):
+            try:
+                # `CoRevokeMallocSpy` fails with `E_ACCESSDENIED` while any
+                # memory block the spy tracked has not been freed yet.
+                _CoRevokeMallocSpy()
+            except OSError as e:
+                err = e
+                if e.winerror != hresult.E_ACCESSDENIED:
+                    raise e
+                # Run `gc.collect()` instead of calling `CoTaskMemFree` here.
+                # This detector frees the blocks by releasing the Python
+                # objects that own them, avoiding a use-after-free.
+                gc.collect()
+                # `get_diff()` is expected to be called inside the `with`
+                # block, so this cleanup does not affect the measured leak.
+            if err is None:
+                return
+            # Try to revoke the spy again, expecting the memory blocks to have
+            # been freed.
+        raise err
 
     def get_diff(self) -> int:
         return self._spy.get_net_bytes()
