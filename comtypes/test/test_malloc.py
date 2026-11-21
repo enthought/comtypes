@@ -359,3 +359,27 @@ class Test_IMallocSpy(unittest.TestCase):
         with self.assertRaises(OSError) as cm:
             _CoRevokeMallocSpy()
         self.assertEqual(cm.exception.winerror, hresult.CO_E_OBJNOTREG)
+
+    def test_revoke_pending_while_allocations_outstanding(self):
+        malloc = CoGetMalloc()
+        spy1 = MockMallocSpy()
+        _CoRegisterMallocSpy(spy1)
+        ptr = malloc.Alloc(100)  # Outstanding allocation while spy is active
+        # 1st call: Spy registered, but allocation `ptr` is still outstanding.
+        # Returns `E_ACCESSDENIED` and marks revoke as pending internally.
+        with self.assertRaises(OSError) as cm:
+            _CoRevokeMallocSpy()
+        self.assertEqual(cm.exception.winerror, hresult.E_ACCESSDENIED)
+        # 2nd call: Allocation `ptr` still outstanding, revoke already pending.
+        # Returns `E_ACCESSDENIED` again (revoke remains pending).
+        with self.assertRaises(OSError) as cm:
+            _CoRevokeMallocSpy()
+        self.assertEqual(cm.exception.winerror, hresult.E_ACCESSDENIED)
+        # Free the outstanding allocation. The pending revoke now completes
+        # automatically and the spy is released.
+        malloc.Free(ptr)
+        # 3rd call: Spy has already been revoked (auto-completed after Free).
+        # Returns `CO_E_OBJNOTREG` because no spy is currently registered.
+        with self.assertRaises(OSError) as cm:
+            _CoRevokeMallocSpy()
+        self.assertEqual(cm.exception.winerror, hresult.CO_E_OBJNOTREG)
