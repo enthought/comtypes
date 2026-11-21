@@ -349,7 +349,7 @@ def _make_safearray_type(itemtype):
             finally:
                 _safearray.SafeArrayUnaccessData(self)
 
-        def _get_records(self, num_elements: int) -> Sequence[Structure]:
+        def _get_records(self, num_elements: int) -> Sequence[SupportsRecordInfo]:
             """Extract element records as a flat list while avoiding double-free
             crashes.
 
@@ -376,7 +376,7 @@ def _make_safearray_type(itemtype):
             # this `SAFEARRAY` type so that it does; otherwise `_needsfree`
             # below has no effect and the copied array (descriptor, data and
             # `BSTR` elements) leaks.
-            copied = cast(_safearray.SafeArrayCopy(self), type(self))
+            copied = cast(_safearray.SafeArrayCopy(self), type(self))  # type: ignore
             # Setting this flag makes `__del__` call `SafeArrayDestroy`
             # when the Python wrapper is finalized.
             copied._needsfree = True
