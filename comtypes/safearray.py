@@ -371,7 +371,12 @@ def _make_safearray_type(itemtype):
             ptr = POINTER(self._itemtype_)()  # container for the values
             # Make an independent `SAFEARRAY` so its data does not depend on
             # the lifetime of the source `SAFEARRAY`, which is `self`.
-            copied = _safearray.SafeArrayCopy(self)  # type: ignore
+            # `SafeArrayCopy` returns a plain `POINTER(tagSAFEARRAY)`, whose
+            # class has no `__del__` that calls `SafeArrayDestroy`.  Cast it to
+            # this `SAFEARRAY` type so that it does; otherwise `_needsfree`
+            # below has no effect and the copied array (descriptor, data and
+            # `BSTR` elements) leaks.
+            copied = cast(_safearray.SafeArrayCopy(self), type(self))
             # Setting this flag makes `__del__` call `SafeArrayDestroy`
             # when the Python wrapper is finalized.
             copied._needsfree = True
