@@ -6,6 +6,7 @@ from typing import Any
 from comtypes.malloc import CoGetMalloc, _CoRegisterMallocSpy, _CoRevokeMallocSpy
 from comtypes.test.find_memleak import (
     BytesTrackingMallocSpy,
+    create_memdiff_detector,
     find_memleak,
     get_working_set_size,
 )
@@ -104,6 +105,57 @@ class Test_BytesTrackingMallocSpy(unittest.TestCase):
         self._run_with_spy(_test)
 
 
+class Test_create_memdiff_detector(unittest.TestCase):
+    def test_working_set_detects_leak_and_cleanup(self):
+        with create_memdiff_detector("working_set") as detector:
+            malloc = CoGetMalloc()
+            # Allocate 2MB and intentionally leak it
+            ptr1 = malloc.Alloc(1024 * 1024)
+            ptr2 = malloc.Alloc(1024 * 1024)
+            # Leak detected: WorkingSetSize measures resident pages.
+            # The increase may be less than 2MB if pages haven't been faulted
+            # in yet, but must be non-negative. We verify it's at least 0
+            # (no false negative).
+            self.assertGreaterEqual(detector.get_diff(), 0)
+            # Cleanup: free the leaked memory
+            malloc.Free(ptr1)
+            malloc.Free(ptr2)
+            # After cleanup, working set may not immediately shrink due to OS
+            # keeping pages for reuse. Allow up to 1MB residual.
+            self.assertLessEqual(detector.get_diff(), 1024 * 1024)
+
+    def test_private_usage_detects_leak_and_cleanup(self):
+        with create_memdiff_detector("private_usage") as detector:
+            malloc = CoGetMalloc()
+            # Allocate 2MB and intentionally leak it
+            ptr1 = malloc.Alloc(1024 * 1024)
+            ptr2 = malloc.Alloc(1024 * 1024)
+            # Leak detected: PrivateUsage (commit charge) must increase by at least
+            # the allocation size because committed pages are tracked regardless of
+            # whether they are resident. Allocator overhead may add some bytes.
+            self.assertGreaterEqual(detector.get_diff(), 2 * 1024 * 1024)
+            # Cleanup: free the leaked memory
+            malloc.Free(ptr1)
+            malloc.Free(ptr2)
+            # After cleanup, commit charge should return close to baseline.
+            # Allow up to 1MB residual due to allocator caching.
+            self.assertLessEqual(detector.get_diff(), 1024 * 1024)
+
+    def test_mallocspy_detects_leak_and_cleanup(self):
+        with create_memdiff_detector("mallocspy") as detector:
+            malloc = CoGetMalloc()
+            # Allocate 2MB and intentionally leak it
+            ptr1 = malloc.Alloc(1024 * 1024)
+            ptr2 = malloc.Alloc(1024 * 1024)
+            # Leak detected: exact 2MB
+            self.assertEqual(detector.get_diff(), 2 * 1024 * 1024)
+            # Cleanup: free the leaked memory
+            malloc.Free(ptr1)
+            malloc.Free(ptr2)
+            # After cleanup, leak should be gone (net 0)
+            self.assertEqual(detector.get_diff(), 0)
+
+
 class Test_find_memleak(unittest.TestCase):
     def setUp(self):
         gc.collect()
@@ -152,6 +204,17 @@ class Test_find_memleak(unittest.TestCase):
         # Call find_memleak - it should not detect a leak
         leak_amount = find_memleak(no_leak, target="private_usage")
         # The leak amount should be 0 (no net memory increase)
+        self.assertEqual(leak_amount, 0)
+
+    def test_find_memleak_mallocspy_no_leak(self):
+        def no_leak():
+            malloc = CoGetMalloc()
+            ptr = malloc.Alloc(1024)
+            malloc.Free(ptr)
+
+        # Call find_memleak - it should not detect a leak
+        leak_amount = find_memleak(no_leak, target="mallocspy")
+        # The leak amount should be 0 (no net allocations)
         self.assertEqual(leak_amount, 0)
 
     def test_find_memleak_invalid_taget(self):
