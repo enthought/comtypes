@@ -61,7 +61,6 @@ class VariantTestCase(unittest.TestCase):
         bytes = find_memleak(func, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
-    @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
     def test_double_array(self):
         a = array.array("d", (3.14, 2.78))
         v = VARIANT(a)
@@ -71,7 +70,11 @@ class VariantTestCase(unittest.TestCase):
         def func():
             VARIANT(array.array("d", (3.14, 2.78)))
 
-        bytes = find_memleak(func)
+        # The VARIANT owns a SAFEARRAY of doubles. `mallocspy` counts this COM
+        # task allocation exactly, unlike `working_set`, which measures
+        # resident pages and reports first-call page faults as leaks
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(func, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     def test_float_array(self):
