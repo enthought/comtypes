@@ -447,3 +447,29 @@ class Test_HRESULT_via_COMObject(ut.TestCase):
             "HRESULT_FROM_WIN32(0) is S_OK; using E_FAIL instead so "
             "that the failure is not reported as success",
         )
+
+    def test_comerror_with_unpackable_details_in_call_without_this(self):
+        # `call_without_this` unpacks `COMError.details` into five fields to
+        # build the error description.  When `details` is not a 5-element
+        # sequence, the unpacking raises `ValueError`/`TypeError`; the handler
+        # falls back to `str(details)` so the error is still reported.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestHresultFromWin32]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                return hresult.S_OK
+
+            def ComMethod(self, arg):
+                raise COMError(hresult.E_FAIL, "simulated", (None, None))  # type: ignore
+
+        obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
+        with self.assertLogs("comtypes._vtbl", level="ERROR") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.ComMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        self.assertEqual(cm.exception.details, ("(None, None)", None, None, 0, None))
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Exception in ITestHresultFromWin32.ComMethod implementation:",
+        )
