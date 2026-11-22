@@ -43,7 +43,6 @@ def com_refcnt(o):
 
 
 class VariantTestCase(unittest.TestCase):
-    @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
     def test_VARIANT_array(self):
         v = VARIANT()
         v.value = ((1, 2, 3), ("foo", "bar", None))
@@ -53,7 +52,13 @@ class VariantTestCase(unittest.TestCase):
         def func():
             VARIANT((1, 2, 3), ("foo", "bar", None))
 
-        bytes = find_memleak(func)
+        # The VARIANT owns a SAFEARRAY of VARIANTs (with BSTR elements).
+        # `mallocspy` counts these COM task allocations exactly, so a per-call
+        # leak is detected deterministically. `working_set` was unreliable here
+        # because it measures resident pages, and the first call in a process
+        # faults in pages that look like a leak
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(func, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
