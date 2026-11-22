@@ -274,7 +274,11 @@ class SafeArrayTest(unittest.TestCase):
         def doit():
             t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
 
-        bytes = find_memleak(doit)
+        # `from_param` creates a SAFEARRAY of `MYCOLOR` records. `mallocspy`
+        # counts the SAFEARRAY descriptor/data exactly, unlike `working_set`,
+        # which measures resident pages and reports first-call page faults as
+        # leaks (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(doit, target="mallocspy")
         self.assertFalse(bytes, f"Leaks {bytes} bytes")  # type: ignore
 
 
