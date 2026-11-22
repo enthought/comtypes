@@ -98,7 +98,6 @@ class Test(unittest.TestCase):
         bytes = find_memleak(doit, (20, 20), target="mallocspy")
         self.assertFalse(bytes, f"Leaks {bytes} bytes")
 
-    @unittest.skip("This test takes a long time.  Do we need it? Can it be rewritten?")
     def test_leaks_3(self):
         # The XP firewall manager.
         fwmgr = CreateObject("HNetCfg.FwMgr")
@@ -110,7 +109,12 @@ class Test(unittest.TestCase):
                 for what in iter(apps):
                     pass
 
-        bytes = find_memleak(doit, (20, 20))
+        # Iterating the collection twice returns BSTRs/VARIANTs allocated by
+        # COM. `mallocspy` counts these COM task allocations exactly, unlike
+        # `working_set`, which measures resident pages and reports first-call
+        # page faults as leaks
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(doit, (20, 20), target="mallocspy")
         self.assertFalse(bytes, f"Leaks {bytes} bytes")
 
 
