@@ -531,3 +531,76 @@ class Test_ReturnHRESULT_via_COMObject(ut.TestCase):
             obj.ComMethod(0)
         self.assertEqual(cm.exception.hresult, hresult.E_UNEXPECTED)
         self.assertEqual(cm.exception.details, ("simulated", None, None, 0, None))
+
+
+class Test_E_NotImplemented_via_COMObject(ut.TestCase):
+    class ITestProperty(IUnknown):
+        # A minimal interface with a read/write property.  `E_NotImplemented`
+        # is not a Python standard error; it is raised by `_MethodFinder`'s
+        # `getter`/`setter` when a COMObject does not implement the property
+        # through normal attribute access, so it is tested separately.
+        _iid_ = GUID.create_new()
+        _methods_ = [
+            COMMETHOD(
+                ["propget"],
+                ctypes.HRESULT,
+                "Value",
+                (["out"], POINTER(ctypes.c_int), "pValue"),
+            ),
+            COMMETHOD(
+                ["propput"],
+                ctypes.HRESULT,
+                "Value",
+                (["in"], ctypes.c_int, "Value"),
+            ),
+        ]
+        if TYPE_CHECKING:
+
+            @property
+            def Value(self) -> int: ...
+            @Value.setter
+            def Value(self, value: int) -> None: ...
+
+    def test_propget_not_implemented(self):
+        # When a COMObject does not implement the `Value` property at all,
+        # `_MethodFinder.getter` does `getattr(self, "Value")`, which raises
+        # `AttributeError`; the getter converts it to `E_NotImplemented`.
+        # `call_without_this` logs a warning and returns `E_NOTIMPL`, so the
+        # COM caller observes `E_NOTIMPL`.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestProperty]
+            _reg_clsid_ = GUID.create_new()
+
+        obj = MyObject().QueryInterface(self.ITestProperty)
+        with self.assertLogs("comtypes._vtbl", level="WARNING") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.Value
+        self.assertEqual(cm.exception.hresult, hresult.E_NOTIMPL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Unimplemented method ITestProperty._get_Value called",
+        )
+
+    def test_propput_not_implemented(self):
+        # When a COMObject implements `Value` as a read-only property,
+        # `_MethodFinder.setter`'s `setattr(self, "Value", value)` raises
+        # `AttributeError`; the setter converts it to `E_NotImplemented`.
+        # `call_without_this` logs a warning and returns `E_NOTIMPL`, so the
+        # COM caller observes `E_NOTIMPL`.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestProperty]
+            _reg_clsid_ = GUID.create_new()
+
+            @property
+            def Value(self):
+                return 42
+
+        obj = MyObject().QueryInterface(self.ITestProperty)
+        with self.assertLogs("comtypes._vtbl", level="WARNING") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.Value = 1
+        self.assertEqual(cm.exception.hresult, hresult.E_NOTIMPL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Unimplemented method ITestProperty._set_Value called",
+        )
