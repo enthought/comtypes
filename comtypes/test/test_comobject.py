@@ -101,7 +101,7 @@ class Test_IUnknown_AddRef_IUnknown_Release(ut.TestCase):
         cuia = uiac.CUIAutomation()
         self.assertEqual(cuia.IUnknown_AddRef(None), 1)
         self.assertEqual(cuia.IUnknown_AddRef(None), 2)
-        with mock.patch.object(COMObject, "_final_release_") as release:
+        with mock.patch.object(cuia, "_final_release_") as release:
             self.assertEqual(cuia.IUnknown_Release(None), 1)
             release.assert_not_called()
             self.assertEqual(cuia.IUnknown_Release(None), 0)
