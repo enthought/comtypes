@@ -14,6 +14,7 @@ from comtypes import (
     COMObject,
     IPersist,
     IUnknown,
+    ReturnHRESULT,
     hresult,
 )
 from comtypes._post_coinit.misc import _CoCreateInstance
@@ -473,3 +474,60 @@ class Test_HRESULT_via_COMObject(ut.TestCase):
             logs.records[0].getMessage(),
             "Exception in ITestHresultFromWin32.ComMethod implementation:",
         )
+
+
+class Test_ReturnHRESULT_via_COMObject(ut.TestCase):
+    class ITestReturnHRESULT(IUnknown):
+        # A minimal interface with one `STDMETHOD` method and one `COMMETHOD`
+        # method, so that both `catch_errors` and `hack`'s `call_without_this`
+        # can be reached.  `ReturnHRESULT` is not a Python standard error, so
+        # its handling is tested separately from `COMError`/`OSError`.
+        _iid_ = GUID.create_new()
+        _methods_ = [
+            STDMETHOD(ctypes.HRESULT, "StdMethod", [ctypes.c_int]),
+            COMMETHOD([], ctypes.HRESULT, "ComMethod", (["in"], ctypes.c_int, "arg")),
+        ]
+        if TYPE_CHECKING:
+
+            def StdMethod(self, arg) -> hints.Hresult: ...
+            def ComMethod(self, arg) -> hints.Hresult: ...
+
+    def test_return_hresult_is_reported_as_failure(self):
+        # A COM method implementation can raise `comtypes.ReturnHRESULT(hr, text)`
+        # to return an HRESULT without logging an error.  `catch_errors` catches
+        # it and calls `ReportError`, so the COM caller observes a `COMError`
+        # carrying the requested HRESULT and the text as the error description.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestReturnHRESULT]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                raise ReturnHRESULT(hresult.E_UNEXPECTED, "simulated")
+
+            def ComMethod(self, arg):
+                return hresult.S_OK
+
+        obj = MyObject().QueryInterface(self.ITestReturnHRESULT)
+        with self.assertRaises(COMError) as cm:
+            obj.StdMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_UNEXPECTED)
+        self.assertEqual(cm.exception.details, ("simulated", None, None, 0, None))
+
+    def test_return_hresult_in_call_without_this_is_reported_as_failure(self):
+        # Same as `test_return_hresult_is_reported`, but the method has no
+        # `this` parameter, so it is wrapped by `hack`'s `call_without_this`.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestReturnHRESULT]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                return hresult.S_OK
+
+            def ComMethod(self, arg):
+                raise ReturnHRESULT(hresult.E_UNEXPECTED, "simulated")
+
+        obj = MyObject().QueryInterface(self.ITestReturnHRESULT)
+        with self.assertRaises(COMError) as cm:
+            obj.ComMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_UNEXPECTED)
+        self.assertEqual(cm.exception.details, ("simulated", None, None, 0, None))
