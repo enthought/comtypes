@@ -35,14 +35,23 @@ def winerror(exc: Exception) -> int:
     """Return the windows error code from a WindowsError or COMError
     instance."""
     if isinstance(exc, COMError):
-        return exc.hresult
+        hr = exc.hresult
+        # Raising COMError signals failure.  hresult=0 (S_OK) has no meaning
+        # on an error path—treat it like OSError with winerror=None and fall
+        # back to E_FAIL.
+        if hr == 0:
+            return hresult.E_FAIL
+        return hr
     elif isinstance(exc, WindowsError):
         code = exc.winerror
         if isinstance(code, int):
-            return code
+            if code != 0:
+                return code
         # Sometimes, a WindowsError instance has no error code.  An access
         # violation raised by ctypes has only text, for example.  In this
         # cases we return a generic error code.
+        # winerror=0 is treated the same way, so that the result is never 0
+        # (S_OK) on an error path.
         return hresult.E_FAIL
     raise TypeError(
         f"Expected comtypes.COMERROR or WindowsError instance, got {type(exc).__name__}"
@@ -80,10 +89,7 @@ def catch_errors(
                 mthname,
                 exc_info=True,
             )
-            hr = hresult.HRESULT_FROM_WIN32(winerror(details))
-            if hr == 0:
-                hr = hresult.E_FAIL
-            return hr
+            return hresult.HRESULT_FROM_WIN32(winerror(details))
         except E_NotImplemented:
             _warning("Unimplemented method %s.%s called", interface.__name__, mthname)
             return hresult.E_NOTIMPL
@@ -182,9 +188,7 @@ def hack(
                 msg = str(details)
             else:
                 msg = f"{source}: {descr}"
-            hr = hresult.HRESULT_FROM_WIN32(hr)
-            if hr == 0:
-                hr = hresult.E_FAIL
+            hr = hresult.HRESULT_FROM_WIN32(winerror(err))
             return ReportError(msg, iid=interface._iid_, clsid=clsid, hresult=hr)
         except OSError as details:
             _error(
@@ -194,8 +198,6 @@ def hack(
                 exc_info=True,
             )
             hr = hresult.HRESULT_FROM_WIN32(winerror(details))
-            if hr == 0:
-                hr = hresult.E_FAIL
             return ReportException(hr, interface._iid_, clsid=clsid)
         except E_NotImplemented:
             _warning("Unimplemented method %s.%s called", interface.__name__, mthname)
