@@ -112,14 +112,19 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertEqual(sa[0], ("a", "b", "c"))
         self.assertEqual(SafeArrayGetVartype(sa), VT_BSTR)
 
-    @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
     def test_VT_BSTR_leaks(self):
         sb = _midlSAFEARRAY(BSTR)
 
         def doit():
             sb.from_param(["foo", "bar"])
 
-        bytes = find_memleak(doit)
+        # `from_param` creates a SAFEARRAY of BSTRs. `mallocspy` counts the
+        # SAFEARRAY descriptor/data and the BSTR elements exactly, so a
+        # per-call leak is detected deterministically. `working_set` was
+        # unreliable here because it measures resident pages, and the first
+        # call in a process faults in pages that look like a leak
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(doit, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
