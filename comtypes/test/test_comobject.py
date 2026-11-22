@@ -101,7 +101,7 @@ class Test_IUnknown_AddRef_IUnknown_Release(ut.TestCase):
         cuia = uiac.CUIAutomation()
         self.assertEqual(cuia.IUnknown_AddRef(None), 1)
         self.assertEqual(cuia.IUnknown_AddRef(None), 2)
-        with mock.patch.object(COMObject, "_final_release_") as release:
+        with mock.patch.object(cuia, "_final_release_") as release:
             self.assertEqual(cuia.IUnknown_Release(None), 1)
             release.assert_not_called()
             self.assertEqual(cuia.IUnknown_Release(None), 0)
@@ -311,34 +311,66 @@ class Test_HRESULT_via_COMObject(ut.TestCase):
             "Exception in ITestHresultFromWin32.ComMethod implementation:",
         )
 
+    def test_zero_winerror_is_reported_as_failure(self):
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestHresultFromWin32]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                raise OSError(0, "simulated", None, 0)
+
+            def ComMethod(self, arg):
+                return hresult.S_OK
+
+        obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
+        with self.assertLogs("comtypes._vtbl", level="WARNING") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.StdMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Exception in ITestHresultFromWin32.StdMethod implementation:",
+        )
+        self.assertEqual(
+            logs.records[1].getMessage(),
+            "HRESULT_FROM_WIN32(0) is S_OK; using E_FAIL instead so "
+            "that the failure is not reported as success",
+        )
+
+    def test_zero_winerror_in_call_without_this_is_reported_as_failure(self):
+        # A `0` winerror must NOT be reported as success.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestHresultFromWin32]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                return hresult.S_OK
+
+            def ComMethod(self, arg):
+                raise OSError(0, "simulated", None, 0)
+
+        obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
+        with self.assertLogs("comtypes._vtbl", level="WARNING") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.ComMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Exception in ITestHresultFromWin32.ComMethod implementation:",
+        )
+        self.assertEqual(
+            logs.records[1].getMessage(),
+            "HRESULT_FROM_WIN32(0) is S_OK; using E_FAIL instead so "
+            "that the failure is not reported as success",
+        )
+
     def test_comerror_hresult(self):
-        # `HRESULT_FROM_WIN32(0)` must return `S_OK` (0), matching the Windows
-        # macro `(HRESULT)(x) <= 0 ? (HRESULT)(x) : ...`.  A COM method that
-        # raises `COMError` with hresult 0 reaches `HRESULT_FROM_WIN32(0)`
-        # through `catch_errors`; the COM call must therefore succeed instead
-        # of failing with 0x80070000.
-        #
-        # This is not about a client guarding against a buggy server.  The
-        # client only refrains from raising on a success HRESULT; it has no
-        # mechanism to flag a `COMError` whose hresult is 0.  What this test
-        # observes is the conversion of the value the server returns.
-        #
-        # Current behaviour: a value that should be `S_OK` is returned as a
-        # failure (`0x80070000`, i.e. `ERROR_SUCCESS` wrapped as a Win32
-        # HRESULT).  The message is "The operation completed successfully" yet
-        # the call is an error -- a contradictory state.
-        #
-        # Fixing it to match the macro (returning `S_OK`) has its own hazard:
-        # the method raised an exception, but the caller sees success.  The
-        # exception is swallowed and output arguments are left unset while the
-        # call is treated as successful.  So which behaviour is preferable is
-        # not obvious: it is a trade-off between "compatibility with the Win32
-        # macro" and "not turning an exception into success" (the safer side).
-        #
-        # Raising `COMError(0, ...)` is itself unnatural, so the real-world
-        # impact is small.  Still, it is worth pinning down the behaviour.
-        # Even if we choose not to match the Win32 macro, returning a failure
-        # for `0` is still wrong in some way.
+        # `HRESULT_FROM_WIN32(0)` returns `S_OK` (0) to match the Windows macro.
+        # However, `catch_errors` runs on an error path. There, a `0` code
+        # (like `COMError(0, ...)`) looks like success and can hide the error.
+        # To prevent this, the error handler uses `E_FAIL` instead and warns
+        # the caller. This is the same fallback `winerror` uses when a
+        # `WindowsError` has no code.
         class MyObject(COMObject):
             _com_interfaces_ = [self.ITestHresultFromWin32]
             _reg_clsid_ = GUID.create_new()
@@ -350,28 +382,18 @@ class Test_HRESULT_via_COMObject(ut.TestCase):
                 return hresult.S_OK
 
         obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
-        with self.assertLogs("comtypes._vtbl", level="ERROR") as logs:
+        with self.assertLogs("comtypes._vtbl", level="WARNING") as logs:
             with self.assertRaises(COMError) as cm:
                 obj.StdMethod(0)
-        # BUG: raising `COMError(0, ...)` makes `catch_errors` extract
-        # `winerror(exc) == 0` and call `HRESULT_FROM_WIN32(0)`.  However, the
-        # implementation's condition is `if errcode & 0x80000000:`, and since
-        # `0 & 0x80000000 == 0` (falsy) it falls through to the else branch and
-        # returns `(0 & 0xFFFF) | 0x80070000 = 0x80070000`.  The correct Windows
-        # macro is `(HRESULT)(x) <= 0 ? (HRESULT)(x) : ...`, so for `x == 0` it
-        # should return `S_OK` (0), but the Python implementation has no such
-        # branch.  Reading `0x80070000` as a signed 32-bit integer gives
-        # `-2147024896`.
-        self.assertEqual(
-            -2147024896,
-            cm.exception.hresult,
-            msg="CHARACTERIZATION(#999): "
-            "If https://github.com/enthought/comtypes/issues/999 is fixed, "
-            "change it.",
-        )
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
         self.assertEqual(
             logs.records[0].getMessage(),
             "Exception in ITestHresultFromWin32.StdMethod implementation:",
+        )
+        self.assertEqual(
+            logs.records[1].getMessage(),
+            "HRESULT_FROM_WIN32(0) is S_OK; using E_FAIL instead so "
+            "that the failure is not reported as success",
         )
 
     def test_comerror_hresult_in_call_without_this(self):
@@ -397,4 +419,31 @@ class Test_HRESULT_via_COMObject(ut.TestCase):
         self.assertEqual(
             logs.records[0].getMessage(),
             "Exception in ITestHresultFromWin32.ComMethod implementation:",
+        )
+
+    def test_comerror_zero_hresult_in_call_without_this(self):
+        # A COMError with `0` hresult must NOT be reported as success.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestHresultFromWin32]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                return hresult.S_OK
+
+            def ComMethod(self, arg):
+                raise COMError(0, "simulated", (None, None, None, 0, None))
+
+        obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
+        with self.assertLogs("comtypes._vtbl", level="WARNING") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.ComMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Exception in ITestHresultFromWin32.ComMethod implementation:",
+        )
+        self.assertEqual(
+            logs.records[1].getMessage(),
+            "HRESULT_FROM_WIN32(0) is S_OK; using E_FAIL instead so "
+            "that the failure is not reported as success",
         )
