@@ -31,15 +31,6 @@ class E_NotImplemented(Exception):
     """COM method is not implemented"""
 
 
-def HRESULT_FROM_WIN32(errcode: int | None) -> int:
-    "Convert a Windows error code into a HRESULT value."
-    if errcode is None:
-        return 0x80000000
-    if errcode & 0x80000000:
-        return errcode
-    return (errcode & 0xFFFF) | 0x80070000
-
-
 def winerror(exc: Exception) -> int:
     """Return the windows error code from a WindowsError or COMError
     instance."""
@@ -89,7 +80,10 @@ def catch_errors(
                 mthname,
                 exc_info=True,
             )
-            return HRESULT_FROM_WIN32(winerror(details))
+            hr = hresult.HRESULT_FROM_WIN32(winerror(details))
+            if hr == 0:
+                hr = hresult.E_FAIL
+            return hr
         except E_NotImplemented:
             _warning("Unimplemented method %s.%s called", interface.__name__, mthname)
             return hresult.E_NOTIMPL
@@ -188,7 +182,9 @@ def hack(
                 msg = str(details)
             else:
                 msg = f"{source}: {descr}"
-            hr = HRESULT_FROM_WIN32(hr)
+            hr = hresult.HRESULT_FROM_WIN32(hr)
+            if hr == 0:
+                hr = hresult.E_FAIL
             return ReportError(msg, iid=interface._iid_, clsid=clsid, hresult=hr)
         except OSError as details:
             _error(
@@ -197,7 +193,9 @@ def hack(
                 mthname,
                 exc_info=True,
             )
-            hr = HRESULT_FROM_WIN32(winerror(details))
+            hr = hresult.HRESULT_FROM_WIN32(winerror(details))
+            if hr == 0:
+                hr = hresult.E_FAIL
             return ReportException(hr, interface._iid_, clsid=clsid)
         except E_NotImplemented:
             _warning("Unimplemented method %s.%s called", interface.__name__, mthname)

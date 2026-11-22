@@ -81,7 +81,16 @@ def HRESULT_FROM_WIN32(x: int) -> int:
     """Converts a system error code to an HRESULT value."""
     # make signed
     x = c_long(x).value
-    if x < 0:
+    # Match the Windows macro:
+    #   (HRESULT)(x) <= 0 ? (HRESULT)(x) : ...
+    # so that `0` maps to `S_OK` (0).
+    if x <= 0:
+        # Keep `0` as `0`.
+        # Converting `0` to `-2147024896` would make the resulting `COMError`
+        # text (`FormatError(-2147024896)`) evaluate to 'The operation
+        # completed successfully', which is misleading.
+        # When catching errors, callers should take care not to accidentally
+        # suppress exceptions by using an error code of `0`.
         return x
     # 0x80000000 | FACILITY_WIN32 << 16 | x & 0xFFFF
     return c_long(0x80070000 | (x & 0xFFFF)).value
