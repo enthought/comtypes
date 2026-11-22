@@ -311,6 +311,49 @@ class Test_HRESULT_via_COMObject(ut.TestCase):
             "Exception in ITestHresultFromWin32.ComMethod implementation:",
         )
 
+    def test_zero_winerror_is_reported_as_failure(self):
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestHresultFromWin32]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                raise OSError(0, "simulated", None, 0)
+
+            def ComMethod(self, arg):
+                return hresult.S_OK
+
+        obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
+        with self.assertLogs("comtypes._vtbl", level="ERROR") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.StdMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Exception in ITestHresultFromWin32.StdMethod implementation:",
+        )
+
+    def test_zero_winerror_in_call_without_this_is_reported_as_failure(self):
+        # A `0` winerror must NOT be reported as success.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestHresultFromWin32]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                return hresult.S_OK
+
+            def ComMethod(self, arg):
+                raise OSError(0, "simulated", None, 0)
+
+        obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
+        with self.assertLogs("comtypes._vtbl", level="ERROR") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.ComMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Exception in ITestHresultFromWin32.ComMethod implementation:",
+        )
+
     def test_comerror_hresult(self):
         # `HRESULT_FROM_WIN32(0)` returns `S_OK` (0) to match the Windows macro.
         # However, `catch_errors` runs on an error path. There, a `0` code
@@ -352,6 +395,28 @@ class Test_HRESULT_via_COMObject(ut.TestCase):
 
             def ComMethod(self, arg):
                 raise COMError(hresult.E_FAIL, "simulated", (None, None, None, 0, None))
+
+        obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
+        with self.assertLogs("comtypes._vtbl", level="ERROR") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.ComMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Exception in ITestHresultFromWin32.ComMethod implementation:",
+        )
+
+    def test_comerror_zero_hresult_in_call_without_this(self):
+        # A COMError with `0` hresult must NOT be reported as success.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestHresultFromWin32]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                return hresult.S_OK
+
+            def ComMethod(self, arg):
+                raise COMError(0, "simulated", (None, None, None, 0, None))
 
         obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
         with self.assertLogs("comtypes._vtbl", level="ERROR") as logs:
