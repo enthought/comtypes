@@ -248,7 +248,12 @@ class VariantTest(unittest.TestCase):
             v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
             return v.value
 
-        bytes = find_memleak(func)
+        # `VARIANT(MYCOLOR(...))` stores the record as a `VT_RECORD` whose data
+        # is allocated with the COM task allocator. `mallocspy` counts this
+        # allocation exactly, unlike `working_set`, which measures resident
+        # pages and reports first-call page faults as leaks
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(func, target="mallocspy")
         self.assertFalse(bytes, f"Leaks {bytes} bytes")  # type: ignore
 
 
