@@ -111,10 +111,10 @@ Calling COM methods is straightforward just like with other Python
 objects.  They can be called with positional and named arguments.
 
 Arguments marked ``[out]`` or ``[out, retval]`` in the IDL are
-returned from a sucessful method call, in a tuple if there is more
+returned from a successful method call, in a tuple if there is more
 than one.  If no ``[out]`` or ``[out, retval]`` arguments are present,
 the ``HRESULT`` returned by the method call is returned.  When
-``[out]`` or ``[out, retval]`` arguments are returned from a sucessful
+``[out]`` or ``[out, retval]`` arguments are returned from a successful
 call, the ``HRESULT`` value is lost.
 
 If the COM method call fails, a ``COMError`` exception is raised,
