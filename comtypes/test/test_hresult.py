@@ -35,7 +35,9 @@ class Test_HRESULT_FROM_WIN32(ut.TestCase):
             (ERROR_INVALID_PARAMETER, comtypes.hresult.E_INVALIDARG),
             (RPC_S_SERVER_UNAVAILABLE, comtypes.hresult.RPC_S_SERVER_UNAVAILABLE),
             (-1, -1),
-            (0, -2147024896),
+            # `0` maps to `S_OK` to match the Windows macro
+            # `(HRESULT)(x) <= 0 ? (HRESULT)(x) : ...`.
+            (0, comtypes.hresult.S_OK),
             (1, -2147024895),
             (0xFFFF - 3, -2146959364),
             (0xFFFF - 2, -2146959363),
