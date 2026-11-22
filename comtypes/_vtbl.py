@@ -40,18 +40,21 @@ def winerror(exc: Exception) -> int:
         # on an error path—treat it like OSError with winerror=None and fall
         # back to E_FAIL.
         if hr == 0:
+            _warn_on_err_code_zero()
             return hresult.E_FAIL
         return hr
     elif isinstance(exc, WindowsError):
         code = exc.winerror
-        if isinstance(code, int):
-            if code != 0:
-                return code
         # Sometimes, a WindowsError instance has no error code.  An access
         # violation raised by ctypes has only text, for example.  In this
         # cases we return a generic error code.
         # winerror=0 is treated the same way, so that the result is never 0
         # (S_OK) on an error path.
+        if isinstance(code, int):
+            if code == 0:
+                _warn_on_err_code_zero()
+                return hresult.E_FAIL
+            return code
         return hresult.E_FAIL
     raise TypeError(
         f"Expected comtypes.COMERROR or WindowsError instance, got {type(exc).__name__}"
@@ -65,6 +68,22 @@ def _do_implement(interface_name: str, method_name: str) -> Callable[..., int]:
         return hresult.E_NOTIMPL
 
     return _not_implemented
+
+
+def _warn_on_err_code_zero() -> None:
+    """Warn that an error code 0 was converted to E_FAIL.
+
+    `HRESULT_FROM_WIN32(0)` returns `S_OK` to match the Windows macro
+    `(HRESULT)(x) <= 0 ? (HRESULT)(x) : ...`.  On an error path this would
+    incorrectly report success and swallow the exception.  The caller must
+    replace it with `E_FAIL` (the same generic failure `winerror` uses when
+    a `WindowsError` has no code) so that a failure is never reported as
+    success.
+    """
+    _warning(
+        "HRESULT_FROM_WIN32(0) is S_OK; using E_FAIL instead so "
+        "that the failure is not reported as success"
+    )
 
 
 def catch_errors(
