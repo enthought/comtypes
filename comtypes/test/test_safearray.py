@@ -127,14 +127,17 @@ class SafeArrayTestCase(unittest.TestCase):
         bytes = find_memleak(doit, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
-    @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
     def test_VT_I4_leaks(self):
         sa = _midlSAFEARRAY(c_long)
 
         def doit():
             sa.from_param([1, 2, 3, 4, 5, 6])
 
-        bytes = find_memleak(doit)
+        # `from_param` creates a SAFEARRAY of longs. `mallocspy` counts this
+        # COM task allocation exactly, unlike `working_set`, which measures
+        # resident pages and reports first-call page faults as leaks
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(doit, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     def test_VT_I4(self):
