@@ -14,6 +14,7 @@ from comtypes import (
     COMObject,
     IPersist,
     IUnknown,
+    ReturnHRESULT,
     hresult,
 )
 from comtypes._post_coinit.misc import _CoCreateInstance
@@ -446,4 +447,160 @@ class Test_HRESULT_via_COMObject(ut.TestCase):
             logs.records[1].getMessage(),
             "HRESULT_FROM_WIN32(0) is S_OK; using E_FAIL instead so "
             "that the failure is not reported as success",
+        )
+
+    def test_comerror_with_unpackable_details_in_call_without_this(self):
+        # `call_without_this` unpacks `COMError.details` into five fields to
+        # build the error description.  When `details` is not a 5-element
+        # sequence, the unpacking raises `ValueError`/`TypeError`; the handler
+        # falls back to `str(details)` so the error is still reported.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestHresultFromWin32]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                return hresult.S_OK
+
+            def ComMethod(self, arg):
+                raise COMError(hresult.E_FAIL, "simulated", (None, None))  # type: ignore
+
+        obj = MyObject().QueryInterface(self.ITestHresultFromWin32)
+        with self.assertLogs("comtypes._vtbl", level="ERROR") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.ComMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_FAIL)
+        self.assertEqual(cm.exception.details, ("(None, None)", None, None, 0, None))
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Exception in ITestHresultFromWin32.ComMethod implementation:",
+        )
+
+
+class Test_ReturnHRESULT_via_COMObject(ut.TestCase):
+    class ITestReturnHRESULT(IUnknown):
+        # A minimal interface with one `STDMETHOD` method and one `COMMETHOD`
+        # method, so that both `catch_errors` and `hack`'s `call_without_this`
+        # can be reached.  `ReturnHRESULT` is not a Python standard error, so
+        # its handling is tested separately from `COMError`/`OSError`.
+        _iid_ = GUID.create_new()
+        _methods_ = [
+            STDMETHOD(ctypes.HRESULT, "StdMethod", [ctypes.c_int]),
+            COMMETHOD([], ctypes.HRESULT, "ComMethod", (["in"], ctypes.c_int, "arg")),
+        ]
+        if TYPE_CHECKING:
+
+            def StdMethod(self, arg) -> hints.Hresult: ...
+            def ComMethod(self, arg) -> hints.Hresult: ...
+
+    def test_return_hresult_is_reported_as_failure(self):
+        # A COM method implementation can raise `comtypes.ReturnHRESULT(hr, text)`
+        # to return an HRESULT without logging an error.  `catch_errors` catches
+        # it and calls `ReportError`, so the COM caller observes a `COMError`
+        # carrying the requested HRESULT and the text as the error description.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestReturnHRESULT]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                raise ReturnHRESULT(hresult.E_UNEXPECTED, "simulated")
+
+            def ComMethod(self, arg):
+                return hresult.S_OK
+
+        obj = MyObject().QueryInterface(self.ITestReturnHRESULT)
+        with self.assertRaises(COMError) as cm:
+            obj.StdMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_UNEXPECTED)
+        self.assertEqual(cm.exception.details, ("simulated", None, None, 0, None))
+
+    def test_return_hresult_in_call_without_this_is_reported_as_failure(self):
+        # Same as `test_return_hresult_is_reported`, but the method has no
+        # `this` parameter, so it is wrapped by `hack`'s `call_without_this`.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestReturnHRESULT]
+            _reg_clsid_ = GUID.create_new()
+
+            def StdMethod(self, this, arg):
+                return hresult.S_OK
+
+            def ComMethod(self, arg):
+                raise ReturnHRESULT(hresult.E_UNEXPECTED, "simulated")
+
+        obj = MyObject().QueryInterface(self.ITestReturnHRESULT)
+        with self.assertRaises(COMError) as cm:
+            obj.ComMethod(0)
+        self.assertEqual(cm.exception.hresult, hresult.E_UNEXPECTED)
+        self.assertEqual(cm.exception.details, ("simulated", None, None, 0, None))
+
+
+class Test_E_NotImplemented_via_COMObject(ut.TestCase):
+    class ITestProperty(IUnknown):
+        # A minimal interface with a read/write property.  `E_NotImplemented`
+        # is not a Python standard error; it is raised by `_MethodFinder`'s
+        # `getter`/`setter` when a COMObject does not implement the property
+        # through normal attribute access, so it is tested separately.
+        _iid_ = GUID.create_new()
+        _methods_ = [
+            COMMETHOD(
+                ["propget"],
+                ctypes.HRESULT,
+                "Value",
+                (["out"], POINTER(ctypes.c_int), "pValue"),
+            ),
+            COMMETHOD(
+                ["propput"],
+                ctypes.HRESULT,
+                "Value",
+                (["in"], ctypes.c_int, "Value"),
+            ),
+        ]
+        if TYPE_CHECKING:
+
+            @property
+            def Value(self) -> int: ...
+            @Value.setter
+            def Value(self, value: int) -> None: ...
+
+    def test_propget_not_implemented(self):
+        # When a COMObject does not implement the `Value` property at all,
+        # `_MethodFinder.getter` does `getattr(self, "Value")`, which raises
+        # `AttributeError`; the getter converts it to `E_NotImplemented`.
+        # `call_without_this` logs a warning and returns `E_NOTIMPL`, so the
+        # COM caller observes `E_NOTIMPL`.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestProperty]
+            _reg_clsid_ = GUID.create_new()
+
+        obj = MyObject().QueryInterface(self.ITestProperty)
+        with self.assertLogs("comtypes._vtbl", level="WARNING") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.Value
+        self.assertEqual(cm.exception.hresult, hresult.E_NOTIMPL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Unimplemented method ITestProperty._get_Value called",
+        )
+
+    def test_propput_not_implemented(self):
+        # When a COMObject implements `Value` as a read-only property,
+        # `_MethodFinder.setter`'s `setattr(self, "Value", value)` raises
+        # `AttributeError`; the setter converts it to `E_NotImplemented`.
+        # `call_without_this` logs a warning and returns `E_NOTIMPL`, so the
+        # COM caller observes `E_NOTIMPL`.
+        class MyObject(COMObject):
+            _com_interfaces_ = [self.ITestProperty]
+            _reg_clsid_ = GUID.create_new()
+
+            @property
+            def Value(self):
+                return 42
+
+        obj = MyObject().QueryInterface(self.ITestProperty)
+        with self.assertLogs("comtypes._vtbl", level="WARNING") as logs:
+            with self.assertRaises(COMError) as cm:
+                obj.Value = 1
+        self.assertEqual(cm.exception.hresult, hresult.E_NOTIMPL)
+        self.assertEqual(
+            logs.records[0].getMessage(),
+            "Unimplemented method ITestProperty._set_Value called",
         )
