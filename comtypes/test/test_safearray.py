@@ -43,7 +43,6 @@ def com_refcnt(o):
 
 
 class VariantTestCase(unittest.TestCase):
-    @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
     def test_VARIANT_array(self):
         v = VARIANT()
         v.value = ((1, 2, 3), ("foo", "bar", None))
@@ -53,10 +52,15 @@ class VariantTestCase(unittest.TestCase):
         def func():
             VARIANT((1, 2, 3), ("foo", "bar", None))
 
-        bytes = find_memleak(func)
+        # The VARIANT owns a SAFEARRAY of VARIANTs (with BSTR elements).
+        # `mallocspy` counts these COM task allocations exactly, so a per-call
+        # leak is detected deterministically. `working_set` was unreliable here
+        # because it measures resident pages, and the first call in a process
+        # faults in pages that look like a leak
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(func, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
-    @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
     def test_double_array(self):
         a = array.array("d", (3.14, 2.78))
         v = VARIANT(a)
@@ -66,7 +70,11 @@ class VariantTestCase(unittest.TestCase):
         def func():
             VARIANT(array.array("d", (3.14, 2.78)))
 
-        bytes = find_memleak(func)
+        # The VARIANT owns a SAFEARRAY of doubles. `mallocspy` counts this COM
+        # task allocation exactly, unlike `working_set`, which measures
+        # resident pages and reports first-call page faults as leaks
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(func, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     def test_float_array(self):
@@ -104,24 +112,32 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertEqual(sa[0], ("a", "b", "c"))
         self.assertEqual(SafeArrayGetVartype(sa), VT_BSTR)
 
-    @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
     def test_VT_BSTR_leaks(self):
         sb = _midlSAFEARRAY(BSTR)
 
         def doit():
             sb.from_param(["foo", "bar"])
 
-        bytes = find_memleak(doit)
+        # `from_param` creates a SAFEARRAY of BSTRs. `mallocspy` counts the
+        # SAFEARRAY descriptor/data and the BSTR elements exactly, so a
+        # per-call leak is detected deterministically. `working_set` was
+        # unreliable here because it measures resident pages, and the first
+        # call in a process faults in pages that look like a leak
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(doit, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
-    @unittest.skip("This fails with a memory leak.  Figure out if false positive.")
     def test_VT_I4_leaks(self):
         sa = _midlSAFEARRAY(c_long)
 
         def doit():
             sa.from_param([1, 2, 3, 4, 5, 6])
 
-        bytes = find_memleak(doit)
+        # `from_param` creates a SAFEARRAY of longs. `mallocspy` counts this
+        # COM task allocation exactly, unlike `working_set`, which measures
+        # resident pages and reports first-call page faults as leaks
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(doit, target="mallocspy")
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
     def test_VT_I4(self):

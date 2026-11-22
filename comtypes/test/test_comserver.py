@@ -2,7 +2,7 @@ import doctest
 import sys
 import unittest
 from ctypes import pointer
-from typing import Any
+from typing import Any, Literal
 
 import comtypes.server
 import comtypes.test.TestComServer
@@ -37,10 +37,15 @@ def tearDownModule():
 
 
 class BaseServerTest:
+    # `find_memleak` target used by `_find_memleak`. Each concrete server test
+    # sets this explicitly, because the appropriate target depends on whether
+    # the server runs in this process or in a separate one.
+    _memleak_target: Literal["working_set", "private_usage", "mallocspy"]
+
     def create_object(self) -> Any: ...
 
     def _find_memleak(self, func):
-        bytes = find_memleak(func)
+        bytes = find_memleak(func, target=self._memleak_target)
         self.assertFalse(bytes, f"Leaks {bytes} bytes")  # type: ignore
 
     def test_mixedinout(self):
@@ -112,18 +117,21 @@ class BaseServerTest:
 
 
 class TestInproc(BaseServerTest, unittest.TestCase):
+    # The server runs in this process, so `mallocspy` can count its COM task
+    # allocations exactly.
+    _memleak_target = "mallocspy"
+
     def create_object(self):
         return CreateObject(
             "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_INPROC_SERVER
         )
 
-    @unittest.skip("Fails occasionally with a memory leak on INPROC.")
-    def test_eval(self):
-        # This test sometimes leaks memory when run as an in-process server.
-        pass
-
 
 class TestLocalServer(BaseServerTest, unittest.TestCase):
+    # The server runs in a separate process, so `mallocspy` cannot see its
+    # allocations. Measure this process's committed memory instead.
+    _memleak_target = "private_usage"
+
     def create_object(self):
         return CreateObject(
             "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
@@ -138,6 +146,10 @@ class TestLocalServer(BaseServerTest, unittest.TestCase):
 
 @unittest.skipIf(IMPORT_PYWIN32_FAILED, "This depends on 'pywin32'.")
 class TestInproc_win32com(BaseServerTest, unittest.TestCase):
+    # The server runs in this process, so `mallocspy` can count its COM task
+    # allocations exactly.
+    _memleak_target = "mallocspy"
+
     def create_object(self):
         return Dispatch("TestComServerLib.TestComServer")
 
@@ -166,6 +178,10 @@ class TestInproc_win32com(BaseServerTest, unittest.TestCase):
 
 @unittest.skipIf(IMPORT_PYWIN32_FAILED, "This depends on 'pywin32'.")
 class TestLocalServer_win32com(BaseServerTest, unittest.TestCase):
+    # The server runs in a separate process, so `mallocspy` cannot see its
+    # allocations. Measure this process's committed memory instead.
+    _memleak_target = "private_usage"
+
     def create_object(self):
         return Dispatch(
             "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_LOCAL_SERVER
@@ -248,7 +264,12 @@ class VariantTest(unittest.TestCase):
             v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
             return v.value
 
-        bytes = find_memleak(func)
+        # `VARIANT(MYCOLOR(...))` stores the record as a `VT_RECORD` whose data
+        # is allocated with the COM task allocator. `mallocspy` counts this
+        # allocation exactly, unlike `working_set`, which measures resident
+        # pages and reports first-call page faults as leaks
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(func, target="mallocspy")
         self.assertFalse(bytes, f"Leaks {bytes} bytes")  # type: ignore
 
 
@@ -269,7 +290,11 @@ class SafeArrayTest(unittest.TestCase):
         def doit():
             t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
 
-        bytes = find_memleak(doit)
+        # `from_param` creates a SAFEARRAY of `MYCOLOR` records. `mallocspy`
+        # counts the SAFEARRAY descriptor/data exactly, unlike `working_set`,
+        # which measures resident pages and reports first-call page faults as
+        # leaks (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(doit, target="mallocspy")
         self.assertFalse(bytes, f"Leaks {bytes} bytes")  # type: ignore
 
 
