@@ -126,11 +126,6 @@ class TestInproc(BaseServerTest, unittest.TestCase):
             "TestComServerLib.TestComServer", clsctx=comtypes.CLSCTX_INPROC_SERVER
         )
 
-    @unittest.skip("Fails occasionally with a memory leak on INPROC.")
-    def test_eval(self):
-        # This test sometimes leaks memory when run as an in-process server.
-        pass
-
 
 class TestLocalServer(BaseServerTest, unittest.TestCase):
     # The server runs in a separate process, so `mallocspy` cannot see its
