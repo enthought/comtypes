@@ -8,16 +8,19 @@ from comtypes.test.find_memleak import find_memleak
 
 class Test(unittest.TestCase):
     def check_leaks(self, func, limit=0):
-        bytes = find_memleak(func)
+        # BSTRs are allocated with `SysAllocString`, which goes through the COM
+        # task allocator, so `mallocspy` counts them exactly. This avoids the
+        # `working_set` false positive where the first call in a process faults
+        # in pages that look like a leak
+        # (see https://github.com/enthought/comtypes/issues/971).
+        bytes = find_memleak(func, target="mallocspy")
         self.assertFalse(bytes > limit, f"Leaks {bytes} bytes")
 
     def test_creation(self):
         def doit():
             BSTR("abcdef" * 100)
 
-        # It seems this test is unreliable.  Sometimes it leaks 4096
-        # bytes, sometimes not.  Try to workaround that...
-        self.check_leaks(doit, limit=4096)
+        self.check_leaks(doit)
 
     def test_from_param(self):
         def doit():
