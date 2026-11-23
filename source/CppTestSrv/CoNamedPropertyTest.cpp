@@ -236,6 +236,23 @@ static HRESULT BuildRangeVariant(const std::map<LONG, LONG>& values,
 	return S_OK ;
 }
 
+// Build a VARIANT holding an empty SAFEARRAY(VARIANT).
+static HRESULT BuildEmptyVariantArray(VARIANT* result)
+{
+	VariantInit(result) ;
+
+	SAFEARRAYBOUND bound = { 0, 0 } ;
+	SAFEARRAY* array = SafeArrayCreate(VT_VARIANT, 1, &bound) ;
+	if (array == NULL)
+	{
+		return E_OUTOFMEMORY ;
+	}
+
+	result->vt = VT_ARRAY | VT_VARIANT ;
+	result->parray = array ;
+	return S_OK ;
+}
+
 // Assign the elements of value to the indices [start, end].
 // value must be a SAFEARRAY(VARIANT) whose element count equals
 // end - start + 1; each element must be a VT_I4.
@@ -594,4 +611,75 @@ HRESULT __stdcall CNamedPropertyTest::put_OptionalItem(VARIANT index, VARIANT va
 	}
 	m_optionalValues[index.lVal] = value.lVal ;
 	return S_OK ;
+}
+
+// Parameterized property that mixes a default-valued argument with an
+// optional argument.  `start` has the default value 1.  When `end` is
+// omitted (VT_ERROR), the getter reads from `start` to the last assigned
+// index; when nothing is assigned in that range it returns an empty array.
+// When `end` is given, it behaves like Range.
+HRESULT __stdcall CNamedPropertyTest::get_OptionalRange(LONG start, VARIANT end,
+	                                                      VARIANT* value)
+{
+	trace("get_OptionalRange called") ;
+	if (value == NULL)
+	{
+		return E_POINTER ;
+	}
+
+	LONG endIndex ;
+	if (end.vt == VT_ERROR)
+	{
+		if (m_optionalRangeValues.empty())
+		{
+			return BuildEmptyVariantArray(value) ;
+		}
+		endIndex = m_optionalRangeValues.rbegin()->first ;
+		if (endIndex < start)
+		{
+			return BuildEmptyVariantArray(value) ;
+		}
+	}
+	else
+	{
+		endIndex = end.lVal ;
+	}
+
+	return BuildRangeVariant(m_optionalRangeValues, start, endIndex, value) ;
+}
+
+// Setter for the default/optional-index property.  When `end` is omitted
+// (VT_ERROR), the values are written from `start` to the end of the supplied
+// sequence.  When `end` is given, it behaves like Range.
+HRESULT __stdcall CNamedPropertyTest::put_OptionalRange(LONG start, VARIANT end,
+	                                                      VARIANT value)
+{
+	trace("put_OptionalRange called") ;
+
+	LONG endIndex ;
+	if (end.vt == VT_ERROR)
+	{
+		if ((value.vt & VT_ARRAY) == 0 || (value.vt & ~VT_ARRAY) != VT_VARIANT ||
+		    value.parray == NULL)
+		{
+			return DISP_E_TYPEMISMATCH ;
+		}
+
+		LONG lower = 0 ;
+		LONG upper = -1 ;
+		SafeArrayGetLBound(value.parray, 1, &lower) ;
+		SafeArrayGetUBound(value.parray, 1, &upper) ;
+		LONG count = upper - lower + 1 ;
+		if (count <= 0)
+		{
+			return DISP_E_BADPARAMCOUNT ;
+		}
+		endIndex = start + count - 1 ;
+	}
+	else
+	{
+		endIndex = end.lVal ;
+	}
+
+	return AssignRangeFromVariant(value, start, endIndex, m_optionalRangeValues) ;
 }

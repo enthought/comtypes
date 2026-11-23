@@ -290,6 +290,16 @@ interface IDualNamedPropertyTest : IDispatch
  HRESULT OptionalItem([in, optional] VARIANT index, [out, retval] VARIANT* value);
  [propput, id(5)]
  HRESULT OptionalItem([in, optional] VARIANT index, [in] VARIANT value);
+
+ // Parameterized property that mixes a default-valued argument with an
+ // optional argument.  `start` has the default value 1.  When `end` is
+ // omitted, the getter reads from `start` to the last assigned index and the
+ // setter writes from `start` to the end of the supplied values.  When `end`
+ // is given, it behaves like Range.
+ [propget, id(6)]
+ HRESULT OptionalRange([in, defaultvalue(1)] long start, [in, optional] VARIANT end, [out, retval] VARIANT* value);
+ [propput, id(6)]
+ HRESULT OptionalRange([in, defaultvalue(1)] long start, [in, optional] VARIANT end, [in] VARIANT value);
 };
 
 // Dispinterface alias for the dual interface.

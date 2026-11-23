@@ -32,6 +32,12 @@ The properties follow this contract:
   comtypes converts to `None`).  Writing `obj.Range[start, end] = values`
   assigns `values[i]` to index `start + i`; the number of values must equal
   `end - start + 1`.
+* `OptionalRange` has a `start` argument defaulting to 1 and an optional `end`.
+  With both bounds it behaves like `Range`; if `end` is omitted, reads extend
+  through the last assigned index.  The all-slice and empty-tuple forms omit
+  `start` and therefore use its default.  The dispinterface setter also accepts
+  omitted bounds, while the dual-vtable setter currently raises `TypeError`
+  for those forms because the value argument is not bound correctly.
 """
 
 import unittest
@@ -334,6 +340,202 @@ class TestDualNamedProperty(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.obj.Item[:] = 42
 
+    def test_optional_range_getitem_both_args_returns_range(self):
+        """`obj.OptionalRange[start, end]` must return the range [start, end].
+
+        When both arguments are given, `OptionalRange` behaves like `Range`:
+        one element per index in [start, end], with an unassigned index filled
+        with a VT_NULL VARIANT (converted to `None`).
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+
+    def test_optional_range_getitem_start_only_reads_to_last_index(self):
+        """`obj.OptionalRange[start]` must read from `start` to the last index.
+
+        The second argument is optional.  When it is omitted, the getter reads
+        from `start` to the last assigned index, so the whole stored range is
+        returned.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[2], (9, 8, 7))
+
+    def test_optional_range_getitem_all_slice_uses_default_start(self):
+        """`obj.OptionalRange[:]` must use the default start value 1.
+
+        The first argument has the default value 1.  The all-slice spelling
+        passes no argument, so the getter reads from index 1 to the last
+        assigned index.  Index 1 was never assigned, so it is filled with
+        VT_NULL (converted to `None`).
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[:], (None, 9, 8, 7))
+
+    def test_optional_range_getitem_empty_tuple_uses_default_start(self):
+        """`obj.OptionalRange[()]` must behave like the all-slice spelling.
+
+        An empty tuple index is treated as "no argument", so the default start
+        value 1 is used and the getter reads to the last assigned index.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[()], (None, 9, 8, 7))
+
+    def test_optional_range_call_both_args(self):
+        """`obj.OptionalRange(start, end)` must forward both arguments.
+
+        This is the call spelling of tuple indexing for a property that mixes a
+        default-valued argument with an optional one.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange(2, 4), (9, 8, 7))
+
+    def test_optional_range_call_start_only(self):
+        """`obj.OptionalRange(start)` must forward only `start`.
+
+        The omitted `end` must fall back to the optional default, so the getter
+        reads to the last assigned index.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange(2), (9, 8, 7))
+
+    def test_optional_range_call_no_args(self):
+        """`obj.OptionalRange()` must use the default start value 1.
+
+        With no arguments, `start` falls back to its default 1 and `end` is
+        omitted, so the getter reads from index 1 to the last assigned index.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange(), (None, 9, 8, 7))
+
+    def test_optional_range_getitem_unset_range_returns_nulls(self):
+        """Reading an unassigned range must return VT_NULL elements.
+
+        With an explicit `end`, `OptionalRange` behaves like `Range`: an index
+        that has not been assigned is reported as a VT_NULL VARIANT, which
+        comtypes converts to `None`.
+        """
+        self.assertEqual(self.obj.OptionalRange[2, 4], (None, None, None))
+
+    def test_optional_range_getitem_empty_map_returns_empty(self):
+        """Reading with an omitted `end` on an empty map must return an empty tuple.
+
+        There is no last assigned index to read to, so the getter returns an
+        empty array, which comtypes converts to an empty tuple.
+        """
+        self.assertEqual(self.obj.OptionalRange[:], ())
+
+    def test_optional_range_getitem_start_beyond_data_returns_empty(self):
+        """Reading from a start beyond the last index must return an empty tuple.
+
+        When `end` is omitted and `start` is greater than the last assigned
+        index, there is nothing to read, so the getter returns an empty array.
+        """
+        self.assertEqual(self.obj.OptionalRange[5], ())
+
+    def test_optional_range_getitem_end_before_start_raises_com_error(self):
+        """An explicit `end` before `start` must be rejected.
+
+        With an explicit `end`, `OptionalRange` behaves like `Range`, which
+        rejects `end < start` with E_INVALIDARG.
+        """
+        with self.assertRaises(COMError) as cm:
+            self.obj.OptionalRange[5, 3]
+        self.assertEqual(cm.exception.hresult, hresult.E_INVALIDARG)
+
+    def test_optional_range_setitem_both_args_round_trips(self):
+        """`obj.OptionalRange[start, end] = values` must assign the range.
+
+        With both arguments, `OptionalRange` behaves like `Range`:
+        `values[i]` is stored under index `start + i`.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+
+    def test_optional_range_setitem_wrong_length_raises_com_error(self):
+        """Assigning a sequence whose length differs from the range must fail.
+
+        `OptionalRange[2, 4]` covers three indices, so a two-element sequence
+        cannot be assigned.  The server rejects the mismatch with
+        DISP_E_BADPARAMCOUNT.
+        """
+        with self.assertRaises(COMError) as cm:
+            self.obj.OptionalRange[2, 4] = (9, 8)
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_BADPARAMCOUNT)
+
+    def test_optional_range_setitem_start_only_raises_type_error(self):
+        """`obj.OptionalRange[start] = values` must raise TypeError.
+
+        CHARACTERIZATION: this records the current (buggy) behavior, not the
+        desired one.  The setter is a bound method whose parameters are
+        declared as `(start, end, value)`, and
+        `bound_named_property.__setitem__` calls it as `fset(instance, start,
+        value)` for a single (non-tuple) index.  That binds `value` to the
+        `end` parameter, so the `value` parameter is left unfilled and Python
+        raises `TypeError: required argument 'value' missing` before the COM
+        call is made.  The dispinterface path is unaffected because its setter
+        is a variadic wrapper around `IDispatch::Invoke`.  When the
+        single-index setter is fixed to pass the value in the right position,
+        this test will start failing and should be updated to assert that the
+        range is written.
+        """
+        with self.assertRaises(
+            TypeError,
+            msg=(
+                "CHARACTERIZATION: failure is expected; once the single-index "
+                "setter is fixed, self.obj.OptionalRange[2] = (9, 8, 7) should "
+                "write indices 2..4"
+            ),
+        ) as cm:
+            self.obj.OptionalRange[2] = (9, 8, 7)
+        self.assertIn("required argument 'value' missing", str(cm.exception))
+
+    def test_optional_range_setitem_all_slice_raises_type_error(self):
+        """`obj.OptionalRange[:] = values` must raise TypeError.
+
+        CHARACTERIZATION: this records the current (buggy) behavior, not the
+        desired one.  The all-slice spelling calls the dual vtable setter as
+        `fset(instance, value)`, so the single positional argument binds to the
+        `start` parameter and the `value` parameter is left unfilled; Python
+        raises `TypeError: required argument 'value' missing` before the COM
+        call is made.  When the all-slice setter is fixed, this test will start
+        failing and should be updated to assert that the range is written from
+        the default start.
+        """
+        with self.assertRaises(
+            TypeError,
+            msg=(
+                "CHARACTERIZATION: failure is expected; once the all-slice "
+                "setter is fixed, self.obj.OptionalRange[:] = (9, 8, 7) should "
+                "write indices 1..3"
+            ),
+        ) as cm:
+            self.obj.OptionalRange[:] = (9, 8, 7)
+        self.assertIn("required argument 'value' missing", str(cm.exception))
+
+    def test_optional_range_setitem_empty_tuple_raises_type_error(self):
+        """`obj.OptionalRange[()] = values` must raise TypeError.
+
+        CHARACTERIZATION: this records the current (buggy) behavior, not the
+        desired one.  `bound_named_property.__setitem__` expands the empty
+        tuple index to `fset(instance, value)`, which is the same call as the
+        all-slice spelling.  On the dual vtable interface that single
+        positional argument binds to the `start` parameter, leaving the `value`
+        parameter unfilled, so Python raises `TypeError: required argument
+        'value' missing` before the COM call is made.  When the empty-tuple
+        setter is fixed, this test will start failing and should be updated to
+        assert that the range is written from the default start.
+        """
+        with self.assertRaises(
+            TypeError,
+            msg=(
+                "CHARACTERIZATION: failure is expected; once the empty-tuple "
+                "setter is fixed, self.obj.OptionalRange[()] = (9, 8, 7) should "
+                "write indices 1..3"
+            ),
+        ) as cm:
+            self.obj.OptionalRange[()] = (9, 8, 7)
+        self.assertIn("required argument 'value' missing", str(cm.exception))
+
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class TestDispNamedProperty(unittest.TestCase):
@@ -569,6 +771,167 @@ class TestDispNamedProperty(unittest.TestCase):
         with self.assertRaises(COMError) as cm:
             self.obj.Item[:] = 42
         self.assertEqual(cm.exception.hresult, hresult.DISP_E_BADPARAMCOUNT)
+
+    def test_optional_range_getitem_both_args_returns_range(self):
+        """`obj.OptionalRange[start, end]` must return the range [start, end].
+
+        When both arguments are given, `OptionalRange` behaves like `Range`:
+        one element per index in [start, end], with an unassigned index filled
+        with a VT_NULL VARIANT (converted to `None`).
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+
+    def test_optional_range_getitem_start_only_reads_to_last_index(self):
+        """`obj.OptionalRange[start]` must read from `start` to the last index.
+
+        The second argument is optional.  When it is omitted, the getter reads
+        from `start` to the last assigned index, so the whole stored range is
+        returned.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[2], (9, 8, 7))
+
+    def test_optional_range_getitem_all_slice_uses_default_start(self):
+        """`obj.OptionalRange[:]` must use the default start value 1.
+
+        The first argument has the default value 1.  The all-slice spelling
+        passes no argument, so the getter reads from index 1 to the last
+        assigned index.  Index 1 was never assigned, so it is filled with
+        VT_NULL (converted to `None`).
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[:], (None, 9, 8, 7))
+
+    def test_optional_range_getitem_empty_tuple_uses_default_start(self):
+        """`obj.OptionalRange[()]` must behave like the all-slice spelling.
+
+        An empty tuple index is treated as "no argument", so the default start
+        value 1 is used and the getter reads to the last assigned index.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[()], (None, 9, 8, 7))
+
+    def test_optional_range_call_both_args(self):
+        """`obj.OptionalRange(start, end)` must forward both arguments.
+
+        This is the call spelling of tuple indexing for a property that mixes a
+        default-valued argument with an optional one.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange(2, 4), (9, 8, 7))
+
+    def test_optional_range_call_start_only(self):
+        """`obj.OptionalRange(start)` must forward only `start`.
+
+        The omitted `end` must fall back to the optional default, so the getter
+        reads to the last assigned index.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange(2), (9, 8, 7))
+
+    def test_optional_range_call_no_args(self):
+        """`obj.OptionalRange()` must use the default start value 1.
+
+        With no arguments, `start` falls back to its default 1 and `end` is
+        omitted, so the getter reads from index 1 to the last assigned index.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange(), (None, 9, 8, 7))
+
+    def test_optional_range_getitem_unset_range_returns_nulls(self):
+        """Reading an unassigned range must return VT_NULL elements.
+
+        With an explicit `end`, `OptionalRange` behaves like `Range`: an index
+        that has not been assigned is reported as a VT_NULL VARIANT, which
+        comtypes converts to `None`.
+        """
+        self.assertEqual(self.obj.OptionalRange[2, 4], (None, None, None))
+
+    def test_optional_range_getitem_empty_map_returns_empty(self):
+        """Reading with an omitted `end` on an empty map must return an empty tuple.
+
+        There is no last assigned index to read to, so the getter returns an
+        empty array, which comtypes converts to an empty tuple.
+        """
+        self.assertEqual(self.obj.OptionalRange[:], ())
+
+    def test_optional_range_getitem_start_beyond_data_returns_empty(self):
+        """Reading from a start beyond the last index must return an empty tuple.
+
+        When `end` is omitted and `start` is greater than the last assigned
+        index, there is nothing to read, so the getter returns an empty array.
+        """
+        self.assertEqual(self.obj.OptionalRange[5], ())
+
+    def test_optional_range_getitem_end_before_start_raises_com_error(self):
+        """An explicit `end` before `start` must be rejected.
+
+        With an explicit `end`, `OptionalRange` behaves like `Range`, which
+        rejects `end < start` with E_INVALIDARG.  The dispinterface getter
+        reaches `IDispatch::Invoke`, and `ITypeInfo::Invoke` wraps the failure
+        HRESULT returned by the method into DISP_E_EXCEPTION, so that is what
+        surfaces here (unlike the dual vtable getter, which reports the
+        method's own HRESULT).
+        """
+        with self.assertRaises(COMError) as cm:
+            self.obj.OptionalRange[5, 3]
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_EXCEPTION)
+
+    def test_optional_range_setitem_both_args_round_trips(self):
+        """`obj.OptionalRange[start, end] = values` must assign the range.
+
+        With both arguments, `OptionalRange` behaves like `Range`:
+        `values[i]` is stored under index `start + i`.
+        """
+        self.obj.OptionalRange[2, 4] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+
+    def test_optional_range_setitem_wrong_length_raises_com_error(self):
+        """Assigning a sequence whose length differs from the range must fail.
+
+        `OptionalRange[2, 4]` covers three indices, so a two-element sequence
+        cannot be assigned.  The dispinterface setter reaches
+        `IDispatch::Invoke`, and `ITypeInfo::Invoke` wraps the failure HRESULT
+        returned by the method into DISP_E_EXCEPTION, so that is what surfaces
+        here (unlike the dual vtable setter, which reports the method's own
+        HRESULT).
+        """
+        with self.assertRaises(COMError) as cm:
+            self.obj.OptionalRange[2, 4] = (9, 8)
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_EXCEPTION)
+
+    def test_optional_range_setitem_start_only_writes_to_end(self):
+        """`obj.OptionalRange[start] = values` must write from `start` to the end.
+
+        The dispinterface setter is a variadic wrapper around
+        `IDispatch::Invoke`.  The last argument is passed as the PROPERTYPUT
+        value and the preceding arguments are passed positionally, so a single
+        index is taken as `start` and the omitted `end` is left at its optional
+        default.  The server then writes the values from `start` to the end of
+        the supplied sequence.
+        """
+        self.obj.OptionalRange[2] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+
+    def test_optional_range_setitem_all_slice_uses_default_start(self):
+        """`obj.OptionalRange[:] = values` must write from the default start 1.
+
+        The all-slice spelling passes no positional argument, so `start` falls
+        back to its default 1 and `end` is omitted.  The server writes the
+        values from index 1 to the end of the supplied sequence.
+        """
+        self.obj.OptionalRange[:] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[1, 3], (9, 8, 7))
+
+    def test_optional_range_setitem_empty_tuple_uses_default_start(self):
+        """`obj.OptionalRange[()] = values` must behave like the all-slice spelling.
+
+        An empty tuple index is treated as "no argument", so `start` falls back
+        to its default 1 and `end` is omitted, just like the all-slice spelling.
+        """
+        self.obj.OptionalRange[()] = (9, 8, 7)
+        self.assertEqual(self.obj.OptionalRange[1, 3], (9, 8, 7))
 
 
 if __name__ == "__main__":

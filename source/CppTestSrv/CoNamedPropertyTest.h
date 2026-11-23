@@ -71,6 +71,10 @@ private:
 	virtual HRESULT __stdcall put_WriteOnlyItem(LONG index, LONG value);
 	virtual HRESULT __stdcall get_OptionalItem(VARIANT index, VARIANT* value);
 	virtual HRESULT __stdcall put_OptionalItem(VARIANT index, VARIANT value);
+	virtual HRESULT __stdcall get_OptionalRange(LONG start, VARIANT end,
+	                                            VARIANT* value);
+	virtual HRESULT __stdcall put_OptionalRange(LONG start, VARIANT end,
+	                                            VARIANT value);
 
 	// Initialization
 	virtual HRESULT Init();
@@ -90,6 +94,8 @@ private:
 	std::map<LONG, LONG> m_rangeValues;
 	// Storage for the optional-index OptionalItem property.
 	std::map<LONG, LONG> m_optionalValues;
+	// Storage for the default/optional-index OptionalRange property.
+	std::map<LONG, LONG> m_optionalRangeValues;
 };
 
 #endif
