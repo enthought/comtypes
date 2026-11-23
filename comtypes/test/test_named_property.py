@@ -23,6 +23,9 @@ The properties follow this contract:
   DISP_E_BADINDEX, so "not set" can be told apart from a stored value.
 * `ReadOnlyItem` and `WriteOnlyItem` share the same storage as `Item`; they
   only read or only write that single map.
+* `OptionalItem` can exchange the whole map through the all-slice spelling
+  (`obj.OptionalItem[:]`) or the empty tuple (`obj.OptionalItem[()]`).  The map
+  is represented as a sequence of (key, value) pairs.
 * `Range` takes two integer indices that denote a range.  Reading
   `obj.Range[start, end]` returns one element per index in `[start, end]`,
   filling an index that has not been assigned with a VT_NULL VARIANT (which
@@ -198,6 +201,139 @@ class TestDualNamedProperty(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.obj.WriteOnlyItem(3)
 
+    def test_optional_getitem_all_slice_returns_pairs(self):
+        """`obj.OptionalItem[:]` must return the whole map as (key, value) pairs.
+
+        The all-slice spelling passes no index, which the server interprets as
+        "the whole map".  The map is returned as a sequence of (key, value)
+        tuples, sorted by key because the server stores it in a std::map.
+        """
+        self.obj.OptionalItem[1] = 10
+        self.obj.OptionalItem[2] = 20
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (2, 20)))
+
+    def test_optional_getitem_empty_tuple_returns_pairs(self):
+        """`obj.OptionalItem[()]` must behave like the all-slice spelling.
+
+        An empty tuple index is treated as "no index" by
+        `bound_named_property.__getitem__`, so it must return the whole map
+        just like `obj.OptionalItem[:]`.
+        """
+        self.obj.OptionalItem[1] = 10
+        self.obj.OptionalItem[2] = 20
+        self.assertEqual(self.obj.OptionalItem[()], ((1, 10), (2, 20)))
+
+    def test_optional_getitem_index_returns_value(self):
+        """`obj.OptionalItem[index]` must return the value stored for that index.
+
+        When an index is supplied, `OptionalItem` behaves like `Item` and
+        returns the single stored value.
+        """
+        self.obj.OptionalItem[5] = 50
+        self.assertEqual(self.obj.OptionalItem[5], 50)
+
+    def test_optional_getitem_unset_index_returns_badindex_variant(self):
+        """Reading an unassigned `OptionalItem` index reports DISP_E_BADINDEX.
+
+        With an index, `OptionalItem` behaves like `Item`, so an index that was
+        never assigned must report DISP_E_BADINDEX.
+        """
+        result = self.obj.OptionalItem[5]
+        self.assertEqual(result._.scode, hresult.DISP_E_BADINDEX)
+
+    def test_optional_setitem_all_slice_replaces_map(self):
+        """`obj.OptionalItem[:] = pairs` must replace the whole map.
+
+        The all-slice setter must not merge with the existing entries: the map
+        is fully overwritten by the supplied (key, value) pairs.
+
+        CHARACTERIZATION: this records the current (buggy) behavior, not the
+        desired one.  On the dual vtable interface the setter is a bound method
+        whose parameters are declared as `(index, value)`, and
+        `bound_named_property.__setitem__` calls it as `fset(instance, value)`
+        for the all-slice spelling.  That single positional argument binds to
+        the `index` parameter, so the `value` parameter is left unfilled and
+        Python raises `TypeError: required argument 'value' missing` before the
+        COM call is made.  The dispinterface path is unaffected because its
+        setter is a variadic wrapper around `IDispatch::Invoke`.  When the
+        all-slice setter is fixed to pass the value in the right position, this
+        test will start failing and should be updated to assert that the map is
+        replaced.
+        """
+        self.obj.OptionalItem[1] = 10
+        with self.assertRaises(
+            TypeError,
+            msg=(
+                "CHARACTERIZATION: failure is expected; once the all-slice setter "
+                "is fixed, self.obj.OptionalItem[:] == ((3, 30), (4, 40)) should pass"
+            ),
+        ) as cm:
+            self.obj.OptionalItem[:] = ((3, 30), (4, 40))
+        self.assertIn("required argument 'value' missing", str(cm.exception))
+
+    def test_optional_setitem_all_slice_empty_clears_map(self):
+        """`obj.OptionalItem[:] = ()` must clear the whole map.
+
+        An empty sequence of pairs must leave the map empty, not keep the
+        previous entries.
+
+        CHARACTERIZATION: this records the current (buggy) behavior, not the
+        desired one.  The all-slice spelling calls the dual vtable setter as
+        `fset(instance, value)`, so the single positional argument binds to the
+        `index` parameter and the `value` parameter is left unfilled; Python
+        raises `TypeError: required argument 'value' missing` before the COM
+        call is made.  When the all-slice setter is fixed, this test will start
+        failing and should be updated to assert that the map is cleared.
+        """
+        self.obj.OptionalItem[1] = 10
+        with self.assertRaises(
+            TypeError,
+            msg=(
+                "CHARACTERIZATION: failure is expected; once the all-slice setter "
+                "is fixed, self.obj.OptionalItem[:] == () should pass"
+            ),
+        ) as cm:
+            self.obj.OptionalItem[:] = ()
+        self.assertIn("required argument 'value' missing", str(cm.exception))
+
+    def test_optional_setitem_empty_tuple_replaces_map(self):
+        """`obj.OptionalItem[()] = pairs` must replace the whole map.
+
+        An empty tuple index means "no index", just like the all-slice
+        spelling, so the setter receives the index defaults followed by the
+        value and the whole map is replaced.
+
+        CHARACTERIZATION: this records the current (buggy) behavior, not the
+        desired one.  `bound_named_property.__setitem__` expands the empty
+        tuple index to `fset(instance, value)`, which is the same call as the
+        all-slice spelling.  On the dual vtable interface that single
+        positional argument binds to the `index` parameter, leaving the `value`
+        parameter unfilled, so Python raises `TypeError: required argument
+        'value' missing` before the COM call is made.  When the empty-tuple
+        setter is fixed, this test will start failing and should be updated to
+        assert that the map is replaced.
+        """
+        self.obj.OptionalItem[1] = 10
+        with self.assertRaises(
+            TypeError,
+            msg=(
+                "CHARACTERIZATION: failure is expected; once the empty-tuple setter "
+                "is fixed, self.obj.OptionalItem[:] == ((3, 30), (4, 40)) should pass"
+            ),
+        ) as cm:
+            self.obj.OptionalItem[()] = ((3, 30), (4, 40))
+        self.assertIn("required argument 'value' missing", str(cm.exception))
+
+    def test_setitem_all_slice_with_required_index_raises_type_error(self):
+        """`obj.Item[:] = value` must raise TypeError when the index is required.
+
+        `Item` has a required index, so the all-slice form cannot fill in a
+        default for it.  The setter is called with a single argument, which
+        binds to the index parameter, leaving the value parameter missing.
+        """
+        with self.assertRaises(TypeError):
+            self.obj.Item[:] = 42
+
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class TestDispNamedProperty(unittest.TestCase):
@@ -347,6 +483,92 @@ class TestDispNamedProperty(unittest.TestCase):
         """
         with self.assertRaises(TypeError):
             self.obj.WriteOnlyItem(3)
+
+    def test_optional_getitem_all_slice_returns_pairs(self):
+        """`obj.OptionalItem[:]` must return the whole map as (key, value) pairs.
+
+        The all-slice spelling passes no index, which the server interprets as
+        "the whole map".  The map is returned as a sequence of (key, value)
+        tuples, sorted by key because the server stores it in a std::map.
+        """
+        self.obj.OptionalItem[1] = 10
+        self.obj.OptionalItem[2] = 20
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (2, 20)))
+
+    def test_optional_getitem_empty_tuple_returns_pairs(self):
+        """`obj.OptionalItem[()]` must behave like the all-slice spelling.
+
+        An empty tuple index is treated as "no index" by
+        `bound_named_property.__getitem__`, so it must return the whole map
+        just like `obj.OptionalItem[:]`.
+        """
+        self.obj.OptionalItem[1] = 10
+        self.obj.OptionalItem[2] = 20
+        self.assertEqual(self.obj.OptionalItem[()], ((1, 10), (2, 20)))
+
+    def test_optional_getitem_index_returns_value(self):
+        """`obj.OptionalItem[index]` must return the value stored for that index.
+
+        When an index is supplied, `OptionalItem` behaves like `Item` and
+        returns the single stored value.
+        """
+        self.obj.OptionalItem[5] = 50
+        self.assertEqual(self.obj.OptionalItem[5], 50)
+
+    def test_optional_getitem_unset_index_returns_badindex_variant(self):
+        """Reading an unassigned `OptionalItem` index reports DISP_E_BADINDEX.
+
+        With an index, `OptionalItem` behaves like `Item`, so an index that was
+        never assigned must report DISP_E_BADINDEX.
+        """
+        result = self.obj.OptionalItem[5]
+        self.assertEqual(result._.scode, hresult.DISP_E_BADINDEX)
+
+    def test_optional_setitem_all_slice_replaces_map(self):
+        """`obj.OptionalItem[:] = pairs` must replace the whole map.
+
+        The all-slice setter must not merge with the existing entries: the map
+        is fully overwritten by the supplied (key, value) pairs.
+        """
+        self.obj.OptionalItem[1] = 10
+        self.obj.OptionalItem[:] = ((3, 30), (4, 40))
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 30), (4, 40)))
+
+    def test_optional_setitem_all_slice_empty_clears_map(self):
+        """`obj.OptionalItem[:] = ()` must clear the whole map.
+
+        An empty sequence of pairs must leave the map empty, not keep the
+        previous entries.
+        """
+        self.obj.OptionalItem[1] = 10
+        self.obj.OptionalItem[:] = ()
+        self.assertEqual(self.obj.OptionalItem[:], ())
+
+    def test_optional_setitem_empty_tuple_replaces_map(self):
+        """`obj.OptionalItem[()] = pairs` must replace the whole map.
+
+        The dispinterface setter is a variadic wrapper around
+        `IDispatch::Invoke`, so a single argument is taken as the value and the
+        optional index is left missing.  This makes the empty-tuple spelling
+        work for the dispinterface, unlike the dual vtable setter.
+        """
+        self.obj.OptionalItem[1] = 10
+        self.obj.OptionalItem[()] = ((3, 30), (4, 40))
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 30), (4, 40)))
+
+    def test_setitem_all_slice_with_required_index_raises_com_error(self):
+        """`obj.Item[:] = value` must raise COMError when the index is required.
+
+        `Item` has a required index, so the all-slice form cannot fill in a
+        default for it.  The dispinterface setter forwards the single argument
+        as the value, leaving the index parameter missing.  Unlike the dual
+        vtable setter (which raises TypeError before the call is made), the
+        dispinterface setter reaches `IDispatch::Invoke`, so the server rejects
+        the wrong argument count with DISP_E_BADPARAMCOUNT, surfaced as COMError.
+        """
+        with self.assertRaises(COMError) as cm:
+            self.obj.Item[:] = 42
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_BADPARAMCOUNT)
 
 
 if __name__ == "__main__":

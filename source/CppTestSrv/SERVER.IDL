@@ -280,6 +280,16 @@ interface IDualNamedPropertyTest : IDispatch
  // Write-only parameterized property.  It writes the same map as Item.
  [propput, id(4)]
  HRESULT WriteOnlyItem([in] long index, [in] long value);
+
+ // Parameterized property whose only argument is optional.
+ // With no index (the all-slice spelling `obj.OptionalItem[:]` or the empty
+ // tuple `obj.OptionalItem[()]`), the getter returns the whole map as a
+ // sequence of (key, value) pairs and the setter replaces the whole map
+ // from such a sequence.  With an index, it behaves like Item.
+ [propget, id(5)]
+ HRESULT OptionalItem([in, optional] VARIANT index, [out, retval] VARIANT* value);
+ [propput, id(5)]
+ HRESULT OptionalItem([in, optional] VARIANT index, [in] VARIANT value);
 };
 
 // Dispinterface alias for the dual interface.

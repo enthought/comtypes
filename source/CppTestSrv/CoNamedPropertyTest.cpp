@@ -45,6 +45,151 @@ static void SetBadIndexVariant(VARIANT* value)
 	value->scode = DISP_E_BADINDEX ;
 }
 
+// Build a VARIANT holding a SAFEARRAY(VARIANT) of (key, value) pairs.
+// Each element is itself a two-element SAFEARRAY(VARIANT) [key, value], so
+// comtypes unpacks the result into a tuple of (key, value) tuples.
+static HRESULT BuildPairsVariant(const std::map<LONG, LONG>& values,
+                                 VARIANT* result)
+{
+	VariantInit(result) ;
+
+	SAFEARRAYBOUND outerBound = { static_cast<ULONG>(values.size()), 0 } ;
+	SAFEARRAY* outer = SafeArrayCreate(VT_VARIANT, 1, &outerBound) ;
+	if (outer == NULL)
+	{
+		return E_OUTOFMEMORY ;
+	}
+
+	LONG index = 0 ;
+	for (std::map<LONG, LONG>::const_iterator it = values.begin() ;
+	     it != values.end() ; ++it, ++index)
+	{
+		SAFEARRAYBOUND innerBound = { 2, 0 } ;
+		SAFEARRAY* inner = SafeArrayCreate(VT_VARIANT, 1, &innerBound) ;
+		if (inner == NULL)
+		{
+			SafeArrayDestroy(outer) ;
+			return E_OUTOFMEMORY ;
+		}
+
+		VARIANT key ;
+		SetLongVariant(&key, it->first) ;
+		VARIANT val ;
+		SetLongVariant(&val, it->second) ;
+		LONG keyIndex = 0 ;
+		LONG valueIndex = 1 ;
+		SafeArrayPutElement(inner, &keyIndex, &key) ;
+		SafeArrayPutElement(inner, &valueIndex, &val) ;
+		VariantClear(&key) ;
+		VariantClear(&val) ;
+
+		VARIANT element ;
+		VariantInit(&element) ;
+		element.vt = VT_ARRAY | VT_VARIANT ;
+		element.parray = inner ;
+		SafeArrayPutElement(outer, &index, &element) ;
+		// SafeArrayPutElement copies the element, so release our copy.
+		VariantClear(&element) ;
+	}
+
+	result->vt = VT_ARRAY | VT_VARIANT ;
+	result->parray = outer ;
+	return S_OK ;
+}
+
+// Replace target with the (key, value) pairs described by value.
+// value must be a SAFEARRAY(VARIANT) of two-element SAFEARRAY(VARIANT)s, or
+// VT_NULL/VT_EMPTY to clear the map.
+static HRESULT ReplaceMapFromVariant(const VARIANT& value,
+                                     std::map<LONG, LONG>& target)
+{
+	if (value.vt == VT_NULL || value.vt == VT_EMPTY)
+	{
+		target.clear() ;
+		return S_OK ;
+	}
+
+	if ((value.vt & VT_ARRAY) == 0 || (value.vt & ~VT_ARRAY) != VT_VARIANT ||
+	    value.parray == NULL)
+	{
+		return DISP_E_TYPEMISMATCH ;
+	}
+
+	SAFEARRAY* outer = value.parray ;
+	if (SafeArrayGetDim(outer) != 1)
+	{
+		return DISP_E_TYPEMISMATCH ;
+	}
+
+	LONG lower = 0 ;
+	LONG upper = -1 ;
+	SafeArrayGetLBound(outer, 1, &lower) ;
+	SafeArrayGetUBound(outer, 1, &upper) ;
+
+	std::map<LONG, LONG> parsed ;
+	for (LONG i = lower ; i <= upper ; ++i)
+	{
+		VARIANT element ;
+		VariantInit(&element) ;
+		HRESULT hr = SafeArrayGetElement(outer, &i, &element) ;
+		if (FAILED(hr))
+		{
+			VariantClear(&element) ;
+			return hr ;
+		}
+
+		if ((element.vt & VT_ARRAY) == 0 ||
+		    (element.vt & ~VT_ARRAY) != VT_VARIANT ||
+		    element.parray == NULL)
+		{
+			VariantClear(&element) ;
+			return DISP_E_TYPEMISMATCH ;
+		}
+
+		SAFEARRAY* inner = element.parray ;
+		if (SafeArrayGetDim(inner) != 1)
+		{
+			VariantClear(&element) ;
+			return DISP_E_TYPEMISMATCH ;
+		}
+
+		LONG innerLower = 0 ;
+		LONG innerUpper = -1 ;
+		SafeArrayGetLBound(inner, 1, &innerLower) ;
+		SafeArrayGetUBound(inner, 1, &innerUpper) ;
+		if (innerUpper - innerLower + 1 != 2)
+		{
+			VariantClear(&element) ;
+			return DISP_E_TYPEMISMATCH ;
+		}
+
+		VARIANT key ;
+		VariantInit(&key) ;
+		VARIANT val ;
+		VariantInit(&val) ;
+		LONG keyIndex = innerLower ;
+		LONG valueIndex = innerLower + 1 ;
+		SafeArrayGetElement(inner, &keyIndex, &key) ;
+		SafeArrayGetElement(inner, &valueIndex, &val) ;
+
+		if (key.vt != VT_I4 || val.vt != VT_I4)
+		{
+			VariantClear(&key) ;
+			VariantClear(&val) ;
+			VariantClear(&element) ;
+			return DISP_E_TYPEMISMATCH ;
+		}
+
+		parsed[key.lVal] = val.lVal ;
+		VariantClear(&key) ;
+		VariantClear(&val) ;
+		VariantClear(&element) ;
+	}
+
+	target.swap(parsed) ;
+	return S_OK ;
+}
+
 // Build a VARIANT holding a SAFEARRAY(VARIANT) with one element per index in
 // [start, end].  An index that has no stored value is filled with a VT_NULL
 // VARIANT, so a caller can tell "not set" apart from a stored value.
@@ -400,5 +545,53 @@ HRESULT __stdcall CNamedPropertyTest::put_WriteOnlyItem(LONG index, LONG value)
 {
 	trace("put_WriteOnlyItem called") ;
 	m_itemValues[index] = value ;
+	return S_OK ;
+}
+
+// Parameterized property whose only argument is optional.
+// With no index (VT_ERROR), the getter returns the whole map as a sequence of
+// (key, value) pairs.  With an index, it behaves like Item.
+HRESULT __stdcall CNamedPropertyTest::get_OptionalItem(VARIANT index, VARIANT* value)
+{
+	trace("get_OptionalItem called") ;
+	if (value == NULL)
+	{
+		return E_POINTER ;
+	}
+
+	if (index.vt == VT_ERROR)
+	{
+		return BuildPairsVariant(m_optionalValues, value) ;
+	}
+
+	std::map<LONG, LONG>::const_iterator it = m_optionalValues.find(index.lVal) ;
+	if (it != m_optionalValues.end())
+	{
+		SetLongVariant(value, it->second) ;
+	}
+	else
+	{
+		SetBadIndexVariant(value) ;
+	}
+	return S_OK ;
+}
+
+// Setter for the optional-index property.
+// With no index (VT_ERROR), the whole map is replaced from a sequence of
+// (key, value) pairs.  With an index, a single entry is stored.
+HRESULT __stdcall CNamedPropertyTest::put_OptionalItem(VARIANT index, VARIANT value)
+{
+	trace("put_OptionalItem called") ;
+
+	if (index.vt == VT_ERROR)
+	{
+		return ReplaceMapFromVariant(value, m_optionalValues) ;
+	}
+
+	if (value.vt != VT_I4)
+	{
+		return DISP_E_TYPEMISMATCH ;
+	}
+	m_optionalValues[index.lVal] = value.lVal ;
 	return S_OK ;
 }
