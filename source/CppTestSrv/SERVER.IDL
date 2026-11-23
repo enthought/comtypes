@@ -242,7 +242,8 @@ dispinterface IDispRecordSafearrayTest
 //
 // The getters return a VARIANT so that reading an index that has not been
 // assigned can report DISP_E_BADINDEX through the VARIANT's scode instead of
-// inventing a value.
+// inventing a value.  ReadOnlyItem and WriteOnlyItem share the same storage
+// as Item, so they only read or only write that single map.
 [
  odl,
  uuid(2C7E5B41-9A3D-4F82-B6E1-7D4C8A0F5E93),
@@ -271,6 +272,14 @@ interface IDualNamedPropertyTest : IDispatch
  HRESULT Range([in] long start, [in] long end, [out, retval] VARIANT* value);
  [propput, id(2)]
  HRESULT Range([in] long start, [in] long end, [in] VARIANT value);
+
+ // Read-only parameterized property.  It reads the same map as Item.
+ [propget, id(3)]
+ HRESULT ReadOnlyItem([in] long index, [out, retval] VARIANT* value);
+
+ // Write-only parameterized property.  It writes the same map as Item.
+ [propput, id(4)]
+ HRESULT WriteOnlyItem([in] long index, [in] long value);
 };
 
 // Dispinterface alias for the dual interface.

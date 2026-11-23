@@ -373,3 +373,32 @@ HRESULT __stdcall CNamedPropertyTest::put_Range(LONG start, LONG end,
 	trace("put_Range called") ;
 	return AssignRangeFromVariant(value, start, end, m_rangeValues) ;
 }
+
+// Read-only parameterized property.  It reads the same map as Item.
+HRESULT __stdcall CNamedPropertyTest::get_ReadOnlyItem(LONG index, VARIANT* value)
+{
+	trace("get_ReadOnlyItem called") ;
+	if (value == NULL)
+	{
+		return E_POINTER ;
+	}
+
+	std::map<LONG, LONG>::const_iterator it = m_itemValues.find(index) ;
+	if (it != m_itemValues.end())
+	{
+		SetLongVariant(value, it->second) ;
+	}
+	else
+	{
+		SetBadIndexVariant(value) ;
+	}
+	return S_OK ;
+}
+
+// Write-only parameterized property.  It writes the same map as Item.
+HRESULT __stdcall CNamedPropertyTest::put_WriteOnlyItem(LONG index, LONG value)
+{
+	trace("put_WriteOnlyItem called") ;
+	m_itemValues[index] = value ;
+	return S_OK ;
+}

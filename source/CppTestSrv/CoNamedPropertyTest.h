@@ -8,7 +8,9 @@
  * `obj.Prop[a, b]`.
  *
  * The getters return a VARIANT so that reading an index that has not been
- * assigned can report DISP_E_BADINDEX through the VARIANT's scode.
+ * assigned can report DISP_E_BADINDEX through the VARIANT's scode.  Item,
+ * ReadOnlyItem and WriteOnlyItem share a single map: ReadOnlyItem only reads
+ * it and WriteOnlyItem only writes it.
  *
  * Range takes two integer indices that denote a range.  Reading
  * Range[start, end] returns one element per index in [start, end], filling an
@@ -64,6 +66,8 @@ private:
 	virtual HRESULT __stdcall put_Item(LONG index, LONG value);
 	virtual HRESULT __stdcall get_Range(LONG start, LONG end, VARIANT* value);
 	virtual HRESULT __stdcall put_Range(LONG start, LONG end, VARIANT value);
+	virtual HRESULT __stdcall get_ReadOnlyItem(LONG index, VARIANT* value);
+	virtual HRESULT __stdcall put_WriteOnlyItem(LONG index, LONG value);
 
 	// Initialization
 	virtual HRESULT Init();

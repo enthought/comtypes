@@ -21,6 +21,8 @@ The properties follow this contract:
 
 * Reading an index that has not been assigned returns a VARIANT whose scode is
   DISP_E_BADINDEX, so "not set" can be told apart from a stored value.
+* `ReadOnlyItem` and `WriteOnlyItem` share the same storage as `Item`; they
+  only read or only write that single map.
 * `Range` takes two integer indices that denote a range.  Reading
   `obj.Range[start, end]` returns one element per index in `[start, end]`,
   filling an index that has not been assigned with a VT_NULL VARIANT (which
@@ -140,6 +142,62 @@ class TestDualNamedProperty(unittest.TestCase):
             self.obj.Range[1, 3] = (9, 8)
         self.assertEqual(cm.exception.hresult, hresult.DISP_E_BADPARAMCOUNT)
 
+    def test_readonly_reads_item_map(self):
+        """`ReadOnlyItem` must read the same map that `Item` writes.
+
+        `ReadOnlyItem` has a getter but no setter.  It shares storage with
+        `Item`, so a value stored through `Item` must be visible through
+        `ReadOnlyItem` for the same index.
+        """
+        self.obj.Item[3] = 42
+        self.assertEqual(self.obj.ReadOnlyItem[3], 42)
+
+    def test_readonly_unset_returns_badindex_variant(self):
+        """Reading an unassigned index through `ReadOnlyItem` reports DISP_E_BADINDEX.
+
+        `ReadOnlyItem` shares the `Item` map, so an index that was never
+        assigned must report DISP_E_BADINDEX just like `Item` does.
+        """
+        result = self.obj.ReadOnlyItem[3]
+        self.assertEqual(result._.scode, hresult.DISP_E_BADINDEX)
+
+    def test_readonly_setitem_raises_type_error(self):
+        """Assigning to a read-only parameterized property must raise TypeError.
+
+        `bound_named_property.__setitem__` must reject the assignment when the
+        property has no setter, instead of silently doing nothing or crashing.
+        """
+        with self.assertRaises(TypeError):
+            self.obj.ReadOnlyItem[3] = 1
+
+    def test_writeonly_writes_item_map(self):
+        """`WriteOnlyItem` must write the same map that `Item` reads.
+
+        `WriteOnlyItem` has a setter but no getter.  It shares storage with
+        `Item`, so a value stored through `WriteOnlyItem` must be visible
+        through `Item` for the same index.
+        """
+        self.obj.WriteOnlyItem[3] = 42
+        self.assertEqual(self.obj.Item[3], 42)
+
+    def test_writeonly_getitem_raises_type_error(self):
+        """Reading a write-only parameterized property must raise TypeError.
+
+        `bound_named_property.__getitem__` must reject the read when the
+        property has no getter.
+        """
+        with self.assertRaises(TypeError):
+            self.obj.WriteOnlyItem[3]
+
+    def test_writeonly_call_raises_type_error(self):
+        """Calling a write-only parameterized property must raise TypeError.
+
+        `bound_named_property.__call__` must reject the call when the property
+        has no getter.
+        """
+        with self.assertRaises(TypeError):
+            self.obj.WriteOnlyItem(3)
+
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class TestDispNamedProperty(unittest.TestCase):
@@ -233,6 +291,62 @@ class TestDispNamedProperty(unittest.TestCase):
         with self.assertRaises(COMError) as cm:
             self.obj.Range[1, 3] = (9, 8)
         self.assertEqual(cm.exception.hresult, hresult.DISP_E_EXCEPTION)
+
+    def test_readonly_reads_item_map(self):
+        """`ReadOnlyItem` must read the same map that `Item` writes.
+
+        `ReadOnlyItem` has a getter but no setter.  It shares storage with
+        `Item`, so a value stored through `Item` must be visible through
+        `ReadOnlyItem` for the same index.
+        """
+        self.obj.Item[3] = 42
+        self.assertEqual(self.obj.ReadOnlyItem[3], 42)
+
+    def test_readonly_unset_returns_badindex_variant(self):
+        """Reading an unassigned index through `ReadOnlyItem` reports DISP_E_BADINDEX.
+
+        `ReadOnlyItem` shares the `Item` map, so an index that was never
+        assigned must report DISP_E_BADINDEX just like `Item` does.
+        """
+        result = self.obj.ReadOnlyItem[3]
+        self.assertEqual(result._.scode, hresult.DISP_E_BADINDEX)
+
+    def test_readonly_setitem_raises_type_error(self):
+        """Assigning to a read-only parameterized property must raise TypeError.
+
+        `bound_named_property.__setitem__` must reject the assignment when the
+        property has no setter, instead of silently doing nothing or crashing.
+        """
+        with self.assertRaises(TypeError):
+            self.obj.ReadOnlyItem[3] = 1
+
+    def test_writeonly_writes_item_map(self):
+        """`WriteOnlyItem` must write the same map that `Item` reads.
+
+        `WriteOnlyItem` has a setter but no getter.  It shares storage with
+        `Item`, so a value stored through `WriteOnlyItem` must be visible
+        through `Item` for the same index.
+        """
+        self.obj.WriteOnlyItem[3] = 42
+        self.assertEqual(self.obj.Item[3], 42)
+
+    def test_writeonly_getitem_raises_type_error(self):
+        """Reading a write-only parameterized property must raise TypeError.
+
+        `bound_named_property.__getitem__` must reject the read when the
+        property has no getter.
+        """
+        with self.assertRaises(TypeError):
+            self.obj.WriteOnlyItem[3]
+
+    def test_writeonly_call_raises_type_error(self):
+        """Calling a write-only parameterized property must raise TypeError.
+
+        `bound_named_property.__call__` must reject the call when the property
+        has no getter.
+        """
+        with self.assertRaises(TypeError):
+            self.obj.WriteOnlyItem(3)
 
 
 if __name__ == "__main__":
