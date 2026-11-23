@@ -16,6 +16,7 @@
 #include "CoVariantErrorTest.h"
 #include "CoFixedPointNumberTest.h"
 #include "CoRecordSafearrayTest.h"
+#include "CoNamedPropertyTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -88,6 +89,12 @@ CFactoryData g_FactoryDataArray[] =
 		L"Record SAFEARRAY round-trip test component",
 		L"Comtypes.RecordSafeArrayRoundTripTest.1",
 		L"Comtypes.RecordSafeArrayRoundTripTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoNamedPropertyTest, CNamedPropertyTest::CreateInstance,
+		L"Parameterized (named) property test component",
+		L"Comtypes.NamedPropertyTest.1",
+		L"Comtypes.NamedPropertyTest",
 		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0}
 } ;

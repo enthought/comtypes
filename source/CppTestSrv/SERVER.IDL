@@ -233,6 +233,46 @@ dispinterface IDispRecordSafearrayTest
 };
 
 
+// Interface IDualNamedPropertyTest
+// Test double for parameterized (named) properties.  A parameterized property
+// is a property that takes one or more arguments, e.g. `obj.Item[index]`.
+// comtypes exposes such properties through its `named_property` descriptor,
+// which supports `obj.Prop[index]`, `obj.Prop[index] = value`,
+// `obj.Prop(index)` and tuple indexing `obj.Prop[a, b]`.
+//
+// The getters return a VARIANT so that reading an index that has not been
+// assigned can report DISP_E_BADINDEX through the VARIANT's scode instead of
+// inventing a value.
+[
+ odl,
+ uuid(2C7E5B41-9A3D-4F82-B6E1-7D4C8A0F5E93),
+ dual,
+ helpstring("Dual interface for testing parameterized (named) properties."),
+ nonextensible,
+ oleautomation
+]
+interface IDualNamedPropertyTest : IDispatch
+{
+ // Read/write parameterized property with a single index.
+ // Reading an index that has not been assigned returns a VARIANT whose
+ // scode is DISP_E_BADINDEX.
+ [propget, id(1)]
+ HRESULT Item([in] long index, [out, retval] VARIANT* value);
+ [propput, id(1)]
+ HRESULT Item([in] long index, [in] long value);
+};
+
+// Dispinterface alias for the dual interface.
+[
+ uuid(6F1A8D24-3B7C-4E59-A0D2-8C5E9B1F4A76),
+ helpstring("Dispinterface alias for parameterized (named) property tests.")
+]
+dispinterface IDispNamedPropertyTest
+{
+ interface IDualNamedPropertyTest;
+};
+
+
 //
 // Component and type library descriptions
 //
@@ -361,5 +401,17 @@ library ComtypesCppTestSrvLib
 	{
 		[default] interface IDualRecordSafearrayTest ;
 		dispinterface IDispRecordSafearrayTest ;
+	} ;
+
+	// CoNamedPropertyTest
+	// Component that implements parameterized (named) property tests.
+	[
+		uuid(9D3F6A18-2E5B-4C70-8A1F-6B4D9E2C7F53),
+		helpstring("Parameterized (named) property test component.")
+	]
+	coclass CoNamedPropertyTest
+	{
+		[default] interface IDualNamedPropertyTest ;
+		dispinterface IDispNamedPropertyTest ;
 	} ;
 } ;
