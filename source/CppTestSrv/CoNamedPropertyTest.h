@@ -9,6 +9,11 @@
  *
  * The getters return a VARIANT so that reading an index that has not been
  * assigned can report DISP_E_BADINDEX through the VARIANT's scode.
+ *
+ * Range takes two integer indices that denote a range.  Reading
+ * Range[start, end] returns one element per index in [start, end], filling an
+ * index that has not been assigned with a VT_NULL VARIANT.  Writing
+ * Range[start, end] = values assigns values[i] to index start + i.
  */
 
 #ifndef __CoNamedPropertyTest_h__
@@ -57,6 +62,8 @@ private:
 	// Interface IDualNamedPropertyTest
 	virtual HRESULT __stdcall get_Item(LONG index, VARIANT* value);
 	virtual HRESULT __stdcall put_Item(LONG index, LONG value);
+	virtual HRESULT __stdcall get_Range(LONG start, LONG end, VARIANT* value);
+	virtual HRESULT __stdcall put_Range(LONG start, LONG end, VARIANT value);
 
 	// Initialization
 	virtual HRESULT Init();
@@ -72,6 +79,8 @@ private:
 
 	// Storage for the single-index Item property.
 	std::map<LONG, LONG> m_itemValues;
+	// Storage for the two-index Range property.
+	std::map<LONG, LONG> m_rangeValues;
 };
 
 #endif

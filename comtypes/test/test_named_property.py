@@ -21,9 +21,16 @@ The properties follow this contract:
 
 * Reading an index that has not been assigned returns a VARIANT whose scode is
   DISP_E_BADINDEX, so "not set" can be told apart from a stored value.
+* `Range` takes two integer indices that denote a range.  Reading
+  `obj.Range[start, end]` returns one element per index in `[start, end]`,
+  filling an index that has not been assigned with a VT_NULL VARIANT (which
+  comtypes converts to `None`).  Writing `obj.Range[start, end] = values`
+  assigns `values[i]` to index `start + i`; the number of values must equal
+  `end - start + 1`.
 """
 
 import unittest
+from _ctypes import COMError
 
 from comtypes import CLSCTX_LOCAL_SERVER, hresult
 from comtypes.client import CreateObject, GetModule
@@ -83,6 +90,56 @@ class TestDualNamedProperty(unittest.TestCase):
         self.obj.Item[3] = 42
         self.assertEqual(self.obj.Item(3), 42)
 
+    def test_getitem_range_unset_returns_nulls(self):
+        """Reading a range that was never assigned must return VT_NULL elements.
+
+        `Range[start, end]` returns one element per index in [start, end].  An
+        index that has not been assigned is reported as a VT_NULL VARIANT,
+        which comtypes converts to `None`.  This lets a caller tell "not set"
+        apart from a stored value without inventing a sentinel.
+        """
+        self.assertEqual(self.obj.Range[1, 3], (None, None, None))
+
+    def test_setitem_range_then_getitem_round_trips(self):
+        """`obj.Range[start, end] = values` must assign values to the range.
+
+        The setter receives the two indices followed by the assigned sequence;
+        `values[i]` must be stored under index `start + i`.  A wrong argument
+        order or an off-by-one would store the values under the wrong indices.
+        """
+        self.obj.Range[1, 3] = (9, 8, 7)
+        self.assertEqual(self.obj.Range[1, 3], (9, 8, 7))
+
+    def test_call_with_multiple_args(self):
+        """`obj.Range(start, end)` must forward both arguments to the getter.
+
+        This is the call spelling of tuple indexing for a property with two
+        arguments.
+        """
+        self.obj.Range[1, 3] = (9, 8, 7)
+        self.assertEqual(self.obj.Range(1, 3), (9, 8, 7))
+
+    def test_getitem_range_fills_unset_indices_with_null(self):
+        """Reading a range wider than what was assigned must fill with VT_NULL.
+
+        After assigning only indices 1..3, reading 1..5 must return the three
+        stored values followed by two VT_NULL elements (converted to `None`).
+        This is the behavior that replaces the old pair-keyed Matrix property.
+        """
+        self.obj.Range[1, 3] = (9, 8, 7)
+        self.assertEqual(self.obj.Range[1, 5], (9, 8, 7, None, None))
+
+    def test_setitem_range_wrong_length_raises_com_error(self):
+        """Assigning a sequence whose length differs from the range must fail.
+
+        `Range[1, 3]` covers three indices, so a two-element sequence cannot be
+        assigned.  The server rejects the mismatch instead of silently storing
+        a partial range.
+        """
+        with self.assertRaises(COMError) as cm:
+            self.obj.Range[1, 3] = (9, 8)
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_BADPARAMCOUNT)
+
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class TestDispNamedProperty(unittest.TestCase):
@@ -123,6 +180,59 @@ class TestDispNamedProperty(unittest.TestCase):
         """
         self.obj.Item[3] = 42
         self.assertEqual(self.obj.Item(3), 42)
+
+    def test_getitem_range_unset_returns_nulls(self):
+        """Reading a range that was never assigned must return VT_NULL elements.
+
+        `Range[start, end]` returns one element per index in [start, end].  An
+        index that has not been assigned is reported as a VT_NULL VARIANT,
+        which comtypes converts to `None`.  This lets a caller tell "not set"
+        apart from a stored value without inventing a sentinel.
+        """
+        self.assertEqual(self.obj.Range[1, 3], (None, None, None))
+
+    def test_setitem_range_then_getitem_round_trips(self):
+        """`obj.Range[start, end] = values` must assign values to the range.
+
+        The setter receives the two indices followed by the assigned sequence;
+        `values[i]` must be stored under index `start + i`.  A wrong argument
+        order or an off-by-one would store the values under the wrong indices.
+        """
+        self.obj.Range[1, 3] = (9, 8, 7)
+        self.assertEqual(self.obj.Range[1, 3], (9, 8, 7))
+
+    def test_call_with_multiple_args(self):
+        """`obj.Range(start, end)` must forward both arguments to the getter.
+
+        This is the call spelling of tuple indexing for a property with two
+        arguments.
+        """
+        self.obj.Range[1, 3] = (9, 8, 7)
+        self.assertEqual(self.obj.Range(1, 3), (9, 8, 7))
+
+    def test_getitem_range_fills_unset_indices_with_null(self):
+        """Reading a range wider than what was assigned must fill with VT_NULL.
+
+        After assigning only indices 1..3, reading 1..5 must return the three
+        stored values followed by two VT_NULL elements (converted to `None`).
+        This is the behavior that replaces the old pair-keyed Matrix property.
+        """
+        self.obj.Range[1, 3] = (9, 8, 7)
+        self.assertEqual(self.obj.Range[1, 5], (9, 8, 7, None, None))
+
+    def test_setitem_range_wrong_length_raises_com_error(self):
+        """Assigning a sequence whose length differs from the range must fail.
+
+        `Range[1, 3]` covers three indices, so a two-element sequence cannot be
+        assigned.  The server rejects the mismatch instead of silently storing
+        a partial range.  The dispinterface setter reaches `IDispatch::Invoke`,
+        and `ITypeInfo::Invoke` wraps the failure HRESULT returned by the
+        method into DISP_E_EXCEPTION, so that is what surfaces here (unlike the
+        dual vtable setter, which reports the method's own HRESULT).
+        """
+        with self.assertRaises(COMError) as cm:
+            self.obj.Range[1, 3] = (9, 8)
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_EXCEPTION)
 
 
 if __name__ == "__main__":

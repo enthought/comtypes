@@ -260,6 +260,17 @@ interface IDualNamedPropertyTest : IDispatch
  HRESULT Item([in] long index, [out, retval] VARIANT* value);
  [propput, id(1)]
  HRESULT Item([in] long index, [in] long value);
+
+ // Read/write parameterized property with two indices that denote a range.
+ // Reading Range[start, end] returns a SAFEARRAY(VARIANT) with one element
+ // per index in [start, end]; an index that has not been assigned is filled
+ // with a VT_NULL VARIANT.  Writing Range[start, end] = values assigns
+ // values[i] to index start + i; the number of values must equal
+ // end - start + 1.
+ [propget, id(2)]
+ HRESULT Range([in] long start, [in] long end, [out, retval] VARIANT* value);
+ [propput, id(2)]
+ HRESULT Range([in] long start, [in] long end, [in] VARIANT value);
 };
 
 // Dispinterface alias for the dual interface.
