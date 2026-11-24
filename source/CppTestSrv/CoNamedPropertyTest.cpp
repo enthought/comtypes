@@ -313,6 +313,114 @@ static HRESULT AssignRangeFromVariant(const VARIANT& value,
 	return S_OK ;
 }
 
+// Build a VARIANT holding a SAFEARRAY(VARIANT) with one element per index in
+// the arithmetic sequence start, start+step, ..., <= end.  An index that has
+// no stored value is filled with a VT_NULL VARIANT, so a caller can tell
+// "not set" apart from a stored value.  `step` must be positive and `end` must
+// not be smaller than `start`.
+static HRESULT BuildStrideVariant(const std::map<LONG, LONG>& values,
+                                  LONG start, LONG step, LONG end,
+                                  VARIANT* result)
+{
+	VariantInit(result) ;
+
+	if (step <= 0 || end < start)
+	{
+		return E_INVALIDARG ;
+	}
+
+	LONG count = (end - start) / step + 1 ;
+	SAFEARRAYBOUND bound = { static_cast<ULONG>(count), 0 } ;
+	SAFEARRAY* array = SafeArrayCreate(VT_VARIANT, 1, &bound) ;
+	if (array == NULL)
+	{
+		return E_OUTOFMEMORY ;
+	}
+
+	for (LONG i = 0 ; i < count ; ++i)
+	{
+		VARIANT element ;
+		VariantInit(&element) ;
+
+		std::map<LONG, LONG>::const_iterator it = values.find(start + i * step) ;
+		if (it != values.end())
+		{
+			SetLongVariant(&element, it->second) ;
+		}
+		else
+		{
+			element.vt = VT_NULL ;
+		}
+
+		SafeArrayPutElement(array, &i, &element) ;
+		VariantClear(&element) ;
+	}
+
+	result->vt = VT_ARRAY | VT_VARIANT ;
+	result->parray = array ;
+	return S_OK ;
+}
+
+// Assign the elements of value to the indices start, start+step, ..., <= end.
+// value must be a SAFEARRAY(VARIANT) whose element count equals the number of
+// indices; each element must be a VT_I4.
+static HRESULT AssignStrideFromVariant(const VARIANT& value,
+                                       LONG start, LONG step, LONG end,
+                                       std::map<LONG, LONG>& target)
+{
+	if (step <= 0 || end < start)
+	{
+		return E_INVALIDARG ;
+	}
+
+	if ((value.vt & VT_ARRAY) == 0 || (value.vt & ~VT_ARRAY) != VT_VARIANT ||
+	    value.parray == NULL)
+	{
+		return DISP_E_TYPEMISMATCH ;
+	}
+
+	SAFEARRAY* array = value.parray ;
+	if (SafeArrayGetDim(array) != 1)
+	{
+		return DISP_E_TYPEMISMATCH ;
+	}
+
+	LONG lower = 0 ;
+	LONG upper = -1 ;
+	SafeArrayGetLBound(array, 1, &lower) ;
+	SafeArrayGetUBound(array, 1, &upper) ;
+
+	LONG count = (end - start) / step + 1 ;
+	if (upper - lower + 1 != count)
+	{
+		return DISP_E_BADPARAMCOUNT ;
+	}
+
+	for (LONG i = 0 ; i < count ; ++i)
+	{
+		VARIANT element ;
+		VariantInit(&element) ;
+		LONG index = lower + i ;
+		HRESULT hr = SafeArrayGetElement(array, &index, &element) ;
+		if (FAILED(hr))
+		{
+			VariantClear(&element) ;
+			return hr ;
+		}
+
+		if (element.vt != VT_I4)
+		{
+			VariantClear(&element) ;
+			return DISP_E_TYPEMISMATCH ;
+		}
+
+		target[start + i * step] = element.lVal ;
+		VariantClear(&element) ;
+	}
+
+	return S_OK ;
+}
+
 ///////////////////////////////////////////////////////////
 //
 // Constructor / Destructor
@@ -682,4 +790,77 @@ HRESULT __stdcall CNamedPropertyTest::put_OptionalRange(LONG start, VARIANT end,
 	}
 
 	return AssignRangeFromVariant(value, start, endIndex, m_optionalRangeValues) ;
+}
+
+// Parameterized property that combines a required argument (`start`), a
+// default-valued argument (`step`, default 1) and an optional argument
+// (`end`).  Reading Stride[start, step, end] returns one element per index in
+// the arithmetic sequence start, start+step, ..., <= end.  When `end` is
+// omitted (VT_ERROR), the getter reads through the last assigned index; when
+// nothing is assigned in that range it returns an empty array.
+HRESULT __stdcall CNamedPropertyTest::get_Stride(LONG start, LONG step, VARIANT end,
+                                                 VARIANT* value)
+{
+	trace("get_Stride called") ;
+	if (value == NULL)
+	{
+		return E_POINTER ;
+	}
+
+	LONG endIndex ;
+	if (end.vt == VT_ERROR)
+	{
+		if (m_strideValues.empty())
+		{
+			return BuildEmptyVariantArray(value) ;
+		}
+		endIndex = m_strideValues.rbegin()->first ;
+		if (endIndex < start)
+		{
+			return BuildEmptyVariantArray(value) ;
+		}
+	}
+	else
+	{
+		endIndex = end.lVal ;
+	}
+
+	return BuildStrideVariant(m_strideValues, start, step, endIndex, value) ;
+}
+
+// Setter for the required/default/optional-index property.  When `end` is
+// omitted (VT_ERROR), the values are written from `start` with the given
+// stride for as many values as were supplied.  When `end` is given, the number
+// of values must equal the number of indices in [start, end] with `step`.
+HRESULT __stdcall CNamedPropertyTest::put_Stride(LONG start, LONG step, VARIANT end,
+                                                 VARIANT value)
+{
+	trace("put_Stride called") ;
+
+	LONG endIndex ;
+	if (end.vt == VT_ERROR)
+	{
+		if ((value.vt & VT_ARRAY) == 0 || (value.vt & ~VT_ARRAY) != VT_VARIANT ||
+		    value.parray == NULL)
+		{
+			return DISP_E_TYPEMISMATCH ;
+		}
+
+		LONG lower = 0 ;
+		LONG upper = -1 ;
+		SafeArrayGetLBound(value.parray, 1, &lower) ;
+		SafeArrayGetUBound(value.parray, 1, &upper) ;
+		LONG count = upper - lower + 1 ;
+		if (count <= 0)
+		{
+			return DISP_E_BADPARAMCOUNT ;
+		}
+		endIndex = start + (count - 1) * step ;
+	}
+	else
+	{
+		endIndex = end.lVal ;
+	}
+
+	return AssignStrideFromVariant(value, start, step, endIndex, m_strideValues) ;
 }

@@ -75,6 +75,10 @@ private:
 	                                            VARIANT* value);
 	virtual HRESULT __stdcall put_OptionalRange(LONG start, VARIANT end,
 	                                            VARIANT value);
+	virtual HRESULT __stdcall get_Stride(LONG start, LONG step, VARIANT end,
+	                                     VARIANT* value);
+	virtual HRESULT __stdcall put_Stride(LONG start, LONG step, VARIANT end,
+	                                     VARIANT value);
 
 	// Initialization
 	virtual HRESULT Init();
@@ -96,6 +100,8 @@ private:
 	std::map<LONG, LONG> m_optionalValues;
 	// Storage for the default/optional-index OptionalRange property.
 	std::map<LONG, LONG> m_optionalRangeValues;
+	// Storage for the required/default/optional-index Stride property.
+	std::map<LONG, LONG> m_strideValues;
 };
 
 #endif

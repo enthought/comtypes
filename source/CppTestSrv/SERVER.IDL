@@ -300,6 +300,21 @@ interface IDualNamedPropertyTest : IDispatch
 	HRESULT OptionalRange([in, defaultvalue(1)] long start, [in, optional] VARIANT end, [out, retval] VARIANT* value);
 	[propput, id(6)]
 	HRESULT OptionalRange([in, defaultvalue(1)] long start, [in, optional] VARIANT end, [in] VARIANT value);
+
+	// Parameterized property that combines a required argument, a
+	// default-valued argument and an optional argument in one signature.
+	// `start` is required, `step` defaults to 1 and `end` is optional.
+	// Reading Stride[start, step, end] returns one element per index in the
+	// arithmetic sequence start, start+step, ..., <= end; an index that has
+	// not been assigned is filled with a VT_NULL VARIANT.  Writing
+	// Stride[start, step, end] = values assigns values[i] to index
+	// start + i*step; the number of values must equal the number of indices.
+	// When `end` is omitted, the getter reads through the last assigned index
+	// and the setter writes as many values as were supplied.
+	[propget, id(7)]
+	HRESULT Stride([in] long start, [in, defaultvalue(1)] long step, [in, optional] VARIANT end, [out, retval] VARIANT* value);
+	[propput, id(7)]
+	HRESULT Stride([in] long start, [in, defaultvalue(1)] long step, [in, optional] VARIANT end, [in] VARIANT value);
 };
 
 // Dispinterface alias for the dual interface.

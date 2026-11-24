@@ -38,6 +38,18 @@ The properties follow this contract:
   `start` and therefore use its default.  The dispinterface setter also accepts
   omitted bounds, while the dual-vtable setter currently raises `TypeError`
   for those forms because the value argument is not bound correctly.
+* `Stride` combines a required argument (`start`), a default-valued argument
+  (`step`, default 1) and an optional argument (`end`) in one signature, so the
+  order of the arguments carries meaning: `start` says where to begin, `step`
+  says how far to advance and `end` says where to stop.  Reading
+  `obj.Stride[start, step, end]` returns one element per index in the
+  arithmetic sequence `start, start+step, ..., <= end`, filling an index that
+  has not been assigned with a VT_NULL VARIANT.  Writing
+  `obj.Stride[start, step, end] = values` assigns `values[i]` to index
+  `start + i*step`.  When `end` is omitted, reads extend through the last
+  assigned index and writes cover as many values as were supplied.  Because
+  `start` is required, the all-slice form (`obj.Stride[:]`) cannot supply it
+  and is rejected.
 """
 
 import unittest
@@ -276,6 +288,85 @@ class TestDualNamedProperty(unittest.TestCase):
             self.obj.OptionalRange[()] = (9, 8, 7)
         self.assertIn("required argument 'value' missing", str(cm.exception))
 
+    def test_stride_getitem_all_args_returns_range(self):
+        self.obj.Stride[1, 2, 5] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 2, 5], (10, 20, 30))
+
+    def test_stride_getitem_unset_returns_nulls(self):
+        self.assertEqual(self.obj.Stride[1, 1, 3], (None, None, None))
+
+    def test_stride_getitem_fills_unset_indices_with_null(self):
+        self.obj.Stride[1, 2, 5] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 1, 5], (10, None, 20, None, 30))
+
+    def test_stride_getitem_start_only_uses_default_step_and_reads_to_last(self):
+        self.obj.Stride[2, 1, 4] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[2], (10, 20, 30))
+
+    def test_stride_getitem_start_and_step_omits_end(self):
+        self.obj.Stride[1, 2, 5] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 2], (10, 20, 30))
+
+    def test_stride_getitem_empty_map_returns_empty(self):
+        self.assertEqual(self.obj.Stride[1], ())
+
+    def test_stride_getitem_start_beyond_data_returns_empty(self):
+        self.obj.Stride[1, 1, 3] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[5], ())
+
+    def test_stride_getitem_end_before_start_raises_com_error(self):
+        with self.assertRaises(COMError) as cm:
+            self.obj.Stride[5, 1, 3]
+        self.assertEqual(cm.exception.hresult, hresult.E_INVALIDARG)
+
+    def test_stride_getitem_zero_step_raises_com_error(self):
+        with self.assertRaises(COMError) as cm:
+            self.obj.Stride[1, 0, 3]
+        self.assertEqual(cm.exception.hresult, hresult.E_INVALIDARG)
+
+    def test_stride_setitem_all_args_round_trips(self):
+        self.obj.Stride[1, 2, 5] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 2, 5], (10, 20, 30))
+
+    def test_stride_setitem_start_only_uses_default_step_and_end(self):
+        # The vtable setter binds the supplied values as step, leaving the
+        # required value argument unset.
+        with self.assertRaises(
+            TypeError,
+            msg=(
+                "CHARACTERIZATION: failure is expected; once the start-only "
+                "setter is fixed, self.obj.Stride[1] = (10, 20, 30) should "
+                "write indices 1, 2, 3 and self.obj.Stride[1, 1, 3] == (10, 20, 30)"
+                "shoud pass"
+            ),
+        ) as cm:
+            self.obj.Stride[1] = (10, 20, 30)
+        self.assertIn("required argument 'value' missing", str(cm.exception))
+
+    def test_stride_setitem_start_and_step_omits_end(self):
+        # The vtable setter binds the supplied values as end, leaving the
+        # required value argument unset.
+        with self.assertRaises(
+            TypeError,
+            msg=(
+                "CHARACTERIZATION: failure is expected; once the start-and-step "
+                "setter is fixed, self.obj.Stride[1, 2] = (10, 20, 30) should "
+                "write indices 1, 3, 5 and self.obj.Stride[1, 2, 5] == (10, 20, 30) "
+                "should pass"
+            ),
+        ) as cm:
+            self.obj.Stride[1, 2] = (10, 20, 30)
+        self.assertIn("required argument 'value' missing", str(cm.exception))
+
+    def test_stride_setitem_wrong_length_raises_com_error(self):
+        with self.assertRaises(COMError) as cm:
+            self.obj.Stride[1, 1, 3] = (10, 20)
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_BADPARAMCOUNT)
+
+    def test_stride_setitem_all_slice_raises_type_error(self):
+        with self.assertRaises(TypeError):
+            self.obj.Stride[:] = (10, 20, 30)
+
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class TestDispNamedProperty(unittest.TestCase):
@@ -444,6 +535,63 @@ class TestDispNamedProperty(unittest.TestCase):
     def test_optional_range_setitem_empty_tuple_uses_default_start(self):
         self.obj.OptionalRange[()] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[1, 3], (9, 8, 7))
+
+    def test_stride_getitem_all_args_returns_range(self):
+        self.obj.Stride[1, 2, 5] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 2, 5], (10, 20, 30))
+
+    def test_stride_getitem_unset_returns_nulls(self):
+        self.assertEqual(self.obj.Stride[1, 1, 3], (None, None, None))
+
+    def test_stride_getitem_fills_unset_indices_with_null(self):
+        self.obj.Stride[1, 2, 5] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 1, 5], (10, None, 20, None, 30))
+
+    def test_stride_getitem_start_only_uses_default_step_and_reads_to_last(self):
+        self.obj.Stride[2, 1, 4] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[2], (10, 20, 30))
+
+    def test_stride_getitem_start_and_step_omits_end(self):
+        self.obj.Stride[1, 2, 5] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 2], (10, 20, 30))
+
+    def test_stride_getitem_empty_map_returns_empty(self):
+        self.assertEqual(self.obj.Stride[1], ())
+
+    def test_stride_getitem_start_beyond_data_returns_empty(self):
+        self.obj.Stride[1, 1, 3] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[5], ())
+
+    def test_stride_getitem_end_before_start_raises_com_error(self):
+        with self.assertRaises(COMError) as cm:
+            self.obj.Stride[5, 1, 3]
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_EXCEPTION)
+
+    def test_stride_getitem_zero_step_raises_com_error(self):
+        with self.assertRaises(COMError) as cm:
+            self.obj.Stride[1, 0, 3]
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_EXCEPTION)
+
+    def test_stride_setitem_all_args_round_trips(self):
+        self.obj.Stride[1, 2, 5] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 2, 5], (10, 20, 30))
+
+    def test_stride_setitem_start_only_uses_default_step_and_end(self):
+        self.obj.Stride[1] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 1, 3], (10, 20, 30))
+
+    def test_stride_setitem_start_and_step_omits_end(self):
+        self.obj.Stride[1, 2] = (10, 20, 30)
+        self.assertEqual(self.obj.Stride[1, 2, 5], (10, 20, 30))
+
+    def test_stride_setitem_wrong_length_raises_com_error(self):
+        with self.assertRaises(COMError) as cm:
+            self.obj.Stride[1, 1, 3] = (10, 20)
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_EXCEPTION)
+
+    def test_stride_setitem_all_slice_raises_com_error(self):
+        with self.assertRaises(COMError):
+            self.obj.Stride[:] = (10, 20, 30)
 
 
 if __name__ == "__main__":
