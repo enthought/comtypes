@@ -600,8 +600,8 @@ HRESULT __stdcall CNamedPropertyTest::get_Item(LONG index, VARIANT* value)
 		return E_POINTER ;
 	}
 
-	std::map<LONG, LONG>::const_iterator it = m_itemValues.find(index) ;
-	if (it != m_itemValues.end())
+	std::map<LONG, LONG>::const_iterator it = m_values.find(index) ;
+	if (it != m_values.end())
 	{
 		SetLongVariant(value, it->second) ;
 	}
@@ -615,7 +615,7 @@ HRESULT __stdcall CNamedPropertyTest::get_Item(LONG index, VARIANT* value)
 HRESULT __stdcall CNamedPropertyTest::put_Item(LONG index, LONG value)
 {
 	trace("put_Item called") ;
-	m_itemValues[index] = value ;
+	m_values[index] = value ;
 	return S_OK ;
 }
 
@@ -632,7 +632,7 @@ HRESULT __stdcall CNamedPropertyTest::get_Range(LONG start, LONG end,
 		return E_POINTER ;
 	}
 
-	return BuildRangeVariant(m_rangeValues, start, end, value) ;
+	return BuildRangeVariant(m_values, start, end, value) ;
 }
 
 // Writing Range[start, end] = values assigns values[i] to index start + i.
@@ -641,7 +641,7 @@ HRESULT __stdcall CNamedPropertyTest::put_Range(LONG start, LONG end,
                                                 VARIANT value)
 {
 	trace("put_Range called") ;
-	return AssignRangeFromVariant(value, start, end, m_rangeValues) ;
+	return AssignRangeFromVariant(value, start, end, m_values) ;
 }
 
 // Read-only parameterized property.  It reads the same map as Item.
@@ -653,8 +653,8 @@ HRESULT __stdcall CNamedPropertyTest::get_ReadOnlyItem(LONG index, VARIANT* valu
 		return E_POINTER ;
 	}
 
-	std::map<LONG, LONG>::const_iterator it = m_itemValues.find(index) ;
-	if (it != m_itemValues.end())
+	std::map<LONG, LONG>::const_iterator it = m_values.find(index) ;
+	if (it != m_values.end())
 	{
 		SetLongVariant(value, it->second) ;
 	}
@@ -669,7 +669,7 @@ HRESULT __stdcall CNamedPropertyTest::get_ReadOnlyItem(LONG index, VARIANT* valu
 HRESULT __stdcall CNamedPropertyTest::put_WriteOnlyItem(LONG index, LONG value)
 {
 	trace("put_WriteOnlyItem called") ;
-	m_itemValues[index] = value ;
+	m_values[index] = value ;
 	return S_OK ;
 }
 
@@ -686,11 +686,11 @@ HRESULT __stdcall CNamedPropertyTest::get_OptionalItem(VARIANT index, VARIANT* v
 
 	if (index.vt == VT_ERROR)
 	{
-		return BuildPairsVariant(m_optionalValues, value) ;
+		return BuildPairsVariant(m_values, value) ;
 	}
 
-	std::map<LONG, LONG>::const_iterator it = m_optionalValues.find(index.lVal) ;
-	if (it != m_optionalValues.end())
+	std::map<LONG, LONG>::const_iterator it = m_values.find(index.lVal) ;
+	if (it != m_values.end())
 	{
 		SetLongVariant(value, it->second) ;
 	}
@@ -710,14 +710,14 @@ HRESULT __stdcall CNamedPropertyTest::put_OptionalItem(VARIANT index, VARIANT va
 
 	if (index.vt == VT_ERROR)
 	{
-		return ReplaceMapFromVariant(value, m_optionalValues) ;
+		return ReplaceMapFromVariant(value, m_values) ;
 	}
 
 	if (value.vt != VT_I4)
 	{
 		return DISP_E_TYPEMISMATCH ;
 	}
-	m_optionalValues[index.lVal] = value.lVal ;
+	m_values[index.lVal] = value.lVal ;
 	return S_OK ;
 }
 
@@ -738,11 +738,11 @@ HRESULT __stdcall CNamedPropertyTest::get_OptionalRange(LONG start, VARIANT end,
 	LONG endIndex ;
 	if (end.vt == VT_ERROR)
 	{
-		if (m_optionalRangeValues.empty())
+		if (m_values.empty())
 		{
 			return BuildEmptyVariantArray(value) ;
 		}
-		endIndex = m_optionalRangeValues.rbegin()->first ;
+		endIndex = m_values.rbegin()->first ;
 		if (endIndex < start)
 		{
 			return BuildEmptyVariantArray(value) ;
@@ -753,7 +753,7 @@ HRESULT __stdcall CNamedPropertyTest::get_OptionalRange(LONG start, VARIANT end,
 		endIndex = end.lVal ;
 	}
 
-	return BuildRangeVariant(m_optionalRangeValues, start, endIndex, value) ;
+	return BuildRangeVariant(m_values, start, endIndex, value) ;
 }
 
 // Setter for the default/optional-index property.  When `end` is omitted
@@ -789,7 +789,7 @@ HRESULT __stdcall CNamedPropertyTest::put_OptionalRange(LONG start, VARIANT end,
 		endIndex = end.lVal ;
 	}
 
-	return AssignRangeFromVariant(value, start, endIndex, m_optionalRangeValues) ;
+	return AssignRangeFromVariant(value, start, endIndex, m_values) ;
 }
 
 // Parameterized property that combines a required argument (`start`), a
@@ -810,11 +810,11 @@ HRESULT __stdcall CNamedPropertyTest::get_Stride(LONG start, LONG step, VARIANT 
 	LONG endIndex ;
 	if (end.vt == VT_ERROR)
 	{
-		if (m_strideValues.empty())
+		if (m_values.empty())
 		{
 			return BuildEmptyVariantArray(value) ;
 		}
-		endIndex = m_strideValues.rbegin()->first ;
+		endIndex = m_values.rbegin()->first ;
 		if (endIndex < start)
 		{
 			return BuildEmptyVariantArray(value) ;
@@ -825,7 +825,7 @@ HRESULT __stdcall CNamedPropertyTest::get_Stride(LONG start, LONG step, VARIANT 
 		endIndex = end.lVal ;
 	}
 
-	return BuildStrideVariant(m_strideValues, start, step, endIndex, value) ;
+	return BuildStrideVariant(m_values, start, step, endIndex, value) ;
 }
 
 // Setter for the required/default/optional-index property.  When `end` is
@@ -862,5 +862,5 @@ HRESULT __stdcall CNamedPropertyTest::put_Stride(LONG start, LONG step, VARIANT 
 		endIndex = end.lVal ;
 	}
 
-	return AssignStrideFromVariant(value, start, step, endIndex, m_strideValues) ;
+	return AssignStrideFromVariant(value, start, step, endIndex, m_values) ;
 }
