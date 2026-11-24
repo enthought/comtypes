@@ -21,6 +21,9 @@ The properties follow this contract:
 
 * Reading an index that has not been assigned returns a VARIANT whose scode is
   DISP_E_BADINDEX, so "not set" can be told apart from a stored value.
+* Every parameterized property (`Item`, `ReadOnlyItem`, `WriteOnlyItem`,
+  `OptionalItem`, `Range`, `OptionalRange` and `Stride`) shares a single map,
+  so a value written through any of them is visible through all of them.
 * `ReadOnlyItem` and `WriteOnlyItem` share the same storage as `Item`; they
   only read or only write that single map.
 * `OptionalItem` can exchange the whole map through the all-slice spelling
@@ -88,10 +91,12 @@ class TestDualNamedProperty(unittest.TestCase):
     def test_setitem_then_getitem_round_trips(self):
         self.obj.Item[3] = 42
         self.assertEqual(self.obj.Item[3], 42)
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 42),))
 
     def test_call_passes_index_to_getter(self):
         self.obj.Item[3] = 42
         self.assertEqual(self.obj.Item(3), 42)
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 42),))
 
     def test_getitem_range_unset_returns_nulls(self):
         self.assertEqual(self.obj.Range[1, 3], (None, None, None))
@@ -99,14 +104,18 @@ class TestDualNamedProperty(unittest.TestCase):
     def test_setitem_range_then_getitem_round_trips(self):
         self.obj.Range[1, 3] = (9, 8, 7)
         self.assertEqual(self.obj.Range[1, 3], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalRange[:], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 9), (2, 8), (3, 7)))
 
     def test_call_with_multiple_args(self):
         self.obj.Range[1, 3] = (9, 8, 7)
         self.assertEqual(self.obj.Range(1, 3), (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 9), (2, 8), (3, 7)))
 
     def test_getitem_range_fills_unset_indices_with_null(self):
         self.obj.Range[1, 3] = (9, 8, 7)
         self.assertEqual(self.obj.Range[1, 5], (9, 8, 7, None, None))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 9), (2, 8), (3, 7)))
 
     def test_setitem_range_wrong_length_raises_com_error(self):
         with self.assertRaises(COMError) as cm:
@@ -116,6 +125,7 @@ class TestDualNamedProperty(unittest.TestCase):
     def test_readonly_reads_item_map(self):
         self.obj.Item[3] = 42
         self.assertEqual(self.obj.ReadOnlyItem[3], 42)
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 42),))
 
     def test_readonly_unset_returns_badindex_variant(self):
         result = self.obj.ReadOnlyItem[3]
@@ -128,6 +138,7 @@ class TestDualNamedProperty(unittest.TestCase):
     def test_writeonly_writes_item_map(self):
         self.obj.WriteOnlyItem[3] = 42
         self.assertEqual(self.obj.Item[3], 42)
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 42),))
 
     def test_writeonly_getitem_raises_type_error(self):
         with self.assertRaises(TypeError):
@@ -146,10 +157,12 @@ class TestDualNamedProperty(unittest.TestCase):
         self.obj.OptionalItem[1] = 10
         self.obj.OptionalItem[2] = 20
         self.assertEqual(self.obj.OptionalItem[()], ((1, 10), (2, 20)))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (2, 20)))
 
     def test_optional_getitem_index_returns_value(self):
         self.obj.OptionalItem[5] = 50
         self.assertEqual(self.obj.OptionalItem[5], 50)
+        self.assertEqual(self.obj.OptionalItem[:], ((5, 50),))
 
     def test_optional_getitem_unset_index_returns_badindex_variant(self):
         result = self.obj.OptionalItem[5]
@@ -201,39 +214,49 @@ class TestDualNamedProperty(unittest.TestCase):
     def test_optional_range_getitem_both_args_returns_range(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_getitem_start_only_reads_to_last_index(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[2], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_getitem_all_slice_uses_default_start(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[:], (None, 9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_getitem_empty_tuple_uses_default_start(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[()], (None, 9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_call_both_args(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange(2, 4), (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_call_start_only(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange(2), (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_call_no_args(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange(), (None, 9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_getitem_unset_range_returns_nulls(self):
         self.assertEqual(self.obj.OptionalRange[2, 4], (None, None, None))
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_optional_range_getitem_empty_map_returns_empty(self):
         self.assertEqual(self.obj.OptionalRange[:], ())
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_optional_range_getitem_start_beyond_data_returns_empty(self):
         self.assertEqual(self.obj.OptionalRange[5], ())
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_optional_range_getitem_end_before_start_raises_com_error(self):
         with self.assertRaises(COMError) as cm:
@@ -243,6 +266,7 @@ class TestDualNamedProperty(unittest.TestCase):
     def test_optional_range_setitem_both_args_round_trips(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_setitem_wrong_length_raises_com_error(self):
         with self.assertRaises(COMError) as cm:
@@ -291,28 +315,35 @@ class TestDualNamedProperty(unittest.TestCase):
     def test_stride_getitem_all_args_returns_range(self):
         self.obj.Stride[1, 2, 5] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[1, 2, 5], (10, 20, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (3, 20), (5, 30)))
 
     def test_stride_getitem_unset_returns_nulls(self):
         self.assertEqual(self.obj.Stride[1, 1, 3], (None, None, None))
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_stride_getitem_fills_unset_indices_with_null(self):
         self.obj.Stride[1, 2, 5] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[1, 1, 5], (10, None, 20, None, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (3, 20), (5, 30)))
 
     def test_stride_getitem_start_only_uses_default_step_and_reads_to_last(self):
         self.obj.Stride[2, 1, 4] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[2], (10, 20, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 10), (3, 20), (4, 30)))
 
     def test_stride_getitem_start_and_step_omits_end(self):
         self.obj.Stride[1, 2, 5] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[1, 2], (10, 20, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (3, 20), (5, 30)))
 
     def test_stride_getitem_empty_map_returns_empty(self):
         self.assertEqual(self.obj.Stride[1], ())
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_stride_getitem_start_beyond_data_returns_empty(self):
         self.obj.Stride[1, 1, 3] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[5], ())
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (2, 20), (3, 30)))
 
     def test_stride_getitem_end_before_start_raises_com_error(self):
         with self.assertRaises(COMError) as cm:
@@ -327,6 +358,7 @@ class TestDualNamedProperty(unittest.TestCase):
     def test_stride_setitem_all_args_round_trips(self):
         self.obj.Stride[1, 2, 5] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[1, 2, 5], (10, 20, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (3, 20), (5, 30)))
 
     def test_stride_setitem_start_only_uses_default_step_and_end(self):
         # The vtable setter binds the supplied values as step, leaving the
@@ -386,10 +418,12 @@ class TestDispNamedProperty(unittest.TestCase):
     def test_setitem_then_getitem_round_trips(self):
         self.obj.Item[3] = 42
         self.assertEqual(self.obj.Item[3], 42)
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 42),))
 
     def test_call_passes_index_to_getter(self):
         self.obj.Item[3] = 42
         self.assertEqual(self.obj.Item(3), 42)
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 42),))
 
     def test_getitem_range_unset_returns_nulls(self):
         self.assertEqual(self.obj.Range[1, 3], (None, None, None))
@@ -397,14 +431,18 @@ class TestDispNamedProperty(unittest.TestCase):
     def test_setitem_range_then_getitem_round_trips(self):
         self.obj.Range[1, 3] = (9, 8, 7)
         self.assertEqual(self.obj.Range[1, 3], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalRange[:], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 9), (2, 8), (3, 7)))
 
     def test_call_with_multiple_args(self):
         self.obj.Range[1, 3] = (9, 8, 7)
         self.assertEqual(self.obj.Range(1, 3), (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 9), (2, 8), (3, 7)))
 
     def test_getitem_range_fills_unset_indices_with_null(self):
         self.obj.Range[1, 3] = (9, 8, 7)
         self.assertEqual(self.obj.Range[1, 5], (9, 8, 7, None, None))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 9), (2, 8), (3, 7)))
 
     def test_setitem_range_wrong_length_raises_com_error(self):
         with self.assertRaises(COMError) as cm:
@@ -414,6 +452,7 @@ class TestDispNamedProperty(unittest.TestCase):
     def test_readonly_reads_item_map(self):
         self.obj.Item[3] = 42
         self.assertEqual(self.obj.ReadOnlyItem[3], 42)
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 42),))
 
     def test_readonly_unset_returns_badindex_variant(self):
         result = self.obj.ReadOnlyItem[3]
@@ -426,6 +465,7 @@ class TestDispNamedProperty(unittest.TestCase):
     def test_writeonly_writes_item_map(self):
         self.obj.WriteOnlyItem[3] = 42
         self.assertEqual(self.obj.Item[3], 42)
+        self.assertEqual(self.obj.OptionalItem[:], ((3, 42),))
 
     def test_writeonly_getitem_raises_type_error(self):
         with self.assertRaises(TypeError):
@@ -444,10 +484,12 @@ class TestDispNamedProperty(unittest.TestCase):
         self.obj.OptionalItem[1] = 10
         self.obj.OptionalItem[2] = 20
         self.assertEqual(self.obj.OptionalItem[()], ((1, 10), (2, 20)))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (2, 20)))
 
     def test_optional_getitem_index_returns_value(self):
         self.obj.OptionalItem[5] = 50
         self.assertEqual(self.obj.OptionalItem[5], 50)
+        self.assertEqual(self.obj.OptionalItem[:], ((5, 50),))
 
     def test_optional_getitem_unset_index_returns_badindex_variant(self):
         result = self.obj.OptionalItem[5]
@@ -476,39 +518,49 @@ class TestDispNamedProperty(unittest.TestCase):
     def test_optional_range_getitem_both_args_returns_range(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_getitem_start_only_reads_to_last_index(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[2], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_getitem_all_slice_uses_default_start(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[:], (None, 9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_getitem_empty_tuple_uses_default_start(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[()], (None, 9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_call_both_args(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange(2, 4), (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_call_start_only(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange(2), (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_call_no_args(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange(), (None, 9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_getitem_unset_range_returns_nulls(self):
         self.assertEqual(self.obj.OptionalRange[2, 4], (None, None, None))
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_optional_range_getitem_empty_map_returns_empty(self):
         self.assertEqual(self.obj.OptionalRange[:], ())
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_optional_range_getitem_start_beyond_data_returns_empty(self):
         self.assertEqual(self.obj.OptionalRange[5], ())
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_optional_range_getitem_end_before_start_raises_com_error(self):
         with self.assertRaises(COMError) as cm:
@@ -518,6 +570,7 @@ class TestDispNamedProperty(unittest.TestCase):
     def test_optional_range_setitem_both_args_round_trips(self):
         self.obj.OptionalRange[2, 4] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_setitem_wrong_length_raises_com_error(self):
         with self.assertRaises(COMError) as cm:
@@ -527,40 +580,50 @@ class TestDispNamedProperty(unittest.TestCase):
     def test_optional_range_setitem_start_only_writes_to_end(self):
         self.obj.OptionalRange[2] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[2, 4], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 9), (3, 8), (4, 7)))
 
     def test_optional_range_setitem_all_slice_uses_default_start(self):
         self.obj.OptionalRange[:] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[1, 3], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 9), (2, 8), (3, 7)))
 
     def test_optional_range_setitem_empty_tuple_uses_default_start(self):
         self.obj.OptionalRange[()] = (9, 8, 7)
         self.assertEqual(self.obj.OptionalRange[1, 3], (9, 8, 7))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 9), (2, 8), (3, 7)))
 
     def test_stride_getitem_all_args_returns_range(self):
         self.obj.Stride[1, 2, 5] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[1, 2, 5], (10, 20, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (3, 20), (5, 30)))
 
     def test_stride_getitem_unset_returns_nulls(self):
         self.assertEqual(self.obj.Stride[1, 1, 3], (None, None, None))
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_stride_getitem_fills_unset_indices_with_null(self):
         self.obj.Stride[1, 2, 5] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[1, 1, 5], (10, None, 20, None, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (3, 20), (5, 30)))
 
     def test_stride_getitem_start_only_uses_default_step_and_reads_to_last(self):
         self.obj.Stride[2, 1, 4] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[2], (10, 20, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((2, 10), (3, 20), (4, 30)))
 
     def test_stride_getitem_start_and_step_omits_end(self):
         self.obj.Stride[1, 2, 5] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[1, 2], (10, 20, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (3, 20), (5, 30)))
 
     def test_stride_getitem_empty_map_returns_empty(self):
         self.assertEqual(self.obj.Stride[1], ())
+        self.assertEqual(self.obj.OptionalItem[:], ())
 
     def test_stride_getitem_start_beyond_data_returns_empty(self):
         self.obj.Stride[1, 1, 3] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[5], ())
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (2, 20), (3, 30)))
 
     def test_stride_getitem_end_before_start_raises_com_error(self):
         with self.assertRaises(COMError) as cm:
@@ -575,6 +638,7 @@ class TestDispNamedProperty(unittest.TestCase):
     def test_stride_setitem_all_args_round_trips(self):
         self.obj.Stride[1, 2, 5] = (10, 20, 30)
         self.assertEqual(self.obj.Stride[1, 2, 5], (10, 20, 30))
+        self.assertEqual(self.obj.OptionalItem[:], ((1, 10), (3, 20), (5, 30)))
 
     def test_stride_setitem_start_only_uses_default_step_and_end(self):
         self.obj.Stride[1] = (10, 20, 30)
