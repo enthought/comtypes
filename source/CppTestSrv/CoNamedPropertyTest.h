@@ -8,10 +8,12 @@
  * `obj.Prop[a, b]`.
  *
  * The getters return a VARIANT so that reading an index that has not been
- * assigned can report DISP_E_BADINDEX through the VARIANT's scode.  Item,
- * ReadOnlyItem and WriteOnlyItem share a single map: ReadOnlyItem only reads
- * it and WriteOnlyItem only writes it.  OptionalItem additionally supports
- * reading and replacing the whole map through the all-slice spelling.
+ * assigned can report DISP_E_BADINDEX through the VARIANT's scode.  Every
+ * parameterized property (Item, ReadOnlyItem, WriteOnlyItem, OptionalItem,
+ * Range, OptionalRange and Stride) shares a single map, so a value written
+ * through any of them is visible through all of them.  ReadOnlyItem only
+ * reads the map and WriteOnlyItem only writes it.  OptionalItem additionally
+ * supports reading and replacing the whole map through the all-slice spelling.
  *
  * Range takes two integer indices that denote a range.  Reading
  * Range[start, end] returns one element per index in [start, end], filling an
@@ -75,6 +77,10 @@ private:
 	                                            VARIANT* value);
 	virtual HRESULT __stdcall put_OptionalRange(LONG start, VARIANT end,
 	                                            VARIANT value);
+	virtual HRESULT __stdcall get_Stride(LONG start, LONG step, VARIANT end,
+	                                     VARIANT* value);
+	virtual HRESULT __stdcall put_Stride(LONG start, LONG step, VARIANT end,
+	                                     VARIANT value);
 
 	// Initialization
 	virtual HRESULT Init();
@@ -88,14 +94,10 @@ private:
 	// Pointer to type information.
 	ITypeInfo* m_pITypeInfo;
 
-	// Storage for the single-index Item property.
-	std::map<LONG, LONG> m_itemValues;
-	// Storage for the two-index Range property.
-	std::map<LONG, LONG> m_rangeValues;
-	// Storage for the optional-index OptionalItem property.
-	std::map<LONG, LONG> m_optionalValues;
-	// Storage for the default/optional-index OptionalRange property.
-	std::map<LONG, LONG> m_optionalRangeValues;
+	// Storage shared by every parameterized property (Item, ReadOnlyItem,
+	// WriteOnlyItem, OptionalItem, Range, OptionalRange and Stride).  A value
+	// written through any of them is visible through all of them.
+	std::map<LONG, LONG> m_values;
 };
 
 #endif
