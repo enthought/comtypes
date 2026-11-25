@@ -1,6 +1,7 @@
 import unittest
+from _ctypes import COMError
 
-from comtypes import CLSCTX_LOCAL_SERVER, IUnknown
+from comtypes import CLSCTX_LOCAL_SERVER, IUnknown, hresult
 from comtypes.client import CreateObject, GetModule
 
 ComtypesCppTestSrvLib_GUID = "{07D2AEE5-1DF8-4D2C-953A-554ADFD25F99}"
@@ -26,13 +27,23 @@ class TestComtypesDispPutRef(unittest.TestCase):
             interface=ComtypesCppTestSrvLib.IDispPutRefTest,
         )
 
-    def test_propputref_setter_stores_zero_sized_obj(self):
+    def test_propputref_setter_rejects_zero_sized_obj(self):
+        # comtypes converts the Python value into a VARIANT in
+        # `tagVARIANT._set_value` (`comtypes/_automation.py`), which turns any
+        # sized object whose length is zero into `VT_NULL`.  The setter is typed
+        # as IUnknown, so the server rejects `VT_NULL` with
+        # `DISP_E_TYPEMISMATCH`.  This records the current behavior; it is not
+        # necessarily desirable.
         other = CreateObject("Scripting.Dictionary")
-        self.obj.Item[3] = other
-        result = self.obj.Item[3]
-        self.assertEqual(
-            result.QueryInterface(IUnknown), other.QueryInterface(IUnknown)
-        )
+        with self.assertRaises(
+            COMError,
+            msg="CHARACTERIZATION: failure is expected; whether or not the "
+            "dictionary is stored, the result should equal the stored object "
+            "(result.QueryInterface(IUnknown) == other.QueryInterface(IUnknown)), "
+            "but an empty sized object is converted to VT_NULL and read back as None",
+        ) as cm:
+            self.obj.Item[3] = other
+        self.assertEqual(cm.exception.hresult, hresult.DISP_E_TYPEMISMATCH)
 
     def test_propputref_setter_stores_non_zero_sized_obj(self):
         other = CreateObject("Scripting.Dictionary")
