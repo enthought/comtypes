@@ -17,6 +17,7 @@
 #include "CoFixedPointNumberTest.h"
 #include "CoRecordSafearrayTest.h"
 #include "CoNamedPropertyTest.h"
+#include "CoComtypesDispPutRefTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -95,6 +96,12 @@ CFactoryData g_FactoryDataArray[] =
 		L"Parameterized (named) property test component",
 		L"Comtypes.NamedPropertyTest.1",
 		L"Comtypes.NamedPropertyTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoComtypesDispPutRefTest, CComtypesDispPutRefTest::CreateInstance,
+		L"Dispinterface propputref code path test component",
+		L"Comtypes.ComtypesDispPutRefTest.1",
+		L"Comtypes.ComtypesDispPutRefTest",
 		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0}
 } ;

@@ -41,7 +41,7 @@ guids.obj : guids.c
 # Component/server source files
 #
 
-server.obj : server.cpp cunknown.h cfactory.h iface.h CoNumericSafearrayTest.h CoByteCompatibilityTest.h CoVariantErrorTest.h CoFixedPointNumberTest.h CoRecordSafearrayTest.h CoNamedPropertyTest.h
+server.obj : server.cpp cunknown.h cfactory.h iface.h CoNumericSafearrayTest.h CoByteCompatibilityTest.h CoVariantErrorTest.h CoFixedPointNumberTest.h CoRecordSafearrayTest.h CoNamedPropertyTest.h CoComtypesDispPutRefTest.h
 	cl $(CPP_FLAGS) server.cpp
 
 CoComtypesDispRecordParamTest.obj : CoComtypesDispRecordParamTest.cpp \
@@ -79,6 +79,10 @@ CoNamedPropertyTest.obj : CoNamedPropertyTest.cpp \
 		CoNamedPropertyTest.h iface.h CUnknown.h
 	cl $(CPP_FLAGS) CoNamedPropertyTest.cpp
 
+CoComtypesDispPutRefTest.obj : CoComtypesDispPutRefTest.cpp \
+		CoComtypesDispPutRefTest.h iface.h CUnknown.h
+	cl $(CPP_FLAGS) CoComtypesDispPutRefTest.cpp
+
 #
 # Helper classes
 #
@@ -115,6 +119,7 @@ SERVER_OBJS = Server.obj     \
               CoFixedPointNumberTest.obj      \
               CoRecordSafearrayTest.obj      \
               CoNamedPropertyTest.obj      \
+              CoComtypesDispPutRefTest.obj      \
               Registry.obj   \
               Cfactory.obj   \
               Cunknown.obj   \

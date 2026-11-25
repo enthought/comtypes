@@ -328,6 +328,43 @@ dispinterface IDispNamedPropertyTest
 };
 
 
+// Interface IDualPutRefTest
+// Test double for a dispinterface code path that parameterized properties do
+// not reach:
+//   * a propputref property, so comtypes invokes with
+//     DISPATCH_PROPERTYPUTREF.
+[
+	odl,
+	uuid(7E4B2C91-5A3D-4F68-9B1E-2C7D4A8F6E35),
+	dual,
+	helpstring("Dual interface for testing dispinterface propputref code paths."),
+	nonextensible,
+	oleautomation
+]
+interface IDualPutRefTest : IDispatch
+{
+	// propputref property.  The setter must invoke with
+	// DISPATCH_PROPERTYPUTREF; the getter reads the stored pointer back.
+	// The value is typed as IUnknown (not VARIANT) so that comtypes passes
+	// the object reference through as a COM pointer instead of converting it
+	// to a VARIANT.
+	[propputref, id(2)]
+	HRESULT Item([in] long index, [in] IUnknown* value);
+	[propget, id(2)]
+	HRESULT Item([in] long index, [out, retval] IUnknown** value);
+};
+
+// Dispinterface alias for the dual interface.
+[
+	uuid(8F5C3DA2-6B4E-4A79-8C2F-3D8E5B9A7F46),
+	helpstring("Dispinterface alias for dispinterface propputref code path tests.")
+]
+dispinterface IDispPutRefTest
+{
+	interface IDualPutRefTest;
+};
+
+
 //
 // Component and type library descriptions
 //
@@ -468,5 +505,17 @@ library ComtypesCppTestSrvLib
 	{
 		[default] interface IDualNamedPropertyTest ;
 		dispinterface IDispNamedPropertyTest ;
+	} ;
+
+	// CoComtypesDispPutRefTest
+	// Component that implements dispinterface propputref code path tests.
+	[
+		uuid(9A6D4EB3-7C5F-4B8A-9D3E-4E9F6CAB8A57),
+		helpstring("Dispinterface propputref code path test component.")
+	]
+	coclass CoComtypesDispPutRefTest
+	{
+		[default] interface IDualPutRefTest ;
+		dispinterface IDispPutRefTest ;
 	} ;
 } ;
