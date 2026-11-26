@@ -520,10 +520,6 @@ library ComtypesCppTestSrvLib
 	} ;
 
 	// CoCoClassParamTestItem
-	// Coclass whose default interface is ICoClassParamTestItem.  It is used
-	// as the return type of IDualCoClassParamTest.GetItemAsCC and
-	// IDispCoClassParamTest.GetItemAsCC, so that comtypes generates a coclass
-	// as the return type of a method.
 	[
 		uuid(4D5E6F7A-8B9C-0D1E-2F3A-4B5C6D7E8F91),
 		helpstring("Coclass used as a method return type.")
@@ -534,26 +530,6 @@ library ComtypesCppTestSrvLib
 	} ;
 
 	// Interface ICoClassParamTestItem
-	// Default interface of the CoCoClassParamTestItem coclass.  A method whose
-	// return type is a coclass returns the coclass' default interface, so this
-	// interface is what a caller receives from IDualCoClassParamTest.GetItemAsCC
-	// and IDispCoClassParamTest.GetItemAsCC.
-	//
-	// SelfAsItf and SelfAsCC both return this object itself, AddRef'd.  The
-	// only difference is the IDL typing: SelfAsItf is typed as the
-	// ICoClassParamTestItem interface and SelfAsCC as the
-	// CoCoClassParamTestItem coclass.  AddRef is required for the same reason
-	// QueryInterface always AddRefs: the caller receives a new reference that
-	// it owns.
-	//
-	// IsSameItemAsCC and IsSameItemAsItf are the argument-typed counterparts of
-	// SelfAsItf and SelfAsCC: instead of returning this object, they receive an
-	// object as an argument and report whether it is the same COM object as
-	// this one.  IsSameItemAsCC types the argument as the CoCoClassParamTestItem
-	// coclass and IsSameItemAsItf types it as the ICoClassParamTestItem
-	// interface.  The comparison is done with QueryInterface(IUnknown) on both
-	// sides, which is the COM identity rule, so it is independent of which
-	// interface the argument was typed as.
 	[
 		object,
 		uuid(1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6E),
@@ -578,20 +554,6 @@ library ComtypesCppTestSrvLib
 	} ;
 
 	// Interface IDualCoClassParamTest
-	// Dual interface with two methods that differ only in the declared return
-	// type:
-	//   * GetItemAsCC returns the CoCoClassParamTestItem coclass, so comtypes
-	//     generates POINTER(POINTER(CoCoClassParamTestItem)) for the
-	//     [out, retval] parameter and POINTER(CoCoClassParamTestItem) for
-	//     the dispinterface return type.  Neither pointer type has
-	//     __com_interface__, so the dispinterface method does not
-	//     QueryInterface the result.
-	//   * GetItemAsItf returns the ICoClassParamTestItem interface, so
-	//     comtypes generates POINTER(POINTER(ICoClassParamTestItem)) for
-	//     the [out, retval] parameter and POINTER(ICoClassParamTestItem)
-	//     for the dispinterface return type.  POINTER(ICoClassParamTestItem)
-	//     has __com_interface__, so the dispinterface method QueryInterfaces
-	//     the result for ICoClassParamTestItem.
 	[
 		odl,
 		uuid(2B3C4D5E-6F7A-8B9C-0D1E-2F3A4B5C6D7F),

@@ -1,11 +1,6 @@
 /*
- * CoCoClassParamTest.cpp - Component for coclass return type tests
+ * CoCoClassParamTest.cpp - Component for coclass return or argument type tests
  *
- * The native logic is intentionally trivial: GetItemAsCC returns a new
- * CCoClassParamTestItem object, whose default interface is
- * ICoClassParamTestItem.  This mirrors the Excel type library, where a
- * property such as _Application.Application is declared to return the
- * Application coclass.
  */
 
 #include <objbase.h>
@@ -54,8 +49,7 @@ HRESULT __stdcall CCoClassParamTestItem::GetValue(long* result)
 }
 
 // Return this object itself, AddRef'd, typed as the ICoClassParamTestItem
-// interface.  AddRef is required for the same reason QueryInterface always
-// AddRefs: the caller receives a new reference that it owns.
+// interface.
 HRESULT __stdcall CCoClassParamTestItem::get_SelfAsItf(ICoClassParamTestItem** result)
 {
 	trace("get_SelfAsItf called") ;
@@ -69,9 +63,7 @@ HRESULT __stdcall CCoClassParamTestItem::get_SelfAsItf(ICoClassParamTestItem** r
 }
 
 // Return this object itself, AddRef'd, typed as the CoCoClassParamTestItem
-// coclass.  The only difference from get_SelfAsItf is the IDL typing: a
-// coclass return type makes comtypes QueryInterface the result for the
-// coclass' default interface.
+// coclass.
 HRESULT __stdcall CCoClassParamTestItem::get_SelfAsCC(CoCoClassParamTestItem** result)
 {
 	trace("get_SelfAsCC called") ;
@@ -84,11 +76,7 @@ HRESULT __stdcall CCoClassParamTestItem::get_SelfAsCC(CoCoClassParamTestItem** r
 	return S_OK ;
 }
 
-// Compare two interface pointers for COM identity.  The COM identity rule
-// says that QueryInterface(IUnknown) returns the same pointer for the same
-// object, so comparing the IUnknown pointers is the correct way to tell
-// whether two interface pointers refer to the same object.  This is
-// independent of which interface each pointer was typed as.
+// Compare two interface pointers for COM identity.
 static HRESULT IsSameComObject(IUnknown* pLeft, IUnknown* pRight,
                                VARIANT_BOOL* result)
 {
@@ -117,9 +105,7 @@ static HRESULT IsSameComObject(IUnknown* pLeft, IUnknown* pRight,
 
 // Return whether item is the same COM object as this one.  The argument is
 // typed as the CoCoClassParamTestItem coclass, so the type library declares
-// the parameter as a coclass pointer.  A coclass pointer is the coclass'
-// default interface pointer, so it is reinterpreted as
-// ICoClassParamTestItem before the identity comparison.
+// the parameter as a coclass pointer.
 HRESULT __stdcall CCoClassParamTestItem::IsSameItemAsCC(CoCoClassParamTestItem* item,
                                                         VARIANT_BOOL* result)
 {
@@ -325,10 +311,7 @@ HRESULT __stdcall CCoClassParamTest::Invoke(DISPID dispidMember, const IID& iid,
 //
 
 // Return a new CCoClassParamTestItem object.  The type library declares the
-// return type as the CoCoClassParamTestItem coclass, so the returned pointer
-// is the default interface of CoCoClassParamTestItem
-// (ICoClassParamTestItem), cast to the incomplete CoCoClassParamTestItem
-// type.  The caller owns the returned reference.
+// return type as the CoCoClassParamTestItem coclass.
 HRESULT __stdcall CCoClassParamTest::GetItemAsCC(CoCoClassParamTestItem** result)
 {
 	trace("GetItemAsCC called") ;
@@ -348,13 +331,8 @@ HRESULT __stdcall CCoClassParamTest::GetItemAsCC(CoCoClassParamTestItem** result
 	return S_OK ;
 }
 
-// Return a new CCoClassParamTestItem object typed as the
-// ICoClassParamTestItem interface.  Unlike GetItemAsCC, the type library
-// declares the return type as ICoClassParamTestItem, so comtypes generates
-// POINTER(ICoClassParamTestItem) for the dispinterface return type.
-// POINTER(ICoClassParamTestItem) has __com_interface__, so the dispinterface
-// method QueryInterfaces the result for ICoClassParamTestItem.  The caller
-// owns the returned reference.
+// Return a new CCoClassParamTestItem object typed as the ICoClassParamTestItem
+// interface.
 HRESULT __stdcall CCoClassParamTest::GetItemAsItf(ICoClassParamTestItem** result)
 {
 	trace("GetItemAsItf called") ;

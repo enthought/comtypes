@@ -1,17 +1,6 @@
 /*
- * CoCoClassParamTest.h - Component for coclass return type tests
+ * CoCoClassParamTest.h - Component for coclass return or argument type tests
  *
- * The type library declares the return type of IDualCoClassParamTest.GetItemAsCC
- * as the CoCoClassParamTestItem coclass.  comtypes generates
- * POINTER(POINTER(CoCoClassParamTestItem)) for the [out, retval] parameter
- * of the dual interface and POINTER(CoCoClassParamTestItem) for the return
- * type of the dispinterface.  A coclass is represented by its default
- * interface, so the method returns an object that implements
- * ICoClassParamTestItem.
- *
- * CCoClassParamTestItem is the object returned by
- * CCoClassParamTest::GetItemAsCC.  It implements ICoClassParamTestItem, the
- * default interface of the CoCoClassParamTestItem coclass.
  */
 
 #ifndef __CoCoClassParamTest_h__
@@ -25,9 +14,7 @@ EXTERN_C const IID DIID_IDispCoClassParamTest;
 
 ///////////////////////////////////////////////////////////
 //
-// CCoClassParamTestItem - the object returned by
-// CCoClassParamTest::GetItemAsCC.  It implements ICoClassParamTestItem, the
-// default interface of the CoCoClassParamTestItem coclass.
+// CCoClassParamTestItem
 //
 class CCoClassParamTestItem : public CUnknown, public ICoClassParamTestItem
 {
@@ -51,7 +38,7 @@ private:
 
 ///////////////////////////////////////////////////////////
 //
-// CCoClassParamTest - the component that returns a coclass.
+// CCoClassParamTest
 //
 class CCoClassParamTest : public CUnknown, public IDualCoClassParamTest
 {
