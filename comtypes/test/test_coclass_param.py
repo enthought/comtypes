@@ -1,4 +1,4 @@
-"""Tests for a method whose declared return type is a coclass."""
+"""Tests for methods whose declared return type or argument type is a coclass."""
 
 import unittest
 
@@ -50,6 +50,18 @@ class TestDualCoClassParam(unittest.TestCase):
         self.assertEqual(item, item.SelfAsItf)
         self.assertEqual(item, item.SelfAsCC)
 
+    def test_is_same_item_as_cc_compares_coclass_typed_argument(self):
+        item = self.obj.GetItemAsItf()
+        other = self.obj.GetItemAsItf()
+        self.assertTrue(item.IsSameItemAsCC(item))
+        self.assertFalse(item.IsSameItemAsCC(other))
+
+    def test_is_same_item_as_itf_compares_interface_typed_argument(self):
+        item = self.obj.GetItemAsItf()
+        other = self.obj.GetItemAsItf()
+        self.assertTrue(item.IsSameItemAsItf(item))
+        self.assertFalse(item.IsSameItemAsItf(other))
+
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
 class TestDispCoClassParam(unittest.TestCase):
@@ -92,3 +104,15 @@ class TestDispCoClassParam(unittest.TestCase):
         )
         self.assertEqual(item, item.SelfAsItf)
         self.assertEqual(item, item.SelfAsCC)
+
+    def test_is_same_item_as_cc_compares_coclass_typed_argument(self):
+        item = self.obj.GetItemAsItf()
+        other = self.obj.GetItemAsItf()
+        self.assertTrue(item.IsSameItemAsCC(item))
+        self.assertFalse(item.IsSameItemAsCC(other))
+
+    def test_is_same_item_as_itf_compares_interface_typed_argument(self):
+        item = self.obj.GetItemAsItf()
+        other = self.obj.GetItemAsItf()
+        self.assertTrue(item.IsSameItemAsItf(item))
+        self.assertFalse(item.IsSameItemAsItf(other))

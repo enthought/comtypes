@@ -545,6 +545,15 @@ library ComtypesCppTestSrvLib
 	// CoCoClassParamTestItem coclass.  AddRef is required for the same reason
 	// QueryInterface always AddRefs: the caller receives a new reference that
 	// it owns.
+	//
+	// IsSameItemAsCC and IsSameItemAsItf are the argument-typed counterparts of
+	// SelfAsItf and SelfAsCC: instead of returning this object, they receive an
+	// object as an argument and report whether it is the same COM object as
+	// this one.  IsSameItemAsCC types the argument as the CoCoClassParamTestItem
+	// coclass and IsSameItemAsItf types it as the ICoClassParamTestItem
+	// interface.  The comparison is done with QueryInterface(IUnknown) on both
+	// sides, which is the COM identity rule, so it is independent of which
+	// interface the argument was typed as.
 	[
 		object,
 		uuid(1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6E),
@@ -560,6 +569,12 @@ library ComtypesCppTestSrvLib
 
 		[propget, helpstring("Returns this object typed as the CoCoClassParamTestItem coclass.")]
 		HRESULT SelfAsCC([out, retval] CoCoClassParamTestItem** result);
+
+		[helpstring("Returns whether item is the same COM object as this one.  The argument is typed as the CoCoClassParamTestItem coclass.")]
+		HRESULT IsSameItemAsCC([in] CoCoClassParamTestItem* item, [out, retval] VARIANT_BOOL* result);
+
+		[helpstring("Returns whether item is the same COM object as this one.  The argument is typed as the ICoClassParamTestItem interface.")]
+		HRESULT IsSameItemAsItf([in] ICoClassParamTestItem* item, [out, retval] VARIANT_BOOL* result);
 	} ;
 
 	// Interface IDualCoClassParamTest

@@ -43,6 +43,10 @@ private:
 	virtual HRESULT __stdcall GetValue(long* result);
 	virtual HRESULT __stdcall get_SelfAsItf(ICoClassParamTestItem** result);
 	virtual HRESULT __stdcall get_SelfAsCC(CoCoClassParamTestItem** result);
+	virtual HRESULT __stdcall IsSameItemAsCC(CoCoClassParamTestItem* item,
+	                                          VARIANT_BOOL* result);
+	virtual HRESULT __stdcall IsSameItemAsItf(ICoClassParamTestItem* item,
+	                                          VARIANT_BOOL* result);
 };
 
 ///////////////////////////////////////////////////////////

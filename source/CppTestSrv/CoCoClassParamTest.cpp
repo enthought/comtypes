@@ -84,6 +84,78 @@ HRESULT __stdcall CCoClassParamTestItem::get_SelfAsCC(CoCoClassParamTestItem** r
 	return S_OK ;
 }
 
+// Compare two interface pointers for COM identity.  The COM identity rule
+// says that QueryInterface(IUnknown) returns the same pointer for the same
+// object, so comparing the IUnknown pointers is the correct way to tell
+// whether two interface pointers refer to the same object.  This is
+// independent of which interface each pointer was typed as.
+static HRESULT IsSameComObject(IUnknown* pLeft, IUnknown* pRight,
+                               VARIANT_BOOL* result)
+{
+	IUnknown* pLeftUnknown = NULL ;
+	HRESULT hr = pLeft->QueryInterface(IID_IUnknown,
+	                                   reinterpret_cast<void**>(&pLeftUnknown)) ;
+	if (FAILED(hr))
+	{
+		return hr ;
+	}
+
+	IUnknown* pRightUnknown = NULL ;
+	hr = pRight->QueryInterface(IID_IUnknown,
+	                            reinterpret_cast<void**>(&pRightUnknown)) ;
+	if (FAILED(hr))
+	{
+		pLeftUnknown->Release() ;
+		return hr ;
+	}
+
+	*result = (pLeftUnknown == pRightUnknown) ? VARIANT_TRUE : VARIANT_FALSE ;
+	pLeftUnknown->Release() ;
+	pRightUnknown->Release() ;
+	return S_OK ;
+}
+
+// Return whether item is the same COM object as this one.  The argument is
+// typed as the CoCoClassParamTestItem coclass, so the type library declares
+// the parameter as a coclass pointer.  A coclass pointer is the coclass'
+// default interface pointer, so it is reinterpreted as
+// ICoClassParamTestItem before the identity comparison.
+HRESULT __stdcall CCoClassParamTestItem::IsSameItemAsCC(CoCoClassParamTestItem* item,
+                                                        VARIANT_BOOL* result)
+{
+	trace("IsSameItemAsCC called") ;
+	if (result == NULL)
+	{
+		return E_POINTER ;
+	}
+	*result = VARIANT_FALSE ;
+	if (item == NULL)
+	{
+		return S_OK ;
+	}
+	return IsSameComObject(reinterpret_cast<ICoClassParamTestItem*>(item),
+	                       static_cast<ICoClassParamTestItem*>(this), result) ;
+}
+
+// Return whether item is the same COM object as this one.  The argument is
+// typed as the ICoClassParamTestItem interface, so the type library declares
+// the parameter as an interface pointer.
+HRESULT __stdcall CCoClassParamTestItem::IsSameItemAsItf(ICoClassParamTestItem* item,
+                                                         VARIANT_BOOL* result)
+{
+	trace("IsSameItemAsItf called") ;
+	if (result == NULL)
+	{
+		return E_POINTER ;
+	}
+	*result = VARIANT_FALSE ;
+	if (item == NULL)
+	{
+		return S_OK ;
+	}
+	return IsSameComObject(item, static_cast<ICoClassParamTestItem*>(this), result) ;
+}
+
 ///////////////////////////////////////////////////////////
 //
 // Constructor / Destructor
