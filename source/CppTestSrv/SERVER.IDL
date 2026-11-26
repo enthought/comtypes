@@ -518,4 +518,100 @@ library ComtypesCppTestSrvLib
 		[default] interface IDualPutRefTest ;
 		dispinterface IDispPutRefTest ;
 	} ;
+
+	// CoCoClassParamTestItem
+	// Coclass whose default interface is ICoClassParamTestItem.  It is used
+	// as the return type of IDualCoClassParamTest.GetItemAsCC and
+	// IDispCoClassParamTest.GetItemAsCC, so that comtypes generates a coclass
+	// as the return type of a method.
+	[
+		uuid(4D5E6F7A-8B9C-0D1E-2F3A-4B5C6D7E8F91),
+		helpstring("Coclass used as a method return type.")
+	]
+	coclass CoCoClassParamTestItem
+	{
+		[default] interface ICoClassParamTestItem ;
+	} ;
+
+	// Interface ICoClassParamTestItem
+	// Default interface of the CoCoClassParamTestItem coclass.  A method whose
+	// return type is a coclass returns the coclass' default interface, so this
+	// interface is what a caller receives from IDualCoClassParamTest.GetItemAsCC
+	// and IDispCoClassParamTest.GetItemAsCC.
+	//
+	// SelfAsItf and SelfAsCC both return this object itself, AddRef'd.  The
+	// only difference is the IDL typing: SelfAsItf is typed as the
+	// ICoClassParamTestItem interface and SelfAsCC as the
+	// CoCoClassParamTestItem coclass.  AddRef is required for the same reason
+	// QueryInterface always AddRefs: the caller receives a new reference that
+	// it owns.
+	[
+		object,
+		uuid(1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6E),
+		helpstring("Default interface of the CoCoClassParamTestItem coclass."),
+		oleautomation
+	]
+	interface ICoClassParamTestItem : IUnknown
+	{
+		HRESULT GetValue([out, retval] long* result);
+
+		[propget, helpstring("Returns this object typed as the ICoClassParamTestItem interface.")]
+		HRESULT SelfAsItf([out, retval] ICoClassParamTestItem** result);
+
+		[propget, helpstring("Returns this object typed as the CoCoClassParamTestItem coclass.")]
+		HRESULT SelfAsCC([out, retval] CoCoClassParamTestItem** result);
+	} ;
+
+	// Interface IDualCoClassParamTest
+	// Dual interface with two methods that differ only in the declared return
+	// type:
+	//   * GetItemAsCC returns the CoCoClassParamTestItem coclass, so comtypes
+	//     generates POINTER(POINTER(CoCoClassParamTestItem)) for the
+	//     [out, retval] parameter and POINTER(CoCoClassParamTestItem) for
+	//     the dispinterface return type.  Neither pointer type has
+	//     __com_interface__, so the dispinterface method does not
+	//     QueryInterface the result.
+	//   * GetItemAsItf returns the ICoClassParamTestItem interface, so
+	//     comtypes generates POINTER(POINTER(ICoClassParamTestItem)) for
+	//     the [out, retval] parameter and POINTER(ICoClassParamTestItem)
+	//     for the dispinterface return type.  POINTER(ICoClassParamTestItem)
+	//     has __com_interface__, so the dispinterface method QueryInterfaces
+	//     the result for ICoClassParamTestItem.
+	[
+		odl,
+		uuid(2B3C4D5E-6F7A-8B9C-0D1E-2F3A4B5C6D7F),
+		dual,
+		helpstring("Dual interface for testing a coclass return type."),
+		nonextensible,
+		oleautomation
+	]
+	interface IDualCoClassParamTest : IDispatch
+	{
+		[id(1), helpstring("Returns the CoCoClassParamTestItem coclass.  The return type is typed as a CoClass in the IDL.")]
+		HRESULT GetItemAsCC([out, retval] CoCoClassParamTestItem** result);
+		[id(2), helpstring("Returns the ICoClassParamTestItem interface.  The return type is typed as an Interface in the IDL.")]
+		HRESULT GetItemAsItf([out, retval] ICoClassParamTestItem** result);
+	} ;
+
+	// Interface IDispCoClassParamTest
+	[
+		uuid(3C4D5E6F-7A8B-9C0D-1E2F-3A4B5C6D7E80),
+		helpstring("Dispinterface for testing a coclass return type.")
+	]
+	dispinterface IDispCoClassParamTest
+	{
+		interface IDualCoClassParamTest;
+	} ;
+
+	// CoCoClassParamTest
+	// Component that implements the coclass return type tests.
+	[
+		uuid(5E6F7A8B-9C0D-1E2F-3A4B-5C6D7E8F9A02),
+		helpstring("Coclass return type test component.")
+	]
+	coclass CoCoClassParamTest
+	{
+		[default] interface IDualCoClassParamTest ;
+		dispinterface IDispCoClassParamTest ;
+	} ;
 } ;
