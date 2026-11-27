@@ -3,7 +3,7 @@ import logging
 import traceback
 from _ctypes import COMError
 from collections.abc import Callable
-from ctypes import HRESULT, POINTER, WINFUNCTYPE, OleDLL, Structure, WinDLL, byref
+from ctypes import POINTER, WINFUNCTYPE, Structure, WinDLL, byref
 from ctypes.wintypes import (
     BOOL,
     DWORD,
@@ -35,11 +35,11 @@ class SECURITY_ATTRIBUTES(Structure):
     ]
 
 
-_ole32 = OleDLL("ole32")
+_ole32 = WinDLL("ole32")
 
 _CoWaitForMultipleHandles = _ole32.CoWaitForMultipleHandles
 _CoWaitForMultipleHandles.argtypes = [DWORD, DWORD, ULONG, LPHANDLE, LPDWORD]
-_CoWaitForMultipleHandles.restype = HRESULT
+_CoWaitForMultipleHandles.restype = ctypes.c_long
 
 
 _kernel32 = WinDLL("kernel32")
@@ -382,22 +382,25 @@ def PumpEvents(timeout: Any) -> None:
             return 1
         return 0
 
-    _SetConsoleCtrlHandler(PHANDLER_ROUTINE(HandlerRoutine), 1)
-
     try:
+        # Windows must receive the same callback address when removing it.
+        handler = PHANDLER_ROUTINE(HandlerRoutine)
+        _SetConsoleCtrlHandler(handler, 1)
         try:
-            _CoWaitForMultipleHandles(
+            result = _CoWaitForMultipleHandles(
                 COWAIT_DEFAULT,
                 int(timeout * 1000),
                 len(handles),
                 handles,
                 byref(ctypes.c_ulong()),
             )
-        except OSError as details:
-            if details.winerror != hresult.RPC_S_CALLPENDING:  # timeout expired
-                raise
-        else:
+            # A normal timeout is a failing HRESULT, but not a Python error.
+            if result == hresult.RPC_S_CALLPENDING:
+                return
+            if result < 0:
+                raise ctypes.WinError(result)
             raise KeyboardInterrupt
+        finally:
+            _SetConsoleCtrlHandler(handler, 0)
     finally:
         _CloseHandle(hevt)
-        _SetConsoleCtrlHandler(PHANDLER_ROUTINE(HandlerRoutine), 0)
