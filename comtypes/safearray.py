@@ -303,6 +303,8 @@ def _make_safearray_type(itemtype):
                     # speedup by creating an ndarray here.
                     for p in elems:
                         if bool(p):
+                            # The array element is borrowed. Own the AddRef separately.
+                            p = cast(p, self._itemtype_)
                             p.AddRef()
                             result.append(p.QueryInterface(itf))
                         else:

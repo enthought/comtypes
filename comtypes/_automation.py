@@ -692,9 +692,8 @@ class tagVARIANT(Structure):
         elif vt == VT_RECORD:
             from comtypes.client import GetModule
 
-            # Retrieving a COM pointer from a structure field does NOT
-            # call AddRef(), have to call it manually:
-            punk = self._.pRecInfo
+            # Keep the temporary AddRef on a pointer that owns it.
+            punk = cast(self._.pRecInfo, POINTER(IUnknown))
             punk.AddRef()
             ri = punk.QueryInterface(IRecordInfo)
 
