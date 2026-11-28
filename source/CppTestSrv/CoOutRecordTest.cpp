@@ -115,8 +115,8 @@ HRESULT COutRecordTest::Init()
 IUnknown* COutRecordTest::CreateSentinel()
 {
 	CSentinel* pSentinel = new CSentinel(m_liveSentinelCount);
-	// The sentinel is created with a reference count of 1.  That reference
-	// is handed to the caller, so no AddRef is needed here.
+	// The sentinel is created with a reference count of 1 and ownership is
+	// transferred to the caller.  The caller is responsible for releasing it.
 	return static_cast<IUnknown*>(pSentinel);
 }
 
@@ -272,7 +272,8 @@ HRESULT __stdcall COutRecordTest::GetSentinel(IUnknown** sentinel)
 	{
 		return E_POINTER;
 	}
-	// CreateSentinel returns a reference held for the caller.
+	// CreateSentinel returns a reference with ownership transferred to the
+	// caller.  The caller is responsible for releasing it.
 	*sentinel = CreateSentinel();
 	return S_OK;
 }

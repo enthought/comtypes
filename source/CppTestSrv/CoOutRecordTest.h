@@ -76,8 +76,8 @@ private:
 	// Destructor
 	~COutRecordTest();
 
-	// Create a new sentinel and return it with a reference held for the
-	// caller (reference count 1).
+	// Create a new sentinel and return it with ownership transferred to the
+	// caller (reference count 1).  The caller is responsible for releasing it.
 	IUnknown* CreateSentinel();
 
 	// Per-instance count of live sentinels.
