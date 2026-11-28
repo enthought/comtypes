@@ -43,6 +43,20 @@ def _create_record_info() -> IRecordInfo:
     )
 
 
+def _clear_record(rec) -> None:
+    """Release the resources owned by an [out] record.
+
+    comtypes does not yet release a record's managed fields (for example
+    `unk` and `text`) when the Python record object is destroyed, so simply
+    dropping the record leaks those resources.  Calling
+    `IRecordInfo::RecordClear` releases them explicitly.
+
+    This call becomes unnecessary once automatic release synchronized with
+    Python object destruction is implemented.
+    """
+    _create_record_info().RecordClear(addressof(rec))
+
+
 if sys.version_info >= (3, 13):
     ARGERR_MSG_STEM = "'StructOutRecordTest' object cannot be interpreted"
 else:
@@ -65,6 +79,7 @@ class TestServerBehavior(unittest.TestCase):
         self.assertIsInstance(rec, ComtypesCppTestSrvLib.StructOutRecordTest)
         self.assertEqual(rec.tag, 1)
         self.assertEqual(rec.text, "aaaa")
+        _clear_record(rec)  # FIX: remove once automatic release is implemented
 
     def test_get_record_retval_returns_record_with_expected_fields(self):
         """`GetRecordRetval` returns a `StructOutRecordTest` as the [out,
@@ -80,6 +95,7 @@ class TestServerBehavior(unittest.TestCase):
         retval = obj.GetRecordRetval()
         self.assertIsInstance(retval, ComtypesCppTestSrvLib.StructOutRecordTest)
         self.assertEqual(retval.tag, 2)
+        _clear_record(retval)  # FIX: remove once automatic release is implemented
 
     def test_get_records_around_returns_records_and_plain_value(self):
         """`GetRecordsAround` returns two [out] records and a plain LONG.
@@ -97,6 +113,8 @@ class TestServerBehavior(unittest.TestCase):
         self.assertEqual(middle, 42)
         self.assertIsInstance(last, ComtypesCppTestSrvLib.StructOutRecordTest)
         self.assertEqual(last.tag, 20)
+        _clear_record(first)  # FIX: remove once automatic release is implemented
+        _clear_record(last)  # FIX: remove once automatic release is implemented
 
     def test_modify_record_returns_modified_record(self):
         """`ModifyRecord` returns the [in, out] record with the modified field.
@@ -113,6 +131,8 @@ class TestServerBehavior(unittest.TestCase):
         modified = obj.ModifyRecord(inout)
         self.assertIsInstance(modified, ComtypesCppTestSrvLib.StructOutRecordTest)
         self.assertEqual(modified.tag, 6)
+        _clear_record(inout)  # FIX: remove once automatic release is implemented
+        _clear_record(modified)  # FIX: remove once automatic release is implemented
 
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
@@ -354,6 +374,7 @@ class TestRecordClear(unittest.TestCase):
         ) as cm:
             ri.RecordClear(rec)
         self.assertIn(ARGERR_MSG_STEM, str(cm.exception))
+        _clear_record(rec)  # FIX: remove once automatic release is implemented
         del rec
         gc.collect()
 
@@ -376,6 +397,7 @@ class TestPutField(unittest.TestCase):
         ri.PutField(DISPATCH_PROPERTYPUTREF, addressof(rec), "unk", s2)
         self.assertEqual(obj.GetLiveSentinelCount(), 1)
         del s2
+        _clear_record(rec)  # FIX: remove once automatic release is implemented
         del rec
         gc.collect()
 
@@ -396,6 +418,7 @@ class TestPutField(unittest.TestCase):
         del s2
         gc.collect()
         self.assertEqual(obj.GetLiveSentinelCount(), 1)
+        _clear_record(rec)  # FIX: remove once automatic release is implemented
         del rec
         gc.collect()
 
@@ -438,6 +461,7 @@ class TestPutField(unittest.TestCase):
         ri = _create_record_info()
         ri.PutField(DISPATCH_PROPERTYPUT, pointer(rec), "text", "new text")
         self.assertEqual(rec.text, "new text")
+        _clear_record(rec)  # FIX: remove once automatic release is implemented
         del rec
         gc.collect()
 
@@ -462,6 +486,7 @@ class TestPutField(unittest.TestCase):
 
         leaked = find_memleak(put_repeatedly, loops=(1, n), target="private_usage")
         self.assertLessEqual(leaked, expected * 0.1)
+        _clear_record(rec)  # FIX: remove once automatic release is implemented
         del rec
         gc.collect()
 
@@ -474,6 +499,7 @@ class TestPutField(unittest.TestCase):
         with self.assertRaises(COMError) as cm:
             ri.PutField(DISPATCH_PROPERTYPUTREF, addressof(rec), "text", "new text")
         self.assertEqual(cm.exception.hresult, hresult.E_INVALIDARG)
+        _clear_record(rec)  # FIX: remove once automatic release is implemented
         del rec
         gc.collect()
 
@@ -529,6 +555,7 @@ class TestPutField(unittest.TestCase):
         ) as cm:
             ri.PutField(DISPATCH_PROPERTYPUT, rec, "text", "new text")
         self.assertIn(ARGERR_MSG_STEM, str(cm.exception))
+        _clear_record(rec)  # FIX: remove once automatic release is implemented
         del rec
         gc.collect()
 
