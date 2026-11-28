@@ -19,6 +19,7 @@
 #include "CoNamedPropertyTest.h"
 #include "CoCoClassParamTest.h"
 #include "CoComtypesDispPutRefTest.h"
+#include "CoOutRecordTest.h"
 
 
 ///////////////////////////////////////////////////////////
@@ -109,6 +110,12 @@ CFactoryData g_FactoryDataArray[] =
 		L"Coclass return type test component",
 		L"Comtypes.CoClassParamTest.1",
 		L"Comtypes.CoClassParamTest",
+		&LIBID_ComtypesCppTestSrvLib,
+		NULL, 0},
+	{&CLSID_CoOutRecordTest, COutRecordTest::CreateInstance,
+		L"[out] record ownership test component",
+		L"Comtypes.OutRecordTest.1",
+		L"Comtypes.OutRecordTest",
 		&LIBID_ComtypesCppTestSrvLib,
 		NULL, 0}
 } ;
