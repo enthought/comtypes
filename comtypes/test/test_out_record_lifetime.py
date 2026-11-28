@@ -2,6 +2,7 @@
 
 import ctypes
 import gc
+import sys
 import unittest
 from _ctypes import COMError
 from ctypes import ArgumentError, addressof, byref, pointer
@@ -40,6 +41,12 @@ def _create_record_info() -> IRecordInfo:
     return GetRecordInfoFromGuids(
         *ComtypesCppTestSrvLib.StructOutRecordTest._recordinfo_
     )
+
+
+if sys.version_info >= (3, 13):
+    ARGERR_MSG_STEM = "'StructOutRecordTest' object cannot be interpreted"
+else:
+    ARGERR_MSG_STEM = "wrong type"
 
 
 @unittest.skipIf(IMPORT_FAILED, "This depends on the out of process COM-server.")
@@ -346,9 +353,7 @@ class TestRecordClear(unittest.TestCase):
             "automatically, this test will fail.",
         ) as cm:
             ri.RecordClear(rec)
-        self.assertIn(
-            "'StructOutRecordTest' object cannot be interpreted", str(cm.exception)
-        )
+        self.assertIn(ARGERR_MSG_STEM, str(cm.exception))
         del rec
         gc.collect()
 
@@ -523,9 +528,7 @@ class TestPutField(unittest.TestCase):
             "instance and takes its address automatically, this test will fail.",
         ) as cm:
             ri.PutField(DISPATCH_PROPERTYPUT, rec, "text", "new text")
-        self.assertIn(
-            "'StructOutRecordTest' object cannot be interpreted", str(cm.exception)
-        )
+        self.assertIn(ARGERR_MSG_STEM, str(cm.exception))
         del rec
         gc.collect()
 
